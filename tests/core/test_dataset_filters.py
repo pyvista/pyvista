@@ -4730,7 +4730,7 @@ def test_align_xyz():
 def test_align_xyz_rectilinear():
     grid = pv.RectilinearGrid([0, 1], [0, 2], [0, 0.5])
     aligned = grid.align_xyz(centered=False)
-    assert isinstance(aligned, pv.StructuredGrid)
+    assert isinstance(aligned, pv.RectilinearGrid)
     expected = np.array([-1, 1, -0.5, 0.5, -0.25, 0.25]) + np.repeat(grid.center, 2)
     assert np.allclose(aligned.bounds, expected)
 

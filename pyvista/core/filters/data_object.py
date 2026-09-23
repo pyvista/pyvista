@@ -86,8 +86,8 @@ if TYPE_CHECKING:
 
 def _rectilinear_transform_components(
     transform: Transform,
-) -> tuple[NumpyArray[float], NumpyArray[float]]:
-    """Return the translation and scale of a transform a rectilinear grid can represent."""
+) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]]:
+    """Return the translation, scale and axis order of a transform a grid can represent."""
     # Follow similar decomposition performed by ImageData.index_to_physical_matrix
     T, R, N, S, K = transform.decompose()
 
@@ -99,16 +99,22 @@ def _rectilinear_transform_components(
         )
         raise ValueError(msg)
 
-    if not np.allclose(np.abs(R), np.eye(3)):
+    # A rotation is representable if it maps each axis onto an axis, i.e. if it is a
+    # signed permutation matrix
+    axes = np.argmax(np.abs(R), axis=1)
+    signs = np.sign(R[np.arange(3), axes])
+    permutation = np.zeros((3, 3))
+    permutation[np.arange(3), axes] = signs
+    if not np.allclose(R, permutation):
         msg = (
-            'The transformation has a non-diagonal rotation component which is not '
-            'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
-            'support rotations, or use\n`Transform.decompose()` to remove this component.'
+            'The transformation has a rotation component which is not axis-aligned and is '
+            'not\nsupported by RectilinearGrid. Cast to StructuredGrid first to fully '
+            'support rotations,\nor use `Transform.decompose()` to remove this component.'
         )
         raise ValueError(msg)
 
     # Lump the scale, the reflection, and any reflection from the rotation together
-    return T, S * N * np.diagonal(R)
+    return T, signs * (S * N)[axes], axes
 
 
 def _transform_vector_names(
@@ -171,14 +177,32 @@ def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Tr
 def _transform_rectilinear_axes(
     output: RectilinearGrid,
     dataset: RectilinearGrid,
-    components: tuple[NumpyArray[float], NumpyArray[float]],
+    components: tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]],
 ) -> None:
-    """Set a grid's axes to another's, scaled and translated."""
+    """Set a grid's axes to another's, permuted, scaled and translated."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
-    translation, scale = components
-    output.x = dataset.x * scale[0] + translation[0]
-    output.y = dataset.y * scale[1] + translation[1]
-    output.z = dataset.z * scale[2] + translation[2]
+    translation, scale, axes = components
+    coordinates = (dataset.x, dataset.y, dataset.z)
+    output.x = coordinates[axes[0]] * scale[0] + translation[0]
+    output.y = coordinates[axes[1]] * scale[1] + translation[1]
+    output.z = coordinates[axes[2]] * scale[2] + translation[2]
+
+
+def _permute_rectilinear_arrays(
+    output: RectilinearGrid, dimensions: tuple[int, int, int], axes: NumpyArray[int]
+) -> None:
+    """Reorder a grid's arrays to match a permutation of its axes."""
+    # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
+    order = (*(2 - axes[::-1]), 3)
+    point_dimensions = np.array(dimensions)
+    cell_dimensions = np.maximum(point_dimensions - 1, 1)
+    for attributes, dims in (
+        (output.point_data, point_dimensions),
+        (output.cell_data, cell_dimensions),
+    ):
+        for name, array in attributes.items():
+            permuted = array.reshape(*dims[::-1], -1).transpose(order)
+            attributes[name] = permuted.reshape(array.shape)
 
 
 class _CellStatusTuple(NamedTuple):
@@ -2028,9 +2052,10 @@ class DataObjectFilters:
 
         .. warning::
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
-            :class:`~pyvista.RectilinearGrid`, and rotations are not supported for
-            :class:`~pyvista.RectilinearGrid`. If present, a ``ValueError`` is raised.
-            To fully support these transformations, the input should be cast to
+            :class:`~pyvista.RectilinearGrid`, and only rotations which map the axes onto
+            each other are supported for :class:`~pyvista.RectilinearGrid`. If an
+            unsupported transformation is present, a ``ValueError`` is raised. To fully
+            support these transformations, the input should be cast to
             :class:`~pyvista.StructuredGrid` `before` applying this filter.
 
         .. note::
@@ -2191,12 +2216,17 @@ class DataObjectFilters:
                 _orient_image_structure(output, cast('pv.ImageData', self), t)
                 _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             elif isinstance(output, pv.RectilinearGrid):
-                _transform_rectilinear_axes(
-                    output,
-                    cast('pv.RectilinearGrid', self),
-                    cast('tuple[NumpyArray[float], NumpyArray[float]]', rectilinear_components),
+                components = cast(
+                    'tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]]',
+                    rectilinear_components,
                 )
+                dataset = cast('pv.RectilinearGrid', self)
+                dimensions = dataset.dimensions
+                _transform_rectilinear_axes(output, dataset, components)
                 _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+                axes = components[2]
+                if not np.array_equal(axes, [0, 1, 2]):
+                    _permute_rectilinear_arrays(output, dimensions, axes)
             else:
                 # A shallow copy leaves the output sharing everything but the points with
                 # the filter's own output, which is only safe when transforming in place

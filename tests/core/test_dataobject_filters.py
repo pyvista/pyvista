@@ -2487,9 +2487,9 @@ def test_transform_inplace(datasets):
 def test_transform_rectilinear_raises(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
-        'The transformation has a non-diagonal rotation component which is not supported by\n'
-        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations, or use\n'
-        '`Transform.decompose()` to remove this component.'
+        'The transformation has a rotation component which is not axis-aligned and is not\n'
+        'supported by RectilinearGrid. Cast to StructuredGrid first to fully support '
+        'rotations,\nor use `Transform.decompose()` to remove this component.'
     )
 
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -2516,7 +2516,11 @@ SHEAR_MATRIX[1, 0] = 0.1
 @pytest.mark.parametrize(
     ('grid', 'transformation', 'match'),
     [
-        ('rectilinear', pv.Transform().rotate_x(30), 'non-diagonal rotation component'),
+        (
+            'rectilinear',
+            pv.Transform().rotate_x(30),
+            'rotation component which is not axis-aligned',
+        ),
         ('rectilinear', SHEAR_MATRIX, 'shear component'),
         ('uniform', SHEAR_MATRIX, 'shear component'),
     ],
@@ -2554,6 +2558,38 @@ def test_transform_rectilinear(rectilinear):
     cast_then_transform = transform(rectilinear.cast_to_unstructured_grid())
 
     assert transform_then_cast == cast_then_transform
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
+    [
+        pv.Transform().rotate_z(90),
+        pv.Transform().rotate_x(90).scale((2, 3, 4)).translate((5, -1, 2)),
+        pv.Transform().rotate_y(-90),
+        pv.Transform().rotate_z(180),
+    ],
+    ids=['rotate-z', 'rotate-x-scale-translate', 'rotate-y', 'rotate-z-180'],
+)
+def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation, inplace):
+    rectilinear.point_data['p'] = np.arange(rectilinear.n_points, dtype=float)
+    rectilinear.cell_data['c'] = np.arange(rectilinear.n_cells, dtype=float)
+    expected = rectilinear.cast_to_structured_grid().transform(transformation, inplace=False)
+
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+
+    assert isinstance(transformed, pv.RectilinearGrid)
+    assert np.allclose(transformed.bounds, expected.bounds)
+    # Points are ordered along the grid's own axes, so sort both before comparing
+    actual_order = np.lexsort(transformed.points.T)
+    expected_order = np.lexsort(expected.points.T)
+    assert np.allclose(transformed.points[actual_order], expected.points[expected_order])
+    assert np.array_equal(transformed['p'][actual_order], expected['p'][expected_order])
+    actual_cells = np.lexsort(transformed.cell_centers().points.T)
+    expected_cells = np.lexsort(expected.cell_centers().points.T)
+    assert np.array_equal(
+        transformed.cell_data['c'][actual_cells], expected.cell_data['c'][expected_cells]
+    )
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
