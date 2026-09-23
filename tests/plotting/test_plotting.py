@@ -3414,6 +3414,7 @@ def test_plot_compare_classifies_every_keyword_the_drawing_methods_take():
         'interpolate_before_map',
         'label',
         'lighting',
+        'line_style',
         'line_width',
         'log_scale',
         'mapper',

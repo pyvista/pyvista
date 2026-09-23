@@ -191,3 +191,188 @@ def test_ruled_surface():
     )
     ruled = poly.ruled_surface(resolution=(21, 21))
     assert ruled.n_cells
+
+
+def test_dash_lines_solid_returns_the_lines_whole():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['ids'] = np.arange(line.n_points)
+
+    solid = line.dash_lines('-')
+    assert solid is not line
+    assert solid.n_cells == line.n_cells
+    assert np.array_equal(solid.points, line.points)
+    assert np.array_equal(solid.point_data['ids'], line.point_data['ids'])
+
+
+@pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
+def test_dash_lines_splits_into_multiple_cells(style):
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    dashed = line.dash_lines(style, scale=0.01)
+    drawn = dashed.compute_cell_sizes(length=True, area=False, volume=False)
+    assert dashed.n_cells > 1
+    assert drawn.cell_data['Length'].sum() < 1.0
+
+
+def test_dash_lines_total_length_matches_duty_cycle():
+    line = pv.Line((0, 0, 0), (1, 0, 0))
+    dashed = line.dash_lines('--', scale=1 / 32)
+    drawn = dashed.compute_cell_sizes(length=True, area=False, volume=False)
+    assert np.isclose(drawn.cell_data['Length'].sum(), 0.5, atol=0.02)
+
+
+@pytest.mark.parametrize(
+    ('style', 'pattern'),
+    [
+        ('--', [8, 8]),
+        (':', [1, 7, 1, 7]),
+        ('-.', [4, 6, 2, 4]),
+        ('-..', [3, 3, 1, 3, 3, 3]),
+    ],
+)
+def test_dash_lines_pattern_spells_out_a_style(style, pattern):
+    # the equivalences the style docstring promises
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=400)
+    named = line.dash_lines(style, scale=0.005)
+    spelled = line.dash_lines(pattern=pattern, scale=0.005)
+    assert named.n_cells == spelled.n_cells
+    assert np.array_equal(named.points, spelled.points)
+
+
+def test_dash_lines_style_and_pattern_are_exclusive():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=50)
+    for style in ['-', '--', '']:
+        with pytest.raises(ValueError, match='Cannot set both'):
+            line.dash_lines(style, pattern=[1, 7])
+
+
+def test_dash_lines_join_makes_the_pattern_continuous():
+    points = np.zeros((51, 3))
+    points[:, 0] = np.linspace(0, 1, 51)
+    segments = np.column_stack([np.full(50, 2), np.arange(50), np.arange(1, 51)])
+    edges = pv.PolyData(points, lines=segments.ravel())
+    assert edges.n_cells == 50
+    assert edges.dash_lines('--', scale=0.05, join=False).n_cells == 50
+    assert edges.dash_lines('--', scale=0.05, join=True).n_cells < 50
+
+
+def test_dash_lines_interpolates_point_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    line['x'] = line.points[:, 0].copy()
+    dashed = line.dash_lines('--', scale=0.01)
+    assert np.allclose(dashed['x'], dashed.points[:, 0], atol=1e-6)
+
+
+def test_dash_lines_copies_cell_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.cell_data['tag'] = np.array([7])
+    dashed = line.dash_lines('--', scale=0.01, join=False)
+    assert np.all(dashed.cell_data['tag'] == 7)
+    assert 'tag' not in line.dash_lines('--', scale=0.01).cell_data
+
+
+def test_dash_lines_removes_non_line_cells():
+    assert pv.Sphere().dash_lines().n_cells == 0
+    assert pv.PolyData().dash_lines().n_cells == 0
+
+
+@pytest.mark.parametrize('style', ['--', '-', ''])
+def test_dash_lines_removes_the_other_cells_of_a_mixed_mesh(style):
+    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+    mesh.lines = np.array([2, 0, 8])
+    mesh.verts = np.array([1, 3])
+    mesh.cell_data['tag'] = np.arange(mesh.n_cells)
+    assert mesh.n_verts
+    assert mesh.n_faces
+
+    dashed = mesh.dash_lines(style, scale=0.2, join=False)
+    assert dashed.n_verts == 0
+    assert dashed.n_faces == 0
+    assert dashed.n_strips == 0
+    assert dashed.n_cells == dashed.n_lines
+    if style == '':
+        assert dashed.n_cells == 0
+    else:
+        # the tags all come from the single line cell, which follows the vert
+        assert np.all(dashed.cell_data['tag'] == mesh.cell_data['tag'][mesh.n_verts])
+
+
+def test_dash_lines_default_scale_follows_length():
+    small = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    large = pv.Line((0, 0, 0), (10, 0, 0), resolution=100)
+    assert small.dash_lines().n_cells == large.dash_lines().n_cells
+
+
+def test_dash_lines_inplace():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    returned = line.dash_lines('--', scale=0.01, inplace=True)
+    assert returned is line
+    assert line.n_cells > 1
+
+
+def test_dash_lines_raises():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    with pytest.raises(ValueError, match='is not valid'):
+        line.dash_lines('wrong')
+    with pytest.raises(ValueError, match='even number of lengths'):
+        line.dash_lines(pattern=[4, 2, 4])
+    with pytest.raises(ValueError, match='greater than 0'):
+        line.dash_lines(pattern=[4, 0])
+    with pytest.raises(ValueError, match='greater than 0'):
+        line.dash_lines(scale=0.0)
+    with pytest.raises(ValueError, match='minimum length of 2'):
+        line.dash_lines(pattern=[])
+    with pytest.raises(ValueError, match='finite'):
+        line.dash_lines(scale=float('inf'))
+
+
+def test_dash_lines_degenerate_cells():
+    mesh = pv.PolyData()
+    mesh.points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+    mesh.lines = np.array([1, 0, 2, 1, 2])
+    assert mesh.n_lines == 2
+
+    dashed = mesh.dash_lines(join=False)
+    assert dashed.n_points == 0
+    assert dashed.n_cells == 0
+
+
+def test_dash_lines_snaps_integer_point_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['ids'] = np.arange(line.n_points)
+
+    dashed = line.dash_lines()
+    assert dashed.point_data['ids'].dtype == line.point_data['ids'].dtype
+    assert np.isin(dashed.point_data['ids'], line.point_data['ids']).all()
+
+
+def test_dash_lines_hidden_style():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    hidden = line.dash_lines('')
+    assert hidden.n_points == 0
+    assert hidden.n_cells == 0
+
+
+def test_dash_lines_keeps_active_scalars_and_field_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['vals'] = np.arange(line.n_points, dtype=float)
+    line.set_active_scalars('vals')
+    line.field_data['meta'] = ['x']
+
+    dashed = line.dash_lines()
+    assert dashed.active_scalars_name == 'vals'
+    assert list(dashed.field_data['meta']) == ['x']
+
+
+def test_dash_lines_keeps_inactive_scalars_inactive():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['vals'] = np.arange(line.n_points, dtype=float)
+    line.set_active_scalars(None)
+    assert line.dash_lines().active_scalars_name is None
+
+
+def test_dash_lines_keeps_active_normals():
+    sphere = pv.Sphere()
+    sphere.lines = np.array([2, 0, 1])
+    dashed = sphere.dash_lines()
+    assert dashed.point_data.active_normals_name == 'Normals'
+    assert dashed.active_scalars_name is None

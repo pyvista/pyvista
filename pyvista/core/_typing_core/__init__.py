@@ -7,6 +7,7 @@ from ._aliases import BoundsTuple as BoundsTuple
 from ._aliases import CellArrayLike as CellArrayLike
 from ._aliases import CellsLike as CellsLike
 from ._aliases import InteractionEventType as InteractionEventType
+from ._aliases import LineStyle as LineStyle
 from ._aliases import MatrixLike as MatrixLike
 from ._aliases import Number as Number
 from ._aliases import RotationLike as RotationLike
