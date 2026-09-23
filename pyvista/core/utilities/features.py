@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import os
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import NoReturn
 from typing import cast
 import warnings
@@ -20,6 +21,7 @@ from pyvista.core.utilities.helpers import wrap
 if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ImageData
+    from pyvista import MultiBlock
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
@@ -616,7 +618,7 @@ def spherical_to_cartesian(
 
 
 def merge(
-    datasets: Sequence[DataSet],
+    datasets: Sequence[DataSet] | MultiBlock[Any],
     *,
     merge_points: bool = True,
     main_has_priority: bool | None = None,
@@ -643,8 +645,10 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.DataSet`]
-        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
+    datasets : sequence[:class:`pyvista.DataSet`] | :class:`pyvista.MultiBlock`
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`. A
+        :class:`pyvista.MultiBlock` is accepted, and raises ``TypeError`` if any
+        of its blocks is not a dataset.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
@@ -690,9 +694,7 @@ def merge(
 
     for i, dataset in enumerate(datasets):
         if not isinstance(dataset, pv.DataSet):
-            msg = (  # type: ignore[unreachable]
-                f'Expected pyvista.DataSet, not {type(dataset).__name__} at index {i}'
-            )
+            msg = f'Expected pyvista.DataSet, not {type(dataset).__name__} at index {i}'
             raise TypeError(msg)
 
     return datasets[0].merge(

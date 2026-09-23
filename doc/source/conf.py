@@ -254,7 +254,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_UnstructuredGridType'),
     (r'py:.*', '.*_GridType'),
     (r'py:.*', '.*_PointGridType'),
-    (r'py:.*', '.*_PointSetType'),
+    (r'py:.*', '.*_PointSetBaseType'),
     (r'py:.*', '.*_DataSetType'),
     (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
@@ -278,6 +278,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PolyData'),
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*_BlockType'),
     (r'py:.*', '.*DatasetObject'),
     (r'py:.*', '.*_DatasetT_co'),
     (r'py:.*', '.*_ReadersT_co'),
@@ -319,6 +320,7 @@ nitpick_ignore_regex = [
     #
     # PyVista plotting-related classes
     (r'py:.*', '.*BasePlotter'),
+    (r'py:.*', '.*_AlgorithmInput'),
     (r'py:.*', '.*ScalarBars'),
     (r'py:.*', '.*Theme'),
     #
