@@ -5599,8 +5599,8 @@ class DataObjectFilters:
         Parameters
         ----------
         inplace : bool, default: False
-            Updates mesh in-place. Only an :class:`~pyvista.UnstructuredGrid` input can
-            be updated in place.
+            Updates mesh in-place. Only a :class:`~pyvista.PolyData` or
+            :class:`~pyvista.UnstructuredGrid` input can be updated in place.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -7200,8 +7200,8 @@ def _validate_triangulate_inplace(mesh: DataSet) -> UnstructuredGrid:
     """Return the mesh, or raise when a triangulated output cannot be copied back into it."""
     if not isinstance(mesh, pv.UnstructuredGrid):
         msg = (
-            f'Cannot use inplace=True for {type(mesh).__name__} input. Only '
-            f'UnstructuredGrid inputs can be triangulated in place.'
+            f'Cannot use inplace=True for {type(mesh).__name__} input. Only PolyData '
+            f'and UnstructuredGrid inputs can be triangulated in place.'
         )
         raise TypeError(msg)
     return mesh
