@@ -215,8 +215,9 @@ pl.show()
 #
 # ``slice_orthogonal`` cuts at the block's center. To cut elsewhere, use
 # :meth:`~pyvista.ImageDataFilters.slice_index`, which takes an index along each axis
-# and returns :class:`~pyvista.ImageData`. Take five planes either side of the center
-# index and lay them side by side with :meth:`~pyvista.ImageDataFilters.concatenate`.
+# and returns :class:`~pyvista.ImageData`. Take five planes, stepping either side of
+# the center index, and lay them side by side with
+# :meth:`~pyvista.ImageDataFilters.concatenate`.
 
 step = 3
 middle = block.dimensions[1] // 2
