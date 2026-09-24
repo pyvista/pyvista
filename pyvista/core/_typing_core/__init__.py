@@ -23,5 +23,7 @@ from ._dataset_types import _DataSetOrMultiBlockType as _DataSetOrMultiBlockType
 from ._dataset_types import _DataSetType as _DataSetType
 from ._dataset_types import _GridType as _GridType
 from ._dataset_types import _MultiBlockType as _MultiBlockType
+from ._dataset_types import _OutputDataObject as _OutputDataObject
+from ._dataset_types import _OutputDataSet as _OutputDataSet
 from ._dataset_types import _PointGridType as _PointGridType
 from ._dataset_types import _PointSetBaseType as _PointSetBaseType

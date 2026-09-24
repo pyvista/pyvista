@@ -80,6 +80,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
+    from pyvista.core._typing_core import _OutputDataObject
+    from pyvista.core._typing_core import _OutputDataSet
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
@@ -3399,8 +3401,8 @@ class DataObjectFilters:
         | UnstructuredGrid
         | MultiBlock
         | tuple[
-            PolyData | PointSet | UnstructuredGrid | MultiBlock,
-            PolyData | PointSet | UnstructuredGrid | MultiBlock,
+            _OutputDataObject,
+            _OutputDataObject,
         ]
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
@@ -3559,7 +3561,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         merge_points: bool = True,
         crinkle: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid | MultiBlock:
+    ) -> _OutputDataObject:
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -3756,7 +3758,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
         plane: PolyData | None = None,
-    ) -> PolyData | PointSet | UnstructuredGrid | MultiBlock:
+    ) -> _OutputDataObject:
         """Clip a dataset by a slab of finite thickness around a plane.
 
         The slab is the volumetric region bounded by two parallel planes offset
@@ -7207,7 +7209,7 @@ def _validate_triangulate_inplace(mesh: DataSet) -> UnstructuredGrid:
 
 def _validate_clip_inplace(
     mesh: DataSet | MultiBlock[Any],
-) -> PolyData | PointSet | UnstructuredGrid:
+) -> _OutputDataSet:
     """Return the mesh, or raise when a clipped output cannot be copied back into it."""
     if not isinstance(mesh, (pv.PolyData, pv.PointSet, pv.UnstructuredGrid)):
         msg = (
@@ -7221,21 +7223,19 @@ def _validate_clip_inplace(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def _clip_output(output: DataSet | MultiBlock, source: DataSet) -> PolyData | PointSet | UnstructuredGrid: ...
+def _clip_output(output: DataSet | MultiBlock, source: DataSet) -> _OutputDataSet: ...
 @overload
 def _clip_output(output: DataSet | MultiBlock, source: MultiBlock) -> MultiBlock: ...
 @overload
-def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> PolyData | PointSet | UnstructuredGrid | MultiBlock: ...
+def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> _OutputDataObject: ...
 # ruff: enable[E501]
 # fmt: on
-def _clip_output(
-    output: DataSet | MultiBlock, source: DataSet | MultiBlock
-) -> PolyData | PointSet | UnstructuredGrid | MultiBlock:
+def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> _OutputDataObject:
     """Give a clipped dataset the array structure and dataset type of its input."""
     # A clip keeps a PolyData or PointSet input's type, a composite stays a composite and
     # anything else gives an UnstructuredGrid
     return cast(
-        'PolyData | PointSet | UnstructuredGrid | MultiBlock',
+        '_OutputDataObject',
         _keep_array_structure(_cast_output_to_match_input_type(output, source), source),
     )
 

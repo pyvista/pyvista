@@ -72,6 +72,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core._typing_core import _OutputDataSet
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral
@@ -716,12 +717,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         both: bool = False,
-    ) -> (
-        PolyData
-        | PointSet
-        | UnstructuredGrid
-        | tuple[PolyData | PointSet | UnstructuredGrid, PolyData | PointSet | UnstructuredGrid]
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid | tuple[_OutputDataSet, _OutputDataSet]:
         """Clip a dataset by a scalar.
 
         .. versionchanged:: 0.49
@@ -868,7 +864,7 @@ class DataSetFilters(DataObjectFilters):
         compute_distance: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         .. versionchanged:: 0.49
@@ -2380,7 +2376,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs: Any,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Find and label connected regions.
 
         This filter extracts cell regions based on a specified connectivity
@@ -2844,7 +2840,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
@@ -5295,7 +5291,7 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_ids: bool = True,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         r"""Remove points and their cells from a mesh.
 
         Cells are removed according to ``mode``, and only points used by a remaining
@@ -6406,7 +6402,7 @@ class DataSetFilters(DataObjectFilters):
         tolerance: float = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Merge duplicate points in this mesh.
 
         .. versionadded:: 0.45
