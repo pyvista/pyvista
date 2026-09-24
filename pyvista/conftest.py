@@ -28,18 +28,14 @@ collect_ignore = [  # Avoid importing deprecated modules
 def fail_on_vtk_output(request: pytest.FixtureRequest) -> Generator[None, None, None]:
     """Fail the test when VTK logs an error or warning while it runs.
 
-    A test that provokes VTK on purpose names the messages it expects with
-    ``expect_vtk_output``; anything else VTK logs still fails it. A test that feeds
-    unreadable input to whichever readers VTK offers has no fixed set of messages to
-    name and opts out with ``skip_vtk_output_check`` instead.
-
-    Lives here, in the package, because the doctests run from the installed copy and
-    collect no ``conftest.py`` from the repository. ``tests`` imports it.
+    - ``expect_vtk_output(*messages, reason=...)`` allows the errors and warnings whose
+      text it names, matched as substrings. Anything else VTK logs still fails the test.
+    - ``skip_vtk_output_check`` turns the check off for that test.
 
     Parameters
     ----------
     request : pytest.FixtureRequest
-        Request for the test being guarded, read for the two markers.
+        Fixture request for the test, used to look up its markers.
 
     """
     if request.node.get_closest_marker('skip_vtk_output_check'):

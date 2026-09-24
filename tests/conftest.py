@@ -23,8 +23,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
 
-# The guard the doctests use, applied to this tree too; it ships with the package
-# because the doctests run from the installed copy.
+# Reuse the doctest fixture for unit tests
 from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
