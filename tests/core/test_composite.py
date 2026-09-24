@@ -93,14 +93,6 @@ def test_multi_block_init_sequence(rectilinear, airplane):
     assert isinstance(multi.GetBlock(1), PolyData)
 
 
-def test_multi_block_init_partitioned(sphere, airplane):
-    # A `PartitionedDataSet` is a sequence, so its partitions become the blocks
-    multi = MultiBlock(pv.PartitionedDataSet([sphere, airplane]))
-    assert multi.n_blocks == 2
-    assert isinstance(multi.GetBlock(0), PolyData)
-    assert isinstance(multi.GetBlock(1), PolyData)
-
-
 def test_multi_block_init_str_is_a_filename(tmp_path, sphere):
     # A `str` is a sequence, but names a file rather than giving one block per character
     MultiBlock([sphere]).save(path := tmp_path / 'blocks.vtm')

@@ -488,16 +488,15 @@ def _read_dispatch(  # noqa: PLR0911
         multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            block = _read_dispatch(
-                each,
-                force_ext=None,
-                file_format=file_format,
-                progress_bar=progress_bar,
-                validate=validate,
-                **kwargs,
-            )
             multi.append(
-                block.cast_to_multiblock() if isinstance(block, pv.PartitionedDataSet) else block,
+                _read_dispatch(  # type: ignore[arg-type]
+                    each,
+                    force_ext=None,
+                    file_format=file_format,
+                    progress_bar=progress_bar,
+                    validate=validate,
+                    **kwargs,
+                ),
                 name,
             )
         return multi
