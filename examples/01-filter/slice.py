@@ -213,4 +213,8 @@ cpos = pv.CameraPosition(
 colored.plot(cpos=cpos)
 
 # %%
+# Every slice here is cut on the dataset's own axes. See
+# :ref:`slice_oblique_anatomy_example` for slicing a structure which runs across them.
+
+# %%
 # .. tags:: filter

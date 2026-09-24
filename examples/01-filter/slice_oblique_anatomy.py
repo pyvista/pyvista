@@ -11,7 +11,8 @@ produced. :meth:`~pyvista.ImageDataFilters.reslice` puts the scan on a grid alig
 the structure, and :meth:`~pyvista.DataObjectFilters.slice_orthogonal` and
 :meth:`~pyvista.ImageDataFilters.slice_index` then cut it squarely.
 
-See :ref:`reslice_example` for what ``reslice`` does on its own.
+See :ref:`slice_example` for the slicing filters on an axis-aligned volume, and
+:ref:`reslice_example` for what ``reslice`` does on its own.
 
 """
 
