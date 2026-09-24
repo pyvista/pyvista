@@ -38,7 +38,7 @@ scapula = dataset['segmentations']['scapula_left']
 # on the bone and ``0`` everywhere else, which leaves the background transparent.
 
 overlay = scapula.copy()
-overlay['scapula'] = (np.asarray(scapula.active_scalars) > 0) * 0.3
+overlay['scapula'] = (scapula.active_scalars > 0) * 0.3
 overlay.set_active_scalars('scapula')
 
 # %%
