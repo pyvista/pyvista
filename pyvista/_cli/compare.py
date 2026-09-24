@@ -227,8 +227,13 @@ def _parse_shape(shape: str) -> list[int] | str:
 
 
 def _enclosing_outline(meshes: list[pv.DataObject]) -> pv.PolyData:
-    """Return an outline enclosing every mesh which can be a block."""
-    blocks = [mesh for mesh in meshes if isinstance(mesh, (pv.DataSet, pv.MultiBlock))]
+    """Return an outline enclosing every mesh, including each partition of a partitioned one."""
+    blocks: list[pv.DataSet | pv.MultiBlock[Any]] = []
+    for mesh in meshes:
+        if isinstance(mesh, pv.PartitionedDataSet):
+            blocks.append(mesh.cast_to_multiblock())
+        elif isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
+            blocks.append(mesh)
     return pv.MultiBlock(blocks).outline()
 
 
