@@ -439,6 +439,39 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
         assert not shares_memory if copy else shares_memory
 
 
+@pytest.mark.parametrize('filter_name', ['points_to_cells', 'cells_to_points'])
+def test_points_to_cells_and_cells_to_points_direction_matrix(filter_name):
+    """Test the half-voxel shift is rotated by the direction matrix."""
+    image = pv.ImageData(dimensions=(4, 5, 6), spacing=(1.0, 2.0, 3.0))
+    image.direction_matrix = pv.Transform().rotate_z(15).rotate_x(20).matrix[:3, :3]
+
+    if filter_name == 'points_to_cells':
+        image.point_data['data'] = range(image.n_points)
+        output = image.points_to_cells()
+        assert np.allclose(output.cell_centers().points, image.points)
+    else:
+        image.cell_data['data'] = range(image.n_cells)
+        output = image.cells_to_points()
+        assert np.allclose(output.points, image.cell_centers().points)
+
+
+def test_contour_labels_direction_matrix():
+    """Test cell labels of a rotated image are contoured in place."""
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    labels = np.zeros(image.n_cells, dtype=np.uint8)
+    labels.reshape(4, 4, 4)[1:3, 1:3, 1:3] = 1
+    image.cell_data['labels'] = labels
+
+    transform = pv.Transform().rotate_z(30)
+    expected = image.contour_labels().transform(transform, inplace=False)
+
+    rotated = image.copy()
+    rotated.direction_matrix = transform.matrix[:3, :3]
+    actual = rotated.contour_labels()
+
+    assert np.allclose(actual.points, expected.points)
+
+
 @pytest.mark.parametrize(
     ('point_flags', 'expected_cell_flags'),
     [
