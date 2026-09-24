@@ -22,7 +22,6 @@ from sphinx.util import logging
 
 if TYPE_CHECKING:
     from sphinx.application import Sphinx
-    from sphinx.ext.autodoc import ObjectMembers
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ def _metaclass_properties(cls: type) -> dict[str, property]:
     directly instead.
     """
     properties: dict[str, property] = {}
-    for meta in type(cls).__mro__:
+    for meta in inspect.getmro(type(cls)):
         if meta in _SKIP_METACLASSES:
             continue
         for name, value in vars(meta).items():
@@ -175,19 +174,14 @@ class EnumDocumenter(ClassDocumenter):
         return _is_enum(member)
 
     def filter_members(
-        self, members: ObjectMembers, want_all: bool
+        self, members: list[ObjectMember], want_all: bool
     ) -> list[tuple[str, Any, bool]]:  # numpydoc ignore=RT01
         """Drop enum members and metaclass properties; each is documented its own way."""
         if not _is_enum(self.object):
             return super().filter_members(members, want_all)
 
         skip_names = set(self.object.__members__) | set(_metaclass_properties(self.object))
-        kept = [
-            member
-            for member in members
-            if (member.__name__ if isinstance(member, ObjectMember) else member[0])
-            not in skip_names
-        ]
+        kept = [member for member in members if member.__name__ not in skip_names]
         return super().filter_members(kept, want_all)
 
     def add_content(self, more_content: Any) -> None:
@@ -238,7 +232,7 @@ def _patch_autosummary_objtype() -> None:
     """
     from sphinx.ext.autosummary import generate  # noqa: PLC0415
 
-    original = generate._get_documenter
+    original = generate._get_documenter  # type: ignore[attr-defined]
     if getattr(original, '_autoenum_patch', False):
         return
 
@@ -247,7 +241,7 @@ def _patch_autosummary_objtype() -> None:
         return 'enum' if _is_enum(obj) else original(obj, parent)
 
     _get_documenter._autoenum_patch = True  # type: ignore[attr-defined]
-    generate._get_documenter = _get_documenter
+    generate._get_documenter = _get_documenter  # type: ignore[attr-defined, assignment]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01

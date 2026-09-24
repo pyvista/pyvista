@@ -16,6 +16,7 @@ import warnings
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
+from sphinx.ext.intersphinx import InventoryAdapter
 from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
 if TYPE_CHECKING:
@@ -238,6 +239,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*LineStyle'),
     (r'py:.*', '.*InteractorStyleHandler'),
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
@@ -539,9 +541,9 @@ exclude_patterns = [
     # searchable through the page that includes it.
     'api/core/cell_quality/*.rst',
     'api/examples/dataset-gallery/*.rst',
-    'api/plotting/charts/pen_line_styles.rst',
     'api/plotting/charts/plot_color_schemes.rst',
     'api/plotting/charts/scatter_marker_styles.rst',
+    'api/plotting/line_styles.rst',
     'api/readers/readers_table.rst',
     'api/utilities/color_table/*.rst',
     'api/utilities/colormap_table/*.rst',
@@ -1217,9 +1219,26 @@ def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
             del env.toctree_includes[docname]
 
 
+def restrict_trimesh_inventory(app: Sphinx) -> None:
+    """Drop non-``trimesh`` names from trimesh's inventory so they link to their own docs."""
+    inventories = InventoryAdapter(app.env)
+    for objtype, objects in inventories.named_inventory['trimesh'].items():
+        if objtype.startswith('py:'):
+            for name in [name for name in objects if name.split('.')[0] != 'trimesh']:
+                del objects[name]
+    # Merge again as intersphinx does, so the entries trimesh overrode are restored
+    main_inventory = inventories.main_inventory
+    main_inventory.clear()
+    for inv_name in sorted(inventories.named_inventory):
+        for objtype, objects in inventories.named_inventory[inv_name].items():
+            main_inventory.setdefault(objtype, {}).update(objects)
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
+    # priority > 500 so intersphinx has already loaded the inventories
+    app.connect('builder-inited', restrict_trimesh_inventory, priority=501)
     # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
     app.connect('env-updated', forget_tag_page_toctrees)
     # Priority must stay above the 501 used by sphinx-book-theme's
