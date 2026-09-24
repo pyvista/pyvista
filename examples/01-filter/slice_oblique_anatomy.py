@@ -55,7 +55,8 @@ line, _, direction = pv.fit_line_to_points(in_plane, init_direction='x', return_
 
 # %%
 # Draw the line over the axial slice it was fitted in. It crosses the slice at an angle,
-# and so does the bone underneath it.
+# and so does the bone underneath it. The mask and the line are translated along ``+z``
+# to lift them clear of the image plane, which they would otherwise fight for depth.
 
 index = round((center[2] - ct.origin[2]) / ct.spacing[2])
 axial = ct.slice_index(k=index)
@@ -95,8 +96,8 @@ angle = np.degrees(np.arctan2(direction[1], direction[0]))
 plane = pv.ImageData(dimensions=(320, 220, 1), spacing=(1.0, 1.0, 1.0))
 
 
-def centered(grid, rotation):
-    """Return the transform which rotates the scapula and centers it in ``grid``."""
+def placed(grid, rotation=0.0):
+    """Return the transform which puts the scapula at the center of ``grid``."""
     return pv.Transform().translate(-center).rotate_z(rotation).translate(grid.center)
 
 
@@ -105,21 +106,17 @@ def centered(grid, rotation):
 # the line and the bone's mask through the same transforms so they can be compared
 # against. The mask is a label image, so it takes ``'nearest'``.
 
-along_scan = ct.reslice(
-    plane, 'linear', transform=centered(plane, 0.0), background_value=-1000
-)
+along_scan = ct.reslice(plane, 'linear', transform=placed(plane), background_value=-1000)
 along_bone = ct.reslice(
-    plane, 'linear', transform=centered(plane, -angle), background_value=-1000
+    plane, 'linear', transform=placed(plane, -angle), background_value=-1000
 )
 
-line_scan = line.transform(centered(plane, 0.0), inplace=False)
-line_bone = line.transform(centered(plane, -angle), inplace=False)
+line_scan = line.transform(placed(plane), inplace=False)
+line_bone = line.transform(placed(plane, -angle), inplace=False)
 
-mask_scan = overlay.reslice(
-    plane, 'nearest', transform=centered(plane, 0.0), background_value=0
-)
+mask_scan = overlay.reslice(plane, 'nearest', transform=placed(plane), background_value=0)
 mask_bone = overlay.reslice(
-    plane, 'nearest', transform=centered(plane, -angle), background_value=0
+    plane, 'nearest', transform=placed(plane, -angle), background_value=0
 )
 
 # %%
@@ -170,10 +167,10 @@ pl.show()
 
 volume = pv.ImageData(dimensions=(200, 160, 280), spacing=(1.0, 1.0, 1.0))
 block = ct.reslice(
-    volume, 'linear', transform=centered(volume, -angle), background_value=-1000
+    volume, 'linear', transform=placed(volume, -angle), background_value=-1000
 )
 bone = overlay.reslice(
-    volume, 'nearest', transform=centered(volume, -angle), background_value=0
+    volume, 'nearest', transform=placed(volume, -angle), background_value=0
 )
 
 block = block.crop(mask=bone, padding=10)
@@ -218,10 +215,12 @@ pl.show()
 #
 # ``slice_orthogonal`` cuts at the block's center. To cut elsewhere, use
 # :meth:`~pyvista.ImageDataFilters.slice_index`, which takes an index along each axis
-# and returns :class:`~pyvista.ImageData`. Step a series of ``XZ`` planes through the
-# blade and lay them side by side with :meth:`~pyvista.ImageDataFilters.concatenate`.
+# and returns :class:`~pyvista.ImageData`. Take five planes either side of the center
+# index and lay them side by side with :meth:`~pyvista.ImageDataFilters.concatenate`.
 
-indices = [38, 41, 44, 47, 50]
+step = 3
+middle = block.dimensions[1] // 2
+indices = [middle + count * step for count in range(-2, 3)]
 planes = [block.slice_index(j=index, rebase_coordinates=True) for index in indices]
 masks = [bone.slice_index(j=index, rebase_coordinates=True) for index in indices]
 
@@ -229,8 +228,8 @@ strip = planes[0].concatenate(planes[1:], 'x')
 strip_mask = masks[0].concatenate(masks[1:], 'x')
 
 # %%
-# The blade fans out as the planes move forward, and the last of them is the one
-# ``slice_orthogonal`` chose.
+# The blade thins as the planes step back through it. The middle panel is the plane
+# ``slice_orthogonal`` cut.
 
 # sphinx_gallery_start_ignore
 # the interactive scene renders blank, so keep the static figure
