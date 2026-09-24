@@ -2645,6 +2645,34 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
     )
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
+    [pv.Transform().rotate_z(90), pv.Transform().rotate_z(90).rotate_x(90)],
+    ids=['one-axis-pair', 'all-three-axes'],
+)
+def test_transform_rectilinear_rotation_active_attributes(rectilinear, transformation, inplace):
+    """Test permuting a grid's axes keeps the arrays it had marked active."""
+    rng = np.random.default_rng()
+    rectilinear.point_data['point_vectors'] = rng.random((rectilinear.n_points, 3))
+    rectilinear.point_data['point_tensors'] = rng.random((rectilinear.n_points, 9))
+    rectilinear.cell_data['cell_vectors'] = rng.random((rectilinear.n_cells, 3))
+    rectilinear.point_data.active_vectors_name = 'point_vectors'
+    rectilinear.cell_data.active_vectors_name = 'cell_vectors'
+    rectilinear.active_tensors_name = 'point_tensors'
+
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+
+    point_data = transformed.point_data
+    cell_data = transformed.cell_data
+    assert point_data.active_vectors_name == 'point_vectors'
+    assert cell_data.active_vectors_name == 'cell_vectors'
+    assert transformed.active_tensors_name == 'point_tensors'
+    # The permuted arrays are written back, so the active ones must not be the originals
+    assert np.array_equal(point_data.active_vectors, point_data['point_vectors'])
+    assert np.array_equal(cell_data.active_vectors, cell_data['cell_vectors'])
+
+
 @pytest.mark.parametrize(
     'transformation',
     [pv.Transform().rotate_z(90), pv.Transform().scale((-1, 1, 1))],
