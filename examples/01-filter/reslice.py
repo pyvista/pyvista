@@ -343,7 +343,10 @@ line, _, direction = pv.fit_line_to_points(in_plane, init_direction='x', return_
 # Draw the line over the axial slice it was fitted in. It crosses the slice at an angle,
 # and so does the bone underneath it.
 
-axial = ct.slice_index(k=round((center[2] - ct.origin[2]) / ct.spacing[2]))
+index = round((center[2] - ct.origin[2]) / ct.spacing[2])
+axial = ct.slice_index(k=index)
+axial_mask = scapula.slice_index(k=index)
+axial_mask['scapula'] = (np.asarray(axial_mask.active_scalars) > 0).astype(float) * 0.3
 
 # sphinx_gallery_start_ignore
 # the interactive scene renders blank, so keep the static figure
@@ -352,7 +355,17 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 
 pl = pv.Plotter()
 pl.add_mesh(axial, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False)
+pl.add_mesh(
+    axial_mask.translate((0, 0, 0.5)), color='orange', opacity='scapula', lighting=False
+)
 pl.add_mesh(line.translate((0, 0, 1)), color='magenta', line_width=6)
+pl.add_legend(
+    [['scapula', 'orange'], ['fitted axis', 'magenta']],
+    bcolor='w',
+    loc='lower left',
+    size=(0.28, 0.12),
+    face='none',
+)
 pl.view_xy()
 pl.camera.tight()
 pl.show()
