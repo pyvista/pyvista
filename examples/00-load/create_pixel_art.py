@@ -4,7 +4,7 @@
 Pixel Art of ALIEN MONSTERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Make `pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_ with boxes.
+`Pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_ from :func:`pyvista.Box`.
 
 Pixel string `source
 <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg>`_ and

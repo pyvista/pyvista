@@ -97,9 +97,11 @@ pl.show()
 # Some filters generate a `pyvista.UnstructuredGrid`
 # out of a`pyvista.Volume`.
 # We will explore 3:
-# :func:`pyvista.DataSetFilters.threshold`
-# :func:`pyvista.DataSetFilters.extract_values`
-# :func:`pyvista.DataSetFilters.clip_scalar`
+#
+# - :func:`pyvista.DataSetFilters.threshold`
+# - :func:`pyvista.DataSetFilters.extract_values`
+# - :func:`pyvista.DataSetFilters.clip_scalar`
+#
 # Note the shape of the produced meshes.
 # ``clip_scalar`` produces ``pyvista.CellType.WEDGE``
 # and ``pyvista.CellType.TETRA``
@@ -150,8 +152,10 @@ pl.show()
 # Some filters generate a `pyvista.UnstructuredGrid`
 # out of a`pyvista.UnstructuredGrid`.
 # We will explore 2:
-# :func:`pyvista.DataSetFilters.threshold`
-# :func:`pyvista.DataSetFilters.clip_scalar`
+#
+# - :func:`pyvista.DataSetFilters.threshold`
+# - :func:`pyvista.DataSetFilters.clip_scalar`
+#
 # Notice how threshold keeps the cells which correspond
 # to the specified value range while ``clip_scalar`` generates
 # a "clean" cut, which modifies the cells at the boundaries of

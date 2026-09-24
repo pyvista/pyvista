@@ -60,9 +60,8 @@ z_cells = np.array([25] * 5 + [35] * 3 + [50] * 2 + [75, 100])
 
 xx = np.repeat(terrain.x, len(z_cells), axis=-1)
 yy = np.repeat(terrain.y, len(z_cells), axis=-1)
-zz = np.repeat(terrain.z, len(z_cells), axis=-1) - np.cumsum(z_cells).reshape(
-    (1, 1, -1)
-)
+depth = np.cumsum(z_cells).reshape((1, 1, -1))
+zz = np.repeat(terrain.z, len(z_cells), axis=-1) - depth
 
 mesh = pv.StructuredGrid(xx, yy, zz)
 mesh['Elevation'] = zz.ravel(order='F')

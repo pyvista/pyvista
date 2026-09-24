@@ -64,9 +64,9 @@ grid.cells
 # using the ``+`` operator.
 #
 # .. note::
-#    This is an inefficient way of creating
-# :class:`pyvista.UnstructuredGrid`    objects. To see a more efficient
-# implementation see    :ref:`create_unstructured_surface_example`.
+#    This is an inefficient way of creating :class:`pyvista.UnstructuredGrid`
+#    objects. To see a more efficient implementation see
+#    :ref:`create_unstructured_surface_example`.
 
 grid_a = example_cells.Hexahedron()
 grid_a.points += [0, 2.5, 0]

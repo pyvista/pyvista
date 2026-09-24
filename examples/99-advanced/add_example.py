@@ -218,6 +218,6 @@ dataset
 # <https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst>`_.
 #
 # .. note::
-#    You only need to create the Python source example (``*.py``).  The
-# jupyter    notebook and the example HTML will be auto-generated via
-# `sphinx-gallery    <https://sphinx-gallery.github.io/>`_.
+#    You only need to create the Python source example (``*.py``).  The jupyter
+#    notebook and the example HTML will be auto-generated via `sphinx-gallery
+#    <https://sphinx-gallery.github.io/>`_.

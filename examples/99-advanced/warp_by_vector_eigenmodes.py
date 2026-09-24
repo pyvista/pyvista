@@ -82,7 +82,10 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 
 def get_first_n_above_thresh(*, N, freqs, thresh, decimals=3):
-    """Return the first N unique frequencies with amplitude>thresh."""
+    """Return the first N unique frequencies above thresh, rounded.
+
+    Frequencies are rounded to decimals before the unique values are taken.
+    """
     unique_freqs, unique_indices = np.unique(
         np.round(freqs, decimals=decimals), return_index=True
     )

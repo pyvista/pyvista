@@ -4,7 +4,7 @@
 Volume Rendering
 ~~~~~~~~~~~~~~~~
 
-Volume render mesh types like :class:`pyvista.ImageData` or 3D NumPy arrays.
+Volume render uniform mesh types like :class:`pyvista.ImageData`.
 
 This also explores how to extract a volume of interest (VOI) from a
 :class:`pyvista.ImageData` using the
@@ -103,10 +103,10 @@ pl.show()
 # Bolt-Nut MultiBlock Dataset
 # """""""""""""""""""""""""""
 # .. note::
-#    See how we set interpolation to ``'linear'`` here to smooth out scalars
-# of    each individual cell to make a more appealing plot. Two actor are
-# returned    by ``add_volume`` because ``bolt_nut`` is a
-# :class:`pyvista.MultiBlock`    dataset.
+#    See how we set interpolation to ``'linear'`` here to smooth out scalars of
+#    each individual cell to make a more appealing plot. Two actor are returned
+#    by ``add_volume`` because ``bolt_nut`` is a :class:`pyvista.MultiBlock`
+#    dataset.
 
 bolt_nut = examples.download_bolt_nut()
 
