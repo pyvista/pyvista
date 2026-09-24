@@ -2437,14 +2437,16 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_transform_active_attributes(datasets, inplace):
-    """Test the active vectors, normals, texture coordinates and tensors are kept."""
+    """Test the active scalars, vectors, normals, texture coordinates and tensors are kept."""
 
     def set_active(attributes, prefix, n):
         """Add an array of every attribute kind and mark them all active."""
+        attributes[f'{prefix}_scalars'] = np.random.default_rng().random(n)
         attributes[f'{prefix}_vectors'] = np.random.default_rng().random((n, 3))
         attributes[f'{prefix}_normals'] = np.random.default_rng().random((n, 3))
         attributes[f'{prefix}_texture'] = np.random.default_rng().random((n, 2))
         attributes[f'{prefix}_tensors'] = np.random.default_rng().random((n, 9))
+        attributes.active_scalars_name = f'{prefix}_scalars'
         attributes.active_vectors_name = f'{prefix}_vectors'
         attributes.active_normals_name = f'{prefix}_normals'
         attributes.active_texture_coordinates_name = f'{prefix}_texture'
@@ -2452,10 +2454,13 @@ def test_transform_active_attributes(datasets, inplace):
 
     def assert_active(attributes, prefix):
         """Assert an array of every attribute kind is still marked active."""
+        tensors = attributes.GetTensors()
+        assert attributes.active_scalars_name == f'{prefix}_scalars'
         assert attributes.active_vectors_name == f'{prefix}_vectors'
         assert attributes.active_normals_name == f'{prefix}_normals'
         assert attributes.active_texture_coordinates_name == f'{prefix}_texture'
-        assert attributes.GetTensors().GetName() == f'{prefix}_tensors'
+        assert tensors is not None
+        assert tensors.GetName() == f'{prefix}_tensors'
 
     scale = (1.0, 2.0, 3.0)
     tf = pv.Transform().scale(scale)
@@ -2465,11 +2470,13 @@ def test_transform_active_attributes(datasets, inplace):
         set_active(dataset.point_data, 'point', dataset.n_points)
         if has_cells:
             set_active(dataset.cell_data, 'cell', dataset.n_cells)
+        dataset.active_tensors_name = 'point_tensors'
         expected_vectors = dataset.point_data.active_vectors * scale
 
         transformed = dataset.transform(tf, inplace=inplace)
 
         assert_active(transformed.point_data, 'point')
+        assert transformed.active_tensors_name == 'point_tensors'
         assert np.allclose(transformed.point_data.active_vectors, expected_vectors)
         if has_cells:
             assert_active(transformed.cell_data, 'cell')

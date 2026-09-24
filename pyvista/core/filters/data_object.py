@@ -2172,6 +2172,7 @@ class DataObjectFilters:
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
         active_point_scalars_name: str | None = point_data.active_scalars_name
         active_cell_scalars_name: str | None = cell_data.active_scalars_name
+        active_tensors_info = self.active_tensors_info
 
         output = self if inplace else self.__class__()
 
@@ -2207,6 +2208,8 @@ class DataObjectFilters:
             if output is not self:
                 output.point_data.active_scalars_name = active_point_scalars_name
                 output.cell_data.active_scalars_name = active_cell_scalars_name
+            # The active tensors are cached on the dataset as well as in the attributes
+            output._active_tensors_info = active_tensors_info
         finally:
             # Make the previously active scalars of this mesh active again
             point_data.active_scalars_name = active_point_scalars_name
