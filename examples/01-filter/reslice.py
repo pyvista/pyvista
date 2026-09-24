@@ -46,6 +46,11 @@ resliced = bird.reslice(gourds, 'linear', background_value=0)
 # Plot the result with the outline of the gourds image in red. The bird fills the
 # corner of the grid it occupies and the rest is background.
 
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 pl.add_mesh(resliced, rgba=True, lighting=False)
 pl.add_mesh(gourds.outline(), color='red', line_width=3)
@@ -340,6 +345,11 @@ line, _, direction = pv.fit_line_to_points(in_plane, init_direction='x', return_
 
 axial = ct.slice_index(k=round((center[2] - ct.origin[2]) / ct.spacing[2]))
 
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 pl.add_mesh(axial, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False)
 pl.add_mesh(line.translate((0, 0, 1)), color='magenta', line_width=6)
@@ -391,6 +401,11 @@ mask_bone = masked(plane, -angle)
 # %%
 # The rotated grid samples along the bone. The bone itself comes out level, and so does
 # the line it was fitted to.
+
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 pl = pv.Plotter(shape=(1, 2))
 panels = [
