@@ -82,6 +82,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core._typing_core import _OutputDataObject
     from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
@@ -4975,7 +4977,7 @@ class DataObjectFilters:
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
         scalar_range: str | VectorLike[float] | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         set_active: bool = True,
         progress_bar: bool = False,
     ) -> _DataSetOrMultiBlockType:
@@ -6746,7 +6748,7 @@ def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
 
 
 def _exclude_string_arrays(
-    dataset: _DataSetType, association: Literal['point', 'cell']
+    dataset: _DataSetType, association: PointLiteral | CellLiteral
 ) -> _DataSetType | None:
     """Return a shallow copy without any string arrays, or ``None`` if there are none."""
     field = _vtk.vtkDataObject.POINT if association == 'point' else _vtk.vtkDataObject.CELL

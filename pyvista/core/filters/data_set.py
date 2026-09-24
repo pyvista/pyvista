@@ -994,7 +994,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
-        preference: Literal['point', 'cell'] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
         all_scalars: bool = False,
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
@@ -1204,7 +1204,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
-        preference: Literal['point', 'cell'] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ) -> UnstructuredGrid:
@@ -1340,16 +1340,16 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet
-    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
-    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def remove_nan_cells(  # type: ignore[misc]
         self: _DataSetType,
         *,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         progress_bar: bool = False,
@@ -1725,7 +1725,7 @@ class DataSetFilters(DataObjectFilters):
         compute_gradients: bool = False,
         compute_scalars: bool = True,
         rng: VectorLike[float] | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
         progress_bar: bool = False,
     ) -> PolyData:
@@ -5409,7 +5409,7 @@ class DataSetFilters(DataObjectFilters):
         )
         | None = None,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         **kwargs: Any,
     ) -> MultiBlock:
@@ -5563,17 +5563,17 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet, split=False
-    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet, split=True
-    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet, split not known
-    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet | MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet | MultiBlock: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet, split=False
-    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # DataSet, split=True
-    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # DataSet, split not known
-    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid | MultiBlock: ...  # type: ignore[misc]
+    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def extract_values(  # type: ignore[misc]
@@ -5591,7 +5591,7 @@ class DataSetFilters(DataObjectFilters):
         )
         | None = None,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
@@ -5917,13 +5917,13 @@ class DataSetFilters(DataObjectFilters):
         values: Any,
         ranges: Any,
         scalars: str | None,
-        preference: Literal['point', 'cell'],
+        preference: PointLiteral | CellLiteral,
         component_mode: Literal['any', 'all', 'multi'] | int,
         split: bool,
         mesh_type: type[DataSet] | None = None,
     ) -> _ExtractValuesInputs | DataSet | MultiBlock:
         def _validate_scalar_array(
-            scalars_: str | None, preference_: Literal['point', 'cell']
+            scalars_: str | None, preference_: PointLiteral | CellLiteral
         ) -> tuple[pyvista_ndarray, str, FieldAssociation]:
             # Get the scalar array and field association to use for extraction
             scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
@@ -6728,7 +6728,7 @@ class DataSetFilters(DataObjectFilters):
         vorticity: bool | str = False,
         qcriterion: bool | str = False,
         faster: bool = False,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
     ) -> _DataSetType:
         """Compute derivative-based quantities of point/cell scalar field.
@@ -7759,7 +7759,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         scalars: str | None = None,
         *,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
@@ -7851,7 +7851,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         sort: bool = False,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
@@ -7979,11 +7979,11 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # return_dict=False
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_dict=True
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
     @overload  # return_dict not known
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def color_labels(  # type: ignore[misc]
@@ -7998,7 +7998,7 @@ class DataSetFilters(DataObjectFilters):
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
         negative_indexing: bool = False,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
         output_scalars: str | None = None,
         return_dict: bool = False,
         inplace: bool = False,
