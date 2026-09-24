@@ -2719,7 +2719,8 @@ def test_transform_imagedata(uniform, spacing):
 
 @pytest.mark.parametrize('grid', ['uniform', 'rectilinear'])
 def test_transform_grid_without_arrays_skips_filter(grid, monkeypatch, request):
-    def fail():  # numpydoc ignore=GL08
+    def fail():  # pragma: no cover -- the filter is skipped, so it never runs
+        """Fail if the transform filter is used."""
         msg = 'The transform filter is not needed without arrays to transform.'
         raise AssertionError(msg)
 
