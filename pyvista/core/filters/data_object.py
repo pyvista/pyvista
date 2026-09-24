@@ -7222,11 +7222,11 @@ def _validate_clip_inplace(
 
 # fmt: off
 # ruff: disable[E501]
-@overload
-def _clip_output(output: DataSet | MultiBlock, source: DataSet) -> _OutputDataSet: ...
-@overload
-def _clip_output(output: DataSet | MultiBlock, source: MultiBlock) -> MultiBlock: ...
-@overload
+@overload  # A composite is clipped block by block, and stays a composite
+def _clip_output(output: MultiBlock, source: MultiBlock) -> MultiBlock: ...
+@overload  # Any other output takes its source's class, or stays an UnstructuredGrid
+def _clip_output(output: DataSet, source: DataSet | MultiBlock) -> _OutputDataSet: ...
+@overload  # An output whose class is not known yet
 def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> _OutputDataObject: ...
 # ruff: enable[E501]
 # fmt: on
@@ -7270,12 +7270,12 @@ def _remove_unused_points_post_clip(
 
 # fmt: off
 # ruff: disable[E501]
+@overload  # Composites are matched block by block, so both must be composite
+def _cast_output_to_match_input_type(output_mesh: MultiBlock[Any], input_mesh: MultiBlock[Any]) -> MultiBlock[Any]: ...
 @overload  # A PolyData input is matched by extracting the output's surface
-def _cast_output_to_match_input_type(output_mesh: DataSet | MultiBlock[Any], input_mesh: PolyData) -> PolyData: ...
+def _cast_output_to_match_input_type(output_mesh: DataSet, input_mesh: PolyData) -> PolyData: ...
 @overload  # A PointSet input is matched by keeping only the output's points
-def _cast_output_to_match_input_type(output_mesh: DataSet | MultiBlock[Any], input_mesh: PointSet) -> PointSet: ...
-@overload  # A composite input is matched block by block
-def _cast_output_to_match_input_type(output_mesh: DataSet | MultiBlock[Any], input_mesh: MultiBlock[Any]) -> MultiBlock[Any]: ...
+def _cast_output_to_match_input_type(output_mesh: DataSet, input_mesh: PointSet) -> PointSet: ...
 @overload  # Any other input leaves the output as it is
 def _cast_output_to_match_input_type(output_mesh: _DataSetOrMultiBlockType, input_mesh: DataSet | MultiBlock[Any]) -> _DataSetOrMultiBlockType | PolyData | PointSet: ...
 # ruff: enable[E501]
@@ -7283,7 +7283,10 @@ def _cast_output_to_match_input_type(output_mesh: _DataSetOrMultiBlockType, inpu
 def _cast_output_to_match_input_type(
     output_mesh: DataSet | MultiBlock[Any], input_mesh: DataSet | MultiBlock[Any]
 ) -> DataSet | MultiBlock[Any]:
-    """Cast an output mesh to match the type of the input mesh it was generated from."""
+    """Cast an output mesh to match the type of the input mesh it was generated from.
+
+    A composite output is matched block by block, so it requires a composite input.
+    """
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet | MultiBlock) -> DataSet:
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
