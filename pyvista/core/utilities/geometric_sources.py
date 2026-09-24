@@ -3264,9 +3264,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         # Init datasets
         names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
         polys = [pv.PolyData() for _ in range(len(names))]
-        self._output: pv.MultiBlock[pv.PolyData] = pv.MultiBlock(
-            dict(zip(names, polys, strict=True))
-        )
+        self._output = pv.MultiBlock(dict(zip(names, polys, strict=True)))
 
         # Store shaft/tip references in separate vars for convenience
         self._shaft_datasets = (polys[0], polys[1], polys[2])
@@ -3832,7 +3830,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         names: Sequence[str] = ('yz', 'zx', 'xy'),
     ) -> None:
         # Init sources and the output dataset
-        self._output: pv.MultiBlock[pv.PolyData] = pv.MultiBlock([pv.PolyData() for _ in range(3)])
+        self._output = pv.MultiBlock([pv.PolyData() for _ in range(3)])
         self.sources = tuple(pv.PlaneSource() for _ in range(3))
 
         # Init properties
@@ -4196,7 +4194,7 @@ class CubeFacesSource(CubeSource):
             points_dtype=_resolve_points_dtype_kwarg(point_dtype, points_dtype),
         )
         # Init output
-        self._output: pv.MultiBlock[pv.PolyData] = pv.MultiBlock([pv.PolyData() for _ in range(6)])
+        self._output = pv.MultiBlock([pv.PolyData() for _ in range(6)])
 
         # Set properties
         self.frame_width = frame_width

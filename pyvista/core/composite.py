@@ -202,7 +202,6 @@ class MultiBlock(
     def __init__(self: MultiBlock[_TypeMultiBlockLeaf], dataset: Sequence[_vtk.vtkDataObject] | dict[str, _vtk.vtkDataObject], /, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
     # ruff: enable[E501]
     # fmt: on
-
     def __init__(
         self, *args, validate: bool | _NestedMeshValidationFields = False, **kwargs
     ) -> None:
@@ -1463,7 +1462,6 @@ class MultiBlock(
     def append(self: MultiBlock[_TypeMultiBlockLeaf], dataset: _vtk.vtkDataObject, name: str | None = ...) -> None: ...  # pragma: no cover
     # ruff: enable[E501]
     # fmt: on
-
     def append(self, dataset, name=None) -> None:
         """Add a data set to the next block index.
 

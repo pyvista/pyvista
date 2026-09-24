@@ -3034,7 +3034,7 @@ def _read_from_plotter(filename: str | Path, kind: Literal['vrml', '3ds']) -> pv
     pl = pv.Plotter(off_screen=True)
     importer = getattr(pl, f'import_{kind}')
     importer(filename)
-    meshes: pv.MultiBlock = pv.MultiBlock(pl.meshes)
+    meshes = pv.MultiBlock(pl.meshes)
     pl.close()
     return meshes
 
