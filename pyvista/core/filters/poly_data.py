@@ -2323,7 +2323,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # verify it is manifold
-        if self.n_open_edges > 0:
+        if not self.is_manifold:
             msg = 'This surface appears to be non-manifold.'
             raise ValueError(msg)
         origin_, normal_ = _validate_plane_origin_and_normal(

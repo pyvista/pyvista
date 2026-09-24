@@ -967,7 +967,7 @@ class DataSetFilters(DataObjectFilters):
             and value == 0
             and self.n_cells
             and surface_.n_faces
-            and surface_.n_open_edges == 0
+            and surface_.is_manifold
         ):
             # Optimization: vtkImplicitPolyDataDistance evaluates serially (VTK 9.7), so
             # classify the points with a stencil and evaluate the distance only where the
@@ -3331,7 +3331,7 @@ class DataSetFilters(DataObjectFilters):
         if not isinstance(surface, pv.PolyData):
             msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
-        if check_surface and surface.n_open_edges > 0:
+        if check_surface and not surface.is_manifold:
             msg = (
                 'Surface is not closed. Please read the warning in the '
                 'documentation for this function and either pass '
@@ -8509,7 +8509,8 @@ class DataSetFilters(DataObjectFilters):
 
         .. note::
             For best results, ensure the input surface is a closed surface. The
-            surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
+            surface has no boundary edges when :attr:`~pyvista.PolyData.n_open_edges` is zero.
+            Use :attr:`~pyvista.PolyData.is_manifold` to also check for non-manifold edges.
 
         .. note::
             This filter returns voxels represented as point data, not

@@ -2412,7 +2412,8 @@ class ImageDataFilters(DataSetFilters):
             surface is not watertight. Filters which require a closed surface, such as
             :meth:`~pyvista.DataSetFilters.voxelize_binary_mask` and
             :meth:`~pyvista.DataSetFilters.select_enclosed_points`, may leak through
-            the gaps. Check :attr:`~pyvista.PolyData.n_open_edges`, and either disable
+            the gaps. Check :attr:`~pyvista.PolyData.n_open_edges` for gaps and
+            :attr:`~pyvista.PolyData.is_manifold` for non-manifold edges; either disable
             ``smoothing`` (the staircase surface encloses the voxels exactly) or
             thicken the labels first, for example with
             :meth:`~pyvista.ImageDataFilters.dilate`, so that regions no longer touch
