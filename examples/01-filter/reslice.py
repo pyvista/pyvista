@@ -24,8 +24,8 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# A Common Grid
-# +++++++++++++
+# Put Two Images on One Grid
+# ++++++++++++++++++++++++++
 #
 # Load two photographs. The bird is smaller than the gourds, and both start at the
 # origin with unit spacing, so the bird covers the lower left corner of the region the
@@ -54,8 +54,8 @@ pl.camera.tight()
 pl.show()
 
 # %%
-# Four Ways Onto a Reference
-# ++++++++++++++++++++++++++
+# Compare Filters With a Reference Image
+# ++++++++++++++++++++++++++++++++++++++
 #
 # Several filters can put an image onto the geometry of another one, and they do not all
 # mean the same thing by it. Only ``reslice`` reads the image where the reference
@@ -184,8 +184,8 @@ print(np.allclose(by_reslice.bounds, by_crop.bounds))
 print(np.allclose(by_reslice.active_scalars, by_crop.active_scalars))
 
 # %%
-# Transform or Reslice
-# ++++++++++++++++++++
+# Compare With the Transform Filter
+# +++++++++++++++++++++++++++++++++
 #
 # Rotating an image with :meth:`~pyvista.DataObjectFilters.transform` and reslicing it
 # through the same rotation are different operations. ``transform`` moves the image and
@@ -245,8 +245,8 @@ print(np.array_equal(through.active_scalars, resliced.active_scalars))
 # ``transform`` filter on its own to move an image without touching its values at all.
 
 # %%
-# Beyond a Matrix
-# +++++++++++++++
+# Use a Non-Linear Transformation
+# +++++++++++++++++++++++++++++++
 #
 # ``transform`` is limited to what an image's geometry can hold: an origin, a spacing
 # and an orthogonal :attr:`~pyvista.ImageData.direction_matrix`. ``reslice`` resamples
@@ -311,8 +311,8 @@ for index, (image, overlay, label) in enumerate(panels):
 pl.show()
 
 # %%
-# Oblique Anatomy
-# +++++++++++++++
+# Align Axes of Oblique Anatomy
+# +++++++++++++++++++++++++++++
 #
 # A structure which runs across the scan axes is awkward to read in the slices the
 # scanner produced. Load a whole-body CT with its segmentations and take the left
@@ -361,9 +361,19 @@ def centered(grid, rotation):
     return pv.Transform().translate(-center).rotate_z(rotation).translate(grid.center)
 
 
+def masked(grid, rotation):
+    """Return the bone's mask on ``grid``, carrying its opacity as an array."""
+    mask = scapula.reslice(
+        grid, 'nearest', transform=centered(grid, rotation), background_value=0
+    )
+    mask['scapula'] = (np.asarray(mask.active_scalars) > 0).astype(float) * 0.3
+    return mask
+
+
 # %%
 # Reslice twice from that one grid, once without a rotation and once with it, and put
-# the line through the same transforms so it can be compared against.
+# the line and the bone's mask through the same transforms so they can be compared
+# against. The mask is a label image, so it takes ``'nearest'``.
 
 along_scan = ct.reslice(
     plane, 'linear', transform=centered(plane, 0.0), background_value=-1000
@@ -375,20 +385,38 @@ along_bone = ct.reslice(
 line_scan = line.transform(centered(plane, 0.0), inplace=False)
 line_bone = line.transform(centered(plane, -angle), inplace=False)
 
+mask_scan = masked(plane, 0.0)
+mask_bone = masked(plane, -angle)
+
 # %%
-# The rotated grid samples along the bone, and the line it was fitted to comes out level.
+# The rotated grid samples along the bone. The bone itself comes out level, and so does
+# the line it was fitted to.
 
 pl = pv.Plotter(shape=(1, 2))
-panels = [(along_scan, line_scan, 'scan axes'), (along_bone, line_bone, 'bone axis')]
-for index, (image, overlay, label) in enumerate(panels):
+panels = [
+    (along_scan, mask_scan, line_scan, 'scan axes'),
+    (along_bone, mask_bone, line_bone, 'bone axis'),
+]
+for index, (image, mask, axis, label) in enumerate(panels):
     pl.subplot(0, index)
     pl.add_mesh(
         image, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
     )
-    pl.add_mesh(overlay.translate((0, 0, 1)), color='magenta', line_width=6)
+    pl.add_mesh(
+        mask.translate((0, 0, 0.5)), color='orange', opacity='scapula', lighting=False
+    )
+    pl.add_mesh(axis.translate((0, 0, 1)), color='magenta', line_width=6)
     pl.add_text(label, font_size=10)
     pl.view_xy()
     pl.camera.tight()
+pl.subplot(0, 0)
+pl.add_legend(
+    [['scapula', 'orange'], ['fitted axis', 'magenta']],
+    bcolor='w',
+    loc='lower left',
+    size=(0.4, 0.14),
+    face='none',
+)
 pl.show()
 
 # %%
@@ -402,6 +430,7 @@ block = ct.reslice(
     volume, 'linear', transform=centered(volume, -angle), background_value=-1000
 )
 slices = block.slice_orthogonal()
+mask_slices = masked(volume, -angle).slice_orthogonal()
 
 # %%
 # View each plane face-on. ``XZ`` shows the blade with its spine and the glenoid, and
@@ -419,8 +448,13 @@ for index, name in enumerate(['XY', 'XZ', 'YZ']):
     pl.add_mesh(
         slices[name], cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
     )
+    pl.add_mesh(mask_slices[name], color='orange', opacity='scapula', lighting=False)
     pl.add_text(name, font_size=10)
     pl.camera.tight(view=name.lower(), adjust_render_window=False, padding=0.1)
+pl.subplot(0, 0)
+pl.add_legend(
+    [['scapula', 'orange']], bcolor='w', loc='lower left', size=(0.5, 0.09), face='none'
+)
 pl.show()
 
 # %%
