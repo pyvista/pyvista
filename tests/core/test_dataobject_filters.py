@@ -4755,6 +4755,17 @@ def test_resample_to_image_masks_geometry(sphere, method):
     assert resampled.active_scalars_name == 'height'
     assert 'mask' not in resampled.point_data
 
+    # `mask_geometry` asks for the mask, or refuses it, whatever the input carries
+    both = sphere.resample_to_image(dimensions=dims, method=method, mask_geometry=True)
+    assert both.active_scalars_name == 'mask'
+    assert np.array_equal(both['mask'], mask)
+    assert np.array_equal(both['height'], resampled['height'])
+
+    sphere.clear_data()
+    refused = sphere.resample_to_image(dimensions=dims, method=method, mask_geometry=False)
+    assert refused.active_scalars_name is None
+    assert 'mask' not in refused.point_data
+
 
 def test_resample_to_image_masks_geometry_options(sphere):
     dims = (20, 20, 20)
@@ -4771,6 +4782,21 @@ def test_resample_to_image_masks_geometry_options(sphere):
     # A composite whose blocks share no arrays is voxelized as a whole
     blocks = pv.MultiBlock([sphere, pv.Sphere(center=(1.5, 0, 0))])
     assert blocks.resample_to_image(dimensions=dims).active_scalars_name == 'mask'
+
+
+def test_resample_to_image_masks_geometry_name_taken(sphere):
+    # An input array of the same name is resampled, and takes the output's scalars
+    sphere['mask'] = np.arange(sphere.n_points, dtype=np.uint8)
+    dims = (20, 20, 20)
+    for requested in (None, False):
+        resampled = sphere.resample_to_image(dimensions=dims, mask_geometry=requested)
+        assert resampled.active_scalars_name == 'mask'
+        assert resampled['mask'].max() > 1
+
+    # Asking for a geometry mask as well has nowhere to put it
+    match = re.escape("A 'mask' array was resampled from the input")
+    with pytest.raises(ValueError, match=match):
+        sphere.resample_to_image(dimensions=dims, mask_geometry=True)
 
 
 def test_resample_to_image_reference_volume(tetbeam):
