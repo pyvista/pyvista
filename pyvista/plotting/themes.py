@@ -744,7 +744,9 @@ class _ColorbarConfig(_ConfigBase):
         """Return or set the colorbar title padding.
 
         The padding is the space between the title and the tick labels, as a
-        multiple of the title font size.
+        multiple of the size the labels are drawn at, or of the size they ask
+        for on a box that sizes the text itself.  A title turned alongside the
+        bar is padded off the bar by a multiple of its own size.
 
         Examples
         --------
@@ -762,7 +764,7 @@ class _ColorbarConfig(_ConfigBase):
     def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the distance between stacked colorbars.
 
-        The distance is a fraction of the window.  ``None`` spaces them as
+        The distance is a fraction of the viewport.  ``None`` spaces them as
         tightly as their titles and tick labels allow.
 
         Examples
@@ -1110,7 +1112,10 @@ class _Font(_ConfigBase):
     def title_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the title size.
 
-        If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for titles.
+        A scalar bar draws its title at this size; a box drawn around a
+        horizontal bar that is too narrow for it, or given too small a height,
+        shrinks it to fit.  Where this and :attr:`label_size` are both ``None``,
+        every size is fitted to the bar the text is drawn on.
 
         Examples
         --------
@@ -1131,7 +1136,10 @@ class _Font(_ConfigBase):
     def label_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for labels.
+        The largest size a scalar bar draws its labels at.  They are drawn
+        smaller where the bar leaves them too little room to stay clear of
+        each other.  Where this and :attr:`title_size` are both ``None``, every
+        size is fitted to the bar the text is drawn on.
 
         Examples
         --------
