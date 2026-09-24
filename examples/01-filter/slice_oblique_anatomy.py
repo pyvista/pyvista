@@ -23,12 +23,23 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
+# Find the Bone's Axis
+# ++++++++++++++++++++
+#
 # Load a whole-body CT with its segmentations and take the left scapula, which lies at
 # an angle within the axial plane.
 
 dataset = examples.download_whole_body_ct_male()
 ct = dataset['ct']
 scapula = dataset['segmentations']['scapula_left']
+
+# %%
+# The mask is drawn over the scan throughout, so give it an opacity array now: ``0.3``
+# on the bone and ``0`` everywhere else, which leaves the background transparent.
+
+overlay = scapula.copy()
+overlay['scapula'] = (np.asarray(scapula.active_scalars) > 0) * 0.3
+overlay.set_active_scalars('scapula')
 
 # %%
 # Project the foreground of the bone's mask onto the axial plane and fit a line to it
@@ -48,8 +59,7 @@ line, _, direction = pv.fit_line_to_points(in_plane, init_direction='x', return_
 
 index = round((center[2] - ct.origin[2]) / ct.spacing[2])
 axial = ct.slice_index(k=index)
-axial_mask = scapula.slice_index(k=index)
-axial_mask['scapula'] = (np.asarray(axial_mask.active_scalars) > 0).astype(float) * 0.3
+axial_mask = overlay.slice_index(k=index)
 
 # sphinx_gallery_start_ignore
 # the interactive scene renders blank, so keep the static figure
@@ -74,6 +84,9 @@ pl.camera.tight()
 pl.show()
 
 # %%
+# Reslice Onto That Axis
+# ++++++++++++++++++++++
+#
 # Because the fit is confined to that plane, a single rotation about the scan axis is
 # enough to bring the line onto the image's x axis.
 
@@ -85,15 +98,6 @@ plane = pv.ImageData(dimensions=(320, 220, 1), spacing=(1.0, 1.0, 1.0))
 def centered(grid, rotation):
     """Return the transform which rotates the scapula and centers it in ``grid``."""
     return pv.Transform().translate(-center).rotate_z(rotation).translate(grid.center)
-
-
-def masked(grid, rotation):
-    """Return the bone's mask on ``grid``, carrying its opacity as an array."""
-    mask = scapula.reslice(
-        grid, 'nearest', transform=centered(grid, rotation), background_value=0
-    )
-    mask['scapula'] = (np.asarray(mask.active_scalars) > 0).astype(float) * 0.3
-    return mask
 
 
 # %%
@@ -111,8 +115,12 @@ along_bone = ct.reslice(
 line_scan = line.transform(centered(plane, 0.0), inplace=False)
 line_bone = line.transform(centered(plane, -angle), inplace=False)
 
-mask_scan = masked(plane, 0.0)
-mask_bone = masked(plane, -angle)
+mask_scan = overlay.reslice(
+    plane, 'nearest', transform=centered(plane, 0.0), background_value=0
+)
+mask_bone = overlay.reslice(
+    plane, 'nearest', transform=centered(plane, -angle), background_value=0
+)
 
 # %%
 # The rotated grid samples along the bone. The bone itself comes out level, and so does
@@ -151,6 +159,9 @@ pl.add_legend(
 pl.show()
 
 # %%
+# Slice the Aligned Block
+# +++++++++++++++++++++++
+#
 # The same rotation applied to a volume rather than a single plane gives a bone-aligned
 # block of the scan. Reslice a generous one, then trim it to the bone with
 # :meth:`~pyvista.ImageDataFilters.crop`, which works in index space and so needs the
@@ -161,7 +172,9 @@ volume = pv.ImageData(dimensions=(200, 160, 280), spacing=(1.0, 1.0, 1.0))
 block = ct.reslice(
     volume, 'linear', transform=centered(volume, -angle), background_value=-1000
 )
-bone = masked(volume, -angle)
+bone = overlay.reslice(
+    volume, 'nearest', transform=centered(volume, -angle), background_value=0
+)
 
 block = block.crop(mask=bone, padding=10)
 bone = bone.crop(extent=block.extent)
@@ -200,6 +213,9 @@ pl.add_legend(
 pl.show()
 
 # %%
+# Choose the Slice Index
+# ++++++++++++++++++++++
+#
 # ``slice_orthogonal`` cuts at the block's center. To cut elsewhere, use
 # :meth:`~pyvista.ImageDataFilters.slice_index`, which takes an index along each axis
 # and returns :class:`~pyvista.ImageData`. Step a series of ``XZ`` planes through the
