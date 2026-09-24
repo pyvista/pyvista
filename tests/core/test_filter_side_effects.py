@@ -5,10 +5,11 @@ The usual way to break that is to activate an array on the input before handing 
 VTK, which nothing notices until someone reads the input afterwards.
 
 Each parametrized test takes one filter and calls it on every mesh type in ``MESH_KINDS``
-under several arrangements of data arrays (see ``DATA_MODES``), and the first also tries
-every keyword the filter accepts (see ``_call_variants``) for the arrangements in
-``KEYWORD_DATA_MODES``. Calls which do not apply to a mesh raise and do not count as runs,
-so a filter runs far fewer times than the loops suggest.
+under every arrangement of data arrays in ``DATA_MODES``. The first test also tries every
+keyword value the filter accepts (see ``_call_variants``) on every mesh type, in one data
+arrangement after another until the call succeeds, so the cost grows with the number of
+values rather than with every combination. The input is checked after every call,
+including calls which raise.
 
 A failure lists every call which broke the property, what changed, and the expression
 which rebuilds that input, so one failing call can be reproduced on its own::
@@ -26,6 +27,7 @@ import hashlib
 import inspect
 import re
 import sys
+import time
 from types import UnionType
 from typing import Any
 from typing import Literal
@@ -284,13 +286,22 @@ def _choices(annotation):
     return []
 
 
+#: Most seconds one filter's input sweep may take.
+MAX_SECONDS = 10.0
+
+
 def _kwarg_variants(func, parameter):
     """Yield values to try for a single keyword parameter."""
     if parameter.name in cases.SKIP_KWARGS:
         return
     yield from cases.KWARG_VALUES.get(parameter.name, [])
-    choices = _choices(_annotation(func, parameter.name))
-    yield from (choice for choice in choices if choice is not parameter.default)
+    default = parameter.default
+    choices = [
+        choice
+        for choice in _choices(_annotation(func, parameter.name))
+        if type(choice) is not type(default) or choice != default
+    ]
+    yield from choices
 
 
 def _call_variants(func):
@@ -350,9 +361,6 @@ DATA_MODES = {
     'single_cell': 'one cell array, nothing active',
     'single_vector': 'one three-component point array, nothing active',
 }
-
-#: The keywords are swept over these modes only, to keep the sweep's runtime in hand.
-KEYWORD_DATA_MODES = ['both', 'single_point', 'single_vector']
 
 #: Modes whose mesh carries one array and no active arrays, so a default has to be resolved.
 UNSET_DATA_MODES = ['single_point', 'single_cell', 'single_vector']
@@ -486,7 +494,27 @@ def _fail_setup(key, errors):
     raise SweepSetupError(msg)
 
 
+def _untraced(test):
+    """Run ``test`` with coverage paused, so the sweep is neither traced nor counted."""
+
+    @functools.wraps(test)
+    def wrapper(*args, **kwargs):
+        """Pause the running coverage measurement, if any, around the test."""
+        coverage = sys.modules.get('coverage')
+        current = coverage.Coverage.current() if coverage else None
+        if current is None:
+            return test(*args, **kwargs)
+        current.stop()
+        try:
+            return test(*args, **kwargs)
+        finally:
+            current.start()
+
+    return wrapper
+
+
 @pytest.mark.parametrize('key', list(FILTERS))
+@_untraced
 def test_filter_does_not_modify_input(key):
     """A filter leaves its input's arrays, active arrays, points and cells alone, even on error."""
     func = FILTERS[key]
@@ -494,29 +522,59 @@ def test_filter_does_not_modify_input(key):
     reports = []
     errors = {}
     ran = 0
-    for mode in DATA_MODES:
+    start = time.perf_counter()
+
+    def call(kind, mode, template, keyword_variant):
+        """Call the filter on a copy of ``template``, recording any change; return if it ran."""
+        nonlocal ran
+        mesh = template.copy()
+        args, kwargs = _call_arguments(name, keyword_variant)
+        before = _fingerprint(mesh)
+        error = _run(mesh, name, args, kwargs)
+        if error is None:
+            ran += 1
+        else:
+            errors.setdefault(f'{kind}/{mode}', error)
+        changes = _changes(before, _fingerprint(mesh))
+        if changes:  # pragma: no cover -- failure path
+            reports.append(_report(kind, mode, name, args, kwargs, changes))
+        return error is None
+
+    inputs = [
+        (kind, mode, template)
+        for mode in DATA_MODES
+        for kind in MESH_KINDS
+        if (template := _override_mesh(name, mode, _make_mesh(kind, mode))) is not None
+        and hasattr(template, name)
+    ]
+    variants = list(_call_variants(func))
+    for kind, mode, template in inputs:
+        call(kind, mode, template, variants[0][1])
+    # Each keyword variant runs on every mesh kind, in the first data mode where it succeeds
+    for index, (_, keyword_variant) in enumerate(variants[1:]):
         for kind in MESH_KINDS:
-            template = _override_mesh(name, mode, _make_mesh(kind, mode))
-            if template is None or not hasattr(template, name):
-                continue
-            for keyword, keyword_variant in _call_variants(func):
-                if keyword is not None and mode not in KEYWORD_DATA_MODES:
-                    continue
-                mesh = template.copy()
-                args, kwargs = _call_arguments(name, keyword_variant)
-                before = _fingerprint(mesh)
-                error = _run(mesh, name, args, kwargs)
-                if error is None:
-                    ran += 1
-                else:
-                    errors.setdefault(f'{kind}/{mode}', error)
-                changes = _changes(before, _fingerprint(mesh))
-                if changes:  # pragma: no cover -- failure path
-                    reports.append(_report(kind, mode, name, args, kwargs, changes))
+            kind_inputs = [entry for entry in inputs if entry[0] == kind]
+            offset = index % len(kind_inputs) if kind_inputs else 0
+            for entry in kind_inputs[offset:] + kind_inputs[:offset]:
+                if call(*entry, keyword_variant):
+                    break
     if not ran:  # pragma: no cover -- failure path
         _fail_setup(key, errors)
     if reports:  # pragma: no cover -- failure path
         _fail(key, 'modified its input', reports, ran, MODIFIED_HINT)
+    _check_budget(key, time.perf_counter() - start)
+
+
+def _check_budget(key, seconds):
+    """Raise if one filter's sweep takes too long."""
+    if seconds > MAX_SECONDS:
+        msg = (
+            f'{key} took {seconds:.1f}s, over the budget of {MAX_SECONDS:.0f}s. This is a '
+            f'problem with the test setup, not a side effect.\n\nFix: in {CASES_FILE}, '
+            f'give its keywords fewer values in KWARG_VALUES, or make each call cheaper '
+            f'through REQUIRED_KWARGS.'
+        )
+        raise SweepSetupError(msg)
 
 
 def _unvaried_keywords():
@@ -579,6 +637,7 @@ def _activated(mesh):
 
 
 @pytest.mark.parametrize('key', _DEFAULT_SCALARS_FILTERS)
+@_untraced
 def test_filter_output_does_not_depend_on_active_scalars(key):
     """A filter returns the same output whether or not its default array was already active."""
     name = FILTERS[key].__name__
@@ -661,3 +720,10 @@ def test_setup_failure_names_new_and_stale_keywords():
         _check_keyword_setup(unvaried, set())
     with pytest.raises(SweepSetupError, match='remove them from KWARG_VALUES'):
         _check_keyword_setup({}, {'order'})
+
+
+def test_setup_failure_names_an_over_budget_filter():
+    """A filter whose sweep is too slow is reported with the fix."""
+    _check_budget('DataSetFilters.align', MAX_SECONDS)
+    with pytest.raises(SweepSetupError, match=r'took 11\.0s(?s:.*)REQUIRED_KWARGS'):
+        _check_budget('DataSetFilters.align', 11.0)

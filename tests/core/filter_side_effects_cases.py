@@ -8,6 +8,8 @@ which is a problem with the test rather than with the filter, and says which tab
   ``POSITIONAL_ARGS`` or ``REQUIRED_KWARGS``, or a mesh it accepts to ``MESH_OVERRIDES``.
 * A new keyword which is neither ``bool`` nor a ``Literal`` has no values to try. Add
   values to ``KWARG_VALUES``, or the name to ``SKIP_KWARGS`` if it cannot affect the input.
+* A filter whose sweep takes over ten seconds is too slow. Make each call cheaper through
+  ``REQUIRED_KWARGS``, such as a single iteration, or give it fewer ``KWARG_VALUES``.
 
 A filter which does modify its input fails with ``Failed`` instead, listing each call.
 """
@@ -189,6 +191,7 @@ POSITIONAL_ARGS = {
 
 #: Keyword arguments required alongside the positional ones.
 REQUIRED_KWARGS = {
+    'align': dict(max_iterations=1),
     'extract_values': dict(values=0.0),
     'sample_over_circular_arc': dict(pointa=(-1, 0, 0), pointb=(1, 0, 0), center=(0, 0, 0)),
     'sample_over_circular_arc_normal': dict(center=(0, 0, 0)),
@@ -258,7 +261,7 @@ KWARG_VALUES: dict[str, list[Any]] = {
     'max_degree': [5],
     'max_edge_len': [0.5],
     'max_error': [1e-5],
-    'max_iterations': [10],
+    'max_iterations': [2],
     'max_landmarks': [20],
     'max_length': [1.0],
     'max_mean_distance': [1e-3],
