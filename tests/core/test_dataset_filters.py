@@ -6082,3 +6082,10 @@ def test_color_labels_int_colormap_matches_color(color_type, n_channels):
     colored = labels.color_labels(ListedColormap(cmap_colors), color_type=color_type)
     expected = [getattr(pv.Color(c), color_type) for c in cmap_colors.tolist()]
     assert np.array_equal(colored['labels' + color_type.removeprefix('int')], expected)
+
+
+def test_color_labels_int_colormap_named_colors():
+    labels = pv.ImageData(dimensions=(2, 1, 1))
+    labels['labels'] = [0, 1]
+    colored = labels.color_labels(ListedColormap(['red', 'blue']))
+    assert np.array_equal(colored['labels_rgb'], [[255, 0, 0], [0, 0, 255]])
