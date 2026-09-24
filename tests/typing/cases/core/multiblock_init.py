@@ -49,6 +49,10 @@ assert_types(pv.MultiBlock(a_vtk_composite()), MultiBlock)
 assert_types(pv.MultiBlock(a_file()), MultiBlock)
 assert_types(pv.MultiBlock(Path(a_file())), MultiBlock)
 
+# A raw VTK block is wrapped, so the block type stays open
+assert_types(pv.MultiBlock([_vtk.vtkPolyData()]), MultiBlock)
+assert_types(pv.MultiBlock({'mesh': _vtk.vtkPolyData()}), MultiBlock)
+
 # Reader options reach `pyvista.read`
 assert_types(pv.MultiBlock(a_file(), force_ext='.vtm'), MultiBlock)
 

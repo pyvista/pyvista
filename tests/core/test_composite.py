@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Generator
 import itertools
 from pathlib import Path
@@ -82,6 +83,28 @@ def test_multi_block_init_list(rectilinear, airplane):
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_sequence(rectilinear, airplane):
+    data = deque([rectilinear, airplane])
+    multi = MultiBlock(data)
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_partitioned(sphere, airplane):
+    # A `PartitionedDataSet` is a sequence, so its partitions become the blocks
+    multi = MultiBlock(pv.PartitionedDataSet([sphere, airplane]))
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), PolyData)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_str_is_a_filename(tmp_path, sphere):
+    # A `str` is a sequence, but names a file rather than giving one block per character
+    MultiBlock([sphere]).save(path := tmp_path / 'blocks.vtm')
+    assert MultiBlock(str(path)).n_blocks == 1
 
 
 def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
