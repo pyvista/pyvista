@@ -4,7 +4,7 @@
 Dashed Lines
 ~~~~~~~~~~~~
 
-Dash a line by splitting its cells with a filter, or by dashing it in the shader.
+Dash a line by splitting its cells, or by dashing it in the shader.
 
 PyVista offers two ways to dash a line, and they differ in where the dashes come
 from. :func:`~pyvista.PolyDataFilters.dash_lines` is a filter: it cuts the line
@@ -29,7 +29,9 @@ import pyvista as pv
 
 theta = np.linspace(0, 4 * np.pi, 400)
 helix = pv.Spline(
-    np.column_stack([np.cos(theta), np.sin(theta), np.linspace(-1.5, 1.5, 400)]),
+    np.column_stack(
+        [np.cos(theta), np.sin(theta), np.linspace(-1.5, 1.5, 400)]
+    ),
     400,
 )
 helix
@@ -85,8 +87,8 @@ pl.view_isometric()
 pl.show()
 
 # %%
-# The style belongs to the actor, so :attr:`~pyvista.Actor.line_style` changes it
-# after the mesh is added.
+# The style belongs to the actor, so :attr:`~pyvista.Actor.line_style` changes
+# it after the mesh is added.
 
 pl = pv.Plotter(shape=(1, 2))
 
@@ -164,8 +166,8 @@ pv.plot_compare(both, **options, zoom=3)
 # Dashing the Edges of a Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Neither option touches the edges drawn by ``show_edges=True``, which come from
-# the polygons rather than from line cells. Extract the edges first and dash them
-# as their own mesh.
+# the polygons rather than from line cells. Extract the edges first and dash
+# them as their own mesh.
 
 sphere = pv.Sphere(theta_resolution=12, phi_resolution=12)
 edges = sphere.extract_all_edges().dash_lines('--', scale=0.01)

@@ -6,15 +6,15 @@ Compare Interpolation/Sampling Methods
 
 Compare two methods for interpolating or sampling data from a target mesh.
 
-:func:`pyvista.DataSetFilters.interpolate` uses a distance weighting kernel to interpolate
-point data from nearby points of the target mesh onto the desired points.
-:func:`pyvista.DataObjectFilters.sample` interpolates data using the interpolation scheme
-of the enclosing cell from the target mesh.
+:func:`pyvista.DataSetFilters.interpolate` uses a distance weighting kernel to
+interpolate point data from nearby points of the target mesh onto the desired
+points. :func:`pyvista.DataObjectFilters.sample` interpolates data using the
+interpolation scheme of the enclosing cell from the target mesh.
 
-If the target mesh is a point cloud, that is, there is no connectivity in the cell
-structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
-preferred.  If interpolation is desired within the cells of the target mesh, then
-:func:`pyvista.DataObjectFilters.sample` is typically desired.
+If the target mesh is a point cloud, that is, there is no connectivity in the
+cell structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
+preferred.  If interpolation is desired within the cells of the target mesh,
+then :func:`pyvista.DataObjectFilters.sample` is typically desired.
 
 Here the two methods are compared and contrasted using a simple example of
 sampling data from a mesh in a rectangular domain. This example demonstrates the
@@ -36,8 +36,8 @@ import pyvista as pv
 # uses a distance-based weighting methodology to interpolate between the
 # unconnected points.
 #
-# First, generate a point cloud mesh in a rectangular domain from
-# ``(0, 0)`` to ``(3, 1)``. The data to be sampled is the square of the y position.
+# First, generate a point cloud mesh in a rectangular domain from ``(0, 0)`` to
+# ``(3, 1)``. The data to be sampled is the square of the y position.
 
 rng = np.random.default_rng(seed=0)
 points = rng.uniform(low=[0, 0], high=[3, 1], size=(250, 2))
@@ -157,14 +157,18 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Instead of sampling onto a point cloud, :func:`pyvista.DataObjectFilters.sample`
-# can sample using other mesh types.  For example, sampling onto a rotated subset
-# of the grid.
+# Instead of sampling onto a point cloud,
+# :func:`pyvista.DataObjectFilters.sample` can sample using other mesh types.
+# For example, sampling onto a rotated subset of the grid.
 #
-# Make subset (0.7, 0.7, 0) units in dimension and then rotate by 45 degrees around
-# its center.
-subset = pv.ImageData(dimensions=(8, 8, 1), spacing=[0.1, 0.1, 0], origin=(0.15, 0.15, 0))
-rotated_subset = subset.rotate_vector(vector=(0, 0, 1), angle=45, point=(0.5, 0.5, 0))
+# Make subset (0.7, 0.7, 0) units in dimension and then rotate by 45 degrees
+# around its center.
+subset = pv.ImageData(
+    dimensions=(8, 8, 1), spacing=[0.1, 0.1, 0], origin=(0.15, 0.15, 0)
+)
+rotated_subset = subset.rotate_vector(
+    vector=(0, 0, 1), angle=45, point=(0.5, 0.5, 0)
+)
 output = rotated_subset.sample(grid)
 output
 

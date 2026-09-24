@@ -21,9 +21,10 @@ from pyvista import examples
 #    exceeds ``feature_angle``)
 # 4. manifold edges (edges used by exactly two polygons).
 #
-# The :func:`extract_feature_edges() <pyvista.DataSetFilters.extract_feature_edges>`
-# filter will extract those edges given a feature angle and return a dataset
-# with lines that represent the edges of the original mesh.
+# The :func:`extract_feature_edges()
+# <pyvista.DataSetFilters.extract_feature_edges>` filter will extract those
+# edges given a feature angle and return a dataset with lines that represent the
+# edges of the original mesh.
 #
 # To demonstrate, we will first extract the edges around a sample CAD model:
 
@@ -31,7 +32,8 @@ from pyvista import examples
 mesh = examples.download_cad_model()
 edges = mesh.extract_feature_edges(45)
 
-# Render the edge lines on top of the original mesh.  Zoom in to provide a better figure.
+# Render the edge lines on top of the original mesh.  Zoom in to provide a
+# better figure.
 pl = pv.Plotter()
 pl.add_mesh(mesh, color=True)
 pl.add_mesh(edges, color='red', line_width=5)
@@ -70,8 +72,8 @@ mesh.n_open_edges
 
 
 # %%
-# And we can extract those edges with the ``boundary_edges`` option of
-# :func:`pyvista.DataSetFilters.extract_feature_edges`:
+# And we can extract those edges with the ``boundary_edges`` option
+# of :func:`pyvista.DataSetFilters.extract_feature_edges`:
 edges = mesh.extract_feature_edges(
     boundary_edges=True, feature_edges=False, manifold_edges=False
 )

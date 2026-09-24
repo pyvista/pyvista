@@ -4,7 +4,7 @@
 Triangle Strips
 ~~~~~~~~~~~~~~~
 
-This example shows how to build a simple :class:`pyvista.PolyData` using triangle strips.
+Build a simple :class:`pyvista.PolyData` using triangle strips.
 
 Triangle strips are a more efficient way of storing the connectivity of
 adjacent triangles.
@@ -35,8 +35,8 @@ points = np.array(
 # %%
 # Build the Connectivity of the Strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The first element is the number of points in the strip next three elements is the
-# initial triangle the rest of the points is where the strip extends to.
+# The first element is the number of points in the strip next three elements is
+# the initial triangle the rest of the points is where the strip extends to.
 strips = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
 
 
@@ -49,8 +49,8 @@ mesh
 # Plot the Triangle Strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the ``PolyData`` and include the point labels using
-# :func:`add_point_labels() <pyvista.Plotter.add_point_labels>` so we can see how
-# the PolyData is constructed using triangle strips.
+# :func:`add_point_labels() <pyvista.Plotter.add_point_labels>` so we can see
+# how the PolyData is constructed using triangle strips.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
@@ -89,8 +89,8 @@ faces
 # Convert Triangles to Strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Convert faces from a :class:`pyvista.PolyData` to strips using :func:`strip()
-# <pyvista.PolyDataFilters.strip>`. Here, for demonstration purposes we convert the
-# triangulated mesh back to a stripped mesh.
+# <pyvista.PolyDataFilters.strip>`. Here, for demonstration purposes we convert
+# the triangulated mesh back to a stripped mesh.
 
 restripped = trimesh.strip()
 restripped

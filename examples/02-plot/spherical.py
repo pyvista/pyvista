@@ -135,7 +135,9 @@ grid_winds.point_data['example'] = vectors
 # Show the result
 pl = pv.Plotter()
 pl.add_mesh(pv.Sphere(radius=RADIUS))
-pl.add_mesh(grid_winds.glyph(orient='example', scale='example', tolerance=0.005))
+pl.add_mesh(
+    grid_winds.glyph(orient='example', scale='example', tolerance=0.005)
+)
 pl.show()
 
 
@@ -162,10 +164,14 @@ levels = z_scale * (np.arange(scalar_3d.shape[0] + 1)) ** 2 + z_offset
 grid_scalar_3d = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # Add data to the grid
-grid_scalar_3d.cell_data['example'] = np.array(scalar_3d).swapaxes(-2, -1).ravel('C')
+grid_scalar_3d.cell_data['example'] = (
+    np.array(scalar_3d).swapaxes(-2, -1).ravel('C')
+)
 
 # Create a set of isosurfaces
-surfaces = grid_scalar_3d.cell_data_to_point_data().contour(isosurfaces=[1, 5, 10, 15])
+surfaces = grid_scalar_3d.cell_data_to_point_data().contour(
+    isosurfaces=[1, 5, 10, 15]
+)
 
 # Show the result
 pl = pv.Plotter()

@@ -20,8 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Volumetric Mesh
-# +++++++++++++++
+# Volumetric Mesh +++++++++++++++
 #
 # Add the height scalars to a uniform 3D mesh.
 mesh = examples.load_uniform()
@@ -46,7 +45,9 @@ pl.add_mesh(mesh, style='wireframe', color='w')
 pl.add_mesh(arc, color='b')
 a = arc.points[0]
 b = arc.points[-1]
-pl.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
+pl.add_point_labels(
+    [a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red'
+)
 pl.show()
 
 # %%

@@ -36,7 +36,8 @@ boundaries = mesh.extract_feature_edges(
 boundaries
 
 # %%
-# The cells are :attr:`~pyvista.CellType.TRIANGLE` cells. For example, the first cell
+# The cells are :attr:`~pyvista.CellType.TRIANGLE` cells. For example, the
+# first cell
 
 mesh.get_cell(0).type
 
@@ -67,8 +68,8 @@ x, y, z = pv.spherical_to_cartesian(r_, phi_, theta_)
 mesh = pv.StructuredGrid(x, y, z)
 
 # %%
-# The mesh has :attr:`~pyvista.CellType.QUAD` cells. The cells that look triangular
-# at the poles are actually degenerate quadrilaterals, that is, two
+# The mesh has :attr:`~pyvista.CellType.QUAD` cells. The cells that look
+# triangular at the poles are actually degenerate quadrilaterals, that is, two
 # points are coincident at the pole, as will be shown later.
 
 mesh.plot(show_edges=True)
@@ -79,7 +80,8 @@ mesh.plot(show_edges=True)
 mesh
 
 # %%
-# The first cell is at the top pole, and it is a :attr:`~pyvista.CellType.QUAD` cell.
+# The first cell is at the top pole, and it is a
+# :attr:`~pyvista.CellType.QUAD` cell.
 
 cell = mesh.get_cell(0)
 cell.type
@@ -110,10 +112,10 @@ pl.show()
 # %%
 # Structured Sphere
 # ~~~~~~~~~~~~~~~~~
-# :func:`pyvista.StructuredSphere` generates the mesh built by hand above, with
-# the same points in the same order. Since the seam is included in the theta
-# direction, ``theta_resolution`` is one less than the number of points used
-# there.
+# :func:`pyvista.StructuredSphere` generates the mesh built by hand above,
+# with the same points in the same order. Since the seam is included in the
+# theta direction, ``theta_resolution`` is one less than the number of points
+# used there.
 
 mesh = pv.StructuredSphere(
     radius=radius, theta_resolution=ntheta - 1, phi_resolution=nphi
@@ -138,10 +140,13 @@ mesh = pv.StructuredSphere(
 mesh
 
 # %%
-# Clip the grid in half and color the cells by radial position to show the layers.
+# Clip the grid in half and color the cells by radial position to show
+# the layers.
 
 clipped = mesh.clip(normal='y')
-clipped['radial position'] = np.linalg.norm(clipped.cell_centers().points, axis=1)
+clipped['radial position'] = np.linalg.norm(
+    clipped.cell_centers().points, axis=1
+)
 clipped.plot(show_edges=True)
 
 # %%
@@ -149,9 +154,9 @@ clipped.plot(show_edges=True)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This example shows how a more complicated mesh can be defined.
 #
-# In contrast to the example above, this example generates a mesh
-# that does not have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE`
-# cells will be used at the poles. First, regenerate the structured data.
+# In contrast to the example above, this example generates a mesh that does not
+# have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE` cells
+# will be used at the poles. First, regenerate the structured data.
 
 radius = 0.5
 ntheta = 9
@@ -163,8 +168,8 @@ phi = np.linspace(0, np.pi, nphi)
 # We do not want duplicate points, so remove the duplicate in theta, which
 # results in 8 unique points in theta. Similarly, the poles at ``phi=0`` and
 # ``phi=pi`` will be handled separately to avoid duplicate points, which
-# results in 10 unique points in phi.  Remove these from the grid in spherical
-# coordinates.
+# results in 10 unique points in phi.  Remove these from the grid in
+# spherical coordinates.
 
 theta = theta[:-1]
 ntheta -= 1
@@ -172,9 +177,9 @@ phi = phi[1:-1]
 nphi -= 2
 
 # %%
-# Use :func:`pyvista.spherical_to_cartesian` to generate Cartesian coordinates for
-# points in the ``(N, 3)`` format required by PyVista.  Note that this method results in
-# the theta variable changing the fastest.
+# Use :func:`pyvista.spherical_to_cartesian` to generate Cartesian coordinates
+# for points in the ``(N, 3)`` format required by PyVista.  Note that this
+# method results in the theta variable changing the fastest.
 
 r_, phi_, theta_ = np.meshgrid([radius], phi, theta, indexing='ij')
 x, y, z = pv.spherical_to_cartesian(r_, phi_, theta_)
@@ -214,7 +219,10 @@ mesh = pv.PolyData(points, faces=faces)
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_point_labels(
-    mesh.points[points_to_label, :], points_to_label, font_size=30, fill_shape=False
+    mesh.points[points_to_label, :],
+    points_to_label,
+    font_size=30,
+    fill_shape=False,
 )
 pl.view_xy()
 pl.show()
@@ -273,12 +281,23 @@ for j in range(nphi - 1):
         )
 
     faces.extend(
-        [4, (j + 1) * ntheta, j * ntheta + 1, (j + 1) * ntheta + 1, (j + 2) * ntheta]
+        [
+            4,
+            (j + 1) * ntheta,
+            j * ntheta + 1,
+            (j + 1) * ntheta + 1,
+            (j + 2) * ntheta,
+        ]
     )
 
 for i in range(1, ntheta):
     faces.extend(
-        [3, nphi * ntheta + 1, (nphi - 1) * ntheta + i, (nphi - 1) * ntheta + i + 1]
+        [
+            3,
+            nphi * ntheta + 1,
+            (nphi - 1) * ntheta + i,
+            (nphi - 1) * ntheta + i + 1,
+        ]
     )
 
 faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
@@ -291,8 +310,8 @@ mesh = pv.PolyData(points, faces=faces)
 
 # %%
 # This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like
-# :func:`pyvista.Sphere`. To demonstrate this, there are no boundaries on the mesh
-# as indicated by no points/cells being extracted.
+# :func:`pyvista.Sphere`. To demonstrate this, there are no boundaries on the
+# mesh as indicated by no points/cells being extracted.
 
 boundaries = mesh.extract_feature_edges(
     non_manifold_edges=True, feature_edges=False, manifold_edges=False

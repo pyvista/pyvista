@@ -20,8 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 from pyvista import examples
 
 # %%
-# Label String Array
-# ++++++++++++++++++
+# Label String Array ++++++++++++++++++
 #
 # This example will label the nodes of a mesh with a given array of string
 # labels for each of the nodes.
@@ -31,14 +30,14 @@ rng = np.random.default_rng(seed=0)
 poly = pv.PolyData(rng.random((10, 3)))
 
 # %%
-# Add string labels to the point data - this associates a label with every
-# node:
+# Add string labels to the point data - this associates a label with every node:
 
 poly['My Labels'] = [f'Label {i}' for i in range(poly.n_points)]
 poly
 
 # %%
-# Now plot the points with labels using :func:`~pyvista.Plotter.add_point_labels`.
+# Now plot the points with labels using
+# :func:`~pyvista.Plotter.add_point_labels`.
 
 pl = pv.Plotter()
 pl.add_point_labels(poly, 'My Labels', point_size=20, font_size=36)
@@ -46,8 +45,7 @@ pl.show()
 
 
 # %%
-# Label Node Locations
-# ++++++++++++++++++++
+# Label Node Locations ++++++++++++++++++++
 #
 # This example will label the nodes of a mesh with their coordinate locations
 
@@ -63,18 +61,21 @@ pl.add_mesh(grid, show_edges=True, color='lightblue')
 # Add labels to points on the yz plane (where x == 0)
 points = grid.points
 mask = points[:, 0] == 0
-pl.add_point_labels(points[mask], points[mask].tolist(), point_size=20, font_size=36)
+pl.add_point_labels(
+    points[mask], points[mask].tolist(), point_size=20, font_size=36
+)
 
 pl.camera_position = pv.CameraPosition(
-    position=(-1.5, 1.5, 3.0), focal_point=(0.05, 0.6, 1.2), viewup=(0.2, 0.9, -0.25)
+    position=(-1.5, 1.5, 3.0),
+    focal_point=(0.05, 0.6, 1.2),
+    viewup=(0.2, 0.9, -0.25),
 )
 
 pl.show()
 
 
 # %%
-# Label Scalar Values
-# +++++++++++++++++++
+# Label Scalar Values +++++++++++++++++++
 #
 # This example will label each point with their scalar values
 
@@ -86,7 +87,9 @@ pl = pv.Plotter()
 # Add the mesh:
 pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
 # Add the points with scalar labels:
-pl.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36)
+pl.add_point_scalar_labels(
+    mesh, 'Spatial Point Data', point_size=20, font_size=36
+)
 
 # Use a nice camera position:
 pl.camera_position = pv.CameraPosition(

@@ -18,27 +18,27 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a dataset with a CT image and corresponding segmentation labels. Here we load
-# :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+# Load a dataset with a CT image and corresponding segmentation labels. Here we
+# load :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
 dataset = examples.download_whole_body_ct_male()
 
 # %%
-# Get the :class:`~pyvista.ImageData` for the CT data and one of the segmentation masks.
-# For this example we choose a mask of the skull.
+# Get the :class:`~pyvista.ImageData` for the CT data and one of the
+# segmentation masks. For this example we choose a mask of the skull.
 
 ct = dataset['ct']
 skull = dataset['segmentations']['skull']
 
 # %%
-# Crop the CT image using the segmentation mask. Use ``padding`` to include additional
-# data points around the masked region.
+# Crop the CT image using the segmentation mask. Use ``padding`` to include
+# additional data points around the masked region.
 
 cropped_ct = ct.crop(mask=skull, padding=10)
 
 # %%
-# Use :meth:`~pyvista.ImageDataFilters.points_to_cells` to plot the cropped image
-# as :attr:`~pyvista.CellType.VOXEL` cells.
+# Use :meth:`~pyvista.ImageDataFilters.points_to_cells` to plot the cropped
+# image as :attr:`~pyvista.CellType.VOXEL` cells.
 
 cpos = pv.CameraPosition(
     position=(687.5, 763.6, 471.3),
@@ -68,25 +68,27 @@ cropped_ct.dimensions == skull.dimensions
 # %%
 # To keep dimension the same, either
 #
-# #. crop the mask itself; the meshes will have smaller dimensions relative to the input
-# #. pad the CT image as part of the initial crop; the meshes will have the same
-#    dimensions as the input
+# #. crop the mask itself; the meshes will have smaller dimensions relative to
+# the input #. pad the CT image as part of the initial crop; the meshes will
+# have the same dimensions as the input
 #
-# To crop the mask itself, you can perform a similar crop as before using ``mask=True``.
+# To crop the mask itself, you can perform a similar crop as before
+# using ``mask=True``.
 
 cropped_skull = skull.crop(mask=True, padding=10)
 cropped_skull.dimensions
 
 # %%
-# However, computationally it is more efficient to crop using ``extent`` directly.
+# However, computationally it is more efficient to crop using
+# ``extent`` directly.
 
 cropped_skull = skull.crop(extent=cropped_ct.extent)
 cropped_skull.dimensions
 
 # %%
-# Alternatively, use ``keep_dimensions`` and ``fill_value`` when initially cropping the
-# image so that the output dimensions match the input. A value of ``-1000`` is used, which
-# may represent air in the scan.
+# Alternatively, use ``keep_dimensions`` and ``fill_value`` when initially
+# cropping the image so that the output dimensions match the input. A value of
+# ``-1000`` is used, which may represent air in the scan.
 
 cropped_ct = ct.crop(mask=skull, keep_dimensions=True, fill_value=-1000)
 cropped_ct.dimensions

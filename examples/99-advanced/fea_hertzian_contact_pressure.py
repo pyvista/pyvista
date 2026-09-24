@@ -64,10 +64,10 @@ line
 # We can sample the Z component stress along the contact edge and compare it
 # with expected pressure.
 #
-# The expected values array is the Hertzian contact pressure and is the
-# analytical solution to the non-adhesive contact problem. Computation of these
-# values is an exercise left up to the reader (the radius of the cylinder is
-# 0.05). See `Contact Mechanics
+# The expected values array is the Hertzian contact pressure and is
+# the analytical solution to the non-adhesive contact problem.
+# Computation of these values is an exercise left up to the reader
+# (the radius of the cylinder is 0.05). See `Contact Mechanics
 # <https://en.wikipedia.org/wiki/Contact_mechanics>`_
 
 # Sample the stress
@@ -107,8 +107,8 @@ plt.show()
 # %%
 # Visualizing the Z Stress Distribution
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# You can now visualize the Z stress distribution. Use :class:`pyvista.Plotter` to
-# create a plot window and add the dataset to it.
+# You can now visualize the Z stress distribution. Use :class:`pyvista.Plotter`
+# to create a plot window and add the dataset to it.
 
 pl = pv.Plotter()
 z_stress = np.abs(mesh['Stress'][:, 2])

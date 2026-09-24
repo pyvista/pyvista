@@ -25,9 +25,9 @@ rng = np.random.default_rng(
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
-# data points using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
-# rescales its axes such that all plotted data is visible. By right clicking on the chart
-# you can enable zooming and panning of the chart.
+# data points using :func:`~pyvista.Chart2D.scatter`. By default, the chart
+# automatically rescales its axes such that all plotted data is visible. By
+# right clicking on the chart you can enable zooming and panning of the chart.
 
 x = rng.standard_normal(100)
 y = rng.standard_normal(100)
@@ -36,9 +36,10 @@ chart.scatter(x, y, size=10, style='+')
 chart.show()
 
 # %%
-# To connect data points with lines, you can create a 2D line plot as shown in
-# the example below using :func:`~pyvista.Chart2D.line`. You can also dynamically
-# 'zoom in' on the plotted data by specifying a custom axis range yourself.
+# To connect data points with lines, you can create a 2D line plot as shown
+# in the example below using :func:`~pyvista.Chart2D.line`. You can also
+# dynamically 'zoom in' on the plotted data by specifying a custom axis
+# range yourself.
 
 x = np.linspace(0, 10, 1000)
 y = np.sin(x**2)
@@ -55,8 +56,14 @@ chart.show()
 x = np.arange(11)
 y = rng.integers(-5, 6, 11)
 chart = pv.Chart2D()
-chart.background_color = (0.5, 0.9, 0.5)  # Use custom background color for chart
-chart.plot(x, y, 'x--b')  # Marker style 'x', striped line style '--', blue color 'b'
+chart.background_color = (
+    0.5,
+    0.9,
+    0.5,
+)  # Use custom background color for chart
+chart.plot(
+    x, y, 'x--b'
+)  # Marker style 'x', striped line style '--', blue color 'b'
 chart.show()
 
 # %%
@@ -163,7 +170,9 @@ f, ax = plt.subplots(
 alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]
 N = int(1e4)
-data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=True)]
+data = [
+    rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=True)
+]
 labels = [
     f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$'
     for alpha, beta in zip(alphas, betas, strict=True)

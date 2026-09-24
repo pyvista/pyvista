@@ -4,7 +4,7 @@
 Color Several Lines
 ~~~~~~~~~~~~~~~~~~~
 
-Render several :func:`~pyvista.MultipleLines` polylines colored by a scalar value.
+Render :func:`~pyvista.MultipleLines` polylines colored by a scalar value.
 
 """
 

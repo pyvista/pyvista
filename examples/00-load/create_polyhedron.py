@@ -6,8 +6,8 @@ Unstructured Grid With Polyhedra
 
 Build a simple :class:`~pyvista.UnstructuredGrid` using polyhedra.
 
-We will be using VTK types to determine which type of cells we are building. A list of
-cell types is given in :class:`pyvista.CellType`.
+We will be using VTK types to determine which type of cells we are building. A
+list of cell types is given in :class:`pyvista.CellType`.
 
 First, we import the required libraries.
 
@@ -91,7 +91,8 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 # %%
 # Polyhedron Connectivity Array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The connectivity array of polyhedra is defined differently from the rest of the cell
+# The connectivity array of polyhedra is defined differently from the rest of
+# the cell
 # types. For polyhedra, we need to set the faces with the following format::
 #
 #     [NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1...,
@@ -103,7 +104,8 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 #   describe the polyhedron.
 # - ``NFaces`` is the number of faces the polyhedron will have.
 # - ``Face0NPoints`` is the number of points the first face will have.
-# - ``Face0Point0...Face0PointN-1`` are each of the points that describe ``face0``.
+# - ``Face0Point0...Face0PointN-1`` are each of the points that describe
+#   ``face0``.
 #
 # In ``polyhedron_connectivity``, the first item is ``NFaces``. ``NItems`` is
 # added to ``polyhedron``.

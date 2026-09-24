@@ -54,7 +54,10 @@ curvsurf.plot(texture=tex)
 elevated = curvsurf.elevation()
 
 elevated.plot(
-    scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False
+    scalars='Elevation',
+    cmap='terrain',
+    texture=tex,
+    interpolate_before_map=False,
 )
 
 
@@ -67,13 +70,12 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# Textures From Files
-# +++++++++++++++++++
+# Textures From Files +++++++++++++++++++
 #
 # What about loading your own texture from an image? This is often most easily
 # done using the :func:`pyvista.read_texture` function - simply pass an image
-# file's path, and this function with handle making a :vtk:`vtkTexture` for you to
-# use.
+# file's path, and this function with handle making a :vtk:`vtkTexture` for you
+# to use.
 
 image_file = examples.mapfile
 tex = pv.read_texture(image_file)
@@ -81,13 +83,12 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# NumPy Arrays as Textures
-# ++++++++++++++++++++++++
+# NumPy Arrays as Textures ++++++++++++++++++++++++
 #
 # Want to use a programmatically built image? :class:`pyvista.ImageData`
-# objects can be converted to textures using :func:`pyvista.image_to_texture`
-# and 3D NumPy (X by Y by RGB) arrays can be converted to textures using
-# :func:`pyvista.numpy_to_texture`.
+# objects can be converted to textures using
+# :func:`pyvista.image_to_texture` and 3D NumPy (X by Y by RGB) arrays can
+# be converted to textures using :func:`pyvista.numpy_to_texture`.
 
 # create an image using numpy,
 xx, yy = np.meshgrid(np.linspace(-200, 200, 20), np.linspace(-200, 200, 20))
@@ -146,15 +147,13 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 pl.close()
 
 # %%
-# Textures With Transparency
-# ++++++++++++++++++++++++++
+# Textures With Transparency ++++++++++++++++++++++++++
 #
-# Textures can also specify per-pixel opacity values. The image must
-# contain a fourth channel specifying the opacity value from 0 [transparent] to
-# 255 [fully visible]. To enable this feature just pass the opacity array as the
-# fourth channel of the image as a 3 dimensional matrix with shape
-# [``nrows``, ``ncols``, 4]
-# :func:`pyvista.numpy_to_texture`.
+# Textures can also specify per-pixel opacity values. The image must contain a
+# fourth channel specifying the opacity value from 0 [transparent] to 255 [fully
+# visible]. To enable this feature just pass the opacity array as the fourth
+# channel of the image as a 3 dimensional matrix with shape [``nrows``,
+# ``ncols``, 4] :func:`pyvista.numpy_to_texture`.
 #
 # Here we can download an image that has an alpha channel:
 rgba = examples.download_rgba_texture()
@@ -167,8 +166,7 @@ curvsurf.plot(texture=rgba, show_grid=True)
 
 
 # %%
-# Repeating Textures
-# ++++++++++++++++++
+# Repeating Textures ++++++++++++++++++
 #
 # What if you have a single texture that you'd like to repeat across a mesh?
 # Simply define the texture coordinates for all nodes explicitly.
@@ -215,12 +213,13 @@ mesh.plot(texture=tex)
 
 # %%
 # The helper method above does not always produce the desired texture
-# coordinates, so sometimes it must be done manually. Here is a great, user
-# contributed example from `this support issue <https://github.com/pyvista/pyvista-support/issues/257>`_
+# coordinates, so sometimes it must be done manually. Here is a
+# great, user contributed example from `this support issue
+# <https://github.com/pyvista/pyvista-support/issues/257>`_
 #
 # Manually create the texture coordinates for a globe map. First, we create
-# the mesh that will be used as the globe. Note the ``start_theta`` for a slight
-# overlap.
+# the mesh that will be used as the globe. Note the ``start_theta`` for a
+# slight overlap.
 sphere = pv.Sphere(
     radius=1,
     theta_resolution=120,
@@ -235,7 +234,8 @@ sphere.active_texture_coordinates = np.zeros((sphere.points.shape[0], 2))
 # Populate by manually calculating
 for i in range(sphere.points.shape[0]):
     sphere.active_texture_coordinates[i] = [
-        0.5 + np.arctan2(-sphere.points[i, 0], sphere.points[i, 1]) / (2 * np.pi),
+        0.5
+        + np.arctan2(-sphere.points[i, 0], sphere.points[i, 1]) / (2 * np.pi),
         0.5 + np.arcsin(sphere.points[i, 2]) / np.pi,
     ]
 

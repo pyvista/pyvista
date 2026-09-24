@@ -4,7 +4,7 @@
 Lighting Properties
 ~~~~~~~~~~~~~~~~~~~
 
-Control aspects of the rendered mesh's lighting such as Ambient, Diffuse, and Specular.
+Control the rendered mesh's lighting: Ambient, Diffuse, and Specular.
 
 These options only work if the ``lighting`` argument to
 ``add_mesh`` is ``True`` (it's ``True`` by default).
@@ -85,7 +85,9 @@ mesh.plot(specular=0.5, specular_power=15, cpos=cpos, show_scalar_bar=False)
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-mesh.plot(diffuse=0.5, specular=0.5, ambient=0.5, cpos=cpos, show_scalar_bar=False)
+mesh.plot(
+    diffuse=0.5, specular=0.5, ambient=0.5, cpos=cpos, show_scalar_bar=False
+)
 
 # %%
 # For detailed control over lighting conditions in general see the

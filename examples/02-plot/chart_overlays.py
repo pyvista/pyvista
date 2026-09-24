@@ -4,7 +4,7 @@
 Chart Overlays
 ~~~~~~~~~~~~~~
 
-This example shows how you can combine multiple charts as overlays in the same renderer.
+Combine multiple charts as overlays in the same renderer.
 
 For an overview of the different chart types you
 can use, please refer to :ref:`chart_basics_example`. Interaction with
@@ -70,7 +70,9 @@ def update_time(time):
     h_line.set_xdata(t[: k + 1])
     h_line.set_ydata(h[: k + 1])
     v_line.update(t[: k + 1], v[: k + 1])
-    pl.add_mesh(pv.Sphere(radius=1, center=(0, 0, h[k])), name='sphere', render=False)
+    pl.add_mesh(
+        pv.Sphere(radius=1, center=(0, 0, h[k])), name='sphere', render=False
+    )
     pl.update()
 
 

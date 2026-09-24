@@ -31,7 +31,10 @@ arc = pv.CircularArc(
 pl = pv.Plotter()
 pl.add_mesh(arc.tube(radius=0.03), color='royalblue')
 pl.add_points(
-    arc.points[[0, -1]], color='tomato', point_size=18, render_points_as_spheres=True
+    arc.points[[0, -1]],
+    color='tomato',
+    point_size=18,
+    render_points_as_spheres=True,
 )
 pl.add_points(
     np.array([[0.0, 0.0, 0.0]]),
@@ -59,7 +62,9 @@ arc_from_normal = pv.CircularArcFromNormal(
 
 pl = pv.Plotter()
 pl.add_mesh(arc_from_normal.tube(radius=0.04), color='seagreen')
-pl.add_mesh(pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2)
+pl.add_mesh(
+    pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2
+)
 pl.show_grid()
 pl.view_xy()
 pl.show()

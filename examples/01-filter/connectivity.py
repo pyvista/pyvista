@@ -4,7 +4,7 @@
 Connectivity
 ~~~~~~~~~~~~
 
-Highlight some applications of the :func:`~pyvista.DataSetFilters.connectivity` filter.
+Highlight uses of the :func:`~pyvista.DataSetFilters.connectivity` filter.
 
 """
 
@@ -14,7 +14,8 @@ Highlight some applications of the :func:`~pyvista.DataSetFilters.connectivity` 
 #
 # Use connectivity to remove noisy isosurfaces.
 #
-# This section is similar to `this VTK example <https://examples.vtk.org/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
+# This section is similar to `this VTK example
+# <https://examples.vtk.org/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
 
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
@@ -65,10 +66,10 @@ all_regions = pine_roots.connectivity('all')
 region_ids = np.unique(all_regions['RegionId'])
 
 # %%
-# Since the region IDs are sorted in descending order (by cell count),
-# we can extract all regions *except* for the largest one using the
-# ``'specified'`` ``extraction_mode`` of the :func:`~pyvista.DataSetFilters.connectivity`
-# filter.
+# Since the region IDs are sorted in descending order (by cell count), we
+# can extract all regions *except* for the largest one using the
+# ``'specified'`` ``extraction_mode`` of the
+# :func:`~pyvista.DataSetFilters.connectivity` filter.
 noise_region_ids = region_ids[1::]  # All region ids except '0'
 noise = pine_roots.connectivity('specified', noise_region_ids)
 
@@ -89,7 +90,8 @@ pl.show()
 #
 # Use connectivity to label all disconnected regions.
 #
-# This section is similar to `this VTK example <https://examples.vtk.org/site/Cxx/PolyData/ColorDisconnectedRegionsDemo/>`__.
+# This section is similar to `this VTK example
+# <https://examples.vtk.org/site/Cxx/PolyData/ColorDisconnectedRegionsDemo/>`__.
 #
 # First, load a dataset with disconnected regions.
 mesh = examples.download_foot_bones()
@@ -103,7 +105,9 @@ conn = mesh.connectivity('all')
 
 colored = conn.color_labels()
 cpos = pv.CameraPosition(
-    position=(10.5, 12.2, 18.3), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+    position=(10.5, 12.2, 18.3),
+    focal_point=(0.0, 0.0, 0.0),
+    viewup=(0.0, 1.0, 0.0),
 )
 colored.plot(cpos=cpos)
 
@@ -133,10 +137,9 @@ mesh.plot(
 )
 
 # %%
-# Extract a region of interest using the
-# ``'point_seed'`` ``extraction_mode`` of the :func:`~pyvista.DataSetFilters.connectivity`
-# filter. Let's extract the steepest peak using a seed point where the
-# curvature is maximized.
+# Extract a region of interest using the ``'point_seed'`` ``extraction_mode`` of
+# the :func:`~pyvista.DataSetFilters.connectivity` filter. Let's extract the
+# steepest peak using a seed point where the curvature is maximized.
 
 # Get seed point
 peak_point_id = np.argmax(mesh['Curvature'])
@@ -145,15 +148,19 @@ peak_point_id = np.argmax(mesh['Curvature'])
 data_min, data_max = mesh.get_data_range()
 peak_range = [0.2, data_max]  # Peak if curvature > 0.2
 
-peak_mesh = mesh.connectivity('point_seed', peak_point_id, scalar_range=peak_range)
+peak_mesh = mesh.connectivity(
+    'point_seed', peak_point_id, scalar_range=peak_range
+)
 
 # %%
 # Let's also extract the closest valley to the steepest peak using the
-# ``'closest'`` ``extraction_mode`` of the :func:`~pyvista.DataSetFilters.connectivity`
-# filter.
+# ``'closest'`` ``extraction_mode`` of the
+# :func:`~pyvista.DataSetFilters.connectivity` filter.
 valley_range = [data_min, -0.2]  # Valley if curvature < -0.2
 peak_point = mesh.points[peak_point_id]
-valley_mesh = mesh.connectivity('closest', peak_point, scalar_range=valley_range)
+valley_mesh = mesh.connectivity(
+    'closest', peak_point, scalar_range=valley_range
+)
 
 # %%
 # Plot extracted regions.

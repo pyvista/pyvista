@@ -6,7 +6,8 @@ Control Global and Local Plotting Themes
 
 Set global and local plotting themes to easily set default plot parameters.
 
-Shows how to use the :ref:`theme_api` and :func:`~pyvista.set_plot_theme` function.
+Shows how to use the :ref:`theme_api` and :func:`~pyvista.set_plot_theme`
+function.
 
 """
 
@@ -43,8 +44,8 @@ plot_example()
 # PyVista also ships with a few plotting themes:
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
-# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and
-#   color schemes.
+# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds
+#   and color schemes.
 # * ``'document'``: this is built for use in document style plotting and making
 #   publication quality figures.
 
@@ -71,8 +72,8 @@ pv.set_plot_theme('document')
 plot_example()
 
 # %%
-# Note that you can also use color gradients for the background of the plotting
-# window.
+# Note that you can also use color gradients for the background of the
+# plotting window.
 pl = pv.Plotter()
 pl.add_mesh(mesh)
 pl.show_grid()
@@ -89,18 +90,16 @@ cpos = pl.show()
 # setting a global theme.  You can also control individual parameters
 # how all meshes are displayed by default via ``pyvista.global_theme``.
 #
-# Here, we print out the current global defaults for all ``pyvista``
-# meshes.  These values have been changed by the previous "Document"
-# theme.
+# Here, we print out the current global defaults for all ``pyvista`` meshes.
+# These values have been changed by the previous "Document" theme.
 
 pv.global_theme
 
 
 # %%
-# By default, edges are not shown on meshes unless explicitly
-# specified when plotting a mesh via ``show_edges=True``.  You can
-# change this default behavior globally by changing the default
-# parameter.
+# By default, edges are not shown on meshes unless explicitly specified when
+# plotting a mesh via ``show_edges=True``.  You can change this default behavior
+# globally by changing the default parameter.
 
 pv.global_theme.show_edges = True
 cpos = pv.Sphere().plot()

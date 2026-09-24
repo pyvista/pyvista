@@ -36,7 +36,9 @@ target = pv.PolyData(source.points + offset + warp)
 # Query the target cloud for each source point and color the source by the
 # resulting distances.
 
-closest_ids = np.array([target.find_closest_point(point) for point in source.points])
+closest_ids = np.array(
+    [target.find_closest_point(point) for point in source.points]
+)
 closest_points = target.points[closest_ids]
 source['distance'] = np.linalg.norm(source.points - closest_points, axis=1)
 

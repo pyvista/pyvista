@@ -35,12 +35,16 @@ cubemap = examples.download_sky_box_cube_map()
 
 
 # %%
-# Let's render the mesh with a base color of "linen" to give it a metal looking
-# finish.
+# Let's render the mesh with a base color of "linen" to give it a metal
+# looking finish.
 pl = pv.Plotter()
 pl.add_actor(cubemap.to_skybox())
-pl.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
-pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
+pl.set_environment_texture(
+    cubemap
+)  # For reflecting the environment off the mesh
+pl.add_mesh(
+    mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1
+)
 pl.view_xy(negative=True)
 pl.show()
 
@@ -58,7 +62,9 @@ pl.set_environment_texture(cubemap)
 
 for i, j in itertools.product(range(5), range(6)):
     sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
-    pl.add_mesh(sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5)
+    pl.add_mesh(
+        sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5
+    )
 
 pl.view_vector((-1, 0, 0), (0, 1, 0))
 pl.show()
@@ -74,14 +80,18 @@ mesh.rotate_z(140, inplace=True)
 
 pl = pv.Plotter(lighting=None)
 pl.set_background('black')
-pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
+pl.add_mesh(
+    mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1
+)
 
 
 # set up lighting
 light = pv.Light(position=(-2, 2, 0), focal_point=(0, 0, 0), color='white')
 pl.add_light(light)
 
-light = pv.Light(position=(2, 0, 0), focal_point=(0, 0, 0), color=(0.7, 0.0862, 0.0549))
+light = pv.Light(
+    position=(2, 0, 0), focal_point=(0, 0, 0), color=(0.7, 0.0862, 0.0549)
+)
 pl.add_light(light)
 
 light = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')

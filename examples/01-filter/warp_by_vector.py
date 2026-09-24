@@ -30,7 +30,8 @@ pv.plot_compare(datasets, color='white')
 
 warp_factors = [0, 1.5, 3.5, 5.5]
 datasets = {
-    f'factor={factor}': sphere.warp_by_vector(factor=factor) for factor in warp_factors
+    f'factor={factor}': sphere.warp_by_vector(factor=factor)
+    for factor in warp_factors
 }
 
 pv.plot_compare(datasets)

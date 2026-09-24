@@ -44,11 +44,11 @@ dataset
 # Plot the Dataset
 # ~~~~~~~~~~~~~~~~
 # Choose a mode shape from the available arrays in the dataset. Each "disp_N"
-# array represents an eigen solution or a single mode shape for a given mode of
-# vibration.
+# array represents an eigen solution or a single mode shape for a given mode
+# of vibration.
 #
-# Plot the fourth mode of the dataset. This is the first torsional mode for the
-# bracket.
+# Plot the fourth mode of the dataset. This is the first torsional mode for
+# the bracket.
 
 cpos = pv.CameraPosition(
     position=(0.744, -0.502, -0.83),
@@ -68,8 +68,9 @@ dataset.plot(
 # %%
 # Visualize Displaced Mode Shape
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We will now visualize the mode shapes of the pump bracket by displacing the
-# original dataset using :func:`warp_by_vector <pyvista.DataSetFilters.warp_by_vector>`.
+# We will now visualize the mode shapes of the pump bracket by
+# displacing the original dataset using :func:`warp_by_vector
+# <pyvista.DataSetFilters.warp_by_vector>`.
 
 # Create a plotter
 pl = pv.Plotter()

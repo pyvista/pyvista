@@ -4,7 +4,7 @@
 Plotting Bounds
 ~~~~~~~~~~~~~~~
 
-Show bounds within a :class:`~pyvista.Plotter` using :func:`~pyvista.Plotter.show_grid`.
+Show bounds with :func:`~pyvista.Plotter.show_grid`.
 
 """
 

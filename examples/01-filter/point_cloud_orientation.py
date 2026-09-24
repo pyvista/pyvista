@@ -27,7 +27,9 @@ full_cloud = examples.download_horse_points()
 rng = np.random.default_rng(seed=4)
 sample_ids = rng.choice(full_cloud.n_points, size=3000, replace=False)
 transform = pv.Transform().rotate_vector((1, 1, 0), 33).rotate_y(18)
-cloud = pv.PolyData(full_cloud.points[sample_ids]).transform(transform, inplace=False)
+cloud = pv.PolyData(full_cloud.points[sample_ids]).transform(
+    transform, inplace=False
+)
 cloud
 
 # %%

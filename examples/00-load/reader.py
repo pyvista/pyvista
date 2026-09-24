@@ -47,8 +47,9 @@ new_mesh = pv.read(temp_file.name)
 print(f'All arrays: {mesh.array_names}')
 
 # %%
-# Using :func:`pyvista.get_reader` enables more fine-grained control of reading data
-# files. Reading in a ``.vtp`` file uses the :class:`pyvista.XMLPolyDataReader`.
+# Using :func:`pyvista.get_reader` enables more fine-grained control
+# of reading data files. Reading in a ``.vtp`` file uses the
+# :class:`pyvista.XMLPolyDataReader`.
 
 reader = pv.get_reader(temp_file.name)
 reader
@@ -65,10 +66,10 @@ print(f'Number of cell arrays:  {reader.number_cell_arrays}')
 print(f'Available cell data:    {reader.cell_array_names}')
 
 # %%
-# We can select which data to read by selectively disabling or enabling
-# specific arrays or all arrays.  Here we disable all the cell arrays and
-# the ``Normals`` point array to leave only the ``height`` point array.  The data
-# is finally read into a pyvista object that only has the ``height`` point array.
+# We can select which data to read by selectively disabling or enabling specific
+# arrays or all arrays.  Here we disable all the cell arrays and the ``Normals``
+# point array to leave only the ``height`` point array.  The data is finally
+# read into a pyvista object that only has the ``height`` point array.
 
 reader.disable_all_cell_arrays()
 reader.disable_point_array('Normals')
@@ -100,9 +101,9 @@ print(f'Available point arrays: {reader.point_array_names}')
 # %%
 # First both time points are read in, and then the difference in density is
 # calculated and saved on the second mesh.  The read method of
-# :class:`pyvista.EnSightReader` returns a :class:`pyvista.MultiBlock` instance.
-# In this dataset, there are 3 blocks and the new scalar must be applied on each
-# block.
+# :class:`pyvista.EnSightReader` returns a :class:`pyvista.MultiBlock`
+# instance. In this dataset, there are 3 blocks and the new scalar must be
+# applied on each block.
 
 reader.set_active_time_value(time_values[0])
 mesh_0 = reader.read()

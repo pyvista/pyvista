@@ -64,9 +64,9 @@ grid.cells
 # using the ``+`` operator.
 #
 # .. note::
-#    This is an inefficient way of creating :class:`pyvista.UnstructuredGrid`
-#    objects. To see a more efficient implementation see
-#    :ref:`create_unstructured_surface_example`.
+#    This is an inefficient way of creating
+# :class:`pyvista.UnstructuredGrid`    objects. To see a more efficient
+# implementation see    :ref:`create_unstructured_surface_example`.
 
 grid_a = example_cells.Hexahedron()
 grid_a.points += [0, 2.5, 0]
@@ -90,9 +90,9 @@ combined.cells
 # %%
 # Cell Types
 # ~~~~~~~~~~
-# PyVista contains the :class:`pyvista.CellType` enumerator, which contains all the
-# available VTK cell types mapped to a Python enumerator. These cell types are
-# used when creating cells and also can be used when checking the
+# PyVista contains the :class:`pyvista.CellType` enumerator, which contains all
+# the available VTK cell types mapped to a Python enumerator. These cell types
+# are used when creating cells and also can be used when checking the
 # :attr:`celltypes <pyvista.UnstructuredGrid.celltypes>` attribute. For example
 # ``combined.celltypes`` contains both the ``pv.CellType.HEXAHEDRON`` and
 # ``pv.CellType.HEXAGONAL_PRISM`` cell types.
@@ -108,8 +108,9 @@ combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 # :class:`pyvista.UnstructuredGrid`, it's quite straightforward to create an
 # unstructured grid with a one or more cells. If you need to reference point
 # ordering or additional, you can either read the source of `cells.py
-# <https://github.com/pyvista/pyvista/blob/main/pyvista/examples/cells.py>`_ or
-# simply create a cell from the ``pyvista.core.cells`` module and inspect its attributes.
+# <https://github.com/pyvista/pyvista/blob/main/pyvista/examples/cells.py>`_
+# or simply create a cell from the ``pyvista.core.cells`` module and inspect
+# its attributes.
 
 points = [
     [1.0, 1.0, 0.0],
@@ -275,8 +276,8 @@ pl.show()
 # %%
 # Auto-Generate Cell Types From Source
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Similar to above, let's create another  ``(4, 4)`` :class:`pyvista.Plotter` and plot
-# all 16 linear cells in a single plot. This time, however, we use
+# Similar to above, let's create another  ``(4, 4)`` :class:`pyvista.Plotter`
+# and plot all 16 linear cells in a single plot. This time, however, we use
 # :func:`~pyvista.examples.cells.generate_cell_blocks` to generate the grids.
 
 # %%
@@ -315,8 +316,8 @@ pl.background_color = 'w'
 pl.show()
 
 # %%
-# Instead of using subplots, plot the generated mesh directly as a single grid of cells.
-# Use a shrink factor to create space between cells.
+# Instead of using subplots, plot the generated mesh directly as a single grid
+# of cells. Use a shrink factor to create space between cells.
 cells = generate_cell_blocks(
     linear_cell_types, block_dimensions=(n_rows, n_cols, 1), shrink_factor=0.5
 )

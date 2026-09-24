@@ -52,7 +52,9 @@ pl = pv.Plotter(lighting='none')
 plane = pv.Plane(i_size=4, j_size=4)
 pl.add_mesh(plane, color='white')
 
-rot120 = np.array([[-0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, -0.5, 0], [0, 0, 1]])
+rot120 = np.array(
+    [[-0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, -0.5, 0], [0, 0, 1]]
+)
 
 position = (-1.5, -1.5, 3)
 focus = (-0.5, -0.5, 0)

@@ -6,8 +6,8 @@ Compare Threshold Filters
 
 Multiple filters exist to exclude or highlight scalar values.
 
-The goal of this example is to compare some of these filters to show how each can be used.
-We will be differentiating them based on the input type they take,
+The goal of this example is to compare some of these filters to show how each
+can be used. We will be differentiating them based on the input type they take,
 as well as the output type they produce.
 
 """
@@ -19,18 +19,21 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Volume Data to Volume Data
-# ++++++++++++++++++++++++++
-# Some filters generate `pyvista.Volume` out of `pyvista.Volume`. We will explore 3:
+# Volume Data to Volume Data ++++++++++++++++++++++++++ Some filters generate
+# `pyvista.Volume` out of `pyvista.Volume`. We will explore 3:
 # :func:`pyvista.DataSetFilters.threshold`
 # :func:`pyvista.ImageDataFilters.image_threshold`
-# :func:`pyvista.ImageDataFilters.select_values`
-# Note how `pyvista.DataSetFilters.threshold` keeps the dynamic
-# of the image for the voxels above the value
-# while ``image_threshold`` produces an all-or-nothing result.
-# Note the little specks for the ``select_values``.
-# It is because it only selects the value (or values) that is (are) specified.
-method_map = {'default': 0, 'threshold': 1, 'image_threshold': 2, 'select_values': 3}
+# :func:`pyvista.ImageDataFilters.select_values` Note how
+# `pyvista.DataSetFilters.threshold` keeps the dynamic of the image for the
+# voxels above the value while ``image_threshold`` produces an all-or-nothing
+# result. Note the little specks for the ``select_values``. It is because it
+# only selects the value (or values) that is (are) specified.
+method_map = {
+    'default': 0,
+    'threshold': 1,
+    'image_threshold': 2,
+    'select_values': 3,
+}
 step = -80
 value = 155
 outlines_mesh = pv.PolyData()
@@ -47,7 +50,9 @@ thresholded_vol_outline.cell_data['method'] = np.full(
     (thresholded_vol_outline.n_cells), method_map['threshold']
 )
 outlines_mesh += thresholded_vol_outline
-image_thresholded_vol = volume.image_threshold(value, in_value=volume['scalars'].max())
+image_thresholded_vol = volume.image_threshold(
+    value, in_value=volume['scalars'].max()
+)
 image_thresholded_vol = image_thresholded_vol.translate([2 * step, 0, 0])
 image_thresholded_vol_outline = pv.Box(image_thresholded_vol.bounds)
 image_thresholded_vol_outline.cell_data['method'] = np.full(
@@ -79,7 +84,9 @@ legend_map = dict(zip(method_map.keys(), color_map.values(), strict=True))
 pl.add_mesh(colored_outline_mesh, style='wireframe', rgb=True, line_width=5)
 pl.add_legend(legend_map)
 cpos = pv.CameraPosition(
-    position=(20, -390, -100.0), focal_point=(20, 100.0, 20.0), viewup=(0, 0, -1)
+    position=(20, -390, -100.0),
+    focal_point=(20, 100.0, 20.0),
+    viewup=(0, 0, -1),
 )
 pl.camera_position = cpos
 pl.show()
@@ -123,12 +130,16 @@ thresholded_vol.cell_data['method'] = np.full(
 thresholded_vol.points[:, 0] += step * 2
 mesh += thresholded_vol
 mesh.set_active_scalars('method')
-colored_mesh, color_map = mesh.color_labels(output_scalars='method', return_dict=True)
+colored_mesh, color_map = mesh.color_labels(
+    output_scalars='method', return_dict=True
+)
 legend_map = dict(zip(method_map.keys(), color_map.values(), strict=True))
 pl.add_mesh(colored_mesh, style='wireframe', rgb=True)
 pl.add_legend(legend_map)
 cpos = pv.CameraPosition(
-    position=(55.2, -385.3, -119.1), focal_point=(55.2, 104.7, 0.9), viewup=(0, 0, -1)
+    position=(55.2, -385.3, -119.1),
+    focal_point=(55.2, 104.7, 0.9),
+    viewup=(0, 0, -1),
 )
 pl.camera_position = cpos
 pl.show()
@@ -173,7 +184,9 @@ pl.add_mesh(surface, show_edges=True)
 pl.add_mesh(colored_mesh, rgb=True, show_edges=True)
 pl.add_legend(legend_map)
 cpos = pv.CameraPosition(
-    position=(6.5, 29.4, 14.9), focal_point=(-1.1, -3.9, 6.0), viewup=(0.96, -0.3, 0.1)
+    position=(6.5, 29.4, 14.9),
+    focal_point=(-1.1, -3.9, 6.0),
+    viewup=(0.96, -0.3, 0.1),
 )
 pl.camera_position = cpos
 pl.show()

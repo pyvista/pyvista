@@ -7,9 +7,8 @@ Terrain Following Mesh
 Use a topographic surface to create a 3D terrain-following mesh.
 
 Terrain following meshes are common in the environmental sciences, for instance
-in hydrological modelling (see
-`Maxwell 2013 <https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564>`_
-and
+in hydrological modelling (see `Maxwell 2013
+<https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564>`_ and
 `ParFlow <https://parflow.org>`_).
 
 In this example, we demonstrate a simple way to make a 3D grid/mesh that
@@ -50,19 +49,20 @@ terrain.plot()
 
 
 # %%
-# And now we have a 3D structured surface of the terrain. We can now extend
-# that structured surface into a 3D mesh to form a terrain following grid.
-# To do this, we first our cell spacings in the z-direction (these start
-# from the terrain surface). Then we repeat the XYZ structured coordinates
-# of the terrain mesh and decrease each Z level by our Z cell spacing.
-# Once we have those structured coordinates, we can create a
-# :class:`pyvista.StructuredGrid`.
+# And now we have a 3D structured surface of the terrain. We can now extend that
+# structured surface into a 3D mesh to form a terrain following grid. To do
+# this, we first our cell spacings in the z-direction (these start from the
+# terrain surface). Then we repeat the XYZ structured coordinates of the terrain
+# mesh and decrease each Z level by our Z cell spacing. Once we have those
+# structured coordinates, we can create a :class:`pyvista.StructuredGrid`.
 
 z_cells = np.array([25] * 5 + [35] * 3 + [50] * 2 + [75, 100])
 
 xx = np.repeat(terrain.x, len(z_cells), axis=-1)
 yy = np.repeat(terrain.y, len(z_cells), axis=-1)
-zz = np.repeat(terrain.z, len(z_cells), axis=-1) - np.cumsum(z_cells).reshape((1, 1, -1))
+zz = np.repeat(terrain.z, len(z_cells), axis=-1) - np.cumsum(z_cells).reshape(
+    (1, 1, -1)
+)
 
 mesh = pv.StructuredGrid(xx, yy, zz)
 mesh['Elevation'] = zz.ravel(order='F')

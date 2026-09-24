@@ -60,10 +60,10 @@ points = np.vstack((cell1, cell2)).astype(float)
 # create the unstructured grid directly from the numpy arrays
 grid = pv.UnstructuredGrid(cells, cell_type, points)
 
-# For cells of fixed sizes (like the mentioned Hexahedra), it is also possible to use the
-# simplified dictionary interface. This automatically calculates the cell array.
-# Note that for mixing with additional cell types, just the appropriate key needs to be
-# added to the dictionary.
+# For cells of fixed sizes (like the mentioned Hexahedra), it is also possible
+# to use the simplified dictionary interface. This automatically calculates the
+# cell array. Note that for mixing with additional cell types, just the
+# appropriate key needs to be added to the dictionary.
 cells_hex = np.arange(16).reshape([2, 8])
 # = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
 grid = pv.UnstructuredGrid({pv.CellType.HEXAHEDRON: cells_hex}, points)

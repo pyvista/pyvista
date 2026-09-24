@@ -30,16 +30,17 @@ pl.add_actor(axes)
 pl.show()
 
 # %%
-# The colors, fonts, grid lines, and axis placement are all constructor arguments. See
-# :ref:`bounds_example` for more ways to configure them.
+# The colors, fonts, grid lines, and axis placement are all constructor
+# arguments. See :ref:`bounds_example` for more ways to configure them.
 #
-# Creating the actor directly means passing the camera and bounds yourself, and the
-# renderer does not track it. :meth:`~pyvista.Plotter.show_bounds` builds the same actor
-# from the scene and registers it, so :meth:`~pyvista.Plotter.remove_bounds_axes` and
+# Creating the actor directly means passing the camera and bounds yourself, and
+# the renderer does not track it. :meth:`~pyvista.Plotter.show_bounds` builds
+# the same actor from the scene and registers it, so
+# :meth:`~pyvista.Plotter.remove_bounds_axes` and
 # :meth:`~pyvista.Plotter.update_bounds_axes` apply to it.
 #
-# :meth:`~pyvista.Plotter.show_grid` adds grid lines on the back faces, labels on the
-# outer edges, and ticks on both sides.
+# :meth:`~pyvista.Plotter.show_grid` adds grid lines on the back faces, labels
+# on the outer edges, and ticks on both sides.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
@@ -50,14 +51,13 @@ pl.show()
 # .. seealso::
 #
 #   :meth:`~pyvista.Plotter.remove_bounds_axes`
-#   :meth:`~pyvista.Plotter.update_bounds_axes`
-#   :ref:`bounds_example`
+# :meth:`~pyvista.Plotter.update_bounds_axes`   :ref:`bounds_example`
 
 # %%
 # Arrow Axes
 # ==========
-# Arrow-style axes include :class:`~pyvista.AxesActor`, :class:`~pyvista.AxesAssembly`,
-# and :class:`~pyvista.AxesAssemblySymmetric`.
+# Arrow-style axes include :class:`~pyvista.AxesActor`,
+# :class:`~pyvista.AxesAssembly`, and :class:`~pyvista.AxesAssemblySymmetric`.
 #
 # ``AxesActor`` is primarily intended for use as an orientation widget
 # (see next section), but can also be added to a plot as a normal actor.
@@ -70,15 +70,16 @@ pl.add_axes_at_origin()
 pl.show()
 
 # %%
-# The axes are too large and should be scaled down. Transformations with ``AxesActor``
-# are possible, but with some caveats:
+# The axes are too large and should be scaled down. Transformations with
+# ``AxesActor`` are possible, but with some caveats:
 #
-# - The bounds of ``AxesActor`` are hard-coded as ``+/- 1``, which makes it challenging
-#   to configure the camera bounds for the plot.
-# - The user matrix must be used for transformations (scale and position properties
-#   do not work).
+# - The bounds of ``AxesActor`` are hard-coded as ``+/- 1``, which makes it
+#   challenging to configure the camera bounds for the plot.
+# - The user matrix must be used for transformations (scale and position
+#   properties do not work).
 #
-# Create new axes, disable its bounds, and apply a scaling :class:`~pyvista.Transform`.
+# Create new axes, disable its bounds, and apply a scaling
+# :class:`~pyvista.Transform`.
 
 trans = pv.Transform().scale(0.25)
 axes = pv.AxesActor()
@@ -86,8 +87,8 @@ axes.UseBoundsOff()
 axes.SetUserMatrix(pv.vtkmatrix_from_array(trans.matrix))
 
 # %%
-# Plot the axes with a mesh. Note that since the bounds of the axes are not used,
-# the tip of the z-axis appears clipped, which is not ideal.
+# Plot the axes with a mesh. Note that since the bounds of the axes are not
+# used, the tip of the z-axis appears clipped, which is not ideal.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
@@ -95,8 +96,8 @@ pl.add_actor(axes)
 pl.show()
 
 # %%
-# Instead of using :class:`~pyvista.AxesActor`, :class:`~pyvista.AxesAssembly` is
-# recommended for positioning axes in a scene.
+# Instead of using :class:`~pyvista.AxesActor`, :class:`~pyvista.AxesAssembly`
+# is recommended for positioning axes in a scene.
 
 axes = pv.AxesAssembly(scale=0.25)
 pl = pv.Plotter()
@@ -163,8 +164,8 @@ pl.show()
 # %%
 # Camera Orientation Widget
 # =========================
-# There is also a specialized camera widget which can be added to a plot with
-# :meth:`~pyvista.Plotter.add_camera_orientation_widget`.
+# There is also a specialized camera widget which can be added to a plot
+# with :meth:`~pyvista.Plotter.add_camera_orientation_widget`.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)

@@ -4,7 +4,7 @@
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a StructuredGrid surface from NumPy arrays using :class:`pyvista.StructuredGrid`.
+Create a surface from NumPy arrays using :class:`pyvista.StructuredGrid`.
 
 """
 
@@ -15,8 +15,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# From NumPy Meshgrid
-# +++++++++++++++++++
+# From NumPy Meshgrid +++++++++++++++++++
 #
 # Create a simple meshgrid using NumPy. Note the usage of ``ij`` indexing.
 
@@ -47,22 +46,20 @@ grid.points
 
 
 # %%
-# From XYZ Points
-# +++++++++++++++
+# From XYZ Points +++++++++++++++
 #
 # Quite often, you might be given a set of coordinates (XYZ points) in a simple
-# tabular format where there exists some structure such that grid could be
-# built between the nodes you have. A great example is found in
-# `pyvista-support#16`_ where a structured grid that is rotated from the
-# Cartesian reference frame is given as just XYZ points. In these cases, all
-# that is needed to recover the grid is the dimensions of the grid
-# (``nx`` by ``ny`` by ``nz``) and that the coordinates are ordered appropriately.
+# tabular format where there exists some structure such that grid could be built
+# between the nodes you have. A great example is found in `pyvista-support#16`_
+# where a structured grid that is rotated from the Cartesian reference frame is
+# given as just XYZ points. In these cases, all that is needed to recover the
+# grid is the dimensions of the grid (``nx`` by ``ny`` by ``nz``) and that the
+# coordinates are ordered appropriately.
 #
 # .. _pyvista-support#16: https://github.com/pyvista/pyvista-support/issues/16
 #
-# For this example, we will create a small dataset and rotate the
-# coordinates such that they are not on orthogonal to Cartesian reference
-# frame.
+# For this example, we will create a small dataset and rotate the coordinates
+# such that they are not on orthogonal to Cartesian reference frame.
 
 rng = np.random.default_rng(seed=0)
 
@@ -114,8 +111,9 @@ plt.show()
 # dimensionality of structured grid including:
 #
 # * manually counting the nodes along the edges of the pointset
-# * using a technique like principle component analysis to strip the rotation from the
-#   dataset and count the unique values along each axis for the new y-projected dataset.
+# * using a technique like principle component analysis to strip the rotation
+#   from the dataset and count the unique values along each axis for the new
+# y-projected dataset.
 #
 # Once you've figured out your grid's dimensions, simple create the
 # :class:`pyvista.StructuredGrid` as follows:
@@ -131,8 +129,7 @@ mesh.plot(show_edges=True, show_grid=True, cpos='xy')
 
 
 # %%
-# Extending a 2D StructuredGrid to 3D
-# +++++++++++++++++++++++++++++++++++
+# Extending a 2D StructuredGrid to 3D +++++++++++++++++++++++++++++++++++
 #
 # A 2D :class:`pyvista.StructuredGrid` mesh can be extended into a 3D mesh.
 # This is highly applicable when wanting to create a terrain following mesh

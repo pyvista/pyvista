@@ -62,7 +62,8 @@ mesh = pv.create_grid(data_to_probe, dimensions=(75, 75, 75))
 result = mesh.sample(data_to_probe)
 
 # %%
-# :func:`~pyvista.DataObjectFilters.resample_to_image` does both steps in one call.
+# :func:`~pyvista.DataObjectFilters.resample_to_image` does both steps in
+# one call.
 data_to_probe.resample_to_image(dimensions=(75, 75, 75))
 
 # %%
@@ -88,14 +89,13 @@ pl.view_isometric()
 pl.show(cpos=cpos)
 
 # %%
-# Resample a Processed Volume
-# +++++++++++++++++++++++++++
-# Clipping an image returns an :class:`~pyvista.UnstructuredGrid`, which image filters do
-# not accept. :func:`~pyvista.DataObjectFilters.resample_to_image` puts the processed
-# volume back on a regular grid.
+# Resample a Processed Volume +++++++++++++++++++++++++++ Clipping an image
+# returns an :class:`~pyvista.UnstructuredGrid`, which image filters do not
+# accept. :func:`~pyvista.DataObjectFilters.resample_to_image` puts the
+# processed volume back on a regular grid.
 #
-# Start from a volumetric scan of a knee. Bone is the bright end of its intensity range,
-# from 100 up.
+# Start from a volumetric scan of a knee. Bone is the bright end of its
+# intensity range, from 100 up.
 knee = examples.download_knee_full()
 
 # sphinx_gallery_start_ignore
@@ -106,23 +106,28 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 knee.plot(volume=True, cmap='bone', clim=[100, 174])
 
 # %%
-# Clip the scan to the bone, and keep the three largest pieces: the tibia, the femur, and
-# the patella. :func:`~pyvista.DataSetFilters.connectivity` numbers the regions from the
-# largest down and stores the numbers as ``'RegionId'``.
+# Clip the scan to the bone, and keep the three largest pieces: the tibia, the
+# femur, and the patella. :func:`~pyvista.DataSetFilters.connectivity` numbers
+# the regions from the largest down and stores the numbers as ``'RegionId'``.
 bone = knee.clip_scalar(scalars='SLCImage', value=100, invert=False)
 bones = bone.connectivity('specified', [0, 1, 2])
 bones.plot(scalars='RegionId', cmap='glasbey', categories=True)
 
 # %%
-# Resample the labeled bones onto the scan's own grid with ``reference_volume``, so that
-# a voxel of the output is a voxel of the scan. Sample the labels as categories to keep
-# them whole, and blank the voxels which fall outside the bone.
-labels = bones.resample_to_image(reference_volume=knee, categorical=True, mark_blank=True)
+# Resample the labeled bones onto the scan's own grid with
+# ``reference_volume``, so that a voxel of the output is a voxel of the scan.
+# Sample the labels as categories to keep them whole, and blank the voxels
+# which fall outside the bone.
+labels = bones.resample_to_image(
+    reference_volume=knee, categorical=True, mark_blank=True
+)
 
 # %%
-# The labels sit on the points of the image, so render them as voxel cells with
-# :func:`~pyvista.ImageDataFilters.points_to_cells`.
-labels.points_to_cells().plot(scalars='RegionId', cmap='glasbey', categories=True)
+# The labels sit on the points of the image, so render them as voxel cells
+# with :func:`~pyvista.ImageDataFilters.points_to_cells`.
+labels.points_to_cells().plot(
+    scalars='RegionId', cmap='glasbey', categories=True
+)
 
 # %%
 # .. tags:: filter

@@ -62,11 +62,10 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 point_cloud.plot(eye_dome_lighting=True)
 
 # %%
-# Now what if you have data attributes (scalar/vector arrays) that you'd like
-# to associate with every node of your mesh? You can easily add NumPy data
-# arrays that have a length equal to the number of points in the mesh along the
-# first axis. For example, lets add a few arrays to this new ``point_cloud``
-# mesh.
+# Now what if you have data attributes (scalar/vector arrays) that you'd like to
+# associate with every node of your mesh? You can easily add NumPy data arrays
+# that have a length equal to the number of points in the mesh along the first
+# axis. For example, lets add a few arrays to this new ``point_cloud`` mesh.
 #
 # Make an array of scalar values with the same length as the points array.
 # Each element in this array will correspond to points at the same index:
@@ -122,7 +121,9 @@ arrows = point_cloud.glyph(
 
 # Display the arrows
 pl = pv.Plotter()
-pl.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
+pl.add_mesh(
+    point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True
+)
 pl.add_mesh(arrows, color='lightblue')
 # pl.add_point_labels([point_cloud.center,], ['Center',],
 #                          point_color='yellow', point_size=20)

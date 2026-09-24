@@ -27,8 +27,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Example A
-# +++++++++
+# Example A +++++++++
 #
 # Use a single sphere widget
 
@@ -66,8 +65,7 @@ pl.show()
 
 
 # %%
-# Example B
-# +++++++++
+# Example B +++++++++
 #
 # Use several sphere widgets at once
 
@@ -105,8 +103,7 @@ pl.show()
 # .. image:: ../../images/gifs/sphere-widget-b.gif
 
 # %%
-# Example C
-# +++++++++
+# Example C +++++++++
 #
 # This one is the coolest - use four sphere widgets to update perturbations on
 # a surface and interpolate between them with some boundary conditions
@@ -150,7 +147,9 @@ points = np.array([[33, 25, 45], [70, 80, 13], [51, 57, 10], [25, 69, 20]])
 def update_surface(point, i):
     points[i] = point
     tp = np.vstack((points, boundaries))
-    zz = griddata(tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method='cubic')
+    zz = griddata(
+        tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method='cubic'
+    )
     surf.points[:, -1] = zz.ravel(order='F')
 
 

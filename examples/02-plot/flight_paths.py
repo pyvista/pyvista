@@ -19,7 +19,9 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 
-def latlon_to_xyz(latitude: float, longitude: float, radius: float = 1.0) -> np.ndarray:
+def latlon_to_xyz(
+    latitude: float, longitude: float, radius: float = 1.0
+) -> np.ndarray:
     """Convert latitude and longitude in degrees to Cartesian coordinates."""
     lat = np.deg2rad(latitude)
     lon = np.deg2rad(longitude)
@@ -54,7 +56,10 @@ routes = [
 arcs = []
 for start, stop in routes:
     arc = pv.CircularArc(
-        pointa=cities[start], pointb=cities[stop], center=(0, 0, 0), resolution=150
+        pointa=cities[start],
+        pointb=cities[stop],
+        center=(0, 0, 0),
+        resolution=150,
     )
     scale = 1.0 + 0.18 * np.sin(np.linspace(0, np.pi, arc.n_points))
     directions = arc.points / np.linalg.norm(arc.points, axis=1)[:, None]

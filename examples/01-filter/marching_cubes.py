@@ -32,7 +32,9 @@ def spider_cage(x, y, z):
     with np.errstate(divide='ignore', invalid='ignore'):
         return (
             np.sqrt((x2 - y2) ** 2 / x2_y2 + 3 * (z * np.sin(a)) ** 2) - 3
-        ) ** 2 + 6 * (np.sqrt((x * y) ** 2 / x2_y2 + (z * np.cos(a)) ** 2) - 1.5) ** 2
+        ) ** 2 + 6 * (
+            np.sqrt((x * y) ** 2 / x2_y2 + (z * np.cos(a)) ** 2) - 1.5
+        ) ** 2
 
 
 # create a uniform grid to sample the function with
@@ -49,7 +51,9 @@ x, y, z = grid.points.T
 values = spider_cage(x, y, z)
 mesh = grid.contour([1], values, method='marching_cubes')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False)
+mesh.plot(
+    scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False
+)
 
 
 # %%
@@ -91,14 +95,15 @@ x, y, z = grid.points.T
 values = barth_sextic(x, y, z)
 mesh = grid.contour([0], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False)
+mesh.plot(
+    scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False
+)
 
 
 # %%
 # Animate Barth Sextic
 # ~~~~~~~~~~~~~~~~~~~~
-# Show 20 frames of various isocurves extracted from the Barth sextic
-# function.
+# Show 20 frames of various isocurves extracted from the Barth sextic function.
 
 
 def angle_to_range(angle):

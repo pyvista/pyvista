@@ -4,7 +4,7 @@
 Build a Ball-and-Stick Molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Assemble a simple molecule from :func:`~pyvista.Sphere` atoms and cylinder bonds.
+Assemble a molecule from :func:`~pyvista.Sphere` atoms and cylinder bonds.
 
 """
 
@@ -22,7 +22,9 @@ carbons = np.column_stack((np.cos(angles), np.sin(angles), np.zeros(6)))
 hydrogens = 1.6 * carbons
 
 
-def make_bond(point_a: np.ndarray, point_b: np.ndarray, radius: float) -> pv.PolyData:
+def make_bond(
+    point_a: np.ndarray, point_b: np.ndarray, radius: float
+) -> pv.PolyData:
     """Create a cylinder between two atom centers."""
     direction = point_b - point_a
     return pv.Cylinder(
@@ -33,8 +35,12 @@ def make_bond(point_a: np.ndarray, point_b: np.ndarray, radius: float) -> pv.Pol
     )
 
 
-carbon_atoms = pv.merge([pv.Sphere(radius=0.22, center=center) for center in carbons])
-hydrogen_atoms = pv.merge([pv.Sphere(radius=0.14, center=center) for center in hydrogens])
+carbon_atoms = pv.merge(
+    [pv.Sphere(radius=0.22, center=center) for center in carbons]
+)
+hydrogen_atoms = pv.merge(
+    [pv.Sphere(radius=0.14, center=center) for center in hydrogens]
+)
 
 carbon_bonds = pv.merge(
     [

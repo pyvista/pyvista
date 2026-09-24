@@ -4,7 +4,7 @@
 Sample Function: Perlin Noise in 3D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sample 3D Perlin noise using :func:`~pyvista.core.utilities.features.sample_function`.
+Sample 3D Perlin noise using :func:`~pyvista.sample_function`.
 
 Video games like Minecraft use Perlin noise to create terrain.  Here,
 we create a voxelized mesh similar to a Minecraft "cave".
@@ -26,7 +26,9 @@ import pyvista as pv
 
 freq = (1, 1, 1)
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-grid = pv.sample_function(noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(120, 40, 40))
+grid = pv.sample_function(
+    noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(120, 40, 40)
+)
 out = grid.threshold(0.02)
 out
 

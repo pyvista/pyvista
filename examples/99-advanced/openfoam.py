@@ -25,7 +25,8 @@ reader = pv.POpenFOAMReader(filename)
 
 # %%
 # OpenFOAM datasets include multiple sub-datasets including the internal mesh
-# and patches, typically boundaries.  This can be inspected before reading the data.
+# and patches, typically boundaries.  This can be inspected before reading
+# the data.
 
 print(f'All patch names: {reader.patch_array_names}')
 print(f'All patch status: {reader.all_patch_arrays_status}')
@@ -82,12 +83,11 @@ internal_mesh = mesh['internalMesh']
 boundaries = mesh['boundary']
 
 # %%
-# This OpenFOAM simulation is in 3D with
-# only 1 cell in the z-direction.  First, the solution is sliced in the center
-# of the z-direction.
-# :func:`pyvista.DataSetFilters.streamlines_evenly_spaced_2D` requires the data
-# to lie in the z=0 plane.  So, after the domain sliced, it is translated to
-# ``z=0``.
+# This OpenFOAM simulation is in 3D with only 1 cell in the z-direction.
+# First, the solution is sliced in the center of the z-direction.
+# :func:`pyvista.DataSetFilters.streamlines_evenly_spaced_2D` requires the
+# data to lie in the z=0 plane.  So, after the domain sliced, it is translated
+# to ``z=0``.
 
 
 def slice_z_center(mesh):

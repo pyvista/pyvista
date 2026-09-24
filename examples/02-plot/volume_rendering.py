@@ -4,7 +4,7 @@
 Volume Rendering
 ~~~~~~~~~~~~~~~~
 
-Volume render uniform mesh types like :class:`pyvista.ImageData` or 3D NumPy arrays.
+Volume render mesh types like :class:`pyvista.ImageData` or 3D NumPy arrays.
 
 This also explores how to extract a volume of interest (VOI) from a
 :class:`pyvista.ImageData` using the
@@ -27,8 +27,7 @@ vol = examples.download_knee_full()
 vol
 
 # %%
-# Simple Volume Render
-# ++++++++++++++++++++
+# Simple Volume Render ++++++++++++++++++++
 #
 
 # A nice camera position
@@ -42,8 +41,7 @@ vol.plot(volume=True, cmap='bone', cpos=cpos)
 
 
 # %%
-# Opacity Mappings
-# ++++++++++++++++
+# Opacity Mappings ++++++++++++++++
 #
 # Or use the :func:`pyvista.Plotter.add_volume` method like below.
 # Note that here we use a non-default opacity mapping to a sigmoid:
@@ -63,8 +61,8 @@ pl.camera_position = cpos
 pl.show()
 
 # %%
-# We can also use a shading technique when volume rendering with the ``shade``
-# option
+# We can also use a shading technique when volume rendering with the
+# ``shade`` option
 pl = pv.Plotter(shape=(1, 2))
 pl.add_volume(vol, cmap='viridis', opacity=opacity, shade=False)
 pl.add_text('No shading')
@@ -76,15 +74,13 @@ pl.link_views()
 pl.show()
 
 # %%
-# Cool Volume Examples
-# ++++++++++++++++++++
+# Cool Volume Examples ++++++++++++++++++++
 #
 # Here are a few more cool volume rendering examples.
 
 
 # %%
-# Head Dataset
-# """"""""""""
+# Head Dataset """"""""""""
 
 head = examples.download_head()
 
@@ -100,13 +96,12 @@ pl.show()
 
 
 # %%
-# Bolt-Nut MultiBlock Dataset
-# """""""""""""""""""""""""""
+# Bolt-Nut MultiBlock Dataset """""""""""""""""""""""""""
 # .. note::
-#    See how we set interpolation to ``'linear'`` here to smooth out scalars of
-#    each individual cell to make a more appealing plot. Two actor are returned
-#    by ``add_volume`` because ``bolt_nut`` is a :class:`pyvista.MultiBlock`
-#    dataset.
+#    See how we set interpolation to ``'linear'`` here to smooth out scalars
+# of    each individual cell to make a more appealing plot. Two actor are
+# returned    by ``add_volume`` because ``bolt_nut`` is a
+# :class:`pyvista.MultiBlock`    dataset.
 
 bolt_nut = examples.download_bolt_nut()
 
@@ -125,8 +120,7 @@ cpos = pl.show(return_cpos=True)
 
 
 # %%
-# Frog Dataset
-# """"""""""""
+# Frog Dataset """"""""""""
 
 frog = examples.download_frog()
 
@@ -142,8 +136,7 @@ pl.show()
 
 
 # %%
-# Extracting a VOI
-# ++++++++++++++++
+# Extracting a VOI ++++++++++++++++
 #
 # Use the :func:`pyvista.ImageDataFilters.extract_subset` filter to extract
 # a volume of interest/subset volume to volume render. This is ideal when
@@ -188,7 +181,9 @@ pl.show()
 # Ah, much better. Let's now volume render that region of interest.
 
 pl = pv.Plotter()
-pl.add_volume(voi, cmap='magma', clim=clim, opacity=opacity, opacity_unit_distance=2000)
+pl.add_volume(
+    voi, cmap='magma', clim=clim, opacity=opacity, opacity_unit_distance=2000
+)
 pl.camera_position = pv.CameraPosition(
     position=(531600.0, 3944000.0, 26560.0),
     focal_point=(599100.0, 3982000.0, -11970.0),
@@ -204,13 +199,14 @@ pl.show()
 # +++++++++++++++++++++++++++++
 # Visualize a medical image with a corresponding binary segmentation mask.
 #
-# For this example, we use :func:`~pyvista.examples.downloads.download_whole_body_ct_male`
-# though :func:`~pyvista.examples.downloads.download_whole_body_ct_female`, or any
+# For this example, we use
+# :func:`~pyvista.examples.downloads.download_whole_body_ct_male` though
+# :func:`~pyvista.examples.downloads.download_whole_body_ct_female`, or any
 # other dataset with a corresponding label or mask may be used.
 
 # %%
-# Load the dataset and get the ct image and a mask image. Here, a mask of the heart is
-# used.
+# Load the dataset and get the ct image and a mask image. Here, a mask of the
+# heart is used.
 dataset = examples.download_whole_body_ct_male()
 ct_image = dataset['ct']
 heart_mask = dataset['segmentations']['heart']
@@ -218,8 +214,8 @@ heart_mask = dataset['segmentations']['heart']
 # %%
 # Use the segmentation mask to isolate the heart in the CT image.
 #
-# Initialize a new array and image with CT background values. Here, we set the scalar
-# values to ``-1000`` which typically corresponds to air (low density).
+# Initialize a new array and image with CT background values. Here, we set the
+# scalar values to ``-1000`` which typically corresponds to air (low density).
 
 heart_array = np.full_like(ct_image.active_scalars, -1000)
 
@@ -228,7 +224,9 @@ heart_array = np.full_like(ct_image.active_scalars, -1000)
 # to mask the CT image to only extract the intensities of interest.
 ct_image_array = ct_image.active_scalars
 heart_mask_array = heart_mask.active_scalars
-heart_array[heart_mask_array == np.True_] = ct_image_array[heart_mask_array == np.True_]
+heart_array[heart_mask_array == np.True_] = ct_image_array[
+    heart_mask_array == np.True_
+]
 
 # %%
 # Add the masked array to the CT image as a new set of scalar values.

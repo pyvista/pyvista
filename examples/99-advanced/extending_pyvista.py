@@ -4,21 +4,21 @@
 Extending PyVista
 ~~~~~~~~~~~~~~~~~
 
-A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended by users.
+A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended.
 
 For example, if the user wants to keep track of the location of the
 maximum point in the (1, 0, 1) direction on the mesh.
 
-There are two methods by which users can handle subclassing.  One is directly managing
-the types objects.  This may require checking types during filter
+There are two methods by which users can handle subclassing.  One is directly
+managing the types objects.  This may require checking types during filter
 operations.
 
-The second is automatic managing of types.  Users can control whether user defined
-classes are nearly always used for particular types of DataSets.
+The second is automatic managing of types.  Users can control whether user
+defined classes are nearly always used for particular types of DataSets.
 
 .. note::
-    This is for advanced usage only.  Automatic managing of types
-    will not work in all situations, in particular when a builtin dataset is directly
+    This is for advanced usage only.  Automatic managing of types will not
+    work in all situations, in particular when a builtin dataset is directly
     instantiated.  See examples below.
 
 """
@@ -45,8 +45,7 @@ class FooData(pv.PolyData):
 
 
 # %%
-# Directly Managing Types
-# +++++++++++++++++++++++
+# Directly Managing Types +++++++++++++++++++++++
 #
 # Now a ``foo_sphere`` object is created of type ``FooData``.
 # The index of the point and location of the point of interest can be obtained
@@ -58,17 +57,21 @@ foo_sphere = FooData(pv.Sphere(theta_resolution=100, phi_resolution=100))
 print('Original foo sphere:')
 print(f'Type: {type(foo_sphere)}')
 print(f'Maximum point index: {foo_sphere.max_point}')
-print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
+print(
+    f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
+)
 
 # %%
-# Using an in-place operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
-# affect the type of the object.
+# Using an in-place operation like :func:`~pyvista.DataObjectFilters.rotate_y`
+# does not affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
 print('\nRotated foo sphere:')
 print(f'Type: {type(foo_sphere)}')
 print(f'Maximum point index: {foo_sphere.max_point}')
-print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
+print(
+    f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
+)
 
 # %%
 # However, filter operations can return different ``DataSet`` types including
@@ -86,15 +89,16 @@ print(f'Type: {type(decimated_foo_sphere)}')
 decimated_foo_sphere = FooData(foo_sphere.decimate(0.5))
 print(f'Type: {type(decimated_foo_sphere)}')
 print(f'Maximum point index: {decimated_foo_sphere.max_point}')
-print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
+print(
+    f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
+)
 
 # %%
-# Automatically Managing Types
-# ++++++++++++++++++++++++++++
+# Automatically Managing Types ++++++++++++++++++++++++++++
 #
-# The default :class:`pyvista.DataSet` type can be set using ``pyvista._wrappers``.
-# In general, it is best to use this method when it is expected to primarily
-# use the user defined class.
+# The default :class:`pyvista.DataSet` type can be set using
+# ``pyvista._wrappers``. In general, it is best to use this method when it is
+# expected to primarily use the user defined class.
 #
 # In this example, all objects that would have been created as
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
@@ -110,27 +114,32 @@ foo_sphere = pv.Sphere(theta_resolution=100, phi_resolution=100)
 print('Original foo sphere:')
 print(f'Type: {type(foo_sphere)}')
 print(f'Maximum point index: {foo_sphere.max_point}')
-print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
+print(
+    f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
+)
 
 # %%
-# Using an in-place operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
-# affect the type of the object.
+# Using an in-place operation like :func:`~pyvista.DataObjectFilters.rotate_y`
+# does not affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
 print('\nRotated foo sphere:')
 print(f'Type: {type(foo_sphere)}')
 print(f'Maximum point index: {foo_sphere.max_point}')
-print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
+print(
+    f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
+)
 
 # %%
-# Filter operations that return :class:`pyvista.PolyData` now return
-# ``FooData``
+# Filter operations that return :class:`pyvista.PolyData` now return ``FooData``
 
 print('\nDecimated foo sphere:')
 decimated_foo_sphere = foo_sphere.decimate(0.5)
 print(f'Type: {type(decimated_foo_sphere)}')
 print(f'Maximum point index: {decimated_foo_sphere.max_point}')
-print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
+print(
+    f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
+)
 
 # %%
 # Users can still create a native :class:`pyvista.PolyData` object, but

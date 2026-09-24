@@ -17,8 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Clip With Plane
-# +++++++++++++++
+# Clip With Plane +++++++++++++++
 #
 # Clip any dataset by a user defined plane using the
 # :func:`pyvista.DataObjectFilters.clip` filter
@@ -38,8 +37,7 @@ pl.show()
 
 
 # %%
-# Clip With Bounds
-# ++++++++++++++++
+# Clip With Bounds ++++++++++++++++
 #
 # Clip any dataset by a set of XYZ bounds using the
 # :func:`pyvista.DataObjectFilters.clip_box` filter.
@@ -56,8 +54,7 @@ pl.show()
 
 
 # %%
-# Clip With Rotated Box
-# +++++++++++++++++++++
+# Clip With Rotated Box +++++++++++++++++++++
 #
 # Clip any dataset by an arbitrarily rotated solid box using the
 # :func:`pyvista.DataObjectFilters.clip_box` filter.
@@ -65,7 +62,10 @@ mesh = examples.load_airplane()
 
 # Use `pv.Box()` or `pv.Cube()` to create a region of interest
 roi = pv.Cube(
-    center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500
+    center=(0.9e3, 0.2e3, mesh.center[2]),
+    x_length=500,
+    y_length=500,
+    z_length=500,
 )
 roi.rotate_z(33, inplace=True)
 

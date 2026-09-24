@@ -30,8 +30,8 @@ cp = pv.CameraPosition(
 )
 
 # %%
-# Let's apply the Gaussian smoothing with different values of standard
-# deviation.
+# Let's apply the Gaussian smoothing with different values of
+# standard deviation.
 datasets = {'Original Image': data}
 for std_dev in [2.0, 4.0, 8.0]:
     datasets[f'Gaussian smoothing, std={std_dev:g}'] = data.gaussian_smooth(
@@ -61,7 +61,9 @@ data = examples.download_brain()
 smoothed_data = data.gaussian_smooth(std_dev=3.0)
 
 
-dargs = dict(clim=smoothed_data.get_data_range(), opacity=[0, 0, 0, 0.1, 0.3, 0.6, 1])
+dargs = dict(
+    clim=smoothed_data.get_data_range(), opacity=[0, 0, 0, 0.1, 0.3, 0.6, 1]
+)
 
 n = [100, 150, 200, 245, 255]
 

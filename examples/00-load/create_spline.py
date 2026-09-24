@@ -4,7 +4,7 @@
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
-Create a spline/polyline from a NumPy array of XYZ vertices using :func:`pyvista.Spline`.
+Create a spline from an array of XYZ vertices using :func:`pyvista.Spline`.
 
 """
 
@@ -110,8 +110,7 @@ tube.plot(scalars='theta', smooth_shading=True)
 
 
 # %%
-# Ribbons
-# +++++++
+# Ribbons +++++++
 #
 # Any of the lines from the examples above can be used to create ribbons.
 # Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.
@@ -120,8 +119,7 @@ ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
 
 # %%
-# Closing a Spline
-# ++++++++++++++++
+# Closing a Spline ++++++++++++++++
 #
 # Create a spline and its closed counterpart.
 
@@ -133,8 +131,7 @@ pl.add_mesh(spline_closed, line_width=4, color='r')
 pl.show()
 
 # %%
-# Parametrizing by Length Versus Index
-# ++++++++++++++++++++++++++++++++++++
+# Parametrizing by Length Versus Index ++++++++++++++++++++++++++++++++++++
 #
 # Create a spline by parametrizing based on length (default) or point index.
 
@@ -142,26 +139,35 @@ pl = pv.Plotter()
 spline = pv.Spline(points, parametrize_by='length')
 spline_by_index = pv.Spline(points, parametrize_by='index')
 pl.add_mesh(spline, line_width=4)
-pl.add_mesh(spline.points, color='g', point_size=8.0, render_points_as_spheres=True)
 pl.add_mesh(
-    spline_by_index.points, color='r', point_size=8.0, render_points_as_spheres=True
+    spline.points, color='g', point_size=8.0, render_points_as_spheres=True
+)
+pl.add_mesh(
+    spline_by_index.points,
+    color='r',
+    point_size=8.0,
+    render_points_as_spheres=True,
 )
 pl.show()
 
 # %%
-# Boundary Constraints
-# ++++++++++++++++++++
+# Boundary Constraints ++++++++++++++++++++
 #
-# Create a spline and see the effect of boundary constraint.
-# Boundary type can be ``'finite_difference'``, ``'clamped'``, ``'second'``,
-# ``'scaled_second'`` with the definition of the boundary types in :func:`pyvista.Spline`.
+# Create a spline and see the effect of boundary constraint. Boundary type can
+# be ``'finite_difference'``, ``'clamped'``, ``'second'``, ``'scaled_second'``
+# with the definition of the boundary types in :func:`pyvista.Spline`.
 #
 # To visualize the different splines, we label each one using integer ID scalars
 # and merge them into a single mesh.
 
 pl = pv.Plotter()
 mesh = pv.PolyData()
-constraint_map = {'finite_difference': 0, 'clamped': 1, 'second': 2, 'scaled_second': 3}
+constraint_map = {
+    'finite_difference': 0,
+    'clamped': 1,
+    'second': 2,
+    'scaled_second': 3,
+}
 for constraint, constraint_id in constraint_map.items():
     val = None if constraint == 'finite_difference' else 1.0
     spline = pv.Spline(
@@ -170,7 +176,9 @@ for constraint, constraint_id in constraint_map.items():
         boundary_constraints=constraint,
         boundary_values=val,
     )
-    spline.cell_data['boundary_constraint'] = np.array([constraint_id], dtype=np.uint8)
+    spline.cell_data['boundary_constraint'] = np.array(
+        [constraint_id], dtype=np.uint8
+    )
     mesh = pv.merge([mesh, spline], merge_points=False)
 
 colored_mesh, color_map = mesh.color_labels(
@@ -180,15 +188,16 @@ legend_map = dict(zip(constraint_map.keys(), color_map.values(), strict=True))
 pl.add_mesh(colored_mesh, line_width=4, rgb=True)
 pl.add_legend(legend_map)
 cpos = pv.CameraPosition(
-    position=(2.0, -2.0, 11.0), focal_point=(-0.8, 3.3, -0.4), viewup=(0.0, 1.0, 0.5)
+    position=(2.0, -2.0, 11.0),
+    focal_point=(-0.8, 3.3, -0.4),
+    viewup=(0.0, 1.0, 0.5),
 )
 pl.camera_position = cpos
 pl.show()
 
 
 # %%
-# Boundary Values
-# +++++++++++++++
+# Boundary Values +++++++++++++++
 #
 # Create a spline and see the effect of boundary value. It can be set at left
 # and right value and has no effect for boundary type 0.

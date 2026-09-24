@@ -4,7 +4,7 @@
 Label Based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a spline and generate labels along the spline based on distance along a spline.
+Create a spline and generate labels based on distance along it.
 
 This is an extension of the :ref:`create_spline_example`.
 
@@ -35,12 +35,12 @@ spline.point_data
 # %%
 # Determine the Coordinates Matching Distance Along a Spline
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Here we write a simple function that gets the closest point matching a distance along a
-# spline and then generate labels for those points.
+# Here we write a simple function that gets the closest point matching a
+# distance along a spline and then generate labels for those points.
 
 
 def get_point_along_spline(distance):
-    """Return the closest point on the spline given a length along the spline."""
+    """Return the closest point at a given length along the spline."""
     idx = np.argmin(np.abs(spline.point_data['arc_length'] - distance))
     return spline.points[idx]
 
@@ -53,7 +53,9 @@ labels = []
 label_points = []
 for dist in dists:
     point = get_point_along_spline(dist)
-    labels.append(f'Dist {dist}: ({point[0]:.2f}, {point[1]:.2f}, {point[2]:.2f})')
+    labels.append(
+        f'Dist {dist}: ({point[0]:.2f}, {point[1]:.2f}, {point[2]:.2f})'
+    )
     label_points.append(point)
 
 labels
@@ -69,7 +71,9 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 pl = pv.Plotter()
-pl.add_mesh(spline, scalars='arc_length', render_lines_as_tubes=True, line_width=10)
+pl.add_mesh(
+    spline, scalars='arc_length', render_lines_as_tubes=True, line_width=10
+)
 pl.add_point_labels(
     label_points,
     labels,

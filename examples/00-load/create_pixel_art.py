@@ -4,10 +4,11 @@
 Pixel Art of ALIEN MONSTERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use :func:`pyvista.Box` to make `pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_.
+Make `pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_ with boxes.
 
-Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg>`_
-and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
+Pixel string `source
+<https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg>`_ and
+`license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
 
@@ -42,7 +43,9 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
     if not line:
         continue
     long_line = line + (20 - len(line)) * ' ' if len(line) < 20 else line
-    alien.append([long_line[i : i + 2] == '% ' for i in range(0, len(long_line), 2)])
+    alien.append(
+        [long_line[i : i + 2] == '% ' for i in range(0, len(long_line), 2)]
+    )
 
 
 # %%

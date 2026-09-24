@@ -30,9 +30,9 @@ import pyvista as pv
 # interpolated across the topology of the dataset which is more accurate.
 #
 # To summarize, when ``interpolate_before_map`` is off, the colors are
-# interpolated after rendering and when ``interpolate_before_map`` is on, the
-# scalars are interpolated across the mesh and those values are mapped to
-# colors.
+# interpolated after rendering and when ``interpolate_before_map`` is on,
+# the scalars are interpolated across the mesh and those values are mapped
+# to colors.
 #
 # So lets take a look at the difference:
 
@@ -58,20 +58,24 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(-1.67, -5.1, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.37, 0.93)
+    position=(-1.67, -5.1, 2.06),
+    focal_point=(0.0, 0.0, 0.0),
+    viewup=(0.0, 0.37, 0.93),
 )
 pl.show()
 
 # %%
-# Shown in the figure above, when not interpolating the scalars before mapping,
-# the colors (RGB values, not scalars) are interpolated between the vertices by
-# the underlying graphics library (OpenGL), and the colors shown are not
-# accurate.
+# Shown in the figure above, when not interpolating the scalars before
+# mapping, the colors (RGB values, not scalars) are interpolated between the
+# vertices by the underlying graphics library (OpenGL), and the colors shown
+# are not accurate.
 #
 # The same interpolation effect occurs for wireframe visualization too:
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True, style='wireframe')
+dargs = dict(
+    scalars='Elevation', cmap='rainbow', show_edges=True, style='wireframe'
+)
 
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(
@@ -89,7 +93,9 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(-1.67, -5.1, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.37, 0.93)
+    position=(-1.67, -5.1, 2.06),
+    focal_point=(0.0, 0.0, 0.0),
+    viewup=(0.0, 0.37, 0.93),
 )
 pl.show()
 
@@ -123,7 +129,9 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+    position=(55.0, 16, 31),
+    focal_point=(-5.0, 0.0, 0.0),
+    viewup=(-0.22, 0.97, -0.09),
 )
 pl.show()
 
@@ -152,7 +160,9 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+    position=(55.0, 16, 31),
+    focal_point=(-5.0, 0.0, 0.0),
+    viewup=(-0.22, 0.97, -0.09),
 )
 pl.show()
 

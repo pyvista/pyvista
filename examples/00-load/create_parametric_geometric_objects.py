@@ -16,15 +16,13 @@ import pyvista as pv
 # %%
 # This example demonstrates how to plot parametric objects using pyvista
 #
-# Supertoroid
-# +++++++++++
+# Supertoroid +++++++++++
 
 supertoroid = pv.ParametricSuperToroid(n1=0.5)
 supertoroid.plot(color='lightblue', smooth_shading=True)
 
 # %%
-# Parametric Ellipsoid
-# ++++++++++++++++++++
+# Parametric Ellipsoid ++++++++++++++++++++
 
 # Ellipsoid with a long x axis
 ellipsoid = pv.ParametricEllipsoid(10, 5, 5)
@@ -32,8 +30,7 @@ ellipsoid.plot(color='lightblue')
 
 
 # %%
-# Partial Parametric Ellipsoid
-# ++++++++++++++++++++++++++++
+# Partial Parametric Ellipsoid ++++++++++++++++++++++++++++
 
 # cool plotting direction
 cpos = pv.CameraPosition(
@@ -49,150 +46,132 @@ part_ellipsoid.plot(color='lightblue', smooth_shading=True, cpos=cpos)
 
 
 # %%
-# Pseudosphere
-# ++++++++++++
+# Pseudosphere ++++++++++++
 
 pseudosphere = pv.ParametricPseudosphere()
 pseudosphere.plot(color='lightblue', smooth_shading=True)
 
 # %%
-# Bohemian Dome
-# +++++++++++++
+# Bohemian Dome +++++++++++++
 
 
 bohemiandome = pv.ParametricBohemianDome()
 bohemiandome.plot(color='lightblue')
 
 # %%
-# Bour
-# ++++
+# Bour ++++
 
 bour = pv.ParametricBour()
 bour.plot(color='lightblue')
 
 # %%
-# Boy's Surface
-# +++++++++++++
+# Boy's Surface +++++++++++++
 
 boy = pv.ParametricBoy()
 boy.plot(color='lightblue')
 
 # %%
-# Catalan Minimal
-# +++++++++++++++
+# Catalan Minimal +++++++++++++++
 
 catalanminimal = pv.ParametricCatalanMinimal()
 catalanminimal.plot(color='lightblue')
 
 # %%
-# Conic Spiral
-# ++++++++++++
+# Conic Spiral ++++++++++++
 
 conicspiral = pv.ParametricConicSpiral()
 conicspiral.plot(color='lightblue')
 
 # %%
-# Cross Cap
-# +++++++++
+# Cross Cap +++++++++
 
 crosscap = pv.ParametricCrossCap()
 crosscap.plot(color='lightblue')
 
 # %%
-# Dini
-# ++++
+# Dini ++++
 
 dini = pv.ParametricDini()
 dini.plot(color='lightblue')
 
 # %%
-# Enneper
-# +++++++
+# Enneper +++++++
 
 enneper = pv.ParametricEnneper()
 enneper.plot(cpos='yz')
 
 # %%
-# Figure-8 Klein
-# ++++++++++++++
+# Figure-8 Klein ++++++++++++++
 
 figure8klein = pv.ParametricFigure8Klein()
 figure8klein.plot()
 
 # %%
-# Henneberg
-# +++++++++
+# Henneberg +++++++++
 
 henneberg = pv.ParametricHenneberg()
 henneberg.plot(color='lightblue')
 
 # %%
-# Klein
-# +++++
+# Klein +++++
 
 klein = pv.ParametricKlein()
 klein.plot(color='lightblue')
 
 # %%
-# Kuen
-# ++++
+# Kuen ++++
 
 kuen = pv.ParametricKuen()
 kuen.plot(color='lightblue')
 
 # %%
-# Mobius
-# ++++++
+# Mobius ++++++
 
 mobius = pv.ParametricMobius()
 mobius.plot(color='lightblue')
 
 # %%
-# Plucker Conoid
-# ++++++++++++++
+# Plucker Conoid ++++++++++++++
 
 pluckerconoid = pv.ParametricPluckerConoid()
 pluckerconoid.plot(color='lightblue')
 
 
 # %%
-# Random Hills
-# ++++++++++++
+# Random Hills ++++++++++++
 
 randomhills = pv.ParametricRandomHills()
 randomhills.plot(color='lightblue')
 
 # %%
-# Roman
-# +++++
+# Roman +++++
 
 roman = pv.ParametricRoman()
 roman.plot(color='lightblue')
 
 # %%
-# Super Ellipsoid
-# +++++++++++++++
+# Super Ellipsoid +++++++++++++++
 
 superellipsoid = pv.ParametricSuperEllipsoid(n1=0.1, n2=2)
 superellipsoid.plot(color='lightblue')
 
 # %%
-# Torus
-# +++++
+# Torus +++++
 
 torus = pv.ParametricTorus()
 torus.plot(color='lightblue')
 
 # %%
-# Circular Arc
-# ++++++++++++
+# Circular Arc ++++++++++++
 
 pointa = [-1, 0, 0]
 pointb = [0, 1, 0]
 center = [0, 0, 0]
 resolution = 100
 
-arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
+arc = pv.CircularArc(
+    pointa=pointa, pointb=pointb, center=center, resolution=resolution
+)
 
 pl = pv.Plotter()
 pl.add_mesh(arc, color='k', line_width=4)
@@ -202,15 +181,16 @@ pl.show()
 
 
 # %%
-# Extruded Half Arc
-# +++++++++++++++++
+# Extruded Half Arc +++++++++++++++++
 
 pointa = [-1, 0, 0]
 pointb = [1, 0, 0]
 center = [0, 0, 0]
 resolution = 100
 
-arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
+arc = pv.CircularArc(
+    pointa=pointa, pointb=pointb, center=center, resolution=resolution
+)
 poly = arc.extrude([0, 0, 1], capping=False)
 poly.plot(color='lightblue', cpos='iso', show_edges=True)
 # %%

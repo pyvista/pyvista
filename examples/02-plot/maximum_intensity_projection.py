@@ -47,7 +47,11 @@ indices = rng.integers(0, vol.n_points, sample_n)
 pts = vol.extract_points(indices, adjacent_cells=False, include_cells=False)
 
 display = dict(
-    cmap='jet', clim=[0, 100], style='points', point_size=5, show_scalar_bar=False
+    cmap='jet',
+    clim=[0, 100],
+    style='points',
+    point_size=5,
+    show_scalar_bar=False,
 )
 
 pl = pv.Plotter(shape=(1, 2))
@@ -75,7 +79,11 @@ pl.show()
 # the default square points.
 
 combined_display = dict(
-    cmap='jet', clim=[0, 100], style='points', point_size=15, show_scalar_bar=False
+    cmap='jet',
+    clim=[0, 100],
+    style='points',
+    point_size=15,
+    show_scalar_bar=False,
 )
 
 pl = pv.Plotter(shape=(1, 2))

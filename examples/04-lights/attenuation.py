@@ -7,20 +7,20 @@ Attenuation
 This example shows how use :attr:`~pyvista.Light.attenuation_values`.
 
 Attenuation is the phenomenon of light's intensity being gradually dampened as
-it propagates through a medium. In PyVista positional lights can show attenuation.
-The quadratic attenuation model uses three parameters to describe attenuation:
-a constant, a linear and a quadratic parameter. These parameters
-describe the decrease of the beam intensity as a function of the distance, `I(r)`.
-In a broad sense the constant, linear, and quadratic components correspond to
-`I(r) = 1`, `I(r) = 1/r` and `I(r) = 1/r^2` decay of the intensity with distance
-from the point source. In all cases a larger attenuation value (of a given kind)
-means stronger dampening (weaker light at a given distance).
+it propagates through a medium. In PyVista positional lights can show
+attenuation. The quadratic attenuation model uses three parameters to describe
+attenuation: a constant, a linear and a quadratic parameter. These parameters
+describe the decrease of the beam intensity as a function of the distance,
+`I(r)`. In a broad sense the constant, linear, and quadratic components
+correspond to `I(r) = 1`, `I(r) = 1/r` and `I(r) = 1/r^2` decay of the intensity
+with distance from the point source. In all cases a larger attenuation value (of
+a given kind) means stronger dampening (weaker light at a given distance).
 
-So the constant attenuation parameter corresponds roughly to a constant intensity
-component. The linear and the quadratic attenuation parameters correspond to intensity
-components that decay with distance from the source. For the same parameter value the
-quadratic attenuation produces a beam that is shorter in range than that produced
-by linear attenuation.
+So the constant attenuation parameter corresponds roughly to a constant
+intensity component. The linear and the quadratic attenuation parameters
+correspond to intensity components that decay with distance from the source. For
+the same parameter value the quadratic attenuation produces a beam that is
+shorter in range than that produced by linear attenuation.
 
 Three spotlights with three different attenuation profiles each:
 
@@ -35,7 +35,9 @@ pl.add_mesh(billboard, color='white')
 
 all_attenuation_values = [(1, 0, 0), (0, 2, 0), (0, 0, 2)]
 offsets = [-2, 0, 2]
-for attenuation_values, offset in zip(all_attenuation_values, offsets, strict=True):
+for attenuation_values, offset in zip(
+    all_attenuation_values, offsets, strict=True
+):
     light = pv.Light(
         position=(0.1, offset, 2), focal_point=(0.1, offset, 1), color='cyan'
     )
@@ -64,7 +66,9 @@ pl.add_mesh(billboard, color='white')
 
 all_attenuation_values = [(1, 0, 0), (0, 2, 0), (0, 0, 2)]
 offsets = [-2, 0, 2]
-for attenuation_values, offset in zip(all_attenuation_values, offsets, strict=True):
+for attenuation_values, offset in zip(
+    all_attenuation_values, offsets, strict=True
+):
     light = pv.Light(
         position=(0.5, offset, 3), focal_point=(0.5, offset, 1), color='cyan'
     )
@@ -95,11 +99,16 @@ for attenuation_values, light_x in zip(
     # loop over three perpendicular planes for each light
     for plane_y in [2, 5, 10]:
         screen = pv.Plane(
-            center=(light_x, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5
+            center=(light_x, plane_y, 0),
+            direction=(0, 1, 0),
+            i_size=5,
+            j_size=5,
         )
         pl.add_mesh(screen, color='white')
 
-    light = pv.Light(position=(light_x, 0, 0), focal_point=(light_x, 1, 0), color='cyan')
+    light = pv.Light(
+        position=(light_x, 0, 0), focal_point=(light_x, 1, 0), color='cyan'
+    )
     light.positional = True
     light.cone_angle = 15
     light.intensity = 5

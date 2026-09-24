@@ -35,7 +35,9 @@ mesh_inside_out.compute_normals(flip_normals=True, inplace=True)
 meshes = mesh + mesh_inside_out
 
 backface_params = dict(color='orangered')
-meshes.plot(color='aquamarine', backface_params=backface_params, smooth_shading=True)
+meshes.plot(
+    color='aquamarine', backface_params=backface_params, smooth_shading=True
+)
 
 
 # %%
@@ -58,33 +60,40 @@ pl.show()
 
 
 # %%
-# In the case of non-orientable surfaces, adding specific backface properties can
-# make the non-orientable quality very obvious by the emergence of "seams"
+# In the case of non-orientable surfaces, adding specific backface properties
+# can make the non-orientable quality very obvious by the emergence of "seams"
 # where the face properties are discontinuous.
 
 henneberg = pv.ParametricHenneberg().scale(0.25, inplace=False)
 klein = (
-    pv.ParametricKlein().rotate_z(150, inplace=False).translate((6, 0, 0), inplace=False)
+    pv.ParametricKlein()
+    .rotate_z(150, inplace=False)
+    .translate((6, 0, 0), inplace=False)
 )
 meshes = henneberg + klein
 
-backface_params = dict(color='mediumseagreen', specular=1.0, specular_power=50.0)
+backface_params = dict(
+    color='mediumseagreen', specular=1.0, specular_power=50.0
+)
 meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
 
 
 # %%
-# Of course we aren't constrained to only setting distinct colors for backfaces;
-# most :class:`pyvista.Property` attributes can be overridden. However, some of
-# these have no effect, while others merely don't make any sense. For instance,
-# most objects have the same opacity no matter which direction you look at them.
-# Here is a GIF animation circling around such an asymmetrically opaque Möbius
-# strip:
+# Of course we aren't constrained to only setting distinct colors for
+# backfaces; most :class:`pyvista.Property` attributes can be overridden.
+# However, some of these have no effect, while others merely don't make any
+# sense. For instance, most objects have the same opacity no matter which
+# direction you look at them. Here is a GIF animation circling around such an
+# asymmetrically opaque Möbius strip:
 
 mobius = pv.ParametricMobius().rotate_z(-90, inplace=False)
 backface_params = dict(opacity=0.5)
 pl = pv.Plotter()
 pl.add_mesh(
-    mobius, color='deepskyblue', backface_params=backface_params, smooth_shading=True
+    mobius,
+    color='deepskyblue',
+    backface_params=backface_params,
+    smooth_shading=True,
 )
 pl.open_gif('mobius_semiopaque.gif')
 

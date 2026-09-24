@@ -30,8 +30,8 @@ points
 # %%
 # Basic Plot
 # ~~~~~~~~~~
-# We can simply plot this point cloud using the convenience :func:`pyvista.plot`
-# function.
+# We can simply plot this point cloud using the convenience
+# :func:`pyvista.plot` function.
 
 pv.plot(points)
 
@@ -152,8 +152,9 @@ pl.show()
 # %%
 # Orbit a Point Cloud
 # ~~~~~~~~~~~~~~~~~~~
-# Generate a plot orbiting around a point cloud. Color based on the distance
-# from the center of the cloud using :func:`~pyvista.Plotter.generate_orbital_path`.
+# Generate a plot orbiting around a point cloud. Color based on the
+# distance from the center of the cloud using
+# :func:`~pyvista.Plotter.generate_orbital_path`.
 
 cloud = examples.download_cloud_dark_matter()
 scalars = np.linalg.norm(cloud.points - cloud.center, axis=1)

@@ -20,8 +20,7 @@ from pyvista import examples
 # %%
 # Any colormap built for ``matplotlib``, ``colorcet``, or ``cmocean`` is fully
 # compatible with PyVista. Colormaps are typically specified by passing the
-# string name of the colormap to the plotting routine via the ``cmap``
-# argument.
+# string name of the colormap to the plotting routine via the ``cmap`` argument.
 #
 # See `Matplotlib's complete list of available colormaps`_,
 # `Colorcet's complete list`_, and `cmocean's complete list`_.
@@ -31,11 +30,10 @@ from pyvista import examples
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 
 # %%
-# Custom Made Colormaps
-# +++++++++++++++++++++
+# Custom Made Colormaps +++++++++++++++++++++
 #
-# To get started using a custom colormap, download some data with scalar values to
-# plot.
+# To get started using a custom colormap, download some data with scalar values
+# to plot.
 
 mesh = examples.download_st_helens().warp_by_scalar()
 # Add scalar array with range (0, 100) that correlates with elevation
@@ -76,7 +74,9 @@ mesh.plot(scalars='values', cmap=boring_cmap)
 # %%
 # You can also pass a list of color strings to the color map.  This
 # approach divides up the colormap into 5 equal parts.
-mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
+mesh.plot(
+    scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red']
+)
 
 # %%
 # If you still wish to have control of the separation of values, you
@@ -92,8 +92,7 @@ scalars[mesh['values'] < 1] = 0  # black
 mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 # %%
-# Matplotlib vs. Colorcet
-# +++++++++++++++++++++++
+# Matplotlib vs. Colorcet +++++++++++++++++++++++
 #
 # Let's compare Colorcet's perceptually uniform "fire" colormap to Matplotlib's
 # "hot" colormap much like the example on the `first page of Colorcet's docs`_.
@@ -128,13 +127,13 @@ pv.plot_compare(
 # .. _calculix_colormap_example:
 #
 # Recreating Native Solver Colormaps (CalculiX)
-# +++++++++++++++++++++++++++++++++++++++++++++
-# Sometimes you want to process results in PyVista but keep the visual
-# style identical to the solver's native post-processing tool.
-# Below is an example of how to recreate the default ``cgx`` (CalculiX GraphiX)
-# colormap using Matplotlib's :class:`matplotlib.colors.LinearSegmentedColormap`.
-# It may be particularly useful when visualizing ``.frd`` files, which
-# :func:`pyvista.read` handles through the ``pyvista-frd-reader`` package.
+# +++++++++++++++++++++++++++++++++++++++++++++ Sometimes you want to process
+# results in PyVista but keep the visual style identical to the solver's native
+# post-processing tool. Below is an example of how to recreate the default
+# ``cgx`` (CalculiX GraphiX) colormap using Matplotlib's
+# :class:`matplotlib.colors.LinearSegmentedColormap`. It may be particularly
+# useful when visualizing ``.frd`` files, which :func:`pyvista.read` handles
+# through the ``pyvista-frd-reader`` package.
 #
 # This specific colormap uses exact RGB nodes at specific scalar fractions
 # (0.0, 0.1, 0.3, 0.5, 0.8, 0.9, 1.0) to create its distinct color bands.

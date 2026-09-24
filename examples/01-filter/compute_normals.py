@@ -19,16 +19,16 @@ from pyvista import examples
 
 # %%
 # Computing the normals of a surface is quite easy using
-# :class:`pyvista.PolyData`'s :func:`pyvista.PolyDataFilters.compute_normals`
-# method.
+# :class:`pyvista.PolyData`'s
+# :func:`pyvista.PolyDataFilters.compute_normals` method.
 
 mesh = examples.download_topo_global()
 mesh.plot(cmap='gist_earth', show_scalar_bar=False)
 
 # %%
-# Now we have a surface dataset of the globe loaded - unfortunately, the
-# dataset shows the globe with a uniform radius which hides topographic relief.
-# Using :func:`pyvista.PolyDataFilters.compute_normals`, we can compute the normal
+# Now we have a surface dataset of the globe loaded - unfortunately, the dataset
+# shows the globe with a uniform radius which hides topographic relief. Using
+# :func:`pyvista.PolyDataFilters.compute_normals`, we can compute the normal
 # vectors on the globe at all points in the dataset, then use the values given
 # in the dataset to warp the surface in the normals direction to create some
 # exaggerated topographic relief.

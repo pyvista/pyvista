@@ -25,7 +25,11 @@ cpos = pv.CameraPosition(
 # representation when plotting:
 pl = pv.Plotter()
 pl.add_mesh(
-    mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10
+    mesh,
+    style='points',
+    color='magenta',
+    render_points_as_spheres=True,
+    point_size=10,
 )
 pl.show(cpos=cpos)
 
@@ -58,9 +62,9 @@ pl.show(cpos=cpos)
 
 
 # %%
-# If you wish to have further control over the way surface points are plotted
-# alongside the surface geometry, extract the surface points and plot them
-# separately.
+# If you wish to have further control over the way surface points are
+# plotted alongside the surface geometry, extract the surface points and
+# plot them separately.
 #
 # The first step is to extract the outer surface geometry of the mesh then
 # grab all the points of that extraction.
@@ -69,8 +73,7 @@ surf_points = mesh.extract_surface(algorithm=None).points
 
 # %%
 # Now that we have the vertices extracted, we can use :func:`add_points()
-# <pyvista.Plotter.add_points>` to render them along side the original
-# geometry.
+# <pyvista.Plotter.add_points>` to render them along side the original geometry.
 #
 # Color the points by their Y position.
 

@@ -16,8 +16,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Iso-Lines
-# +++++++++
+# Iso-Lines +++++++++
 #
 # Let's extract 1D iso-lines of a scalar field from a 2D surface mesh.
 mesh = examples.load_random_hills()
@@ -31,8 +30,7 @@ pl.show()
 
 
 # %%
-# Iso-Surfaces
-# ++++++++++++
+# Iso-Surfaces ++++++++++++
 #
 # Let's extract 2D iso-surfaces of a scalar field from a 3D mesh.
 mesh = examples.download_embryo().resample(0.5, anti_aliasing=True)
@@ -51,10 +49,8 @@ pl.show()
 
 
 # %%
-# Banded Contours
-# +++++++++++++++
-# Create banded contours for surface meshes using
-# :func:`~pyvista.PolyDataFilters.contour_banded`.
+# Banded Contours +++++++++++++++ Create banded contours for surface meshes
+# using :func:`~pyvista.PolyDataFilters.contour_banded`.
 mesh = examples.load_random_hills()
 
 # %%
@@ -78,12 +74,13 @@ pl.add_mesh(arrows, **dargs)
 pl.show()
 
 # %%
-# Contours From a Label Map
-# +++++++++++++++++++++++++
+# Contours From a Label Map +++++++++++++++++++++++++
 #
-# Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
-# using :func:`~pyvista.ImageDataFilters.contour_labels`.
-label_map = pv.examples.load_frog_tissues().resample(0.5, interpolation='nearest')
+# Create labeled surfaces from 3D label maps (e.f. multi-label image
+# segmentation) using :func:`~pyvista.ImageDataFilters.contour_labels`.
+label_map = pv.examples.load_frog_tissues().resample(
+    0.5, interpolation='nearest'
+)
 mesh = label_map.contour_labels()
 mesh.plot(cmap='glasbey', cpos='yx', categories=True)
 # %%

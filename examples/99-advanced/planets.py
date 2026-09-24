@@ -31,7 +31,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # %%
 # Plot the Solar System With Stars in the Background
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This section relies on calculations in `Visualizing Celestial Bodies in 3D
+# This section relies on calculations in `Visualizing Celestial
+# Bodies in 3D
 # <https://tamaskis.github.io/files/Visualizing_Celestial_Bodies_in_3D.pdf>`_.
 
 
@@ -57,7 +58,8 @@ jupiter_texture = examples.planets.download_jupiter_surface(texture=True)
 
 saturn = examples.planets.load_planet(radius=60268.0)
 saturn_texture = examples.planets.download_saturn_surface(texture=True)
-# Saturn's rings range from 7000.0 km to 80000.0 km from the surface of the planet
+# Saturn's rings range from 7000.0 km to 80000.0 km from the surface of
+# the planet
 inner = 60268.0 + 7000.0
 outer = 60268.0 + 80000.0
 saturn_rings = examples.planets.load_planet_rings(inner=inner, outer=outer)
@@ -137,7 +139,9 @@ venus = examples.planets.load_planet(radius=6052.0)
 atmosphere_texture = examples.planets.download_venus_surface(
     atmosphere=True, texture=True
 )
-surface_texture = examples.planets.download_venus_surface(atmosphere=False, texture=True)
+surface_texture = examples.planets.download_venus_surface(
+    atmosphere=False, texture=True
+)
 
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)

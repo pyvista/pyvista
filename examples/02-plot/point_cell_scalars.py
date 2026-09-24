@@ -4,7 +4,7 @@
 Point Cell Scalars
 ~~~~~~~~~~~~~~~~~~
 
-This example demonstrates how to add point scalars for each individual cell to a dataset.
+Add point scalars for each individual cell to a dataset.
 
 """
 
@@ -31,8 +31,7 @@ grid.plot(scalars='Point Data')
 # %%
 # Plot Cell Scalars
 # ~~~~~~~~~~~~~~~~~
-# Next, let's plot cell scalars. We're simply assigning based on the cell
-# index.
+# Next, let's plot cell scalars. We're simply assigning based on the cell index.
 grid.cell_data['Cell Data'] = range(grid.n_cells)
 grid.plot(scalars='Cell Data')
 
@@ -40,14 +39,14 @@ grid.plot(scalars='Cell Data')
 # %%
 # Splitting the Cells
 # ~~~~~~~~~~~~~~~~~~~
-# If you wanted to assign data to each point of each cell and plot that, it's
-# simply not possible since these hexahedral cells all share the same
-# points. To split up individual cells, separate them using
-# :func:`pyvista.DataSetFilters.separate_cells`.
+# If you wanted to assign data to each point of each cell and plot
+# that, it's simply not possible since these hexahedral cells all
+# share the same points. To split up individual cells, separate them
+# using :func:`pyvista.DataSetFilters.separate_cells`.
 #
-# With this filter the resulting :class:`pyvista.UnstructuredGrid` now contains
-# 32 points, or 8 for each cell. They are now fully separated with no shared
-# points.
+# With this filter the resulting :class:`pyvista.UnstructuredGrid` now
+# contains 32 points, or 8 for each cell. They are now fully separated with no
+# shared points.
 
 split_cells = grid.separate_cells()
 split_cells

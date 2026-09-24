@@ -4,9 +4,10 @@
 Clip and Cap a Closed Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Compare a standard planar clip with :func:`~pyvista.PolyDataFilters.clip_closed_surface`.
+Compare a planar clip with :func:`~pyvista.PolyDataFilters.clip_closed_surface`.
 
-The standard clip leaves an open boundary; ``clip_closed_surface`` seals the cut face.
+The standard clip leaves an open boundary; ``clip_closed_surface`` seals the cut
+face.
 
 """
 
@@ -34,7 +35,10 @@ plane_origin = surface.center
 plane_normal = (1, 0.3, 0)
 plane_size = surface.length * 1.2
 plane = pv.Plane(
-    center=plane_origin, direction=plane_normal, i_size=plane_size, j_size=plane_size
+    center=plane_origin,
+    direction=plane_normal,
+    i_size=plane_size,
+    j_size=plane_size,
 )
 
 pl = pv.Plotter()
@@ -52,7 +56,9 @@ pl.show()
 # clip caps that loop with new triangles and stays watertight.
 
 open_clip = surface.clip(normal=plane_normal, origin=plane_origin)
-closed_clip = surface.clip_closed_surface(normal=plane_normal, origin=plane_origin)
+closed_clip = surface.clip_closed_surface(
+    normal=plane_normal, origin=plane_origin
+)
 
 open_boundary = open_clip.extract_feature_edges(
     boundary_edges=True,

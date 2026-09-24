@@ -19,7 +19,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# By default, a single scalar bar is used for all plotted scalars with the same name:
+# By default, a single scalar bar is used for all plotted scalars with the
+# same name:
 
 # Create two cube meshes containing the scalar array scalars1
 cube = pv.Cube()
@@ -55,7 +56,8 @@ pl.add_mesh(
 pl.show()
 
 # %%
-# By default, a unique scalar bar is used for all plotted scalars with unique names:
+# By default, a unique scalar bar is used for all plotted scalars with
+# unique names:
 
 # Create a cube mesh with four scalar arrays
 cube = pv.Cube()
@@ -64,9 +66,9 @@ cube.cell_data['scalars2'] = range(0, 12, 2)
 cube.cell_data['scalars3'] = range(0, 18, 3)
 cube.cell_data['scalars4'] = range(0, 24, 4)
 
-# Plot the four scalar arrays - note how there is one scalar bar for each plotted
-# scalar. A shallow copy of cube is made when plotting each scalar array since
-# a mesh can have only one active scalar
+# Plot the four scalar arrays - note how there is one scalar bar for each
+# plotted scalar. A shallow copy of cube is made when plotting each scalar array
+# since a mesh can have only one active scalar
 pl = pv.Plotter(shape=(2, 2), border_width=1)
 pl.add_mesh(cube, scalars='scalars1', cmap='coolwarm')
 pl.camera.zoom(0.75)
@@ -88,7 +90,10 @@ pl.show()
 # Plot the four scalar arrays - use one scalar bar for each row
 pl = pv.Plotter(shape=(2, 2), border_width=1)
 pl.add_mesh(
-    cube, scalars='scalars1', cmap='coolwarm', scalar_bar_args={'title': 'Scalars 1 & 2'}
+    cube,
+    scalars='scalars1',
+    cmap='coolwarm',
+    scalar_bar_args={'title': 'Scalars 1 & 2'},
 )
 pl.camera.zoom(0.75)
 pl.subplot(0, 1)

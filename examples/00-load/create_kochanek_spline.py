@@ -57,7 +57,9 @@ for i in range(5):
 
 t = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
-    kochanek_spline = pv.KochanekSpline(points, tension=[t[i], t[i], t[i]], n_points=1000)
+    kochanek_spline = pv.KochanekSpline(
+        points, tension=[t[i], t[i], t[i]], n_points=1000
+    )
     pl.subplot(1, i)
     pl.add_text('t = ' + str(t[i]))
     pl.add_mesh(kochanek_spline, color='k')
@@ -70,7 +72,9 @@ for i in range(5):
 
 b = [-1.0, -0.5, 0.0, 0.5, 1.0]
 for i in range(5):
-    kochanek_spline = pv.KochanekSpline(points, bias=[b[i], b[i], b[i]], n_points=1000)
+    kochanek_spline = pv.KochanekSpline(
+        points, bias=[b[i], b[i], b[i]], n_points=1000
+    )
     pl.subplot(2, i)
     pl.add_text('b = ' + str(b[i]))
     pl.add_mesh(kochanek_spline, color='k')

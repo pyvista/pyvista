@@ -29,7 +29,9 @@ from pyvista import examples
 
 mesh = examples.load_hexbeam()
 rng = np.random.default_rng(seed=0)
-mesh.point_data['pressure'] = rng.normal(loc=100.0, scale=20.0, size=mesh.n_points)
+mesh.point_data['pressure'] = rng.normal(
+    loc=100.0, scale=20.0, size=mesh.n_points
+)
 mesh.point_data['velocity'] = rng.normal(size=(mesh.n_points, 3))
 
 # %%

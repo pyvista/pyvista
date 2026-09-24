@@ -27,10 +27,11 @@ bracket
 # %%
 # Default Color Map - Lookup Table
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# First, let's plot using the default color map, "viridis". Internally, PyVista
-# will automatically create a lookup table to map the scalars (stored here
-# within ``point_data``) to RGBA colors. This is shown here as a nested attribute
-# to the :class:`pyvista.DataSetMapper` and it has a helpful ``repr`` method:
+# First, let's plot using the default color map, "viridis". Internally,
+# PyVista will automatically create a lookup table to map the scalars (stored
+# here within ``point_data``) to RGBA colors. This is shown here as a nested
+# attribute to the :class:`pyvista.DataSetMapper` and it has a helpful
+# ``repr`` method:
 
 pl = pv.Plotter()
 actor = pl.add_mesh(bracket)
@@ -166,8 +167,7 @@ pl.show()
 # %%
 # Control Several Lookup Table Attributes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Demonstrate the use of several slider bar widgets with lookup table
-# callbacks.
+# Demonstrate the use of several slider bar widgets with lookup table callbacks.
 
 # Create a new lookup table with oranges
 lut = pv.LookupTable()
@@ -188,7 +188,9 @@ def make_double_slider(attr, idx):
         if min_value > max_value:
             # force the movement of the maximum value
             max_value = min_value
-            pl.widgets.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
+            pl.widgets.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(
+                max_value
+            )
         setattr(lut, attr, (min_value, max_value))
 
         if attr == 'scalar_range':
@@ -199,7 +201,9 @@ def make_double_slider(attr, idx):
         if max_value < min_value:
             # force the movement of the minimum value
             min_value = max_value
-            pl.widgets.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
+            pl.widgets.slider_widgets[idx * 2].GetRepresentation().SetValue(
+                min_value
+            )
         setattr(lut, attr, (min_value, max_value))
 
         if attr == 'scalar_range':

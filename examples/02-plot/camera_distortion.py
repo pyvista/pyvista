@@ -4,7 +4,7 @@
 Camera Distortion
 ~~~~~~~~~~~~~~~~~
 
-Render a scene through a lens that does not project straight lines to straight lines.
+Render a scene through a lens that bends straight lines.
 
 Uses :func:`~pyvista.Plotter.enable_camera_distortion`.
 
@@ -118,7 +118,10 @@ for column, resolution in enumerate([2, 32]):
     pl.add_text(f'{resolution} x {resolution} cells', font_size=10)
     pl.add_mesh(
         pv.Plane(
-            i_size=3.0, j_size=3.0, i_resolution=resolution, j_resolution=resolution
+            i_size=3.0,
+            j_size=3.0,
+            i_resolution=resolution,
+            j_resolution=resolution,
         ),
         color='white',
         show_edges=True,
@@ -133,8 +136,7 @@ pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Any array-like will do, including the shape ``cv2.calibrateCamera`` hands
 # back. Only the four Brown-Conrady terms are supported; a fifth coefficient,
-# OpenCV's higher-order radial ``k3``, raises rather than being dropped
-# quietly.
+# OpenCV's higher-order radial ``k3``, raises rather than being dropped quietly.
 
 distortion_coefficients = np.array([[0.28, 0.12, 0.004, -0.003]])
 

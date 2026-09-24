@@ -43,7 +43,9 @@ pl.add_mesh(spheres.copy(), **dargs)
 
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(11.7, 4.7, -4.33), focal_point=(0.0, 0.0, 0.0), viewup=(0.3, 0.07, 0.9)
+    position=(11.7, 4.7, -4.33),
+    focal_point=(0.0, 0.0, 0.0),
+    viewup=(0.3, 0.07, 0.9),
 )
 pl.show()
 
@@ -67,15 +69,16 @@ pl.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(43.6, 49.5, 19.8), focal_point=(0.0, 2.25, 0.0), viewup=(-0.57, 0.7, -0.42)
+    position=(43.6, 49.5, 19.8),
+    focal_point=(0.0, 2.25, 0.0),
+    viewup=(-0.57, 0.7, -0.42),
 )
 
 pl.show()
 
 
 # %%
-# And here is another example when rendering many translucent contour
-# surfaces.
+# And here is another example when rendering many translucent contour surfaces.
 
 mesh = examples.download_brain().resample(0.4, anti_aliasing=True)
 contours = mesh.contour(5)

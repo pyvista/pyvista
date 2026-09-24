@@ -4,7 +4,7 @@
 Create a PointSet
 ~~~~~~~~~~~~~~~~~
 
-A :class:`~pyvista.PointSet` explicitly stores point arrays to represent geometry.
+A :class:`~pyvista.PointSet` stores point arrays to represent geometry.
 
 This class is useful for improving the performance of filters on point clouds.
 
@@ -33,8 +33,9 @@ clipped.plot(show_scalar_bar=False)
 # Show the performance improvement when using a PointSet.
 #
 # .. note::
-#   For VTK 9.4.X, there is no performance improvement due to a VTK bug which
-#   was introduced into this version. See https://gitlab.kitware.com/vtk/vtk/-/issues/19649.
+# For VTK 9.4.X, there is no performance improvement due to a VTK bug
+# which was introduced into this version. See
+# https://gitlab.kitware.com/vtk/vtk/-/issues/19649.
 
 # pset = lidar.cast_to_pointset()
 

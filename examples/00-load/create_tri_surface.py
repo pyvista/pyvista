@@ -19,8 +19,7 @@ import pyvista as pv
 rng = np.random.default_rng(seed=0)
 
 # %%
-# Simple Triangulations
-# +++++++++++++++++++++
+# Simple Triangulations +++++++++++++++++++++
 #
 # First, create some points for the surface.
 
@@ -53,13 +52,14 @@ surf.plot(show_edges=True)
 
 
 # %%
-# Masked Triangulations
-# +++++++++++++++++++++
+# Masked Triangulations +++++++++++++++++++++
 #
 
 x = np.arange(10, dtype=float)
 xx, yy, zz = np.meshgrid(x, x, [0])
-points = np.column_stack((xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')))
+points = np.column_stack(
+    (xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F'))
+)
 # Perturb the points
 points[:, 0] += rng.random(len(points)) * 0.3
 points[:, 1] += rng.random(len(points)) * 0.3

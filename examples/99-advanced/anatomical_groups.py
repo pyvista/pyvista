@@ -11,9 +11,9 @@ Uses the downloadable datasets
 :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
 These datasets include labels for 117 anatomical structures. In this example,
-the labels are grouped by filtering the list of labels and coloring the
-labels with the recommended RGB values used by the 3DSlicer
-`TotalSegmentator Extension <https://github.com/lassoan/SlicerTotalSegmentator>`_.
+the labels are grouped by filtering the list of labels and coloring the labels
+with the recommended RGB values used by the 3DSlicer `TotalSegmentator Extension
+<https://github.com/lassoan/SlicerTotalSegmentator>`_.
 
 """
 
@@ -23,11 +23,11 @@ from pyvista import examples
 # %%
 # Load Dataset
 # ------------
-# Load a TotalSegmentator dataset. Can be the
-# :func:`male <pyvista.examples.downloads.download_whole_body_ct_male>` or
-# :func:`female <pyvista.examples.downloads.download_whole_body_ct_female>` female
-# subjects included with `PyVista`, or any other subject from the
-# `TotalSegmentator dataset <https://zenodo.org/records/10047292>`_.
+# Load a TotalSegmentator dataset. Can be the :func:`male
+# <pyvista.examples.downloads.download_whole_body_ct_male>` or :func:`female
+# <pyvista.examples.downloads.download_whole_body_ct_female>` female subjects
+# included with `PyVista`, or any other subject from the `TotalSegmentator
+# dataset <https://zenodo.org/records/10047292>`_.
 dataset = examples.download_whole_body_ct_female()
 
 # %%
@@ -40,8 +40,8 @@ label_map = dataset['label_map']
 # Get a list of all label names. This list will be filtered by group.
 label_names = dataset['segmentations'].keys()
 
-# Get color and id mappings included with the dataset. These are used to filter and
-# color the contours.
+# Get color and id mappings included with the dataset. These are used to filter
+# and color the contours.
 names_to_colors = dataset.user_dict['names_to_colors']
 names_to_ids = dataset.user_dict['names_to_ids']
 ids_to_colors = dataset.user_dict['ids_to_colors']
@@ -49,8 +49,9 @@ ids_to_colors = dataset.user_dict['ids_to_colors']
 # %%
 # Color Mapping
 # =============
-# Show the color mapping included with the dataset. Print the dictionary and format
-# it to visually align the RGB values. The formatted dictionary is valid python code.
+# Show the color mapping included with the dataset. Print the dictionary and
+# format it to visually align the RGB values. The formatted dictionary is valid
+# python code.
 #
 # .. note
 #
@@ -71,9 +72,9 @@ print('}')
 # %%
 # ``filter_labels``
 # =================
-# To visualize a particular group of anatomic regions, we first define a function
-# to filter the labels by name. Given a list of terms, the function returns
-# any label which contains any of the search terms.
+# To visualize a particular group of anatomic regions, we first define a
+# function to filter the labels by name. Given a list of terms, the function
+# returns any label which contains any of the search terms.
 def filter_labels(label_names: list[str], search_terms: list[str]):
     def include_label(label_name: str):
         return any(target in label_name for target in search_terms)
@@ -85,9 +86,9 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
 # ``plot_anatomy``
 # ================
 # Define a function which, given a list of terms, will look up labels associated
-# with those terms, generate contours for the labels, and plot the result. The function
-# uses :meth:`~pyvista.ImageDataFilters.contour_labels` for generating contours and
-# :meth:`~pyvista.DataSetFilters.color_labels` for coloring them.
+# with those terms, generate contours for the labels, and plot the result. The
+# function uses :meth:`~pyvista.ImageDataFilters.contour_labels` for generating
+# contours and :meth:`~pyvista.DataSetFilters.color_labels` for coloring them.
 def plot_anatomy(search_terms: list[str]):
     # Get a list of labels which contain any of the listed terms.
     group_names = filter_labels(label_names, search_terms)
@@ -169,8 +170,8 @@ plot_anatomy(spine)
 # %%
 # Other Organs
 # ============
-# Show other organs not included in the cardiovascular or gastrointestinal
-# systems.
+# Show other organs not included in the cardiovascular or
+# gastrointestinal systems.
 
 # Define terms which describe all relevant segments.
 other_organs = [

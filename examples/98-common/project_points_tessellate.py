@@ -62,7 +62,9 @@ plane_vis = pv.Plane(
 
 # plot it
 pl = pv.Plotter()
-pl.add_mesh(mesh, show_edges=True, color='white', opacity=0.5, label='Tessellated mesh')
+pl.add_mesh(
+    mesh, show_edges=True, color='white', opacity=0.5, label='Tessellated mesh'
+)
 pl.add_mesh(
     pv.PolyData(point_cloud),
     color='red',

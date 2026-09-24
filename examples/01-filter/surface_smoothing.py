@@ -52,9 +52,9 @@ smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
 
 # %%
-# Still not smooth enough? Increase the number of iterations for the Laplacian
-# smoothing algorithm to a crazy high value. Note how this causes the mesh to
-# "shrink":
+# Still not smooth enough? Increase the number of iterations for the
+# Laplacian smoothing algorithm to a crazy high value. Note how this causes
+# the mesh to "shrink":
 
 # Smooth the surface EVEN MORE
 smooth = surf.smooth(n_iter=1000)
@@ -77,8 +77,9 @@ pl.show()
 # <pyvista.PolyDataFilters.smooth>`. In this example, you can see how Taubin
 # smoothing maintains the volume relative to the original mesh.
 #
-# Also, note that the number of iterations can be reduced to get the same approximate
-# amount of smoothing. This is because Taubin smoothing is more efficient.
+# Also, note that the number of iterations can be reduced to get the same
+# approximate amount of smoothing. This is because Taubin smoothing is
+# more efficient.
 
 smooth_w_taubin = surf.smooth_taubin(n_iter=50, pass_band=0.05)
 
@@ -108,7 +109,9 @@ smooth_kwargs = dict(n_iter=500, relaxation_factor=0.05)
 
 cube = pv.Cube().triangulate().subdivide(4)
 cube_smoothed = {
-    f'feature_smoothing={value}': cube.smooth(**smooth_kwargs, feature_smoothing=value)
+    f'feature_smoothing={value}': cube.smooth(
+        **smooth_kwargs, feature_smoothing=value
+    )
     for value in [False, True]
 }
 
@@ -144,7 +147,9 @@ plane.points[boundary, 2] = 0.05 * np.sin(12 * plane.points[boundary, 1])
 # of the plane is already flat, so only the ripple shows a difference.
 
 plane_smoothed = {
-    f'boundary_smoothing={value}': plane.smooth(**smooth_kwargs, boundary_smoothing=value)
+    f'boundary_smoothing={value}': plane.smooth(
+        **smooth_kwargs, boundary_smoothing=value
+    )
     for value in [False, True]
 }
 
@@ -155,7 +160,8 @@ pv.plot_compare(datasets, show_edges=True)
 # %%
 # Print the height of the rippled boundary of each mesh
 for name, mesh in datasets.items():
-    print(f'{name}: boundary z min={mesh.bounds.z_min:.4f}, max={mesh.bounds.z_max:.4f}')
+    bounds = mesh.bounds
+    print(f'{name}: boundary z min={bounds.z_min:.4f}, max={bounds.z_max:.4f}')
 
 # %%
 # The ripple is untouched with ``boundary_smoothing=False`` and is flattened

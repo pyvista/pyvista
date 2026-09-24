@@ -17,9 +17,9 @@ from pyvista.examples import plot_cell
 # %%
 # Non-Convex Cells
 # ----------------
-# Many VTK algorithms assume that cells are convex. This can result in incorrect outputs
-# and may also affect rendering. For example, let's create :class:`~pyvista.PolyData`
-# with a concave :attr:`~pyvista.CellType.QUAD` cell.
+# Many VTK algorithms assume that cells are convex. This can result in incorrect
+# outputs and may also affect rendering. For example, let's create
+# :class:`~pyvista.PolyData` with a concave :attr:`~pyvista.CellType.QUAD` cell.
 points = [
     [-0.5, -1.0, 0.0],
     [0.0, -0.3, 0.0],
@@ -30,21 +30,22 @@ faces = [4, 0, 1, 2, 3]
 quad = pv.PolyData(points, faces)
 
 # %%
-# Use :meth:`~pyvista.DataObjectFilters.validate_mesh` to show that the cell is not
-# convex.
+# Use :meth:`~pyvista.DataObjectFilters.validate_mesh` to show that the cell is
+# not convex.
 report = quad.validate_mesh()
 print(report.is_valid)
 # %%
 print(report.invalid_fields)
 
 # %%
-# If we plot the cell, we can see that the concave cell is incorrectly rendered as though
-# it's convex even though it is not.
+# If we plot the cell, we can see that the concave cell is incorrectly rendered
+# as though it's convex even though it is not.
 plot_cell(quad, 'xy')
 
 # %%
-# To address the convexity problem, we can :meth:`~pyvista.PolyDataFilters.triangulate`
-# the mesh. The mesh is now valid and renders correctly.
+# To address the convexity problem, we can
+# :meth:`~pyvista.PolyDataFilters.triangulate` the mesh. The mesh is now valid
+# and renders correctly.
 triangles = quad.triangulate()
 report = triangles.validate_mesh()
 print(report.is_valid)
@@ -54,8 +55,8 @@ plot_cell(triangles, 'xy')
 # %%
 # Cells With Inverted Faces
 # -------------------------
-# Cells with inverted faces can result in incorrect geometric computations such as
-# cell volume or centroid. To demonstrate this, we first create a valid
+# Cells with inverted faces can result in incorrect geometric computations such
+# as cell volume or centroid. To demonstrate this, we first create a valid
 # :attr:`~pyvista.CellType.POLYHEDRON` cell similar to the
 # :func:`~pyvista.examples.cells.Polyhedron` example cell.
 points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
@@ -64,27 +65,29 @@ cells = [len(cells), *cells.copy()]
 polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
 
 # %%
-# Plot the cell and show its normals. Since all points have counter-clockwise traversal,
-# the normals all point outward and the cell is valid.
+# Plot the cell and show its normals. Since all points have counter-clockwise
+# traversal, the normals all point outward and the cell is valid.
 report = polyhedron.validate_mesh()
 print(report.is_valid)
 # %%
 plot_cell(polyhedron, show_normals=True)
 
 # %%
-# Now swap two points in the polyhedron's connectivity to generate an otherwise identical
-# polyhedron with a single incorrectly oriented face.
+# Now swap two points in the polyhedron's connectivity to generate an otherwise
+# identical polyhedron with a single incorrectly oriented face.
 index1 = 3  # index of first point ID of first face
 index2 = index1 + 1  # index of second point ID of first face
 point_id1 = cells[index1]
 cells[index1] = cells[index2]
 cells[index2] = point_id1
 
-invalid_polyhedron = pv.UnstructuredGrid(cells, [pv.CellType.POLYHEDRON], points)
+invalid_polyhedron = pv.UnstructuredGrid(
+    cells, [pv.CellType.POLYHEDRON], points
+)
 
 # %%
-# The cell is now invalid, and the bottom face is incorrectly oriented with its normal
-# pointing inward.
+# The cell is now invalid, and the bottom face is incorrectly oriented with its
+# normal pointing inward.
 report = invalid_polyhedron.validate_mesh()
 print(report.is_valid)
 # %%
@@ -94,9 +97,9 @@ plot_cell(invalid_polyhedron, show_normals=True)
 
 # %%
 # Now let's compare the centroid of the valid and invalid cells using
-# :meth:`~pyvista.DataObjectFilters.cell_centers`. The computed centroids differ,
-# demonstrating the need to have valid cells when using filters that depend on geometric
-# properties.
+# :meth:`~pyvista.DataObjectFilters.cell_centers`. The computed centroids
+# differ, demonstrating the need to have valid cells when using filters that
+# depend on geometric properties.
 valid_centroid = polyhedron.cell_centers().points[0].tolist()
 print(valid_centroid)
 # %%
@@ -106,9 +109,9 @@ print(invalid_centroid)
 # %%
 # Self-Intersecting Cells
 # -----------------------
-# Most :class:`cell types <pyvista.CellType>` have a defined point order which must
-# be respected. For example, let's try to create a :attr:`~pyvista.CellType.HEXAHEDRON`
-# cell with eight points:
+# Most :class:`cell types <pyvista.CellType>` have a defined point order which
+# must be respected. For example, let's try to create a
+# :attr:`~pyvista.CellType.HEXAHEDRON` cell with eight points:
 points = [
     [0.0, 0.0, 0.0],
     [1.0, 0.0, 0.0],
@@ -124,8 +127,8 @@ celltype = [pv.CellType.HEXAHEDRON]
 hexahedron = pv.UnstructuredGrid(cells, celltype, points)
 
 # %%
-# At a quick glance, the cell may `appear` to be valid, but it is not, since the point
-# ordering is incorrect.
+# At a quick glance, the cell may `appear` to be valid, but it is not, since the
+# point ordering is incorrect.
 report = hexahedron.validate_mesh()
 print(report.is_valid)
 # %%
@@ -136,21 +139,22 @@ plot_cell(hexahedron)
 print(report.invalid_fields)
 
 # %%
-# Note that the invalid fields may differ across VTK versions or even operating systems.
-# If a cell is invalid, there are sometimes multiple inter-related issues that may be
-# reported.
+# Note that the invalid fields may differ across VTK versions or even operating
+# systems. If a cell is invalid, there are sometimes multiple inter-related
+# issues that may be reported.
 
 # %%
-# From the plot above, we can visually confirm these issues since some faces appear to
-# intersect, and others appear to be "folded" and hence there are non-planar. To
-# investigate the ``'inverted_faces'`` problem further, let's plot the cell again with
-# normals.
+# From the plot above, we can visually confirm these issues since some faces
+# appear to intersect, and others appear to be "folded" and hence there are
+# non-planar. To investigate the ``'inverted_faces'`` problem further, let's
+# plot the cell again with normals.
 plot_cell(hexahedron, show_normals=True)
 
 # %%
-# Since some of the normals are pointing inward, this confirms that there are inverted
-# faces. To make the cell valid, we need to re-order the cell connectivity based on the
-# required ordering stated in the documentation for :vtk:`vtkHexahedron`.
+# Since some of the normals are pointing inward, this confirms that there
+# are inverted faces. To make the cell valid, we need to re-order the cell
+# connectivity based on the required ordering stated in the documentation
+# for :vtk:`vtkHexahedron`.
 cells = [8, 0, 1, 4, 2, 3, 5, 7, 6]  # instead of [8, 0, 1, 2, 3, 4, 5, 6, 7]
 celltype = [pv.CellType.HEXAHEDRON]
 hexahedron = pv.UnstructuredGrid(cells, celltype, points)
@@ -162,9 +166,10 @@ plot_cell(hexahedron)
 # %%
 # Meshes With Unused Points
 # -------------------------
-# Unused points are points not associated with any cells. These points are not processed
-# consistently by filters and are often ignored or removed. To demonstrate this, create an
-# :class:`~pyvista.UnstructuredGrid` with a single unused point.
+# Unused points are points not associated with any cells. These points are not
+# processed consistently by filters and are often ignored or removed. To
+# demonstrate this, create an :class:`~pyvista.UnstructuredGrid` with a single
+# unused point.
 grid = pv.UnstructuredGrid()
 grid.points = [[0.0, 0.0, 0.0]]
 print(grid.n_points)
@@ -179,8 +184,8 @@ print(report.is_valid)
 print(report.invalid_fields)
 
 # %%
-# Use :meth:`~pyvista.DataObjectFilters.extract_surface` on the grid and observe that the
-# unused point is removed.
+# Use :meth:`~pyvista.DataObjectFilters.extract_surface` on the grid and observe
+# that the unused point is removed.
 poly = grid.extract_surface(algorithm=None)
 print(poly.n_points)
 # %%

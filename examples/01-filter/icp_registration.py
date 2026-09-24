@@ -42,7 +42,12 @@ cpos = pv.CameraPosition(
 # registered back onto the reference.
 
 offset = np.array(target.length) * 0.4
-transform = pv.Transform().rotate_x(25).rotate_z(-35).translate((offset, -offset, offset))
+transform = (
+    pv.Transform()
+    .rotate_x(25)
+    .rotate_z(-35)
+    .translate((offset, -offset, offset))
+)
 source = target.transform(transform, inplace=False)
 
 pl = pv.Plotter()
@@ -60,8 +65,12 @@ pl.show()
 
 aligned, matrix = source.align(target, return_matrix=True)
 
-_, closest_points = target.find_closest_cell(aligned.points, return_closest_point=True)
-aligned['distance_to_target'] = np.linalg.norm(aligned.points - closest_points, axis=1)
+_, closest_points = target.find_closest_cell(
+    aligned.points, return_closest_point=True
+)
+aligned['distance_to_target'] = np.linalg.norm(
+    aligned.points - closest_points, axis=1
+)
 
 pl = pv.Plotter(shape=(1, 2))
 pl.subplot(0, 0)

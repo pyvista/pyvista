@@ -12,7 +12,8 @@ custom shape via a GLSL fragment shader.
 
 The ``point_shape`` parameter can be passed directly to
 :func:`pyvista.Plotter.add_mesh` or set globally via
-:attr:`pyvista.global_theme.point_shape <pyvista.plotting.themes.Theme.point_shape>`.
+:attr:`pyvista.global_theme.point_shape
+<pyvista.plotting.themes.Theme.point_shape>`.
 
 """
 
@@ -67,7 +68,11 @@ pl = pv.Plotter(shape=(1, 3))
 
 pl.subplot(0, 0)
 pl.add_mesh(
-    cloud, scalars='elevation', style='points', point_size=15, show_scalar_bar=False
+    cloud,
+    scalars='elevation',
+    style='points',
+    point_size=15,
+    show_scalar_bar=False,
 )
 pl.add_text('Default (squares)', font_size=10)
 

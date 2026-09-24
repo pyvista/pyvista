@@ -2,7 +2,7 @@
 extend = "../pyproject.toml"
 
 # But use a different line length.
-line-length = 90
+line-length = 80
 
 [lint.isort]
 # Examples don't need `from __future__ import annotations` (Python >=3.10),

@@ -46,13 +46,15 @@ camera_position = pv.CameraPosition(
 pl = pv.Plotter()
 for i in range(1, len(mesh)):
     pl.add_mesh(mesh[i], color='k')
-pl.add_mesh(one_streamline.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
+pl.add_mesh(
+    one_streamline.tube(radius=0.05), scalars='vorticity_mag', clim=clim
+)
 pl.view_xy()
 pl.show(cpos=camera_position)
 
 # %%
-# To generate multiple streamlines, a line source can be used with the ``pointa``
-# and ``pointb`` parameters.
+# To generate multiple streamlines, a line source can be used with the
+# ``pointa`` and ``pointb`` parameters.
 
 line_streamlines = fluid_mesh.streamlines(
     pointa=(0, -5, 0),
@@ -65,7 +67,9 @@ line_streamlines = fluid_mesh.streamlines(
 pl = pv.Plotter()
 for i in range(1, len(mesh)):
     pl.add_mesh(mesh[i], color='k')
-pl.add_mesh(line_streamlines.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
+pl.add_mesh(
+    line_streamlines.tube(radius=0.05), scalars='vorticity_mag', clim=clim
+)
 pl.view_xy()
 pl.show(cpos=camera_position)
 
@@ -89,13 +93,14 @@ line_streamlines = fluid_mesh.streamlines_evenly_spaced_2D(
 pl = pv.Plotter()
 for i in range(1, len(mesh)):
     pl.add_mesh(mesh[i], color='k')
-pl.add_mesh(line_streamlines.tube(radius=0.02), scalars='vorticity_mag', clim=clim)
+pl.add_mesh(
+    line_streamlines.tube(radius=0.02), scalars='vorticity_mag', clim=clim
+)
 pl.view_xy()
 pl.show(cpos=camera_position)
 
 # %%
-# The streamlines are only approximately evenly spaced and capture the
-# vortex pair downstream of the cylinder with appropriate choice of
-# ``start_position``.
+# The streamlines are only approximately evenly spaced and capture the vortex
+# pair downstream of the cylinder with appropriate choice of ``start_position``.
 #
 # .. tags:: filter

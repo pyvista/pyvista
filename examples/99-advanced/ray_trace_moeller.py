@@ -114,7 +114,8 @@ if inter:
 
     pl = pv.Plotter()
     pl.add_text(
-        f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26
+        f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})',
+        font_size=26,
     )
     pl.add_mesh(tri)
     _ = pl.add_arrows(
@@ -125,7 +126,10 @@ if inter:
         style='wireframe',
     )
     pl.add_points(
-        np.array([point]), point_size=20, render_points_as_spheres=True, color='b'
+        np.array([point]),
+        point_size=20,
+        render_points_as_spheres=True,
+        color='b',
     )
     pl.add_point_labels(
         tri,

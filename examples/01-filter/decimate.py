@@ -17,7 +17,9 @@ mesh = examples.download_face()
 
 # Define a camera position that shows this mesh properly
 cpos = pv.CameraPosition(
-    position=(0.4, -0.07, -0.31), focal_point=(0.05, -0.13, -0.06), viewup=(-0.1, 1, 0.08)
+    position=(0.4, -0.07, -0.31),
+    focal_point=(0.05, -0.13, -0.06),
+    viewup=(-0.1, 1, 0.08),
 )
 plot_kwargs = dict(show_edges=True, color=True)
 
@@ -108,16 +110,15 @@ print(f'Decimated # of points: {decimated.n_points}')
 compare_decimation(spiral, decimated)
 
 # %%
-# Using a larger level of reduction, 80%, leads to a much coarser level of
-# representation.
+# Using a larger level of reduction, 80%, leads to a much coarser level
+# of representation.
 
 decimated = spiral.decimate_polyline(0.8)
 print(f'Original # of points:  {spiral.n_points}')
 print(f'Decimated # of points: {decimated.n_points}')
 
 # %%
-# The structure of the inner part of the spiral is completely
-# lost.
+# The structure of the inner part of the spiral is completely lost.
 
 compare_decimation(spiral, decimated)
 

@@ -17,8 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Pick Points on a Sphere
-# +++++++++++++++++++++++
+# Pick Points on a Sphere +++++++++++++++++++++++
 #
 sphere = pv.Sphere()
 
@@ -28,11 +27,10 @@ pl.enable_point_picking()
 pl.show()
 
 # %%
-# Ignore the 3D Window
-# ++++++++++++++++++++
+# Ignore the 3D Window ++++++++++++++++++++
 #
-# In the above example, both points on the mesh and points in the 3d window can be
-# selected. It is possible instead pick only points on the mesh.
+# In the above example, both points on the mesh and points in the 3d window can
+# be selected. It is possible instead pick only points on the mesh.
 sphere = pv.Sphere()
 
 pl = pv.Plotter()
@@ -41,8 +39,7 @@ pl.enable_point_picking(pickable_window=False)  # Make the 3D window unpickable
 pl.show()
 
 # %%
-# Modify Which Actors Are Pickable
-# ++++++++++++++++++++++++++++++++
+# Modify Which Actors Are Pickable ++++++++++++++++++++++++++++++++
 #
 # After enabling point picking, we can modify which actors are pickable.
 sphere = pv.Sphere()
@@ -58,8 +55,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Pick Using the Left-Mouse Button
-# ++++++++++++++++++++++++++++++++
+# Pick Using the Left-Mouse Button ++++++++++++++++++++++++++++++++
 #
 sphere = pv.Sphere()
 

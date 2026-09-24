@@ -4,7 +4,7 @@
 Platonic Solids
 ~~~~~~~~~~~~~~~
 
-PyVista wraps the :vtk:`vtkPlatonicSolidSource` filter as :func:`pyvista.PlatonicSolid`.
+PyVista wraps :vtk:`vtkPlatonicSolidSource` as :func:`pyvista.PlatonicSolid`.
 
 """
 
@@ -17,9 +17,9 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# We can either use the generic :func:`PlatonicSolid() <pyvista.PlatonicSolid>`
-# and specify the different kinds of solids to generate, or we can use the thin
-# wrappers:
+# We can either use the generic :func:`PlatonicSolid()
+# <pyvista.PlatonicSolid>` and specify the different kinds of solids to
+# generate, or we can use the thin wrappers:
 #
 # * :func:`pyvista.Tetrahedron`
 # * :func:`pyvista.Octahedron`
@@ -27,8 +27,8 @@ from pyvista import examples
 # * :func:`pyvista.Icosahedron`
 # * :func:`pyvista.Cube` (implemented via a different filter)
 #
-# Let's generate all the Platonic solids, along with the :func:`teapotahedron
-# <pyvista.examples.downloads.download_teapot>`.
+# Let's generate all the Platonic solids, along with the
+# :func:`teapotahedron <pyvista.examples.downloads.download_teapot>`.
 
 kinds = [
     'tetrahedron',
@@ -85,7 +85,6 @@ pl.enable_shadows()
 pl.show()
 
 # %%
-# The Platonic solids come with cell scalars that index each face of the
-# solids.
+# The Platonic solids come with cell scalars that index each face of the solids.
 #
 # .. tags:: load

@@ -20,8 +20,7 @@ mesh = image.warp_by_scalar()
 
 
 # %%
-# Global Value
-# ++++++++++++
+# Global Value ++++++++++++
 #
 # You can also apply a global opacity value to the mesh by passing a single
 # float between 0 and 1 which would enable you to see objects behind the mesh:
@@ -40,8 +39,7 @@ pl.show()
 
 
 # %%
-# Transfer Functions
-# ++++++++++++++++++
+# Transfer Functions ++++++++++++++++++
 #
 # It's possible to apply an opacity mapping to any scalar array plotted. You
 # can specify either a single static value to make the mesh transparent on all
@@ -54,14 +52,14 @@ pl.show()
 #   range from low to high
 # - ``'linear_r'``: linearly vary (increase) opacity across the plotted scalar
 #   range from high to low
-# - ``'geom'``: on a log scale, vary (increase) opacity across the plotted scalar
-#   range from low to high
-# - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted scalar
-#   range from high to low
-# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted
+# - ``'geom'``: on a log scale, vary (increase) opacity across the plotted
 #   scalar range from low to high
-# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted
+# - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted
 #   scalar range from high to low
+# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the
+#   plotted scalar range from low to high
+# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the
+#   plotted scalar range from high to low
 
 # Show the linear opacity transfer function
 mesh.plot(opacity='linear')
@@ -123,15 +121,19 @@ pv.plot_compare(
     cmap='bone',
     opacity=opacities,
     scalar_bar_args=[
-        {'title': str(opacity), 'vertical': True, 'position_x': 0.1, 'fmt': '%.0f'}
+        {
+            'title': str(opacity),
+            'vertical': True,
+            'position_x': 0.1,
+            'fmt': '%.0f',
+        }
         for opacity in opacities
     ],
     cpos='xy',
 )
 
 # %%
-# Opacity by Array
-# ++++++++++++++++
+# Opacity by Array ++++++++++++++++
 #
 # You can also use a scalar array associated with the mesh to give each cell
 # its own opacity/transparency value derived from a scalar field. For example,

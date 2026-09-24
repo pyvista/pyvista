@@ -49,9 +49,9 @@ def update_resolution(value):
 
 
 # %%
-# Pass the :vtk:`vtkConeSource` (a :vtk:`vtkAlgorithm` subclass) directly to the
-# plotter and connect a slider widget to our callback that adjusts the
-# resolution.
+# Pass the :vtk:`vtkConeSource` (a :vtk:`vtkAlgorithm` subclass) directly
+# to the plotter and connect a slider widget to our callback that adjusts
+# the resolution.
 pl = pv.Plotter()
 pl.add_mesh(algo, color='red')
 pl.add_slider_widget(update_resolution, [5, 100], title='Resolution')
@@ -79,11 +79,9 @@ pl.show()
 
 
 # %%
-# Filter Pipeline
-# +++++++++++++++
-# We can do this with any :vtk:`vtkAlgorithm` subclass for dynamically generating
-# or filtering data. Here is an example of executing a pipeline of VTK filters
-# together.
+# Filter Pipeline +++++++++++++++ We can do this with any :vtk:`vtkAlgorithm`
+# subclass for dynamically generating or filtering data. Here is an example of
+# executing a pipeline of VTK filters together.
 
 # Source mesh object (static)
 mesh = examples.download_bunny_coarse()

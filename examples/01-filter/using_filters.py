@@ -13,22 +13,24 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# PyVista wrapped data objects have a suite of common filters ready for immediate
-# use directly on the object. These filters include the following
-# (see :ref:`filters` for a complete list):
+# PyVista wrapped data objects have a suite of common filters ready for
+# immediate use directly on the object. These filters include the following (see
+# :ref:`filters` for a complete list):
 #
-# * ``slice``: creates a single slice through the input dataset on a user defined plane
-# * ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal slices
-# * ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along a
-#   specified axis
+# * ``slice``: creates a single slice through the input dataset on a user
+#   defined plane
+# * ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal
+#   slices
+# * ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along
+#   a specified axis
 # * ``threshold``: Thresholds a dataset by a single value or range of values
 # * ``threshold_percent``: Threshold by percentages of the scalar range
 # * ``clip``: Clips the dataset by a user defined plane
 # * ``outline_corners``: Outlines the corners of the data extent
 # * ``extract_surface``: Extract surface geometry
 #
-# To use these filters, call the method of your choice directly on your data
-# object:
+# To use these filters, call the method of your choice directly on your
+# data object:
 
 dataset = examples.load_uniform()
 dataset.set_active_scalars('Spatial Point Data')
@@ -40,13 +42,13 @@ outline = dataset.outline()
 
 # %%
 # And now there is a thresholded version of the input dataset in the new
-# ``threshed`` object. To learn more about what keyword arguments are available to
-# alter how filters are executed, print the docstring for any filter attached to
-# PyVista objects with either ``help(dataset.threshold)`` or using ``shift+tab``
-# in an IPython environment.
+# ``threshed`` object. To learn more about what keyword arguments are available
+# to alter how filters are executed, print the docstring for any filter attached
+# to PyVista objects with either ``help(dataset.threshold)`` or using
+# ``shift+tab`` in an IPython environment.
 #
-# We can now plot this filtered dataset along side an outline of the original
-# dataset
+# We can now plot this filtered dataset along side an outline of the
+# original dataset
 
 pl = pv.Plotter()
 pl.add_mesh(outline, color='k')
@@ -61,11 +63,13 @@ pl.show()
 contours = dataset.contour()
 slices = dataset.slice_orthogonal()
 glyphs = dataset.glyph(
-    factor=1e-3, geom=pv.Sphere(theta_resolution=8, phi_resolution=8), orient=False
+    factor=1e-3,
+    geom=pv.Sphere(theta_resolution=8, phi_resolution=8),
+    orient=False,
 )
 
-# Use :func:`~pyvista.plot_compare` to show each result in its own linked subplot with an
-# outline of the original dataset.
+# Use :func:`~pyvista.plot_compare` to show each result in its own linked
+# subplot with an outline of the original dataset.
 datasets = {
     'Threshold': threshed,
     'Contour': contours,
@@ -81,8 +85,7 @@ pv.plot_compare(
 )
 
 # %%
-# Filter Pipeline
-# +++++++++++++++
+# Filter Pipeline +++++++++++++++
 #
 # In VTK, filters are often used in a pipeline where each algorithm passes its
 # output to the next filtering algorithm. In PyVista, we can mimic the
@@ -91,12 +94,16 @@ pv.plot_compare(
 #
 # 1. First, use :func:`~pyvista.DataSetFilters.remove_nan_cells` to drop any
 #    cells whose scalar values are ``NaN``.
-# 2. Use an ``elevation`` filter to generate scalar values corresponding to height.
+# 2. Use an ``elevation`` filter to generate scalar values corresponding to
+#    height.
 # 3. Use the ``clip`` filter to cut the dataset in half.
-# 4. Create three slices along each axial plane using the ``slice_orthogonal`` filter.
+# 4. Create three slices along each axial plane using the ``slice_orthogonal``
+#    filter.
 
 # Apply a filtering chain
-result = dataset.remove_nan_cells().elevation().clip(normal='z').slice_orthogonal()
+result = (
+    dataset.remove_nan_cells().elevation().clip(normal='z').slice_orthogonal()
+)
 
 # %%
 # And to view this filtered data, simply call the ``plot`` method

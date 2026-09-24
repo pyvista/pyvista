@@ -4,7 +4,7 @@
 Linked Views in Subplots
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create linked views in PyVista subplots using :func:`~pyvista.Plotter.link_views`.
+Link views in PyVista subplots using :func:`~pyvista.Plotter.link_views`.
 
 Camera movements in one view are synchronized with other views. This is
 particularly useful when comparing different versions or representations of
@@ -42,7 +42,11 @@ pl.open_gif('linked.gif')
 nframe = 15
 for i in range(nframe):
     pl.camera_position = pv.CameraPosition(
-        position=(15 * np.cos(i * np.pi / 45.0), 5.0, 15 * np.sin(i * np.pi / 45.0)),
+        position=(
+            15 * np.cos(i * np.pi / 45.0),
+            5.0,
+            15 * np.sin(i * np.pi / 45.0),
+        ),
         focal_point=(0, 0, 0),
         viewup=(0, 1, 0),
     )

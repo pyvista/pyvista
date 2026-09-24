@@ -49,8 +49,8 @@ slices = mesh.slice_orthogonal(x=20, y=20, z=30)
 slices.plot(cmap=cmap)
 # %%
 # We can also add just a single slice of the volume by specifying the origin
-# and normal of the slicing plane with the :func:`pyvista.DataObjectFilters.slice`
-# filter:
+# and normal of the slicing plane with the
+# :func:`pyvista.DataObjectFilters.slice` filter:
 
 # Single slice - origin defaults to the center of the mesh
 single_slice = mesh.slice(normal=[1, 1, 0])
@@ -69,11 +69,11 @@ slices.plot(cmap=cmap)
 
 
 # %%
-# Slice Along Line
-# ++++++++++++++++
+# Slice Along Line ++++++++++++++++
 #
-# We can also slice a dataset along a :func:`pyvista.Spline` or :func:`pyvista.Line`
-# using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
+# We can also slice a dataset along a :func:`pyvista.Spline` or
+# :func:`pyvista.Line` using the
+# :func:`pyvista.DataObjectFilters.slice_along_line` filter.
 #
 # First, define a line source through the dataset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while
@@ -111,8 +111,7 @@ pl.show(cpos=[1, -1, 1])
 
 
 # %%
-# Multiple Slices in Vector Direction
-# +++++++++++++++++++++++++++++++++++
+# Multiple Slices in Vector Direction +++++++++++++++++++++++++++++++++++
 #
 # Slice a mesh along a vector direction perpendicularly.
 
@@ -146,10 +145,10 @@ pl.show()
 
 
 # %%
-# Slice at Different Bearings
-# +++++++++++++++++++++++++++
+# Slice at Different Bearings +++++++++++++++++++++++++++
 #
-# From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_
+# From `pyvista-support#23
+# <https://github.com/pyvista/pyvista-support/issues/23>`_
 #
 # An example of how to get many slices at different bearings all centered
 # around a user-chosen location.
@@ -178,15 +177,14 @@ pl.add_mesh(model.outline())
 pl.show()
 
 # %%
-# Slice ImageData With Indexing
-# +++++++++++++++++++++++++++++
-# Most slicing filters return :class:`~pyvista.PolyData` or
-# :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs, however,
-# it's often desirable to return :class:`~pyvista.ImageData`. The
+# Slice ImageData With Indexing +++++++++++++++++++++++++++++ Most slicing
+# filters return :class:`~pyvista.PolyData` or
+# :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs,
+# however, it's often desirable to return :class:`~pyvista.ImageData`. The
 # :meth:`~pyvista.ImageDataFilters.slice_index` filter supports this use case.
 #
-# Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
-# :func:`~pyvista.examples.examples.load_frog_tissues`.
+# Extract a single 2D slice from a 3D segmentation mask and plot it. Here we
+# use :func:`~pyvista.examples.examples.load_frog_tissues`.
 
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
@@ -198,8 +196,8 @@ colored = sliced.color_labels()
 colored.plot(cpos='xy', zoom='tight', lighting=False)
 
 # %%
-# Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we
-# define indices to extract the frog's head.
+# Extract a 3D volume of interest instead and visualize it as a surface mesh.
+# Here we define indices to extract the frog's head.
 
 sliced = mask.slice_index(i=[300, 500], j=[110, 350], k=[0, 100])
 surface = sliced.contour_labels()

@@ -6,7 +6,8 @@ Wrapping Other Objects
 
 Wrap other object types using :func:`~pyvista.wrap`.
 
-You can :func:`~pyvista.wrap` several other object types using pyvista including:
+You can :func:`~pyvista.wrap` several other object types using pyvista
+including:
 
 - ``numpy`` arrays
 - :class:`trimesh.Trimesh` meshes
@@ -58,8 +59,9 @@ mesh = pv.wrap(tmesh)
 print(mesh)
 
 # %%
-# We can also convert to a :class:`trimesh.Trimesh` mesh with :func:`~pyvista.to_trimesh`.
-# First create :class:`~pyvista.PolyData` with data.
+# We can also convert to a :class:`trimesh.Trimesh` mesh with
+# :func:`~pyvista.to_trimesh`. First create :class:`~pyvista.PolyData`
+# with data.
 mesh = pv.Sphere()
 mesh.point_data['point_ids'] = np.arange(mesh.n_points)
 mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
@@ -86,8 +88,9 @@ print(tmesh.face_attributes.keys())
 print(tmesh.metadata)
 
 # %%
-# Use :func:`~pyvista.from_trimesh` to convert it back to a :class:`~pyvista.PolyData`
-# mesh. This is the same as using :func:`~pyvista.wrap`.
+# Use :func:`~pyvista.from_trimesh` to convert it back to a
+# :class:`~pyvista.PolyData` mesh. This is the same as using
+# :func:`~pyvista.wrap`.
 pvmesh = pv.from_trimesh(tmesh)
 
 # %%

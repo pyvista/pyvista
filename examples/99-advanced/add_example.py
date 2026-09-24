@@ -13,8 +13,8 @@ Each example should have a reference anchor in the form:
 
 ``.. _<example_name>_example:``
 
-The ``.. _`` is necessary. Everything that follows is your reference anchor, which
-can potentially be used within a docstring. As convention, we keep all
+The ``.. _`` is necessary. Everything that follows is your reference anchor,
+which can potentially be used within a docstring. As convention, we keep all
 references all in ``snake_case``.
 
 This section should give a brief overview of what the example is about and/or
@@ -49,8 +49,9 @@ typically set up your imports.
         PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
         # \sphinx_gallery_end_ignore (remove the \)
 
-    Note that the ``sphinx_gallery_start_ignore`` and ``sphinx_gallery_end_ignore``
-    flags have been escaped to appear in the current documentation.
+    Note that the ``sphinx_gallery_start_ignore`` and
+    ``sphinx_gallery_end_ignore`` flags have been escaped to appear in the
+    current documentation.
     See ``Sphinx-Gallery`` `documentation <https://sphinx-gallery.github.io/stable/configuration.html#hiding-code-blocks>`_
     for more details.
 
@@ -116,13 +117,12 @@ dataset.plot(text='Example Figure')
 # %%
 # Caveat - Plotter Must Be Within One Cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# It's not possible for a single :class:`pyvista.Plotter` object across
-# multiple cells because these are closed out automatically at the end of a
-# cell.
+# It's not possible for a single :class:`pyvista.Plotter` object across multiple
+# cells because these are closed out automatically at the end of a cell.
 #
-# Here we just exercise the :class:`pyvista.Actor` ``repr`` for demonstrating
-# why you might want to instantiate a plotter without showing it in the same
-# cell.
+# Here we just exercise the :class:`pyvista.Actor` ``repr`` for
+# demonstrating why you might want to instantiate a plotter without showing
+# it in the same cell.
 
 pl = pv.Plotter()
 actor = pl.add_mesh(dataset)
@@ -165,7 +165,9 @@ pl.background_color = 'w'
 # clear and overwrite the mesh on each frame
 n_frames = 20
 for i in range(n_frames):
-    exploded = sphere.explode(factor=i / (n_frames * 2)).extract_surface(algorithm=None)
+    exploded = sphere.explode(factor=i / (n_frames * 2)).extract_surface(
+        algorithm=None
+    )
     actor.mapper.dataset.copy_from(exploded)
     pl.camera.reset_clipping_range()
     pl.write_frame()  # Write this frame
@@ -181,9 +183,9 @@ pl.close()
 # <https://github.com/pyvista/data>`_, and you can add the file by
 # following the directions there.
 #
-# Under the hood, PyVista uses `pooch <https://github.com/fatiando/pooch>`_,
-# and you can easily access any files added with
-# :func:`pyvista.examples.downloads.download_file`.
+# Under the hood, PyVista uses `pooch
+# <https://github.com/fatiando/pooch>`_, and you can easily access any
+# files added with :func:`pyvista.examples.downloads.download_file`.
 
 filename = examples.download_file('bunny.ply')
 filename
@@ -193,10 +195,10 @@ filename
 # Adding a Wrapped Example
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # While it's possible to simply download a file and then read it in, it's
-# better for you to write a wrapped ``download_<example_dataset>()`` within
-# ``/pyvista/examples/downloads.py``. For example :func:`download_bunny()
-# <pyvista.examples.downloads.download_bunny>` downloads and reads with
-# :func:`pyvista.read`.
+# better for you to write a wrapped ``download_<example_dataset>()``
+# within ``/pyvista/examples/downloads.py``. For example
+# :func:`download_bunny() <pyvista.examples.downloads.download_bunny>`
+# downloads and reads with :func:`pyvista.read`.
 #
 # If you intend on adding an example file, you should add a new function in
 # ``downloads.py`` to make it easy for users to add example files.
@@ -210,11 +212,11 @@ dataset
 # Once your example is complete and you've verified it builds locally, you can
 # make a pull request (PR).
 #
-# Branches containing examples should be prefixed with `docs/` as per the branch
-# naming conventions found in out `Contributing Guidelines
+# Branches containing examples should be prefixed with `docs/` as per
+# the branch naming conventions found in out `Contributing Guidelines
 # <https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst>`_.
 #
 # .. note::
-#    You only need to create the Python source example (``*.py``).  The jupyter
-#    notebook and the example HTML will be auto-generated via `sphinx-gallery
-#    <https://sphinx-gallery.github.io/>`_.
+#    You only need to create the Python source example (``*.py``).  The
+# jupyter    notebook and the example HTML will be auto-generated via
+# `sphinx-gallery    <https://sphinx-gallery.github.io/>`_.

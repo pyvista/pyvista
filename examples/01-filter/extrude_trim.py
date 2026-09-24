@@ -73,8 +73,12 @@ plane = pv.Plane(
 
 # extrude with and without the all_edges option
 extruded_disc = disc.extrude_trim((0, 0, -1.0), plane)
-extruded_disc_all = disc.extrude_trim((0, 0, -1.0), plane, extrusion='all_edges')
-print(f'Extrusion has {extruded_disc.n_faces} faces with default boundary_edges')
+extruded_disc_all = disc.extrude_trim(
+    (0, 0, -1.0), plane, extrusion='all_edges'
+)
+print(
+    f'Extrusion has {extruded_disc.n_faces} faces with default boundary_edges'
+)
 print(f'Extrusion has {extruded_disc_all.n_faces} faces with all_edges')
 
 
@@ -121,7 +125,9 @@ extruded_line
 # Note how the scalars are copied to the extruded line.
 
 pl = pv.Plotter()
-pl.add_mesh(line, style='wireframe', line_width=20, show_scalar_bar=False, color='r')
+pl.add_mesh(
+    line, style='wireframe', line_width=20, show_scalar_bar=False, color='r'
+)
 pl.add_mesh(plane, style='wireframe', color='black', show_scalar_bar=False)
 pl.add_mesh(extruded_line, show_scalar_bar=False, lighting=False)
 pl.show()

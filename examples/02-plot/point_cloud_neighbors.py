@@ -4,7 +4,7 @@
 Highlight Nearest Neighbors in a Point Cloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use :func:`~pyvista.DataSet.find_closest_point` to inspect point-cloud neighborhoods.
+Use :func:`~pyvista.DataSet.find_closest_point` to inspect neighborhoods.
 
 """
 

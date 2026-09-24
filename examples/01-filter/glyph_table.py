@@ -15,12 +15,12 @@ import pyvista as pv
 
 # %%
 #
-# We can allow tables of glyphs in a backward-compatible way by
-# allowing a sequence of geometries as well as single (scalar)
-# geometries to be passed as the ``geom`` kwarg of :func:`pyvista.DataSetFilters.glyph`.
-# An ``indices`` optional keyword specifies the index of each glyph geometry in
-# the table, and it has to be the same length as ``geom`` if specified. If it is
-# absent a default value of ``range(len(geom))`` is assumed.
+# We can allow tables of glyphs in a backward-compatible way by allowing a
+# sequence of geometries as well as single (scalar) geometries to be passed as
+# the ``geom`` kwarg of :func:`pyvista.DataSetFilters.glyph`. An ``indices``
+# optional keyword specifies the index of each glyph geometry in the table, and
+# it has to be the same length as ``geom`` if specified. If it is absent a
+# default value of ``range(len(geom))`` is assumed.
 
 # sphinx_gallery_start_ignore
 # interactive plot has wrong lighting
@@ -33,9 +33,8 @@ N = 5
 values = np.arange(N)  # values for scalars to look up glyphs by
 
 
-# taken from:
-# rng = np.random.default_rng()
-# params = rng.uniform(0.5, 2, size=(N, 2))  # (n1, n2) parameters for the toroids
+# taken from: rng = np.random.default_rng() params = rng.uniform(0.5, 2,
+# size=(N, 2))  # (n1, n2) parameters for the toroids
 params = np.array(
     [
         [1.56821334, 0.99649769],
@@ -55,19 +54,56 @@ mesh = pv.StructuredGrid(x, y, z)
 # add random scalars
 # rng_int = rng.integers(0, N, size=x.size)
 rng_int = np.array(
-    [4, 1, 2, 0, 4, 0, 1, 4, 3, 1, 1, 3, 3, 4, 3, 4, 4, 3, 3, 2, 2, 1, 1, 1, 2, 0, 3],
+    [
+        4,
+        1,
+        2,
+        0,
+        4,
+        0,
+        1,
+        4,
+        3,
+        1,
+        1,
+        3,
+        3,
+        4,
+        3,
+        4,
+        4,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        2,
+        0,
+        3,
+    ],
 )
 mesh.point_data['scalars'] = rng_int
 
 # construct the glyphs on top of the mesh; don't scale by scalars now
 glyphs = mesh.glyph(
-    geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, N - 1), orient=False
+    geom=geoms,
+    indices=values,
+    scale=False,
+    factor=0.3,
+    rng=(0, N - 1),
+    orient=False,
 )
 
 # create plotter and add our glyphs with some nontrivial lighting
 pl = pv.Plotter()
 pl.add_mesh(
-    glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False
+    glyphs,
+    specular=1,
+    specular_power=15,
+    smooth_shading=True,
+    show_scalar_bar=False,
 )
 pl.show()
 # %%

@@ -7,7 +7,8 @@ Silhouette Highlight
 Extract an outline (silhouette) of a polygonal mesh's edges.
 
 The silhouette may be created using the ``silhouette`` keyword with
-:meth:`~pyvista.Plotter.add_mesh`, or by using `~pyvista.Plotter.add_silhouette` directly.
+:meth:`~pyvista.Plotter.add_mesh`, or by using `~pyvista.Plotter.add_silhouette`
+directly.
 
 """
 
@@ -58,7 +59,9 @@ silhouettes = {
     'Silhouette with sharp edges': dict(
         color='red', line_width=8.0, decimate=None, feature_angle=True
     ),
-    'Silhouette without sharp edges': dict(color='red', line_width=8.0, decimate=None),
+    'Silhouette without sharp edges': dict(
+        color='red', line_width=8.0, decimate=None
+    ),
     'No silhouette': False,
 }
 
@@ -89,7 +92,9 @@ pl.add_mesh(
     cylinder,
     color='lightblue',
     smooth_shading=True,
-    silhouette=dict(decimate=None, feature_angle=True, line_width=8, color='white'),
+    silhouette=dict(
+        decimate=None, feature_angle=True, line_width=8, color='white'
+    ),
 )
 pl.camera_position = pv.CameraPosition(
     position=(-0.2937, 0.2389, 0.3514),

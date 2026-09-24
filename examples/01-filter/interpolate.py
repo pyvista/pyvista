@@ -28,7 +28,9 @@ surface = examples.download_saddle_surface()
 points = examples.download_sparse_points()
 
 pl = pv.Plotter()
-pl.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+pl.add_mesh(
+    points, scalars='val', point_size=30.0, render_points_as_spheres=True
+)
 pl.add_mesh(surface)
 pl.show()
 
@@ -39,18 +41,18 @@ interpolated = surface.interpolate(points, radius=12.0)
 
 
 pl = pv.Plotter()
-pl.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+pl.add_mesh(
+    points, scalars='val', point_size=30.0, render_points_as_spheres=True
+)
 pl.add_mesh(interpolated, scalars='val')
 pl.show()
 
 
 # %%
-# Complex Interpolation
-# +++++++++++++++++++++
-# In this example, we will in interpolate sparse points in 3D space into a
-# volume. These data are from temperature probes in the subsurface and the goal
-# is to create an approximate 3D model of the temperature field in the
-# subsurface.
+# Complex Interpolation +++++++++++++++++++++ In this example, we will in
+# interpolate sparse points in 3D space into a volume. These data are from
+# temperature probes in the subsurface and the goal is to create an approximate
+# 3D model of the temperature field in the subsurface.
 #
 # This approach is a great for back-of-the-hand estimations but pales in
 # comparison to kriging
@@ -81,7 +83,9 @@ pl.show(cpos=cpos)
 
 # %%
 # Run an interpolation
-interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_points')
+interp = grid.interpolate(
+    probes, radius=15000, sharpness=10, strategy='mask_points'
+)
 
 # %%
 # Visualize the results

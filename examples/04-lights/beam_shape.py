@@ -34,8 +34,8 @@ pl.show()
 # We can see that the default lighting does a very good job of articulating the
 # shape of the hemispheres.
 #
-# Let's shine a directional light on them, positioned between the hemispheres and
-# oriented along their centers:
+# Let's shine a directional light on them, positioned between the hemispheres
+# and oriented along their centers:
 
 pl = pv.Plotter(lighting='none')
 
@@ -83,9 +83,10 @@ pl.show()
 # :ref:`attenuation_example` example.
 #
 # Switching to a spotlight (that is, a positional light with a cone angle less
-# than 90 degrees) will enable beam shaping using the :py:attr:`pyvista.Light.exponent`
-# property. Let's put our hemispheres side by side for this, and put a light in
-# the center of each: one spotlight, one merely positional.
+# than 90 degrees) will enable beam shaping using the
+# :py:attr:`pyvista.Light.exponent` property. Let's put our hemispheres side by
+# side for this, and put a light in the center of each: one spotlight, one
+# merely positional.
 
 pl = pv.Plotter(lighting='none')
 
@@ -116,13 +117,13 @@ pl.show()
 
 
 # %%
-# Even though the two lights only differ by a fraction of a degree in cone angle,
-# the beam shaping effect enabled for spotlights causes a marked difference in
-# the result.
+# Even though the two lights only differ by a fraction of a degree in cone
+# angle, the beam shaping effect enabled for spotlights causes a marked
+# difference in the result.
 #
-# Once we have a spotlight we can change its :py:attr:`pyvista.Light.exponent`
-# to make the beam shape sharper or broader. Three spotlights with varying
-# sharpness:
+# Once we have a spotlight we can change its
+# :py:attr:`pyvista.Light.exponent` to make the beam shape sharper or
+# broader. Three spotlights with varying sharpness:
 
 pl = pv.Plotter(lighting='none')
 hemi_template = pv.Sphere().clip()

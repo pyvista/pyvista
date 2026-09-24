@@ -55,8 +55,12 @@ pl.add_mesh(
     line_width=8,
     render_lines_as_tubes=True,
 )
-pl.add_points(points, color='black', point_size=16, render_points_as_spheres=True)
-pl.add_point_labels(points, labels, font_size=24, point_size=0, fill_shape=False)
+pl.add_points(
+    points, color='black', point_size=16, render_points_as_spheres=True
+)
+pl.add_point_labels(
+    points, labels, font_size=24, point_size=0, fill_shape=False
+)
 pl.show()
 # %%
 # .. tags:: plot

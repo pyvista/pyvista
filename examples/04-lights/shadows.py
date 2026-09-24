@@ -6,7 +6,8 @@ Shadows
 
 Demonstrate the usage of lights and shadows in PyVista.
 
-Uses :class:`~pyvista.Light` objects and :meth:`~pyvista.Plotter.enable_shadows`.
+Uses :class:`~pyvista.Light` objects and
+:meth:`~pyvista.Plotter.enable_shadows`.
 
 """
 
@@ -54,7 +55,9 @@ center = np.array(mesh.center)
 center -= [0, 0, mesh.center[2] - bnds.z_min + height / 2]
 width = x_size * (1 + expand)
 length = y_size * (1 + expand)
-base_mesh = pv.Cube(center=center, x_length=width, y_length=length, z_length=height)
+base_mesh = pv.Cube(
+    center=center, x_length=width, y_length=length, z_length=height
+)
 
 # rotate base and mesh to get a better view
 base_mesh.rotate_z(30, inplace=True)
@@ -88,7 +91,9 @@ pl = pv.Plotter(lighting=None, window_size=(800, 800))
 
 # add several planes
 for plane_y in [2, 5, 10]:
-    screen = pv.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+    screen = pv.Plane(
+        center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5
+    )
     pl.add_mesh(screen, color='white')
 
 light = pv.Light(
@@ -116,7 +121,9 @@ pl = pv.Plotter(lighting=None, window_size=(800, 800))
 
 # add several planes
 for plane_y in [2, 5, 10]:
-    screen = pv.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
+    screen = pv.Plane(
+        center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5
+    )
     pl.add_mesh(screen, color='white')
 
 light = pv.Light(

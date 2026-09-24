@@ -65,8 +65,8 @@ pl.show(cpos=cpos)
 # ~~~~~~~~~~~~
 # You can use :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>` in
 # combination with :func:`extract_all_edges
-# <pyvista.DataObjectFilters.extract_all_edges>` to get the center of all edges of
-# a mesh.
+# <pyvista.DataObjectFilters.extract_all_edges>` to get the center of all edges
+# of a mesh.
 
 # create a simple mesh and extract all the edges and then centers of the mesh.
 mesh = pv.Cube()

@@ -16,9 +16,9 @@ https://asa.scitation.org/doi/10.1121/1.401643.
 """
 
 # %%
-# First, let's solve the eigenvalue problem for a vibrating cube. We use
-# a crude approximation (by choosing a low max polynomial order) to get a fast
-# computation.
+# First, let's solve the eigenvalue problem for a vibrating cube. We use a
+# crude approximation (by choosing a low max polynomial order) to get a
+# fast computation.
 import itertools
 
 import numpy as np
@@ -29,7 +29,8 @@ from scipy.linalg import eigh
 def analytical_integral_rppd(p, q, r, *, a, b, c):
     """Return the analytical value of the RPPD integral.
 
-    This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).
+    This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b) and
+    (z, -c, c).
     """
     if p < 0 or q < 0 or r < 0.0:
         return 0.0
@@ -81,12 +82,15 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 
 def get_first_n_above_thresh(*, N, freqs, thresh, decimals=3):
-    """Return first N unique frequencies with amplitude>thresh based on first decimals."""
+    """Return the first N unique frequencies with amplitude>thresh."""
     unique_freqs, unique_indices = np.unique(
         np.round(freqs, decimals=decimals), return_index=True
     )
     nonzero = unique_freqs > thresh
-    unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
+    unique_freqs, unique_indices = (
+        unique_freqs[nonzero],
+        unique_indices[nonzero],
+    )
     return unique_freqs[:N], unique_indices[:N]
 
 
@@ -161,10 +165,14 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
                 * r2
                 * F(p1 + p2, q1 + q2, r1 + r2 - 2, **geom_params)
             )
-            G[index2_, index1] = G[index1, index2_]  # since stiffness matrix is symmetric
+            G[index2_, index1] = G[
+                index1, index2_
+            ]  # since stiffness matrix is symmetric
             if I == J:
                 E[index1, index2_] = F(p1 + p2, q1 + q2, r1 + r2, **geom_params)
-                E[index2_, index1] = E[index1, index2_]  # since mass matrix is symmetric
+                E[index2_, index1] = E[
+                    index1, index2_
+                ]  # since mass matrix is symmetric
     return E, G, quadruplets
 
 
@@ -234,9 +242,14 @@ for i, mode_index in enumerate(mode_indices):
     eigenvector = vr[:, mode_index]
     displacement_points = np.zeros_like(vol.points)
 
-    for weight, (component, p, q, r) in zip(eigenvector, quadruplets, strict=True):
+    for weight, (component, p, q, r) in zip(
+        eigenvector, quadruplets, strict=True
+    ):
         displacement_points[:, component] += (
-            weight * vol.points[:, 0] ** p * vol.points[:, 1] ** q * vol.points[:, 2] ** r
+            weight
+            * vol.points[:, 0] ** p
+            * vol.points[:, 1] ** q
+            * vol.points[:, 2] ** r
         )
 
     # normalize magnitude
@@ -245,7 +258,8 @@ for i, mode_index in enumerate(mode_indices):
     if max_magnitude > 0.0:
         displacement_points /= max_magnitude
 
-    # for repeatability, ensure that the first point always has positive displacement
+    # for repeatability, ensure that the first point always has
+    # positive displacement
     if displacement_points[0, 0] < 0.0:
         displacement_points = -displacement_points
 
@@ -256,7 +270,11 @@ warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
 pl = pv.Plotter()
 pl.add_mesh(
-    vol, style='wireframe', scalars=warpby, show_scalar_bar=False, clim=(0.0, 1.0)
+    vol,
+    style='wireframe',
+    scalars=warpby,
+    show_scalar_bar=False,
+    clim=(0.0, 1.0),
 )
 pl.add_mesh(warped, scalars=warpby, clim=(0.0, 1.0))
 pl.show()
@@ -270,8 +288,9 @@ for i, j in itertools.product(range(2), range(4)):
     pl.subplot(i, j)
     current_index = 4 * i + j
     vector = f'eigenmode_{current_index:02}'
+    freq_khz = computed_freqs_khz[current_index]
     pl.add_text(
-        f'mode {current_index}, freq. {computed_freqs_khz[current_index]:.1f} kHz',
+        f'mode {current_index}, freq. {freq_khz:.1f} kHz',
         font_size=10,
     )
     pl.add_mesh(

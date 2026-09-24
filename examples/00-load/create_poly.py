@@ -18,7 +18,9 @@ import pyvista as pv
 # comprise that face.
 
 # mesh points
-vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
+vertices = np.array(
+    [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]]
+)
 
 # mesh faces
 faces = np.hstack(

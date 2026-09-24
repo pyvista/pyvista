@@ -7,8 +7,8 @@ Electronics Cooling CFD
 Plot an electronics cooling CFD example hosted on SimScale.
 
 From the `SimScale Project Library <https://www.simscale.com/projects/>`_,
-generated from the `Thermal Management Tutorial: CHT Analysis of an
-Electronics Box
+generated from the `Thermal Management Tutorial: CHT Analysis of an Electronics
+Box
 <https://www.simscale.com/docs/tutorials/thermal-management-cht-analysis-electronics-box/>`_.
 
 This example dataset was read using the :class:`pyvista.POpenFOAMReader` and
@@ -72,7 +72,9 @@ z_slice = air.clip('z', value=-0.005)
 # Plot it
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
-pl.add_mesh(z_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Velocity'})
+pl.add_mesh(
+    z_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Velocity'}
+)
 pl.add_mesh(structure, color='w', smooth_shading=True, split_sharp_edges=True)
 pl.camera_position = 'xy'
 pl.camera.roll = 90
@@ -156,8 +158,8 @@ pl.show()
 #
 # For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
-# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can visualize
-# it using :func:`add_volume() <pyvista.Plotter.add_volume>`
+# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can
+# visualize it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
 
 # sphinx_gallery_start_ignore

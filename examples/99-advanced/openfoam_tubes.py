@@ -27,7 +27,8 @@ block
 # %%
 # Plot Cross Section
 # ~~~~~~~~~~~~~~~~~~
-# Plot the outline of the dataset along with a cross section of the flow velocity.
+# Plot the outline of the dataset along with a cross section of the
+# flow velocity.
 
 # first, get the first block representing the air within the tube.
 air = block[0]
@@ -37,7 +38,10 @@ y_slice = air.slice('y')
 
 pl = pv.Plotter()
 pl.add_mesh(
-    y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'}
+    y_slice,
+    scalars='U',
+    lighting=False,
+    scalar_bar_args={'title': 'Flow Velocity'},
 )
 pl.add_mesh(air, color='w', opacity=0.25)
 pl.enable_anti_aliasing()
@@ -61,8 +65,8 @@ pl.show()
 
 
 # %%
-# Now, actually generate the streamlines. Since the original inlet contains
-# 1000 points, let's reduce this to around 200 points by using every fifth point.
+# Now, actually generate the streamlines. Since the original inlet contains 1000
+# points, let's reduce this to around 200 points by using every fifth point.
 #
 # .. note::
 #    If we wanted a uniform subsampling of the inlet, we could use
@@ -100,8 +104,8 @@ pl.show()
 #
 # For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
-# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can visualize
-# it using :func:`add_volume() <pyvista.Plotter.add_volume>`
+# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can
+# visualize it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
 # sphinx_gallery_start_ignore
 # volume rendering does not work in interactive plots currently

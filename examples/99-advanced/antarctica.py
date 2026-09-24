@@ -12,9 +12,9 @@ mesh to have the simulation node value already on the mesh.
 This was originally posted to `pyvista/pyvista-support#83
 <https://github.com/pyvista/pyvista-support/issues/83>`_.
 
-The modeling results are courtesy of `Urruty Benoit <https://github.com/BenoitURRUTY>`_
-and  are from the `Elmer/Ice <https://elmerice.elmerfem.org>`_ simulation
-software.
+The modeling results are courtesy of `Urruty Benoit
+<https://github.com/BenoitURRUTY>`_ and  are from the `Elmer/Ice
+<https://elmerice.elmerfem.org>`_ simulation software.
 
 """
 
@@ -30,7 +30,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 from pyvista import examples
 
-# Load the sample data :func:`~pyvista.examples.downloads.download_antarctica_velocity`
+# Load the sample data
+# :func:`~pyvista.examples.downloads.download_antarctica_velocity`
 mesh = examples.download_antarctica_velocity()
 mesh['magnitude'] = np.linalg.norm(mesh['ssavelocity'], axis=1)
 mesh
@@ -56,7 +57,9 @@ pl.show(cpos='xy')
 
 # %%
 
-vel_dargs = dict(scalars='magnitude', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+vel_dargs = dict(
+    scalars='magnitude', clim=[1e-3, 1e4], cmap='Blues', log_scale=True
+)
 
 mesh.plot(cpos='xy', **vel_dargs)
 
@@ -87,8 +90,8 @@ pl.show()
 
 
 # %%
-# Compare directions. Normalize them so we can get a reasonable direction
-# comparison.
+# Compare directions. Normalize them so we can get a reasonable
+# direction comparison.
 
 flow_a = a.point_data['ssavelocity'].copy()
 flow_a /= np.linalg.norm(flow_a, axis=1).reshape(-1, 1)
@@ -115,7 +118,10 @@ agree = flow_a.dot(flow_b.mean(0))
 
 pl = pv.Plotter()
 pl.add_mesh(
-    a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block b'}
+    a,
+    scalars=agree,
+    cmap='bwr',
+    scalar_bar_args={'title': 'Flow agreement with block b'},
 )
 pl.add_mesh(b, color='w')
 pl.show(cpos='xy')
@@ -126,6 +132,9 @@ agree = flow_b.dot(flow_a.mean(0))
 pl = pv.Plotter()
 pl.add_mesh(a, color='w')
 pl.add_mesh(
-    b, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block a'}
+    b,
+    scalars=agree,
+    cmap='bwr',
+    scalar_bar_args={'title': 'Flow agreement with block a'},
 )
 pl.show(cpos='xy')

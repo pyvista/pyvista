@@ -9,10 +9,11 @@ Apply an FFT to a :class:`~pyvista.ImageData` sampled from Perlin noise.
 Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
 Here, we demonstrate FFT usage by first generating Perlin noise using
-:func:`pyvista.sample_function() <pyvista.core.utilities.features.sample_function>` to
-sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`,
-and then performing FFT of the sampled noise to show the frequency content of
-that noise.
+:func:`pyvista.sample_function()
+<pyvista.core.utilities.features.sample_function>` to sample
+:func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`, and
+then performing FFT of the sampled noise to show the frequency content of that
+noise.
 
 """
 
@@ -28,9 +29,9 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # <https://en.wikipedia.org/wiki/Perlin_noise>`_ as in
 # :ref:`perlin_noise_2d_example` example.
 #
-# Note that we are generating it in a flat plane and using a frequency of 10 in
-# the x direction and 5 in the y direction. The unit of frequency is
-# ``1/pixel``.
+# Note that we are generating it in a flat plane and using a frequency of
+# 10 in the x direction and 5 in the y direction. The unit of frequency
+# is ``1/pixel``.
 #
 # Also note that the dimensions of the image are powers of 2. This is because
 # the FFT is much more efficient for arrays sized as a power of 2.
@@ -38,7 +39,9 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 freq = [10, 5, 0]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
 xdim, ydim = (2**9, 2**9)
-sampled = pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydim, 1))
+sampled = pv.sample_function(
+    noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydim, 1)
+)
 
 # warp and plot the sampled noise
 warped_noise = sampled.warp_by_scalar()
@@ -48,9 +51,8 @@ warped_noise.plot(show_scalar_bar=False, text='Perlin Noise', lighting=False)
 # %%
 # Perform FFT of Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Next, perform an FFT of the noise and plot the frequency content.
-# For the sake of simplicity, we will only plot the content in the first
-# quadrant.
+# Next, perform an FFT of the noise and plot the frequency content. For the sake
+# of simplicity, we will only plot the content in the first quadrant.
 #
 # Note the usage of :func:`numpy.fft.fftfreq` to get the frequencies.
 
@@ -66,8 +68,8 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 # Plot the Frequency Domain
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, plot the noise in the frequency domain. Note how there is more high
-# frequency content in the x direction and this matches the frequencies given
-# to :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`.
+# frequency content in the x direction and this matches the frequencies given to
+# :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`.
 
 # scale to make the plot viewable
 subset['scalars'] = np.abs(subset.active_scalars)
@@ -216,7 +218,7 @@ pl.close()
 # In contrast, the right mesh is always warped to the same visible height,
 # irrespective of the cutoff frequency. This highlights how the typical
 # wavelength (size of the features) of the Perlin noise decreases as the
-# frequency cutoff is increased since wavelength and frequency are inversely
-# proportional.
+# frequency cutoff is increased since wavelength and frequency are
+# inversely proportional.
 #
 # .. tags:: filter

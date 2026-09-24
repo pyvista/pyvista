@@ -4,7 +4,7 @@
 Extract Surface
 ---------------
 
-Extract nearly any object surface with :meth:`~pyvista.DataObjectFilters.extract_surface`.
+Extract a surface with :meth:`~pyvista.DataObjectFilters.extract_surface`.
 
 """
 
@@ -15,8 +15,8 @@ import pyvista as pv
 # %%
 # Surface Extraction of Nonlinear Cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Here we create a single :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` cell and then
-# extract its surface to demonstrate how to extract the surface of an
+# Here we create a single :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` cell
+# and then extract its surface to demonstrate how to extract the surface of an
 # :class:`~pyvista.UnstructuredGrid`. First define points of a linear cell:
 
 lin_pts = np.array(
@@ -34,8 +34,8 @@ lin_pts = np.array(
 )
 
 # %%
-# Next, define the "mid-side" points of a quad cell. See the definition of a
-# :vtk:`vtkQuadraticHexahedron`.
+# Next, define the "mid-side" points of a quad cell. See the definition of
+# a :vtk:`vtkQuadraticHexahedron`.
 
 quad_pts = np.array(
     [
@@ -68,20 +68,19 @@ celltypes = np.array([pv.CellType.QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # %%
-# Finally, extract the surface and plot it.
-# Note that the ``'dataset_surface'`` algorithm is necessary to use when generating
-# surfaces from non-linear cells. Setting ``algorithm=None`` also works.
+# Finally, extract the surface and plot it. Note that the ``'dataset_surface'``
+# algorithm is necessary to use when generating surfaces from non-linear cells.
+# Setting ``algorithm=None`` also works.
 surf = grid.extract_surface(algorithm='dataset_surface')
 surf.plot(show_scalar_bar=False)
 
 # %%
 # Nonlinear Surface Subdivision
 # =============================
-# Should your UnstructuredGrid contain quadratic cells, you can
-# generate a smooth surface based on the position of the
-# "mid-edge" nodes.  This allows the plotting of cells
-# containing curvature.  For additional reference, please see:
-# https://www.osti.gov/biblio/919127
+# Should your UnstructuredGrid contain quadratic cells, you can generate a
+# smooth surface based on the position of the "mid-edge" nodes.  This allows
+# the plotting of cells containing curvature.  For additional reference, please
+# see: https://www.osti.gov/biblio/919127
 
 surf_subdivided = grid.extract_surface(
     algorithm='dataset_surface', nonlinear_subdivision=5
@@ -93,16 +92,17 @@ surf_subdivided.plot(show_scalar_bar=False)
 #
 # Compare Surface Extraction Algorithms
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The filter :meth:`~pyvista.DataObjectFilters.extract_surface` provides the option to
-# select which internal VTK algorithm to use for surface extraction:
-# :vtk:`vtkGeometryFilter` or :vtk:`vtkDataSetSurfaceFilter`. Both algorithms produce
-# similar surfaces, but they differ in important ways. As the following examples will
-# demonstrate, it is generally preferable to use the geometry algorithm.
+# The filter :meth:`~pyvista.DataObjectFilters.extract_surface` provides the
+# option to select which internal VTK algorithm to use for surface extraction:
+# :vtk:`vtkGeometryFilter` or :vtk:`vtkDataSetSurfaceFilter`. Both algorithms
+# produce similar surfaces, but they differ in important ways. As the
+# following examples will demonstrate, it is generally preferable to use the
+# geometry algorithm.
 #
 # Structural Preservation
 # =======================
-# The geometry algorithm preserves structure when converting between mesh types, whereas
-# the dataset surface algorithm does not.
+# The geometry algorithm preserves structure when converting between mesh types,
+# whereas the dataset surface algorithm does not.
 #
 # For example, let's create a simple :class:`~pyvista.PolyData` mesh using
 # :meth:`~pyvista.Cone` and cast it to :class:`~pyvista.UnstructuredGrid`.
@@ -111,8 +111,9 @@ poly = pv.Cone()
 ugrid = poly.cast_to_unstructured_grid()
 
 # %%
-# If we convert it back to a surface, the geometry algorithm returns the original surface
-# with the same order of points and the same cell connectivity arrays.
+# If we convert it back to a surface, the geometry algorithm returns the
+# original surface with the same order of points and the same cell
+# connectivity arrays.
 
 poly_geometry = ugrid.extract_surface(
     algorithm='geometry', pass_cellid=False, pass_pointid=False
@@ -152,10 +153,10 @@ pl.show()
 # %%
 # Closed Surface Generation
 # =========================
-# The geometry algorithm generates closed surfaces in cases where a closed surface is
-# expected, whereas the dataset surface algorithm may not. For example, extract the
-# surface of :class:`~pyvista.ImageData` comprised of a single
-# :attr:`~pyvista.CellType.VOXEL` cell.
+# The geometry algorithm generates closed surfaces in cases where a closed
+# surface is expected, whereas the dataset surface algorithm may not. For
+# example, extract the surface of :class:`~pyvista.ImageData` comprised of a
+# single :attr:`~pyvista.CellType.VOXEL` cell.
 
 grid = pv.ImageData(dimensions=(2, 2, 2))
 assert grid.n_cells == 1
@@ -177,29 +178,30 @@ assert poly_surface.distinct_cell_types == {pv.CellType.QUAD}
 assert poly_geometry.max_cell_dimensionality == 2
 
 # %%
-# However, the geometry algorithm returns a closed surface with eight points and no
-# open edges.
+# However, the geometry algorithm returns a closed surface with eight points and
+# no open edges.
 assert poly_geometry.n_points == 8
 assert poly_geometry.n_open_edges == 0
 
 # %%
-# In contrast, the dataset surface algorithm returns a surface with duplicate points and
-# many open edges.
+# In contrast, the dataset surface algorithm returns a surface with duplicate
+# points and many open edges.
 assert poly_surface.n_points == 24
 assert poly_surface.n_open_edges == 24
 
 # %%
-# This can be fixed with a call to :meth:`~pyvista.PolyDataFilters.clean`, however.
+# This can be fixed with a call to
+# :meth:`~pyvista.PolyDataFilters.clean`, however.
 
 cleaned = poly_surface.clean()
 assert cleaned.n_points == 8
 assert cleaned.n_open_edges == 0
 
 # %%
-# Note that a closed surface is important for some calculations. For example, the filter
-# :meth:`~pyvista.DataSetFilters.select_interior_points` requires a closed surface by
-# default, and properties like :attr:`~pyvista.PolyData.volume` assume the input is a
-# closed surface.
+# Note that a closed surface is important for some calculations. For example,
+# the filter :meth:`~pyvista.DataSetFilters.select_interior_points` requires a
+# closed surface by default, and properties like
+# :attr:`~pyvista.PolyData.volume` assume the input is a closed surface.
 
 # %%
 # .. tags:: filter

@@ -4,7 +4,7 @@
 Picking Elements of a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pick different elements on meshes using :func:`~pyvista.Plotter.enable_element_picking`.
+Pick elements on meshes using :func:`~pyvista.Plotter.enable_element_picking`.
 
 The different elements of a mesh are:
 
@@ -16,7 +16,8 @@ The different elements of a mesh are:
 * Edge: pick a single edge of a cell on the mesh
 * Point: pick a single point on the mesh
 
-These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum class.
+These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum
+class.
 
 """
 
@@ -25,8 +26,7 @@ import pyvista as pv
 from pyvista.plotting.opts import ElementType
 
 # %%
-# Pick Face on Voxel Cell
-# +++++++++++++++++++++++
+# Pick Face on Voxel Cell +++++++++++++++++++++++
 #
 mesh = pv.Wavelet()
 
@@ -52,8 +52,7 @@ except AttributeError:
     pass
 
 # %%
-# Pick an Edge of a Cell
-# ++++++++++++++++++++++
+# Pick an Edge of a Cell ++++++++++++++++++++++
 #
 sphere = pv.Sphere()
 

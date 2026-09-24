@@ -34,7 +34,9 @@ pl.show()
 def callback(mesh):
     """Shrink the mesh each time it's clicked."""
     shrunk = mesh.shrink(0.9)
-    mesh.copy_from(shrunk)  # make operation "in-place" by replacing the original mesh
+    mesh.copy_from(
+        shrunk
+    )  # make operation "in-place" by replacing the original mesh
 
 
 pl = pv.Plotter()

@@ -4,7 +4,7 @@
 Repair a Surface With ``fill_holes``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Seal small openings in a surface with :func:`pyvista.PolyDataFilters.fill_holes`.
+Seal openings in a surface with :func:`pyvista.PolyDataFilters.fill_holes`.
 
 """
 
@@ -31,7 +31,9 @@ hole_sizes = [60, 25, 10]  # cells removed per hole, controls each hole's radius
 
 drop_cells = set()
 for seed, size in zip(seed_indices, hole_sizes, strict=True):
-    candidates = np.argsort(np.linalg.norm(centers - centers[seed], axis=1))[:size]
+    candidates = np.argsort(np.linalg.norm(centers - centers[seed], axis=1))[
+        :size
+    ]
     drop_cells.update(int(c) for c in candidates)
 
 keep_mask = np.ones(sphere.n_cells, dtype=bool)
