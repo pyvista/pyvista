@@ -150,8 +150,8 @@ def _convert_transform_input_to_float(
 ) -> bool:
     """Convert a dataset's integer points and named vector arrays to float, in place."""
     converted = False
-    # The points of an image or a rectilinear grid are computed and are always float
-    if not isinstance(dataset, (pv.ImageData, pv.RectilinearGrid)):
+    # A grid's points are computed from its structure and are always float
+    if not isinstance(dataset, pv.Grid):
         points = dataset.points
         if not np.issubdtype(points.dtype, np.floating):
             dataset.points = points.astype(dtype)
@@ -2230,9 +2230,9 @@ class DataObjectFilters:
 
         output = self if inplace else self.__class__()
 
-        # An image's structure carries the transformation, so the filter is only needed for
+        # A grid's structure carries the transformation, so the filter is only needed for
         # its vector arrays
-        filter_needed = not isinstance(output, pv.ImageData) or _has_arrays_to_transform(
+        filter_needed = not isinstance(output, pv.Grid) or _has_arrays_to_transform(
             point_vectors, cell_vectors
         )
 
@@ -2265,7 +2265,8 @@ class DataObjectFilters:
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = dataset.dimensions
                 _transform_rectilinear_axes(output, dataset, components)
-                _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+                if filter_needed or not inplace:
+                    _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 _permute_rectilinear_arrays(output, dimensions, components)
             else:
                 # A shallow copy leaves the output sharing everything but the points with
