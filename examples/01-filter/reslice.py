@@ -1,19 +1,19 @@
 """
-.. _resample_reslice_example:
+.. _reslice_example:
 
-Resample and Reslice Images
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Reslice Images
+~~~~~~~~~~~~~~
 
-Compare the ``resample`` and ``reslice`` image filters.
+Sample an image at the points of another image.
 
-:meth:`~pyvista.ImageDataFilters.resample` and :meth:`~pyvista.ImageDataFilters.reslice`
-both create a new image by interpolating an existing one, but they answer different
-questions. ``resample`` changes how densely an image is sampled and leaves it where it
-is. ``reslice`` samples the image at the points of a second image, so the two images end
-up on a common grid.
+:meth:`~pyvista.ImageDataFilters.reslice` builds a new image by interpolating an existing
+one at the points of a reference image, so the two end up on a common grid. It can apply
+a transform as it samples, including one no image geometry could hold.
 
-See :meth:`~pyvista.ImageDataFilters.resample` for changing an image's resolution and
-for the interpolation and anti-aliasing options both filters share.
+Along the way it is compared with the filters which answer nearby questions:
+:meth:`~pyvista.ImageDataFilters.resample`, :meth:`~pyvista.DataObjectFilters.sample`,
+:meth:`~pyvista.ImageDataFilters.crop` and
+:meth:`~pyvista.DataObjectFilters.transform`.
 
 """
 
@@ -24,8 +24,8 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Reslice
-# +++++++
+# A Common Grid
+# +++++++++++++
 #
 # Load two photographs. The bird is smaller than the gourds, and both start at the
 # origin with unit spacing, so the bird covers the lower left corner of the region the
@@ -75,6 +75,12 @@ resliced = mandelbrot.reslice(reference, 'linear')
 resampled = mandelbrot.resample(reference_image=reference, interpolation='linear')
 
 # %%
+# :meth:`~pyvista.DataObjectFilters.sample` answers the same question for meshes in
+# general, by probing one dataset at the points of another.
+
+sampled = reference.sample(mandelbrot)
+
+# %%
 # The region can also be cropped out of the image by hand and the crop resampled to the
 # reference's spacing. :meth:`~pyvista.ImageDataFilters.crop` works in index space, so
 # the reference's bounds have to be converted into the image's indices first.
@@ -91,41 +97,53 @@ cropped_resampled = cropped.resample(
 # Plot each output over the image it came from. Use
 # :meth:`~pyvista.ImageDataFilters.points_to_cells` to draw the samples as
 # :attr:`~pyvista.CellType.PIXEL` cells with their edges showing, and outline the
-# reference region in red. The resliced samples continue the picture around them,
-# because that is where they were taken. The resampled ones are the whole set shrunk
-# into the frame. The cropped ones carry the right picture but not the right grid.
+# reference region in red. The resliced samples continue the picture
+# around them, because that is where they were taken, and the sampled ones agree with
+# them. The resampled ones are the whole set shrunk into the frame. The cropped ones
+# carry the right picture but not the right grid.
 
 clim = mandelbrot.get_data_range()
+voxels = mandelbrot.points_to_cells()
 
 # sphinx_gallery_start_ignore
-# the interactive scene renders a single panel zoomed in rather than all three
+# the interactive scene renders a single panel zoomed in rather than all four
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-outputs = [
-    ('reslice', resliced),
-    ('resample', resampled),
-    ('crop+resample', cropped_resampled),
-]
-pl = pv.Plotter(shape=(1, 3))
-for index, (label, output) in enumerate(outputs):
-    pl.subplot(0, index)
-    for voxels in [mandelbrot.points_to_cells(), output.points_to_cells()]:
-        pl.add_mesh(
-            voxels, clim=clim, show_edges=True, lighting=False, show_scalar_bar=False
-        )
-    pl.add_mesh(reference.points_to_cells().outline(), color='red', line_width=4)
-    pl.add_text(label, font_size=10)
-    pl.view_xy()
-    pl.camera.tight()
-pl.show()
+outputs = {
+    'reslice': resliced,
+    'sample': sampled,
+    'resample': resampled,
+    'crop+resample': cropped_resampled,
+}
+panels = {
+    label: pv.MultiBlock([voxels, output.points_to_cells()])
+    for label, output in outputs.items()
+}
+pv.plot_compare(
+    panels,
+    reference_mesh=reference.points_to_cells().outline(),
+    reference_kwargs={'color': 'red', 'line_width': 4},
+    shape=(2, 2),
+    clim=clim,
+    show_edges=True,
+    lighting=False,
+    show_scalar_bar=False,
+    show_axes=False,
+    cpos='xy',
+    zoom='tight',
+)
 
 # %%
-# ``reslice`` and ``resample`` both carry the reference's geometry, since that is what
-# ``reference_image`` asks for. Only their values differ: ``reslice`` read the image at
-# the reference's points, while ``resample`` stretched the whole image onto them. The
-# crop can only land on whole input voxels, so it covers more than the reference asked
-# for and its spacing cannot match either.
+# ``reslice`` and ``sample`` agree to floating point precision, since both read the image
+# at the reference's points. ``sample`` works on any dataset and returns the mask arrays
+# that go with probing, while ``reslice`` is the image filter and carries the border,
+# interpolation and anti-aliasing options an image needs.
+#
+# ``resample`` also carries the reference's geometry, since that is what
+# ``reference_image`` asks for, but it stretched the whole image onto it rather than
+# reading at its points. The crop can only land on whole input voxels, so it covers more
+# than the reference asked for and its spacing cannot match either.
 
 print(resliced.origin, resliced.spacing)
 print(resampled.origin, resampled.spacing)
@@ -195,15 +213,16 @@ print(resliced.index_to_physical_matrix.round(3))
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-pl = pv.Plotter(shape=(1, 2))
-for index, (image, label) in enumerate([(moved, 'transform'), (resliced, 'reslice')]):
-    pl.subplot(0, index)
-    pl.add_mesh(image, rgba=True, lighting=False)
-    pl.add_mesh(gourds.outline(), color='red', line_width=3)
-    pl.add_text(label, font_size=10)
-    pl.view_xy()
-    pl.camera.tight()
-pl.show()
+pv.plot_compare(
+    {'transform': moved, 'reslice': resliced},
+    reference_mesh=gourds.outline(),
+    reference_kwargs={'color': 'red', 'line_width': 3},
+    rgba=True,
+    lighting=False,
+    show_axes=False,
+    cpos='xy',
+    zoom='tight',
+)
 
 # %%
 # The two are not alternatives so much as two halves of the same operation. Moving the
