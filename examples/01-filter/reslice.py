@@ -349,50 +349,39 @@ pl.show()
 
 # %%
 # Because the fit is confined to that plane, a single rotation about the scan axis is
-# enough to bring the line onto the image's x axis.
+# enough to bring the line onto the image's x axis. Reslice a volume around the bone on
+# those axes, sized so that the reference itself does the cropping.
 
 angle = np.degrees(np.arctan2(direction[1], direction[0]))
 rotation = pv.Transform().rotate_z(-angle).matrix[:3, :3]
 
-reference = pv.ImageData(dimensions=(320, 220, 1), spacing=(1.0, 1.0, 1.0))
+reference = pv.ImageData(dimensions=(160, 120, 240), spacing=(1.0, 1.0, 1.0))
 
+matrix = np.eye(4)
+matrix[:3, :3] = rotation
+matrix[:3, 3] = np.array(reference.center) - rotation @ center
 
-def centered(rot):
-    """Return the matrix which centers the scapula in the reference under ``rot``."""
-    matrix = np.eye(4)
-    matrix[:3, :3] = rot
-    matrix[:3, 3] = np.array(reference.center) - rot @ center
-    return matrix
-
+along_bone = ct.reslice(reference, 'linear', transform=matrix, background_value=-1000)
 
 # %%
-# Reslice twice from that one grid, once without a rotation and once with it, and put
-# the line through the same transforms so it can be compared against.
+# The output is axis-aligned, so :meth:`~pyvista.DataSetFilters.slice_orthogonal` cuts
+# the bone squarely along all three planes.
 
-along_scan = ct.reslice(
-    reference, 'linear', transform=centered(np.eye(3)), background_value=-1000
-)
-along_bone = ct.reslice(
-    reference, 'linear', transform=centered(rotation), background_value=-1000
-)
-
-line_scan = line.transform(centered(np.eye(3)), inplace=False)
-line_bone = line.transform(centered(rotation), inplace=False)
+slices = along_bone.slice_orthogonal()
 
 # %%
-# The rotated grid samples along the bone, and the line it was fitted to comes out level.
+# View each plane face-on. ``XZ`` shows the blade with its spine and the glenoid, and
+# ``XY`` is a cross-section through it. None of these planes cut the bone this way in
+# the axes the scanner produced.
 
-pl = pv.Plotter(shape=(1, 2))
-panels = [(along_scan, line_scan, 'scan axes'), (along_bone, line_bone, 'bone axis')]
-for index, (image, overlay, label) in enumerate(panels):
+pl = pv.Plotter(shape=(1, 3), window_size=[1000, 620])
+for index, name in enumerate(['XY', 'XZ', 'YZ']):
     pl.subplot(0, index)
     pl.add_mesh(
-        image, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
+        slices[name], cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
     )
-    pl.add_mesh(overlay.translate((0, 0, 1)), color='magenta', line_width=6)
-    pl.add_text(label, font_size=10)
-    pl.view_xy()
-    pl.camera.tight()
+    pl.add_text(name, font_size=10)
+    pl.camera.tight(view=name.lower(), adjust_render_window=False, padding=0.1)
 pl.show()
 
 # %%
