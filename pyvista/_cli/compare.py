@@ -15,6 +15,7 @@ from cyclopts import Parameter
 from rich.panel import Panel
 
 import pyvista as pv
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 
 from .app import CLI_APP
 from .utils import HELP_FORMATTER
@@ -227,8 +228,8 @@ def _parse_shape(shape: str) -> list[int] | str:
 
 
 def _enclosing_outline(meshes: list[pv.DataObject]) -> pv.PolyData:
-    """Return an outline enclosing every mesh which can be a block."""
-    blocks = [mesh for mesh in meshes if isinstance(mesh, (pv.DataSet, pv.MultiBlock))]
+    """Return an outline enclosing every mesh which defines bounds."""
+    blocks = [mesh for mesh in meshes if isinstance(mesh, _BoundsSizeMixin)]
     return pv.MultiBlock(blocks).outline()
 
 
