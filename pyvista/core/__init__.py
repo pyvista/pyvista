@@ -69,7 +69,7 @@ _TYPE_ALIASES = (
 )
 
 
-if not TYPE_CHECKING:
+if not TYPE_CHECKING:  # pragma: no branch
 
     def __getattr__(name: str) -> object:
         """Forward the type aliases that moved to ``pyvista.typing`` with a deprecation warning."""

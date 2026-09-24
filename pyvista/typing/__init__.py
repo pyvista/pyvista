@@ -54,7 +54,7 @@ _LAZY_ALIASES = {
 }
 
 
-if not TYPE_CHECKING:
+if not TYPE_CHECKING:  # pragma: no branch
 
     def __getattr__(name: str) -> object:
         """Import a type alias whose module cannot be imported with this one."""
