@@ -40,6 +40,7 @@ from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _make_reference_volume
+from pyvista.core.filters.data_object import _remove_unused_points_post_clip
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.filters.data_object import _validate_reference_volume_options
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -833,8 +834,9 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
-            _cast_output_to_match_input_type(_get_output(alg), self), self
+        result0: PolyData | PointSet | UnstructuredGrid = _remove_unused_points_post_clip(
+            _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
+            self,
         )
         if not is_single_value:
             # Keep what lies above the lower value as well
@@ -843,8 +845,11 @@ class DataSetFilters(DataObjectFilters):
             inplace_target.copy_from(result0, deep=False)
             result0 = inplace_target
         if both:
-            result1: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
-                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
+            result1: PolyData | PointSet | UnstructuredGrid = _remove_unused_points_post_clip(
+                _keep_array_structure(
+                    _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
+                ),
+                self,
             )
             return result0, result1
         return result0
