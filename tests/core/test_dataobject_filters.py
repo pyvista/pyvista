@@ -2366,6 +2366,11 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
             )
 
 
+def _matching_orders(actual_points, expected_points):
+    """Return the orders which sort two matching point sets the same way."""
+    return np.lexsort(np.round(actual_points, 8).T), np.lexsort(np.round(expected_points, 8).T)
+
+
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
     itertools.product([0, 1, 2], [0, 1, 2]),
@@ -2392,37 +2397,29 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         if num_point_data:
             assert dataset.point_data == orig_dataset.point_data
 
-        assert np.allclose(dataset.points[:, 0] * sx, transformed.points[:, 0])
-        assert np.allclose(dataset.points[:, 1] * sy, transformed.points[:, 1])
-        assert np.allclose(dataset.points[:, 2] * sz, transformed.points[:, 2])
+        scale = (sx, sy, sz)
+        expected_points = dataset.points * scale
+        # A rectilinear grid reverses the axes a negative scale would make descend, so
+        # match the points of both meshes before comparing their arrays
+        order, expected_order = _matching_orders(transformed.points, expected_points)
+        if not isinstance(dataset, pv.RectilinearGrid):
+            assert np.array_equal(order, expected_order)
+        assert np.allclose(transformed.points[order], expected_points[expected_order])
 
         if not isinstance(dataset, pv.PointSet):
+            cell_order, expected_cell_order = _matching_orders(
+                transformed.cell_centers().points, dataset.cell_centers().points * scale
+            )
             for i in range(num_cell_arrays):
                 assert np.allclose(
-                    dataset.cell_data[f'C{i}'][:, 0] * sx,
-                    transformed.cell_data[f'C{i}'][:, 0],
-                )
-                assert np.allclose(
-                    dataset.cell_data[f'C{i}'][:, 1] * sy,
-                    transformed.cell_data[f'C{i}'][:, 1],
-                )
-                assert np.allclose(
-                    dataset.cell_data[f'C{i}'][:, 2] * sz,
-                    transformed.cell_data[f'C{i}'][:, 2],
+                    transformed.cell_data[f'C{i}'][cell_order],
+                    dataset.cell_data[f'C{i}'][expected_cell_order] * scale,
                 )
 
         for i in range(num_point_data):
             assert np.allclose(
-                dataset.point_data[f'P{i}'][:, 0] * sx,
-                transformed.point_data[f'P{i}'][:, 0],
-            )
-            assert np.allclose(
-                dataset.point_data[f'P{i}'][:, 1] * sy,
-                transformed.point_data[f'P{i}'][:, 1],
-            )
-            assert np.allclose(
-                dataset.point_data[f'P{i}'][:, 2] * sz,
-                transformed.point_data[f'P{i}'][:, 2],
+                transformed.point_data[f'P{i}'][order],
+                dataset.point_data[f'P{i}'][expected_order] * scale,
             )
 
         # Verify active scalars are not changed
@@ -2534,9 +2531,9 @@ def test_transform_inplace(datasets):
 def test_transform_rectilinear_raises(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
-        'The transformation has a non-diagonal rotation component which is not supported by\n'
-        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations, or use\n'
-        '`Transform.decompose()` to remove this component.'
+        'The transformation has a rotation component which is not axis-aligned and is not\n'
+        'supported by RectilinearGrid. Cast to StructuredGrid first to fully support '
+        'rotations,\nor use `Transform.decompose()` to remove this component.'
     )
 
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -2563,7 +2560,11 @@ SHEAR_MATRIX[1, 0] = 0.1
 @pytest.mark.parametrize(
     ('grid', 'transformation', 'match'),
     [
-        ('rectilinear', pv.Transform().rotate_x(30), 'non-diagonal rotation component'),
+        (
+            'rectilinear',
+            pv.Transform().rotate_x(30),
+            'rotation component which is not axis-aligned',
+        ),
         ('rectilinear', SHEAR_MATRIX, 'shear component'),
         ('uniform', SHEAR_MATRIX, 'shear component'),
     ],
@@ -2601,6 +2602,62 @@ def test_transform_rectilinear(rectilinear):
     cast_then_transform = transform(rectilinear.cast_to_unstructured_grid())
 
     assert transform_then_cast == cast_then_transform
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
+    [
+        pv.Transform().rotate_z(90),
+        pv.Transform().rotate_x(90).scale((2, 3, 4)).translate((5, -1, 2)),
+        pv.Transform().rotate_y(-90),
+        pv.Transform().rotate_z(180),
+        pv.Transform().rotate_z(90).rotate_x(90),
+    ],
+    ids=[
+        'rotate-z',
+        'rotate-x-scale-translate',
+        'rotate-y',
+        'rotate-z-180',
+        'rotate-z-then-x',
+    ],
+)
+def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation, inplace):
+    rectilinear.point_data['p'] = np.arange(rectilinear.n_points, dtype=float)
+    rectilinear.point_data['v'] = np.arange(rectilinear.n_points * 3, dtype=float).reshape(-1, 3)
+    rectilinear.cell_data['c'] = np.arange(rectilinear.n_cells, dtype=float)
+    expected = rectilinear.cast_to_structured_grid().transform(transformation, inplace=False)
+
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+
+    assert isinstance(transformed, pv.RectilinearGrid)
+    assert np.allclose(transformed.bounds, expected.bounds)
+    # Points are ordered along the grid's own axes, so sort both before comparing
+    actual_order = np.lexsort(np.round(transformed.points, 8).T)
+    expected_order = np.lexsort(np.round(expected.points, 8).T)
+    assert np.allclose(transformed.points[actual_order], expected.points[expected_order])
+    assert np.array_equal(transformed['p'][actual_order], expected['p'][expected_order])
+    assert np.array_equal(transformed['v'][actual_order], expected['v'][expected_order])
+    actual_cells = np.lexsort(np.round(transformed.cell_centers().points, 8).T)
+    expected_cells = np.lexsort(np.round(expected.cell_centers().points, 8).T)
+    assert np.array_equal(
+        transformed.cell_data['c'][actual_cells], expected.cell_data['c'][expected_cells]
+    )
+
+
+@pytest.mark.parametrize(
+    'transformation',
+    [pv.Transform().rotate_z(90), pv.Transform().scale((-1, 1, 1))],
+    ids=['rotation', 'reflection'],
+)
+def test_transform_rectilinear_axes_ascend(rectilinear, transformation):
+    transformed = rectilinear.transform(transformation, inplace=False)
+
+    for coordinates in (transformed.x, transformed.y, transformed.z):
+        assert np.all(np.diff(coordinates) > 0)
+    # Descending coordinates are not supported by the cell locators
+    probe = pv.PolyData(transformed.cell_centers().points)
+    assert np.all(probe.sample(transformed)['vtkValidPointMask'] == 1)
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
@@ -2661,8 +2718,11 @@ def test_reflect_mesh_about_point(datasets):
         reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0), progress_bar=True)
         assert reflected.n_cells == dataset.n_cells
         assert reflected.n_points == dataset.n_points
-        assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
-        assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+        expected_points = dataset.points * (-1, 1, 1) + (2 * x_plane, 0, 0)
+        order, expected_order = _matching_orders(reflected.points, expected_points)
+        if not isinstance(dataset, pv.RectilinearGrid):
+            assert np.array_equal(order, expected_order)
+        assert np.allclose(reflected.points[order], expected_points[expected_order])
 
 
 def test_reflect_mesh_with_vectors(datasets):
@@ -2691,34 +2751,37 @@ def test_reflect_mesh_with_vectors(datasets):
         # assert isinstance(reflected, type(dataset))
         assert reflected.n_cells == dataset.n_cells
         assert reflected.n_points == dataset.n_points
-        assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
-        assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+        reflection = (-1, 1, 1)
+        expected_points = dataset.points * reflection
+        order, expected_order = _matching_orders(reflected.points, expected_points)
+        if not isinstance(dataset, pv.RectilinearGrid):
+            assert np.array_equal(order, expected_order)
+        assert np.allclose(reflected.points[order], expected_points[expected_order])
 
-        # assert normals are reflected
+        # assert vector fields and normals are reflected
+        if not isinstance(dataset, pv.PointSet):
+            cell_order, expected_cell_order = _matching_orders(
+                reflected.cell_centers().points, dataset.cell_centers().points * reflection
+            )
+            if hasattr(dataset, 'compute_normals'):
+                assert np.allclose(
+                    reflected.cell_data['Normals'][cell_order],
+                    dataset.cell_data['Normals'][expected_cell_order] * reflection,
+                )
+            assert np.allclose(
+                reflected.cell_data['C'][cell_order],
+                dataset.cell_data['C'][expected_cell_order] * reflection,
+            )
+
         if hasattr(dataset, 'compute_normals'):
             assert np.allclose(
-                dataset.cell_data['Normals'][:, 0],
-                -reflected.cell_data['Normals'][:, 0],
+                reflected.point_data['Normals'][order],
+                dataset.point_data['Normals'][expected_order] * reflection,
             )
-            assert np.allclose(
-                dataset.cell_data['Normals'][:, 1:],
-                reflected.cell_data['Normals'][:, 1:],
-            )
-            assert np.allclose(
-                dataset.point_data['Normals'][:, 0],
-                -reflected.point_data['Normals'][:, 0],
-            )
-            assert np.allclose(
-                dataset.point_data['Normals'][:, 1:],
-                reflected.point_data['Normals'][:, 1:],
-            )
-
-        # assert other vector fields are reflected
-        if not isinstance(dataset, pv.PointSet):
-            assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
-            assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
-        assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
-        assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
+        assert np.allclose(
+            reflected.point_data['P'][order],
+            dataset.point_data['P'][expected_order] * reflection,
+        )
 
 
 @pytest.mark.parametrize(
