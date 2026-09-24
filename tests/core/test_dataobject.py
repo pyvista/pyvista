@@ -861,3 +861,149 @@ def test_del_while_interpreter_is_finalizing(monkeypatch, sphere):
     monkeypatch.setattr(sys, 'is_finalizing', lambda: True)
 
     finalizer(sphere)
+
+
+def test_principal_axes(datasets):
+    for dataset in datasets:
+        axes, std = dataset.principal_axes(return_std=True)
+        expected_axes, expected_std = pv.principal_axes(dataset.points, return_std=True)
+        if isinstance(dataset, pv.ImageData):
+            # A uniform grid's axes are its own, in any order and with any sign
+            products = np.abs(axes @ np.array(dataset.direction_matrix))
+            assert np.allclose(np.max(products, axis=1), 1.0)
+            assert np.allclose(axes @ axes.T, np.eye(3))
+        else:
+            assert np.allclose(axes, expected_axes)
+        assert np.allclose(std, expected_std, atol=1e-6)
+        assert np.allclose(dataset.principal_axes(), axes)
+
+
+def test_principal_axes_cell_centers_and_merge_points():
+    mesh = pv.ParametricEllipsoid(1, 2, 3) + pv.ParametricEllipsoid(1, 2, 3)
+
+    assert np.allclose(
+        mesh.principal_axes(cell_centers=True),
+        pv.principal_axes(mesh.cell_centers().points),
+    )
+    assert np.allclose(
+        mesh.principal_axes(merge_points=True),
+        pv.principal_axes(mesh.merge_points().points),
+    )
+
+
+def test_principal_axes_composite():
+    multi = pv.MultiBlock([pv.MultiBlock([pv.Sphere()]), pv.Cube()])
+    points = np.vstack([block.points for block in multi.recursive_iterator(skip_none=True)])
+
+    assert np.allclose(multi.principal_axes(), pv.principal_axes(points))
+
+    centers = np.vstack(
+        [block.cell_centers().points for block in multi.recursive_iterator(skip_none=True)]
+    )
+    assert np.allclose(multi.principal_axes(cell_centers=True), pv.principal_axes(centers))
+
+
+@pytest.mark.parametrize('dimensions', [(7, 5, 3), (4, 5, 1), (5, 5, 5), (3, 60, 40)], ids=str)
+@pytest.mark.parametrize('cell_centers', [True, False])
+def test_principal_axes_image(dimensions, cell_centers):
+    image = pv.ImageData(dimensions=dimensions, spacing=(2.0, 1.0, 4.0))
+    image.direction_matrix = pv.Transform().rotate_vector((1, 2, 3), 35).matrix[:3, :3]
+    points = image.cell_centers().points if cell_centers else image.points
+
+    axes, std = image.principal_axes(cell_centers=cell_centers, return_std=True)
+    expected_axes, expected_std = pv.principal_axes(points, return_std=True)
+
+    assert np.allclose(std, expected_std, atol=1e-6)
+    # The sign of each axis is arbitrary
+    assert np.allclose(np.abs(axes), np.abs(expected_axes))
+    assert np.allclose(axes @ axes.T, np.eye(3))
+    assert np.isclose(np.linalg.det(axes), 1.0)
+
+
+def test_principal_axes_is_cached(monkeypatch):
+    mesh = pv.Sphere()
+    first = mesh.principal_axes()
+
+    def fail(*_args, **_kwargs):  # numpydoc ignore=GL08
+        msg = 'The principal axes should be cached.'
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(pv, 'principal_axes', fail)
+    assert np.array_equal(mesh.principal_axes(), first)
+
+
+@pytest.mark.parametrize(
+    'modify',
+    [
+        lambda mesh: setattr(mesh, 'points', mesh.points * (1, 1, 5)),
+        lambda mesh: mesh.points.__setitem__((slice(None), 0), mesh.points[:, 0] * 9),
+        lambda mesh: mesh.rotate_z(30, inplace=True),
+        lambda mesh: mesh.scale((1, 8, 1), inplace=True),
+    ],
+    ids=['points-setter', 'points-in-place', 'rotate', 'scale'],
+)
+def test_principal_axes_cache_is_invalidated(modify):
+    mesh = pv.Sphere()
+    before = mesh.principal_axes()
+
+    modify(mesh)
+
+    assert np.allclose(mesh.principal_axes(), pv.principal_axes(mesh.points))
+    assert not np.allclose(mesh.principal_axes(), before)
+
+
+def test_principal_axes_cache_is_invalidated_by_a_block():
+    older = pv.Cone()
+    older.points = older.points * (1, 1, 50)
+    multi = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    multi.principal_axes()
+
+    # The replacement is older than the block it replaces, so its own time is not enough
+    multi[0] = older
+
+    points = np.vstack([block.points for block in multi.recursive_iterator(skip_none=True)])
+    assert np.allclose(multi.principal_axes(), pv.principal_axes(points))
+
+    multi.principal_axes()
+    multi[1].points = multi[1].points * (1, 9, 1)
+    points = np.vstack([block.points for block in multi.recursive_iterator(skip_none=True)])
+    assert np.allclose(multi.principal_axes(), pv.principal_axes(points))
+
+
+def test_principal_axes_returns_a_copy():
+    mesh = pv.Sphere()
+    axes, std = mesh.principal_axes(return_std=True)
+
+    axes *= -1
+    std *= -1
+
+    assert np.allclose(mesh.principal_axes(), pv.principal_axes(mesh.points))
+    assert np.all(mesh.principal_axes(return_std=True)[1] >= 0)
+
+
+@pytest.mark.parametrize('mesh', [pv.PolyData(), pv.MultiBlock()], ids=['polydata', 'multiblock'])
+def test_principal_axes_raises_without_points(mesh):
+    match = 'Cannot compute the principal axes of a mesh with no points.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        mesh.principal_axes()
+
+
+@pytest.mark.parametrize(
+    'composite',
+    [pv.MultiBlock([pv.Sphere(), pv.Cube()]), pv.PartitionedDataSet([pv.Sphere(), pv.Cube()])],
+    ids=['multiblock', 'partitioned'],
+)
+def test_principal_axes_composite_types(composite):
+    points = np.vstack([block.points for block in composite])
+    assert np.allclose(composite.principal_axes(), pv.principal_axes(points))
+
+
+def test_principal_axes_cell():
+    cell = pv.Sphere().get_cell(0)
+    assert np.allclose(cell.principal_axes(), pv.principal_axes(cell.points))
+
+
+def test_principal_axes_raises_without_points_attribute():
+    match = 'Table has no points to compute the principal axes from.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Table().principal_axes()
