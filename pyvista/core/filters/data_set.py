@@ -527,10 +527,9 @@ class DataSetFilters(DataObjectFilters):
                 vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector_
 
-        # Get points and compute principal axes
-        input_mesh = self.cell_centers() if cell_centers else self
-        points = input_mesh.merge_points().points if merge_points else input_mesh.points
-        axes, std = pv.principal_axes(points, return_std=True)
+        axes, std = self.principal_axes(
+            cell_centers=cell_centers, merge_points=merge_points, return_std=True
+        )
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
             # Set directions of first two axes to +X,+Y by default

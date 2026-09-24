@@ -4946,6 +4946,106 @@ class DataObjectFilters:
         output.cell_data.clear()
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def principal_axes(self: DataSet | MultiBlock[Any], *, cell_centers: bool = ..., merge_points: bool = ..., return_std: Literal[False] = False) -> NumpyArray[float]: ...  # type: ignore[misc]
+    @overload
+    def principal_axes(self: DataSet | MultiBlock[Any], *, cell_centers: bool = ..., merge_points: bool = ..., return_std: Literal[True] = True) -> tuple[NumpyArray[float], NumpyArray[float]]: ...  # type: ignore[misc]
+    @overload
+    def principal_axes(self: DataSet | MultiBlock[Any], *, cell_centers: bool = ..., merge_points: bool = ..., return_std: bool = ...) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
+    def principal_axes(  # type: ignore[misc]
+        self: DataSet | MultiBlock[Any],
+        *,
+        cell_centers: bool = False,
+        merge_points: bool = False,
+        return_std: bool = False,
+    ) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]:
+        """Compute the principal axes of this mesh's points.
+
+        The axes are the orthonormal vectors which best fit the points, ordered from the
+        largest to the smallest percentage of the variance they explain. For a
+        :class:`~pyvista.MultiBlock`, the points of all its blocks are used.
+
+        The axes are cached, and are computed again when this mesh is modified.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        cell_centers : bool, default: False
+            Use the :meth:`~pyvista.DataObjectFilters.cell_centers` of this mesh instead
+            of its points.
+
+        merge_points : bool, default: False
+            Merge coincident points with :meth:`~pyvista.DataSetFilters.merge_points`
+            first. Duplicate points bias the axes, so enabling this can improve the fit.
+
+        return_std : bool, default: False
+            Also return the standard deviation of the points along each axis.
+
+        Returns
+        -------
+        numpy.ndarray
+            ``3 x 3`` orthonormal array with the axes as the rows.
+
+        numpy.ndarray
+            Standard deviation along each axis if ``return_std`` is ``True``.
+
+        See Also
+        --------
+        pyvista.principal_axes
+            Equivalent function for an array of points.
+
+        pyvista.DataSetFilters.align_xyz
+            Align a mesh to the x-y-z axes using its principal axes.
+
+        Examples
+        --------
+        Compute the principal axes of a uniform grid. The grid is sampled furthest
+        along its y-axis, so that axis is returned first.
+
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(10, 5, 2), spacing=(1.0, 3.0, 2.0))
+        >>> image.principal_axes()
+        array([[ 0.,  1.,  0.],
+               [ 1.,  0.,  0.],
+               [-0., -0., -1.]])
+
+        Return the standard deviation along each axis as well.
+
+        >>> _, std = image.principal_axes(return_std=True)
+        >>> std
+        array([4.24264069, 2.87228132, 1.        ])
+
+        Compute the principal axes of a cone.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> axes = mesh.principal_axes()
+
+        """
+        cached = self._principal_axes_cache.get((cell_centers, merge_points))
+        modified_time = _modified_time(self)
+        if cached is None or cached[0] != modified_time:
+            if isinstance(self, pv.ImageData):
+                axes, std = _uniform_principal_axes(self, cell_centers=cell_centers)
+            else:
+                points = _principal_axes_points(
+                    self, cell_centers=cell_centers, merge_points=merge_points
+                )
+                if len(points) == 0:
+                    msg = 'Cannot compute the principal axes of a mesh with no points.'
+                    raise ValueError(msg)
+                axes, std = pv.principal_axes(points, return_std=True)
+            self._principal_axes_cache[cell_centers, merge_points] = (modified_time, axes, std)
+        else:
+            _, axes, std = cached
+        # Copy so a caller cannot modify the cached arrays
+        return (axes.copy(), std.copy()) if return_std else axes.copy()
+
     def elevation(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -6416,6 +6516,48 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
         return _blank_invalid_points(interpolated) if mark_blank else interpolated
+
+
+def _modified_time(dataset: DataSet | MultiBlock[Any]) -> tuple[int, int]:
+    """Return a modified time which also covers the blocks of a composite."""
+    if isinstance(dataset, pv.MultiBlock):
+        nodes = itertools.chain(
+            dataset.recursive_iterator(skip_none=True),
+            dataset.recursive_iterator(node_type='parent'),
+        )
+        return dataset.GetMTime(), max((node.GetMTime() for node in nodes), default=0)
+    return dataset.GetMTime(), 0
+
+
+def _principal_axes_points(
+    dataset: DataSet | MultiBlock[Any], *, cell_centers: bool, merge_points: bool
+) -> NumpyArray[float]:
+    """Return the points a dataset's principal axes are computed from."""
+    if isinstance(dataset, pv.MultiBlock):
+        blocks = dataset.recursive_iterator(skip_empty=True, skip_none=True)
+        meshes: list[DataSet] = [
+            block.cell_centers() if cell_centers else block for block in blocks
+        ]
+        points = np.vstack([mesh.points for mesh in meshes]) if meshes else np.empty((0, 3))
+        return pv.PointSet(points).merge_points().points if merge_points else points
+    mesh = dataset.cell_centers() if cell_centers else dataset
+    return mesh.merge_points().points if merge_points else mesh.points
+
+
+def _uniform_principal_axes(
+    image: ImageData, *, cell_centers: bool
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    """Return the principal axes and standard deviation of a uniformly sampled grid."""
+    # Uniform samples are uncorrelated, so the grid's own axes fit them
+    dimensions = np.array(image.dimensions)
+    if cell_centers:
+        dimensions = np.maximum(dimensions - 1, 1)
+    variance = np.array(image.spacing) ** 2 * (dimensions**2 - 1) / 12
+    order = np.argsort(-variance, kind='stable')
+    axes = np.array(image.direction_matrix)[:, order].T
+    if np.linalg.det(axes) < 0:
+        axes[2] *= -1
+    return axes, np.sqrt(variance[order])
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:

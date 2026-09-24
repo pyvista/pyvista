@@ -114,6 +114,11 @@ class DataObject(
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
+        # Principal axes, keyed by the options they were computed with
+        self._principal_axes_cache: dict[
+            tuple[bool, bool], tuple[tuple[int, int], NumpyArray[float], NumpyArray[float]]
+        ] = {}
+
     def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found.
 
