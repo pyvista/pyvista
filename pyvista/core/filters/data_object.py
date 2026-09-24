@@ -136,6 +136,11 @@ def _transform_vector_names(
     )
 
 
+def _transforms_any_array(point_vectors: list[str | None], cell_vectors: list[str | None]) -> bool:
+    """Return whether the transform filter has any array to transform."""
+    return any(name is not None for name in (*point_vectors, *cell_vectors))
+
+
 def _convert_transform_input_to_float(
     dataset: DataSet,
     vectors: Sequence[tuple[DataSetAttributes, list[str | None]]],
@@ -143,10 +148,12 @@ def _convert_transform_input_to_float(
 ) -> bool:
     """Convert a dataset's integer points and named vector arrays to float, in place."""
     converted = False
-    points = dataset.points
-    if not np.issubdtype(points.dtype, np.floating):
-        dataset.points = points.astype(dtype)
-        converted = True
+    # An image's points are computed from its structure and are always float
+    if not isinstance(dataset, pv.ImageData):
+        points = dataset.points
+        if not np.issubdtype(points.dtype, np.floating):
+            dataset.points = points.astype(dtype)
+            converted = True
     for attributes, names in vectors:
         for name in names:
             if name is None:
@@ -2221,22 +2228,32 @@ class DataObjectFilters:
 
         output = self if inplace else self.__class__()
 
+        # An image's structure carries the transformation, so the filter is only needed for
+        # its vector arrays
+        filter_needed = not isinstance(output, pv.ImageData) or _transforms_any_array(
+            point_vectors, cell_vectors
+        )
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
         self.set_active_scalars(None)
 
         try:
-            alg = _vtk.vtkTransformFilter()
-            alg.SetInputDataObject(self)
-            alg.SetTransform(t)
-            alg.SetTransformAllInputVectors(transform_all_input_vectors)
+            if filter_needed:
+                alg = _vtk.vtkTransformFilter()
+                alg.SetInputDataObject(self)
+                alg.SetTransform(t)
+                alg.SetTransformAllInputVectors(transform_all_input_vectors)
 
-            _update_alg(alg, progress_bar=progress_bar, message='Transforming')
-            vtk_filter_output = _get_output(alg)
+                _update_alg(alg, progress_bar=progress_bar, message='Transforming')
+                vtk_filter_output = _get_output(alg)
+            else:
+                vtk_filter_output = self
 
             if isinstance(output, pv.ImageData):
                 _orient_image_structure(output, cast('pv.ImageData', self), t)
-                _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+                if output is not vtk_filter_output:
+                    _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             elif isinstance(output, pv.RectilinearGrid):
                 components = cast(
                     'tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]]',

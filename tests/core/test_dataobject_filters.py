@@ -2717,6 +2717,35 @@ def test_transform_imagedata(uniform, spacing):
     assert np.allclose(translated.center, uniform.origin)
 
 
+def test_transform_imagedata_without_arrays_skips_filter(uniform, monkeypatch):
+    def fail():  # numpydoc ignore=GL08
+        msg = 'The transform filter is not needed without arrays to transform.'
+        raise AssertionError(msg)
+
+    transformation = pv.Transform().rotate_z(90).translate((1, 2, 3))
+    expected = uniform.cast_to_structured_grid().transform(transformation, inplace=False)
+
+    monkeypatch.setattr(_vtk, 'vtkTransformFilter', fail)
+    transformed = uniform.transform(transformation, inplace=False)
+
+    assert isinstance(transformed, pv.ImageData)
+    assert np.allclose(transformed.points, expected.points)
+    assert np.array_equal(transformed.active_scalars, expected.active_scalars)
+    assert transformed.active_scalars_name == uniform.active_scalars_name
+
+    uniform.transform(transformation, inplace=True)
+    assert uniform == transformed
+
+
+def test_transform_imagedata_with_vectors_uses_filter(uniform):
+    uniform.point_data['vectors'] = np.tile([1.0, 0.0, 0.0], (uniform.n_points, 1))
+    uniform.point_data.active_vectors_name = 'vectors'
+
+    transformed = uniform.transform(pv.Transform().rotate_z(90), inplace=False)
+
+    assert np.allclose(transformed.point_data['vectors'], [0.0, 1.0, 0.0])
+
+
 def test_transform_imagedata_raises_with_shear(uniform):
     shear = np.eye(4)
     shear[0, 1] = 0.1
