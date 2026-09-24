@@ -7395,13 +7395,15 @@ class _Crinkler:
         """Shallow copy the dataset, add cell ID arrays, and record the active scalars."""
         active_scalars_info = []
         # Shallow copies keep the cell ids off the caller's dataset and blocks
-        copied: DataSet | MultiBlock
+        copied: _DataSetOrMultiBlockType
         if isinstance(dataset, pv.MultiBlock):
-            copied = dataset.generic_filter(lambda block: block.copy(deep=False))
-            blocks: Iterable[DataSet] = copied.recursive_iterator(
+            composite = dataset.generic_filter(lambda block: block.copy(deep=False))
+            blocks: Iterable[DataSet] = composite.recursive_iterator(
                 'blocks',
                 **_Crinkler.ITER_KWARGS,  # type: ignore[call-overload]
             )
+            # generic_filter is typed as returning a bare MultiBlock, not the input's class
+            copied = cast('_DataSetOrMultiBlockType', composite)
         else:
             copied = dataset.copy(deep=False)
             blocks = [copied]
@@ -7411,7 +7413,7 @@ class _Crinkler:
                 block.cell_data[_Crinkler.CELL_IDS] = np.arange(
                     block.n_cells, dtype=_Crinkler.INT_DTYPE
                 )
-        return cast('_DataSetOrMultiBlockType', copied), active_scalars_info
+        return copied, active_scalars_info
 
 
 def _cell_status_docs_insert() -> str:
