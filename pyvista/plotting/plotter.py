@@ -2146,6 +2146,17 @@ class BasePlotter(_BoundsSizeMixin):
         pyvista.Camera
             Camera from the active renderer.
 
+        Examples
+        --------
+        Access and update the active camera.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.camera.position = (2.0, 1.0, 1.0)
+        >>> pl.camera.position
+        (2.0, 1.0, 1.0)
+
         """
         if not self.renderer.camera.is_set:
             self.camera_position = CameraPosition(*self.get_default_cam_pos())
