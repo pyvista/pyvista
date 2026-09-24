@@ -48,6 +48,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
 
 _InterpolationOptions = Literal[
     'nearest',
@@ -179,7 +181,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         kernel_size: VectorLike[int] = (3, 3, 3),
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
     ) -> ImageData:
         """Smooth data using a median filter.
@@ -1830,7 +1832,7 @@ class ImageDataFilters(DataSetFilters):
         in_value: float | None = 1.0,
         out_value: float | None = 0.0,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
     ) -> ImageData:
         """Apply a threshold to scalar values in a uniform grid.
@@ -3440,7 +3442,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
 
-        def _get_output_scalars(preference: Literal['point', 'cell']) -> str | None:
+        def _get_output_scalars(preference: PointLiteral | CellLiteral) -> str | None:
             """Return the active scalars name when it has the given association."""
             active_scalars = self.active_scalars_name
             if active_scalars:
@@ -4318,7 +4320,7 @@ class ImageDataFilters(DataSetFilters):
         anti_aliasing: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         inplace: bool = False,
         progress_bar: bool = False,
     ) -> ImageData:
@@ -5006,11 +5008,11 @@ class ImageDataFilters(DataSetFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # split=False
-    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[False] = ...) -> ImageData: ...  # type: ignore[misc]
+    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[False] = ...) -> ImageData: ...  # type: ignore[misc]
     @overload  # split=True
-    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # split not known
-    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: bool = ...) -> ImageData | MultiBlock: ...  # type: ignore[misc]
+    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: bool = ...) -> ImageData | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def select_values(  # type: ignore[misc]
@@ -5030,7 +5032,7 @@ class ImageDataFilters(DataSetFilters):
         fill_value: float | VectorLike[float] | None = 0,
         replacement_value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         split: bool = False,
@@ -5282,7 +5284,7 @@ class ImageDataFilters(DataSetFilters):
             'pv.pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
         )
-        preference: Literal['point', 'cell'] = (
+        preference: PointLiteral | CellLiteral = (
             'point' if association == FieldAssociation.POINT else 'cell'
         )
         _validate_value_for_dtype(fill_value, input_array.dtype, name='fill_value')
