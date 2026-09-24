@@ -168,8 +168,8 @@ def test_clip_inplace_return_clipped(mesh):
     assert kept is mesh
     assert removed is not mesh
     assert mesh.n_points < n_points_in
-    assert kept.n_points == expected_kept.n_points
-    assert removed.n_points == expected_removed.n_points
+    assert np.array_equal(kept.points, expected_kept.points)
+    assert np.array_equal(removed.points, expected_removed.points)
 
 
 @pytest.mark.parametrize(
