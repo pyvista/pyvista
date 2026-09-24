@@ -66,6 +66,12 @@ if TYPE_CHECKING:
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock[Any]', DataSet, None]
+# Composite types :vtk:`vtkMultiBlockDataSet` refuses to hold as a block
+_NOT_A_BLOCK = (
+    _vtk.vtkPartitionedDataSet,
+    _vtk.vtkPartitionedDataSetCollection,
+    _vtk.vtkUniformGridAMR,
+)
 _NestedPolyData = Union['PolyData', 'MultiBlock[_NestedPolyData]']
 _NestedUnstructuredGrid = Union['UnstructuredGrid', 'MultiBlock[_NestedUnstructuredGrid]']
 _BlockType = TypeVar(
@@ -1470,6 +1476,13 @@ class MultiBlock(
             Block name to give to dataset.  A default name is given
             depending on the block index as ``'Block-{i:02}'``.
 
+        Raises
+        ------
+        TypeError
+            If ``dataset`` is a composite which cannot be a block, such as a
+            :class:`~pyvista.PartitionedDataSet`.  Convert it with
+            :meth:`~pyvista.DataObject.cast_to_multiblock` first.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1877,6 +1890,13 @@ class MultiBlock(
 
         # this is the only spot in the class where we actually add
         # data to the MultiBlock
+
+        if isinstance(data, _NOT_A_BLOCK):
+            msg = (
+                f'A {type(data).__name__} cannot be a block of a MultiBlock. '
+                f'Call cast_to_multiblock() on it first.'
+            )
+            raise TypeError(msg)
 
         # check if we are overwriting a block
         existing_dataset = self.GetBlock(i)

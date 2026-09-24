@@ -93,6 +93,39 @@ def test_multi_block_init_sequence(rectilinear, airplane):
     assert isinstance(multi.GetBlock(1), PolyData)
 
 
+def test_multi_block_init_partitioned(sphere, airplane):
+    # A `PartitionedDataSet` is a sequence, so its partitions become the blocks
+    multi = MultiBlock(pv.PartitionedDataSet([sphere, airplane]))
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), PolyData)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+@pytest.mark.parametrize(
+    'add_block',
+    [
+        lambda multi, block: multi.append(block),
+        lambda multi, block: multi.__setitem__(0, block),
+        lambda multi, block: multi.insert(0, block),
+    ],
+    ids=['append', 'setitem', 'insert'],
+)
+def test_multi_block_rejects_a_block_vtk_refuses(sphere, add_block):
+    # VTK only logs when it refuses a block, leaving the slot silently empty
+    multi = MultiBlock([sphere])
+    match = re.escape(
+        'A PartitionedDataSet cannot be a block of a MultiBlock. '
+        'Call cast_to_multiblock() on it first.'
+    )
+    with pytest.raises(TypeError, match=match):
+        add_block(multi, pv.PartitionedDataSet([sphere]))
+
+
+def test_multi_block_init_rejects_a_block_vtk_refuses(sphere):
+    with pytest.raises(TypeError, match='cannot be a block of a MultiBlock'):
+        MultiBlock([pv.PartitionedDataSet([sphere])])
+
+
 def test_multi_block_init_str_is_a_filename(tmp_path, sphere):
     # A `str` is a sequence, but names a file rather than giving one block per character
     MultiBlock([sphere]).save(path := tmp_path / 'blocks.vtm')
