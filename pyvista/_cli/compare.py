@@ -227,7 +227,7 @@ def _parse_shape(shape: str) -> list[int] | str:
 
 
 def _enclosing_outline(meshes: list[pv.DataObject]) -> pv.PolyData:
-    """Return an outline enclosing every mesh which defines bounds."""
+    """Return an outline enclosing every mesh which can be a block."""
     blocks = [mesh for mesh in meshes if isinstance(mesh, (pv.DataSet, pv.MultiBlock))]
     return pv.MultiBlock(blocks).outline()
 
