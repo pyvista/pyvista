@@ -69,6 +69,21 @@ files, where they came from, and the readers for them.
    >>> mesh = examples.get_example('bunny').load()
    >>> mesh.plot()
 
+The same object says in one word what using the data obliges you to do, names
+the license, and carries the credit line to use. The full record behind them,
+read from the `pyvista/data <https://github.com/pyvista/data>`_ repository and
+from the table shipped alongside the built-in examples, is one attribute away:
+
+.. code-block:: python
+
+   >>> shark = examples.get_example('grey_nurse_shark')
+   >>> shark.usage, shark.license
+   ('share_alike', 'CC-BY-SA-3.0')
+   >>> shark.attribution
+   'Grey Nurse Shark, uploaded by rogerpeng1 ...'
+   >>> shark.metadata.provenance
+   'verified'
+
 See the API reference for details:
 
 .. autosummary::
@@ -76,6 +91,9 @@ See the API reference for details:
 
    examples.get_example
    examples.Example
+   examples.ExampleMetadata
+   examples.License
+   examples.Reference
 
 Dataset Gallery
 ---------------

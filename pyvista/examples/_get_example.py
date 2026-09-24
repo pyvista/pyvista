@@ -22,12 +22,15 @@ import pyvista as pv
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _FileProps
+from pyvista.examples._dataset_metadata import _metadata_for_source_names
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import ModuleType
 
     from pyvista.examples._dataset_loader import DatasetObject
+    from pyvista.examples._dataset_metadata import ExampleMetadata
+    from pyvista.examples._dataset_metadata import Usage
 
 _DatasetT_co = TypeVar('_DatasetT_co', covariant=True, default='DatasetObject')
 _ReadersT_co = TypeVar(
@@ -80,6 +83,21 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     >>> mesh.n_cells
     31594185
 
+    Every example says in one word what using it obliges you to do, and carries the
+    credit line to use when it asks for one.
+
+    >>> bunny.usage  # doctest:+SKIP
+    'non_commercial'
+    >>> bunny.attribution  # doctest:+SKIP
+    'Stanford Computer Graphics Laboratory.'
+
+    The license, and the full record behind these, are one attribute away.
+
+    >>> bunny.license  # doctest:+SKIP
+    'LicenseRef-StanfordScanningRepository'
+    >>> bunny.metadata.provenance  # doctest:+SKIP
+    'verified'
+
     """
 
     name: str
@@ -95,13 +113,83 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
     source_urls: tuple[str, ...]
-    """URL of each file which is downloaded, empty for an example which ships with PyVista."""
+    """URL each file is downloaded from, empty for an example generated in memory."""
 
     @functools.cached_property
     def _loader(self) -> _DatasetLoader:
         """Return the loader backing this example, resolved from :attr:`function` once."""
         loader, _, _ = _get_dataset_loader(self.function)
         return loader
+
+    @functools.cached_property
+    def metadata(self) -> ExampleMetadata | None:
+        """Return the published record for this example's files.
+
+        .. versionadded:: 0.50
+
+        The published table is downloaded once per session on first access, whatever
+        ``download`` was passed to :func:`~pyvista.examples.get_example`. The record mirrors one entry of the ``DATASETS.toml`` table in
+        `pyvista/data <https://github.com/pyvista/data>`_ and carries what this
+        class leaves out: who made the data, where it came from, how sure the origin
+        is, every license in full, what was changed, and what to cite.
+
+        Returns
+        -------
+        ExampleMetadata | None
+            The record, or ``None`` for an example generated in code or whose files
+            have no entry.
+
+        """
+        loader = self._loader
+        if not isinstance(loader, _DOWNLOADABLE_TYPES):
+            return None
+        return _metadata_for_source_names(loader.source_names)
+
+    @property
+    def title(self) -> str | None:  # numpydoc ignore=RT01
+        """Short human-readable name of the data, such as ``'Grey nurse shark'``.
+
+        .. versionadded:: 0.50
+        """
+        return None if self.metadata is None else self.metadata.title
+
+    @property
+    def description(self) -> str | None:  # numpydoc ignore=RT01
+        """What the data is, in one or two sentences.
+
+        .. versionadded:: 0.50
+        """
+        return None if self.metadata is None else self.metadata.description
+
+    @property
+    def usage(self) -> Usage | None:  # numpydoc ignore=RT01
+        """Most restrictive term the license attaches, or ``None`` when unrecorded.
+
+        .. versionadded:: 0.50
+
+        One of ``'unrestricted'``, ``'attribution'``, ``'share_alike'``,
+        ``'non_commercial'`` and ``'undetermined'``, from least to most restrictive.
+        """
+        return None if self.metadata is None else self.metadata.usage
+
+    @property
+    def license(self) -> str | None:  # numpydoc ignore=RT01
+        """SPDX license expression, such as ``'CC-BY-4.0'``, or ``None`` when unrecorded.
+
+        .. versionadded:: 0.50
+
+        The same value as :attr:`ExampleMetadata.license_expression
+        <pyvista.examples.ExampleMetadata.license_expression>`.
+        """
+        return None if self.metadata is None else self.metadata.license_expression
+
+    @property
+    def attribution(self) -> str | None:  # numpydoc ignore=RT01
+        """Credit line the license requires, when it requires one.
+
+        .. versionadded:: 0.50
+        """
+        return None if self.metadata is None else self.metadata.attribution
 
     @functools.cached_property
     def readers(self) -> _ReadersT_co:

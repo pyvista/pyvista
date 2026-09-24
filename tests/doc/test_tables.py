@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from io import StringIO
+import json
+import re
+from typing import get_args
+
 import cmcrameri
 import cmocean
 from colorcet import all_original_names
@@ -14,6 +20,8 @@ import pyvista as pv
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _MultiFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+from pyvista.examples._get_example import _get_dataset_loader
 
 CMAP_SET_MISMATCH_ERROR_MSG = (
     'Colormaps in documentation differ from colormaps available. '
@@ -183,6 +191,235 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     make_tables._update_image_placeholders(node)
 
     assert node['uri'].endswith(expected.name)
+
+
+def test_usage_badges_cover_every_usage_value():
+    """A `use` value missing from the manifest order is dropped from the filter panel.
+
+    `collectFacetValues` in dataset_gallery_filter.js keeps only the values named in
+    `order`, so a slug the cards emit but the manifest omits disappears silently.
+    """
+    from pyvista.examples._dataset_metadata import Usage
+
+    badges = make_tables.DATASET_GALLERY_USAGE_BADGES
+    assert set(get_args(Usage)) == set(badges)
+    # The facet slug is derived from the value, so the manifest order must agree.
+    assert [make_tables._facet_slugify(usage) for usage in badges] == [
+        'unrestricted',
+        'attribution',
+        'share-alike',
+        'non-commercial',
+        'undetermined',
+    ]
+    colours = [colour for _, colour in badges.values()]
+    assert len(set(colours)) == len(colours)
+    # Solid marks usage and outlined marks provenance; the module badge is not checked.
+    assert not any(colour.endswith('-line') for colour in colours)
+    assert all(
+        colour.endswith('-line')
+        for colour in make_tables.DATASET_GALLERY_PROVENANCE_COLORS.values()
+    )
+
+
+@pytest.mark.parametrize(
+    ('prose', 'expected'),
+    [
+        ('plain text', 'plain text'),
+        ('a `code` span', 'a ``code`` span'),
+        ('already ``literal``', 'already ``literal``'),
+        ('a_b and *star*', r'a\_b and \*star\*'),
+        ('see https://example.org/a_b', 'see ``https://example.org/a_b``'),
+        # A trailing underscore in a URL is a reStructuredText reference otherwise.
+        (
+            'see https://web.archive.org/web/2024id_/https://x.org/y',
+            'see ``https://web.archive.org/web/2024id_/https://x.org/y``',
+        ),
+        ('(https://example.org/x), next', '(``https://example.org/x``), next'),
+        ('ends https://example.org/x.', 'ends ``https://example.org/x``.'),
+        ('wiki https://e.org/Foo_(bar) here', 'wiki ``https://e.org/Foo_(bar)`` here'),
+    ],
+)
+def test_rst_from_prose(prose, expected):
+    assert make_tables._rst_from_prose(prose) == expected
+
+
+def test_rst_from_prose_output_parses_as_rst():
+    """The escaping exists to keep the docs build green, so parse the result."""
+    from docutils.core import publish_doctree
+
+    hostile = 'Trailing https://web.archive.org/web/2020id_/http://x.org/y and a_b *and* `c`.'
+    errors = StringIO()
+    publish_doctree(
+        make_tables._rst_from_prose(hostile),
+        settings_overrides={
+            'report_level': 2,
+            'halt_level': 5,
+            'warning_stream': errors,
+            'file_insertion_enabled': False,
+        },
+    )
+
+    assert 'ERROR' not in errors.getvalue()
+    assert 'WARNING' not in errors.getvalue()
+
+
+@pytest.fixture
+def metadata():
+    """A record covering every field the gallery renders."""
+    from pyvista.examples._dataset_metadata import ExampleMetadata
+    from pyvista.examples._dataset_metadata import License
+
+    return ExampleMetadata(
+        name='thing',
+        title='Thing',
+        description='A thing.',
+        paths=('thing.vtk',),
+        license_expression='CC-BY-3.0',
+        licenses=(
+            License(
+                spdx_id='CC-BY-3.0',
+                title='Creative Commons Attribution 3.0 Unported',
+                url='https://creativecommons.org/licenses/by/3.0/',
+                commercial_use=True,
+                attribution_required=True,
+                share_alike=False,
+                text_url='https://example.org/LICENSES/CC-BY-3.0.txt',
+            ),
+        ),
+        provenance='verified',
+        origin_url='https://humus.name/',
+        origin_title='Humus texture library',
+        redistributed_from='https://gitlab.kitware.com/vtk/vtk-examples/-/tree/master/x',
+    )
+
+
+def test_license_field_links_the_text_and_the_issuer(metadata):
+    field = make_tables.DatasetPropsGenerator.generate_license_field(metadata)
+
+    assert ':bdg-link-primary:`CC-BY-3.0 <https://example.org/LICENSES/CC-BY-3.0.txt>`' in field
+    assert '`Creative Commons Attribution 3.0 Unported <https://creativecommons.org/' in field
+
+
+def test_usage_badge_links_the_legend(metadata):
+    gen = make_tables.DatasetPropsGenerator
+    sa = replace(metadata.licenses[0], share_alike=True)
+
+    assert gen.generate_usage_badge(metadata) == (
+        ':bdg-ref-info:`Credit required <dataset_gallery_usage>`'
+    )
+    assert gen.generate_usage_badge(replace(metadata, licenses=(sa,))) == (
+        ':bdg-ref-warning:`Share alike <dataset_gallery_usage>`'
+    )
+    assert gen.generate_provenance_field(metadata) == ':bdg-success-line:`verified`'
+
+
+def test_usage_badge_marks_an_uncatalogued_file_but_not_generated_data():
+    gen = make_tables.DatasetPropsGenerator
+
+    assert gen.generate_usage_badge(None, _SingleFileDownloadableDatasetLoader('mesh.vtp')) == (
+        ':bdg-ref-muted-line:`Not recorded <dataset_gallery_usage>`'
+    )
+    assert gen.generate_usage_badge(None, _DatasetLoader(pv.Sphere)) == ''
+    assert gen.generate_usage_badge(None) == ''
+
+
+def test_card_header_carries_the_module_and_usage_badges(monkeypatch, metadata, tmp_path):
+    path = tmp_path / 'mesh.vtp'
+    path.touch()
+    loader = _SingleFileDatasetLoader(str(path))
+    metadata = replace(metadata, licenses=(replace(metadata.licenses[0], share_alike=True),))
+    monkeypatch.setattr(
+        make_tables.DatasetPropsGenerator, '_dataset_metadata', staticmethod(lambda _: metadata)
+    )
+    card = make_tables.DatasetCard(
+        'thing', loader, module=pv.examples.downloads, function=pv.examples.download_bunny
+    )
+    monkeypatch.setattr(card, '_generate_cross_references', lambda *_: '')
+
+    rst = card.generate()
+
+    header = rst.split('^^^')[0]
+    assert ':bdg-ref-secondary:`Downloads' in header
+    assert ':bdg-ref-warning:`Share alike <dataset_gallery_usage>`' in header
+    # The facet slug is what docutils makes of the value, and the manifest lists it.
+    assert 'use-share-alike' in header
+    assert make_tables.DatasetCardFetcher.FACET_LABELS['use-share-alike'] == 'Share alike'
+    footer = rst.split('+++')[1]
+    assert '**Usage**' in footer
+    assert '**Commercial use**' in footer
+    assert '**Attribution required**' in footer
+    assert '**Share alike**' in footer
+    assert re.findall(r'^\s*(Yes|No)$', footer, re.MULTILINE) == ['Yes', 'Yes', 'Yes']
+    plain = make_tables.DatasetCard._create_footer_block('', replace(metadata, licenses=()))
+    assert re.findall(r'^\s*(Yes|No)$', plain, re.MULTILINE) == ['No', 'Yes', 'No']
+
+
+def test_filter_manifest_lists_the_usage_slugs_the_cards_emit():
+    html = make_tables.DatasetCardFetcher.generate_filter_toolbar()
+    start = html.index('>', html.index('id="facet-manifest"')) + 1
+    manifest = json.loads(html[start : html.index('</script>', start)])
+
+    assert manifest['order']['use'] == [
+        'unrestricted',
+        'attribution',
+        'share-alike',
+        'non-commercial',
+        'undetermined',
+    ]
+
+
+def test_unrecorded_facets_tell_a_missing_record_from_generated_data(monkeypatch):
+    monkeypatch.setattr(
+        make_tables.DatasetPropsGenerator, '_dataset_metadata', staticmethod(lambda _: None)
+    )
+    packaged, _, _ = _get_dataset_loader(pv.examples.load_ant)
+    classes, labels = make_tables.DatasetCard._generate_facet_classes(
+        packaged, pv.examples.examples
+    )
+    assert 'use-na' in classes.split()
+    assert labels['use-na'] == labels['license-na'] == 'N/A (not recorded)'
+
+    _, labels = make_tables.DatasetCard._generate_facet_classes(
+        _DatasetLoader(pv.Sphere), pv.examples.examples
+    )
+    assert labels['use-na'] == 'N/A (no file)'
+
+
+def test_license_field_falls_back_to_the_issuer_page(metadata):
+    lic = replace(metadata.licenses[0], text_url=None)
+    field = make_tables.DatasetPropsGenerator.generate_license_field(
+        replace(metadata, licenses=(lic,))
+    )
+
+    assert ':bdg-link-primary:`CC-BY-3.0 <https://creativecommons.org/licenses/by/3.0/>`' in field
+
+
+def test_redistributor_shows_the_host_not_the_whole_url(metadata):
+    field = make_tables.DatasetPropsGenerator.generate_redistributor_field(metadata)
+    bare = make_tables.DatasetPropsGenerator.generate_redistributor_field(
+        replace(metadata, redistributed_from='a private archive')
+    )
+    missing = make_tables.DatasetPropsGenerator.generate_redistributor_field(
+        replace(metadata, redistributed_from=None)
+    )
+
+    assert field.startswith('`gitlab.kitware.com <https://gitlab.kitware.com/')
+    assert bare == '``a private archive``'
+    assert missing is None
+
+
+def test_origin_field_falls_back_to_a_literal_for_a_non_url(metadata):
+    linked = make_tables.DatasetPropsGenerator.generate_origin_field(metadata)
+    bare = make_tables.DatasetPropsGenerator.generate_origin_field(
+        replace(metadata, origin_url='OnScale Solve')
+    )
+    missing = make_tables.DatasetPropsGenerator.generate_origin_field(
+        replace(metadata, origin_url=None)
+    )
+
+    assert linked == '`Humus texture library <https://humus.name/>`__'
+    assert bare == '``Humus texture library``'
+    assert missing is None
 
 
 @pytest.mark.parametrize(
