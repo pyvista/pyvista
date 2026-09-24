@@ -33,8 +33,9 @@ N = 5
 values = np.arange(N)  # values for scalars to look up glyphs by
 
 
-# taken from: rng = np.random.default_rng() params = rng.uniform(0.5, 2,
-# size=(N, 2))  # (n1, n2) parameters for the toroids
+# taken from:
+# rng = np.random.default_rng()
+# params = rng.uniform(0.5, 2, size=(N, 2))  # (n1, n2) for the toroids
 params = np.array(
     [
         [1.56821334, 0.99649769],

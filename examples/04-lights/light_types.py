@@ -49,10 +49,9 @@ pl.show()
 # :py:attr:`pyvista.Camera.focal_point` properties in a coordinate system that
 # is local to the camera. The coordinates in the scene's coordinate system can
 # be accessed through the :py:attr:`pyvista.Light.world_position` and
-# :py:attr:`pyvista.Light.world_focal_point` read-only properties,
-# respectively. For specifics of the local coordinate system used for the
-# coordinates please see the documentation of
-# :func:`pyvista.Light.set_camera_light`.
+# :py:attr:`pyvista.Light.world_focal_point` read-only properties, respectively.
+# For specifics of the local coordinate system used for the coordinates please
+# see the documentation of :func:`pyvista.Light.set_camera_light`.
 
 pl = pv.Plotter(lighting='none')
 pl.add_mesh(mesh, color='lightblue', smooth_shading=True)

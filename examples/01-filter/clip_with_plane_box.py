@@ -17,7 +17,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Clip With Plane +++++++++++++++
+# Clip With Plane
+# +++++++++++++++
 #
 # Clip any dataset by a user defined plane using the
 # :func:`pyvista.DataObjectFilters.clip` filter
@@ -37,7 +38,8 @@ pl.show()
 
 
 # %%
-# Clip With Bounds ++++++++++++++++
+# Clip With Bounds
+# ++++++++++++++++
 #
 # Clip any dataset by a set of XYZ bounds using the
 # :func:`pyvista.DataObjectFilters.clip_box` filter.
@@ -54,7 +56,8 @@ pl.show()
 
 
 # %%
-# Clip With Rotated Box +++++++++++++++++++++
+# Clip With Rotated Box
+# +++++++++++++++++++++
 #
 # Clip any dataset by an arbitrarily rotated solid box using the
 # :func:`pyvista.DataObjectFilters.clip_box` filter.

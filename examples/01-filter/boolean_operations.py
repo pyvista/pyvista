@@ -58,8 +58,8 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 # The union of two manifold meshes ``A`` and ``B`` is the mesh
 # which is in ``A``, in ``B``, or in both ``A`` and ``B``.
 #
-# Order of operands does not matter for boolean union (the operation is
-# commutative).
+# Order of operands does not matter for boolean union (the operation
+# is commutative).
 
 result = sphere_a | sphere_b
 pl = pv.Plotter()

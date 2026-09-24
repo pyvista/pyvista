@@ -35,8 +35,8 @@ sized = dataset.compute_cell_sizes()
 cell_volumes = sized.cell_data['Volume']
 
 # %%
-# We can also compute the total volume of the mesh using the ``.volume``
-# property:
+# We can also compute the total volume of the mesh using the
+# ``.volume`` property:
 
 # Compute the total volume of the mesh
 volume = dataset.volume

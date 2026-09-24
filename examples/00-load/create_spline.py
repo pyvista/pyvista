@@ -110,7 +110,8 @@ tube.plot(scalars='theta', smooth_shading=True)
 
 
 # %%
-# Ribbons +++++++
+# Ribbons
+# +++++++
 #
 # Any of the lines from the examples above can be used to create ribbons.
 # Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.
@@ -119,7 +120,8 @@ ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
 
 # %%
-# Closing a Spline ++++++++++++++++
+# Closing a Spline
+# ++++++++++++++++
 #
 # Create a spline and its closed counterpart.
 
@@ -131,7 +133,8 @@ pl.add_mesh(spline_closed, line_width=4, color='r')
 pl.show()
 
 # %%
-# Parametrizing by Length Versus Index ++++++++++++++++++++++++++++++++++++
+# Parametrizing by Length Versus Index
+# ++++++++++++++++++++++++++++++++++++
 #
 # Create a spline by parametrizing based on length (default) or point index.
 
@@ -151,7 +154,8 @@ pl.add_mesh(
 pl.show()
 
 # %%
-# Boundary Constraints ++++++++++++++++++++
+# Boundary Constraints
+# ++++++++++++++++++++
 #
 # Create a spline and see the effect of boundary constraint. Boundary type can
 # be ``'finite_difference'``, ``'clamped'``, ``'second'``, ``'scaled_second'``
@@ -197,7 +201,8 @@ pl.show()
 
 
 # %%
-# Boundary Values +++++++++++++++
+# Boundary Values
+# +++++++++++++++
 #
 # Create a spline and see the effect of boundary value. It can be set at left
 # and right value and has no effect for boundary type 0.

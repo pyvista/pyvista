@@ -70,9 +70,8 @@ assert len(path) in data.shape, (
 # If not, you'll need to interpolate the path
 
 # Grab the number of samples (in Z dir) and number of traces/soundings
-nsamples, ntraces = (
-    data.shape
-)  # Might be opposite for your data, pay attention here
+# Might be opposite for your data, pay attention here
+nsamples, ntraces = data.shape
 
 # Define the Z spacing of your 2D section
 z_spacing = 0.12

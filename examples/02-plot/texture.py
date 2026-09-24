@@ -70,7 +70,8 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# Textures From Files +++++++++++++++++++
+# Textures From Files
+# +++++++++++++++++++
 #
 # What about loading your own texture from an image? This is often most easily
 # done using the :func:`pyvista.read_texture` function - simply pass an image
@@ -83,7 +84,8 @@ curvsurf.plot(texture=tex)
 
 
 # %%
-# NumPy Arrays as Textures ++++++++++++++++++++++++
+# NumPy Arrays as Textures
+# ++++++++++++++++++++++++
 #
 # Want to use a programmatically built image? :class:`pyvista.ImageData`
 # objects can be converted to textures using
@@ -147,7 +149,8 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 pl.close()
 
 # %%
-# Textures With Transparency ++++++++++++++++++++++++++
+# Textures With Transparency
+# ++++++++++++++++++++++++++
 #
 # Textures can also specify per-pixel opacity values. The image must contain a
 # fourth channel specifying the opacity value from 0 [transparent] to 255 [fully
@@ -166,7 +169,8 @@ curvsurf.plot(texture=rgba, show_grid=True)
 
 
 # %%
-# Repeating Textures ++++++++++++++++++
+# Repeating Textures
+# ++++++++++++++++++
 #
 # What if you have a single texture that you'd like to repeat across a mesh?
 # Simply define the texture coordinates for all nodes explicitly.
@@ -212,9 +216,9 @@ mesh.plot(texture=tex)
 
 
 # %%
-# The helper method above does not always produce the desired texture
-# coordinates, so sometimes it must be done manually. Here is a
-# great, user contributed example from `this support issue
+# The helper method above does not always produce the desired
+# texture coordinates, so sometimes it must be done manually. Here
+# is a great, user contributed example from `this support issue
 # <https://github.com/pyvista/pyvista-support/issues/257>`_
 #
 # Manually create the texture coordinates for a globe map. First, we create

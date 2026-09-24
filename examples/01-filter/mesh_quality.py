@@ -96,8 +96,8 @@ pl.show()
 # %%
 # Tetrahedron Cell Quality
 # ------------------------
-# Load a mesh with :attr:`~pyvista.CellType.TETRA` cells. Here we use
-# :meth:`~pyvista.examples.downloads.download_letter_a`.
+# Load a mesh with :attr:`~pyvista.CellType.TETRA` cells. Here we
+# use :meth:`~pyvista.examples.downloads.download_letter_a`.
 
 mesh = examples.download_letter_a()
 

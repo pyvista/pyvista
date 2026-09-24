@@ -43,8 +43,7 @@ pl.show()
 
 
 # %%
-# You can also directly read in gltf files and extract the underlying
-# mesh.
+# You can also directly read in gltf files and extract the underlying mesh.
 
 block = pv.read(helmet_file)
 mesh = block[0][0][0]

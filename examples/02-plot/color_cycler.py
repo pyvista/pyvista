@@ -17,8 +17,7 @@ Cycle through colors when sequentially adding meshes to a plotter.
 import pyvista as pv
 
 # %%
-# Turn on color cycling in PyVista's theme and set it to use the default
-# cycler.
+# Turn on color cycling in PyVista's theme and set it to use the default cycler.
 pv.global_theme.color_cycler = 'default'
 
 # %%
@@ -56,8 +55,8 @@ pl.show()
 
 # %%
 # Further, you can control this on a per-renderer basis by calling
-# :func:`set_color_cycler() <pyvista.Renderer.set_color_cycler>` on the active
-# ``renderer``.
+# :func:`set_color_cycler() <pyvista.Renderer.set_color_cycler>` on the
+# active ``renderer``.
 pl = pv.Plotter(shape=(1, 2))
 
 pl.subplot(0, 0)

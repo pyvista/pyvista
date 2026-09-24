@@ -89,10 +89,11 @@ pl.view_isometric()
 pl.show(cpos=cpos)
 
 # %%
-# Resample a Processed Volume +++++++++++++++++++++++++++ Clipping an image
-# returns an :class:`~pyvista.UnstructuredGrid`, which image filters do not
-# accept. :func:`~pyvista.DataObjectFilters.resample_to_image` puts the
-# processed volume back on a regular grid.
+# Resample a Processed Volume
+# +++++++++++++++++++++++++++
+# Clipping an image returns an :class:`~pyvista.UnstructuredGrid`, which image
+# filters do not accept. :func:`~pyvista.DataObjectFilters.resample_to_image`
+# puts the processed volume back on a regular grid.
 #
 # Start from a volumetric scan of a knee. Bone is the bright end of its
 # intensity range, from 100 up.

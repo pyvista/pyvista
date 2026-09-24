@@ -19,9 +19,10 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Volume Data to Volume Data ++++++++++++++++++++++++++ Some filters generate
-# `pyvista.Volume` out of `pyvista.Volume`. We will explore 3:
-# :func:`pyvista.DataSetFilters.threshold`
+# Volume Data to Volume Data
+# ++++++++++++++++++++++++++
+# Some filters generate `pyvista.Volume` out of `pyvista.Volume`. We will
+# explore 3: :func:`pyvista.DataSetFilters.threshold`
 # :func:`pyvista.ImageDataFilters.image_threshold`
 # :func:`pyvista.ImageDataFilters.select_values` Note how
 # `pyvista.DataSetFilters.threshold` keeps the dynamic of the image for the

@@ -12,8 +12,8 @@ Uses the downloadable datasets
 
 These datasets include labels for 117 anatomical structures. In this example,
 the labels are grouped by filtering the list of labels and coloring the labels
-with the recommended RGB values used by the 3DSlicer `TotalSegmentator Extension
-<https://github.com/lassoan/SlicerTotalSegmentator>`_.
+with the recommended RGB values used by the 3DSlicer `TotalSegmentator
+Extension <https://github.com/lassoan/SlicerTotalSegmentator>`_.
 
 """
 

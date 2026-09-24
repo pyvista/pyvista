@@ -27,7 +27,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Example A +++++++++
+# Example A
+# +++++++++
 #
 # Use a single sphere widget
 
@@ -65,7 +66,8 @@ pl.show()
 
 
 # %%
-# Example B +++++++++
+# Example B
+# +++++++++
 #
 # Use several sphere widgets at once
 
@@ -103,7 +105,8 @@ pl.show()
 # .. image:: ../../images/gifs/sphere-widget-b.gif
 
 # %%
-# Example C +++++++++
+# Example C
+# +++++++++
 #
 # This one is the coolest - use four sphere widgets to update perturbations on
 # a surface and interpolate between them with some boundary conditions

@@ -15,7 +15,8 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# From NumPy Meshgrid +++++++++++++++++++
+# From NumPy Meshgrid
+# +++++++++++++++++++
 #
 # Create a simple meshgrid using NumPy. Note the usage of ``ij`` indexing.
 
@@ -46,7 +47,8 @@ grid.points
 
 
 # %%
-# From XYZ Points +++++++++++++++
+# From XYZ Points
+# +++++++++++++++
 #
 # Quite often, you might be given a set of coordinates (XYZ points) in a simple
 # tabular format where there exists some structure such that grid could be built
@@ -129,7 +131,8 @@ mesh.plot(show_edges=True, show_grid=True, cpos='xy')
 
 
 # %%
-# Extending a 2D StructuredGrid to 3D +++++++++++++++++++++++++++++++++++
+# Extending a 2D StructuredGrid to 3D
+# +++++++++++++++++++++++++++++++++++
 #
 # A 2D :class:`pyvista.StructuredGrid` mesh can be extended into a 3D mesh.
 # This is highly applicable when wanting to create a terrain following mesh

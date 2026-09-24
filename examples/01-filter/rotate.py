@@ -20,7 +20,8 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Define Camera Position and Axes +++++++++++++++++++++++++++++++
+# Define Camera Position and Axes
+# +++++++++++++++++++++++++++++++
 #
 # Define camera position and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
 
@@ -38,7 +39,8 @@ axes = pv.Axes(show_actor=True, actor_scale=2.0, line_width=5)
 axes.origin = (3.0, 3.0, 3.0)
 
 # %%
-# Original Mesh +++++++++++++
+# Original Mesh
+# +++++++++++++
 #
 # Plot original mesh. Add axes actor to Plotter.
 
@@ -51,7 +53,8 @@ pl.add_mesh(mesh)
 pl.show(cpos=cpos)
 
 # %%
-# Rotation About the X Axis +++++++++++++++++++++++++
+# Rotation About the X Axis
+# +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the x axis every 60 degrees. Add the axes actor to
 # the Plotter and set the axes origin to the point of rotation.
@@ -68,7 +71,8 @@ for i in range(6):
 pl.show(cpos=cpos)
 
 # %%
-# Rotation About the Y Axis +++++++++++++++++++++++++
+# Rotation About the Y Axis
+# +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the y axis every 60 degrees. Add the axes actor to
 # the Plotter and set the axes origin to the point of rotation.
@@ -85,7 +89,8 @@ for i in range(6):
 pl.show(cpos=cpos)
 
 # %%
-# Rotation About the Z Axis +++++++++++++++++++++++++
+# Rotation About the Z Axis
+# +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the z axis every 60 degrees. Add axes actor to the
 # Plotter and set the axes origin to the point of rotation.
@@ -102,7 +107,8 @@ for i in range(6):
 pl.show(cpos=cpos)
 
 # %%
-# Rotation About a Custom Vector ++++++++++++++++++++++++++++++
+# Rotation About a Custom Vector
+# ++++++++++++++++++++++++++++++
 #
 # Plot the mesh rotated about a custom vector every 60 degrees. Add the axes
 # actor to the Plotter and set axes origin to the point of rotation.

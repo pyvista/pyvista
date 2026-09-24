@@ -165,14 +165,12 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
                 * r2
                 * F(p1 + p2, q1 + q2, r1 + r2 - 2, **geom_params)
             )
-            G[index2_, index1] = G[
-                index1, index2_
-            ]  # since stiffness matrix is symmetric
+            # since stiffness matrix is symmetric
+            G[index2_, index1] = G[index1, index2_]
             if I == J:
                 E[index1, index2_] = F(p1 + p2, q1 + q2, r1 + r2, **geom_params)
-                E[index2_, index1] = E[
-                    index1, index2_
-                ]  # since mass matrix is symmetric
+                # since mass matrix is symmetric
+                E[index2_, index1] = E[index1, index2_]
     return E, G, quadruplets
 
 

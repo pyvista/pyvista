@@ -6,8 +6,8 @@ Wrapping Other Objects
 
 Wrap other object types using :func:`~pyvista.wrap`.
 
-You can :func:`~pyvista.wrap` several other object types using pyvista
-including:
+You can :func:`~pyvista.wrap` several other object types using
+pyvista including:
 
 - ``numpy`` arrays
 - :class:`trimesh.Trimesh` meshes

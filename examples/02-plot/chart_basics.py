@@ -56,14 +56,10 @@ chart.show()
 x = np.arange(11)
 y = rng.integers(-5, 6, 11)
 chart = pv.Chart2D()
-chart.background_color = (
-    0.5,
-    0.9,
-    0.5,
-)  # Use custom background color for chart
-chart.plot(
-    x, y, 'x--b'
-)  # Marker style 'x', striped line style '--', blue color 'b'
+# Use custom background color for chart
+chart.background_color = (0.5, 0.9, 0.5)
+# Marker style 'x', striped line style '--', blue color 'b'
+chart.plot(x, y, 'x--b')
 chart.show()
 
 # %%

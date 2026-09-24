@@ -122,10 +122,8 @@ groups = [
     (0, np.s_[:]),  # First group spans over all columns of the first row (0)
     ([1, 3], 0),  # Second group spans over row 1-3 of the first column (0)
     (np.s_[2:], [1, 2]),  # Third group spans over rows 2-4 and columns 1-2
-    (
-        slice(1, -1),
-        3,
-    ),  # Fourth group spans over rows 1-3 of the last column (3)
+    # Fourth group spans over rows 1-3 of the last column (3)
+    (slice(1, -1), 3),
 ]
 
 pl = pv.Plotter(

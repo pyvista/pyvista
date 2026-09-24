@@ -12,9 +12,10 @@ attenuation. The quadratic attenuation model uses three parameters to describe
 attenuation: a constant, a linear and a quadratic parameter. These parameters
 describe the decrease of the beam intensity as a function of the distance,
 `I(r)`. In a broad sense the constant, linear, and quadratic components
-correspond to `I(r) = 1`, `I(r) = 1/r` and `I(r) = 1/r^2` decay of the intensity
-with distance from the point source. In all cases a larger attenuation value (of
-a given kind) means stronger dampening (weaker light at a given distance).
+correspond to
+`I(r) = 1`, `I(r) = 1/r` and `I(r) = 1/r^2` decay of the intensity with distance
+from the point source. In all cases a larger attenuation value (of a given kind)
+means stronger dampening (weaker light at a given distance).
 
 So the constant attenuation parameter corresponds roughly to a constant
 intensity component. The linear and the quadratic attenuation parameters

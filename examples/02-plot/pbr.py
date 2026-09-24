@@ -39,9 +39,8 @@ cubemap = examples.download_sky_box_cube_map()
 # looking finish.
 pl = pv.Plotter()
 pl.add_actor(cubemap.to_skybox())
-pl.set_environment_texture(
-    cubemap
-)  # For reflecting the environment off the mesh
+# For reflecting the environment off the mesh
+pl.set_environment_texture(cubemap)
 pl.add_mesh(
     mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1
 )

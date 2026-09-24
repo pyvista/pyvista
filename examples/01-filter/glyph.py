@@ -24,9 +24,8 @@ mask = mesh['scalars'] < 210
 mesh['scalars'][mask] = 0  # null out smaller vectors
 
 # Make a geometric object to use as the glyph
-geom = pv.Arrow(
-    tip_resolution=8, shaft_resolution=8
-)  # This could be any dataset
+# This could be any dataset
+geom = pv.Arrow(tip_resolution=8, shaft_resolution=8)
 
 # Perform the glyph
 glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.003, geom=geom)
@@ -76,7 +75,8 @@ pl.show()
 
 
 # %%
-# Subset of Glyphs ++++++++++++++++
+# Subset of Glyphs
+# ++++++++++++++++
 #
 # Sometimes you might not want glyphs for every node in the input dataset. In
 # this case, you can choose to build glyphs for a subset of the input dataset

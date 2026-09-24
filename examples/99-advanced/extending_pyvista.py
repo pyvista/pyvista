@@ -9,9 +9,9 @@ A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended.
 For example, if the user wants to keep track of the location of the
 maximum point in the (1, 0, 1) direction on the mesh.
 
-There are two methods by which users can handle subclassing.  One is directly
-managing the types objects.  This may require checking types during filter
-operations.
+There are two methods by which users can handle subclassing.  One is
+directly managing the types objects.  This may require checking types during
+filter operations.
 
 The second is automatic managing of types.  Users can control whether user
 defined classes are nearly always used for particular types of DataSets.
@@ -45,7 +45,8 @@ class FooData(pv.PolyData):
 
 
 # %%
-# Directly Managing Types +++++++++++++++++++++++
+# Directly Managing Types
+# +++++++++++++++++++++++
 #
 # Now a ``foo_sphere`` object is created of type ``FooData``.
 # The index of the point and location of the point of interest can be obtained
@@ -94,7 +95,8 @@ print(
 )
 
 # %%
-# Automatically Managing Types ++++++++++++++++++++++++++++
+# Automatically Managing Types
+# ++++++++++++++++++++++++++++
 #
 # The default :class:`pyvista.DataSet` type can be set using
 # ``pyvista._wrappers``. In general, it is best to use this method when it is

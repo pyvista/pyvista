@@ -107,7 +107,8 @@ print('v:', v)
 # Plot the problem setup and the intersection
 
 if inter:
-    # reconstruct intersection point in barycentric coordinates.  See
+    # reconstruct intersection point in barycentric coordinates.
+    # See
     # https://en.wikipedia.org/wiki/Barycentric_coordinate_system
     a, b, c = (1 - u - v), u, v
     point = tri.points[0] * a + tri.points[1] * b + tri.points[2] * c

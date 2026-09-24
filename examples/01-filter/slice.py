@@ -69,7 +69,8 @@ slices.plot(cmap=cmap)
 
 
 # %%
-# Slice Along Line ++++++++++++++++
+# Slice Along Line
+# ++++++++++++++++
 #
 # We can also slice a dataset along a :func:`pyvista.Spline` or
 # :func:`pyvista.Line` using the
@@ -111,7 +112,8 @@ pl.show(cpos=[1, -1, 1])
 
 
 # %%
-# Multiple Slices in Vector Direction +++++++++++++++++++++++++++++++++++
+# Multiple Slices in Vector Direction
+# +++++++++++++++++++++++++++++++++++
 #
 # Slice a mesh along a vector direction perpendicularly.
 
@@ -145,7 +147,8 @@ pl.show()
 
 
 # %%
-# Slice at Different Bearings +++++++++++++++++++++++++++
+# Slice at Different Bearings
+# +++++++++++++++++++++++++++
 #
 # From `pyvista-support#23
 # <https://github.com/pyvista/pyvista-support/issues/23>`_
@@ -177,8 +180,9 @@ pl.add_mesh(model.outline())
 pl.show()
 
 # %%
-# Slice ImageData With Indexing +++++++++++++++++++++++++++++ Most slicing
-# filters return :class:`~pyvista.PolyData` or
+# Slice ImageData With Indexing
+# +++++++++++++++++++++++++++++
+# Most slicing filters return :class:`~pyvista.PolyData` or
 # :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData` inputs,
 # however, it's often desirable to return :class:`~pyvista.ImageData`. The
 # :meth:`~pyvista.ImageDataFilters.slice_index` filter supports this use case.

@@ -20,8 +20,8 @@ from pyvista import examples
 # %%
 # Generate a Bunch of Bunnies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Create many bunnies using the :func:`glyph <pyvista.DataSetFilters.glyph>`
-# filter.
+# Create many bunnies using the :func:`glyph
+# <pyvista.DataSetFilters.glyph>` filter.
 
 # download the stanford bunny and rotate it into a good position
 mesh = examples.download_bunny()

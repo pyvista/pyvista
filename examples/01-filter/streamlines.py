@@ -137,7 +137,8 @@ pl.show()
 
 
 # %%
-# Kitchen +++++++
+# Kitchen
+# +++++++
 #
 kpos = pv.CameraPosition(
     position=(-6.68, 11.9, 11.6),
@@ -169,7 +170,8 @@ pl.show()
 
 
 # %%
-# Custom 3D Vector Field ++++++++++++++++++++++
+# Custom 3D Vector Field
+# ++++++++++++++++++++++
 #
 
 nx = 20

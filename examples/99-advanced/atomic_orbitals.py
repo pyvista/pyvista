@@ -14,8 +14,9 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 # Import the applicable libraries.
 #
 # .. note::
-#    This example is modeled off of `Matplotlib: Hydrogen Wave Function
-#    <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_.
+#    This example is modeled off of `Matplotlib: Hydrogen Wave
+# Function
+# <http://staff.ustc.edu.cn/~zqj/posts/Hydrogen-Wavefunction/>`_.
 #
 #    This example requires `sympy <https://www.sympy.org/>`_. Install it with:
 #
@@ -29,23 +30,18 @@ from pyvista import examples
 # %%
 # Generate the Dataset
 # ~~~~~~~~~~~~~~~~~~~~
-# Generate the dataset by evaluating the analytic hydrogen wave function from
-# ``sympy``.
+# Generate the dataset by evaluating the analytic hydrogen wave function
+# from ``sympy``.
 #
 # .. math::
-#    \begin{equation}
-#        \psi_{n\ell m}(r,\theta,\phi)
-#        =
-#        \sqrt{
-#            \left(\frac{2}{na_0}\right)^3\, \frac{(n-\ell-1)!}{2n[(n+\ell)!]}
-#        }
-#        e^{-r / na_0}
-#        \left(\frac{2r}{na_0}\right)^\ell
-#        L_{n-\ell-1}^{2\ell+1} \cdot Y_\ell^m(\theta, \phi)
-#    \end{equation}
+#    \begin{equation}        \psi_{n\ell m}(r,\theta,\phi)        =
+# \sqrt{            \left(\frac{2}{na_0}\right)^3\,
+# \frac{(n-\ell-1)!}{2n[(n+\ell)!]}        }        e^{-r / na_0}
+# \left(\frac{2r}{na_0}\right)^\ell        L_{n-\ell-1}^{2\ell+1} \cdot
+# Y_\ell^m(\theta, \phi)    \end{equation}
 #
-# See `Hydrogen atom <https://en.wikipedia.org/wiki/Hydrogen_atom>`_ for more
-# details.
+# See `Hydrogen atom <https://en.wikipedia.org/wiki/Hydrogen_atom>`_ for
+# more details.
 #
 # This dataset evaluates this function for the hydrogen orbital
 # :math:`3d_{xy}`, with the following quantum numbers:

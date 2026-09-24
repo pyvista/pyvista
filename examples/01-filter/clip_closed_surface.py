@@ -6,8 +6,8 @@ Clip and Cap a Closed Surface
 
 Compare a planar clip with :func:`~pyvista.PolyDataFilters.clip_closed_surface`.
 
-The standard clip leaves an open boundary; ``clip_closed_surface`` seals the cut
-face.
+The standard clip leaves an open boundary; ``clip_closed_surface`` seals the
+cut face.
 
 """
 

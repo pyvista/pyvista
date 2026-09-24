@@ -27,7 +27,8 @@ vol = examples.download_knee_full()
 vol
 
 # %%
-# Simple Volume Render ++++++++++++++++++++
+# Simple Volume Render
+# ++++++++++++++++++++
 #
 
 # A nice camera position
@@ -41,7 +42,8 @@ vol.plot(volume=True, cmap='bone', cpos=cpos)
 
 
 # %%
-# Opacity Mappings ++++++++++++++++
+# Opacity Mappings
+# ++++++++++++++++
 #
 # Or use the :func:`pyvista.Plotter.add_volume` method like below.
 # Note that here we use a non-default opacity mapping to a sigmoid:
@@ -74,13 +76,15 @@ pl.link_views()
 pl.show()
 
 # %%
-# Cool Volume Examples ++++++++++++++++++++
+# Cool Volume Examples
+# ++++++++++++++++++++
 #
 # Here are a few more cool volume rendering examples.
 
 
 # %%
-# Head Dataset """"""""""""
+# Head Dataset
+# """"""""""""
 
 head = examples.download_head()
 
@@ -96,7 +100,8 @@ pl.show()
 
 
 # %%
-# Bolt-Nut MultiBlock Dataset """""""""""""""""""""""""""
+# Bolt-Nut MultiBlock Dataset
+# """""""""""""""""""""""""""
 # .. note::
 #    See how we set interpolation to ``'linear'`` here to smooth out scalars
 # of    each individual cell to make a more appealing plot. Two actor are
@@ -120,7 +125,8 @@ cpos = pl.show(return_cpos=True)
 
 
 # %%
-# Frog Dataset """"""""""""
+# Frog Dataset
+# """"""""""""
 
 frog = examples.download_frog()
 
@@ -136,7 +142,8 @@ pl.show()
 
 
 # %%
-# Extracting a VOI ++++++++++++++++
+# Extracting a VOI
+# ++++++++++++++++
 #
 # Use the :func:`pyvista.ImageDataFilters.extract_subset` filter to extract
 # a volume of interest/subset volume to volume render. This is ideal when

@@ -19,8 +19,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# First, generate the sphere positions and radii randomly on the edge of a
-# torus.
+# First, generate the sphere positions and radii randomly on the edge of
+# a torus.
 
 # Seed the rng for reproducibility
 rng = np.random.default_rng(seed=0)

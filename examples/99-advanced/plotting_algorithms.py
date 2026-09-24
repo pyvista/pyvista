@@ -79,9 +79,11 @@ pl.show()
 
 
 # %%
-# Filter Pipeline +++++++++++++++ We can do this with any :vtk:`vtkAlgorithm`
-# subclass for dynamically generating or filtering data. Here is an example of
-# executing a pipeline of VTK filters together.
+# Filter Pipeline
+# +++++++++++++++
+# We can do this with any :vtk:`vtkAlgorithm` subclass for dynamically
+# generating or filtering data. Here is an example of executing a pipeline of
+# VTK filters together.
 
 # Source mesh object (static)
 mesh = examples.download_bunny_coarse()

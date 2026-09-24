@@ -212,8 +212,9 @@ dataset
 # Once your example is complete and you've verified it builds locally, you can
 # make a pull request (PR).
 #
-# Branches containing examples should be prefixed with `docs/` as per
-# the branch naming conventions found in out `Contributing Guidelines
+# Branches containing examples should be prefixed with `docs/` as
+# per the branch naming conventions found in out `Contributing
+# Guidelines
 # <https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst>`_.
 #
 # .. note::

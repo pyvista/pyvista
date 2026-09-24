@@ -51,8 +51,8 @@ opacity[::10] = np.geomspace(0.01, 0.75, 10)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the volume with a single clip plane.
 #
-# Reverse the opacity array such that portions closer to the center are more
-# opaque.
+# Reverse the opacity array such that portions closer to the center are
+# more opaque.
 
 pl = pv.Plotter()
 pl.add_volume_clip_plane(grid, normal='-x', opacity=opacity[::-1], cmap='magma')

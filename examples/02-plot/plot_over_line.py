@@ -20,7 +20,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Volumetric Mesh +++++++++++++++
+# Volumetric Mesh
+# +++++++++++++++
 #
 # First a 3D mesh example to demonstrate
 mesh = examples.download_kitchen()
@@ -43,7 +44,8 @@ mesh.plot_over_line(a, b, resolution=100)
 
 
 # %%
-# Flat Surface ++++++++++++
+# Flat Surface
+# ++++++++++++
 #
 # We could also plot the values of a mesh that lies on a flat surface
 mesh = examples.download_st_helens()

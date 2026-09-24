@@ -20,7 +20,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 from pyvista import examples
 
 # %%
-# Label String Array ++++++++++++++++++
+# Label String Array
+# ++++++++++++++++++
 #
 # This example will label the nodes of a mesh with a given array of string
 # labels for each of the nodes.
@@ -45,7 +46,8 @@ pl.show()
 
 
 # %%
-# Label Node Locations ++++++++++++++++++++
+# Label Node Locations
+# ++++++++++++++++++++
 #
 # This example will label the nodes of a mesh with their coordinate locations
 
@@ -75,7 +77,8 @@ pl.show()
 
 
 # %%
-# Label Scalar Values +++++++++++++++++++
+# Label Scalar Values
+# +++++++++++++++++++
 #
 # This example will label each point with their scalar values
 
