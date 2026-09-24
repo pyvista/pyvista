@@ -22,6 +22,7 @@ docstring says what to do when a new filter or keyword makes this module fail.
 
 from __future__ import annotations
 
+from collections import Counter
 import functools
 import hashlib
 import inspect
@@ -56,15 +57,21 @@ from tests.core import filter_side_effects_cases as cases
 _ANNOTATION_NAMES = {**vars(_typing_core), **vars(pv)}
 
 
+def _vectors(rng, n):
+    """Return ``n`` nonzero vectors drawn from eight directions."""
+    return rng.integers(1, 3, size=(n, 3)).astype(float)
+
+
 def _mesh_arrays(mesh, mode):
     """Add ``mode``'s data arrays to ``mesh`` and return it."""
     rng = np.random.default_rng(0)
+    # Few distinct values, since the label filters do one extraction per value
     if mode in ('single_point', 'single_cell', 'single_vector'):
         mesh.clear_data()
         cell_only = mode == 'single_cell'
         attributes = mesh.cell_data if cell_only else mesh.point_data
         n = mesh.n_cells if cell_only else mesh.n_points
-        solo = rng.random((n, 3)) if mode == 'single_vector' else np.arange(n, dtype=float) % 5
+        solo = _vectors(rng, n) if mode == 'single_vector' else np.arange(n, dtype=float) % 5
         attributes['solo'] = solo
         for association in (mesh.point_data, mesh.cell_data):
             association.active_scalars_name = None
@@ -74,8 +81,8 @@ def _mesh_arrays(mesh, mode):
     if mode in ('point', 'both'):
         n = mesh.n_points
         mesh.point_data['p_scalars'] = np.arange(n, dtype=float) % 7
-        mesh.point_data['p_other'] = np.linspace(-1.0, 1.0, n)
-        mesh.point_data['p_vectors'] = rng.random((n, 3))
+        mesh.point_data['p_other'] = np.linspace(-1.0, 1.0, n).round()
+        mesh.point_data['p_vectors'] = _vectors(rng, n)
         mesh.point_data['p_labels'] = (np.arange(n) % 3).astype(np.int32) * 10
         mesh.point_data['p_bool'] = np.arange(n) % 2 == 0
         mesh.point_data.active_scalars_name = 'p_scalars'
@@ -83,8 +90,8 @@ def _mesh_arrays(mesh, mode):
     if mode in ('cell', 'both'):
         n = mesh.n_cells
         mesh.cell_data['c_scalars'] = np.arange(n, dtype=float) % 5
-        mesh.cell_data['c_other'] = np.linspace(-2.0, 2.0, n)
-        mesh.cell_data['c_vectors'] = rng.random((n, 3))
+        mesh.cell_data['c_other'] = np.linspace(-2.0, 2.0, n).round()
+        mesh.cell_data['c_vectors'] = _vectors(rng, n)
         mesh.cell_data['c_labels'] = (np.arange(n) % 3).astype(np.int32) * 10
         mesh.cell_data['c_bool'] = np.arange(n) % 2 == 0
         mesh.cell_data.active_scalars_name = 'c_scalars'
@@ -546,30 +553,36 @@ def test_filter_does_not_modify_input(key):
         and hasattr(template, name)
     ]
     variants = list(_call_variants(func))
+    runs = Counter()
     for kind, mode, template in inputs:
-        call(kind, mode, template, variants[0][1])
+        runs['no keyword'] += call(kind, mode, template, variants[0][1])
     # Each keyword variant runs on every mesh kind, in the first data mode where it succeeds
-    for index, (_, keyword_variant) in enumerate(variants[1:]):
+    for index, (keyword, keyword_variant) in enumerate(variants[1:]):
         for kind in MESH_KINDS:
             kind_inputs = [entry for entry in inputs if entry[0] == kind]
             offset = index % len(kind_inputs) if kind_inputs else 0
             for entry in kind_inputs[offset:] + kind_inputs[:offset]:
                 if call(*entry, keyword_variant):
+                    runs[keyword] += 1
                     break
     if not ran:  # pragma: no cover -- failure path
         _fail_setup(key, errors)
     if reports:  # pragma: no cover -- failure path
         _fail(key, 'modified its input', reports, ran, MODIFIED_HINT)
-    _check_budget(key, ran)
+    _check_budget(key, runs)
 
 
-def _check_budget(key, ran):
-    """Raise if one filter's sweep runs more calls than the budget allows."""
-    if ran > MAX_RUNS:
+def _check_budget(key, runs):
+    """Raise if one filter's sweep runs more calls than the budget allows, naming the most."""
+    total = sum(runs.values())
+    if total > MAX_RUNS:
+        keywords = Counter({keyword: n for keyword, n in runs.items() if keyword != 'no keyword'})
+        most = ', '.join(f'{keyword} ({count})' for keyword, count in keywords.most_common(3))
         msg = (
-            f'{key} ran {ran} calls, over the budget of {MAX_RUNS}. This is a problem with '
-            f'the test setup, not a side effect.\n\nFix: in {CASES_FILE}, give its keywords '
-            f'fewer values in KWARG_VALUES, or name a keyword with many choices in SKIP_KWARGS.'
+            f'{key} ran {total} calls, over the budget of {MAX_RUNS}. This is a problem with '
+            f'the test setup, not a side effect. The keywords making the most calls: {most}.'
+            f'\n\nFix: in {CASES_FILE}, give those keywords fewer values in KWARG_VALUES, or '
+            f'name one with many choices in SKIP_KWARGS.'
         )
         raise SweepSetupError(msg)
 
@@ -721,6 +734,9 @@ def test_setup_failure_names_new_and_stale_keywords():
 
 def test_setup_failure_names_an_over_budget_filter():
     """A filter whose sweep runs too many calls is reported with the fix."""
-    _check_budget('DataSetFilters.align', MAX_RUNS)
-    with pytest.raises(SweepSetupError, match=r'ran 351 calls(?s:.*)KWARG_VALUES'):
-        _check_budget('DataSetFilters.align', MAX_RUNS + 1)
+    _check_budget('DataSetFilters.align', Counter({'no keyword': MAX_RUNS}))
+    runs = Counter({'no keyword': 40, 'validation_fields': MAX_RUNS - 39, 'action': 0})
+    with pytest.raises(
+        SweepSetupError, match=re.escape('ran 351 calls') + '(?s:.*)validation_fields \\(311\\)'
+    ):
+        _check_budget('DataSetFilters.align', runs)
