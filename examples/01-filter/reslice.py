@@ -54,10 +54,14 @@ pl.camera.tight()
 pl.show()
 
 # %%
-# Position Matters
-# ++++++++++++++++
+# Four Ways Onto a Reference
+# ++++++++++++++++++++++++++
 #
-# The difference is clearest on an image coarse enough to see every sample. Generate a
+# Several filters can put an image onto the geometry of another one, and they do not all
+# mean the same thing by it. Only ``reslice`` reads the image where the reference
+# actually lies.
+#
+# The differences are clearest on an image coarse enough to see every sample. Generate a
 # small Mandelbrot set, and a reference which covers part of it at a finer spacing.
 
 mandelbrot = pv.ImageMandelbrotSource(
@@ -69,19 +73,20 @@ reference = pv.ImageData(
 
 # %%
 # ``reslice`` returns that region of the image, sampled at the reference's points.
-# ``resample`` returns the whole image squeezed into the reference's geometry.
+# :meth:`~pyvista.ImageDataFilters.resample` takes the reference as a description of the
+# output geometry alone, so it returns the whole image squeezed into it.
 
 resliced = mandelbrot.reslice(reference, 'linear')
 resampled = mandelbrot.resample(reference_image=reference, interpolation='linear')
 
 # %%
-# :meth:`~pyvista.DataObjectFilters.sample` answers the same question for meshes in
-# general, by probing one dataset at the points of another.
+# :meth:`~pyvista.DataObjectFilters.sample` asks the same question ``reslice`` does, but
+# for meshes in general, by probing one dataset at the points of another.
 
 sampled = reference.sample(mandelbrot)
 
 # %%
-# The region can also be cropped out of the image by hand and the crop resampled to the
+# The fourth way is by hand: cut the region out of the image and resample the cut to the
 # reference's spacing. :meth:`~pyvista.ImageDataFilters.crop` works in index space, so
 # the reference's bounds have to be converted into the image's indices first.
 
