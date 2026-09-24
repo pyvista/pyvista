@@ -717,7 +717,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         both: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid | tuple[_OutputDataSet, _OutputDataSet]:
+    ) -> _OutputDataSet | tuple[_OutputDataSet, _OutputDataSet]:
         """Clip a dataset by a scalar.
 
         .. versionchanged:: 0.49
