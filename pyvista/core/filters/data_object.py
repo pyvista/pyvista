@@ -7305,11 +7305,15 @@ def _cast_output_to_match_input_type(
             mesh_out.replace(ids, cast_output(block_out, block_in))
         return mesh_out
 
-    return (
-        cast_output_blocks(output_mesh, cast('MultiBlock', input_mesh))
-        if isinstance(output_mesh, pv.MultiBlock)
-        else cast_output(output_mesh, input_mesh)
-    )
+    if isinstance(output_mesh, pv.MultiBlock):
+        if not isinstance(input_mesh, pv.MultiBlock):
+            msg = (
+                f'Cannot match a composite output to a {type(input_mesh).__name__} input. '
+                f'A composite output is matched block by block, so both must be composite.'
+            )
+            raise TypeError(msg)
+        return cast_output_blocks(output_mesh, input_mesh)
+    return cast_output(output_mesh, input_mesh)
 
 
 class _Crinkler:

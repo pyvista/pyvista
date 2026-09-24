@@ -33,6 +33,7 @@ from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
+from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
@@ -697,6 +698,12 @@ def test_clip_box_polydata_no_unused_points(invert):
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
     assert _n_unused_points(clipped) == 0
+
+
+def test_cast_output_to_match_input_type_requires_two_composites():
+    match = 'Cannot match a composite output to a PolyData input.'
+    with pytest.raises(TypeError, match=match):
+        _cast_output_to_match_input_type(pv.MultiBlock([pv.Sphere()]), pv.Sphere())
 
 
 @pytest.mark.parametrize(
