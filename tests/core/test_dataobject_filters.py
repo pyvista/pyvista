@@ -2568,11 +2568,19 @@ def test_transform_rectilinear(rectilinear):
         pv.Transform().rotate_x(90).scale((2, 3, 4)).translate((5, -1, 2)),
         pv.Transform().rotate_y(-90),
         pv.Transform().rotate_z(180),
+        pv.Transform().rotate_z(90).rotate_x(90),
     ],
-    ids=['rotate-z', 'rotate-x-scale-translate', 'rotate-y', 'rotate-z-180'],
+    ids=[
+        'rotate-z',
+        'rotate-x-scale-translate',
+        'rotate-y',
+        'rotate-z-180',
+        'rotate-z-then-x',
+    ],
 )
 def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation, inplace):
     rectilinear.point_data['p'] = np.arange(rectilinear.n_points, dtype=float)
+    rectilinear.point_data['v'] = np.arange(rectilinear.n_points * 3, dtype=float).reshape(-1, 3)
     rectilinear.cell_data['c'] = np.arange(rectilinear.n_cells, dtype=float)
     expected = rectilinear.cast_to_structured_grid().transform(transformation, inplace=False)
 
@@ -2581,15 +2589,26 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
     assert isinstance(transformed, pv.RectilinearGrid)
     assert np.allclose(transformed.bounds, expected.bounds)
     # Points are ordered along the grid's own axes, so sort both before comparing
-    actual_order = np.lexsort(transformed.points.T)
-    expected_order = np.lexsort(expected.points.T)
+    actual_order = np.lexsort(np.round(transformed.points, 8).T)
+    expected_order = np.lexsort(np.round(expected.points, 8).T)
     assert np.allclose(transformed.points[actual_order], expected.points[expected_order])
     assert np.array_equal(transformed['p'][actual_order], expected['p'][expected_order])
-    actual_cells = np.lexsort(transformed.cell_centers().points.T)
-    expected_cells = np.lexsort(expected.cell_centers().points.T)
+    assert np.array_equal(transformed['v'][actual_order], expected['v'][expected_order])
+    actual_cells = np.lexsort(np.round(transformed.cell_centers().points, 8).T)
+    expected_cells = np.lexsort(np.round(expected.cell_centers().points, 8).T)
     assert np.array_equal(
         transformed.cell_data['c'][actual_cells], expected.cell_data['c'][expected_cells]
     )
+
+
+def test_transform_rectilinear_axes_ascend(rectilinear):
+    transformed = rectilinear.transform(pv.Transform().rotate_z(90), inplace=False)
+
+    for coordinates in (transformed.x, transformed.y, transformed.z):
+        assert np.all(np.diff(coordinates) > 0)
+    # Descending coordinates are not supported by the cell locators
+    probe = pv.PolyData(transformed.cell_centers().points)
+    assert np.all(probe.sample(transformed)['vtkValidPointMask'] == 1)
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])

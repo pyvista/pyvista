@@ -4734,6 +4734,11 @@ def test_align_xyz_rectilinear():
     expected = np.array([-1, 1, -0.5, 0.5, -0.25, 0.25]) + np.repeat(grid.center, 2)
     assert np.allclose(aligned.bounds, expected)
 
+    grid = examples.load_rectilinear()
+    aligned = grid.align_xyz(centered=False)
+    assert sorted(aligned.dimensions) == sorted(grid.dimensions)
+    assert np.allclose(sorted(aligned['Random Data']), sorted(grid['Random Data']))
+
     box = grid.oriented_bounding_box()
     assert np.allclose(box.bounds, grid.bounds)
 

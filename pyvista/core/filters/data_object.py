@@ -183,17 +183,32 @@ def _transform_rectilinear_axes(
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
     translation, scale, axes = components
     coordinates = (dataset.x, dataset.y, dataset.z)
-    output.x = coordinates[axes[0]] * scale[0] + translation[0]
-    output.y = coordinates[axes[1]] * scale[1] + translation[1]
-    output.z = coordinates[axes[2]] * scale[2] + translation[2]
+    transformed = [
+        coordinates[axis] * factor + offset
+        for axis, factor, offset in zip(axes, scale, translation, strict=True)
+    ]
+    # Permuted axes are reordered anyway, so also descend them, which locators do not support
+    permuted = not np.array_equal(axes, [0, 1, 2])
+    output.x, output.y, output.z = (
+        array[::-1] if permuted and factor < 0 else array
+        for array, factor in zip(transformed, scale, strict=True)
+    )
 
 
 def _permute_rectilinear_arrays(
-    output: RectilinearGrid, dimensions: tuple[int, int, int], axes: NumpyArray[int]
+    output: RectilinearGrid,
+    dimensions: tuple[int, int, int],
+    components: tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]],
 ) -> None:
-    """Reorder a grid's arrays to match a permutation of its axes."""
+    """Reorder a grid's arrays to match the permutation and reversal of its axes."""
+    _, scale, axes = components
+    if np.array_equal(axes, [0, 1, 2]):
+        return
+    reversed_axes = np.flatnonzero(scale < 0)
+
     # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
     order = (*(2 - axes[::-1]), 3)
+    flip = tuple(2 - reversed_axes)
     point_dimensions = np.array(dimensions)
     cell_dimensions = np.maximum(point_dimensions - 1, 1)
     for attributes, dims in (
@@ -201,7 +216,7 @@ def _permute_rectilinear_arrays(
         (output.cell_data, cell_dimensions),
     ):
         for name, array in attributes.items():
-            permuted = array.reshape(*dims[::-1], -1).transpose(order)
+            permuted = np.flip(array.reshape(*dims[::-1], -1).transpose(order), axis=flip)
             attributes[name] = permuted.reshape(array.shape)
 
 
@@ -2052,10 +2067,10 @@ class DataObjectFilters:
 
         .. warning::
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
-            :class:`~pyvista.RectilinearGrid`, and only rotations which map the axes onto
-            each other are supported for :class:`~pyvista.RectilinearGrid`. If an
-            unsupported transformation is present, a ``ValueError`` is raised. To fully
-            support these transformations, the input should be cast to
+            :class:`~pyvista.RectilinearGrid`, and :class:`~pyvista.RectilinearGrid` only
+            supports rotations which map each axis onto a coordinate axis, i.e. multiples
+            of 90 degrees. If an unsupported transformation is present, a ``ValueError``
+            is raised. To fully support these transformations, the input should be cast to
             :class:`~pyvista.StructuredGrid` `before` applying this filter.
 
         .. note::
@@ -2063,6 +2078,11 @@ class DataObjectFilters:
             :class:`~pyvista.ImageData.origin`,
             :class:`~pyvista.ImageData.spacing`, and
             :class:`~pyvista.ImageData.direction_matrix` properties.
+
+        .. versionchanged:: 0.50
+            Rotations which map each axis onto a coordinate axis are supported for
+            :class:`~pyvista.RectilinearGrid`. Its :attr:`~pyvista.RectilinearGrid.dimensions`
+            and its point and cell arrays are permuted to match.
 
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously
@@ -2221,12 +2241,11 @@ class DataObjectFilters:
                     rectilinear_components,
                 )
                 dataset = cast('pv.RectilinearGrid', self)
+                # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = dataset.dimensions
                 _transform_rectilinear_axes(output, dataset, components)
                 _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
-                axes = components[2]
-                if not np.array_equal(axes, [0, 1, 2]):
-                    _permute_rectilinear_arrays(output, dimensions, axes)
+                _permute_rectilinear_arrays(output, dimensions, components)
             else:
                 # A shallow copy leaves the output sharing everything but the points with
                 # the filter's own output, which is only safe when transforming in place
