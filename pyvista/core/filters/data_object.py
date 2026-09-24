@@ -3395,16 +3395,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
         plane: PolyData | None = None,
-    ) -> (
-        PolyData
-        | PointSet
-        | UnstructuredGrid
-        | MultiBlock
-        | tuple[
-            _OutputDataObject,
-            _OutputDataObject,
-        ]
-    ):
+    ) -> _OutputDataObject | tuple[_OutputDataObject, _OutputDataObject]:
         """Clip a dataset by a plane by specifying the origin and normal.
 
         The origin and normal may be set explicitly or implicitly using a
