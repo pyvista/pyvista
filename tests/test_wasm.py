@@ -16,6 +16,7 @@ Run all tests:
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import os
 from pathlib import Path
@@ -113,26 +114,78 @@ class TestGenerateStandaloneHTML:
 class TestJupyterBackendAutoDetection:
     """Tests for WASM backend auto-detection in Pyodide environments."""
 
+    @contextlib.contextmanager
+    def _without_plugin_backends(self):
+        """Temporarily remove plugin-discovered backends (e.g. trame-pyvista).
+
+        Plugin backends require the regular VTK package and cannot run in
+        Pyodide, so they must not shadow the automatic WASM choice here.
+        """
+        import pyvista.jupyter as jupyter_mod
+        from pyvista.jupyter import _custom_backend_sources
+        from pyvista.jupyter import _custom_backends
+
+        saved_backends = _custom_backends.copy()
+        saved_sources = _custom_backend_sources.copy()
+        saved_loaded = jupyter_mod._entry_points_loaded
+        _custom_backends.clear()
+        _custom_backend_sources.clear()
+        # Prevent _ensure_entry_points() from re-adding plugin backends
+        jupyter_mod._entry_points_loaded = True
+        try:
+            yield
+        finally:
+            _custom_backends.update(saved_backends)
+            _custom_backend_sources.update(saved_sources)
+            jupyter_mod._entry_points_loaded = saved_loaded
+
     @mock_patch.object(sys, 'platform', 'emscripten')
     def test_resolve_backend_prefers_wasm_in_pyodide(self):
         """Test that _resolve_backend prefers wasm in emscripten environment."""
         from pyvista.jupyter import _resolve_backend
 
         # Mock pyvista_wasm as available
-        with mock_patch.dict('sys.modules', {'pyvista_wasm': MagicMock()}):
+        with (
+            self._without_plugin_backends(),
+            mock_patch.dict('sys.modules', {'pyvista_wasm': MagicMock()}),
+        ):
             backend = _resolve_backend()
             assert backend == 'wasm'
 
     @mock_patch.object(sys, 'platform', 'emscripten')
+    def test_resolve_backend_prefers_explicit_custom_backend_over_wasm(self):
+        """Test that an explicit custom backend registration wins over wasm."""
+        from pyvista.jupyter import _resolve_backend
+        from pyvista.jupyter import register_jupyter_backend
+
+        def handler(plotter, **kwargs): ...
+
+        with self._without_plugin_backends():
+            register_jupyter_backend('my_custom', handler)
+            try:
+                with mock_patch.dict('sys.modules', {'pyvista_wasm': MagicMock()}):
+                    assert _resolve_backend() == 'my_custom'
+            finally:
+                from pyvista.jupyter import _custom_backend_sources
+                from pyvista.jupyter import _custom_backends
+
+                del _custom_backends['my_custom']
+                del _custom_backend_sources['my_custom']
+
     def test_resolve_backend_fallback_without_pyvista_wasm(self):
         """Test fallback when pyvista-wasm is not available in emscripten."""
         from pyvista.jupyter import _resolve_backend
 
-        # Without pyvista_wasm, should fall back to trame or static
-        backend = _resolve_backend()
+        # Plugin backends are excluded: they require the regular VTK package
+        # and cannot run in Pyodide, so the fallback is 'static'
+        with (
+            self._without_plugin_backends(),
+            mock_patch.object(sys, 'platform', 'emscripten'),
+        ):
+            backend = _resolve_backend()
         # Should not be wasm since pyvista_wasm is not available
         assert backend != 'wasm'
-        assert backend in ['trame', 'static']
+        assert backend == 'static'
 
 
 class TestNotebookWasmHandler:

@@ -82,27 +82,6 @@ def is_pyodide() -> bool:
     return sys.platform == 'emscripten'
 
 
-def _ensure_numpy_in_pyodide() -> None:
-    """Ensure numpy is available in Pyodide environment.
-
-    This function attempts to install numpy using micropip if it's
-    not already available in a Pyodide environment.
-
-    """
-    if is_pyodide():
-        try:
-            pass  # numpy is already imported at module level
-        except ImportError:
-            try:
-                import asyncio  # noqa: PLC0415
-
-                import micropip  # type: ignore[import-not-found,unused-ignore]  # noqa: PLC0415
-
-                asyncio.get_event_loop().run_until_complete(micropip.install('numpy'))
-            except ImportError:
-                pass
-
-
 class WASMPlotter:
     """Wrapper for WASM-compatible plotting.
 
@@ -410,7 +389,3 @@ def generate_standalone_html(plotter: Plotter, **kwargs) -> str:
             wasm_plotter.background_color = str(bg_color)
 
     return wasm_plotter.generate_standalone_html()
-
-
-# Ensure numpy is available in Pyodide on module import
-_ensure_numpy_in_pyodide()

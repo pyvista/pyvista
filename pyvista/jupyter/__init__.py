@@ -244,10 +244,16 @@ def _resolve_backend() -> str:
 
     """
     _ensure_entry_points()
-    # In Pyodide/WASM environments, prefer the WASM backend if pyvista-wasm
-    # is available. This enables interactive 3D visualization in browsers
-    # using VTK.wasm instead of the regular VTK Python package. This check
-    # comes before any trame preference: trame requires the regular VTK
+    # Priority 1: explicit registrations. They are a deliberate decision by
+    # the user and must not be silently ignored, not even by the automatic
+    # WASM choice in Pyodide below.
+    for name, source in _custom_backend_sources.items():
+        if ':' not in source:  # explicit registration (module.qualname)
+            return name
+    # Priority 2: in Pyodide/WASM environments, prefer the WASM backend if
+    # pyvista-wasm is available. This enables interactive 3D visualization in
+    # browsers using VTK.wasm instead of the regular VTK Python package. This
+    # check comes before any trame preference: trame requires the regular VTK
     # package, which cannot be installed in Pyodide.
     if _is_pyodide():
         try:
@@ -258,12 +264,9 @@ def _resolve_backend() -> str:
             has_wasm = True
         if has_wasm:
             return 'wasm'
-    # Prefer user registrations over plugin-discovered backends; among
-    # plugin-discovered ones, prefer 'trame' (the all-in-one backend)
-    # over the more specialized 'server'/'client'/'html' aliases.
-    for name, source in _custom_backend_sources.items():
-        if ':' not in source:  # explicit registration (module.qualname)
-            return name
+    # Priority 3 and below: plugin-discovered backends. Prefer 'trame' (the
+    # all-in-one backend) over the more specialized
+    # 'server'/'client'/'html' aliases.
     if 'trame' in _custom_backends:
         return 'trame'
     if _custom_backends:

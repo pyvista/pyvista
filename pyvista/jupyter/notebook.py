@@ -223,7 +223,12 @@ def _convert_to_wasm_mesh(mesh):
                 faces = np.array([])
 
         # Create WASM PolyData
-        wasm_mesh = pyvista_wasm.PolyData(points, faces)
+        if faces is not None and len(faces) > 0:
+            wasm_mesh = pyvista_wasm.PolyData(points, faces)
+        else:
+            # Point cloud without faces: constructing with an empty faces
+            # array fails, so fall back to a points-only PolyData
+            wasm_mesh = pyvista_wasm.PolyData(points)
 
         # Transfer point and cell data
         for name in mesh.point_data.keys():
