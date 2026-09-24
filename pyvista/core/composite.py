@@ -119,7 +119,8 @@ class MultiBlock(
         dictionary of datasets, or a file to read.
 
         .. versionchanged:: 0.50
-           The blocks may be given as any sequence, not only a ``list`` or ``tuple``.
+           The blocks may be given as any sequence, not only a ``list`` or ``tuple``,
+           so the partitions of a :class:`~pyvista.PartitionedDataSet` can be the blocks.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
