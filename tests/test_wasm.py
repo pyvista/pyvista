@@ -1,0 +1,390 @@
+"""Tests for WASM/Pyodide support module.
+
+This file contains both unit tests (using mocks) and Pyodide integration tests.
+- Unit tests: Run in standard Python environment with mocks
+- Pyodide tests: Run in actual Pyodide/WebAssembly environment (marked with 'pyodide')
+
+Run only unit tests:
+    pytest tests/test_wasm.py -m "not pyodide"
+
+Run only Pyodide tests:
+    pytest tests/test_wasm.py -m pyodide --runtime=node
+
+Run all tests:
+    pytest tests/test_wasm.py
+"""
+
+from __future__ import annotations
+
+import contextlib
+import importlib.util
+import os
+from pathlib import Path
+import sys
+from unittest.mock import MagicMock
+from unittest.mock import patch as mock_patch
+
+import pytest
+
+import pyvista as pv
+from pyvista import wasm
+
+
+def _pyodide_dist_available():
+    """Check if a Pyodide distribution is available for testing."""
+    dist_dir = os.environ.get('PYODIDE_DIST_DIR', 'pyodide')
+    return Path(dist_dir).is_dir()
+
+
+def _pytest_pyodide_installed():
+    """Check if the pytest-pyodide plugin is installed."""
+    return importlib.util.find_spec('pytest_pyodide') is not None
+
+
+class TestIsPyodide:
+    """Tests for is_pyodide function."""
+
+    def test_is_pyodide_returns_false_in_standard_python(self):
+        """Test that is_pyodide returns False in standard Python."""
+        assert wasm.is_pyodide() is False
+
+    @mock_patch.object(sys, 'platform', 'emscripten')
+    def test_is_pyodide_returns_true_in_emscripten(self):
+        """Test that is_pyodide returns True in emscripten platform."""
+        assert wasm.is_pyodide() is True
+
+
+class TestWASMBackendIntegration:
+    """Tests for WASM backend integration with Jupyter."""
+
+    def test_wasm_in_allowed_backends(self):
+        """Test that 'wasm' is in the list of allowed Jupyter backends."""
+        from pyvista.jupyter import ALLOWED_BACKENDS
+
+        assert 'wasm' in ALLOWED_BACKENDS
+
+    def test_jupyter_backend_validation_accepts_wasm(self):
+        """Test that the jupyter backend validation accepts 'wasm'."""
+        from pyvista.jupyter import _validate_jupyter_backend
+
+        # Should raise ImportError since pyvista-wasm is not installed
+        with pytest.raises(ImportError, match='pyvista-wasm'):
+            _validate_jupyter_backend('wasm')
+
+    def test_jupyter_backend_validation_is_case_insensitive(self):
+        """Test that backend validation is case insensitive for wasm."""
+        from pyvista.jupyter import _validate_jupyter_backend
+
+        # Should raise ImportError since pyvista-wasm is not installed
+        with pytest.raises(ImportError, match='pyvista-wasm'):
+            _validate_jupyter_backend('WASM')
+
+
+class TestWASMPlotter:
+    """Tests for WASMPlotter class."""
+
+    def test_wasm_plotter_requires_pyvista_wasm(self):
+        """Test that WASMPlotter requires pyvista-wasm package."""
+        wasm_plotter = wasm.WASMPlotter()
+        with pytest.raises(ImportError, match='pyvista-wasm'):
+            # Access the internal plotter to trigger the import
+            wasm_plotter._get_wasm_plotter()
+
+    def test_wasm_plotter_add_mesh_without_pyvista_wasm(self):
+        """Test that add_mesh raises ImportError without pyvista-wasm."""
+        mesh = pv.Sphere()
+        wasm_plotter = wasm.WASMPlotter()
+
+        with pytest.raises(ImportError, match='pyvista-wasm'):
+            wasm_plotter.add_mesh(mesh)
+
+
+class TestGenerateStandaloneHTML:
+    """Tests for generate_standalone_html function."""
+
+    def test_generate_standalone_html_requires_pyvista_wasm(self):
+        """Test that generate_standalone_html requires pyvista-wasm."""
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+
+        with pytest.raises(ImportError, match='pyvista-wasm'):
+            wasm.generate_standalone_html(pl)
+
+
+class TestJupyterBackendAutoDetection:
+    """Tests for WASM backend auto-detection in Pyodide environments."""
+
+    @contextlib.contextmanager
+    def _without_plugin_backends(self):
+        """Temporarily remove plugin-discovered backends (e.g. trame-pyvista).
+
+        Plugin backends require the regular VTK package and cannot run in
+        Pyodide, so they must not shadow the automatic WASM choice here.
+        """
+        import pyvista.jupyter as jupyter_mod
+        from pyvista.jupyter import _custom_backend_sources
+        from pyvista.jupyter import _custom_backends
+
+        saved_backends = _custom_backends.copy()
+        saved_sources = _custom_backend_sources.copy()
+        saved_loaded = jupyter_mod._entry_points_loaded
+        _custom_backends.clear()
+        _custom_backend_sources.clear()
+        # Prevent _ensure_entry_points() from re-adding plugin backends
+        jupyter_mod._entry_points_loaded = True
+        try:
+            yield
+        finally:
+            _custom_backends.update(saved_backends)
+            _custom_backend_sources.update(saved_sources)
+            jupyter_mod._entry_points_loaded = saved_loaded
+
+    @mock_patch.object(sys, 'platform', 'emscripten')
+    def test_resolve_backend_prefers_wasm_in_pyodide(self):
+        """Test that _resolve_backend prefers wasm in emscripten environment."""
+        from pyvista.jupyter import _resolve_backend
+
+        # Mock pyvista_wasm as available
+        with (
+            self._without_plugin_backends(),
+            mock_patch.dict('sys.modules', {'pyvista_wasm': MagicMock()}),
+        ):
+            backend = _resolve_backend()
+            assert backend == 'wasm'
+
+    @mock_patch.object(sys, 'platform', 'emscripten')
+    def test_resolve_backend_prefers_explicit_custom_backend_over_wasm(self):
+        """Test that an explicit custom backend registration wins over wasm."""
+        from pyvista.jupyter import _resolve_backend
+        from pyvista.jupyter import register_jupyter_backend
+
+        def handler(plotter, **kwargs): ...
+
+        with self._without_plugin_backends():
+            register_jupyter_backend('my_custom', handler)
+            try:
+                with mock_patch.dict('sys.modules', {'pyvista_wasm': MagicMock()}):
+                    assert _resolve_backend() == 'my_custom'
+            finally:
+                from pyvista.jupyter import _custom_backend_sources
+                from pyvista.jupyter import _custom_backends
+
+                del _custom_backends['my_custom']
+                del _custom_backend_sources['my_custom']
+
+    def test_resolve_backend_fallback_without_pyvista_wasm(self):
+        """Test fallback when pyvista-wasm is not available in emscripten."""
+        from pyvista.jupyter import _resolve_backend
+
+        # Plugin backends are excluded: they require the regular VTK package
+        # and cannot run in Pyodide, so the fallback is 'static'
+        with (
+            self._without_plugin_backends(),
+            mock_patch.object(sys, 'platform', 'emscripten'),
+        ):
+            backend = _resolve_backend()
+        # Should not be wasm since pyvista_wasm is not available
+        assert backend != 'wasm'
+        assert backend == 'static'
+
+
+class TestNotebookWasmHandler:
+    """Tests for WASM handler in notebook module."""
+
+    def test_show_wasm_requires_pyvista_wasm(self):
+        """Test that show_wasm requires pyvista-wasm package."""
+        from pyvista.jupyter.notebook import show_wasm
+
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+
+        with pytest.raises(ImportError, match='pyvista-wasm'):
+            show_wasm(pl)
+
+
+class TestWasmModuleExports:
+    """Tests for wasm module exports."""
+
+    def test_wasm_module_has_is_pyodide(self):
+        """Test that wasm module exports is_pyodide function."""
+        assert hasattr(wasm, 'is_pyodide')
+        assert callable(wasm.is_pyodide)
+
+    def test_wasm_module_has_wasm_plotter(self):
+        """Test that wasm module exports WASMPlotter class."""
+        assert hasattr(wasm, 'WASMPlotter')
+        assert isinstance(wasm.WASMPlotter, type)
+
+    def test_wasm_module_has_generate_standalone_html(self):
+        """Test that wasm module exports generate_standalone_html function."""
+        assert hasattr(wasm, 'generate_standalone_html')
+        assert callable(wasm.generate_standalone_html)
+
+    def test_wasm_available_from_main_namespace(self):
+        """Test that wasm is accessible from the main pyvista namespace."""
+        assert hasattr(pv, 'wasm')
+
+
+@pytest.mark.pyodide
+@pytest.mark.skipif(not _pyodide_dist_available(), reason='Pyodide distribution not available')
+@pytest.mark.skipif(not _pytest_pyodide_installed(), reason='pytest-pyodide is not installed')
+class TestPyodideIntegration:
+    """Pyodide integration tests for WASM support.
+
+    These tests run in an actual Pyodide/WebAssembly environment using
+    pytest-pyodide. They verify that pyvista works correctly in browser-based
+    Python environments.
+
+    To run these tests:
+        pytest tests/test_wasm.py -m pyodide --runtime=node
+
+    To skip these tests and run only unit tests:
+        pytest tests/test_wasm.py -m "not pyodide"
+    """
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_is_pyodide_detection(self, selenium):
+        """Test that is_pyodide returns True in actual Pyodide environment."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+
+            import pyvista as pv
+            from pyvista import wasm
+
+            # In Pyodide, is_pyodide should return True
+            assert wasm.is_pyodide() is True, "is_pyodide() should return True in Pyodide"
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_plotter_creation(self, selenium):
+        """Test WASMPlotter creation in actual Pyodide environment."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+            from pyvista import wasm
+
+            # Create WASMPlotter
+            plotter = wasm.WASMPlotter()
+            assert plotter is not None
+
+            # Test that internal plotter is not created until needed
+            assert plotter._wasm_plotter is None
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_add_mesh(self, selenium):
+        """Test adding mesh to WASMPlotter in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+            from pyvista import wasm
+
+            # Create mesh and plotter
+            mesh = pv.Sphere()
+            plotter = wasm.WASMPlotter()
+
+            # Add mesh (should not raise)
+            actor = plotter.add_mesh(mesh)
+
+            # Verify mesh was tracked
+            assert len(plotter._meshes) == 1
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_generate_standalone_html(self, selenium):
+        """Test generating standalone HTML in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+            from pyvista import wasm
+
+            # Create plotter with mesh
+            pl = pv.Plotter()
+            pl.add_mesh(pv.Sphere())
+
+            # Generate HTML
+            html = wasm.generate_standalone_html(pl)
+
+            # Verify HTML is generated
+            assert isinstance(html, str)
+            assert '<!DOCTYPE html>' in html or '<html' in html.lower()
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_jupyter_backend_wasm(self, selenium):
+        """Test setting Jupyter backend to wasm in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+
+            # Set backend to wasm
+            pv.set_jupyter_backend('wasm')
+
+            # Verify backend is set
+            assert pv.global_theme.jupyter.backend == 'wasm'
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_backend_auto_detection(self, selenium):
+        """Test that wasm backend is auto-detected in actual Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+            from pyvista.jupyter import _resolve_backend
+
+            # In Pyodide, should resolve to 'wasm' when pyvista-wasm is available
+            backend = _resolve_backend()
+            assert backend == 'wasm', f"Expected 'wasm' but got '{backend}'"
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_plotter_views(self, selenium):
+        """Test WASMPlotter view methods in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+            from pyvista import wasm
+
+            # Create plotter and add mesh
+            plotter = wasm.WASMPlotter()
+            plotter.add_mesh(pv.Sphere())
+
+            # Test view methods (should not raise)
+            plotter.view_xy()
+            plotter.view_xz()
+            plotter.view_yz()
+            plotter.view_isometric()
+        """)
+
+    @pytest.mark.driver_timeout(120)
+    def test_pyodide_wasm_plotter_background_color(self, selenium):
+        """Test WASMPlotter background color property in Pyodide."""
+        selenium.run_js("""
+            await micropip.install("pyvista");
+            await micropip.install("pyvista-wasm");
+
+            import pyvista as pv
+            from pyvista import wasm
+
+            # Create plotter
+            plotter = wasm.WASMPlotter()
+
+            # Set background color
+            plotter.background_color = (0.1, 0.2, 0.3)
+
+            # Get background color
+            bg = plotter.background_color
+            assert len(bg) == 3
+        """)

@@ -578,6 +578,13 @@ def test_report_dependencies(package):
         # cvista is an alternative VTK backend, installed only in the dedicated
         # vtk_cvista CI env (see tox.ini). The report covers it there.
         pytest.skip('cvista (alternative VTK backend) is not installed in this environment')
+    elif package in (
+        'pyvista[colormaps,io,io-override,jupyter]',
+        'pyvista[colormaps,io,io-override,jupyter,wasm]',
+    ):
+        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
+    elif package == 'pyvista-wasm':
+        pytest.xfail('not installed with --test group')
     assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 

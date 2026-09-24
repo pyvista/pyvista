@@ -27,10 +27,13 @@ dependencies = [
   'pyvista-validation==0.2.2', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
-  'vtk!=9.4.0',
-  'vtk!=9.4.1',
-  'vtk<9.8.0',
-  'vtk>=9.3.1',
+  # The platform markers exclude VTK from WASM/WebAssembly environments
+  # (platform_machine == 'wasm32' or sys_platform == 'emscripten'); there,
+  # pyvista-wasm provides VTK.wasm instead of the regular VTK Python package.
+  'vtk!=9.4.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk!=9.4.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk<9.8.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk>=9.3.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
 ]
 description = '3D visualization and mesh analysis for science and engineering.'
 dynamic = ['version']
@@ -41,7 +44,7 @@ readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,io-override,jupyter]']
+all = ['pyvista[colormaps,io,io-override,jupyter,wasm]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
 io = [
@@ -53,6 +56,11 @@ io = [
 ]
 io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
+# WASM/Pyodide support for browser-based Python environments (JupyterLite, Pyodide, Stlite)
+# Note: In WASM environments, the regular VTK package is not used; instead VTK.wasm
+# is provided via pyvista-wasm. Install with: pip install "pyvista[wasm]"
+# Note: pyvista-wasm requires Python>=3.12
+wasm = ['pyvista-wasm>=0.3.0; python_version >= "3.12"']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
@@ -305,6 +313,7 @@ filterwarnings = [
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
+  'ignore:The \(path.*\) argument is deprecated.*', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local -> pathlib.Path)
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
   'ignore:pyvista\.trame.*is deprecated:pyvista.core.errors.PyVistaDeprecationWarning', # shim re-exports to trame-pyvista
 
@@ -315,6 +324,7 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
+  'driver_timeout(seconds): timeout in seconds for the browser driver used by pytest-pyodide integration tests. Only effective when pytest-pyodide is installed.',
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
   'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
@@ -322,6 +332,7 @@ markers = [
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
   'needs_rendering: this test requires VTK rendering modules (Plotter, .plot(), screenshots, charts, widgets). Auto-applied to tests/plotting. Deselect with `-m "not needs_rendering"` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
+  'pyodide: mark test as requiring Pyodide environment to run (pytest-pyodide)',
   'security: security regression test (refusal of unsafe paths, untrusted-input handling). Run with `pytest -m security`.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
