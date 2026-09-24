@@ -1309,6 +1309,27 @@ def test_resample_reference_image(uniform, spacing, direction_matrix, origin, di
     assert np.allclose(resampled.bounds, reference.bounds)
 
 
+def test_resample_reference_image_resizes_in_its_own_frame():
+    # The input is resized in index space and the reference's geometry is applied
+    # to the result, so the values are not sampled at the reference's points.
+    image = pv.ImageData(dimensions=(9, 2, 2), spacing=(0.25, 1, 1), origin=(-4, 0, 0))
+    image.point_data['x'] = image.points[:, 0]
+    reference = pv.ImageData(dimensions=(5, 2, 2), spacing=(0.5, 1, 1), origin=(10, 0, 0))
+
+    resampled = image.resample(reference_image=reference, interpolation='linear')
+
+    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+    # The values span the input's own x range, sampled at the reference's index fractions
+    fractions = np.linspace(0.0, 1.0, reference.dimensions[0])
+    expected = image.bounds.x_min + fractions * (image.bounds.x_max - image.bounds.x_min)
+    assert np.allclose(resampled['x'].reshape(2, 2, -1)[0, 0], expected)
+    assert not np.allclose(resampled['x'], resampled.points[:, 0])
+    # Reslice samples at the reference's points instead, which lie outside the image
+    resliced = image.reslice(reference, 'linear')
+    assert np.allclose(resliced.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert np.allclose(resliced['x'], 0.0)
+
+
 @pytest.mark.parametrize(
     ('name', 'value'),
     [
@@ -2025,6 +2046,28 @@ def test_reslice_transform_moves_the_image():
 @pytest.mark.parametrize(
     'transform',
     [
+        pv.Transform().translate((3, -2, 1)),
+        pv.Transform().rotate_z(30),
+        pv.Transform().scale((2, 0.5, 1)),
+        pv.Transform().rotate_z(30).translate((3, -2, 1)),
+    ],
+)
+def test_reslice_transform_matches_moving_the_image(transform):
+    # Moving the image and then reslicing gives what passing the transform gives
+    image = pv.ImageData(dimensions=(9, 9, 9), spacing=(0.5, 0.5, 0.5))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(7, 7, 7), origin=(0.5, 0.5, 0.5))
+
+    shortcut = image.reslice(reference, 'linear', transform=transform, background_value=-1.0)
+    moved = image.transform(transform, inplace=False).reslice(
+        reference, 'linear', background_value=-1.0
+    )
+    assert np.allclose(shortcut['x'], moved['x'])
+
+
+@pytest.mark.parametrize(
+    'transform',
+    [
         pv.Transform().rotate_vector((0, 0, 1), 30),
         pv.Transform().rotate_vector((0, 0, 1), 30).matrix,
         pv.Transform().rotate_vector((0, 0, 1), 30).matrix[:3, :3],
@@ -2056,7 +2099,7 @@ def test_reslice_transform_nonlinear():
     spline.SetBasisToR()
 
     resliced = image.reslice(reference, 'linear', transform=spline, background_value=-1.0)
-    # The image is stretched, so its last value lands beyond the reference
+    # The image is compressed onto [0, 7], so the reference runs past its end
     assert resliced['x'][-1] == -1.0
     assert np.allclose(resliced['x'][:8], np.linspace(0, 9, 8), atol=1e-6)
 

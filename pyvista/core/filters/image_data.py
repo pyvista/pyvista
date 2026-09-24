@@ -5089,7 +5089,8 @@ class ImageDataFilters(DataSetFilters):
         anti_aliasing : bool, default: False
             Enable anti-aliasing. Each axis sampled more coarsely than the image is
             blurred in proportion to its sampling ratio, which approximates averaging
-            the samples it merges.
+            the samples it merges. A non-linear ``transform`` has no single scale, so
+            only the two grids' spacing sizes the blur in that case.
 
         scalars : str, optional
             Name of scalars to reslice. Defaults to currently active scalars.

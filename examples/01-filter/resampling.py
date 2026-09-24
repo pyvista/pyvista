@@ -77,7 +77,7 @@ data_to_probe.resample(dimensions=(75, 75, 75))
 # array, where ``sample`` also carries the grid's own arrays and the mask arrays probing
 # adds, and it offers the border, interpolation, and anti-aliasing options an image
 # needs. See :ref:`reslice_example`.
-data_to_probe.reslice(mesh)
+data_to_probe.reslice(mesh, 'linear')
 
 # %%
 threshold = lambda m: m.threshold(75.0, scalars='SLCImage')

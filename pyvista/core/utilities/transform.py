@@ -1,4 +1,4 @@
-"""Module containing the transform classes."""
+"""Module containing the Transform class."""
 
 from __future__ import annotations
 
