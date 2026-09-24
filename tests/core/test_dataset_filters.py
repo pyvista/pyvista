@@ -16,7 +16,6 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
-from matplotlib import colormaps
 from matplotlib.colors import ListedColormap
 import numpy as np
 import pytest
@@ -6072,31 +6071,14 @@ def test_filters_keep_the_input_subclass():
     assert type(image.warp_by_scalar('scalars')) is pv.StructuredGrid
 
 
-def _listed_colormap_names():
-    """Return the names of every installed ListedColormap that color_labels accepts."""
-    from pyvista.plotting.colors import _CMCRAMERI_CMAPS
-    from pyvista.plotting.colors import _CMOCEAN_CMAPS
-    from pyvista.plotting.colors import _COLORCET_CMAPS
-
-    names = []
-    for name in {*colormaps, *_COLORCET_CMAPS, *_CMOCEAN_CMAPS, *_CMCRAMERI_CMAPS}:
-        try:
-            cmap = pv.get_cmap_safe(name)
-        except (ValueError, ModuleNotFoundError):
-            continue
-        if isinstance(cmap, ListedColormap):
-            names.append(name)
-    return sorted(names)
-
-
+@pytest.mark.parametrize('n_channels', [3, 4])
 @pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba'])
-def test_color_labels_int_colormap_matches_color(color_type):
-    labels = pv.ImageData(dimensions=(300, 1, 1))
-    labels['labels'] = np.arange(labels.n_points) % 256
-    for name in _listed_colormap_names():
-        cmap_colors = np.asarray(pv.get_cmap_safe(name).colors, dtype=float).tolist()
-        expected = np.array([getattr(pv.Color(c), color_type) for c in cmap_colors])
-        colored = labels.color_labels(name, color_type=color_type, coloring_mode='cycle')
-        actual = colored['labels' + color_type.removeprefix('int')]
-        expected_rows = expected[labels['labels'] % len(expected)]
-        assert np.array_equal(actual, expected_rows), name
+def test_color_labels_int_colormap_matches_color(color_type, n_channels):
+    values = np.array([0.0, 0.5, 1.5, 2.5, 127.5, 128.5, 254.5, 255.0]) / 255
+    cmap_colors = np.column_stack([values, values[::-1], np.roll(values, 3), values])
+    cmap_colors = cmap_colors[:, :n_channels]
+    labels = pv.ImageData(dimensions=(len(values), 1, 1))
+    labels['labels'] = np.arange(len(values))
+    colored = labels.color_labels(ListedColormap(cmap_colors), color_type=color_type)
+    expected = [getattr(pv.Color(c), color_type) for c in cmap_colors.tolist()]
+    assert np.array_equal(colored['labels' + color_type.removeprefix('int')], expected)
