@@ -187,10 +187,9 @@ def _transform_rectilinear_axes(
         coordinates[axis] * factor + offset
         for axis, factor, offset in zip(axes, scale, translation, strict=True)
     ]
-    # Permuted axes are reordered anyway, so also descend them, which locators do not support
-    permuted = not np.array_equal(axes, [0, 1, 2])
+    # A negative scale descends, which cell locators do not support, so reverse those axes
     output.x, output.y, output.z = (
-        array[::-1] if permuted and factor < 0 else array
+        array[::-1] if factor < 0 else array
         for array, factor in zip(transformed, scale, strict=True)
     )
 
@@ -202,9 +201,9 @@ def _permute_rectilinear_arrays(
 ) -> None:
     """Reorder a grid's arrays to match the permutation and reversal of its axes."""
     _, scale, axes = components
-    if np.array_equal(axes, [0, 1, 2]):
-        return
     reversed_axes = np.flatnonzero(scale < 0)
+    if np.array_equal(axes, [0, 1, 2]) and reversed_axes.size == 0:
+        return
 
     # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
     order = (*(2 - axes[::-1]), 3)
@@ -2081,8 +2080,9 @@ class DataObjectFilters:
 
         .. versionchanged:: 0.50
             Rotations which map each axis onto a coordinate axis are supported for
-            :class:`~pyvista.RectilinearGrid`. Its :attr:`~pyvista.RectilinearGrid.dimensions`
-            and its point and cell arrays are permuted to match.
+            :class:`~pyvista.RectilinearGrid`. Its coordinates always ascend, and its
+            :attr:`~pyvista.RectilinearGrid.dimensions`, points and arrays are ordered to
+            match.
 
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously
