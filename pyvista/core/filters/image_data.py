@@ -5124,7 +5124,10 @@ class ImageDataFilters(DataSetFilters):
             Where an image's samples sit in space.
 
         :meth:`~pyvista.DataObjectFilters.sample`
-            Resample array data from one mesh onto another.
+            Probe any mesh at the points of another. It answers the same question for
+            meshes in general and agrees with this filter, but it returns a probed copy
+            of the reference along with the mask arrays probing carries, and it has none
+            of the border, interpolation, or anti-aliasing options an image needs.
 
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.

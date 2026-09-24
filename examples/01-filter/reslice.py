@@ -144,7 +144,7 @@ pv.plot_compare(
 # ``reslice`` and ``sample`` agree to floating point precision, since both read the image
 # at the reference's points. ``sample`` works on any dataset and returns the mask arrays
 # that go with probing, while ``reslice`` is the image filter and carries the border,
-# interpolation and anti-aliasing options an image needs.
+# interpolation, and anti-aliasing options an image needs.
 #
 # ``resample`` also carries the reference's geometry, since that is what
 # ``reference_image`` asks for, but it stretched the whole image onto it rather than
