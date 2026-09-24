@@ -231,7 +231,7 @@ def _enclosing_outline(meshes: list[pv.DataObject]) -> pv.PolyData:
     blocks: list[pv.DataSet | pv.MultiBlock[Any]] = []
     for mesh in meshes:
         if isinstance(mesh, pv.PartitionedDataSet):
-            blocks.extend(partition for partition in mesh if partition is not None)
+            blocks.append(mesh.cast_to_multiblock())
         elif isinstance(mesh, (pv.DataSet, pv.MultiBlock)):
             blocks.append(mesh)
     return pv.MultiBlock(blocks).outline()
