@@ -110,7 +110,11 @@ def test_contour_banded_raises(mocker: MockerFixture):
         sp.contour_banded(1)
 
 
-@pytest.mark.expect_vtk_output('No Intersection between objects', 'No points/cells to operate on')
+@pytest.mark.expect_vtk_output(
+    'No Intersection between objects',
+    'No points/cells to operate on',
+    reason='one cube is contained within the other, which PyVista reports as a UserWarning',
+)
 def test_boolean_intersect_edge_case():
     a = pv.Cube(x_length=2, y_length=2, z_length=2).triangulate()
     b = pv.Cube().triangulate()  # smaller cube (x_length=1)

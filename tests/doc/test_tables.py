@@ -189,6 +189,7 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     'Error parsing XML in stream',
     'Error parsing input file.',
     'Algorithm vtkXMLPolyDataReader',
+    reason='the readers probe a file that exists but holds nothing they can read',
 )
 @pytest.mark.parametrize(
     ('filename', 'field', 'slug', 'label'),
@@ -236,6 +237,7 @@ def test_dataset_card_reader_field(tmp_path, filename, field, slug, label):
     'Error parsing XML in stream',
     'Error parsing input file.',
     'Algorithm vtkXMLPolyDataReader',
+    reason='the readers probe a file that exists but holds nothing they can read',
 )
 def test_dataset_card_reader_field_mixed(tmp_path):
     """A loader with both kinds of file lists both readers rather than one N/A."""

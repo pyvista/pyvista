@@ -228,7 +228,11 @@ def test_get_reader_fail(tmp_path):
         pv.get_reader(str(tmp_path))
 
 
-@pytest.mark.expect_vtk_output('Unable to open', 'Algorithm vtkPExodusIIReader')
+@pytest.mark.expect_vtk_output(
+    'Unable to open',
+    'Algorithm vtkPExodusIIReader',
+    reason='the readers probe a file that exists but holds nothing they can read',
+)
 @pytest.mark.parametrize(
     'filename',
     [
@@ -249,6 +253,7 @@ def test_get_reader_pexodus_pattern(tmp_path, filename):
     'Unable to open',
     'Algorithm vtkExodusIIReader',
     'Algorithm vtkPExodusIIReader',
+    reason='the readers probe a file that exists but holds nothing they can read',
 )
 @pytest.mark.parametrize(
     ('force_ext', 'reader_type'),

@@ -1870,7 +1870,10 @@ def test_sample():
     sample_test(snap_to_closest_point=True)
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 @pytest.mark.parametrize(
     'locator', ['cell', 'cell_tree', 'static_cell', _vtk.vtkStaticCellLocator]
 )
@@ -1903,6 +1906,8 @@ def test_sample_obb_tree_locator_raises(locator):
     'Unable to factor linear system',
     'vtkMath::Jacobi: Error extracting eigenfunctions',
     'vtkOBBTree Does not implement FindCell',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate, '
+    'and vtkOBBTree implements no FindCell',
 )
 @pytest.mark.needs_vtk_version(less_than=(9, 7, 0))
 @pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
@@ -1932,7 +1937,10 @@ def categorical_target():
     return target
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 @pytest.mark.parametrize('categorical', [True, False])
 def test_sample_categorical(categorical_probe, categorical_target, categorical):
     result = categorical_probe.sample(categorical_target, categorical=categorical)
@@ -1942,7 +1950,10 @@ def test_sample_categorical(categorical_probe, categorical_target, categorical):
     assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 @pytest.mark.parametrize('composite', [pv.MultiBlock, pv.PartitionedDataSet])
 @pytest.mark.parametrize('categorical', [True, False])
 def test_sample_categorical_composite_target(
@@ -2057,7 +2068,10 @@ def test_sample_empty_composite_categorical(categorical_probe):
     assert not np.any(result['vtkValidPointMask'])
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 @pytest.mark.parametrize(
     'mesh',
     [pv.PolyData(), pv.PointSet(np.array([[0.0, 0.0, 0.0], [9.0, 9.0, 9.0]]))],
@@ -2072,7 +2086,10 @@ def test_sample_composite_categorical_without_ghost_arrays(mesh, categorical_tar
     assert 'labels' in result.point_data
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_composite):
     target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
@@ -2085,7 +2102,10 @@ def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_compos
         categorical_probe.sample(target, categorical=True)
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 def test_sample_categorical_string_scalars_raise(categorical_probe, categorical_target):
     categorical_target.clear_point_data()
     categorical_target.point_data['names'] = ['a'] * categorical_target.n_points
@@ -2095,7 +2115,10 @@ def test_sample_categorical_string_scalars_raise(categorical_probe, categorical_
         categorical_probe.sample(categorical_target, categorical=True)
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 def test_sample_categorical_activates_the_only_candidate(categorical_probe, categorical_target):
     categorical_target.point_data.active_scalars_name = None
 
@@ -2107,7 +2130,10 @@ def test_sample_categorical_activates_the_only_candidate(categorical_probe, cate
     assert categorical_target.point_data.active_scalars_name is None
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 def test_sample_categorical_ambiguous_scalars_raises(categorical_probe, categorical_target):
     categorical_target.point_data['other'] = np.ones(categorical_target.n_points)
     categorical_target.point_data.active_scalars_name = None
@@ -2123,7 +2149,10 @@ def test_sample_non_dataset_target_raises(categorical_probe):
         categorical_probe.sample(None)
 
 
-@pytest.mark.expect_vtk_output('Unable to factor linear system')
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
 def test_sample_categorical_multi_component_raises(categorical_probe):
     target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
     target.point_data['vectors'] = np.ones((target.n_points, 3))

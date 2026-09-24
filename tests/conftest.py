@@ -198,11 +198,8 @@ def fail_on_vtk_output(request):
     if request.node.get_closest_marker('skip_vtk_output_check'):
         yield
         return
-    expected = [
-        pattern
-        for marker in request.node.iter_markers('expect_vtk_output')
-        for pattern in marker.args
-    ]
+    markers = list(request.node.iter_markers('expect_vtk_output'))
+    expected = [pattern for marker in markers for pattern in marker.args]
     with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
         yield
     events = catcher.events
@@ -214,6 +211,8 @@ def fail_on_vtk_output(request):
     ]:
         logged = '\n'.join(str(event) for event in unexpected)
         msg = f'VTK logged {len(unexpected)} error(s) or warning(s):\n{logged}'
+        if reasons := [marker.kwargs['reason'] for marker in markers if 'reason' in marker.kwargs]:
+            msg += '\n\nThis test expects VTK output because ' + '; '.join(reasons)
         pytest.fail(msg)
 
 

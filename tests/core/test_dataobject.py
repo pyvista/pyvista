@@ -621,6 +621,7 @@ def test_default_pickle_format():
     'Not all meta data was read from the file.',
     'Could not read dimensions or extents from the file.',
     'Error reading binary data!',
+    reason='legacy pickling round-trips through VTK readers that warn about metadata they drop',
 )
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):

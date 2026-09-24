@@ -423,6 +423,7 @@ def test_read_reader_kwargs():
     'Error parsing input file.',
     'Algorithm vtkXMLStructuredGridReader',
     'Algorithm vtkXMLMultiBlockDataReader',
+    reason='a .vtu file read as .vts fails in the reader, which is how PyVista detects it',
 )
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
@@ -996,6 +997,7 @@ def test_vtk_error_catcher():
 @pytest.mark.expect_vtk_output(
     'Error opening file this_file_does_not_exist.vtp',
     'Algorithm vtkXMLPolyDataReader',
+    reason='the file does not exist, and _update_alg raises on the VTK error',
 )
 def test_update_alg_raises():
     reader = _vtk.vtkXMLPolyDataReader()
@@ -1004,7 +1006,11 @@ def test_update_alg_raises():
         _update_alg(reader)
 
 
-@pytest.mark.expect_vtk_output('Unexpected point index value: 0', 'Algorithm vtkOBJReader')
+@pytest.mark.expect_vtk_output(
+    'Unexpected point index value: 0',
+    'Algorithm vtkOBJReader',
+    reason='the OBJ indices are out of range, and _update_alg raises on the VTK error',
+)
 def test_update_alg_raises_request_data_error(tmp_path):
     # OBJ indices are one-based, so the line element below is out of range
     obj_file = tmp_path / 'bad.obj'
