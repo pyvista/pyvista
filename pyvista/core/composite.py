@@ -66,12 +66,6 @@ if TYPE_CHECKING:
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock[Any]', DataSet, None]
-# Composite types :vtk:`vtkMultiBlockDataSet` refuses to hold as a block
-_NOT_A_BLOCK = (
-    _vtk.vtkPartitionedDataSet,
-    _vtk.vtkPartitionedDataSetCollection,
-    _vtk.vtkUniformGridAMR,
-)
 _NestedPolyData = Union['PolyData', 'MultiBlock[_NestedPolyData]']
 _NestedUnstructuredGrid = Union['UnstructuredGrid', 'MultiBlock[_NestedUnstructuredGrid]']
 _BlockType = TypeVar(
@@ -1890,7 +1884,10 @@ class MultiBlock(
         # this is the only spot in the class where we actually add
         # data to the MultiBlock
 
-        if isinstance(data, _NOT_A_BLOCK):
+        # These two are the only composites :vtk:`vtkMultiBlockDataSet` holds as a block
+        if isinstance(data, _vtk.vtkCompositeDataSet) and not isinstance(
+            data, (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiPieceDataSet)
+        ):
             msg = (
                 f'A {type(data).__name__} cannot be a block of a MultiBlock. '
                 f'Call cast_to_multiblock() on it first.'

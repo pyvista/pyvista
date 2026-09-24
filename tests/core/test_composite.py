@@ -120,6 +120,10 @@ def test_multi_block_rejects_a_block_vtk_refuses(sphere, add_block):
     with pytest.raises(TypeError, match=match):
         add_block(multi, pv.PartitionedDataSet([sphere]))
 
+    # A multi-piece dataset is one VTK does hold, so it reaches `wrap` and fails there
+    with pytest.raises(TypeError, match='is not currently supported by pyvista'):
+        add_block(multi, _vtk.vtkMultiPieceDataSet())
+
 
 def test_multi_block_init_rejects_a_block_vtk_refuses(sphere):
     with pytest.raises(TypeError, match='cannot be a block of a MultiBlock'):
