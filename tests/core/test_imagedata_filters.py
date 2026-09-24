@@ -439,20 +439,23 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
         assert not shares_memory if copy else shares_memory
 
 
-@pytest.mark.parametrize('filter_name', ['points_to_cells', 'cells_to_points'])
-def test_points_to_cells_and_cells_to_points_direction_matrix(filter_name):
+@pytest.mark.parametrize(
+    ('filter_name', 'scalars'),
+    [('points_to_cells', 'point_data'), ('cells_to_points', 'cell_data')],
+)
+def test_points_to_cells_and_cells_to_points_direction_matrix(filter_name, scalars):
     """Test the half-voxel shift is rotated by the direction matrix."""
     image = pv.ImageData(dimensions=(4, 5, 6), spacing=(1.0, 2.0, 3.0))
     image.direction_matrix = pv.Transform().rotate_z(15).rotate_x(20).matrix[:3, :3]
+    image.point_data['point_data'] = range(image.n_points)
+    image.cell_data['cell_data'] = range(image.n_cells)
 
-    if filter_name == 'points_to_cells':
-        image.point_data['data'] = range(image.n_points)
-        output = image.points_to_cells()
-        assert np.allclose(output.cell_centers().points, image.points)
-    else:
-        image.cell_data['data'] = range(image.n_cells)
-        output = image.cells_to_points()
-        assert np.allclose(output.points, image.cell_centers().points)
+    output = getattr(image, filter_name)(scalars=scalars)
+
+    point_image, cell_image = (
+        (image, output) if filter_name == 'points_to_cells' else (output, image)
+    )
+    assert np.allclose(cell_image.cell_centers().points, point_image.points)
 
 
 def test_contour_labels_direction_matrix():
