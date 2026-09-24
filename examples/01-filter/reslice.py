@@ -129,6 +129,7 @@ pv.plot_compare(
     panels,
     reference_mesh=reference.points_to_cells().outline(),
     reference_kwargs={'color': 'red', 'line_width': 4},
+    label_kwargs={'color': 'white'},
     shape=(2, 2),
     clim=clim,
     show_edges=True,
