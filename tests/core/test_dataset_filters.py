@@ -16,6 +16,7 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
+from matplotlib import colormaps
 from matplotlib.colors import ListedColormap
 import numpy as np
 import pytest
@@ -6069,3 +6070,33 @@ def test_filters_keep_the_input_subclass():
     image = pv.ImageData(dimensions=(3, 3, 3))
     image['scalars'] = np.zeros(image.n_points)
     assert type(image.warp_by_scalar('scalars')) is pv.StructuredGrid
+
+
+def _listed_colormap_names():
+    """Return the names of every installed ListedColormap that color_labels accepts."""
+    from pyvista.plotting.colors import _CMCRAMERI_CMAPS
+    from pyvista.plotting.colors import _CMOCEAN_CMAPS
+    from pyvista.plotting.colors import _COLORCET_CMAPS
+
+    names = []
+    for name in {*colormaps, *_COLORCET_CMAPS, *_CMOCEAN_CMAPS, *_CMCRAMERI_CMAPS}:
+        try:
+            cmap = pv.get_cmap_safe(name)
+        except (ValueError, ModuleNotFoundError):
+            continue
+        if isinstance(cmap, ListedColormap):
+            names.append(name)
+    return sorted(names)
+
+
+@pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba'])
+def test_color_labels_int_colormap_matches_color(color_type):
+    labels = pv.ImageData(dimensions=(300, 1, 1))
+    labels['labels'] = np.arange(labels.n_points) % 256
+    for name in _listed_colormap_names():
+        cmap_colors = np.asarray(pv.get_cmap_safe(name).colors, dtype=float).tolist()
+        expected = np.array([getattr(pv.Color(c), color_type) for c in cmap_colors])
+        colored = labels.color_labels(name, color_type=color_type, coloring_mode='cycle')
+        actual = colored['labels' + color_type.removeprefix('int')]
+        expected_rows = expected[labels['labels'] % len(expected)]
+        assert np.array_equal(actual, expected_rows), name

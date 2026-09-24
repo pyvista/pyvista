@@ -8269,6 +8269,15 @@ class DataSetFilters(DataObjectFilters):
                 )
                 raise ValueError(msg)
 
+        def _float_colors_to_int(color_array_, n_components_):
+            """Convert float colors in [0, 1] to int tuples, rounding like ``Color``."""
+            ints = np.rint(255 * color_array_.astype(float)).astype(int)
+            if n_components_ == 3:
+                ints = ints[:, :3]
+            elif ints.shape[1] == 3:
+                ints = np.column_stack([ints, np.full(len(ints), 255)])
+            return [tuple(row) for row in ints.tolist()]
+
         def _is_index_like(array_, n_colors_):
             """Return which values can be used to index ``n_colors_`` colors."""
             min_value = -n_colors_ if negative_indexing else 0
@@ -8361,6 +8370,13 @@ class DataSetFilters(DataObjectFilters):
                         color_rgb_sequence = (
                             cmap_colors if n_channels == 4 else [[*c, 1.0] for c in cmap_colors]
                         )
+                        _is_rgb_sequence = True
+                    elif (
+                        n_channels in (3, 4)
+                        and np.all(color_array >= 0.0)
+                        and np.all(color_array <= 1.0)
+                    ):
+                        color_rgb_sequence = _float_colors_to_int(color_array, num_components)
                         _is_rgb_sequence = True
                     else:
                         # The colors may be an array, which is not a valid color sequence
