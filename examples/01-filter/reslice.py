@@ -50,8 +50,8 @@ resliced = bird.reslice(gourds, 'linear', background_value=0)
 # Plot the result with the outline of the gourds image in red. The bird fills
 # the corner of the grid it occupies and the rest is background.
 
-# sphinx_gallery_start_ignore the interactive scene renders blank, so keep the
-# static figure
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
@@ -123,8 +123,8 @@ cropped_resampled = cropped.resample(
 clim = mandelbrot.get_data_range()
 voxels = mandelbrot.points_to_cells()
 
-# sphinx_gallery_start_ignore the interactive scene renders a single panel
-# zoomed in rather than all four
+# sphinx_gallery_start_ignore
+# the interactive scene renders a single panel zoomed in rather than all four
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
@@ -234,8 +234,8 @@ print(resliced.index_to_physical_matrix.round(3))
 # while ``reslice`` returns the frame itself and writes ``background_value``
 # into the corners the rotated image no longer reaches.
 
-# sphinx_gallery_start_ignore two full-resolution photographs push the
-# interactive scene past the size limit
+# sphinx_gallery_start_ignore
+# two full-resolution photographs push the interactive scene past the size limit
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
@@ -311,8 +311,8 @@ warped_lines = grid.reslice(gourds, 'nearest', transform=warp)
 # ``transform`` could not have done this: it would have to keep the image's
 # samples on a regular grid.
 
-# sphinx_gallery_start_ignore two full-resolution photographs push the
-# interactive scene past the size limit
+# sphinx_gallery_start_ignore
+# two full-resolution photographs push the interactive scene past the size limit
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 

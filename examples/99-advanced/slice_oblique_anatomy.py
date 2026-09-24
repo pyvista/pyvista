@@ -65,8 +65,8 @@ index = round((center[2] - ct.origin[2]) / ct.spacing[2])
 axial = ct.slice_index(k=index)
 axial_mask = overlay.slice_index(k=index)
 
-# sphinx_gallery_start_ignore the interactive scene renders blank, so keep the
-# static figure
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
@@ -129,8 +129,8 @@ mask_bone = overlay.reslice(
 # The rotated grid samples along the bone. The bone itself comes out level, and
 # so does the line it was fitted to.
 
-# sphinx_gallery_start_ignore the interactive scene renders blank, so keep the
-# static figure
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
@@ -202,8 +202,8 @@ mask_slices = bone.slice_orthogonal()
 # glenoid, and ``XY`` is a cross-section through it. None of these planes cut
 # the bone this way in the axes the scanner produced.
 
-# sphinx_gallery_start_ignore the interactive scene renders a blank panel rather
-# than the three planes
+# sphinx_gallery_start_ignore
+# the interactive scene renders a blank panel rather than the three planes
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
@@ -253,8 +253,8 @@ strip_mask = masks[0].concatenate(masks[1:], 'x')
 # The blade thins as the planes step back through it. The middle panel is the
 # plane ``slice_orthogonal`` cut.
 
-# sphinx_gallery_start_ignore the interactive scene renders blank, so keep the
-# static figure
+# sphinx_gallery_start_ignore
+# the interactive scene renders blank, so keep the static figure
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
