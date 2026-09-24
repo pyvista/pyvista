@@ -73,9 +73,10 @@ data_to_probe.resample(dimensions=(75, 75, 75))
 # %%
 # Both meshes here are :class:`~pyvista.ImageData`, and for that case
 # :meth:`~pyvista.ImageDataFilters.reslice` is the closer fit than ``sample``. It reads
-# the image at the grid's points just as ``sample`` does, but returns an image instead
-# of a probed copy of the grid, and it offers the border, interpolation,
-# and anti-aliasing options an image needs. See :ref:`reslice_example`.
+# the image at the grid's points just as ``sample`` does, but returns only the resampled
+# array, where ``sample`` also carries the grid's own arrays and the mask arrays probing
+# adds, and it offers the border, interpolation, and anti-aliasing options an image
+# needs. See :ref:`reslice_example`.
 data_to_probe.reslice(mesh)
 
 # %%

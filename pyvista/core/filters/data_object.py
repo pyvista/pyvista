@@ -5733,11 +5733,9 @@ class DataObjectFilters:
             Resample image data to modify its dimensions and spacing.
 
         pyvista.ImageDataFilters.reslice
-            Sample an image at the points of a reference image. Prefer this when both
-            meshes are :class:`~pyvista.ImageData`. It returns an image rather than a
-            probed copy of the reference, it does not add the mask arrays probing
-            carries, and it offers the border, interpolation, and anti-aliasing
-            options an image needs.
+            Sample an image at the points of a reference image. Prefer it when both
+            meshes are :class:`~pyvista.ImageData`: it returns the resampled array alone,
+            and offers the border, interpolation, and anti-aliasing options images need.
 
         Examples
         --------
