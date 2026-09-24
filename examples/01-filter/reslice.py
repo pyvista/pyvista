@@ -364,7 +364,7 @@ matrix[:3, 3] = np.array(reference.center) - rotation @ center
 along_bone = ct.reslice(reference, 'linear', transform=matrix, background_value=-1000)
 
 # %%
-# The output is axis-aligned, so :meth:`~pyvista.DataSetFilters.slice_orthogonal` cuts
+# The output is axis-aligned, so :meth:`~pyvista.DataObjectFilters.slice_orthogonal` cuts
 # the bone squarely along all three planes.
 
 slices = along_bone.slice_orthogonal()
