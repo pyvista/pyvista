@@ -451,16 +451,26 @@ pl.show()
 
 # %%
 # The same rotation applied to a volume rather than a single plane gives a bone-aligned
-# block of the scan, sized so that the reference itself does the cropping. The output is
-# axis-aligned, so :meth:`~pyvista.DataObjectFilters.slice_orthogonal` cuts the bone
-# squarely along all three planes.
+# block of the scan. Reslice a generous one, then trim it to the bone with
+# :meth:`~pyvista.ImageDataFilters.crop`, which works in index space and so needs the
+# reslice to have happened first.
 
-volume = pv.ImageData(dimensions=(160, 120, 240), spacing=(1.0, 1.0, 1.0))
+volume = pv.ImageData(dimensions=(200, 160, 280), spacing=(1.0, 1.0, 1.0))
 block = ct.reslice(
     volume, 'linear', transform=centered(volume, -angle), background_value=-1000
 )
+bone = masked(volume, -angle)
+
+block = block.crop(mask=bone, padding=10)
+bone = bone.crop(extent=block.extent)
+
+# %%
+# The trimmed block is axis-aligned, so
+# :meth:`~pyvista.DataObjectFilters.slice_orthogonal` cuts the bone squarely along all
+# three planes.
+
 slices = block.slice_orthogonal()
-mask_slices = masked(volume, -angle).slice_orthogonal()
+mask_slices = bone.slice_orthogonal()
 
 # %%
 # View each plane face-on. ``XZ`` shows the blade with its spine and the glenoid, and
