@@ -2732,18 +2732,29 @@ def test_transform_imagedata_without_arrays_skips_filter(uniform, monkeypatch):
     assert np.allclose(transformed.points, expected.points)
     assert np.array_equal(transformed.active_scalars, expected.active_scalars)
     assert transformed.active_scalars_name == uniform.active_scalars_name
+    assert transformed.point_data.keys() == uniform.point_data.keys()
+    assert transformed.cell_data.keys() == uniform.cell_data.keys()
+    assert transformed.field_data.keys() == uniform.field_data.keys()
+
+    # The output holds its own arrays, not the input's
+    transformed.active_scalars[0] += 1
+    assert transformed.active_scalars[0] != uniform.active_scalars[0]
 
     uniform.transform(transformation, inplace=True)
-    assert uniform == transformed
+    assert np.allclose(uniform.points, transformed.points)
 
 
-def test_transform_imagedata_with_vectors_uses_filter(uniform):
-    uniform.point_data['vectors'] = np.tile([1.0, 0.0, 0.0], (uniform.n_points, 1))
-    uniform.point_data.active_vectors_name = 'vectors'
+@pytest.mark.parametrize('association', ['point_data', 'cell_data'])
+@pytest.mark.parametrize('attribute', ['active_vectors_name', 'active_normals_name'])
+def test_transform_imagedata_with_vectors_uses_filter(uniform, association, attribute):
+    attributes = getattr(uniform, association)
+    size = uniform.n_points if association == 'point_data' else uniform.n_cells
+    attributes['vectors'] = np.tile([1.0, 0.0, 0.0], (size, 1))
+    setattr(attributes, attribute, 'vectors')
 
     transformed = uniform.transform(pv.Transform().rotate_z(90), inplace=False)
 
-    assert np.allclose(transformed.point_data['vectors'], [0.0, 1.0, 0.0])
+    assert np.allclose(getattr(transformed, association)['vectors'], [0.0, 1.0, 0.0])
 
 
 def test_transform_imagedata_raises_with_shear(uniform):

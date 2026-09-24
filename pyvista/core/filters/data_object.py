@@ -136,7 +136,9 @@ def _transform_vector_names(
     )
 
 
-def _transforms_any_array(point_vectors: list[str | None], cell_vectors: list[str | None]) -> bool:
+def _has_arrays_to_transform(
+    point_vectors: list[str | None], cell_vectors: list[str | None]
+) -> bool:
     """Return whether the transform filter has any array to transform."""
     return any(name is not None for name in (*point_vectors, *cell_vectors))
 
@@ -148,8 +150,8 @@ def _convert_transform_input_to_float(
 ) -> bool:
     """Convert a dataset's integer points and named vector arrays to float, in place."""
     converted = False
-    # An image's points are computed from its structure and are always float
-    if not isinstance(dataset, pv.ImageData):
+    # The points of an image or a rectilinear grid are computed and are always float
+    if not isinstance(dataset, (pv.ImageData, pv.RectilinearGrid)):
         points = dataset.points
         if not np.issubdtype(points.dtype, np.floating):
             dataset.points = points.astype(dtype)
@@ -2230,7 +2232,7 @@ class DataObjectFilters:
 
         # An image's structure carries the transformation, so the filter is only needed for
         # its vector arrays
-        filter_needed = not isinstance(output, pv.ImageData) or _transforms_any_array(
+        filter_needed = not isinstance(output, pv.ImageData) or _has_arrays_to_transform(
             point_vectors, cell_vectors
         )
 
@@ -2252,7 +2254,7 @@ class DataObjectFilters:
 
             if isinstance(output, pv.ImageData):
                 _orient_image_structure(output, cast('pv.ImageData', self), t)
-                if output is not vtk_filter_output:
+                if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             elif isinstance(output, pv.RectilinearGrid):
                 components = cast(
