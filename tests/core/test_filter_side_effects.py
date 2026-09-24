@@ -27,7 +27,6 @@ import hashlib
 import inspect
 import re
 import sys
-import time
 from types import UnionType
 from typing import Any
 from typing import Literal
@@ -286,8 +285,8 @@ def _choices(annotation):
     return []
 
 
-#: Most seconds one filter's input sweep may take.
-MAX_SECONDS = 10.0
+#: Most calls which may run without raising in one filter's input sweep.
+MAX_RUNS = 350
 
 
 def _kwarg_variants(func, parameter):
@@ -522,7 +521,6 @@ def test_filter_does_not_modify_input(key):
     reports = []
     errors = {}
     ran = 0
-    start = time.perf_counter()
 
     def call(kind, mode, template, keyword_variant):
         """Call the filter on a copy of ``template``, recording any change; return if it ran."""
@@ -562,17 +560,16 @@ def test_filter_does_not_modify_input(key):
         _fail_setup(key, errors)
     if reports:  # pragma: no cover -- failure path
         _fail(key, 'modified its input', reports, ran, MODIFIED_HINT)
-    _check_budget(key, time.perf_counter() - start)
+    _check_budget(key, ran)
 
 
-def _check_budget(key, seconds):
-    """Raise if one filter's sweep takes too long."""
-    if seconds > MAX_SECONDS:
+def _check_budget(key, ran):
+    """Raise if one filter's sweep runs more calls than the budget allows."""
+    if ran > MAX_RUNS:
         msg = (
-            f'{key} took {seconds:.1f}s, over the budget of {MAX_SECONDS:.0f}s. This is a '
-            f'problem with the test setup, not a side effect.\n\nFix: in {CASES_FILE}, '
-            f'give its keywords fewer values in KWARG_VALUES, or make each call cheaper '
-            f'through REQUIRED_KWARGS.'
+            f'{key} ran {ran} calls, over the budget of {MAX_RUNS}. This is a problem with '
+            f'the test setup, not a side effect.\n\nFix: in {CASES_FILE}, give its keywords '
+            f'fewer values in KWARG_VALUES, or name a keyword with many choices in SKIP_KWARGS.'
         )
         raise SweepSetupError(msg)
 
@@ -723,7 +720,7 @@ def test_setup_failure_names_new_and_stale_keywords():
 
 
 def test_setup_failure_names_an_over_budget_filter():
-    """A filter whose sweep is too slow is reported with the fix."""
-    _check_budget('DataSetFilters.align', MAX_SECONDS)
-    with pytest.raises(SweepSetupError, match=r'took 11\.0s(?s:.*)REQUIRED_KWARGS'):
-        _check_budget('DataSetFilters.align', 11.0)
+    """A filter whose sweep runs too many calls is reported with the fix."""
+    _check_budget('DataSetFilters.align', MAX_RUNS)
+    with pytest.raises(SweepSetupError, match=r'ran 351 calls(?s:.*)KWARG_VALUES'):
+        _check_budget('DataSetFilters.align', MAX_RUNS + 1)

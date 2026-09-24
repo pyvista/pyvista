@@ -8,8 +8,8 @@ which is a problem with the test rather than with the filter, and says which tab
   ``POSITIONAL_ARGS`` or ``REQUIRED_KWARGS``, or a mesh it accepts to ``MESH_OVERRIDES``.
 * A new keyword which is neither ``bool`` nor a ``Literal`` has no values to try. Add
   values to ``KWARG_VALUES``, or the name to ``SKIP_KWARGS`` if it cannot affect the input.
-* A filter whose sweep takes over ten seconds is too slow. Make each call cheaper through
-  ``REQUIRED_KWARGS``, such as a single iteration, or give it fewer ``KWARG_VALUES``.
+* A filter whose sweep runs over ``MAX_RUNS`` calls has too many keyword values. Give it
+  fewer ``KWARG_VALUES``, or name a keyword with many choices in ``SKIP_KWARGS``.
 
 A filter which does modify its input fails with ``Failed`` instead, listing each call.
 """
