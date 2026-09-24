@@ -207,9 +207,10 @@ pl.show()
 
 # %%
 # The two are not alternatives so much as two halves of the same operation. Moving the
-# image with ``transform`` and then reslicing the result onto the reference gives the
-# same values as passing the rotation to ``reslice`` directly, because ``reslice`` reads
-# its input wherever that input's geometry says it lies.
+# image with ``transform`` and then reslicing the result gives the same values as passing
+# the rotation to ``reslice`` directly, so ``transform=`` is a shortcut for moving the
+# image and then sampling it onto the reference, done in one pass without building the
+# moved image.
 
 through = moved.reslice(gourds, 'linear', background_value=0)
 print(np.array_equal(through.active_scalars, resliced.active_scalars))

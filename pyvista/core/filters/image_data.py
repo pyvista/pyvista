@@ -5030,16 +5030,14 @@ class ImageDataFilters(DataSetFilters):
         ``reference_image``, so the two images are aligned in space. The
         :attr:`~pyvista.Grid.dimensions`, :attr:`~pyvista.ImageData.spacing`,
         :attr:`~pyvista.ImageData.origin`, :attr:`~pyvista.ImageData.offset`, and
-        :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference,
-        and so therefore do its :attr:`~pyvista.ImageData.index_to_physical_matrix` and
-        :attr:`~pyvista.ImageData.physical_to_index_matrix`.
+        :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference.
 
         Use this filter to map an image onto the grid of another image, for example, to
-        give two acquisitions of the same subject a common grid. :meth:`resample` is the
-        filter for changing sampling density in the image's own frame. Give the reference
-        a rotated :attr:`~pyvista.ImageData.direction_matrix` to sample an oblique plane
-        or volume, and pass a ``transform`` to move the image as it is sampled, so a
-        registration result is applied in the same pass.
+        give two acquisitions of the same subject a common grid. Use :meth:`resample`
+        instead to change the sampling density in the image's own frame. Give the
+        reference a rotated :attr:`~pyvista.ImageData.direction_matrix` to sample an
+        oblique plane or volume, and pass a ``transform`` to move the image as it is
+        sampled, so a registration result is applied in the same pass.
 
         This filter may be used to reslice either point or cell data. Cell data is
         sampled at the cell centers of the reference image.
@@ -5072,9 +5070,11 @@ class ImageDataFilters(DataSetFilters):
 
         transform : TransformLike | :vtk:`vtkAbstractTransform`, optional
             Transform applied to the image before it is sampled, in the same direction as
-            :meth:`~pyvista.DataObjectFilters.transform`. Non-linear transforms such as
-            :vtk:`vtkThinPlateSplineTransform` are accepted, so a registration result may
-            be applied directly.
+            :meth:`~pyvista.DataObjectFilters.transform`. That filter stores its result in
+            the image's geometry and so is limited to linear transforms, whereas this
+            resamples the values and accepts any :vtk:`vtkAbstractTransform`. A non-linear
+            registration result, such as a :vtk:`vtkThinPlateSplineTransform`, may
+            therefore be applied directly. See the notes below.
 
         border_mode : 'clamp' | 'wrap' | 'mirror', default: 'clamp'
             Controls the interpolation at the image's borders.
@@ -5129,41 +5129,47 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
 
+        Notes
+        -----
+        ``transform`` is a shortcut for moving the image and then sampling it onto the
+        reference, done in one pass without building the moved image. These two give the
+        same values::
+
+            image.transform(transform).reslice(reference)
+            image.reslice(reference, transform=transform)
+
+        The shortcut is the more capable of the two, since
+        :meth:`~pyvista.DataObjectFilters.transform` can only carry a transform an image's
+        geometry is able to hold.
+
         Examples
         --------
         .. pyvista-plot::
             :force_static:
 
-            An image acquired off-axis carries its rotation in the
-            :attr:`~pyvista.ImageData.direction_matrix`, so its samples do not line up
-            with the axes.
+            Rotate a photograph about its own center.
 
+            >>> import numpy as np
             >>> import pyvista as pv
-            >>> scan = pv.ImageEllipsoidSource(
-            ...     whole_extent=(0, 40, 0, 24, 0, 0),
-            ...     center=(20, 12, 0),
-            ...     radius=(16, 6, 0),
-            ... ).output
-            >>> scan.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+            >>> from pyvista import examples
+            >>> gourds = examples.download_gourds()
+            >>> center = np.array(gourds.center)
+            >>> rotate = pv.Transform().translate(-center).rotate_z(45).translate(center)
 
-            Reslice it onto an upright grid, passing a ``transform`` which undoes the
-            rotation, to read the same picture onto axis-aligned samples.
+            Reslice the image onto its own grid through that rotation. The picture turns
+            but the samples do not move, so the output is still axis-aligned and the
+            corners the rotation vacated hold ``background_value``.
 
-            >>> reference = pv.ImageData(dimensions=(41, 25, 1))
-            >>> straightened = scan.reslice(
-            ...     reference, 'linear', transform=pv.Transform().rotate_z(-30)
+            >>> rotated = gourds.reslice(
+            ...     gourds, 'linear', transform=rotate, background_value=0
             ... )
 
-            >>> pl = pv.Plotter(shape=(1, 2))
-            >>> _ = pl.add_mesh(scan, cmap='bone', lighting=False, show_scalar_bar=False)
-            >>> _ = pl.add_text('off-axis', font_size=10)
-            >>> pl.view_xy()
-            >>> pl.camera.tight()
-            >>> _ = pl.subplot(0, 1)
-            >>> _ = pl.add_mesh(
-            ...     straightened, cmap='bone', lighting=False, show_scalar_bar=False
-            ... )
-            >>> _ = pl.add_text('resliced', font_size=10)
+            :meth:`~pyvista.DataObjectFilters.transform` cannot do this. It would turn
+            the grid along with the picture, leaving an image whose samples no longer
+            line up with the axes.
+
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(rotated, rgba=True, lighting=False)
             >>> pl.view_xy()
             >>> pl.camera.tight()
             >>> pl.show()
