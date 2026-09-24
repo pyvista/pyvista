@@ -924,7 +924,8 @@ def test_principal_axes_is_cached(monkeypatch):
     mesh = pv.Sphere()
     first = mesh.principal_axes()
 
-    def fail(*_args, **_kwargs):  # numpydoc ignore=GL08
+    def fail(*_args, **_kwargs):  # pragma: no cover -- the axes are cached, so it never runs
+        """Fail if the axes are computed again."""
         msg = 'The principal axes should be cached.'
         raise AssertionError(msg)
 
