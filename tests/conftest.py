@@ -22,6 +22,10 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+
+# The guard the doctests use, applied to this tree too; it ships with the package
+# because the doctests run from the installed copy.
+from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
@@ -184,36 +188,6 @@ def global_variables_reset():
     yield
     pv.ON_SCREENSHOT = tmp_screenshots
     pv.FIGURE_PATH = tmp_figurepath
-
-
-@pytest.fixture(autouse=True)
-def fail_on_vtk_output(request):
-    """Fail the test when VTK logs an error or warning while it runs.
-
-    A test that provokes VTK on purpose names the messages it expects with
-    ``expect_vtk_output``; anything else VTK logs still fails it. A test that feeds
-    unreadable input to whichever readers VTK offers has no fixed set of messages to
-    name and opts out with ``skip_vtk_output_check`` instead.
-    """
-    if request.node.get_closest_marker('skip_vtk_output_check'):
-        yield
-        return
-    markers = list(request.node.iter_markers('expect_vtk_output'))
-    expected = [pattern for marker in markers for pattern in marker.args]
-    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
-        yield
-    events = catcher.events
-    # The traceback of a failure raised here keeps this frame alive, and with it the
-    # catcher's own output window, which the leak check would then report instead.
-    del catcher
-    if unexpected := [  # pragma: no cover -- taken only by a test that leaks
-        event for event in events if not any(text in event.alert for text in expected)
-    ]:
-        logged = '\n'.join(str(event) for event in unexpected)
-        msg = f'VTK logged {len(unexpected)} error(s) or warning(s):\n{logged}'
-        if reasons := [marker.kwargs['reason'] for marker in markers if 'reason' in marker.kwargs]:
-            msg += '\n\nThis test expects VTK output because ' + '; '.join(reasons)
-        pytest.fail(msg)
 
 
 @pytest.fixture(scope='session', autouse=True)
