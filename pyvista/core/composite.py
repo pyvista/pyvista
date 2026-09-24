@@ -113,7 +113,7 @@ class MultiBlock(
         dictionary of datasets, or a file to read.
 
         .. versionchanged:: 0.50
-           Any sequence is accepted, not only a ``list`` or ``tuple``.
+           The blocks may be given as any sequence, not only a ``list`` or ``tuple``.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
