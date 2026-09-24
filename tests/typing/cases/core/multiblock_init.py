@@ -49,6 +49,9 @@ assert_types(pv.MultiBlock(a_vtk_composite()), MultiBlock)
 assert_types(pv.MultiBlock(a_file()), MultiBlock)
 assert_types(pv.MultiBlock(Path(a_file())), MultiBlock)
 
+# Reader options reach `pyvista.read`
+assert_types(pv.MultiBlock(a_file(), force_ext='.vtm'), MultiBlock)
+
 # A declared block type is kept, so blocks of a subclass widen to it
 declared: MultiBlock[DataSet] = pv.MultiBlock([poly()])
 assert_types(declared, MultiBlock[DataSet])
