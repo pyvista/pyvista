@@ -111,7 +111,6 @@ test = [
   'pytest-codspeed<5.1.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
-  'pytest-pyodide<0.30.0',
   'pytest-pyvista==0.3.3',
   'pytest-timeout<2.5.0',
   'pytest-xdist<3.9.0',
@@ -296,7 +295,6 @@ run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
 addopts = ['--durations=25', '--strict-config', '--strict-markers', '-ra']
-asyncio_default_fixture_loop_scope = 'function'
 doctest_optionflags = 'NUMBER ELLIPSIS'
 log_level = 'INFO'
 
@@ -315,7 +313,7 @@ filterwarnings = [
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
-  'ignore:The \(path.*\) argument is deprecated.*:pytest.PytestRemovedIn9Warning', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local → pathlib.Path)
+  'ignore:The \(path.*\) argument is deprecated.*', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local -> pathlib.Path)
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
   'ignore:pyvista\.trame.*is deprecated:pyvista.core.errors.PyVistaDeprecationWarning', # shim re-exports to trame-pyvista
 
@@ -326,6 +324,7 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
+  'driver_timeout(seconds): timeout in seconds for the browser driver used by pytest-pyodide integration tests. Only effective when pytest-pyodide is installed.',
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
   'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
