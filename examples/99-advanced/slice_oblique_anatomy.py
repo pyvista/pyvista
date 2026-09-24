@@ -18,7 +18,7 @@ See :ref:`slice_example` for the slicing filters on an axis-aligned volume, and
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 3
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
