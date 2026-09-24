@@ -2893,6 +2893,25 @@ def test_concatenate_preserve_extents():
         image_a.concatenate(image_b, axis=0, mode='preserve-extents')
 
 
+@pytest.mark.parametrize('mode', [None, 'strict', 'resample-match', 'crop-match'])
+def test_concatenate_offset_mismatch(mode):
+    array_a = np.arange(1, 10)
+    array_b = np.arange(10, 19)
+
+    image_a = pv.ImageData(dimensions=(3, 3, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(3, 3, 1))
+    image_b.offset = (4, 5, 6)
+    image_b['B'] = array_b
+
+    image_a.offset = (1, 2, 3)
+    concatenated = image_a.concatenate(image_b, axis='x', mode=mode)
+    assert concatenated.dimensions == (6, 3, 1)
+    assert concatenated.offset == (1, 2, 3)
+    expected = np.hstack([array_a.reshape(3, 3), array_b.reshape(3, 3)]).ravel()
+    assert np.array_equal(concatenated.active_scalars, expected)
+
+
 def test_concatenate_crop():
     array_a = np.array([0])
     array_b = np.arange(9)
