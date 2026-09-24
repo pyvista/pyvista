@@ -489,7 +489,7 @@ def _read_dispatch(  # noqa: PLR0911
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
             multi.append(
-                _read_dispatch(  # type: ignore[arg-type]
+                _read_dispatch(
                     each,
                     force_ext=None,
                     file_format=file_format,
