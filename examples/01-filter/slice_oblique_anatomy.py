@@ -154,7 +154,8 @@ pl.show()
 # The same rotation applied to a volume rather than a single plane gives a bone-aligned
 # block of the scan. Reslice a generous one, then trim it to the bone with
 # :meth:`~pyvista.ImageDataFilters.crop`, which works in index space and so needs the
-# reslice to have happened first.
+# reslice to have happened first. See :ref:`crop_labeled_example` for that filter on
+# its own.
 
 volume = pv.ImageData(dimensions=(200, 160, 280), spacing=(1.0, 1.0, 1.0))
 block = ct.reslice(
