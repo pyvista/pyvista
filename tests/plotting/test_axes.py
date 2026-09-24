@@ -66,6 +66,7 @@ def test_axes_actor_total_len(axes_actor):
     assert axes_actor.total_length == (1, 2, 3)
 
 
+@pytest.mark.expect_vtk_output('One or more normalized shaft lengths')
 def test_axes_actor_shaft_len(axes_actor):
     axes_actor.shaft_length = 1
     assert axes_actor.shaft_length == (1, 1, 1)
@@ -74,6 +75,7 @@ def test_axes_actor_shaft_len(axes_actor):
     assert axes_actor.shaft_length == (1, 2, 3)
 
 
+@pytest.mark.expect_vtk_output('One or more normalized tip lengths')
 def test_axes_actor_tip_len(axes_actor):
     axes_actor.tip_length = 1
     assert axes_actor.tip_length == (1, 1, 1)

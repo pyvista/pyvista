@@ -185,6 +185,11 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     assert node['uri'].endswith(expected.name)
 
 
+@pytest.mark.expect_vtk_output(
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLPolyDataReader',
+)
 @pytest.mark.parametrize(
     ('filename', 'field', 'slug', 'label'),
     [
@@ -227,6 +232,11 @@ def test_dataset_card_reader_field(tmp_path, filename, field, slug, label):
     assert class_option(slug) == [slug]
 
 
+@pytest.mark.expect_vtk_output(
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLPolyDataReader',
+)
 def test_dataset_card_reader_field_mixed(tmp_path):
     """A loader with both kinds of file lists both readers rather than one N/A."""
     paths = [tmp_path / 'mesh.vtp', tmp_path / 'mesh.frd']

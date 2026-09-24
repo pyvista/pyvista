@@ -253,6 +253,7 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
+@pytest.mark.expect_vtk_output('vtkMath::Jacobi: Error extracting eigenfunctions')
 @pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot

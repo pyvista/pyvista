@@ -1052,6 +1052,7 @@ def test_texture_map_to_sphere():
     assert 'Texture Coordinates' in dataset.array_names
 
 
+@pytest.mark.expect_vtk_output('Turning indexing off: no data to index with')
 def test_glyph(datasets, sphere):
     for dataset in datasets:
         dataset['vectors'] = np.ones_like(dataset.points)
@@ -2172,6 +2173,7 @@ def test_streamlines_errors(uniform_vec):
         uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
 
+@pytest.mark.expect_vtk_output('The update extent specified in the information')
 def test_streamlines_from_source(uniform_vec):
     vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
     source = pv.PolyData(vertices)
@@ -2260,6 +2262,7 @@ def test_streamlines_evenly_spaced_2d_errors():
         mesh.rotate_x(45).streamlines_evenly_spaced_2D()
 
 
+@pytest.mark.expect_vtk_output('Algorithm vtkEvenlySpacedStreamlines2D')
 @pytest.mark.xfail
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
@@ -3855,6 +3858,7 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
+@pytest.mark.expect_vtk_output('Could not locate key vtkExodusIIReader::GLOBAL_TEMPORAL_VARIABLE')
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
@@ -3863,6 +3867,7 @@ def test_compute_boundary_mesh_quality():
     assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
 
 
+@pytest.mark.expect_vtk_output('Input unstructured grid has non 3D cells.')
 def test_compute_boundary_mesh_quality_surface(sphere):
     # A surface has no 3D cells, so there are no boundary faces to measure
     qual = sphere.compute_boundary_mesh_quality()
@@ -4674,6 +4679,7 @@ def test_integrate_data_pointset(pointset):
     assert integrated.n_cells == 1
 
 
+@pytest.mark.expect_vtk_output('No cells to build')
 @pytest.mark.parametrize('name', ['streamlines', 'streamlines_from_source'])
 def test_streamlines_pointset(pointset, name):
     pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))

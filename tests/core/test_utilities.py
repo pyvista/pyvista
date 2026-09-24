@@ -417,6 +417,13 @@ def test_read_reader_kwargs():
         pv.read(file, enable_patch_array=True)
 
 
+@pytest.mark.expect_vtk_output(
+    'Cannot find StructuredGrid element in file.',
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLStructuredGridReader',
+    'Algorithm vtkXMLMultiBlockDataReader',
+)
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -986,6 +993,10 @@ def test_vtk_error_catcher():
         pass
 
 
+@pytest.mark.expect_vtk_output(
+    'Error opening file this_file_does_not_exist.vtp',
+    'Algorithm vtkXMLPolyDataReader',
+)
 def test_update_alg_raises():
     reader = _vtk.vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
@@ -993,6 +1004,7 @@ def test_update_alg_raises():
         _update_alg(reader)
 
 
+@pytest.mark.expect_vtk_output('Unexpected point index value: 0', 'Algorithm vtkOBJReader')
 def test_update_alg_raises_request_data_error(tmp_path):
     # OBJ indices are one-based, so the line element below is out of range
     obj_file = tmp_path / 'bad.obj'

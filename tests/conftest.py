@@ -186,6 +186,37 @@ def global_variables_reset():
     pv.FIGURE_PATH = tmp_figurepath
 
 
+@pytest.fixture(autouse=True)
+def fail_on_vtk_output(request):
+    """Fail the test when VTK logs an error or warning while it runs.
+
+    A test that provokes VTK on purpose names the messages it expects with
+    ``expect_vtk_output``; anything else VTK logs still fails it. A test that feeds
+    unreadable input to whichever readers VTK offers has no fixed set of messages to
+    name and opts out with ``skip_vtk_output_check`` instead.
+    """
+    if request.node.get_closest_marker('skip_vtk_output_check'):
+        yield
+        return
+    expected = [
+        pattern
+        for marker in request.node.iter_markers('expect_vtk_output')
+        for pattern in marker.args
+    ]
+    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+        yield
+    events = catcher.events
+    # The traceback of a failure raised here keeps this frame alive, and with it the
+    # catcher's own output window, which the leak check would then report instead.
+    del catcher
+    if unexpected := [
+        event for event in events if not any(text in event.alert for text in expected)
+    ]:
+        logged = '\n'.join(str(event) for event in unexpected)
+        msg = f'VTK logged {len(unexpected)} error(s) or warning(s):\n{logged}'
+        pytest.fail(msg)
+
+
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""

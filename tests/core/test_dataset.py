@@ -706,6 +706,7 @@ def test_set_texture_coordinates(hexbeam):
         hexbeam.active_texture_coordinates = np.empty((hexbeam.n_points, 1))
 
 
+@pytest.mark.expect_vtk_output('Can not set attribute Vectors. Incorrect number of components.')
 def test_set_active_vectors_fail(hexbeam):
     with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.set_active_vectors('not a vector')
@@ -725,6 +726,7 @@ def test_set_active_vectors_fail(hexbeam):
     active_component_consistency_check(hexbeam, 'vectors', 'point')
 
 
+@pytest.mark.expect_vtk_output('Can not set attribute Tensors. Incorrect number of components.')
 def test_set_active_tensors_fail(hexbeam):
     with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.set_active_tensors('not a tensor')

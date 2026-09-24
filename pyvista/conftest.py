@@ -28,8 +28,8 @@ collect_ignore = [  # Avoid importing deprecated modules
 def fail_on_vtk_output() -> Generator[None, None, None]:
     """Fail the test when VTK logs an error or warning while it runs.
 
-    Defined here rather than in ``tests`` so that it also applies to the doctests run
-    from the installed package, which collect no ``conftest.py`` from the repository.
+    A ``conftest.py`` reaches only its own directory and below, so this covers the
+    doctests run from the installed package and ``tests`` has its own counterpart.
     """
     with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
         yield
