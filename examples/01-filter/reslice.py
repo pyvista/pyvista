@@ -349,25 +349,59 @@ pl.show()
 
 # %%
 # Because the fit is confined to that plane, a single rotation about the scan axis is
-# enough to bring the line onto the image's x axis. Reslice a volume around the bone on
-# those axes, sized so that the reference itself does the cropping.
+# enough to bring the line onto the image's x axis.
 
 angle = np.degrees(np.arctan2(direction[1], direction[0]))
-rotation = pv.Transform().rotate_z(-angle).matrix[:3, :3]
 
-reference = pv.ImageData(dimensions=(160, 120, 240), spacing=(1.0, 1.0, 1.0))
+plane = pv.ImageData(dimensions=(320, 220, 1), spacing=(1.0, 1.0, 1.0))
 
-matrix = np.eye(4)
-matrix[:3, :3] = rotation
-matrix[:3, 3] = np.array(reference.center) - rotation @ center
 
-along_bone = ct.reslice(reference, 'linear', transform=matrix, background_value=-1000)
+def centered(grid, rotation):
+    """Return the transform which rotates the scapula and centers it in ``grid``."""
+    return pv.Transform().translate(-center).rotate_z(rotation).translate(grid.center)
+
 
 # %%
-# The output is axis-aligned, so :meth:`~pyvista.DataObjectFilters.slice_orthogonal` cuts
-# the bone squarely along all three planes.
+# Reslice twice from that one grid, once without a rotation and once with it, and put
+# the line through the same transforms so it can be compared against.
 
-slices = along_bone.slice_orthogonal()
+along_scan = ct.reslice(
+    plane, 'linear', transform=centered(plane, 0.0), background_value=-1000
+)
+along_bone = ct.reslice(
+    plane, 'linear', transform=centered(plane, -angle), background_value=-1000
+)
+
+line_scan = line.transform(centered(plane, 0.0), inplace=False)
+line_bone = line.transform(centered(plane, -angle), inplace=False)
+
+# %%
+# The rotated grid samples along the bone, and the line it was fitted to comes out level.
+
+pl = pv.Plotter(shape=(1, 2))
+panels = [(along_scan, line_scan, 'scan axes'), (along_bone, line_bone, 'bone axis')]
+for index, (image, overlay, label) in enumerate(panels):
+    pl.subplot(0, index)
+    pl.add_mesh(
+        image, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
+    )
+    pl.add_mesh(overlay.translate((0, 0, 1)), color='magenta', line_width=6)
+    pl.add_text(label, font_size=10)
+    pl.view_xy()
+    pl.camera.tight()
+pl.show()
+
+# %%
+# The same rotation applied to a volume rather than a single plane gives a bone-aligned
+# block of the scan, sized so that the reference itself does the cropping. The output is
+# axis-aligned, so :meth:`~pyvista.DataObjectFilters.slice_orthogonal` cuts the bone
+# squarely along all three planes.
+
+volume = pv.ImageData(dimensions=(160, 120, 240), spacing=(1.0, 1.0, 1.0))
+block = ct.reslice(
+    volume, 'linear', transform=centered(volume, -angle), background_value=-1000
+)
+slices = block.slice_orthogonal()
 
 # %%
 # View each plane face-on. ``XZ`` shows the blade with its spine and the glenoid, and
