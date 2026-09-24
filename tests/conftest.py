@@ -209,7 +209,7 @@ def fail_on_vtk_output(request):
     # The traceback of a failure raised here keeps this frame alive, and with it the
     # catcher's own output window, which the leak check would then report instead.
     del catcher
-    if unexpected := [
+    if unexpected := [  # pragma: no cover -- taken only by a test that leaks
         event for event in events if not any(text in event.alert for text in expected)
     ]:
         logged = '\n'.join(str(event) for event in unexpected)
