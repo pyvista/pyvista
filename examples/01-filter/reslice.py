@@ -374,6 +374,11 @@ slices = along_bone.slice_orthogonal()
 # ``XY`` is a cross-section through it. None of these planes cut the bone this way in
 # the axes the scanner produced.
 
+# sphinx_gallery_start_ignore
+# the interactive scene renders a blank panel rather than the three planes
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter(shape=(1, 3), window_size=[1000, 620])
 for index, name in enumerate(['XY', 'XZ', 'YZ']):
     pl.subplot(0, index)
