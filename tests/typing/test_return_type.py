@@ -9,6 +9,7 @@ import pytest
 import pyvista as pv
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.errors import VTKVersionError
+from pyvista.plotting.mapper import _BaseMapper
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -71,6 +72,13 @@ def try_init_object(class_, kwargs):
         if 'abstract' in repr(e):
             pytest.skip('Class is abstract.')
         raise  # pragma: no cover -- failure path
+    if isinstance(instance, _BaseMapper):
+        # A mapper measures its dataset, so it has no bounds or center without one.
+        instance.dataset = (
+            pv.Cube().cast_to_unstructured_grid()
+            if isinstance(instance, pv.UnstructuredGridVolumeRayCastMapper)
+            else pv.Cube()
+        )
     return instance
 
 
@@ -78,10 +86,6 @@ def get_property_return_type(prop: property):
     return prop.fget.__annotations__['return']
 
 
-@pytest.mark.expect_vtk_output(
-    'Input port 0 of algorithm vtkDataSetMapper',
-    reason='an unconnected mapper reports inverted sentinel bounds where it should raise',
-)
 def test_bounds_tuple(class_with_bounds):
     if is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
@@ -106,10 +110,6 @@ def test_bounds_tuple(class_with_bounds):
     assert return_type == 'BoundsTuple'
 
 
-@pytest.mark.expect_vtk_output(
-    'Input port 0 of algorithm vtkDataSetMapper',
-    reason='an unconnected mapper reports inverted sentinel bounds where it should raise',
-)
 def test_bounds_size(class_with_bounds):
     if is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
@@ -136,10 +136,6 @@ def test_bounds_size(class_with_bounds):
     assert return_type == 'tuple[float, float, float]'
 
 
-@pytest.mark.expect_vtk_output(
-    'Input port 0 of algorithm vtkDataSetMapper',
-    reason='an unconnected mapper reports inverted sentinel bounds where it should raise',
-)
 def test_center_tuple(class_with_center):
     if is_vtk_attribute(class_with_center, 'center'):
         pytest.skip('center is defined by vtk, not pyvista.')

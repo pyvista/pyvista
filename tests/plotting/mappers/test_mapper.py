@@ -53,6 +53,22 @@ def test_bounds(dataset_mapper):
     assert dataset_mapper.bounds == (-126.0, 125.0, -127.0, 126.0, -127.0, 127.0)
 
 
+@pytest.mark.parametrize(
+    'mapper_type',
+    [
+        pv.DataSetMapper,
+        pv.PointGaussianMapper,
+        pv.FixedPointVolumeRayCastMapper,
+        pv.CompositePolyDataMapper,
+    ],
+)
+@pytest.mark.parametrize('name', ['bounds', 'center'])
+def test_bounds_and_center_without_a_dataset_raises(mapper_type, name):
+    match = f'This {mapper_type.__name__} has no dataset, so it has no {name}.'
+    with pytest.raises(ValueError, match=match):
+        getattr(mapper_type(), name)
+
+
 def test_lookup_table(dataset_mapper):
     assert isinstance(dataset_mapper.lookup_table, _vtk.vtkLookupTable)
 
