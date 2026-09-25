@@ -2801,6 +2801,18 @@ def test_transform_decompose_dtype(dtype, homogeneous):
     assert np.issubdtype(K.dtype, dtype)
 
 
+@pytest.mark.parametrize('homogeneous', [True, False])
+@pytest.mark.parametrize('dtype', [np.int32, np.int64, np.uint8])
+def test_transform_decompose_integer_dtype(dtype, homogeneous):
+    matrix = np.eye(4, dtype=dtype)
+    matrix[0, 1] = 1
+    decomposed = transformations.decomposition(matrix, homogeneous=homogeneous)
+    assert all(array.dtype == np.float64 for array in decomposed)
+    expected = transformations.decomposition(matrix.astype(float), homogeneous=homogeneous)
+    for actual, desired in zip(decomposed, expected, strict=True):
+        assert np.array_equal(actual, desired)
+
+
 @pytest.mark.parametrize(
     ('representation', 'args', 'expected_type', 'expected_shape'),
     [

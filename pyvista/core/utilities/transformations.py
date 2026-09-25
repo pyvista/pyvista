@@ -485,6 +485,8 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
 
     """
     matrix4x4 = _validation.validate_transform4x4(transformation)
+    if not np.issubdtype(matrix4x4.dtype, np.floating):
+        matrix4x4 = matrix4x4.astype(np.float64)
 
     dtype_out = matrix4x4.dtype
     I3 = np.eye(3, dtype=dtype_out)
