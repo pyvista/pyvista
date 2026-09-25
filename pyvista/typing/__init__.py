@@ -77,7 +77,7 @@ _MOVED_FROM_CORE = frozenset(
 )
 _MOVED_FROM_PLOTTING = frozenset({'CameraPositionOptions', 'Chart', 'ColorLike'})
 
-# Aliases each module used to provide, forwarded from there with a deprecation warning
+# Aliases forwarded from each module with a deprecation warning
 _MOVED_TO_TYPING_NAMESPACE = {
     'pyvista': _MOVED_FROM_CORE | _MOVED_FROM_PLOTTING,
     'pyvista.core': _MOVED_FROM_CORE,
