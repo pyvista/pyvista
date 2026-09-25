@@ -6265,9 +6265,9 @@ class DataObjectFilters:
         Use ``mask_name`` to name it something else; the filter owns that name, so an
         input array called ``'mask'`` is replaced by it.
 
-        The input's active scalars stay active. The binary array becomes the scalars
-        only when no resampled array can, which is to say the input carried nothing but
-        normals, texture coordinates and vectors.
+        Whatever VTK resamples onto the output's scalars stays active. The binary array
+        becomes them when nothing else does, since an image with no scalars plots as its
+        bounding box.
 
         .. versionadded:: 0.50
 
@@ -6567,7 +6567,7 @@ class DataObjectFilters:
             )
             if null_value is not None:
                 _fill_null_values(sampled, null_value, mask_name)
-            return _activate_mask_without_scalars(sampled, mask_name)
+            return sampled
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
             msg = (
                 f'Cell data {dropped} is dropped by `method={chosen!r}`'
@@ -6593,7 +6593,7 @@ class DataObjectFilters:
         )
         if mark_blank:
             _blank_invalid_points(interpolated, mask_name)
-        return _activate_mask_without_scalars(interpolated, mask_name)
+        return interpolated
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
@@ -7240,26 +7240,6 @@ def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -
             f'`{dtype}` data type holds integers from {info.min} to {info.max}.'
         )
         raise ValueError(msg)
-
-
-def _activate_mask_without_scalars(image: ImageData, mask_name: str) -> ImageData:
-    """Give the mask the scalars when the resampling produced none a caller would plot."""
-    if image.active_scalars_name is None and not _has_resampled_scalars(image, mask_name):
-        image.set_active_scalars(mask_name)
-    return image
-
-
-def _has_resampled_scalars(image: ImageData, mask_name: str) -> bool:
-    """Return whether an array a caller would rather plot than the mask was resampled."""
-    data = image.point_data
-    not_scalars = {
-        mask_name,
-        _GHOST_ARRAY,
-        data.active_normals_name,
-        data.active_texture_coordinates_name,
-        data.active_vectors_name,
-    }
-    return bool(set(data.keys()) - not_scalars)
 
 
 def _blank_invalid_points(image: ImageData, mask_name: str) -> ImageData:
