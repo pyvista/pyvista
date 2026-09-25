@@ -15,6 +15,7 @@ from pyvista.core._typing_core import MatrixLike as MatrixLike
 from pyvista.core._typing_core import RotationLike as RotationLike
 from pyvista.core._typing_core import TransformLike as TransformLike
 from pyvista.core._typing_core import VectorLike as VectorLike
+from pyvista.core._typing_core import WrappableType as WrappableType
 
 if TYPE_CHECKING:
     from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions as CameraPositionOptions
     from pyvista.plotting._typing import Chart as Chart
     from pyvista.plotting._typing import ColorLike as ColorLike
+    from pyvista.plotting._typing import PlottableType as PlottableType
 
 __all__ = [
     'ArrayLike',
@@ -35,9 +37,11 @@ __all__ = [
     'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
+    'PlottableType',
     'RotationLike',
     'TransformLike',
     'VectorLike',
+    'WrappableType',
 ]
 
 # Imported on first access, since importing these modules here is circular or loads plotting
@@ -47,7 +51,11 @@ _LAZY_ALIASES = {
     'ColorLike': 'pyvista.plotting._typing',
     'JupyterBackendOptions': 'pyvista.jupyter',
     'MeshValidationFields': 'pyvista.core.filters.data_object',
+    'PlottableType': 'pyvista.plotting._typing',
 }
+
+# Never exported from ``pyvista``, so not forwarded from there
+_NEW_ALIASES = frozenset({'PlottableType', 'WrappableType'})
 
 
 if not TYPE_CHECKING:  # pragma: no branch

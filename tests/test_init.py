@@ -354,9 +354,12 @@ _CORE_TYPE_ALIASES = [
     'VectorLike',
 ]
 _PLOTTING_TYPE_ALIASES = ['CameraPositionOptions', 'Chart', 'ColorLike']
+_NEW_TYPE_ALIASES = ['PlottableType', 'WrappableType']
 _TYPE_ALIAS_SOURCES = {
     **dict.fromkeys(_CORE_TYPE_ALIASES, 'pyvista.core._typing_core'),
+    'WrappableType': 'pyvista.core._typing_core',
     **dict.fromkeys(_PLOTTING_TYPE_ALIASES, 'pyvista.plotting._typing'),
+    'PlottableType': 'pyvista.plotting._typing',
     'JupyterBackendOptions': 'pyvista.jupyter',
     'MeshValidationFields': 'pyvista.core.filters.data_object',
 }
@@ -384,7 +387,7 @@ def test_typing_dir_lists_aliases_before_access():
 @pytest.mark.parametrize(
     ('module', 'name'),
     [
-        *(('pyvista', name) for name in _TYPE_ALIAS_SOURCES),
+        *(('pyvista', name) for name in _TYPE_ALIAS_SOURCES if name not in _NEW_TYPE_ALIASES),
         *(('pyvista.core', name) for name in _CORE_TYPE_ALIASES),
         *(('pyvista.plotting', name) for name in _PLOTTING_TYPE_ALIASES),
     ],

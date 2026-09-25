@@ -42,9 +42,9 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import WrappableType
     from pyvista.core._typing_core import _VolumeArray
     from pyvista.core._typing_core._array_like import _Scalar
-    from pyvista.wrappers import _WrappableVTKDataObjectType
 
 _NORMALS = {
     'x': [1, 0, 0],
@@ -171,13 +171,7 @@ def wrap(dataset: meshio.Mesh, *, validate: bool | None = ...) -> UnstructuredGr
 # ruff: enable[E501]
 # fmt: on
 def wrap(  # noqa: PLR0911
-    dataset: _WrappableVTKDataObjectType
-    | DataObject
-    | trimesh.Trimesh
-    | meshio.Mesh
-    | _vtk.vtkAbstractArray
-    | _VolumeArray
-    | None,
+    dataset: WrappableType,
     *,
     validate: bool | None = None,
 ) -> DataObject | pyvista_ndarray | None:
@@ -202,7 +196,7 @@ def wrap(  # noqa: PLR0911
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | :vtk:`vtkDataSet`
+    dataset : WrappableType
         Dataset to wrap.
 
     validate : bool, optional

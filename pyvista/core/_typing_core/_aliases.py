@@ -19,6 +19,12 @@ from ._array_like import _ArrayLike2D
 from ._array_like import _NumberT
 from ._array_like import _Scalar
 
+if TYPE_CHECKING:
+    import meshio
+    import trimesh
+
+    from pyvista.core.dataobject import DataObject
+
 if TYPE_CHECKING or os.environ.get(
     '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
 ):  # pragma: no cover
@@ -98,3 +104,13 @@ _VolumeArray = NDArray[Union[np.bool_, np.number]]
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
 LineStyle = Literal['', '-', '--', ':', '-.', '-..']
+
+_WrappableType = Union[
+    _vtk.vtkDataObject,
+    'DataObject',
+    _vtk.vtkDataArray,
+    _VolumeArray,
+    'trimesh.Trimesh',
+    'meshio.Mesh',
+]
+WrappableType = Union[_WrappableType, None]
