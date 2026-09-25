@@ -1431,7 +1431,7 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
 
     Parameters
     ----------
-    theme : pyvista.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         The theme to be used.
     emissive : bool, optional
         Whether or not the point should appear emissive. Default is set by the

@@ -8630,7 +8630,7 @@ class DataSetFilters(DataObjectFilters):
         -------
         ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
-            has ``dtype`` :class:`numpy.uint8` if the foreground and background values are
+            has ``dtype`` :obj:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
 
         See Also

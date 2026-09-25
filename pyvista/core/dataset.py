@@ -1279,7 +1279,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        BoundsLike
+        BoundsTuple
             Bounding box of this dataset.
             The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -2329,7 +2329,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
             The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
         Returns
         -------
@@ -2407,7 +2407,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
             The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
         Returns
         -------
@@ -2464,7 +2464,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         tolerance : float, optional
             The absolute tolerance to use to find cells along line.
             The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
         deduplicate_points : bool, default: False
             By default, duplicate intersection points may be returned if an intersection point

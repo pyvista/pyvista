@@ -200,7 +200,7 @@ def wrap(  # noqa: PLR0911
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
+    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | :vtk:`vtkDataSet`
         Dataset to wrap.
 
     validate : bool, optional
