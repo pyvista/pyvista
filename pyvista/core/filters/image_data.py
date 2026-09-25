@@ -3476,10 +3476,11 @@ class ImageDataFilters(DataSetFilters):
             operation_mask=dimensionality, operator=dims_operator, operation_size=1
         )
 
-        # Prepare the new image
+        # Prepare the new image. The half-voxel shift is in index space and must be
+        # rotated by the direction matrix before being applied to the origin.
         new_image.origin = origin_operator(
             self.origin,
-            (np.array(self.spacing) / 2) * dims_mask,
+            self.direction_matrix @ ((np.array(self.spacing) / 2) * dims_mask),
         )
         extent_min = self.extent[::2]
         new_image.extent = (
