@@ -25,7 +25,7 @@ from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
     import meshio
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     import trimesh
 
     from pyvista import DataObject
@@ -157,7 +157,7 @@ def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: .
 def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
 # Misc overloads
 @overload
-def wrap(dataset: npt.NDArray[np.floating], *, validate: bool | None = ...) -> PolyData | ImageData: ...
+def wrap(dataset: NDArray[np.floating], *, validate: bool | None = ...) -> PolyData | ImageData: ...
 @overload
 def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
@@ -175,7 +175,7 @@ def wrap(  # noqa: PLR0911
     | trimesh.Trimesh
     | meshio.Mesh
     | _vtk.vtkAbstractArray
-    | npt.NDArray[np.floating]
+    | NDArray[np.floating]
     | None,
     *,
     validate: bool | None = None,
@@ -398,10 +398,10 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     normal: VectorLike[float] | _NormalsLiteral | None,
     plane: PolyData | None,
     default_normal: _NormalsLiteral,
-) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
+) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
     def _get_origin_and_normal_from_plane(
         plane_: PolyData,
-    ) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
         _validation.check_instance(plane_, pv.PolyData, name='plane')
 
         if (dimensionality := plane_.dimensionality) != 2:
@@ -436,21 +436,21 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
 # fmt: off
 # ruff: disable[E501]
 @overload
-def axis_rotation(points: npt.NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> npt.NDArray[np.floating]: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.floating]: ...
 @overload
-def axis_rotation(points: npt.NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
 @overload
-def axis_rotation(points: npt.NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> npt.NDArray[np.floating] | None: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.floating] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def axis_rotation(
-    points: npt.NDArray[np.floating],
+    points: NDArray[np.floating],
     angle: float,
     *,
     inplace: bool = False,
     deg: bool = True,
     axis: str = 'z',
-) -> npt.NDArray[np.floating] | None:
+) -> NDArray[np.floating] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -537,8 +537,8 @@ def is_inside_bounds(
 
 
 def _is_inside_bounds(
-    point: deque[float | npt.NDArray[_Scalar]],
-    bounds: deque[float | npt.NDArray[_Scalar]],
+    point: deque[float | NDArray[_Scalar]],
+    bounds: deque[float | NDArray[_Scalar]],
 ) -> bool:
     """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:

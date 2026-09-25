@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
@@ -31,6 +31,6 @@ SKIP_RUNTIME = (
 )
 
 
-assert_types(a_plotter().get_image_depth(), npt.NDArray[np.float32])
-assert_types(a_plotter().get_image_depth(fill_value=None), npt.NDArray[np.float32])
-assert_types(a_plotter().image_depth, npt.NDArray[np.float32])
+assert_types(a_plotter().get_image_depth(), NDArray[np.float32])
+assert_types(a_plotter().get_image_depth(fill_value=None), NDArray[np.float32])
+assert_types(a_plotter().image_depth, NDArray[np.float32])

@@ -61,7 +61,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import DataSet
@@ -88,7 +88,7 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
     _RectilinearComponents = tuple[
-        npt.NDArray[np.floating], npt.NDArray[np.floating], npt.NDArray[np.signedinteger]
+        NDArray[np.floating], NDArray[np.floating], NDArray[np.signedinteger]
     ]
 
 
@@ -6521,9 +6521,7 @@ class DataObjectFilters:
         return _blank_invalid_points(interpolated) if mark_blank else interpolated
 
 
-def _convex_hull_scipy(
-    points: npt.NDArray[np.floating], dimensionality: Literal[1, 2, 3]
-) -> PolyData:
+def _convex_hull_scipy(points: NDArray[np.floating], dimensionality: Literal[1, 2, 3]) -> PolyData:
     """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
 
     Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
@@ -6669,7 +6667,7 @@ def _slice_image_along_axis(
     faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
     output = pv.PolyData.from_regular_faces(points, faces)
 
-    def slab(array: npt.NDArray[Any], k: int) -> npt.NDArray[Any]:
+    def slab(array: NDArray[Any], k: int) -> NDArray[Any]:
         # The plane of values at index k along the axis, ordered like the points
         grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
         index: list[Any] = [slice(None)] * 3
@@ -6853,7 +6851,7 @@ def _exclude_string_arrays(
 
 
 def _box_planes(
-    bounds: npt.NDArray[np.floating],
+    bounds: NDArray[np.floating],
 ) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
@@ -6951,7 +6949,7 @@ def _validate_reference_volume_options(
         raise TypeError(msg)
 
 
-def _validate_spacing(spacing: float | VectorLike[float]) -> npt.NDArray[np.float64]:
+def _validate_spacing(spacing: float | VectorLike[float]) -> NDArray[np.float64]:
     """Return a positive, finite spacing broadcast to three axes."""
     return _validation.validate_array3(
         spacing,
@@ -6965,9 +6963,9 @@ def _validate_spacing(spacing: float | VectorLike[float]) -> npt.NDArray[np.floa
 
 
 def _round_dimensions(
-    dimensions: npt.NDArray[np.floating],
+    dimensions: NDArray[np.floating],
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
-) -> npt.NDArray[np.signedinteger]:
+) -> NDArray[np.signedinteger]:
     """Round fractional dimensions to integers, with ``numpy.round`` by default."""
     rounding_func = np.round if rounding_func is None else rounding_func
     return _validation.validate_array3(
@@ -6979,7 +6977,7 @@ def _round_dimensions(
 
 
 def _spacing_for_n_points(
-    size: npt.NDArray[np.floating],
+    size: NDArray[np.floating],
     target_n_points: int,
     name: str = 'target n points',
     *,
@@ -7017,8 +7015,8 @@ def _count_points(dimensions: VectorLike[int], point_offset: int) -> int:
 
 
 def _dimensions_within(
-    size: npt.NDArray[np.floating], max_n_points: int, point_offset: int
-) -> npt.NDArray[np.signedinteger]:
+    size: NDArray[np.floating], max_n_points: int, point_offset: int
+) -> NDArray[np.signedinteger]:
     """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
     spacing = _spacing_for_n_points(
         size, max_n_points, name='max n points', point_offset=point_offset
@@ -7398,7 +7396,7 @@ class _Crinkler:
 
     @staticmethod
     def _extract_cells(
-        dataset: DataSet, ids: npt.NDArray[np.bool_], active_scalars_info_: Any
+        dataset: DataSet, ids: NDArray[np.bool_], active_scalars_info_: Any
     ) -> DataSet:
         """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
@@ -7415,7 +7413,7 @@ class _Crinkler:
     ) -> Any:
         """Extract crinkled cells from the clip output."""
 
-        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> npt.NDArray[np.bool_]:
+        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> NDArray[np.bool_]:
             # Optimization: mark the ids in a boolean array instead of collecting them in
             # Python sets, whose construction dominated the crinkle clip for large meshes
             mask = np.zeros(block_.n_cells, dtype=bool)

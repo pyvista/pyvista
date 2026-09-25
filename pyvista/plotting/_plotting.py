@@ -23,7 +23,7 @@ from .utilities.algorithms import SmoothShadingAlgorithm
 if TYPE_CHECKING:
     from typing import Literal
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataobject import DataObject
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 
 def _resolve_scalars_field(
-    scalars: npt.NDArray[np.floating],
+    scalars: NDArray[np.floating],
     mesh: DataSet,
     preference: PointLiteral | CellLiteral,
 ) -> PointLiteral | CellLiteral:
@@ -94,10 +94,10 @@ def _resolve_scalars_field(
 
 
 def reduce_component_scalars(
-    scalars: npt.NDArray[Any],
+    scalars: NDArray[Any],
     scalars_name: str,
     component: int | None,
-) -> tuple[npt.NDArray[Any], str]:
+) -> tuple[NDArray[Any], str]:
     """Reduce a 2D scalar array to 1D by magnitude or component index.
 
     Produces the derived array and synthesized name (``{name}-normed`` for
@@ -152,7 +152,7 @@ def reduce_component_scalars(
 
 def _stamp_raw_numpy_scalars(  # noqa: PLR0917
     mesh: DataSet,
-    scalars: npt.NDArray[np.floating],
+    scalars: NDArray[np.floating],
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[str, PointLiteral | CellLiteral]:
@@ -200,11 +200,11 @@ def _stamp_raw_numpy_scalars(  # noqa: PLR0917
 
 def _reduce_multicomponent_scalars_on_mesh(  # noqa: PLR0917
     mesh: DataSet,
-    scalars: npt.NDArray[np.floating],
+    scalars: NDArray[np.floating],
     scalars_name: str,
     component: int | None,
     preference: PointLiteral | CellLiteral,
-) -> tuple[npt.NDArray[np.floating], str, PointLiteral | CellLiteral]:
+) -> tuple[NDArray[np.floating], str, PointLiteral | CellLiteral]:
     """Reduce 2D scalars to 1D and stamp the derived array on ``mesh``.
 
     Smooth-shading pre-processing cannot defer this reduction to
@@ -261,11 +261,11 @@ def _reduce_multicomponent_scalars_on_mesh(  # noqa: PLR0917
 
 def _remap_scalars_through_topology_change(  # noqa: PLR0917
     mesh: DataSet,
-    scalars: npt.NDArray[np.floating],
+    scalars: NDArray[np.floating],
     original_scalar_name: str | None,
     preference: PointLiteral | CellLiteral,
     input_n_points: int,
-) -> npt.NDArray[np.floating]:
+) -> NDArray[np.floating]:
     """Re-resolve ``scalars`` after smooth shading changes topology.
 
     Surface extraction and/or sharp-edge splitting may drop cells or
@@ -339,9 +339,9 @@ def process_opacity(
     opacity: float | OpacityOptions | str | VectorLike[float] | None,
     preference: PointLiteral | CellLiteral,
     n_colors: int,
-    scalars: npt.NDArray[np.floating] | None,
+    scalars: NDArray[np.floating] | None,
     use_transparency: bool,
-) -> tuple[bool, float | npt.NDArray[Any] | None]:
+) -> tuple[bool, float | NDArray[Any] | None]:
     """Process opacity.
 
     This function accepts an opacity string or array and always
@@ -385,7 +385,7 @@ def process_opacity(
 
     """
     custom_opac = False
-    values: float | npt.NDArray[Any] | None
+    values: float | NDArray[Any] | None
     if isinstance(opacity, str):
         # Get array from mesh
         array = get_array(mesh, opacity, preference=preference)
@@ -439,7 +439,7 @@ def _common_arg_parser(
     name: str | None,
     nan_color: ColorLike | None,
     nan_opacity: float,
-    texture: Texture | npt.NDArray[np.floating] | Literal[False] | None,
+    texture: Texture | NDArray[np.floating] | Literal[False] | None,
     rgb: bool | None,
     style: StyleOptions | None,
     remove_existing_actor: bool | None = None,
@@ -457,7 +457,7 @@ def _common_arg_parser(
     CullingOptions | bool | None,
     str,
     Color,
-    Texture | npt.NDArray[np.floating] | None,
+    Texture | NDArray[np.floating] | None,
     bool | None,
     InterpolationType,
     bool,

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 from tests.typing.meshes import poly
 
-assert_types(poly().find_cells_within_bounds(poly().bounds), npt.NDArray[np.intp])
+assert_types(poly().find_cells_within_bounds(poly().bounds), NDArray[np.intp])

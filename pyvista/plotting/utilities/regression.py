@@ -16,12 +16,12 @@ from pyvista import _vtk
 from pyvista.core.utilities.arrays import point_array
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista import ImageData
     from pyvista import Plotter
 
-    _Pixels: TypeAlias = npt.NDArray[np.uint8] | npt.NDArray[np.float32]
+    _Pixels: TypeAlias = NDArray[np.uint8] | NDArray[np.float32]
 
     ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
@@ -48,7 +48,7 @@ def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
     return pv.wrap(vtk_image)
 
 
-def wrap_image_array(arr: npt.NDArray[np.uint8]) -> ImageData:
+def wrap_image_array(arr: NDArray[np.uint8]) -> ImageData:
     """Wrap a NumPy array as a ``pyvista.ImageData``.
 
     Parameters
@@ -130,11 +130,11 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> _Pixels:
 # fmt: off
 # ruff: disable[E501]
 @overload
-def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[False] = False, ignore_alpha: bool = ..., scale: int = ...) -> npt.NDArray[np.uint8]: ...
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[False] = False, ignore_alpha: bool = ..., scale: int = ...) -> NDArray[np.uint8]: ...
 @overload
 def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[True], ignore_alpha: bool = ..., scale: int = ...) -> ImageData: ...
 @overload
-def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: bool = ..., ignore_alpha: bool = ..., scale: int = ...) -> npt.NDArray[np.uint8] | ImageData: ...
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: bool = ..., ignore_alpha: bool = ..., scale: int = ...) -> NDArray[np.uint8] | ImageData: ...
 # ruff: enable[E501]
 # fmt: on
 def image_from_window(
@@ -143,7 +143,7 @@ def image_from_window(
     as_vtk: bool = False,
     ignore_alpha: bool = False,
     scale: int = 1,
-) -> npt.NDArray[np.uint8] | ImageData:
+) -> NDArray[np.uint8] | ImageData:
     """Extract the image from the render window as an array.
 
     Parameters
@@ -191,7 +191,7 @@ def image_from_window(
     # anti-aliased edge pixel, by enough to fail image regression.  Reported upstream at
     # https://gitlab.kitware.com/vtk/vtk/-/work_items/20138
     imfilter.ReadFrontBufferOn()
-    data = cast('npt.NDArray[np.uint8]', run_image_filter(imfilter))
+    data = cast('NDArray[np.uint8]', run_image_filter(imfilter))
     if off:
         # Critical for Trame and other offscreen tools
         render_window.GetInteractor().EnableRenderOff()

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 from pyvista import _vtk
@@ -18,4 +18,4 @@ def an_id_list() -> _vtk.vtkIdList:
     return ids
 
 
-assert_types(vtk_id_list_to_array(an_id_list()), npt.NDArray[np.intp])
+assert_types(vtk_id_list_to_array(an_id_list()), NDArray[np.intp])

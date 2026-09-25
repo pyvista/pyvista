@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     import pandas
     import pyarrow
 
@@ -95,7 +95,7 @@ class Table(DataObject, _vtk.vtkTable):
                 raise TypeError(msg)
 
     @staticmethod
-    def _prepare_arrays(arrays: MatrixLike[float] | VectorLike[float]) -> npt.NDArray[_Scalar]:
+    def _prepare_arrays(arrays: MatrixLike[float] | VectorLike[float]) -> NDArray[_Scalar]:
         arrays = np.asarray(arrays)
         if arrays.ndim == 1:
             return np.reshape(arrays, (1, -1))
@@ -241,7 +241,7 @@ class Table(DataObject, _vtk.vtkTable):
         self,
         data: (
             DataSetAttributes
-            | dict[str, npt.NDArray[np.floating]]
+            | dict[str, NDArray[np.floating]]
             | MatrixLike[float]
             | VectorLike[float]
         ),
@@ -254,7 +254,7 @@ class Table(DataObject, _vtk.vtkTable):
             Other dataset attributes, mapping, or array data to update from.
 
         """
-        arrays: DataSetAttributes | dict[str, npt.NDArray[np.floating]]
+        arrays: DataSetAttributes | dict[str, NDArray[np.floating]]
         if isinstance(data, (DataSetAttributes, dict)):
             arrays = data
         else:

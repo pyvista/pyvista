@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import TypeAlias
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -1898,7 +1898,7 @@ class Color(_NoNewAttrMixin):
             msg = f'Unsupported color channel value provided: {val}'
             raise ValueError(msg)
 
-    def _from_rgba(self, rgba: Sequence[_ColorChannel] | npt.NDArray[Any]) -> None:
+    def _from_rgba(self, rgba: Sequence[_ColorChannel] | NDArray[Any]) -> None:
         """Construct color from an RGB(A) sequence."""
         arg = rgba
         if len(rgba) == 3:

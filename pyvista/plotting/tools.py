@@ -23,7 +23,7 @@ from pyvista.core.errors import DeprecationError
 from .colors import Color
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista.core._typing_core import VectorLike
 
@@ -635,10 +635,10 @@ def create_north_arrow() -> pv.PolyData:
 
 
 def normalize(
-    x: npt.NDArray[Any],
+    x: NDArray[Any],
     minimum: float | None = None,
     maximum: float | None = None,
-) -> npt.NDArray[np.floating]:
+) -> NDArray[np.floating]:
     """Normalize the given values to the range ``[0, 1]``.
 
     Parameters
@@ -663,14 +663,14 @@ def normalize(
     return (x - low) / (high - low)
 
 
-def _opacity_transfer_functions(n_colors: int) -> dict[str, npt.NDArray[np.uint8]]:
+def _opacity_transfer_functions(n_colors: int) -> dict[str, NDArray[np.uint8]]:
     """Return every named opacity mapping, each ``n_colors`` values long."""
 
-    def sigmoid(x: npt.NDArray[np.floating]) -> npt.NDArray[np.uint8]:  # numpydoc ignore=PR01,RT01
+    def sigmoid(x: NDArray[np.floating]) -> NDArray[np.uint8]:  # numpydoc ignore=PR01,RT01
         """Map ``x`` onto the [0, 255] opacity range with a logistic curve."""
         return np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
 
-    transfer_func: dict[str, npt.NDArray[np.uint8]] = {
+    transfer_func: dict[str, NDArray[np.uint8]] = {
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
@@ -703,7 +703,7 @@ def opacity_transfer_function(
     *,
     interpolate: bool = True,
     kind: str = 'linear',
-) -> npt.NDArray[np.uint8]:
+) -> NDArray[np.uint8]:
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of

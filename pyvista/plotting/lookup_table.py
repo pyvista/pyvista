@@ -23,7 +23,7 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista.core._typing_core import MatrixLike
@@ -65,7 +65,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
         obj.__dict__.update(VTKObject=array, table=table_ref)
         return obj
 
-    def __array_finalize__(self, obj: npt.NDArray[Any] | None) -> None:
+    def __array_finalize__(self, obj: NDArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
         # Views and slices keep their parent's metadata; copies and ufunc results do not
         if isinstance(obj, lookup_table_ndarray) and np.may_share_memory(self, obj):
@@ -91,7 +91,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
 
     def __array_wrap__(
         self,
-        out_arr: npt.NDArray[Any],
+        out_arr: NDArray[Any],
         context: tuple[Any, ...] | None = None,
         return_scalar: bool = False,  # noqa: FBT001, FBT002
     ) -> Any:
@@ -1236,16 +1236,14 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return (*rgb, self.GetOpacity(value)) if opacity else rgb
 
     # fmt: off
-    # ruff: disable[E501]
     @overload
     def __call__(self, value: float) -> tuple[float, float, float, float]: ...
     @overload
-    def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> npt.NDArray[np.float64]: ...
-    # ruff: enable[E501]
+    def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> NDArray[np.float64]: ...
     # fmt: on
     def __call__(
         self, value: float | VectorLike[float] | _vtk.vtkDataArray
-    ) -> tuple[float, float, float, float] | npt.NDArray[np.float64]:
+    ) -> tuple[float, float, float, float] | NDArray[np.float64]:
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)

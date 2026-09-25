@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
@@ -37,10 +37,10 @@ def a_flag() -> bool:
     return True
 
 
-assert_types(a_plotter().screenshot(), npt.NDArray[np.uint8])
-assert_types(a_plotter().screenshot(return_img=True), npt.NDArray[np.uint8])
+assert_types(a_plotter().screenshot(), NDArray[np.uint8])
+assert_types(a_plotter().screenshot(return_img=True), NDArray[np.uint8])
 
 assert_types(a_plotter().screenshot(return_img=False), None)
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(a_plotter().screenshot(return_img=a_flag()), npt.NDArray[np.uint8] | None)
+assert_types(a_plotter().screenshot(return_img=a_flag()), NDArray[np.uint8] | None)

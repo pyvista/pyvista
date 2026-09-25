@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
 
-_Cell = int | npt.NDArray[np.signedinteger]
-_CellAndPoint = tuple[int | npt.NDArray[np.signedinteger], npt.NDArray[np.float64]]
+_Cell = int | NDArray[np.signedinteger]
+_CellAndPoint = tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]
 
 
 def a_flag() -> bool:
@@ -18,7 +18,7 @@ def a_flag() -> bool:
 
 
 SKIP_RUNTIME = {
-    'pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)])': 'the runtime checker does not accept an int64 array as `npt.NDArray[np.signedinteger]`',
+    'pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)])': 'the runtime checker does not accept an int64 array as `NDArray[np.signedinteger]`',
 }
 
 assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0)), _Cell)
