@@ -3628,7 +3628,11 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_mesh(
         self,
-        mesh: MatrixLike[float] | PlottableType | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
+        mesh: MatrixLike[float]
+        | VectorLike[float]
+        | PlottableType
+        | _vtk.vtkAlgorithm
+        | _vtk.vtkAlgorithmOutput,
         *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,

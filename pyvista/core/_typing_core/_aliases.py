@@ -20,7 +20,10 @@ if TYPE_CHECKING:
     import meshio
     import trimesh
 
+    from pyvista.core.composite import MultiBlock
     from pyvista.core.dataobject import DataObject
+    from pyvista.core.dataset import DataSet
+    from pyvista.core.partitioned import PartitionedDataSet
 
 if TYPE_CHECKING or os.environ.get(
     '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
@@ -98,12 +101,16 @@ InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.
 
 LineStyle = Literal['', '-', '--', ':', '-.', '-..']
 
-_WrappableType = Union[
-    _vtk.vtkDataObject,
-    'DataObject',
-    _vtk.vtkDataArray,
+# Objects that wrap to a DataSet, MultiBlock or PartitionedDataSet
+_MeshTypes = Union[
+    _vtk.vtkDataSet,
+    _vtk.vtkMultiBlockDataSet,
+    _vtk.vtkPartitionedDataSet,
+    'DataSet',
+    'MultiBlock',
+    'PartitionedDataSet',
     NumpyArray[float],
     'trimesh.Trimesh',
     'meshio.Mesh',
 ]
-WrappableType = Union[_WrappableType, None]
+WrappableType = Union[_MeshTypes, _vtk.vtkDataObject, 'DataObject', _vtk.vtkDataArray, None]

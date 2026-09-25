@@ -587,6 +587,7 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/add_floor.py',
         'typing/cases/plotting/add_legend.py',
         'typing/cases/plotting/add_legend_scale.py',
+        'typing/cases/plotting/add_mesh.py',
         'typing/cases/plotting/add_north_arrow_widget.py',
         'typing/cases/plotting/add_orientation_widget.py',
         'typing/cases/plotting/add_ruler.py',
