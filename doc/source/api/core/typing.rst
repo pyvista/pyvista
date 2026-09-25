@@ -71,8 +71,8 @@ pyvista.typing.WrappableType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Object accepted by :func:`~pyvista.wrap`.
 
-Includes PyVista and VTK data objects, VTK data arrays, NumPy arrays, ``trimesh``
-meshes, ``meshio`` meshes, and ``None``.
+Includes PyVista and VTK data objects, VTK data arrays, NumPy arrays, sequences of
+points, ``trimesh`` meshes, ``meshio`` meshes, and ``None``.
 
 .. currentmodule:: pyvista.typing
 
@@ -189,7 +189,8 @@ pyvista.typing.PlottableType
 Object accepted by :func:`~pyvista.plot` or :meth:`~pyvista.Plotter.add_mesh`.
 
 Includes PyVista and VTK datasets and composite datasets, ``trimesh`` and ``meshio``
-meshes, NumPy arrays of points or of volume values, and the path of a mesh file.
+meshes, NumPy arrays of points or of volume values, sequences of points, and the path of
+a mesh file.
 
 .. currentmodule:: pyvista.typing
 

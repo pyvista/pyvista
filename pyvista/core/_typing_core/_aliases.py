@@ -110,6 +110,8 @@ _MeshLike = Union[
     'MultiBlock',
     'PartitionedDataSet',
     NumpyArray[float],
+    VectorLike[float],
+    MatrixLike[float],
     'trimesh.Trimesh',
     'meshio.Mesh',
 ]
