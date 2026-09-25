@@ -53,8 +53,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core.utilities.arrays import CellLiteral
-    from pyvista.core.utilities.arrays import PointLiteral
 
 _InterpolationOptions = Literal[
     'nearest',
