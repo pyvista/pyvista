@@ -366,7 +366,7 @@ class RenderPasses(_NoNewAttrMixin):
         """Add a render pass."""
         class_name = render_pass.GetClassName()
 
-        if class_name in PRE_PASS and render_pass in self._passes:
+        if class_name in PRE_PASS and render_pass in self._passes.get(class_name, []):
             return
 
         if class_name not in self._passes:
