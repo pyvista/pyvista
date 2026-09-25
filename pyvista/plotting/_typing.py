@@ -19,14 +19,11 @@ from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
+from pyvista.core._typing_core import _WrappableType
 
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
-    import meshio
-    import trimesh
-
-    from pyvista.core.dataobject import DataObject
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -39,17 +36,6 @@ if TYPE_CHECKING:
     from .colors import _COLORCET_CMAPS_LITERAL
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
-
-_WrappableType: TypeAlias = Union[
-    _vtk.vtkDataObject,
-    'DataObject',
-    _vtk.vtkAbstractArray,
-    NumpyArray[float],
-    'trimesh.Trimesh',
-    'meshio.Mesh',
-]
-
-WrappableType: TypeAlias = _WrappableType | None
 
 PlottableType: TypeAlias = ArrayLike[float] | _WrappableType | str | Path
 

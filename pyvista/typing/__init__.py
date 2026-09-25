@@ -17,6 +17,7 @@ from pyvista.core._typing_core import NumberType as NumberType
 from pyvista.core._typing_core import RotationLike as RotationLike
 from pyvista.core._typing_core import TransformLike as TransformLike
 from pyvista.core._typing_core import VectorLike as VectorLike
+from pyvista.core._typing_core import WrappableType as WrappableType
 
 if TYPE_CHECKING:
     from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
@@ -25,7 +26,6 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import Chart as Chart
     from pyvista.plotting._typing import ColorLike as ColorLike
     from pyvista.plotting._typing import PlottableType as PlottableType
-    from pyvista.plotting._typing import WrappableType as WrappableType
 
 __all__ = [
     'ArrayLike',
@@ -56,7 +56,6 @@ _LAZY_ALIASES = {
     'JupyterBackendOptions': 'pyvista.jupyter',
     'MeshValidationFields': 'pyvista.core.filters.data_object',
     'PlottableType': 'pyvista.plotting._typing',
-    'WrappableType': 'pyvista.plotting._typing',
 }
 
 # Never exported from ``pyvista``, so not forwarded from there

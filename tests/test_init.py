@@ -359,8 +359,9 @@ _PLOTTING_TYPE_ALIASES = ['CameraPositionOptions', 'Chart', 'ColorLike']
 _NEW_TYPE_ALIASES = ['PlottableType', 'WrappableType']
 _TYPE_ALIAS_SOURCES = {
     **dict.fromkeys(_CORE_TYPE_ALIASES, 'pyvista.core._typing_core'),
+    'WrappableType': 'pyvista.core._typing_core',
     **dict.fromkeys(_PLOTTING_TYPE_ALIASES, 'pyvista.plotting._typing'),
-    **dict.fromkeys(_NEW_TYPE_ALIASES, 'pyvista.plotting._typing'),
+    'PlottableType': 'pyvista.plotting._typing',
     'JupyterBackendOptions': 'pyvista.jupyter',
     'MeshValidationFields': 'pyvista.core.filters.data_object',
 }
