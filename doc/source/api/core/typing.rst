@@ -67,6 +67,17 @@ Includes sequences and numpy arrays.
 VTK Related Types
 -----------------
 
+pyvista.typing.WrappableType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Object accepted by :func:`pyvista.wrap`.
+
+Includes PyVista and VTK data objects, NumPy arrays, ``trimesh`` meshes,
+``meshio`` meshes, and ``None``.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: WrappableType
+
 pyvista.BoundsTuple
 ~~~~~~~~~~~~~~~~~~~
 
@@ -172,17 +183,6 @@ or :class:`~pyvista.ChartMPL`, as accepted by :meth:`~pyvista.Plotter.add_chart`
 
 .. autodata:: Chart
    :no-value:
-
-pyvista.typing.WrappableType
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Object accepted by :func:`pyvista.wrap`.
-
-Includes PyVista and VTK data objects, NumPy arrays, ``trimesh`` meshes,
-``meshio`` meshes, and ``None``.
-
-.. currentmodule:: pyvista.typing
-
-.. autodata:: WrappableType
 
 pyvista.typing.PlottableType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
