@@ -342,6 +342,7 @@ def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     assert e.value.code == 1
 
 
+@pytest.mark.skip_vtk_output_check
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     # Create a dummy .vtp file with empty contents
@@ -1625,6 +1626,7 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
         assert error in err, err
 
 
+@pytest.mark.skip_vtk_output_check
 @pytest.mark.needs_vtk_version(9, 4, reason='workers crash older vtk')
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_skip_unreadable_hint(
@@ -1852,6 +1854,7 @@ def test_convert_resolve_collisions_counter_increment(
     assert 'ant.vtp → ant_2.pv' in err, err
 
 
+@pytest.mark.skip_vtk_output_check
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """A single unreadable file with --skip-unreadable announces the skip and does not save."""
@@ -1864,6 +1867,7 @@ def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.Ca
     assert not (tmp_example_dir / 'bad.pv').exists()
 
 
+@pytest.mark.skip_vtk_output_check
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """Unreadable files are skipped and reported after the summary; all-skipped -> 0 saved."""
@@ -1934,6 +1938,7 @@ def test_validate_multiple_files_single_mesh_invalid(
     assert '1 invalid mesh out of 1 mesh validated.' in err, err
 
 
+@pytest.mark.skip_vtk_output_check
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_validate_skip_unreadable(
     tmp_example_dir: Path,

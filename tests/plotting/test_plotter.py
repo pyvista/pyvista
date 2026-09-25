@@ -423,7 +423,7 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), _vtk.vtkAlgorithm()
+    m.return_value = pv.PolyData(), _vtk.vtkSphereSource()
 
     pl = pv.Plotter()
     match = re.escape(
