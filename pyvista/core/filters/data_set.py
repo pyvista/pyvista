@@ -34,6 +34,7 @@ from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import _DEFAULT_MASK_NAME
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _clip_input
@@ -41,6 +42,7 @@ from pyvista.core.filters.data_object import _clip_output
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _make_reference_volume
 from pyvista.core.filters.data_object import _remove_unused_points_post_clip
+from pyvista.core.filters.data_object import _rename_valid_point_mask
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.filters.data_object import _validate_reference_volume_options
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -3505,6 +3507,7 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         progress_bar: bool = False,
+        mask_name: str = _DEFAULT_MASK_NAME,
     ) -> _DataSetType:
         """Interpolate values onto this mesh from a given dataset.
 
@@ -3517,6 +3520,11 @@ class DataSetFilters(DataObjectFilters):
         This uses a Gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel. You can also switch this
         kernel to use an N closest points approach.
+
+        .. versionchanged:: 0.50
+            The array ``strategy='mask_points'`` adds was named
+            ``'vtkValidPointMask'`` and stored as ``int8``. Pass
+            ``mask_name='vtkValidPointMask'`` to restore both.
 
         If the cell topology is more useful for interpolating, for example, from a
         discretized FEM or CFD simulation, use
@@ -3542,9 +3550,10 @@ class DataSetFilters(DataObjectFilters):
             Specify a strategy to use when encountering a "null" point during
             the interpolation process. Null points occur when the local
             neighborhood (of nearby points to interpolate from) is empty. If
-            the strategy is set to ``'mask_points'``, then an output array is
-            created that marks points as being valid (=1) or null (invalid =0)
-            (and the NullValue is set as well). If the strategy is set to
+            the strategy is set to ``'mask_points'``, then a binary ``uint8`` array
+            named by ``mask_name`` is added to the output, marking points as being
+            valid (=1) or null (invalid =0) (and the NullValue is set as well). If
+            the strategy is set to
             ``'null_value'``, then the output data values are set to the
             ``null_value`` (specified in the output point data). Finally, the
             strategy ``'closest_point'`` is to simply use the closest point to
@@ -3568,6 +3577,14 @@ class DataSetFilters(DataObjectFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        mask_name : str, default: 'mask'
+            Name of the binary point array ``strategy='mask_points'`` creates. Any array
+            of that name on the input or the target is replaced by it. Interpolating
+            onto :class:`~pyvista.ImageData` makes it the output's scalars when nothing
+            else is, since an image with no scalars plots as its bounding box.
+
+            .. versionadded:: 0.50
 
         Returns
         -------
@@ -3671,7 +3688,8 @@ class DataSetFilters(DataObjectFilters):
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar=progress_bar, message='Interpolating')
-        return _as_input_class(_get_output(interpolator), self)
+        output = _rename_valid_point_mask(_get_output(interpolator), mask_name)
+        return _as_input_class(output, self)
 
     # fmt: off
     # ruff: disable[E501]
