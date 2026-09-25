@@ -50,14 +50,12 @@ from pyvista.core.utilities.fileio import get_ext
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
 # Annotations only (never resolved at runtime), so keep these out of the runtime
 # namespace: ``pv.Texture`` would eagerly import rendering and break core-only builds.
 if TYPE_CHECKING:
-    DatasetObject = (
-        pv.DataSet | pv.Texture | npt.NDArray[Any] | pv.MultiBlock | pv.PartitionedDataSet
-    )
+    DatasetObject = pv.DataSet | pv.Texture | NDArray[Any] | pv.MultiBlock | pv.PartitionedDataSet
     DatasetType = type[DatasetObject]
 
 

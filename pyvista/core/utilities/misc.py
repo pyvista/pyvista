@@ -31,7 +31,7 @@ from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import VectorLike
@@ -664,7 +664,7 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
 def _reciprocal(
     x: ArrayLike[float], tol: float = 1e-8, value_if_division_by_zero: float = 0.0
-) -> npt.NDArray[float]:
+) -> NDArray[float]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
     The reciprocal of elements with an absolute value less than a

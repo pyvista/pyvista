@@ -61,7 +61,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import DataSet
@@ -91,7 +91,7 @@ if TYPE_CHECKING:
 
 def _rectilinear_transform_components(
     transform: Transform,
-) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[int]]:
+) -> tuple[NDArray[float], NDArray[float], NDArray[int]]:
     """Return the translation, scale and axis order of a transform a grid can represent."""
     # Follow similar decomposition performed by ImageData.index_to_physical_matrix
     T, R, N, S, K = transform.decompose()
@@ -193,7 +193,7 @@ def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Tr
 def _transform_rectilinear_axes(
     output: RectilinearGrid,
     dataset: RectilinearGrid,
-    components: tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[int]],
+    components: tuple[NDArray[float], NDArray[float], NDArray[int]],
 ) -> None:
     """Set a grid's axes to another's, permuted, scaled and translated."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
@@ -213,7 +213,7 @@ def _transform_rectilinear_axes(
 def _permute_rectilinear_arrays(
     output: RectilinearGrid,
     dimensions: tuple[int, int, int],
-    components: tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[int]],
+    components: tuple[NDArray[float], NDArray[float], NDArray[int]],
 ) -> None:
     """Reorder a grid's arrays to match the permutation and reversal of its axes."""
     _, scale, axes = components
@@ -2275,7 +2275,7 @@ class DataObjectFilters:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             elif isinstance(output, pv.RectilinearGrid):
                 components = cast(
-                    'tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[int]]',
+                    'tuple[NDArray[float], NDArray[float], NDArray[int]]',
                     rectilinear_components,
                 )
                 dataset = cast('pv.RectilinearGrid', self)
@@ -6518,7 +6518,7 @@ class DataObjectFilters:
         return _blank_invalid_points(interpolated) if mark_blank else interpolated
 
 
-def _convex_hull_scipy(points: npt.NDArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
+def _convex_hull_scipy(points: NDArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
     """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
 
     Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
@@ -6664,7 +6664,7 @@ def _slice_image_along_axis(
     faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
     output = pv.PolyData.from_regular_faces(points, faces)
 
-    def slab(array: npt.NDArray[Any], k: int) -> npt.NDArray[Any]:
+    def slab(array: NDArray[Any], k: int) -> NDArray[Any]:
         # The plane of values at index k along the axis, ordered like the points
         grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
         index: list[Any] = [slice(None)] * 3
@@ -6847,7 +6847,7 @@ def _exclude_string_arrays(
     return filtered
 
 
-def _box_planes(bounds: npt.NDArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
+def _box_planes(bounds: NDArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
@@ -6944,7 +6944,7 @@ def _validate_reference_volume_options(
         raise TypeError(msg)
 
 
-def _validate_spacing(spacing: float | VectorLike[float]) -> npt.NDArray[float]:
+def _validate_spacing(spacing: float | VectorLike[float]) -> NDArray[float]:
     """Return a positive, finite spacing broadcast to three axes."""
     return _validation.validate_array3(
         spacing,
@@ -6958,9 +6958,9 @@ def _validate_spacing(spacing: float | VectorLike[float]) -> npt.NDArray[float]:
 
 
 def _round_dimensions(
-    dimensions: npt.NDArray[float],
+    dimensions: NDArray[float],
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
-) -> npt.NDArray[int]:
+) -> NDArray[int]:
     """Round fractional dimensions to integers, with ``numpy.round`` by default."""
     rounding_func = np.round if rounding_func is None else rounding_func
     return _validation.validate_array3(
@@ -6972,7 +6972,7 @@ def _round_dimensions(
 
 
 def _spacing_for_n_points(
-    size: npt.NDArray[float],
+    size: NDArray[float],
     target_n_points: int,
     name: str = 'target n points',
     *,
@@ -7009,9 +7009,7 @@ def _count_points(dimensions: VectorLike[int], point_offset: int) -> int:
     return math.prod(int(d) + point_offset for d in dimensions)
 
 
-def _dimensions_within(
-    size: npt.NDArray[float], max_n_points: int, point_offset: int
-) -> npt.NDArray[int]:
+def _dimensions_within(size: NDArray[float], max_n_points: int, point_offset: int) -> NDArray[int]:
     """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
     spacing = _spacing_for_n_points(
         size, max_n_points, name='max n points', point_offset=point_offset
@@ -7390,9 +7388,7 @@ class _Crinkler:
     ITER_KWARGS: ClassVar = dict(skip_none=True)
 
     @staticmethod
-    def _extract_cells(
-        dataset: DataSet, ids: npt.NDArray[bool], active_scalars_info_: Any
-    ) -> DataSet:
+    def _extract_cells(dataset: DataSet, ids: NDArray[bool], active_scalars_info_: Any) -> DataSet:
         """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
         association, name = active_scalars_info_
@@ -7408,7 +7404,7 @@ class _Crinkler:
     ) -> Any:
         """Extract crinkled cells from the clip output."""
 
-        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> npt.NDArray[bool]:
+        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> NDArray[bool]:
             # Optimization: mark the ids in a boolean array instead of collecting them in
             # Python sets, whose construction dominated the crinkle clip for large meshes
             mask = np.zeros(block_.n_cells, dtype=bool)

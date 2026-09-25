@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
 
+    from numpy.typing import NDArray
     import pandas
     import pyarrow
     from typing_extensions import Self
@@ -378,7 +379,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> npt.NDArray[float] | None:
+    def active_vectors(self: Self) -> NDArray[float] | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
@@ -1022,7 +1023,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """
         return [self.get_array(name) for name in self.keys()]
 
-    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, npt.NDArray[Any]]]:
+    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, NDArray[Any]]]:
         """Yield ``(column_name, 1d_ndarray)`` pairs with multi-component arrays expanded.
 
         Shared helper for :meth:`to_arrow`, :meth:`to_pandas`, and
@@ -1041,7 +1042,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             raise ValueError(msg)
         seen: set[str] = set()
 
-        def _emit(col_name: str, values: npt.NDArray[Any]) -> tuple[str, npt.NDArray[Any]]:
+        def _emit(col_name: str, values: NDArray[Any]) -> tuple[str, NDArray[Any]]:
             if col_name in seen:
                 msg = (
                     f'Column name collision on {col_name!r}: multiple arrays would map '
@@ -1647,7 +1648,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: npt.NDArray[float],
+        texture_coordinates: NDArray[float],
     ) -> None:
         """Set the active texture coordinates array.
 

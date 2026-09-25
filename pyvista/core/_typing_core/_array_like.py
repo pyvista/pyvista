@@ -28,7 +28,7 @@ from typing import TypeVar
 from typing import Union
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 
 _NumberT = TypeVar(
     '_NumberT',
@@ -36,7 +36,7 @@ _NumberT = TypeVar(
 )
 
 # Forwarded as the deprecated `pyvista.NumpyArray`
-NumpyArray = npt.NDArray[_NumberT]
+NumpyArray = NDArray[_NumberT]
 
 _FiniteNestedList = (
     list[_NumberT]
@@ -52,24 +52,24 @@ _FiniteNestedTuple = (
 )
 
 _ArrayLike1D = Union[
-    npt.NDArray[_NumberT],
+    NDArray[_NumberT],
     Sequence[_NumberT],
-    Sequence[npt.NDArray[_NumberT]],
+    Sequence[NDArray[_NumberT]],
 ]
 _ArrayLike2D = Union[
-    npt.NDArray[_NumberT],
+    NDArray[_NumberT],
     Sequence[Sequence[_NumberT]],
-    Sequence[Sequence[npt.NDArray[_NumberT]]],
+    Sequence[Sequence[NDArray[_NumberT]]],
 ]
 _ArrayLike3D = Union[
-    npt.NDArray[_NumberT],
+    NDArray[_NumberT],
     Sequence[Sequence[Sequence[_NumberT]]],
-    Sequence[Sequence[Sequence[npt.NDArray[_NumberT]]]],
+    Sequence[Sequence[Sequence[NDArray[_NumberT]]]],
 ]
 _ArrayLike4D = Union[
-    npt.NDArray[_NumberT],
+    NDArray[_NumberT],
     Sequence[Sequence[Sequence[Sequence[_NumberT]]]],
-    Sequence[Sequence[Sequence[Sequence[npt.NDArray[_NumberT]]]]],
+    Sequence[Sequence[Sequence[Sequence[NDArray[_NumberT]]]]],
 ]
 _ArrayLike = Union[
     _ArrayLike1D[_NumberT],

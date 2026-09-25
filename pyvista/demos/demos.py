@@ -16,7 +16,7 @@ from pyvista import examples
 from .logo import text_3d
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista.plotting.plotter import _ShowReturnType
 
@@ -241,7 +241,7 @@ def plot_wave(
     frequency: float = 1,
     wavetime: float = 3,
     notebook: bool | None = None,
-) -> npt.NDArray[float]:
+) -> NDArray[float]:
     """Plot a 3D moving wave in a render window.
 
     Parameters

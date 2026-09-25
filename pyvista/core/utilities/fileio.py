@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
     import imageio
     import meshio
+    from numpy.typing import NDArray
     import trimesh
 
     from pyvista import BaseReader
@@ -1563,7 +1564,7 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
-def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, npt.NDArray[Any]]:
+def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, NDArray[Any]]:
     """Return the attribute mapping with every value as an array."""
     return {name: np.asarray(value) for name, value in attributes.items()}
 
@@ -1610,7 +1611,7 @@ def from_trimesh(
         _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
     # Handle case with no faces
-    faces: npt.NDArray[int] = mesh.faces
+    faces: NDArray[int] = mesh.faces
     if faces.size == 0:
         faces = faces.reshape((0, 3))
     # Trimesh doesn't pad faces

@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import ClassVar
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import MultiBlock
@@ -182,7 +182,7 @@ class DataObject(
         filename: Path | str,
         *,
         binary: bool = True,
-        texture: npt.NDArray[np.uint8] | str | None = None,
+        texture: NDArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
     ) -> None:

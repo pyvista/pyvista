@@ -11,7 +11,7 @@ import pyvista as pv
 from pyvista import _vtk
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista import DataSet
 
@@ -43,9 +43,7 @@ def _cell_length_percentile(mesh: DataSet, percentile: float, sample_size: int) 
     return float(np.quantile(lengths, percentile)) if lengths.size else 0.0
 
 
-def _cell_edge_lengths(
-    mesh: DataSet, cell_ids: npt.NDArray[int] | None = None
-) -> npt.NDArray[float]:
+def _cell_edge_lengths(mesh: DataSet, cell_ids: NDArray[int] | None = None) -> NDArray[float]:
     """Return the length of every edge of the cells of a mesh."""
     if mesh.n_cells == 0:
         return np.empty(0, dtype=float)
@@ -70,9 +68,7 @@ def _cell_edge_lengths(
     )
 
 
-def _image_edge_lengths(
-    mesh: pv.ImageData, cell_ids: npt.NDArray[int] | None
-) -> npt.NDArray[float]:
+def _image_edge_lengths(mesh: pv.ImageData, cell_ids: NDArray[int] | None) -> NDArray[float]:
     """Return the four edges per axis shared by every cell of an image."""
     spacing = np.array(mesh.spacing, dtype=float)[np.array(mesh.dimensions) > 1]
     n_cells = mesh.n_cells if cell_ids is None else len(cell_ids)
@@ -80,8 +76,8 @@ def _image_edge_lengths(
 
 
 def _rectilinear_edge_lengths(
-    mesh: pv.RectilinearGrid, cell_ids: npt.NDArray[int] | None
-) -> npt.NDArray[float]:
+    mesh: pv.RectilinearGrid, cell_ids: NDArray[int] | None
+) -> NDArray[float]:
     """Return the four edges per axis of the axis-aligned cells of a rectilinear grid."""
     coords = [np.asarray(c, dtype=float) for c in (mesh.x, mesh.y, mesh.z)]
     steps = [np.diff(c) if c.size > 1 else np.zeros(1) for c in coords]
@@ -96,8 +92,8 @@ def _rectilinear_edge_lengths(
 
 
 def _structured_edge_lengths(
-    mesh: pv.StructuredGrid, cell_ids: npt.NDArray[int] | None
-) -> npt.NDArray[float]:
+    mesh: pv.StructuredGrid, cell_ids: NDArray[int] | None
+) -> NDArray[float]:
     """Return the edges of the hexahedral cells of a structured grid."""
     dims = np.array(mesh.dimensions)
     points = mesh.points.reshape((*dims[::-1], 3))
@@ -131,9 +127,7 @@ def _edges_per_axis(n_axes: int) -> int:
     return 2 ** (n_axes - 1) if n_axes else 0
 
 
-def _polydata_edge_lengths(
-    mesh: pv.PolyData, cell_ids: npt.NDArray[int] | None
-) -> npt.NDArray[float]:
+def _polydata_edge_lengths(mesh: pv.PolyData, cell_ids: NDArray[int] | None) -> NDArray[float]:
     """Return the edges of the vertex, line, polygon, and strip cells of polydata."""
     cell_arrays = [mesh.GetVerts(), mesh.GetLines(), mesh.GetPolys(), mesh.GetStrips()]
     base_types = [
@@ -165,18 +159,18 @@ def _polydata_edge_lengths(
 def _cell_array_edge_lengths(
     mesh: DataSet,
     *,
-    cell_types: npt.NDArray[np.uint8],
-    offsets: npt.NDArray[int],
-    connectivity: npt.NDArray[int],
-    cell_ids: npt.NDArray[int] | None,
-) -> npt.NDArray[float]:
+    cell_types: NDArray[np.uint8],
+    offsets: NDArray[int],
+    connectivity: NDArray[int],
+    cell_ids: NDArray[int] | None,
+) -> NDArray[float]:
     """Return the edges of cells described by cell types and a cell array."""
     cell_ids = np.arange(cell_types.size) if cell_ids is None else np.asarray(cell_ids)
     types = cell_types[cell_ids].astype(np.int64)
     sizes = np.diff(offsets)[cell_ids]
     starts = offsets[cell_ids]
     points = mesh.points
-    lengths: list[npt.NDArray[float]] = []
+    lengths: list[NDArray[float]] = []
     # Cells of one type and size share a local edge table, so process them together
     base = int(sizes.max(initial=0)) + 1
     keys = types * base + sizes
@@ -199,7 +193,7 @@ def _cell_array_edge_lengths(
     return np.concatenate(lengths).astype(float) if lengths else np.empty(0, dtype=float)
 
 
-def _local_edge_table(mesh: DataSet, cell_id: int) -> npt.NDArray[int]:
+def _local_edge_table(mesh: DataSet, cell_id: int) -> NDArray[int]:
     """Return the endpoints of each edge of a cell as indices into the cell's points."""
     cell = _vtk.vtkGenericCell()
     if isinstance(mesh, pv.ExplicitStructuredGrid):
@@ -221,14 +215,14 @@ def _local_edge_table(mesh: DataSet, cell_id: int) -> npt.NDArray[int]:
     return np.array(edges, dtype=int).reshape(-1, 2)
 
 
-def _curve_edge_table(cell_type: int, n_points: int) -> npt.NDArray[int]:
+def _curve_edge_table(cell_type: int, n_points: int) -> NDArray[int]:
     """Return the segments of a 1D cell, which has no edges of its own."""
     if cell_type == pv.CellType.POLY_LINE:
         return np.column_stack([np.arange(n_points - 1), np.arange(1, n_points)])
     return np.array([[0, 1]]) if n_points > 1 else np.empty((0, 2), dtype=int)
 
 
-def _cell_edges(cell: _vtk.vtkCell) -> npt.NDArray[float]:
+def _cell_edges(cell: _vtk.vtkCell) -> NDArray[float]:
     """Return the length of every edge of a single cell."""
     lengths: list[float] = []
     for edge_id in range(cell.GetNumberOfEdges()):

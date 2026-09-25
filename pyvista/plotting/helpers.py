@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
@@ -220,7 +220,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
 
 def view_vectors(
     view: _ViewOptions, *, negative: bool = False
-) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
+) -> tuple[NDArray[int], NDArray[int]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

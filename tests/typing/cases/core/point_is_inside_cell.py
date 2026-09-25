@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 from typing_extensions import Never
 
@@ -20,7 +20,7 @@ def a_grid() -> pv.ImageData:
     return pv.ImageData(dimensions=(3, 3, 3))
 
 
-assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)), bool | npt.NDArray[np.bool_])
-assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]), bool | npt.NDArray[np.bool_])
+assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)), bool | NDArray[np.bool_])
+assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]), bool | NDArray[np.bool_])
 
 assert_types(pointset().point_is_inside_cell(0, (0.5, 0.5, 0.5)), Never)  # pragma: no cover

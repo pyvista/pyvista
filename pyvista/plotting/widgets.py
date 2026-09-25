@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import TypeAlias
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista import DataSet
     from pyvista import ImageData
@@ -2630,8 +2630,8 @@ class WidgetComponent(_NoNewAttrMixin):
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
         axes: MatrixLike[float] | None = None,
-        release_callback: Callable[[npt.NDArray[float]], None] | None = None,
-        interact_callback: Callable[[npt.NDArray[float]], None] | None = None,
+        release_callback: Callable[[NDArray[float]], None] | None = None,
+        interact_callback: Callable[[NDArray[float]], None] | None = None,
     ) -> AffineWidget3D:
         """Add a 3D affine transform widget.
 

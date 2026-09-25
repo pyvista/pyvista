@@ -27,7 +27,7 @@ from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     from scipy.spatial.transform import Rotation
 
     from pyvista import DataSet
@@ -1478,7 +1478,7 @@ class Transform(
         return self
 
     @property
-    def matrix(self: Transform) -> npt.NDArray[float]:
+    def matrix(self: Transform) -> NDArray[float]:
         """Return or set the current transformation matrix.
 
         Notes
@@ -1511,7 +1511,7 @@ class Transform(
         self.SetMatrix(vtkmatrix_from_array(array))
 
     @property
-    def inverse_matrix(self: Transform) -> npt.NDArray[float]:
+    def inverse_matrix(self: Transform) -> NDArray[float]:
         """Return the inverse of the current transformation :attr:`~Transform.matrix`.
 
         Notes
@@ -1537,7 +1537,7 @@ class Transform(
         return array
 
     @property
-    def matrix_list(self: Transform) -> list[npt.NDArray[float]]:
+    def matrix_list(self: Transform) -> list[NDArray[float]]:
         """Return a list of all current transformation matrices.
 
         Notes
@@ -1562,7 +1562,7 @@ class Transform(
         ]
 
     @property
-    def inverse_matrix_list(self: Transform) -> list[npt.NDArray[float]]:
+    def inverse_matrix_list(self: Transform) -> list[NDArray[float]]:
         """Return a list of all inverse transformations applied by this :class:`Transform`.
 
         Notes
@@ -1598,7 +1598,7 @@ class Transform(
     @overload
     def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
-    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> npt.NDArray[float]: ...
+    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[float]: ...
     @overload
     def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
     # ruff: enable[E501]
@@ -1833,13 +1833,11 @@ class Transform(
             matrix[:3, 3] = 0
 
         # Validate array - make sure we have floats
-        array: npt.NDArray[float] = _validation.validate_array(
-            obj, must_have_shape=[(3,), (-1, 3)]
-        )
+        array: NDArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
         # Transform a 1D array
-        out: npt.NDArray[float] | None
+        out: NDArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
             if inplace:
@@ -1858,7 +1856,7 @@ class Transform(
         *,
         inverse: bool = False,
         copy: bool = True,
-    ) -> npt.NDArray[float]:
+    ) -> NDArray[float]:
         """Apply the current transformation :attr:`~Transform.matrix` to a point or points.
 
         This is equivalent to ``apply(points, 'points')``. See :meth:`apply` for
@@ -1905,7 +1903,7 @@ class Transform(
         *,
         inverse: bool = False,
         copy: bool = True,
-    ) -> npt.NDArray[float]:
+    ) -> NDArray[float]:
         """Apply the current transformation :attr:`~Transform.matrix` to a vector or vectors.
 
         This is equivalent to ``apply(vectors, 'vectors')``. See :meth:`apply` for
@@ -2495,7 +2493,7 @@ class Transform(
         return wxyz[1:4], wxyz[0]
 
     @property
-    def rotation_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def rotation_matrix(self) -> NDArray[float]:  # numpydoc ignore=RT01
         """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         The rotation is orthonormal and right-handed with positive determinant.
@@ -2601,7 +2599,7 @@ class Transform(
         return tuple(S.tolist())
 
     @property
-    def shear_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def shear_matrix(self) -> NDArray[float]:  # numpydoc ignore=RT01
         """Return the shear component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         .. versionadded:: 0.47
@@ -2726,9 +2724,9 @@ class Transform(
     @overload
     def as_rotation(self, representation: None = ..., *args, **kwargs) -> Rotation: ...
     @overload
-    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'], *args, **kwargs) -> npt.NDArray[float]: ...
+    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'], *args, **kwargs) -> NDArray[float]: ...
     @overload
-    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'] | None = ..., *args, **kwargs) -> Rotation | npt.NDArray[float]: ...
+    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'] | None = ..., *args, **kwargs) -> Rotation | NDArray[float]: ...
     # ruff: enable[E501]
     # fmt: on
     def as_rotation(
@@ -2737,7 +2735,7 @@ class Transform(
         | None = None,
         *args,
         **kwargs,
-    ) -> Rotation | npt.NDArray[float]:
+    ) -> Rotation | NDArray[float]:
         """Return the rotation component as a SciPy ``Rotation`` or any of its representations.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component

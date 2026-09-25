@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
@@ -72,7 +72,7 @@ class PolyDataFilters(DataSetFilters):
 
     def edge_mask(  # type: ignore[misc]
         self: PolyData, angle: float, *, progress_bar: bool = False
-    ) -> npt.NDArray[bool]:
+    ) -> NDArray[bool]:
         """Return a mask of the points of a surface mesh with a surface angle greater than angle.
 
         Parameters
@@ -114,7 +114,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('npt.NDArray[float]', pv.point_array(edges, 'point_ind'))
+        orig_id = cast('NDArray[float]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -765,7 +765,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
-    ) -> npt.NDArray[float]:
+    ) -> NDArray[float]:
         """Return the point-wise curvature of a mesh.
 
         Parameters
@@ -2682,7 +2682,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[npt.NDArray[float], npt.NDArray[int]]:
+    ) -> tuple[NDArray[float], NDArray[int]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -2777,7 +2777,7 @@ class PolyDataFilters(DataSetFilters):
         *,
         first_point: bool = False,
         retry: bool = False,
-    ) -> tuple[npt.NDArray[float], npt.NDArray[int], npt.NDArray[int]]:  # pragma: no cover
+    ) -> tuple[NDArray[float], NDArray[int], NDArray[int]]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -3084,7 +3084,7 @@ class PolyDataFilters(DataSetFilters):
         pass_point_ids: bool | None = None,
         pass_cell_ids: bool | None = None,
         progress_bar: bool | None = None,
-    ) -> PolyData | tuple[PolyData, npt.NDArray[int]]:
+    ) -> PolyData | tuple[PolyData, NDArray[int]]:
         """Rebuild a mesh by removing points.
 
         .. deprecated:: 0.49
@@ -3193,7 +3193,7 @@ class PolyDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
         keep_scalars = True if keep_scalars is None else keep_scalars
-        remove_array: npt.NDArray[Any] = np.asarray(remove)
+        remove_array: NDArray[Any] = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
         if not issubclass(remove_array.dtype.type, (np.bool_, np.integer)):
@@ -3222,7 +3222,7 @@ class PolyDataFilters(DataSetFilters):
 
         nfaces = fmask.sum()
         faces = cast(
-            'npt.NDArray[int]', np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False)
+            'NDArray[int]', np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False)
         )
 
         newmesh = pv.PolyData.from_regular_faces(new_points, faces, deep=True)
@@ -4947,9 +4947,7 @@ def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
     return runs
 
 
-def _locate(
-    ids: npt.NDArray[int], cumulative: npt.NDArray[float], value: float
-) -> tuple[int, int, float]:
+def _locate(ids: NDArray[int], cumulative: NDArray[float], value: float) -> tuple[int, int, float]:
     """Return the point ids bracketing a distance along a polyline and the blend weight."""
     # clamp so the pair stays inside the polyline at either end of it
     upper = min(max(int(np.searchsorted(cumulative, value, side='left')), 1), len(ids) - 1)
@@ -4979,9 +4977,7 @@ def _drawn_intervals(
 
 def _build_dashes(
     source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
-) -> tuple[
-    npt.NDArray[int], npt.NDArray[int], npt.NDArray[float], npt.NDArray[int], npt.NDArray[int]
-]:
+) -> tuple[NDArray[int], NDArray[int], NDArray[float], NDArray[int], NDArray[int]]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points
     cycle = period * scale
@@ -5073,12 +5069,12 @@ def _copy_active_names(source: DataSetAttributes, output: DataSetAttributes) -> 
 
 
 def _interpolate_rows(
-    array: npt.NDArray[Any],
+    array: NDArray[Any],
     *,
-    index_a: npt.NDArray[int],
-    index_b: npt.NDArray[int],
-    weight: npt.NDArray[float],
-) -> npt.NDArray[Any]:
+    index_a: NDArray[int],
+    index_b: NDArray[int],
+    weight: NDArray[float],
+) -> NDArray[Any]:
     """Blend array rows between two index sets, snapping to the nearest for non-float data."""
     if not np.issubdtype(array.dtype, np.floating):
         # ids and labels cannot be averaged, so take whichever end is nearer

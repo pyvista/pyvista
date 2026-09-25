@@ -12,7 +12,7 @@ from typing import TypedDict
 from typing import Union
 
 import matplotlib as mpl
-import numpy.typing as npt
+from numpy.typing import NDArray
 
 from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
@@ -59,7 +59,7 @@ ColorLike = Union[
     tuple[float, float, float, float],
     Sequence[int],
     Sequence[float],
-    npt.NDArray[float],
+    NDArray[float],
     dict[str, int | float | str],
     str,
     'Color',

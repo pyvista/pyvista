@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import FieldLiteral
@@ -140,7 +140,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         uinput: str
         | _vtk.vtkTexture
         | _vtk.vtkImageData
-        | npt.NDArray[Any]
+        | NDArray[Any]
         | Sequence[pv.ImageData]
         | None = None,
         **kwargs: Any,
@@ -270,7 +270,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         self.SetInputDataObject(image)
         self.Update()
 
-    def _from_array(self, image: npt.NDArray[Any]) -> None:
+    def _from_array(self, image: NDArray[Any]) -> None:
         """Create a texture from a np.ndarray."""
         if image.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
@@ -399,7 +399,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             raise ValueError(msg)
         return image
 
-    def to_array(self) -> npt.NDArray[float]:
+    def to_array(self) -> NDArray[float]:
         """Return the texture as an array.
 
         Notes
@@ -867,7 +867,7 @@ def image_to_texture(image: pv.ImageData | _vtk.vtkImageData) -> Texture:
     return Texture(image)
 
 
-def numpy_to_texture(image: npt.NDArray[Any]) -> Texture:
+def numpy_to_texture(image: NDArray[Any]) -> Texture:
     """Convert a NumPy image array to a :class:`pyvista.Texture`.
 
     Parameters

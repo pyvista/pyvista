@@ -19,7 +19,7 @@ from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista import DataObject
     from pyvista import _vtk
@@ -387,7 +387,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
         return self.writer.GetArrayName()  # type: ignore[attr-defined]
 
     @texture.setter
-    def texture(self, texture: str | npt.NDArray[float] | None) -> None:
+    def texture(self, texture: str | NDArray[float] | None) -> None:
         if texture is None:
             self.writer.SetArrayName(None)  # type: ignore[attr-defined]
             return

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
@@ -22,10 +22,10 @@ assert_types(unstructured().align_xyz(), pv.UnstructuredGrid)
 assert_types(explicit_structured().align_xyz(), pv.ExplicitStructuredGrid)
 assert_types(pointset().align_xyz(), pv.PointSet)
 
-assert_types(poly().align_xyz(return_matrix=True), tuple[pv.PolyData, npt.NDArray[float]])
-assert_types(image().align_xyz(return_matrix=True), tuple[pv.ImageData, npt.NDArray[float]])
-assert_types(rectilinear().align_xyz(return_matrix=True), tuple[pv.RectilinearGrid, npt.NDArray[float]])
-assert_types(structured().align_xyz(return_matrix=True), tuple[pv.StructuredGrid, npt.NDArray[float]])
-assert_types(unstructured().align_xyz(return_matrix=True), tuple[pv.UnstructuredGrid, npt.NDArray[float]])
-assert_types(explicit_structured().align_xyz(return_matrix=True), tuple[pv.ExplicitStructuredGrid, npt.NDArray[float]])
-assert_types(pointset().align_xyz(return_matrix=True), tuple[pv.PointSet, npt.NDArray[float]])
+assert_types(poly().align_xyz(return_matrix=True), tuple[pv.PolyData, NDArray[float]])
+assert_types(image().align_xyz(return_matrix=True), tuple[pv.ImageData, NDArray[float]])
+assert_types(rectilinear().align_xyz(return_matrix=True), tuple[pv.RectilinearGrid, NDArray[float]])
+assert_types(structured().align_xyz(return_matrix=True), tuple[pv.StructuredGrid, NDArray[float]])
+assert_types(unstructured().align_xyz(return_matrix=True), tuple[pv.UnstructuredGrid, NDArray[float]])
+assert_types(explicit_structured().align_xyz(return_matrix=True), tuple[pv.ExplicitStructuredGrid, NDArray[float]])
+assert_types(pointset().align_xyz(return_matrix=True), tuple[pv.PointSet, NDArray[float]])

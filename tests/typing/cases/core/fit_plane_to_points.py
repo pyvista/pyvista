@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
 
-_Meta = tuple[pv.PolyData, npt.NDArray[np.floating], npt.NDArray[np.floating]]
+_Meta = tuple[pv.PolyData, NDArray[np.floating], NDArray[np.floating]]
 
 
-def some_points() -> npt.NDArray[float]:
+def some_points() -> NDArray[float]:
     """Return points with a distinct variance along each axis."""
     return np.array([[0.0, 0.0, 0.0], [3.0, 0.0, 0.0], [0.0, 2.0, 0.0], [1.0, 1.0, 0.5]])
 
