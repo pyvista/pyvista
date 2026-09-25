@@ -389,6 +389,28 @@ def test_typing_dir_lists_aliases_before_access():
     assert exec_success('import pyvista.typing as t; assert {*t.__all__} <= {*dir(t)}')
 
 
+def test_type_alias_forwards_from_pyvista():
+    """``pyvista`` keeps forwarding every alias it provided before ``pyvista.typing``."""
+    assert _MOVED_TO_TYPING_NAMESPACE['pyvista'] == {
+        'ArrayLike',
+        'CameraPositionOptions',
+        'CellArrayLike',
+        'CellsLike',
+        'Chart',
+        'ColorLike',
+        'InteractionEventType',
+        'JupyterBackendOptions',
+        'LineStyle',
+        'MatrixLike',
+        'MeshValidationFields',
+        'Number',
+        'NumberType',
+        'RotationLike',
+        'TransformLike',
+        'VectorLike',
+    }
+
+
 @pytest.mark.parametrize(
     ('module', 'name'),
     [
