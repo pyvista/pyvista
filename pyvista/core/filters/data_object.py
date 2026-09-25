@@ -1303,8 +1303,11 @@ def _rename_valid_point_mask(
             valid = np.asarray(point_data[_VALID_POINT_MASK]) != 0
             point_data.remove(_VALID_POINT_MASK)
             # uint8 rather than VTK's char, which the volume mapper refuses to render.
-            # `set_array` rather than `[...] =`, which would make the flag the scalars
+            # `set_array` rather than `[...] =`, which would activate it unconditionally
             point_data.set_array(valid.astype(np.uint8), mask_name)
+            # An image with no scalars plots as its bounding box, hiding every voxel
+            if isinstance(dataset, pv.ImageData) and dataset.active_scalars_name is None:
+                dataset.set_active_scalars(mask_name)
     return output
 
 
@@ -5768,6 +5771,9 @@ class DataObjectFilters:
         ``1`` at the points which could be sampled and ``0`` at the points which could
         not. Use ``mask_name`` to name it something else; the filter owns that name, so
         an input array called ``'mask'`` is replaced by the flag.
+
+        Sampling onto :class:`~pyvista.ImageData` makes the array the output's scalars
+        when nothing else is, since an image with no scalars plots as its bounding box.
 
         .. versionchanged:: 0.50
             The array was named ``'vtkValidPointMask'`` and stored as ``int8``. Pass
