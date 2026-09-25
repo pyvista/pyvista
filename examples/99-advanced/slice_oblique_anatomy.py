@@ -243,8 +243,8 @@ pl.show()
 step = 3
 middle = block.dimensions[1] // 2
 indices = [middle + count * step for count in range(-2, 3)]
-planes = [block.slice_index(j=index, rebase_coordinates=True) for index in indices]
-masks = [bone.slice_index(j=index, rebase_coordinates=True) for index in indices]
+planes = [block.slice_index(j=index) for index in indices]
+masks = [bone.slice_index(j=index) for index in indices]
 
 strip = planes[0].concatenate(planes[1:], 'x')
 strip_mask = masks[0].concatenate(masks[1:], 'x')
