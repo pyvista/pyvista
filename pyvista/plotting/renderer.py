@@ -817,7 +817,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.set_background(color)
         self.Modified()
 
-    def _before_render_event(self, *args: object, **kwargs: object) -> None:
+    def _before_render_event(self, *args: Any, **kwargs: Any) -> None:
         """Notify all charts about render event."""
         if self._charts is not None:
             for chart in self._charts:
