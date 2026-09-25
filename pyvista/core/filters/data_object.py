@@ -6215,10 +6215,12 @@ class DataObjectFilters:
         A binary ``'mask'`` array comes back alongside the resampled arrays, holding
         ``1`` at the voxels the input reached. It is a voxelization of the input's
         geometry, so an input carrying nothing to resample still yields a usable image.
-        The input's active scalars stay active, and the mask takes them only when the
-        input carried none beyond normals and texture coordinates. An array of that name
-        on the input is resampled like any other, and VTK's own ``'vtkValidPointMask'``
-        is kept for the flag.
+        If the input already has an array named ``'mask'``, that one is resampled like
+        any other and the binary array keeps VTK's name, ``'vtkValidPointMask'``.
+
+        The input's active scalars stay active. The binary array becomes the scalars
+        only when no resampled array can, which is to say the input carried nothing but
+        normals, texture coordinates and vectors.
 
         .. versionadded:: 0.50
 
