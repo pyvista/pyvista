@@ -64,8 +64,10 @@ _MOVED_FROM_CORE = frozenset(
         'CellArrayLike',
         'CellsLike',
         'InteractionEventType',
+        'JupyterBackendOptions',
         'LineStyle',
         'MatrixLike',
+        'MeshValidationFields',
         'Number',
         'NumberType',
         'RotationLike',
@@ -74,11 +76,10 @@ _MOVED_FROM_CORE = frozenset(
     }
 )
 _MOVED_FROM_PLOTTING = frozenset({'CameraPositionOptions', 'Chart', 'ColorLike'})
-_MOVED_FROM_TOP_LEVEL = frozenset({'JupyterBackendOptions', 'MeshValidationFields'})
 
-# Aliases each module provided before this one existed, forwarded from there with a warning
+# Aliases each module used to provide, forwarded from there with a deprecation warning
 _MOVED_TO_TYPING_NAMESPACE = {
-    'pyvista': _MOVED_FROM_CORE | _MOVED_FROM_PLOTTING | _MOVED_FROM_TOP_LEVEL,
+    'pyvista': _MOVED_FROM_CORE | _MOVED_FROM_PLOTTING,
     'pyvista.core': _MOVED_FROM_CORE,
     'pyvista.plotting': _MOVED_FROM_PLOTTING,
 }

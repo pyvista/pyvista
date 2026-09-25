@@ -344,10 +344,27 @@ def test_validation_forward_deprecated():
 
 
 _TYPE_ALIAS_SOURCES = {
-    **dict.fromkeys(_MOVED_TO_TYPING_NAMESPACE['pyvista.core'], 'pyvista.core._typing_core'),
-    'WrappableType': 'pyvista.core._typing_core',
-    **dict.fromkeys(_MOVED_TO_TYPING_NAMESPACE['pyvista.plotting'], 'pyvista.plotting._typing'),
-    'PlottableType': 'pyvista.plotting._typing',
+    **dict.fromkeys(
+        [
+            'ArrayLike',
+            'CellArrayLike',
+            'CellsLike',
+            'InteractionEventType',
+            'LineStyle',
+            'MatrixLike',
+            'Number',
+            'NumberType',
+            'RotationLike',
+            'TransformLike',
+            'VectorLike',
+            'WrappableType',
+        ],
+        'pyvista.core._typing_core',
+    ),
+    **dict.fromkeys(
+        ['CameraPositionOptions', 'Chart', 'ColorLike', 'PlottableType'],
+        'pyvista.plotting._typing',
+    ),
     'JupyterBackendOptions': 'pyvista.jupyter',
     'MeshValidationFields': 'pyvista.core.filters.data_object',
 }
