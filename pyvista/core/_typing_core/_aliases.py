@@ -102,7 +102,7 @@ InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.
 LineStyle = Literal['', '-', '--', ':', '-.', '-..']
 
 # Objects that wrap to a DataSet, MultiBlock or PartitionedDataSet
-_MeshTypes = Union[
+_MeshLike = Union[
     _vtk.vtkDataSet,
     _vtk.vtkMultiBlockDataSet,
     _vtk.vtkPartitionedDataSet,
@@ -113,4 +113,4 @@ _MeshTypes = Union[
     'trimesh.Trimesh',
     'meshio.Mesh',
 ]
-WrappableType = Union[_MeshTypes, _vtk.vtkDataObject, 'DataObject', _vtk.vtkDataArray, None]
+WrappableType = Union[_MeshLike, _vtk.vtkDataObject, 'DataObject', _vtk.vtkDataArray, None]

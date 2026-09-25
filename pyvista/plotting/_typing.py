@@ -18,7 +18,7 @@ from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
-from pyvista.core._typing_core import _MeshTypes
+from pyvista.core._typing_core import _MeshLike
 
 from .renderer import CameraPosition
 
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = _MeshTypes | str | Path
+PlottableType: TypeAlias = _MeshLike | str | Path
 
 
 NamedColormaps = Union[
