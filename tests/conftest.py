@@ -22,6 +22,9 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+
+# Reuse the doctest fixture for unit tests
+from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (

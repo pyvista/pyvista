@@ -732,3 +732,39 @@ def test_vtksz_file_size_exceptions(request, test_name, expected):
         test_case=test_case, request=request
     )
     assert test_case.max_vtksz_file_size == expected
+
+
+def test_vtk_output_fails_the_test(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    from pyvista import _vtk
+
+    def _log_a_vtk_error():
+        _vtk.vtkMultiBlockDataSet().SetBlock(0, _vtk.vtkPartitionedDataSet())
+
+    def test_leaks():
+        _log_a_vtk_error()
+
+    @pytest.mark.expect_vtk_output('cannot be added as a block')
+    def test_expected():
+        _log_a_vtk_error()
+
+    @pytest.mark.expect_vtk_output('a message VTK never logs')
+    def test_other_message():
+        _log_a_vtk_error()
+
+    def test_silent():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(passed=4, errors=2)
+    results.stdout.fnmatch_lines(['*VTK logged 1 error(s) or warning(s)*'])
+
+    report = RunResultsReport(results_parser.parse(results=results))
+    assert report.error == ['test_leaks', 'test_other_message']
