@@ -37,8 +37,6 @@ if TYPE_CHECKING:
 
     _T = TypeVar('_T')
 
-T = TypeVar('T', bound='AnnotatedIntEnum')
-
 _SMPBackendOptions = Literal['stdthread', 'tbb', 'openmp', 'sequential']
 _SMP_BACKEND_NAMES: dict[str, str] = {
     'stdthread': 'STDThread',

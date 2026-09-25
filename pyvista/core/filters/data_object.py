@@ -61,6 +61,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
+    from typing_extensions import Self
+
     from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import DataSetAttributes
@@ -70,14 +72,18 @@ if TYPE_CHECKING:
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
-    from pyvista import RotationLike
-    from pyvista import TransformLike
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
+    from pyvista.core._typing_core import _OutputDataObject
+    from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
@@ -276,7 +282,7 @@ class CellStatus(IntEnum):
     ZERO_SIZE = _PYVISTA_CELL_STATUS_INFO['ZERO_SIZE']
     NEGATIVE_SIZE = _PYVISTA_CELL_STATUS_INFO['NEGATIVE_SIZE']
 
-    def __new__(cls, value, _doc):
+    def __new__(cls, value: int, _doc: str) -> Self:
         """Override method to include member documentation."""
         obj = int.__new__(cls, value)
         obj._value_ = value
@@ -378,7 +384,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         | None = None,
         *,
         name: str | None,
-        **cell_validator_kwargs,
+        **cell_validator_kwargs: Any,
     ) -> None:
         data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
             validation_fields, exclude_fields
@@ -430,8 +436,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @staticmethod
     def _validate_fields(
-        validation_fields,
-        exclude_fields,
+        validation_fields: _LiteralMeshValidationFields
+        | Sequence[_LiteralMeshValidationFields]
+        | None,
+        exclude_fields: _LiteralMeshValidationFields
+        | Sequence[_LiteralMeshValidationFields]
+        | None,
     ) -> tuple[tuple[_DataFields, ...], tuple[_PointFields, ...], tuple[_CellFields, ...]]:
         # Validate inputs
         allowed_data_fields = _MeshValidator._allowed_data_fields
@@ -478,36 +488,28 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 output.extend(out)  # type: ignore[attr-defined]
             return tuple(tuple(fields) for fields in output_fields)  # type: ignore[return-value]
 
-        elif validation_fields is None and exclude_fields is None:
-            # Default values, no need to validate
-            data_fields_to_validate.extend(allowed_data_fields)
-            point_fields_to_validate.extend(allowed_point_fields)
-            cell_fields_to_validate.extend(allowed_cell_fields)
-        else:
-            if exclude_fields is not None:
-                validation_fields = exclude_fields
+        elif (
+            requested := validation_fields if validation_fields is not None else exclude_fields
+        ) is not None:
             allowed_fields_or_groups = (
                 *allowed_data_fields,
                 *allowed_point_fields,
                 *allowed_cell_fields,
                 *_MeshValidator._allowed_field_groups,
             )
-            if isinstance(validation_fields, str):
-                validation_fields = (validation_fields,)
-            for field_or_group in validation_fields:
+            requested_fields = (requested,) if isinstance(requested, str) else tuple(requested)
+            for field_or_group in requested_fields:
                 _validation.check_contains(
                     allowed_fields_or_groups, must_contain=field_or_group, name='validation_fields'
                 )
 
             # Inputs are valid, but we need to categorize them
-            input_fields = list(validation_fields)
-            if 'memory_safe' in validation_fields:
+            input_fields = list(requested_fields)
+            if 'memory_safe' in requested_fields:
                 # Replace memory_safe group with the actual field names used
                 input_fields.remove('memory_safe')
                 memory_safe_fields = (
-                    field
-                    for field in get_args(_MemorySafeFields)
-                    if field not in validation_fields
+                    field for field in get_args(_MemorySafeFields) if field not in requested_fields
                 )
                 input_fields.extend(memory_safe_fields)
 
@@ -519,17 +521,22 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 elif field_or_group == 'cells':
                     cell_fields_to_validate.extend(allowed_cell_fields)
                 elif field_or_group in allowed_data_fields:
-                    data_fields_to_validate.append(field_or_group)
+                    data_fields_to_validate.append(cast('_DataFields', field_or_group))
                 elif field_or_group in allowed_point_fields:
-                    point_fields_to_validate.append(field_or_group)
+                    point_fields_to_validate.append(cast('_PointFields', field_or_group))
                 elif field_or_group in allowed_cell_fields:
-                    cell_fields_to_validate.append(field_or_group)
+                    cell_fields_to_validate.append(cast('_CellFields', field_or_group))
                 else:  # pragma: no cover
                     msg = (
                         f'Something went wrong! Invalid field or group {field_or_group}. '
                         'This code should not be reachable.'
                     )
                     raise RuntimeError(msg)
+        else:
+            # Default values, no need to validate
+            data_fields_to_validate.extend(allowed_data_fields)
+            point_fields_to_validate.extend(allowed_point_fields)
+            cell_fields_to_validate.extend(allowed_cell_fields)
 
         if exclude_fields:
 
@@ -551,12 +558,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _generate_report(
         mesh: _DataSetOrMultiBlockType,
         *,
-        name,
+        name: str | None,
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
         explicit: bool,
-        **cell_validator_kwargs,
+        **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
             # Ignore any warnings caused by wrapping alg outputs
@@ -594,7 +601,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
         explicit: bool,
-        **cell_validator_kwargs,
+        **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetType]:
         point_fields, cell_fields = _MeshValidator._supported_fields(
             mesh, point_fields, cell_fields, explicit=explicit
@@ -651,7 +658,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
         explicit: bool,
-        **cell_validator_kwargs,
+        **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
 
@@ -714,11 +721,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     def _validate_cells(
         mesh: _DataSetType,
         validation_fields: tuple[_CellFields, ...],
-        **cell_validator_kwargs,
+        **cell_validator_kwargs: Any,
     ) -> tuple[list[_MeshValidator._FieldSummary], _DataSetType]:
         """Validate cells and only return summary objects for the requested fields."""
 
-        def get_message(array_):
+        def get_message(array_: list[int]) -> str | list[str]:
             if array_:
                 # Create separate message of each cell type
                 cell_types = sorted(_distinct_cell_types(mesh))
@@ -734,7 +741,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                             cell_types.remove(ctype)
                     return _MeshValidator._invalid_cell_msg(
                         name,
-                        tuple(arrays),  # type: ignore[arg-type]
+                        tuple(arrays),
                         cell_type=cell_types,
                     )
                 else:
@@ -750,12 +757,22 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             summaries.append(summary)
         return summaries, validated_mesh
 
+    # fmt: off
+    # ruff: disable[E501]
+    @staticmethod
+    @overload  # one array
+    def _invalid_cell_msg(name: str, array: list[int], cell_type: CellType | None = ...) -> str: ...
+    @staticmethod
+    @overload  # one array per cell type
+    def _invalid_cell_msg(name: str, array: tuple[list[int], ...], cell_type: list[CellType]) -> list[str]: ...
+    # ruff: enable[E501]
+    # fmt: on
     @staticmethod
     def _invalid_cell_msg(
         name: str,
-        array: list[int] | tuple[list[int]],
+        array: list[int] | tuple[list[int], ...],
         cell_type: CellType | list[CellType] | None = None,
-    ) -> _NestedStrings:
+    ) -> str | list[str]:
         if not array:
             return ''
         if isinstance(cell_type, list) and isinstance(array, tuple):
@@ -798,7 +815,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
     ) -> list[_MeshValidator._FieldSummary]:
         """Validate data arrays and only return summary objects for the requested fields."""
 
-        def join_limited(items, max_items=4):
+        def join_limited(items: Sequence[str], max_items: int = 4) -> str:
             if len(items) <= max_items:
                 return ', '.join(items)
             return ', '.join(items[:max_items]) + ', ...'
@@ -1043,7 +1060,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
     def message(self) -> str | None:
         """Return the formatted validation message, if any."""
 
-        def insert_bullet(indent: str, string: str):
+        def insert_bullet(indent: str, string: str) -> str:
             bullet = (
                 _MeshValidator._MESSAGE_BULLET
                 if string.startswith(_MeshValidator._MESH_HAS)
@@ -1085,7 +1102,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         """Return any field names which have values."""
         return tuple(f.name for f in fields(self) if getattr(self, f.name))
 
-    def _set_body(self, val):
+    def _set_body(self, val: _ReportBodyOptions | None) -> None:
         object.__setattr__(self, '_report_body', val)
         if self._subreports is not None:  # type: ignore[attr-defined]
             for subreport in self._subreports:  # type: ignore[attr-defined]
@@ -1136,7 +1153,7 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         lines.append(title)
         lines.append('-' * len(title))
 
-        def append_group_name(name):
+        def append_group_name(name: str) -> None:
             heading = f'{name}:'
             lines.append(heading)
             _MeshValidator._SECTION_HEADINGS.add(heading)
@@ -1230,7 +1247,7 @@ class DataObjectFilters:
         exclude_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
         report_body: _ReportBodyOptions = 'message',
         name: str | None = None,
-        **cell_validator_kwargs,
+        **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         """Validate this mesh's array data, points, and cells.
 
@@ -1650,7 +1667,7 @@ class DataObjectFilters:
     def _validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         validate: Literal[True] | _NestedMeshValidationFields,
-    ):
+    ) -> None:
         """Validate mesh using a ``bool`` or named fields and raise error."""
         validation_fields = None if validate is True else validate
         self.validate_mesh(validation_fields, action='error')
@@ -1705,7 +1722,7 @@ class DataObjectFilters:
             Value used for most floating point equality checks throughout the cell checking
             process, for example, for checking coincident points or intersecting edges.
             The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
             .. note::
                 This tolerance is independent of other tolerances.
@@ -1731,7 +1748,7 @@ class DataObjectFilters:
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
             The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
 
@@ -1889,7 +1906,7 @@ class DataObjectFilters:
             cell_validator.Update()
             output = _get_output(cell_validator)
 
-        def post_process(mesh: DataSet):
+        def post_process(mesh: DataSet) -> None:
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
             if skip_validator:
@@ -1914,7 +1931,7 @@ class DataObjectFilters:
                     continue
                 mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
 
-        def set_pyvista_validity_state(mesh: DataSet):
+        def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
 
             # A cell's size cannot be computed when its points do not exist
@@ -2095,7 +2112,7 @@ class DataObjectFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :data:`~pyvista.typing.TransformLike`
         is accepted.
 
         >>> transform_matrix = np.array(
@@ -3228,6 +3245,22 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # DataSet, return_clipped=False
+    def _clip_with_function(self: DataSet, function: _vtk.vtkImplicitFunction | None, *, invert: bool = ..., value: float = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ...) -> DataSet: ...  # type: ignore[misc]
+    @overload  # DataSet, return_clipped=True
+    def _clip_with_function(self: DataSet, function: _vtk.vtkImplicitFunction | None, *, invert: bool = ..., value: float = ..., return_clipped: Literal[True], progress_bar: bool = ..., crinkle: bool = ...) -> tuple[DataSet, DataSet]: ...  # type: ignore[misc]
+    @overload  # DataSet, return_clipped not known
+    def _clip_with_function(self: DataSet, function: _vtk.vtkImplicitFunction | None, *, invert: bool = ..., value: float = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ...) -> DataSet | tuple[DataSet, DataSet]: ...  # type: ignore[misc]
+    @overload  # MultiBlock, return_clipped=False
+    def _clip_with_function(self: MultiBlock, function: _vtk.vtkImplicitFunction | None, *, invert: bool = ..., value: float = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock, return_clipped=True
+    def _clip_with_function(self: MultiBlock, function: _vtk.vtkImplicitFunction | None, *, invert: bool = ..., value: float = ..., return_clipped: Literal[True], progress_bar: bool = ..., crinkle: bool = ...) -> tuple[MultiBlock, MultiBlock]: ...  # type: ignore[misc]
+    @overload  # MultiBlock, return_clipped not known
+    def _clip_with_function(self: MultiBlock, function: _vtk.vtkImplicitFunction | None, *, invert: bool = ..., value: float = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ...) -> MultiBlock | tuple[MultiBlock, MultiBlock]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def _clip_with_function(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         function: _vtk.vtkImplicitFunction | None,
@@ -3237,7 +3270,7 @@ class DataObjectFilters:
         return_clipped: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
-    ):
+    ) -> DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]:
         """Clip using an implicit function, or the active scalars if it is ``None``."""
         source = self
         if crinkle:
@@ -3262,7 +3295,7 @@ class DataObjectFilters:
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar=progress_bar, message='Clipping with Function')
 
-        def _maybe_cast_to_point_set(in_):
+        def _maybe_cast_to_point_set(in_: Any) -> Any:
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
@@ -3364,7 +3397,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
         plane: PolyData | None = None,
-    ):
+    ) -> _OutputDataObject | tuple[_OutputDataObject, _OutputDataObject]:
         """Clip a dataset by a plane by specifying the origin and normal.
 
         The origin and normal may be set explicitly or implicitly using a
@@ -3456,8 +3489,7 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        if inplace:
-            _validate_clip_inplace(self)
+        inplace_target = _validate_clip_inplace(self) if inplace else None
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
@@ -3475,25 +3507,17 @@ class DataObjectFilters:
 
         # Post-process clip to fix output type and remove unused points
         if isinstance(result, tuple):
-            result = (
-                _keep_array_structure(_cast_output_to_match_input_type(result[0], self), self),
-                _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
-            )
-            result = (
-                _remove_unused_points_post_clip(result[0], self),
-                _remove_unused_points_post_clip(result[1], self),
-            )
-        else:
-            result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
-            result = _remove_unused_points_post_clip(result, self)
-        if inplace:
-            if return_clipped:
-                self.copy_from(result[0], deep=False)
-                return self, result[1]
-            else:
-                self.copy_from(result, deep=False)
-                return self
-        return result
+            kept = _remove_unused_points_post_clip(_clip_output(result[0], self), self)
+            removed = _remove_unused_points_post_clip(_clip_output(result[1], self), self)
+            if inplace_target is not None:
+                inplace_target.copy_from(cast('DataSet', kept), deep=False)
+                return inplace_target, removed
+            return kept, removed
+        clipped = _remove_unused_points_post_clip(_clip_output(result, self), self)
+        if inplace_target is not None:
+            inplace_target.copy_from(cast('DataSet', clipped), deep=False)
+            return inplace_target
+        return clipped
 
     # fmt: off
     # ruff: disable[E501]
@@ -3530,7 +3554,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         merge_points: bool = True,
         crinkle: bool = False,
-    ):
+    ) -> _OutputDataObject:
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -3610,7 +3634,7 @@ class DataObjectFilters:
         """
         if bounds is None:
 
-            def _get_quarter(dmin, dmax):
+            def _get_quarter(dmin: float, dmax: float) -> float:
                 """Get a section of the given range (internal helper)."""
                 return dmax - ((dmax - dmin) * factor)
 
@@ -3689,7 +3713,7 @@ class DataObjectFilters:
         clipped = _remove_unused_points_post_clip(clipped, self)
         if merge_points:
             clipped = _weld_points(clipped)
-        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
+        return _clip_output(clipped, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -3727,7 +3751,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
         plane: PolyData | None = None,
-    ):
+    ) -> _OutputDataObject:
         """Clip a dataset by a slab of finite thickness around a plane.
 
         The slab is the volumetric region bounded by two parallel planes offset
@@ -3846,8 +3870,8 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
-        result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
-        return _remove_unused_points_post_clip(result, self)
+        clipped = _clip_output(result, self)
+        return _remove_unused_points_post_clip(clipped, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -3874,7 +3898,7 @@ class DataObjectFilters:
         generate_triangles: bool = False,
         contour: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | MultiBlock:
         """Slice a dataset by a VTK implicit function.
 
         Parameters
@@ -3998,7 +4022,7 @@ class DataObjectFilters:
         contour: bool = False,
         progress_bar: bool = False,
         plane: PolyData | None = None,
-    ):
+    ) -> PolyData | MultiBlock:
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
         The origin and normal may be set explicitly or implicitly using a
@@ -4269,8 +4293,8 @@ class DataObjectFilters:
         tolerance: float | None = None,
         generate_triangles: bool = False,
         contour: bool = False,
-        bounds=None,
-        center=None,
+        bounds: VectorLike[float] | None = None,
+        center: VectorLike[float] | None = None,
         progress_bar: bool = False,
     ) -> MultiBlock:
         """Create many slices of the input dataset along a specified axis.
@@ -4385,10 +4409,11 @@ class DataObjectFilters:
             bounds = self.bounds
         if center is None:
             center = self.center
+        bounds_ = np.asarray(bounds, dtype=float)
         if tolerance is None:
-            tolerance = (bounds[ax_index * 2 + 1] - bounds[ax_index * 2]) * 0.01
+            tolerance = float(bounds_[ax_index * 2 + 1] - bounds_[ax_index * 2]) * 0.01
         rng = np.linspace(
-            bounds[ax_index * 2] + tolerance, bounds[ax_index * 2 + 1] - tolerance, n
+            bounds_[ax_index * 2] + tolerance, bounds_[ax_index * 2 + 1] - tolerance, n
         )
         center = list(center)
         # Make each of the slices
@@ -4441,7 +4466,7 @@ class DataObjectFilters:
         generate_triangles: bool = False,
         contour: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | MultiBlock:
         """Slice a dataset using a polyline/spline as the path.
 
         This also works for lines generated with :func:`pyvista.Line`.
@@ -4580,7 +4605,7 @@ class DataObjectFilters:
         use_all_points: bool | None = None,
         clear_data: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | MultiBlock:
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -4773,7 +4798,7 @@ class DataObjectFilters:
 
         """
 
-        def warn_future():
+        def warn_future() -> None:
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
             if _is_deprecation_due((0, 50)):  # pragma: no cover
                 msg = (
@@ -4843,7 +4868,7 @@ class DataObjectFilters:
         self: DataSet | MultiBlock[Any],
         *,
         dimensionality: Literal[1, 2, 3, 'auto'] = 3,
-        progress_bar=False,
+        progress_bar: bool = False,
     ) -> PolyData:
         """Compute the convex hull from this mesh's points.
 
@@ -4952,7 +4977,7 @@ class DataObjectFilters:
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
         scalar_range: str | VectorLike[float] | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         set_active: bool = True,
         progress_bar: bool = False,
     ) -> _DataSetOrMultiBlockType:
@@ -5153,7 +5178,7 @@ class DataObjectFilters:
 
         """
 
-        def ensure_arrays_if_empty(dataset: DataSet):
+        def ensure_arrays_if_empty(dataset: DataSet) -> None:
             if vertex_count:
                 dataset.cell_data['VertexCount'] = np.zeros(shape=(0,))
             if area:
@@ -5213,7 +5238,7 @@ class DataObjectFilters:
         vertex: bool = True,
         pass_cell_data: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | MultiBlock:
         """Generate points at the center of the cells in this dataset.
 
         These points can be used for placing glyphs or vectors.
@@ -5353,7 +5378,7 @@ class DataObjectFilters:
         *,
         pass_cell_data: bool = False,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> _DataSetOrMultiBlockType:
         """Transform cell data into point data.
 
@@ -5495,7 +5520,7 @@ class DataObjectFilters:
         *,
         pass_point_data: bool = False,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> _DataSetOrMultiBlockType:
         """Transform point data into cell data.
 
@@ -5559,7 +5584,7 @@ class DataObjectFilters:
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid | MultiBlock:
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -5567,20 +5592,20 @@ class DataObjectFilters:
         Parameters
         ----------
         inplace : bool, default: False
-            Updates mesh in-place.
+            Updates mesh in-place. Only a :class:`~pyvista.PolyData` or
+            :class:`~pyvista.UnstructuredGrid` input can be updated in place.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
         -------
-        pyvista.PolyData | pyvista.UnstructuredGrid | pyvista.MultiBlock
-            Mesh containing only linear cells. A :class:`~pyvista.PolyData` gives a
-            ``PolyData`` of triangles through
-            :meth:`~pyvista.PolyDataFilters.triangulate`; every other dataset gives an
+        pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Mesh containing only linear cells. A dataset gives an
             :class:`~pyvista.UnstructuredGrid`, and a :class:`~pyvista.MultiBlock`
-            gives a ``MultiBlock`` whose blocks each follow that rule, nested blocks
-            included.
+            gives a ``MultiBlock`` whose blocks each take the path for their own
+            type, nested blocks included, so a :class:`~pyvista.PolyData` block gives
+            a ``PolyData`` through :meth:`~pyvista.PolyDataFilters.triangulate`.
 
         Examples
         --------
@@ -5601,14 +5626,16 @@ class DataObjectFilters:
         if isinstance(self, pv.MultiBlock):
             return self.generic_filter('triangulate', inplace=inplace, progress_bar=progress_bar)
 
+        inplace_target = _validate_triangulate_inplace(self) if inplace else None
+
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
 
         mesh = _get_output(alg)
-        if inplace:
-            self.copy_from(mesh, deep=False)
-            return self
+        if inplace_target is not None:
+            inplace_target.copy_from(mesh, deep=False)
+            return inplace_target
         return mesh
 
     def sample(  # type: ignore[misc]
@@ -5961,7 +5988,7 @@ class DataObjectFilters:
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
-        def _call_dataset_cell_quality(dataset, **kwargs):
+        def _call_dataset_cell_quality(dataset: DataSet, **kwargs: Any) -> DataSet:
             # Dispatch through the instance (rather than binding directly to
             # `DataObjectFilters._dataset_cell_quality`) so that a block-level
             # override, e.g. PointSet's, is honored when this runs per-block
@@ -5985,11 +6012,11 @@ class DataObjectFilters:
     def _dataset_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        measures_requested,
-        measures_available,
-        keep_valid_only,
-        null_value,
-        progress_bar,
+        measures_requested: list[_CellQualityLiteral],
+        measures_available: dict[str, str],
+        keep_valid_only: bool,
+        null_value: float,
+        progress_bar: bool,
     ) -> _DataSetType:
         """Compute cell quality of a DataSet (internal method)."""
         CELL_QUALITY = 'CellQuality'
@@ -6564,10 +6591,10 @@ def _slice_image_along_axis(
     faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
     output = pv.PolyData.from_regular_faces(points, faces)
 
-    def slab(array, k):
+    def slab(array: NumpyArray[Any], k: int) -> NumpyArray[Any]:
         # The plane of values at index k along the axis, ordered like the points
         grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
-        index = [slice(None)] * 3
+        index: list[Any] = [slice(None)] * 3
         index[2 - axis] = k
         return array.reshape(grid_shape + array.shape[1:])[tuple(index)].reshape(
             -1, *array.shape[1:]
@@ -6721,7 +6748,7 @@ def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
 
 
 def _exclude_string_arrays(
-    dataset: _DataSetType, association: Literal['point', 'cell']
+    dataset: _DataSetType, association: PointLiteral | CellLiteral
 ) -> _DataSetType | None:
     """Return a shallow copy without any string arrays, or ``None`` if there are none."""
     field = _vtk.vtkDataObject.POINT if association == 'point' else _vtk.vtkDataObject.CELL
@@ -7162,9 +7189,20 @@ def _clip_by_box_planes(
     return _get_output(append)
 
 
+def _validate_triangulate_inplace(mesh: DataSet) -> UnstructuredGrid:
+    """Return the mesh, or raise when a triangulated output cannot be copied back into it."""
+    if not isinstance(mesh, pv.UnstructuredGrid):
+        msg = (
+            f'Cannot use inplace=True for {type(mesh).__name__} input. Only PolyData '
+            f'and UnstructuredGrid inputs can be triangulated in place.'
+        )
+        raise TypeError(msg)
+    return mesh
+
+
 def _validate_clip_inplace(
     mesh: DataSet | MultiBlock[Any],
-) -> PolyData | PointSet | UnstructuredGrid:
+) -> _OutputDataSet:
     """Return the mesh, or raise when a clipped output cannot be copied back into it."""
     if not isinstance(mesh, (pv.PolyData, pv.PointSet, pv.UnstructuredGrid)):
         msg = (
@@ -7175,7 +7213,30 @@ def _validate_clip_inplace(
     return mesh
 
 
-def _remove_unused_points_post_clip(clip_output, source):
+# fmt: off
+# ruff: disable[E501]
+@overload  # A composite is clipped block by block, and stays a composite
+def _clip_output(output: MultiBlock, source: MultiBlock) -> MultiBlock: ...
+@overload  # Any other output takes its source's class, or stays an UnstructuredGrid
+def _clip_output(output: DataSet, source: DataSet | MultiBlock) -> _OutputDataSet: ...
+@overload  # An output whose class is not known yet
+def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> _OutputDataObject: ...
+# ruff: enable[E501]
+# fmt: on
+def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> _OutputDataObject:
+    """Give a clipped dataset the array structure and dataset type of its input."""
+    # A clip keeps a PolyData or PointSet input's type, a composite stays a composite and
+    # anything else gives an UnstructuredGrid
+    return cast(
+        '_OutputDataObject',
+        _keep_array_structure(_cast_output_to_match_input_type(output, source), source),
+    )
+
+
+def _remove_unused_points_post_clip(
+    clip_output: _DataSetOrMultiBlockType, source: DataSet | MultiBlock[Any]
+) -> _DataSetOrMultiBlockType:
+    """Drop points a buggy clipper kept from the input, when the clipper is one that does."""
     # vtkClipPolyData is buggy and retains unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
     # https://github.com/pyvista/pyvista/issues/7738
@@ -7185,33 +7246,49 @@ def _remove_unused_points_post_clip(clip_output, source):
 
     input_bounds = source.bounds
 
-    def maybe_remove_unused_points(mesh: DataSet):
+    def maybe_remove_unused_points(mesh: DataSet) -> DataSet:
         # Unused points are correctly removed sometimes, so for performance we only
         # remove points when the clipped bounds match input bounds
         if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
             return _keep_array_structure(mesh.remove_unused_points(), mesh)
         return mesh
 
-    return (
+    return cast(
+        '_DataSetOrMultiBlockType',
         clip_output.generic_filter(maybe_remove_unused_points)
         if isinstance(clip_output, pv.MultiBlock)
-        else maybe_remove_unused_points(clip_output)
+        else maybe_remove_unused_points(clip_output),
     )
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload  # Composites are matched block by block, so both must be composite
+def _cast_output_to_match_input_type(output_mesh: MultiBlock[Any], input_mesh: MultiBlock[Any]) -> MultiBlock[Any]: ...
+@overload  # A PolyData input is matched by extracting the output's surface
+def _cast_output_to_match_input_type(output_mesh: DataSet, input_mesh: PolyData) -> PolyData: ...
+@overload  # A PointSet input is matched by keeping only the output's points
+def _cast_output_to_match_input_type(output_mesh: DataSet, input_mesh: PointSet) -> PointSet: ...
+@overload  # Any other input leaves the output as it is
+def _cast_output_to_match_input_type(output_mesh: _DataSetOrMultiBlockType, input_mesh: DataSet | MultiBlock[Any]) -> _DataSetOrMultiBlockType | PolyData | PointSet: ...
+# ruff: enable[E501]
+# fmt: on
 def _cast_output_to_match_input_type(
     output_mesh: DataSet | MultiBlock[Any], input_mesh: DataSet | MultiBlock[Any]
-):
-    # Ensure output type matches input type
+) -> DataSet | MultiBlock[Any]:
+    """Cast an output mesh to match the type of the input mesh it was generated from.
 
-    def cast_output(mesh_out: DataSet, mesh_in: DataSet):
+    A composite output is matched block by block, so it requires a composite input.
+    """
+
+    def cast_output(mesh_out: DataSet, mesh_in: DataSet | MultiBlock) -> DataSet:
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
             return mesh_out.extract_surface(algorithm=None, pass_cellid=False, pass_pointid=False)
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out
 
-    def cast_output_blocks(mesh_out: MultiBlock[Any], mesh_in: MultiBlock[Any]):
+    def cast_output_blocks(mesh_out: MultiBlock[Any], mesh_in: MultiBlock[Any]) -> MultiBlock[Any]:
         # Replace all blocks in the output mesh with cast versions that match the input
         for (ids, _, block_out), block_in in zip(
             mesh_out.recursive_iterator('all', skip_none=True),
@@ -7221,11 +7298,15 @@ def _cast_output_to_match_input_type(
             mesh_out.replace(ids, cast_output(block_out, block_in))
         return mesh_out
 
-    return (
-        cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
-        if isinstance(output_mesh, pv.MultiBlock)
-        else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
-    )
+    if isinstance(output_mesh, pv.MultiBlock):
+        if not isinstance(input_mesh, pv.MultiBlock):
+            msg = (
+                f'Cannot match a composite output to a {type(input_mesh).__name__} input. '
+                f'A composite output is matched block by block, so both must be composite.'
+            )
+            raise TypeError(msg)
+        return cast_output_blocks(output_mesh, input_mesh)
+    return cast_output(output_mesh, input_mesh)
 
 
 class _Crinkler:
@@ -7236,7 +7317,9 @@ class _Crinkler:
     ITER_KWARGS: ClassVar = dict(skip_none=True)
 
     @staticmethod
-    def _extract_cells(dataset, ids, active_scalars_info_):
+    def _extract_cells(
+        dataset: DataSet, ids: NumpyArray[bool], active_scalars_info_: Any
+    ) -> DataSet:
         """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
         association, name = active_scalars_info_
@@ -7247,10 +7330,12 @@ class _Crinkler:
         return output
 
     @staticmethod
-    def _extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+    def _extract_crinkle_cells(  # noqa: PLR0917
+        dataset: Any, a_: Any, b_: Any, active_scalars_info: Any
+    ) -> Any:
         """Extract crinkled cells from the clip output."""
 
-        def clipped_cell_mask(block_, clipped):
+        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> NumpyArray[bool]:
             # Optimization: mark the ids in a boolean array instead of collecting them in
             # Python sets, whose construction dominated the crinkle clip for large meshes
             mask = np.zeros(block_.n_cells, dtype=bool)
@@ -7258,30 +7343,24 @@ class _Crinkler:
                 mask[clipped.cell_data[_Crinkler.CELL_IDS]] = True
             return mask
 
-        if b_ is None:
-            # Extract cells when `return_clipped=False`
-            def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
-                if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
-                    return _Crinkler._extract_cells(
-                        block_, clipped_cell_mask(block_, clipped_a), active_scalars_info_
-                    )
-                return clipped_a
-        else:
-            # Extract cells when `return_clipped=True`
-            def extract_cells_from_block(  # noqa: PLR0917
-                block_, clipped_a, clipped_b, active_scalars_info_
-            ):
-                if _Crinkler.CELL_IDS not in clipped_a.cell_data.keys():
-                    return clipped_a, clipped_b
-                mask_a = clipped_cell_mask(block_, clipped_a)
-                mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
-                clipped_a = _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)
-                clipped_b = _Crinkler._extract_cells(block_, mask_b, active_scalars_info_)
-                return clipped_a, clipped_b
+        def extract_cells_from_block(  # noqa: PLR0917
+            block_: Any, clipped_a: Any, clipped_b: Any, active_scalars_info_: Any
+        ) -> Any:
+            # `clipped_b` is None unless `return_clipped` was set
+            if _Crinkler.CELL_IDS not in clipped_a.cell_data.keys():
+                return clipped_a if clipped_b is None else (clipped_a, clipped_b)
+            mask_a = clipped_cell_mask(block_, clipped_a)
+            if clipped_b is None:
+                return _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)
+            mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
+            return (
+                _Crinkler._extract_cells(block_, mask_a, active_scalars_info_),
+                _Crinkler._extract_cells(block_, mask_b, active_scalars_info_),
+            )
 
         def extract_cells_from_multiblock(  # noqa: PLR0917
-            multi_in, multi_a, multi_b, active_scalars_info_
-        ):
+            multi_in: Any, multi_a: Any, multi_b: Any, active_scalars_info_: Any
+        ) -> Any:
             # Iterate though input and output multiblocks
             # `multi_b` may be None depending on `return_clipped`
             self_iter = multi_in.recursive_iterator('all', **_Crinkler.ITER_KWARGS)
@@ -7310,29 +7389,34 @@ class _Crinkler:
         return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
 
     @staticmethod
-    def _add_cell_ids(dataset: DataSet | MultiBlock[Any]):
+    def _add_cell_ids(
+        dataset: _DataSetOrMultiBlockType,
+    ) -> tuple[_DataSetOrMultiBlockType, list[Any]]:
         """Shallow copy the dataset, add cell ID arrays, and record the active scalars."""
         active_scalars_info = []
         # Shallow copies keep the cell ids off the caller's dataset and blocks
+        copied: _DataSetOrMultiBlockType
         if isinstance(dataset, pv.MultiBlock):
-            dataset = dataset.generic_filter(lambda block: block.copy(deep=False))
-            blocks: Iterable[DataSet] = dataset.recursive_iterator(
+            composite = dataset.generic_filter(lambda block: block.copy(deep=False))
+            blocks: Iterable[DataSet] = composite.recursive_iterator(
                 'blocks',
                 **_Crinkler.ITER_KWARGS,  # type: ignore[call-overload]
             )
+            # generic_filter is typed as returning a bare MultiBlock, not the input's class
+            copied = cast('_DataSetOrMultiBlockType', composite)
         else:
-            dataset = dataset.copy(deep=False)
-            blocks = [dataset]
+            copied = dataset.copy(deep=False)
+            blocks = [copied]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
             if not isinstance(block, pv.PointSet):
                 block.cell_data[_Crinkler.CELL_IDS] = np.arange(
                     block.n_cells, dtype=_Crinkler.INT_DTYPE
                 )
-        return dataset, active_scalars_info
+        return copied, active_scalars_info
 
 
-def _cell_status_docs_insert():
+def _cell_status_docs_insert() -> str:
     """Format CellStatus enum info for inserting into a docstring."""
     # Sort by name, but ensure VALID is the first value.
     statuses = sorted(

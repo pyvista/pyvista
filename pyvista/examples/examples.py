@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import VectorLike
 
 # get location of this folder and the example files
 dir_path = str(Path(os.path.realpath(__file__)).parent)
