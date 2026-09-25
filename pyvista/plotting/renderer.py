@@ -1856,7 +1856,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_axes
             Show the axes orientation widget.
 
-        axes_enabled
+        :attr:`~pyvista.Renderer.axes_enabled`
             Check if the axes orientation widget is enabled.
 
         Examples
@@ -1881,7 +1881,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         hide_axes
             Hide the axes orientation widget.
 
-        axes_enabled
+        :attr:`~pyvista.Renderer.axes_enabled`
             Check if the axes orientation widget is enabled.
 
         add_axes_at_origin
@@ -4248,7 +4248,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             For dict inputs, the keys are used as labels and the values are used
             as the colors. Labels must be strings, and colors can be any
-            :class:`~pyvista.ColorLike`.
+            :data:`~pyvista.typing.ColorLike`.
 
             For list inputs, the list must contain one entry for each item to
             be added to the legend. Each entry can contain one of the following:

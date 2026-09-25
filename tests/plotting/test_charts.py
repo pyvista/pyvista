@@ -253,6 +253,10 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
+@pytest.mark.expect_vtk_output(
+    'vtkMath::Jacobi: Error extracting eigenfunctions',
+    reason='VTK fails to extract eigenvectors while fitting the axis scale',
+)
 @pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
@@ -1236,5 +1240,7 @@ def test_get_background_texture(chart_2d):
 
 def test_line_style_tables_agree():
     assert (
-        list(_LINE_STYLE_PATTERNS) == list(get_args(pv.LineStyle)) == list(charts.Pen.LINE_STYLES)
+        list(_LINE_STYLE_PATTERNS)
+        == list(get_args(pv.typing.LineStyle))
+        == list(charts.Pen.LINE_STYLES)
     )

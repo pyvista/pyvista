@@ -1,76 +1,67 @@
 Typing
 ======
 
-Type aliases and type variable used by PyVista.
+.. module:: pyvista.typing
+
+Type aliases and type variable for annotating code that uses PyVista.
+
+.. versionadded:: 0.50
+   The ``pyvista.typing`` module.
+
+.. deprecated:: 0.50
+   Accessing these aliases from ``pyvista``, for example ``pyvista.VectorLike``,
+   is deprecated. Use ``pyvista.typing.VectorLike`` instead.
 
 
 Numeric Array-Like Types
 ------------------------
 
-pyvista.NumberType
-~~~~~~~~~~~~~~~~~~
+pyvista.typing.NumberType
+~~~~~~~~~~~~~~~~~~~~~~~~~
 Type variable for numeric data types.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autotypevar:: NumberType
 
-pyvista.ArrayLike
-~~~~~~~~~~~~~~~~~
+pyvista.typing.Number
+~~~~~~~~~~~~~~~~~~~~~
+Integer or float value.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: Number
+
+pyvista.typing.ArrayLike
+~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: ArrayLike
 
-pyvista.MatrixLike
-~~~~~~~~~~~~~~~~~~
+pyvista.typing.MatrixLike
+~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with numerical values.
 
 Includes singly nested sequences and numpy arrays.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: MatrixLike
 
 
-pyvista.VectorLike
-~~~~~~~~~~~~~~~~~~
+pyvista.typing.VectorLike
+~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with numerical values.
 
 Includes sequences and numpy arrays.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: VectorLike
-
-
-Plotting Types
---------------
-
-pyvista.WrappableType
-~~~~~~~~~~~~~~~~~~~~~
-Object accepted by :func:`pyvista.wrap`.
-
-Includes PyVista and VTK data objects, NumPy arrays, ``trimesh`` meshes,
-``meshio`` meshes, and ``None``.
-
-.. currentmodule:: pyvista
-
-.. autodata:: WrappableType
-
-pyvista.PlottableType
-~~~~~~~~~~~~~~~~~~~~~
-Object accepted by :func:`pyvista.plot` or :meth:`pyvista.Plotter.add_mesh`.
-
-Includes all :data:`pyvista.WrappableType` objects except ``None``, along with
-array-like objects, file paths, and filenames.
-
-.. currentmodule:: pyvista
-
-.. autodata:: PlottableType
 
 
 VTK Related Types
@@ -83,79 +74,123 @@ pyvista.BoundsTuple
 
 .. autoclass:: BoundsTuple
 
-pyvista.CellsLike
-~~~~~~~~~~~~~~~~~
+pyvista.typing.CellsLike
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: CellsLike
 
-pyvista.CellArrayLike
-~~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.CellArrayLike
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: CellArrayLike
 
-pyvista.RotationLike
-~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.RotationLike
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Array or object representing a spatial rotation.
 
 Includes 3x3 arrays and SciPy Rotation objects.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: RotationLike
 
-pyvista.TransformLike
-~~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.TransformLike
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Array or object representing a spatial transformation.
 
 Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: TransformLike
 
-pyvista.InteractionEventType
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.InteractionEventType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Interaction event mostly used for widgets.
 
 Includes both strings such as ``'end'``, ``'start'`` and ``'always'``
 and :vtk:`vtkCommand.EventIds`.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: InteractionEventType
 
-pyvista.LineStyle
-~~~~~~~~~~~~~~~~~
+pyvista.typing.LineStyle
+~~~~~~~~~~~~~~~~~~~~~~~~
 Named style of a line, shared by the charts and the line filters.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: LineStyle
 
-pyvista.CameraPositionOptions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Any object used to set a :class:`Camera`.
+pyvista.typing.CameraPositionOptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Any object used to set a :class:`~pyvista.Camera`.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: CameraPositionOptions
 
-pyvista.JupyterBackendOptions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.JupyterBackendOptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Jupyter backend to use.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: JupyterBackendOptions
 
-pyvista.MeshValidationFields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.MeshValidationFields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Field options for :meth:`~pyvista.DataObjectFilters.validate_mesh`.
 
-.. currentmodule:: pyvista
+.. currentmodule:: pyvista.typing
 
 .. autodata:: MeshValidationFields
+
+
+Plotting Types
+--------------
+
+pyvista.typing.ColorLike
+~~~~~~~~~~~~~~~~~~~~~~~~
+Any object that can be converted to a :class:`~pyvista.Color`.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: ColorLike
+
+pyvista.typing.Chart
+~~~~~~~~~~~~~~~~~~~~
+Any of :class:`~pyvista.Chart2D`, :class:`~pyvista.ChartBox`, :class:`~pyvista.ChartPie`
+or :class:`~pyvista.ChartMPL`, as accepted by :meth:`~pyvista.Plotter.add_chart`.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: Chart
+   :no-value:
+
+pyvista.typing.WrappableType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Object accepted by :func:`pyvista.wrap`.
+
+Includes PyVista and VTK data objects, NumPy arrays, ``trimesh`` meshes,
+``meshio`` meshes, and ``None``.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: WrappableType
+
+pyvista.typing.PlottableType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Object accepted by :func:`pyvista.plot` or :meth:`pyvista.Plotter.add_mesh`.
+
+Includes all :data:`~pyvista.typing.WrappableType` objects except ``None``, along with
+array-like objects, file paths, and filenames.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: PlottableType

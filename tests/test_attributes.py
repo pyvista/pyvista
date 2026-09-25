@@ -441,6 +441,7 @@ def test_dir_snake_case_visible_when_allowed(sphere):
         assert 'information' in listing
 
 
+@pytest.mark.skip_vtk_output_check
 def test_pyvista_class_no_new_attributes(pyvista_class):
     def skip_test_for_some_classes():
         if pyvista_class in (

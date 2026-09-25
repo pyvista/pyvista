@@ -9,15 +9,14 @@ from . import _rendering_imports as _rendering_imports
 
 # isort: on
 
+from typing import Any
+
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
 
+# Bound so the submodule is also reachable as ``pyvista._typing``
+from . import _typing as _typing
 from ._property import Property as Property
-from ._typing import CameraPositionOptions as CameraPositionOptions
-from ._typing import Chart as Chart
-from ._typing import ColorLike as ColorLike
-from ._typing import PlottableType as PlottableType
-from ._typing import WrappableType as WrappableType
 from .actor import Actor as Actor
 from .actor_properties import ActorProperties as ActorProperties
 from .affine_widget import AffineWidget3D as AffineWidget3D
@@ -33,7 +32,7 @@ from .charts import ChartMPL as ChartMPL
 from .charts import ChartPie as ChartPie
 from .colors import PARAVIEW_BACKGROUND as PARAVIEW_BACKGROUND
 from .colors import Color as Color
-from .colors import __getattr__  # noqa: F401
+from .colors import __getattr__ as _colors_getattr
 from .colors import color_char_to_word as color_char_to_word
 from .colors import get_cmap_safe as get_cmap_safe
 from .colors import hex_colors as hex_colors
@@ -138,3 +137,12 @@ class QtInteractor:  # numpydoc ignore=PR01
 
 
 global_theme: _GlobalTheme = _GlobalTheme()
+
+
+def __getattr__(name: str) -> Any:
+    """Forward the deprecated attributes of this module with a warning."""
+    if name in ('CameraPositionOptions', 'Chart', 'ColorLike'):
+        from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
+
+        return _get_deprecated_alias(__name__, name)
+    return _colors_getattr(name)
