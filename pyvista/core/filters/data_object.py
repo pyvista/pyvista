@@ -7199,6 +7199,8 @@ def _name_valid_point_mask(image: ImageData) -> ImageData:
         return image
     valid = image.point_data[_VALID_POINT_MASK] != 0
     image.point_data.remove(_VALID_POINT_MASK)
+    # uint8 under a free name: the volume mapper rejects the flag's own VTK_CHAR type,
+    # and retyping it in place breaks a probe which resamples it later
     image.point_data.set_array(valid.astype(np.uint8), _MASK_ARRAY)
     if image.active_scalars_name is None and not _has_resampled_scalars(image):
         image.set_active_scalars(_MASK_ARRAY)
