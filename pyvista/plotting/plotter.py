@@ -619,7 +619,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._window_size_unset = False
         self.last_image_depth: NumpyArray[np.float32] | None = None
         self.last_image: NumpyArray[np.uint8] | None = None
-        self.last_vtksz: str | Path | None = None
+        self.last_vtksz: bytes | None = None
         self._has_background_layer = False
         if image_scale is None:
             image_scale = self._theme.image_scale
@@ -4283,7 +4283,7 @@ class BasePlotter(_BoundsSizeMixin):
                     corners_grid.cell_data[array] = mesh.cell_data[array][0]
 
                 # Combine meshes
-                not_hidden = not_hidden + corners_grid
+                not_hidden = not_hidden.merge(corners_grid)
                 association, name = mesh.active_scalars_info
                 try:
                     not_hidden.set_active_scalars(name, preference=association)

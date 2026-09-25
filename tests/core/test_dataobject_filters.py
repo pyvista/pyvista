@@ -33,6 +33,7 @@ from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
+from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
@@ -147,6 +148,29 @@ def test_clip_inplace(mesh):
     clipped = mesh.clip(inplace=True)
     assert clipped is mesh
     assert mesh.n_points < n_points_in
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PointSet(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])),
+        pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['polydata', 'pointset', 'unstructured'],
+)
+def test_clip_inplace_return_clipped(mesh):
+    mesh = mesh.copy()
+    n_points_in = mesh.n_points
+    expected_kept, expected_removed = mesh.copy().clip(return_clipped=True)
+
+    kept, removed = mesh.clip(inplace=True, return_clipped=True)
+
+    assert kept is mesh
+    assert removed is not mesh
+    assert mesh.n_points < n_points_in
+    assert np.array_equal(kept.points, expected_kept.points)
+    assert np.array_equal(removed.points, expected_removed.points)
 
 
 @pytest.mark.parametrize(
@@ -663,12 +687,100 @@ def test_clip_box_no_unused_points(as_composite):
     assert np.allclose(clipped.bounds, new_bounds)
 
 
+def _n_unused_points(mesh):
+    """Return the number of points which no cell of the mesh refers to."""
+    used = np.unique(mesh.cast_to_unstructured_grid().cell_connectivity)
+    return mesh.n_points - len(used)
+
+
 @pytest.mark.parametrize('invert', [True, False])
 def test_clip_box_polydata_no_unused_points(invert):
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
-    used = np.unique(clipped.cast_to_unstructured_grid().cell_connectivity)
-    assert clipped.n_points == len(used)
+    assert _n_unused_points(clipped) == 0
+
+
+def test_cast_output_to_match_input_type_requires_two_composites():
+    match = 'Cannot match a composite output to a PolyData input.'
+    with pytest.raises(TypeError, match=match):
+        _cast_output_to_match_input_type(pv.MultiBlock([pv.Sphere()]), pv.Sphere())
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        lambda: pv.Plane(i_resolution=8, j_resolution=8).triangulate().strip(),
+        lambda: pv.Sphere(theta_resolution=16, phi_resolution=16),
+        lambda: (
+            pv.Plane(i_resolution=8, j_resolution=8)
+            .triangulate()
+            .merge(pv.lines_from_points(np.linspace([-1, 0, 0], [1, 0, 0], 5)))
+        ),
+        lambda: pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['strips', 'polydata', 'polydata_with_lines', 'unstructured_grid'],
+)
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='x', origin=mesh.center, return_clipped=True),
+        lambda mesh: mesh.clip_box(pv.Box(mesh.bounds).scale(0.6).bounds, merge_points=False),
+        lambda mesh: mesh.clip_slab(0.5, normal='x', origin=mesh.center),
+        lambda mesh: mesh.clip_scalar(scalars='x', value=mesh.center[0], both=True),
+    ],
+    ids=['clip', 'clip_box', 'clip_slab', 'clip_scalar'],
+)
+def test_clip_output_has_no_unused_points(make_mesh, clip_filter):
+    """Point removal is skipped after a clipper, so no clipper may leave points behind."""
+    mesh = make_mesh()
+    mesh.point_data['x'] = mesh.points[:, 0]
+
+    outputs = clip_filter(mesh)
+
+    for output in outputs if isinstance(outputs, tuple) else [outputs]:
+        assert output.n_cells
+        assert _n_unused_points(output) == 0
+
+
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='z', origin=(0, 0, 99), return_clipped=True)[1],
+        lambda mesh: mesh.clip_scalar(scalars='height', value=99, both=True)[1],
+    ],
+    ids=['clip', 'clip_scalar'],
+)
+def test_clip_empty_half_keeps_array_names(clip_filter):
+    """Removing the unused points of an empty half must not drop its arrays."""
+    mesh = pv.Plane().triangulate().strip()
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
+    assert mesh.n_strips
+
+    clipped = clip_filter(mesh)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
+
+
+def test_clip_leaves_points_alone_when_the_clipper_keeps_none(monkeypatch, hexbeam):
+    """The table-based clipper builds its own point list, so nothing follows it."""
+
+    def _fail(*_args, **_kwargs):  # pragma: no cover -- the test asserts it never runs
+        msg = 'remove_unused_points should not be called'
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(pv.UnstructuredGrid, 'remove_unused_points', _fail)
+    monkeypatch.setattr(pv.PolyData, 'remove_unused_points', _fail)
+
+    bounds = hexbeam.bounds
+    # Clip nothing away, so the output keeps the bounds of the input
+    kept, _ = hexbeam.clip(normal='x', origin=(bounds.x_max, 0.0, 0.0), return_clipped=True)
+    assert kept.n_cells == hexbeam.n_cells
+    assert hexbeam.clip_box(bounds, invert=False, merge_points=False).n_cells == hexbeam.n_cells
+    assert hexbeam.clip_slab(1e3, normal='x').n_cells == hexbeam.n_cells
 
 
 @pytest.mark.parametrize('invert', [True, False])
@@ -1749,6 +1861,12 @@ def test_triangulate():
     tri = data.triangulate(progress_bar=True)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
+
+
+def test_triangulate_inplace_requires_an_unstructured_grid():
+    match = 'Cannot use inplace=True for ImageData input.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        examples.load_uniform().triangulate(inplace=True)
 
 
 def test_triangulate_composite(multiblock_all_no_pointset):
