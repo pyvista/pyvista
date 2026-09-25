@@ -225,7 +225,11 @@ class AxesActor(
     def shaft_length(self, length: float | VectorLike[float]) -> None:
         self.SetNormalizedShaftLength(
             *_validation.validate_array3(
-                length, broadcast=True, dtype_out=float, name='shaft_length'
+                length,
+                broadcast=True,
+                dtype_out=float,
+                name='shaft_length',
+                must_be_in_range=[0, 1],
             )
         )
 
@@ -253,7 +257,11 @@ class AxesActor(
     def tip_length(self, length: float | VectorLike[float]) -> None:
         self.SetNormalizedTipLength(
             *_validation.validate_array3(
-                length, broadcast=True, dtype_out=float, name='tip_length'
+                length,
+                broadcast=True,
+                dtype_out=float,
+                name='tip_length',
+                must_be_in_range=[0, 1],
             )
         )
 
