@@ -4692,19 +4692,15 @@ def test_integrate_data_pointset(pointset):
     assert integrated.n_cells == 1
 
 
-@pytest.mark.expect_vtk_output(
-    'No cells to build',
-    reason='a PointSet has no cells for the locator, and the filter should reject it first',
-)
 @pytest.mark.parametrize('name', ['streamlines', 'streamlines_from_source'])
-def test_streamlines_pointset(pointset, name):
+def test_streamlines_pointset_raises(pointset, name):
     pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
     kwargs = {
         'streamlines': dict(n_points=2),
         'streamlines_from_source': dict(source=pv.PolyData(pointset.points[:1])),
     }[name]
-    output = getattr(pointset, name)(vectors='vectors', **kwargs)
-    assert isinstance(output, pv.PolyData)
+    with pytest.raises(pv.PointSetCellOperationError, match='PointSets contain no cells'):
+        getattr(pointset, name)(vectors='vectors', **kwargs)
 
 
 def test_integrate_data():
