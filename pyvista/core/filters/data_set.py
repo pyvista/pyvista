@@ -6674,6 +6674,11 @@ class DataSetFilters(DataObjectFilters):
         pyvista.PolyData
             Boundary faces of the 3D cells, with the computed metrics in ``cell_data``.
 
+        Raises
+        ------
+        ValueError
+            If the input has no 3D cells.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -6694,6 +6699,12 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        if (dimensionality := self.max_cell_dimensionality) < 3:
+            msg = (
+                f'Boundary faces are only defined for 3D cells, but the input has cells of '
+                f'dimension {dimensionality} at most.'
+            )
+            raise ValueError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(
             self.cast_to_unstructured_grid() if isinstance(self, pv.PolyData) else self

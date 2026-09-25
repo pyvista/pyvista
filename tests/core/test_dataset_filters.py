@@ -3879,15 +3879,13 @@ def test_compute_boundary_mesh_quality():
     assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
 
 
-@pytest.mark.expect_vtk_output(
-    'Input unstructured grid has non 3D cells.',
-    reason='a surface has no 3D cells, and the filter returns an empty mesh where it should raise',
+@pytest.mark.parametrize(
+    'mesh', [pv.Sphere(), pv.PolyData(), pv.Line()], ids=['surface', 'empty', 'line']
 )
-def test_compute_boundary_mesh_quality_surface(sphere):
-    # A surface has no 3D cells, so there are no boundary faces to measure
-    qual = sphere.compute_boundary_mesh_quality()
-    assert isinstance(qual, pv.PolyData)
-    assert qual.n_cells == 0
+def test_compute_boundary_mesh_quality_without_3d_cells_raises(mesh):
+    match = r'Boundary faces are only defined for 3D cells, but the input has cells of dimension'
+    with pytest.raises(ValueError, match=match):
+        mesh.compute_boundary_mesh_quality()
 
 
 def test_compute_derivatives(random_hills):
