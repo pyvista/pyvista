@@ -6077,6 +6077,7 @@ class ImageDataFilters(DataSetFilters):
             Compare a single slice of a magnetic resonance angiogram of the carotid
             arteries with a maximum intensity projection through the whole volume.
 
+            >>> import pyvista as pv
             >>> from pyvista import examples
             >>> carotid = examples.download_carotid()
             >>> plane = carotid.slice_index(k=22)
