@@ -351,6 +351,13 @@ def plot(  # noqa: ANN202
         if len(var_item) == 2:
             first, second = var_item
             if isinstance(first, np.ndarray) and isinstance(second, np.ndarray):  # arrows
+                from pyvista.core.utilities.arrays import _is_real  # noqa: PLC0415
+
+                if not (_is_real(first) and _is_real(second)):
+                    msg = (
+                        f'Arrow arrays must be real numbers, got {first.dtype} and {second.dtype}.'
+                    )
+                    raise TypeError(msg)
                 pl.add_arrows(first, second)
                 return
 

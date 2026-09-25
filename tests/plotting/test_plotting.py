@@ -1677,6 +1677,13 @@ def test_plot_arrows():
     pv.plot_arrows(cent, direction)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_arrows_rejects_complex():
+    arrows = np.zeros((2, 3), dtype=complex)
+    with pytest.raises(TypeError, match='Arrow arrays must be real numbers'):
+        pv.plot([arrows, arrows])
+
+
 def test_add_arrows():
     vector = np.array([1, 0, 0])
     center = np.array([0, 0, 0])

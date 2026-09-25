@@ -138,6 +138,11 @@ def _is_integer(array: NDArray[Any]) -> TypeIs[NDArray[np.integer]]:
     return np.issubdtype(array.dtype, np.integer)
 
 
+def _is_real(array: NDArray[Any]) -> TypeIs[NDArray[_Scalar]]:
+    """Return whether ``array`` has a boolean, integer, or floating dtype of at most 64 bits."""
+    return array.dtype.kind in 'biuf' and array.dtype.itemsize <= 8
+
+
 def _coerce_pointslike_arg(
     points: MatrixLike[float] | VectorLike[float],
     *,
