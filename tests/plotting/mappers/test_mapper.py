@@ -53,6 +53,10 @@ def test_bounds(dataset_mapper):
     assert dataset_mapper.bounds == (-126.0, 125.0, -127.0, 126.0, -127.0, 127.0)
 
 
+def test_center(dataset_mapper):
+    assert dataset_mapper.center == dataset_mapper.dataset.center
+
+
 @pytest.mark.parametrize(
     'mapper_type',
     [
