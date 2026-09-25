@@ -609,7 +609,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def set_active_scalars(
         self: Self,
         name: str | None,
-        preference: PointLiteral | CellLiteral = 'cell',
+        preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
     ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
@@ -622,10 +622,11 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             ``None``, deactivates active scalars for both point and
             cell data.
 
-        preference : str, default: "cell"
+        preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
-            type.  Can be either ``'cell'`` or ``'point'``.
+            type.  Can be either ``'cell'`` or ``'point'``, or the matching
+            :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
         Returns
         -------
@@ -677,7 +678,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return field, self.cell_data.active_scalars
 
     def set_active_vectors(
-        self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+        self: Self,
+        name: str | None,
+        preference: PointLiteral | CellLiteral | FieldAssociation = 'point',
     ) -> None:
         """Find the vectors by name and appropriately sets it as active.
 
@@ -688,11 +691,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         name : str, optional
             Name of the vectors array to assign as active.
 
-        preference : str, default: "point"
+        preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``,
-            ``'field'``, or ``'point'``.
+            matching this type.  Can be either ``'cell'``, ``'field'`` or
+            ``'point'``, or the matching
+            :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
         """
         if name is None:
@@ -719,7 +723,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self._active_vectors_info = ActiveArrayInfoTuple(field, name)
 
     def set_active_tensors(
-        self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+        self: Self,
+        name: str | None,
+        preference: PointLiteral | CellLiteral | FieldAssociation = 'point',
     ) -> None:
         """Find the tensors by name and appropriately sets it as active.
 
@@ -730,11 +736,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         name : str, optional
             Name of the tensors array to assign as active.
 
-        preference : str, default: "point"
+        preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``,
-            ``'field'``, or ``'point'``.
+            matching this type.  Can be either ``'cell'``, ``'field'`` or
+            ``'point'``, or the matching
+            :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
         """
         if name is None:
@@ -922,15 +929,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             if arr_var is None:
                 return (np.nan, np.nan)
 
+        arr: NumpyArray[Any]
         if isinstance(arr_var, str):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
         else:
-            arr = arr_var  # type: ignore[assignment]
+            arr = arr_var
 
         # If array has no tuples return a NaN range
-        if arr is None:
-            return (np.nan, np.nan)
         if arr.size == 0 or not (arr.dtype == bool or np.issubdtype(arr.dtype, np.number)):
             return (np.nan, np.nan)
         # Use the array range

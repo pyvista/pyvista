@@ -4283,7 +4283,7 @@ class BasePlotter(_BoundsSizeMixin):
                     corners_grid.cell_data[array] = mesh.cell_data[array][0]
 
                 # Combine meshes
-                not_hidden = not_hidden + corners_grid
+                not_hidden = not_hidden.merge(corners_grid)
                 association, name = mesh.active_scalars_info
                 try:
                     not_hidden.set_active_scalars(name, preference=association)
