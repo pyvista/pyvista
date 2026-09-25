@@ -825,13 +825,13 @@ def principal_axes(
     >>> std  # doctest:+SKIP
     array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
-    Compare this to using :meth:`numpy.std` for the computation.
+    Compare this to using :func:`numpy.std` for the computation.
 
     >>> np.std(mesh.points, axis=0)
     pyvista_ndarray([3.0149572, 1.5074761, 0.7035699], dtype=float32)
 
     Since the points are axis-aligned, the two results agree in this case. In general,
-    however, these two methods differ in that :meth:`numpy.std` with `axis=0` computes
+    however, these two methods differ in that :func:`numpy.std` with `axis=0` computes
     the standard deviation along the `x-y-z` axes, whereas the standard deviation
     returned by :meth:`principal_axes` is computed along the principal axes.
 
