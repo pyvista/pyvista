@@ -42,7 +42,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
     """Return the NumPy datatype responding to :vtk:`vtkIdTypeArray`.
 
     The 64-bit case returns :class:`numpy.longlong` (C ``long long``) rather than
-    :class:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
+    :obj:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
     LP64 (Linux/macOS) NumPy binds the name ``int64`` to C ``long`` instead, which is
     a *distinct* scalar type. Since VTK 9.7 the NumPy-to-VTK mapping follows the
     underlying C type, so ``np.int64`` there resolves to ``VTK_LONG`` and only

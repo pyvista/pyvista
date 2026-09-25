@@ -33,6 +33,7 @@ from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
+from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
@@ -147,6 +148,29 @@ def test_clip_inplace(mesh):
     clipped = mesh.clip(inplace=True)
     assert clipped is mesh
     assert mesh.n_points < n_points_in
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PointSet(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])),
+        pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['polydata', 'pointset', 'unstructured'],
+)
+def test_clip_inplace_return_clipped(mesh):
+    mesh = mesh.copy()
+    n_points_in = mesh.n_points
+    expected_kept, expected_removed = mesh.copy().clip(return_clipped=True)
+
+    kept, removed = mesh.clip(inplace=True, return_clipped=True)
+
+    assert kept is mesh
+    assert removed is not mesh
+    assert mesh.n_points < n_points_in
+    assert np.array_equal(kept.points, expected_kept.points)
+    assert np.array_equal(removed.points, expected_removed.points)
 
 
 @pytest.mark.parametrize(
@@ -674,6 +698,12 @@ def test_clip_box_polydata_no_unused_points(invert):
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
     assert _n_unused_points(clipped) == 0
+
+
+def test_cast_output_to_match_input_type_requires_two_composites():
+    match = 'Cannot match a composite output to a PolyData input.'
+    with pytest.raises(TypeError, match=match):
+        _cast_output_to_match_input_type(pv.MultiBlock([pv.Sphere()]), pv.Sphere())
 
 
 @pytest.mark.parametrize(
@@ -1831,6 +1861,12 @@ def test_triangulate():
     tri = data.triangulate(progress_bar=True)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
+
+
+def test_triangulate_inplace_requires_an_unstructured_grid():
+    match = 'Cannot use inplace=True for ImageData input.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        examples.load_uniform().triangulate(inplace=True)
 
 
 def test_triangulate_composite(multiblock_all_no_pointset):

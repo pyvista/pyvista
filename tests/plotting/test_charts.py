@@ -1240,5 +1240,7 @@ def test_get_background_texture(chart_2d):
 
 def test_line_style_tables_agree():
     assert (
-        list(_LINE_STYLE_PATTERNS) == list(get_args(pv.LineStyle)) == list(charts.Pen.LINE_STYLES)
+        list(_LINE_STYLE_PATTERNS)
+        == list(get_args(pv.typing.LineStyle))
+        == list(charts.Pen.LINE_STYLES)
     )

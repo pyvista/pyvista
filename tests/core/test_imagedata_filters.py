@@ -440,6 +440,42 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
 
 
 @pytest.mark.parametrize(
+    ('filter_name', 'scalars'),
+    [('points_to_cells', 'point_data'), ('cells_to_points', 'cell_data')],
+)
+def test_points_to_cells_and_cells_to_points_direction_matrix(filter_name, scalars):
+    """Test the half-voxel shift is rotated by the direction matrix."""
+    image = pv.ImageData(dimensions=(4, 5, 6), spacing=(1.0, 2.0, 3.0))
+    image.direction_matrix = pv.Transform().rotate_z(15).rotate_x(20).matrix[:3, :3]
+    image.point_data['point_data'] = range(image.n_points)
+    image.cell_data['cell_data'] = range(image.n_cells)
+
+    output = getattr(image, filter_name)(scalars=scalars)
+
+    point_image, cell_image = (
+        (image, output) if filter_name == 'points_to_cells' else (output, image)
+    )
+    assert np.allclose(cell_image.cell_centers().points, point_image.points)
+
+
+def test_contour_labels_direction_matrix():
+    """Test cell labels of a rotated image are contoured in place."""
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    labels = np.zeros(image.n_cells, dtype=np.uint8)
+    labels.reshape(4, 4, 4)[1:3, 1:3, 1:3] = 1
+    image.cell_data['labels'] = labels
+
+    transform = pv.Transform().rotate_z(30)
+    expected = image.contour_labels().transform(transform, inplace=False)
+
+    rotated = image.copy()
+    rotated.direction_matrix = transform.matrix[:3, :3]
+    actual = rotated.contour_labels()
+
+    assert np.allclose(actual.points, expected.points)
+
+
+@pytest.mark.parametrize(
     ('point_flags', 'expected_cell_flags'),
     [
         ([HIDDEN_POINT, 0], [HIDDEN_CELL, 0]),
@@ -2891,6 +2927,25 @@ def test_concatenate_preserve_extents():
     match = "The axis keyword cannot be used with 'preserve-extents' mode."
     with pytest.raises(ValueError, match=match):
         image_a.concatenate(image_b, axis=0, mode='preserve-extents')
+
+
+@pytest.mark.parametrize('mode', [None, 'strict', 'resample-match', 'crop-match'])
+def test_concatenate_offset_mismatch(mode):
+    array_a = np.arange(1, 10)
+    array_b = np.arange(10, 19)
+
+    image_a = pv.ImageData(dimensions=(3, 3, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(3, 3, 1))
+    image_b.offset = (4, 5, 6)
+    image_b['B'] = array_b
+
+    image_a.offset = (1, 2, 3)
+    concatenated = image_a.concatenate(image_b, axis='x', mode=mode)
+    assert concatenated.dimensions == (6, 3, 1)
+    assert concatenated.offset == (1, 2, 3)
+    expected = np.hstack([array_a.reshape(3, 3), array_b.reshape(3, 3)]).ravel()
+    assert np.array_equal(concatenated.active_scalars, expected)
 
 
 def test_concatenate_crop():
