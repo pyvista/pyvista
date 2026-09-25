@@ -1302,8 +1302,9 @@ def _rename_valid_point_mask(
         if _VALID_POINT_MASK in point_data:
             valid = np.asarray(point_data[_VALID_POINT_MASK]) != 0
             point_data.remove(_VALID_POINT_MASK)
-            # uint8 rather than VTK's char, which the volume mapper refuses to render
-            point_data[mask_name] = valid.astype(np.uint8)
+            # uint8 rather than VTK's char, which the volume mapper refuses to render.
+            # `set_array` rather than `[...] =`, which would make the flag the scalars
+            point_data.set_array(valid.astype(np.uint8), mask_name)
     return output
 
 
