@@ -4953,17 +4953,13 @@ class ImageDataFilters(DataSetFilters):
                 )
         if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
             # The interpolator expects pre-computed spline coefficients as input
-            coefficients = _vtk.vtkImageBSplineCoefficients()
-            coefficients.SetInputData(input_image)
-            coefficients.SetSplineDegree(interpolator.GetSplineDegree())
-            dtype = input_image.point_data[name].dtype
-            if dtype != np.float32 and dtype.itemsize > 2:
-                coefficients.SetOutputScalarTypeToDouble()
-            _set_border_mode(coefficients, border_mode)
-            _update_alg(
-                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
+            input_image = _bspline_coefficients(
+                input_image,
+                scalars=name,
+                degree=interpolator.GetSplineDegree(),
+                border_mode=border_mode,
+                progress_bar=progress_bar,
             )
-            input_image = _get_output(coefficients)
 
         resize_filter = _vtk.vtkImageResize()
         resize_filter.SetInputData(input_image)
@@ -6019,6 +6015,26 @@ def _image_interpolator(
         raise RuntimeError(msg)
     _set_border_mode(interpolator, border_mode)
     return interpolator
+
+
+def _bspline_coefficients(
+    image: ImageData,
+    *,
+    scalars: str,
+    degree: int,
+    border_mode: _BorderModeOptions,
+    progress_bar: bool,
+) -> ImageData:
+    """Pre-compute the spline coefficients expected by the B-spline interpolator."""
+    coefficients = _vtk.vtkImageBSplineCoefficients()
+    coefficients.SetInputData(image)
+    coefficients.SetSplineDegree(degree)
+    dtype = image.point_data[scalars].dtype
+    if dtype != np.float32 and dtype.itemsize > 2:
+        coefficients.SetOutputScalarTypeToDouble()
+    _set_border_mode(coefficients, border_mode)
+    _update_alg(coefficients, progress_bar=progress_bar, message='Computing spline coefficients.')
+    return _get_output(coefficients)
 
 
 def _round_to_dtype(array: NumpyArray[float], dtype: np.dtype[Any]) -> NumpyArray[Any]:
