@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections.abc import Callable  # noqa: TC003
 from importlib.metadata import entry_points
 import importlib.util
+from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import get_args
@@ -262,7 +263,9 @@ def _validate_jupyter_backend(
     raise ValueError(msg)
 
 
-def set_jupyter_backend(backend: JupyterBackendOptions | str | None, name=None, **kwargs):
+def set_jupyter_backend(
+    backend: JupyterBackendOptions | str | None, name: str | None = None, **kwargs: Any
+) -> None:
     """Set the plotting backend for a jupyter notebook.
 
     Parameters
