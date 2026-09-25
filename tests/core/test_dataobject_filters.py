@@ -2312,9 +2312,29 @@ def test_sample_mask_does_not_take_the_scalars(partly_covered):
     del target.point_data['data']
     assert target.active_scalars_name is None
 
+    # A mesh with no scalars still plots its own shape, so the mask is left inactive
     result = probe.sample(target)
     assert 'mask' in result.point_data
     assert result.active_scalars_name is None
+
+
+@pytest.mark.parametrize('method', ['sample', 'interpolate'])
+def test_mask_takes_the_scalars_of_an_image(method):
+    # An image with no scalars plots as its bounding box, so the mask takes them
+    image = pv.ImageData(dimensions=(8, 8, 8), spacing=(0.3, 0.3, 0.3), origin=(-1, -1, -1))
+    source = pv.Sphere()
+    kwargs = {'strategy': 'mask_points', 'radius': 0.3} if method == 'interpolate' else {}
+    voxelized = getattr(image, method)(source, **kwargs)
+    assert voxelized.active_scalars_name == 'mask'
+
+    # Arrays which are nobody's scalars do not beat it, since neither would plot
+    unflagged = source.copy()
+    unflagged.point_data.set_array(unflagged.points[:, 0], 'aaa')
+    assert getattr(image, method)(unflagged, **kwargs).active_scalars_name == 'mask'
+
+    # Anything VTK does resample onto the scalars keeps them
+    source['height'] = source.points[:, 2]
+    assert getattr(image, method)(source, **kwargs).active_scalars_name == 'height'
 
 
 def test_sample_mask_name(partly_covered):

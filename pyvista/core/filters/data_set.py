@@ -3580,7 +3580,9 @@ class DataSetFilters(DataObjectFilters):
 
         mask_name : str, default: 'mask'
             Name of the binary point array ``strategy='mask_points'`` creates. Any array
-            of that name on the input or the target is replaced by it.
+            of that name on the input or the target is replaced by it. Interpolating
+            onto :class:`~pyvista.ImageData` makes it the output's scalars when nothing
+            else is, since an image with no scalars plots as its bounding box.
 
             .. versionadded:: 0.50
 
