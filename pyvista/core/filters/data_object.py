@@ -6116,8 +6116,9 @@ class DataObjectFilters:
 
         A binary ``'mask'`` array comes back alongside the resampled arrays, holding
         ``1`` at the voxels the input reached. It is a voxelization of the input's
-        geometry, so an input carrying nothing to resample still yields a usable image,
-        and it becomes the output's scalars when nothing else did. An array of that name
+        geometry, so an input carrying nothing to resample still yields a usable image.
+        The input's active scalars stay active, and the mask takes them only when the
+        input carried none beyond normals and texture coordinates. An array of that name
         on the input is resampled like any other, and VTK's own ``'vtkValidPointMask'``
         is kept for the flag.
 
@@ -7094,9 +7095,22 @@ def _name_valid_point_mask(image: ImageData) -> ImageData:
     valid = image.point_data[_VALID_POINT_MASK] != 0
     image.point_data.remove(_VALID_POINT_MASK)
     image.point_data.set_array(valid.astype(np.uint8), _MASK_ARRAY)
-    if image.active_scalars_name is None:
+    if image.active_scalars_name is None and not _has_resampled_scalars(image):
         image.set_active_scalars(_MASK_ARRAY)
     return image
+
+
+def _has_resampled_scalars(image: ImageData) -> bool:
+    """Return whether an array a caller would rather plot than the mask was resampled."""
+    data = image.point_data
+    not_scalars = {
+        _MASK_ARRAY,
+        _GHOST_ARRAY,
+        data.active_normals_name,
+        data.active_texture_coordinates_name,
+        data.active_vectors_name,
+    }
+    return bool(set(data.keys()) - not_scalars)
 
 
 def _blank_invalid_points(image: ImageData) -> ImageData:

@@ -4756,6 +4756,15 @@ def test_resample_to_image_masks_geometry(sphere, method):
     assert resampled.active_scalars_name == 'height'
     assert np.array_equal(resampled['mask'], mask)
 
+    # Arrays which are nobody's scalars are left that way, as `sample` leaves them
+    sphere.clear_data()
+    sphere.point_data.set_array(sphere.points[:, 0], 'aaa')
+    sphere.point_data.set_array(sphere.points[:, 1], 'zzz')
+    assert sphere.active_scalars_name is None
+    unchosen = sphere.resample_to_image(dimensions=dims, method=method)
+    assert unchosen.active_scalars_name is None
+    assert np.array_equal(unchosen['mask'], mask)
+
 
 def test_resample_to_image_masks_geometry_options(sphere):
     dims = (20, 20, 20)
