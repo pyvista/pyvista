@@ -188,9 +188,11 @@ _DOCUMENTED_TYPES = [
     'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
+    'PlottableType',
     'RotationLike',
     'TransformLike',
     'VectorLike',
+    'WrappableType',
 ]
 
 # Names in signatures and docstrings without a documentation page
@@ -224,7 +226,6 @@ _UNDOCUMENTED_TYPES = [
     'OpacityOptions',
     'PathStrSeq',
     'PickerType',
-    'PlottableType',
     'PointLiteral',
     'PointSetToPolyDataAlgorithm',
     'ReaderProvider',

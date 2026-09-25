@@ -8,12 +8,20 @@ from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
+from numpy.typing import NDArray
+
 from pyvista import _vtk
 
 from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 from ._array_like import _NumberT
+
+if TYPE_CHECKING:
+    import meshio
+    import trimesh
+
+    from pyvista.core.dataobject import DataObject
 
 if TYPE_CHECKING or os.environ.get(
     '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
@@ -91,3 +99,13 @@ _ArrayLikeOrScalar = Union[_NumberT, ArrayLike[_NumberT]]
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
 LineStyle = Literal['', '-', '--', ':', '-.', '-..']
+
+_WrappableType = Union[
+    _vtk.vtkDataObject,
+    'DataObject',
+    _vtk.vtkDataArray,
+    NDArray[float],
+    'trimesh.Trimesh',
+    'meshio.Mesh',
+]
+WrappableType = Union[_WrappableType, None]

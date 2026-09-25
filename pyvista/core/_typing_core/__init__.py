@@ -12,7 +12,9 @@ from ._aliases import MatrixLike as MatrixLike
 from ._aliases import RotationLike as RotationLike
 from ._aliases import TransformLike as TransformLike
 from ._aliases import VectorLike as VectorLike
+from ._aliases import WrappableType as WrappableType
 from ._aliases import _ArrayLikeOrScalar as _ArrayLikeOrScalar
+from ._aliases import _WrappableType as _WrappableType
 from ._array_like import _FiniteNestedList as _FiniteNestedList
 from ._array_like import _FiniteNestedTuple as _FiniteNestedTuple
 from ._dataset_types import _DataObjectType as _DataObjectType
