@@ -1376,6 +1376,7 @@ Documenting Type Aliases
 The documentation expands a type alias into its full value wherever it appears in a
 signature. To show and link an alias by name instead, which suits long unions:
 
+#. Export it from ``pyvista/typing/__init__.py`` and add it to that module's ``__all__``.
 #. Add its name to ``_DOCUMENTED_TYPES`` in ``doc/source/conf.py``.
 #. Document it in ``doc/source/api/core/typing.rst``.
 

@@ -188,6 +188,7 @@ _DOCUMENTED_TYPES = [
     'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
+    'Number',
     'NumberType',
     'RotationLike',
     'TransformLike',
@@ -253,7 +254,7 @@ _UNDOCUMENTED_TYPES = [
 
 # Configuration for sphinx.ext.autodoc
 autodoc_type_aliases = {
-    **{name: f'~pyvista.{name}' for name in _DOCUMENTED_TYPES},
+    **{name: f'~pyvista.typing.{name}' for name in _DOCUMENTED_TYPES},
     'FrameType': 'types.FrameType',
     # generated from the example names; render it as a name, not 222 literals
     'ExampleName': 'ExampleName',
@@ -281,7 +282,7 @@ numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 numpydoc_xref_ignore = {'optional'}
 # Link docstring types such as ``VectorLike[float]`` from any module
-numpydoc_xref_aliases = {name: f'pyvista.{name}' for name in _DOCUMENTED_TYPES}
+numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in _DOCUMENTED_TYPES}
 
 sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with

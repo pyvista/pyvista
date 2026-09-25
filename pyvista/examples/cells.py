@@ -28,7 +28,7 @@ from pyvista._warn_external import warn_external
 if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import CameraPositionOptions
 
 

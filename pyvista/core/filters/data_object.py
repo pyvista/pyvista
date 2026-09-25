@@ -72,12 +72,12 @@ if TYPE_CHECKING:
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
-    from pyvista import RotationLike
-    from pyvista import TransformLike
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core._typing_core import _OutputDataObject
@@ -2112,7 +2112,7 @@ class DataObjectFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :data:`~pyvista.typing.TransformLike`
         is accepted.
 
         >>> transform_matrix = np.array(

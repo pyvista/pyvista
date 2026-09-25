@@ -6,6 +6,7 @@ import ast
 
 import pytest
 
+import pyvista as pv
 from tests.conftest import PYVISTA_ROOT_DIR
 
 CONF_PY = PYVISTA_ROOT_DIR / 'doc' / 'source' / 'conf.py'
@@ -31,6 +32,11 @@ def test_undocumented_types_are_sorted():
     """Keep the nitpick ignore names sorted and unique."""
     names = conf_value('_UNDOCUMENTED_TYPES')
     assert names == sorted(set(names))
+
+
+def test_documented_types_match_typing_module():
+    """Document every name that ``pyvista.typing`` exports."""
+    assert sorted(conf_value('_DOCUMENTED_TYPES')) == sorted(pv.typing.__all__)
 
 
 def test_undocumented_types_are_public():
