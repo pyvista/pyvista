@@ -22,9 +22,11 @@ docstring says what to do when a new filter or keyword makes this module fail.
 
 from __future__ import annotations
 
+import ast
 from collections import Counter
 import functools
 import hashlib
+import importlib
 import inspect
 import re
 import sys
@@ -41,7 +43,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core import _typing_core
 from pyvista.core.filters.composite import CompositeFilters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
@@ -53,8 +54,31 @@ from pyvista.core.filters.unstructured_grid import UnstructuredGridFilters
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from tests.core import filter_side_effects_cases as cases
 
-#: Names the filter annotations refer to without importing them at runtime.
-_ANNOTATION_NAMES = {**vars(_typing_core), **vars(pv)}
+
+@functools.cache
+def _type_checking_names(module_name):
+    """Return the names a module imports inside ``if TYPE_CHECKING:``, where they exist."""
+    module = sys.modules[module_name]
+    names = {}
+    for node in ast.parse(inspect.getsource(module)).body:
+        if not (isinstance(node, ast.If) and ast.unparse(node.test).endswith('TYPE_CHECKING')):
+            continue
+        for statement in node.body:
+            if isinstance(statement, ast.ImportFrom):
+                source = '.' * statement.level + (statement.module or '')
+                imported = importlib.import_module(source, module.__package__)
+                names.update(
+                    {
+                        alias.asname or alias.name: getattr(imported, alias.name)
+                        for alias in statement.names
+                        if hasattr(imported, alias.name)
+                    }
+                )
+            elif isinstance(statement, ast.Import):
+                for alias in statement.names:
+                    bound = alias.asname or alias.name.split('.')[0]
+                    names[bound] = importlib.import_module((alias.asname and alias.name) or bound)
+    return names
 
 
 def _vectors(rng, n):
@@ -274,7 +298,7 @@ def _annotation(func, name):
     annotation = inspect.signature(func).parameters[name].annotation
     if not isinstance(annotation, str):
         return annotation
-    namespace = {**_ANNOTATION_NAMES, **vars(sys.modules[func.__module__])}
+    namespace = {**_type_checking_names(func.__module__), **vars(sys.modules[func.__module__])}
     try:
         return eval(annotation, namespace)  # noqa: S307  - the filter's own annotation
     except NameError:  # a name imported for type checking only
