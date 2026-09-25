@@ -9,7 +9,6 @@ from typing import Any
 from typing import TypeVar
 
 import numpy as np
-import numpy.typing as npt
 
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
 
+    from numpy.typing import NDArray
     import pandas
     import pyarrow
     from typing_extensions import Self
@@ -378,7 +378,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> npt.NDArray[np.floating] | None:
+    def active_vectors(self: Self) -> NDArray[np.floating] | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
@@ -739,7 +739,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: npt.ArrayLike,
+        data: ArrayLike[float],
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
@@ -1022,7 +1022,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """
         return [self.get_array(name) for name in self.keys()]
 
-    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, npt.NDArray[Any]]]:
+    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, NDArray[Any]]]:
         """Yield ``(column_name, 1d_ndarray)`` pairs with multi-component arrays expanded.
 
         Shared helper for :meth:`to_arrow`, :meth:`to_pandas`, and
@@ -1041,7 +1041,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             raise ValueError(msg)
         seen: set[str] = set()
 
-        def _emit(col_name: str, values: npt.NDArray[Any]) -> tuple[str, npt.NDArray[Any]]:
+        def _emit(col_name: str, values: NDArray[Any]) -> tuple[str, NDArray[Any]]:
             if col_name in seen:
                 msg = (
                     f'Column name collision on {col_name!r}: multiple arrays would map '
@@ -1437,7 +1437,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def __eq__(self: Self, other: object) -> bool:
         """Test dict-like equivalency."""
 
-        def array_equal_nan(array1: npt.ArrayLike, array2: npt.ArrayLike) -> bool:
+        def array_equal_nan(array1: NDArray[Any], array2: NDArray[Any]) -> bool:
             # Check with `equal_nan=True` but only for floats since this fails for strings
             # See numpy/numpy#16377
             return (
@@ -1647,7 +1647,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: npt.NDArray[np.floating],
+        texture_coordinates: NDArray[np.floating],
     ) -> None:
         """Set the active texture coordinates array.
 

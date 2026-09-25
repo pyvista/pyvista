@@ -19,7 +19,6 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
-import numpy.typing as npt
 import pyvista_validation as _validation
 
 import pyvista as pv
@@ -39,6 +38,7 @@ if TYPE_CHECKING:
 
     import imageio
     import meshio
+    from numpy.typing import NDArray
     import trimesh
 
     from pyvista import BaseReader
@@ -1326,7 +1326,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    def split(arr: npt.NDArray[np.signedinteger]) -> list[npt.NDArray[np.signedinteger]]:
+    def split(arr: NDArray[np.signedinteger]) -> list[NDArray[np.signedinteger]]:
         i = 0
         offsets: list[int] = [0]
 
@@ -1342,7 +1342,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     if polyhedron_faces:
         polyhedron_locations = split(mesh.polyhedron_face_locations)
-        polyhedral_cell_faces: list[list[npt.NDArray[np.signedinteger]]] = [
+        polyhedral_cell_faces: list[list[NDArray[np.signedinteger]]] = [
             [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
         ]
 
@@ -1562,7 +1562,7 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
-def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, npt.NDArray[Any]]:
+def _as_arrays(attributes: Mapping[str, object]) -> dict[str, NDArray[Any]]:
     """Return the attribute mapping with every value as an array."""
     return {name: np.asarray(value) for name, value in attributes.items()}
 
@@ -1609,7 +1609,7 @@ def from_trimesh(
         _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
     # Handle case with no faces
-    faces: npt.NDArray[np.signedinteger] = mesh.faces
+    faces: NDArray[np.signedinteger] = mesh.faces
     if faces.size == 0:
         faces = faces.reshape((0, 3))
     # Trimesh doesn't pad faces

@@ -584,6 +584,7 @@ banned-from = [
 pyvista = "pv"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
+"numpy.typing.ArrayLike".msg = "Use `pyvista.typing.ArrayLike` instead, with a scalar type added where scalars are accepted"
 "vtk".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules, and avoid pulling in the entire VTK package"
 "vtkmodules".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules"
 
