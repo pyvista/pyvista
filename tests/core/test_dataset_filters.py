@@ -3880,10 +3880,19 @@ def test_compute_boundary_mesh_quality():
 
 
 @pytest.mark.parametrize(
-    'mesh', [pv.Sphere(), pv.PolyData(), pv.Line()], ids=['surface', 'empty', 'line']
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PolyData(),
+        pv.Line(),
+        pv.ImageData(dimensions=(4, 4, 1)),
+        pv.RectilinearGrid(np.arange(4.0), np.arange(4.0), np.array([0.0])),
+        pv.StructuredGrid(*np.meshgrid(np.arange(4.0), np.arange(4.0), [0.0], indexing='ij')),
+    ],
+    ids=['surface', 'empty', 'line', 'image_2d', 'rectilinear_2d', 'structured_2d'],
 )
 def test_compute_boundary_mesh_quality_without_3d_cells_raises(mesh):
-    match = r'Boundary faces are only defined for 3D cells, but the input has cells of dimension'
+    match = r'Boundary faces are only defined for 3D cells, but the input has none'
     with pytest.raises(ValueError, match=match):
         mesh.compute_boundary_mesh_quality()
 

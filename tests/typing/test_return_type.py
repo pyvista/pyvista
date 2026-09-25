@@ -9,7 +9,6 @@ import pytest
 import pyvista as pv
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.errors import VTKVersionError
-from pyvista.plotting.mapper import _BaseMapper
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -72,13 +71,6 @@ def try_init_object(class_, kwargs):
         if 'abstract' in repr(e):
             pytest.skip('Class is abstract.')
         raise  # pragma: no cover -- failure path
-    if isinstance(instance, _BaseMapper):
-        # A mapper measures its dataset, so it has no bounds or center without one.
-        instance.dataset = (
-            pv.Cube().cast_to_unstructured_grid()
-            if isinstance(instance, pv.UnstructuredGridVolumeRayCastMapper)
-            else pv.Cube()
-        )
     return instance
 
 

@@ -205,6 +205,13 @@ class AxesActor(
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
+        Value must be in the range ``[0, 1]``.
+
+        .. versionchanged:: 0.50
+
+            Values outside ``[0, 1]`` now raise ``ValueError``. Previously they were
+            stored and clamped by VTK.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -236,6 +243,13 @@ class AxesActor(
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
+
+        Value must be in the range ``[0, 1]``.
+
+        .. versionchanged:: 0.50
+
+            Values outside ``[0, 1]`` now raise ``ValueError``. Previously they were
+            stored and clamped by VTK.
 
         Examples
         --------

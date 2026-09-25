@@ -62,11 +62,13 @@ def test_bounds(dataset_mapper):
         pv.CompositePolyDataMapper,
     ],
 )
-@pytest.mark.parametrize('name', ['bounds', 'center'])
-def test_bounds_and_center_without_a_dataset_raises(mapper_type, name):
-    match = f'This {mapper_type.__name__} has no dataset, so it has no {name}.'
-    with pytest.raises(ValueError, match=match):
-        getattr(mapper_type(), name)
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [('bounds', (1.0, -1.0, 1.0, -1.0, 1.0, -1.0)), ('center', (0.0, 0.0, 0.0))],
+)
+def test_bounds_and_center_without_a_dataset(mapper_type, name, expected):
+    """Every mapper family reports the uninitialized sentinel, without asking VTK."""
+    assert getattr(mapper_type(), name) == expected
 
 
 def test_lookup_table(dataset_mapper):

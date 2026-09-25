@@ -161,22 +161,6 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
             self._theme.interpolate_before_map,
         )
 
-    def _raise_if_no_dataset(self, name: str) -> None:
-        """Reject a geometric query on a mapper that has no dataset to measure.
-
-        VTK answers one anyway, with the sentinel an uninitialized bounding box
-        carries, and logs a pipeline error for the missing input connection.
-
-        Parameters
-        ----------
-        name : str
-            Name of the property being read, used in the error message.
-
-        """
-        if self.dataset is None:
-            msg = f'This {type(self).__name__} has no dataset, so it has no {name}.'
-            raise ValueError(msg)
-
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of this mapper.
@@ -194,7 +178,9 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
                     z_max =  0.5)
 
         """
-        self._raise_if_no_dataset('bounds')
+        if self.dataset is None:
+            # The sentinel VTK leaves in an uninitialized bounding box.
+            return BoundsTuple(1.0, -1.0, 1.0, -1.0, 1.0, -1.0)
         return BoundsTuple(*self.GetBounds())
 
     @property
@@ -207,7 +193,8 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
             Center of the active renderer.
 
         """
-        self._raise_if_no_dataset('center')
+        if self.dataset is None:
+            return (0.0, 0.0, 0.0)
         return self.GetCenter()
 
     def copy(self) -> _BaseMapper:
