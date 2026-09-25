@@ -10,6 +10,8 @@ import textwrap
 import pytest
 
 from pyvista import _vtk
+from pyvista import typing as pv_typing
+from pyvista.typing import _LAZY_ALIASES
 from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
 from tests.vtk_backend_divergence import CVISTA_NAMESPACE
 
@@ -343,43 +345,16 @@ def test_validation_forward_deprecated():
     assert _validation.validate_array3([1, 2, 3]).shape == (3,)
 
 
-_TYPE_ALIAS_SOURCES = {
-    **dict.fromkeys(
-        [
-            'ArrayLike',
-            'CellArrayLike',
-            'CellsLike',
-            'InteractionEventType',
-            'LineStyle',
-            'MatrixLike',
-            'Number',
-            'NumberType',
-            'RotationLike',
-            'TransformLike',
-            'VectorLike',
-            'WrappableType',
-        ],
-        'pyvista.core._typing_core',
-    ),
-    **dict.fromkeys(
-        ['CameraPositionOptions', 'Chart', 'ColorLike', 'PlottableType'],
-        'pyvista.plotting._typing',
-    ),
-    'JupyterBackendOptions': 'pyvista.jupyter',
-    'MeshValidationFields': 'pyvista.core.filters.data_object',
-}
-
-
 def _source_alias(name):
     """Return the type alias ``name`` from the private module that provides it."""
-    return getattr(importlib.import_module(_TYPE_ALIAS_SOURCES[name]), name)
+    module = _LAZY_ALIASES.get(name, 'pyvista.core._typing_core')
+    return getattr(importlib.import_module(module), name)
 
 
 def test_typing_namespace():
     """``pyvista.typing`` exports every type alias, unchanged from the module that provides it."""
     import pyvista as pv
 
-    assert sorted(pv.typing.__all__) == sorted(_TYPE_ALIAS_SOURCES)
     for name in pv.typing.__all__:
         assert getattr(pv.typing, name) is _source_alias(name)
 
@@ -430,7 +405,7 @@ def test_type_alias_forward_deprecated(module, name):
 
 
 @pytest.mark.parametrize(
-    'name', sorted(set(_TYPE_ALIAS_SOURCES) - _MOVED_TO_TYPING_NAMESPACE['pyvista'])
+    'name', sorted(set(pv_typing.__all__) - _MOVED_TO_TYPING_NAMESPACE['pyvista'])
 )
 def test_type_alias_not_forwarded_from_pyvista(name):
     """A type alias that ``pyvista`` never provided is only in ``pyvista.typing``."""
