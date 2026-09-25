@@ -63,7 +63,6 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
-    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import ImageData
@@ -165,11 +164,13 @@ def _convert_transform_input_to_float(
     return converted
 
 
-def _copy_transformed_arrays(output: DataSet, filtered: DataObject, *, copy: bool) -> None:
+def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) -> None:
     """Copy the point, cell and field arrays the transform filter produced."""
     output.point_data.update(filtered.point_data, copy=copy)
     output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
+    # DataSetAttributes.update copies arrays without marking any of them active
+    _copy_active_attributes(filtered, output)
 
 
 def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
@@ -2233,6 +2234,7 @@ class DataObjectFilters:
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
         active_point_scalars_name: str | None = point_data.active_scalars_name
         active_cell_scalars_name: str | None = cell_data.active_scalars_name
+        active_tensors_info = self.active_tensors_info
 
         output = self if inplace else self.__class__()
 
@@ -2272,6 +2274,8 @@ class DataObjectFilters:
             if output is not self:
                 output.point_data.active_scalars_name = active_point_scalars_name
                 output.cell_data.active_scalars_name = active_cell_scalars_name
+            # The active tensors are cached on the dataset as well as in the attributes
+            output._active_tensors_info = active_tensors_info
         finally:
             # Make the previously active scalars of this mesh active again
             point_data.active_scalars_name = active_point_scalars_name

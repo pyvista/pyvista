@@ -2593,6 +2593,53 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         assert actual_cell_scalars_name == expected_cell_scalars_name
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+def test_transform_active_attributes(datasets, inplace):
+    """Test the active scalars, vectors, normals, texture coordinates and tensors are kept."""
+
+    def set_active(attributes, prefix, n):
+        """Add an array of every attribute kind and mark them all active."""
+        attributes[f'{prefix}_scalars'] = np.random.default_rng().random(n)
+        attributes[f'{prefix}_vectors'] = np.random.default_rng().random((n, 3))
+        attributes[f'{prefix}_normals'] = np.random.default_rng().random((n, 3))
+        attributes[f'{prefix}_texture'] = np.random.default_rng().random((n, 2))
+        attributes[f'{prefix}_tensors'] = np.random.default_rng().random((n, 9))
+        attributes.active_scalars_name = f'{prefix}_scalars'
+        attributes.active_vectors_name = f'{prefix}_vectors'
+        attributes.active_normals_name = f'{prefix}_normals'
+        attributes.active_texture_coordinates_name = f'{prefix}_texture'
+        attributes.SetActiveTensors(f'{prefix}_tensors')
+
+    def assert_active(attributes, prefix):
+        """Assert an array of every attribute kind is still marked active."""
+        tensors = attributes.GetTensors()
+        assert attributes.active_scalars_name == f'{prefix}_scalars'
+        assert attributes.active_vectors_name == f'{prefix}_vectors'
+        assert attributes.active_normals_name == f'{prefix}_normals'
+        assert attributes.active_texture_coordinates_name == f'{prefix}_texture'
+        assert tensors is not None
+        assert tensors.GetName() == f'{prefix}_tensors'
+
+    scale = (1.0, 2.0, 3.0)
+    tf = pv.Transform().scale(scale)
+    for dataset in datasets:
+        dataset.clear_data()
+        has_cells = not isinstance(dataset, pv.PointSet)
+        set_active(dataset.point_data, 'point', dataset.n_points)
+        if has_cells:
+            set_active(dataset.cell_data, 'cell', dataset.n_cells)
+        dataset.active_tensors_name = 'point_tensors'
+        expected_vectors = dataset.point_data.active_vectors * scale
+
+        transformed = dataset.transform(tf, inplace=inplace)
+
+        assert_active(transformed.point_data, 'point')
+        assert transformed.active_tensors_name == 'point_tensors'
+        assert np.allclose(transformed.point_data.active_vectors, expected_vectors)
+        if has_cells:
+            assert_active(transformed.cell_data, 'cell')
+
+
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
     itertools.product([0, 1, 2], [0, 1, 2]),
@@ -2757,6 +2804,34 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
     assert np.array_equal(
         transformed.cell_data['c'][actual_cells], expected.cell_data['c'][expected_cells]
     )
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
+    [pv.Transform().rotate_z(90), pv.Transform().rotate_z(90).rotate_x(90)],
+    ids=['one-axis-pair', 'all-three-axes'],
+)
+def test_transform_rectilinear_rotation_active_attributes(rectilinear, transformation, inplace):
+    """Test permuting a grid's axes keeps the arrays it had marked active."""
+    rng = np.random.default_rng()
+    rectilinear.point_data['point_vectors'] = rng.random((rectilinear.n_points, 3))
+    rectilinear.point_data['point_tensors'] = rng.random((rectilinear.n_points, 9))
+    rectilinear.cell_data['cell_vectors'] = rng.random((rectilinear.n_cells, 3))
+    rectilinear.point_data.active_vectors_name = 'point_vectors'
+    rectilinear.cell_data.active_vectors_name = 'cell_vectors'
+    rectilinear.active_tensors_name = 'point_tensors'
+
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+
+    point_data = transformed.point_data
+    cell_data = transformed.cell_data
+    assert point_data.active_vectors_name == 'point_vectors'
+    assert cell_data.active_vectors_name == 'cell_vectors'
+    assert transformed.active_tensors_name == 'point_tensors'
+    # The permuted arrays are written back, so the active ones must not be the originals
+    assert np.array_equal(point_data.active_vectors, point_data['point_vectors'])
+    assert np.array_equal(cell_data.active_vectors, cell_data['cell_vectors'])
 
 
 @pytest.mark.parametrize(
