@@ -1922,7 +1922,7 @@ def test_sample_locator(locator):
 
     result = mesh.sample(target, locator=locator() if callable(locator) else locator)
 
-    assert result['vtkValidPointMask'].all()
+    assert result['mask'].all()
     assert np.allclose(result['x'], mesh.points[:, 0])
 
 
@@ -1981,7 +1981,7 @@ def categorical_target():
 def test_sample_categorical(categorical_probe, categorical_target, categorical):
     result = categorical_probe.sample(categorical_target, categorical=categorical)
 
-    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    sampled = result['labels'][result['mask'] == 1]
     assert sampled.size
     assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
 
@@ -1999,7 +1999,7 @@ def test_sample_categorical_composite_target(
 
     result = categorical_probe.sample(target, categorical=categorical)
 
-    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    sampled = result['labels'][result['mask'] == 1]
     assert sampled.size
     assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
 
@@ -2036,7 +2036,7 @@ def test_sample_composite_categorical_merge_matches_vtk(kwargs):
         assert np.allclose(merged.point_data[name], expected.point_data[name]), name
     for name in expected.cell_data:
         assert np.array_equal(merged.cell_data[name], expected.cell_data[name]), name
-    assert np.array_equal(merged['vtkValidPointMask'], expected['vtkValidPointMask'])
+    assert np.array_equal(merged['mask'], expected['mask'])
 
 
 @pytest.fixture
@@ -2069,7 +2069,7 @@ def test_sample_composite_categorical_drops_partial_arrays(
 
     assert 'partial' not in merged.point_data
     assert np.array_equal(merged['common'], [0.0, 1.0, 0.0])
-    assert np.array_equal(merged['vtkValidPointMask'], [1, 1, 0])
+    assert np.array_equal(merged['mask'], [1, 1, 0])
 
 
 @pytest.mark.parametrize(
@@ -2101,7 +2101,7 @@ def test_sample_empty_composite_categorical(categorical_probe):
     result = categorical_probe.sample(pv.MultiBlock(), categorical=True)
 
     assert result.n_points == categorical_probe.n_points
-    assert not np.any(result['vtkValidPointMask'])
+    assert not np.any(result['mask'])
 
 
 @pytest.mark.expect_vtk_output(
@@ -2160,7 +2160,7 @@ def test_sample_categorical_activates_the_only_candidate(categorical_probe, cate
 
     result = categorical_probe.sample(categorical_target, categorical=True)
 
-    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    sampled = result['labels'][result['mask'] == 1]
     assert sampled.size
     assert np.isin(sampled, categorical_target['labels']).all()
     assert categorical_target.point_data.active_scalars_name is None
@@ -2220,11 +2220,11 @@ def test_sample_composite():
     assert 'common_data' in result.point_data
     # Need pass partial arrays?
     assert 'partial_data' not in result.point_data
-    assert 'vtkValidPointMask' in result.point_data
+    assert 'mask' in result.point_data
     assert 'vtkGhostType' in result.point_data
     # data outside domain is 0
     assert np.array_equal(result['common_data'], [0.0, 1.0, 0.0])
-    assert np.array_equal(result['vtkValidPointMask'], [1, 1, 0])
+    assert np.array_equal(result['mask'], [1, 1, 0])
 
     result = probe_points.sample(composite, mark_blank=False)
     assert 'vtkGhostType' not in result.point_data
@@ -2245,7 +2245,7 @@ def test_sample_composite():
     assert 'common_data' in result[0].point_data
     # Need pass partial arrays?
     assert 'partial_data' not in result[0].point_data
-    assert 'vtkValidPointMask' in result[0].point_data
+    assert 'mask' in result[0].point_data
     assert 'vtkGhostType' in result[0].point_data
 
 
@@ -2262,34 +2262,99 @@ def test_sample_composite_target():
     grid = pv.ImageData(dimensions=(20, 20, 20), spacing=(0.09,) * 3, origin=(-0.8,) * 3)
 
     flat = grid.sample(pv.MultiBlock([a, b]))
-    assert flat['vtkValidPointMask'].sum() > 0
+    assert flat['mask'].sum() > 0
     assert 'height' in flat.point_data
     assert 'cval' in flat.point_data
 
     # Nesting and empty blocks are handled by the composite probe
     nested = grid.sample(pv.MultiBlock([a, pv.MultiBlock([b])]))
-    assert np.array_equal(nested['vtkValidPointMask'], flat['vtkValidPointMask'])
+    assert np.array_equal(nested['mask'], flat['mask'])
 
     with_none = grid.sample(pv.MultiBlock([a, None]))
-    assert 0 < with_none['vtkValidPointMask'].sum() < flat['vtkValidPointMask'].sum()
+    assert 0 < with_none['mask'].sum() < flat['mask'].sum()
 
     partitioned = grid.sample(pv.PartitionedDataSet([a, b]))
-    assert np.array_equal(partitioned['vtkValidPointMask'], flat['vtkValidPointMask'])
+    assert np.array_equal(partitioned['mask'], flat['mask'])
 
     # Unwrapped composites are accepted too
     raw = _vtk.vtkMultiBlockDataSet()
     raw.SetNumberOfBlocks(2)
     raw.SetBlock(0, a)
     raw.SetBlock(1, b)
-    assert np.array_equal(grid.sample(raw)['vtkValidPointMask'], flat['vtkValidPointMask'])
+    assert np.array_equal(grid.sample(raw)['mask'], flat['mask'])
 
     raw_partitions = _vtk.vtkPartitionedDataSet()
     raw_partitions.SetNumberOfPartitions(2)
     raw_partitions.SetPartition(0, a)
     raw_partitions.SetPartition(1, b)
-    assert np.array_equal(
-        grid.sample(raw_partitions)['vtkValidPointMask'], flat['vtkValidPointMask']
+    assert np.array_equal(grid.sample(raw_partitions)['mask'], flat['mask'])
+
+
+@pytest.fixture
+def partly_covered():
+    """Return a probe whose points only partly land in the target it samples."""
+    target = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25))
+    target['data'] = np.arange(target.n_points, dtype=float)
+    probe = pv.PointSet([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [9.0, 9.0, 9.0]])
+    return probe, target
+
+
+def test_sample_mask_is_uint8(partly_covered):
+    probe, target = partly_covered
+    mask = probe.sample(target)['mask']
+    assert mask.dtype == np.uint8
+    assert np.array_equal(mask, [1, 1, 0])
+
+
+def test_sample_mask_name(partly_covered):
+    probe, target = partly_covered
+    result = probe.sample(target, mask_name='valid')
+    assert 'mask' not in result.point_data
+    assert result['valid'].dtype == np.uint8
+    assert np.array_equal(result['valid'], [1, 1, 0])
+
+
+def test_sample_mask_name_vtk_keeps_vtk_array(partly_covered):
+    probe, target = partly_covered
+    result = probe.sample(target, mask_name='vtkValidPointMask')
+    assert 'mask' not in result.point_data
+    assert result['vtkValidPointMask'].dtype == np.int8
+
+
+def test_sample_mask_replaces_input_array(partly_covered):
+    probe, target = partly_covered
+    target['mask'] = np.full(target.n_points, 7.0)
+
+    result = probe.sample(target)
+    assert np.array_equal(result['mask'], [1, 1, 0])
+    assert np.array_equal(target['mask'], np.full(target.n_points, 7.0))
+
+    kept = probe.sample(target, mask_name='valid')
+    assert kept['mask'][0] == 7.0
+
+
+def test_sample_mask_survives_chaining(partly_covered):
+    probe, target = partly_covered
+    once = probe.sample(target)
+    twice = once.sample(target)
+    assert twice['mask'].dtype == np.uint8
+    assert np.array_equal(twice['mask'], once['mask'])
+
+
+def test_interpolate_mask_name(partly_covered):
+    probe, target = partly_covered
+    result = probe.interpolate(target, strategy='mask_points', radius=0.1)
+    assert result['mask'].dtype == np.uint8
+    assert np.array_equal(result['mask'], [1, 1, 0])
+
+    renamed = probe.interpolate(target, strategy='mask_points', radius=0.1, mask_name='valid')
+    assert 'mask' not in renamed.point_data
+    assert np.array_equal(renamed['valid'], [1, 1, 0])
+
+    vtk_name = probe.interpolate(
+        target, strategy='mask_points', radius=0.1, mask_name='vtkValidPointMask'
     )
+    assert vtk_name['vtkValidPointMask'].dtype == np.int8
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
@@ -2846,7 +2911,7 @@ def test_transform_rectilinear_axes_ascend(rectilinear, transformation):
         assert np.all(np.diff(coordinates) > 0)
     # Descending coordinates are not supported by the cell locators
     probe = pv.PolyData(transformed.cell_centers().points)
-    assert np.all(probe.sample(transformed)['vtkValidPointMask'] == 1)
+    assert np.all(probe.sample(transformed)['mask'] == 1)
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
@@ -5050,7 +5115,7 @@ def test_resample_to_image(tetbeam):
     assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
 
     # The interior of the beam is sampled and its arrays are interpolated
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid.any()
     assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 2])
 
@@ -5113,12 +5178,12 @@ def test_resample_to_image_method_interpolate(sphere):
 
     # Interpolating from the points fills every voxel the surface crosses
     image = sphere.resample_to_image(dimensions=dims)
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid[voxel_of_each_point(sphere.subdivide(3), image)].all()
 
     # A surface has no volume for a cell search to land in, so sampling does not
     sampled = sphere.resample_to_image(dimensions=dims, method='sample')
-    sampled_valid = sampled['vtkValidPointMask'].astype(bool)
+    sampled_valid = sampled['mask'].astype(bool)
     assert not sampled_valid[voxel_of_each_point(sphere, sampled)].all()
     assert sampled_valid.sum() < valid.sum()
 
@@ -5132,7 +5197,7 @@ def test_resample_to_image_method_interpolate(sphere):
     # A smaller radius fills fewer voxels
     half_diagonal = np.linalg.norm(image.spacing) / 2
     tight = sphere.resample_to_image(dimensions=dims, radius=half_diagonal)
-    assert tight['vtkValidPointMask'].sum() < valid.sum()
+    assert tight['mask'].sum() < valid.sum()
 
     # A point cloud has no cells to reach across, so its radius is half a voxel diagonal
     cloud = pv.PolyData(sphere.points)
@@ -5154,7 +5219,7 @@ def test_resample_to_image_multiblock():
     assert np.allclose(np.array(image.bounds_size) + np.array(image.spacing), blocks.bounds_size)
 
     # Surfaces have no volume, so the blocks are interpolated from their points
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid.any()
     assert image.point_data['vtkGhostType'].size == image.n_points
 
@@ -5178,7 +5243,7 @@ def test_resample_to_image_multiblock_volumetric():
     image = blocks.resample_to_image(target_n_points=20_000)
     assert 'height' in image.point_data
     # Volumetric blocks are sampled, which fills their interiors
-    assert image['vtkValidPointMask'].sum() > 0.3 * image.n_points
+    assert image['mask'].sum() > 0.3 * image.n_points
 
 
 def test_resample_to_image_multiblock_matches_combined():
@@ -5336,7 +5401,7 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
     for mesh, kwargs in [(sphere, dict(dimensions=(20, 20, 20))), (tetbeam, {})]:
         for method in ['sample', 'interpolate']:
             image = mesh.resample_to_image(method=method, mark_blank=True, **kwargs)
-            invalid = image['vtkValidPointMask'] == 0
+            invalid = image['mask'] == 0
             ghosts = image.point_data[ghost_name]
             assert ghosts.dtype == np.uint8
             assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
@@ -5345,7 +5410,7 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
             unmarked = mesh.resample_to_image(method=method, **kwargs)
             assert ghost_name not in unmarked.point_data
             assert ghost_name not in unmarked.cell_data
-            assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
+            assert np.array_equal(unmarked['mask'], image['mask'])
 
 
 @pytest.mark.parametrize(('method', 'kwargs'), [('sample', {}), ('interpolate', {'radius': 0.05})])
@@ -5356,7 +5421,7 @@ def test_resample_to_image_null_value(sphere, method, kwargs):
     shared = dict(dimensions=dims, method=method, **kwargs)
 
     plain = sphere.resample_to_image(**shared)
-    invalid = plain['vtkValidPointMask'] == 0
+    invalid = plain['mask'] == 0
     assert invalid.any()
     assert np.array_equal(plain['point_scalars'][invalid], np.zeros(invalid.sum()))
 
@@ -5369,7 +5434,7 @@ def test_resample_to_image_null_value(sphere, method, kwargs):
     blanked = sphere.resample_to_image(null_value=-99.0, mark_blank=True, **shared)
     hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
     ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
-    assert np.array_equal(blanked['vtkValidPointMask'], plain['vtkValidPointMask'])
+    assert np.array_equal(blanked['mask'], plain['mask'])
     assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
 
 
@@ -5389,7 +5454,7 @@ def test_resample_to_image_null_value_float_dtype(sphere):
     sphere.clear_data()
     sphere['counts'] = np.arange(sphere.n_points, dtype=np.float32)
     image = sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=-1.0)
-    assert image['counts'][image['vtkValidPointMask'] == 0].min() == -1.0
+    assert image['counts'][image['mask'] == 0].min() == -1.0
 
 
 def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
@@ -5422,7 +5487,7 @@ def test_resample_to_image_interpolate_point_cloud(sphere):
     cloud['point_scalars'] = sphere.points[:, 0]
     image = cloud.resample_to_image(dimensions=(20, 20, 20))
 
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid[voxel_of_each_point(cloud, image)].all()
     # Each filled voxel takes a value from points no further away than the radius
     radius = np.linalg.norm(image.spacing) / 2
@@ -5441,7 +5506,7 @@ def test_resample_to_image_flat_input(axis):
     assert image.dimensions[axis] == 1
     assert image.spacing[axis] > 0
     # Every voxel of the flat image takes a value from the plane
-    assert image['vtkValidPointMask'].all()
+    assert image['mask'].all()
 
     # The voxels are centered on the plane, so sampling its cells is exact
     exact = plane.resample_to_image(dimensions=image.dimensions, method='sample')
@@ -5455,7 +5520,7 @@ def test_resample_to_image_categorical(tetbeam):
     blended = tetbeam.resample_to_image(dimensions=dims)
     categorical = tetbeam.resample_to_image(dimensions=dims, categorical=True)
 
-    valid = categorical['vtkValidPointMask'].astype(bool)
+    valid = categorical['mask'].astype(bool)
     # Interpolating labels invents values between them, nearest neighbor does not
     assert np.array_equal(np.unique(categorical['labels'][valid]), [3.0, 7.0])
     assert len(np.unique(blended['labels'][valid])) > 2
