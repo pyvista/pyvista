@@ -692,6 +692,24 @@ def test_set_active_tensors(hexbeam):
     active_component_consistency_check(hexbeam, 'tensors', 'point')
 
 
+@pytest.mark.parametrize('association', [pv.FieldAssociation.POINT, pv.FieldAssociation.CELL])
+@pytest.mark.parametrize(
+    ('setter', 'info', 'n_components'),
+    [
+        ('set_active_scalars', 'active_scalars_info', 1),
+        ('set_active_vectors', 'active_vectors_info', 3),
+        ('set_active_tensors', 'active_tensors_info', 9),
+    ],
+)
+def test_set_active_array_preference_field_association(
+    hexbeam, association, setter, info, n_components
+):
+    hexbeam.point_data['arr'] = np.ones((hexbeam.n_points, n_components))
+    hexbeam.cell_data['arr'] = np.ones((hexbeam.n_cells, n_components))
+    getattr(hexbeam, setter)('arr', preference=association)
+    assert getattr(hexbeam, info).association == association
+
+
 def test_set_texture_coordinates(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.active_texture_coordinates = [1, 2, 3]
