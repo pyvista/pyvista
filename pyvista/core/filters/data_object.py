@@ -1281,6 +1281,32 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
         return '\n'.join(lines)
 
 
+_VALID_POINT_MASK = 'vtkValidPointMask'
+_GHOST_ARRAY = 'vtkGhostType'
+_DEFAULT_MASK_NAME = 'mask'
+
+
+def _rename_valid_point_mask(
+    output: _DataSetOrMultiBlockType, mask_name: str
+) -> _DataSetOrMultiBlockType:
+    """Rewrite the validity flag VTK generates as ``uint8`` under the caller's name."""
+    if mask_name == _VALID_POINT_MASK:
+        return output
+    datasets = (
+        output.recursive_iterator(skip_none=True)
+        if isinstance(output, pv.MultiBlock)
+        else [output]
+    )
+    for dataset in datasets:
+        point_data = dataset.point_data
+        if _VALID_POINT_MASK in point_data:
+            valid = np.asarray(point_data[_VALID_POINT_MASK]) != 0
+            point_data.remove(_VALID_POINT_MASK)
+            # uint8 rather than VTK's char, which the volume mapper refuses to render
+            point_data[mask_name] = valid.astype(np.uint8)
+    return output
+
+
 @abstract_class
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
@@ -5726,6 +5752,7 @@ class DataObjectFilters:
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
+        mask_name: str = _DEFAULT_MASK_NAME,
     ) -> _DataSetOrMultiBlockType:
         """Resample array data from a passed mesh onto this mesh.
 
@@ -5736,9 +5763,14 @@ class DataObjectFilters:
         weighting for nearby points.  If there is cell topology, ``sample`` is
         usually preferred.
 
-        The point data 'vtkValidPointMask' stores whether the point could be sampled
-        with a value of 1 meaning successful sampling. And a value of 0 means
-        unsuccessful.
+        The output carries a binary ``uint8`` point array, ``'mask'`` by default, holding
+        ``1`` at the points which could be sampled and ``0`` at the points which could
+        not. Use ``mask_name`` to name it something else; the filter owns that name, so
+        an input array called ``'mask'`` is replaced by the flag.
+
+        .. versionchanged:: 0.50
+            The array was named ``'vtkValidPointMask'`` and stored as ``int8``. Pass
+            ``mask_name='vtkValidPointMask'`` to restore both.
 
         This uses :vtk:`vtkResampleWithDataSet`.
 
@@ -5802,6 +5834,12 @@ class DataObjectFilters:
 
             .. versionadded:: 0.43
 
+        mask_name : str, default: 'mask'
+            Name of the binary point array marking which points could be sampled. Any
+            array of that name on the input or the target is replaced by it.
+
+            .. versionadded:: 0.50
+
         Returns
         -------
         output : DataSet | MultiBlock
@@ -5862,6 +5900,7 @@ class DataObjectFilters:
             pass_field_data=pass_field_data,
             mark_blank=mark_blank,
             snap_to_closest_point=snap_to_closest_point,
+            mask_name=mask_name,
         )
 
         # Sample block by block so each block takes the path for its own type
@@ -5939,7 +5978,7 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             message='Resampling array Data from a Passed Mesh onto Mesh',
         )
-        return _get_output(alg)
+        return _rename_valid_point_mask(_get_output(alg), mask_name)
 
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -6155,6 +6194,7 @@ class DataObjectFilters:
         radius: float | None = None,
         sharpness: float | None = None,
         progress_bar: bool = False,
+        mask_name: str = _DEFAULT_MASK_NAME,
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
 
@@ -6215,8 +6255,8 @@ class DataObjectFilters:
         A binary ``'mask'`` array comes back alongside the resampled arrays, holding
         ``1`` at the voxels the input reached. It is a voxelization of the input's
         geometry, so an input carrying nothing to resample still yields a usable image.
-        If the input already has an array named ``'mask'``, that one is resampled like
-        any other and the binary array keeps VTK's name, ``'vtkValidPointMask'``.
+        Use ``mask_name`` to name it something else; the filter owns that name, so an
+        input array called ``'mask'`` is replaced by it.
 
         The input's active scalars stay active. The binary array becomes the scalars
         only when no resampled array can, which is to say the input carried nothing but
@@ -6359,11 +6399,15 @@ class DataObjectFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        mask_name : str, default: 'mask'
+            Name of the binary point array marking which voxels the input reached. Any
+            array of that name on the input is replaced by it.
+
         Returns
         -------
         ImageData
             Uniform grid with the input's arrays sampled onto its points, plus the
-            binary ``'mask'`` array. The voxels are points, not
+            binary mask array. The voxels are points, not
             :attr:`~pyvista.CellType.VOXEL` cells;
             :meth:`~pyvista.ImageDataFilters.points_to_cells` converts them and carries
             the blanking over. See :ref:`image_representations_example` for the
@@ -6512,10 +6556,11 @@ class DataObjectFilters:
                 categorical=False if categorical is None else categorical,
                 mark_blank=mark_blank,
                 progress_bar=progress_bar,
+                mask_name=mask_name,
             )
             if null_value is not None:
-                _fill_null_values(sampled, null_value)
-            return _name_valid_point_mask(sampled)
+                _fill_null_values(sampled, null_value, mask_name)
+            return _activate_mask_without_scalars(sampled, mask_name)
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
             msg = (
                 f'Cell data {dropped} is dropped by `method={chosen!r}`'
@@ -6537,10 +6582,11 @@ class DataObjectFilters:
             strategy='mask_points',  # The only strategy which produces the validity mask
             null_value=0.0 if null_value is None else null_value,
             progress_bar=progress_bar,
+            mask_name=mask_name,
         )
         if mark_blank:
-            _blank_invalid_points(interpolated)
-        return _name_valid_point_mask(interpolated)
+            _blank_invalid_points(interpolated, mask_name)
+        return _activate_mask_without_scalars(interpolated, mask_name)
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
@@ -6648,11 +6694,6 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
-
-
-_VALID_POINT_MASK = 'vtkValidPointMask'
-_GHOST_ARRAY = 'vtkGhostType'
-_MASK_ARRAY = 'mask'
 
 
 def _slice_image_along_axis(
@@ -6788,10 +6829,11 @@ def _sample_composite_categorical(
     mesh: DataSet, blocks: list[DataSet], *, options: dict[str, Any]
 ) -> DataSet:
     """Sample each block of a composite target and keep the first block to hit each point."""
+    mask_name = options['mask_name']
     result = mesh.sample(blocks[0], categorical=True, **options)
     for block in blocks[1:]:
         probed = mesh.sample(block, categorical=True, **options)
-        fill = (result[_VALID_POINT_MASK] == 0) & (probed[_VALID_POINT_MASK] == 1)
+        fill = (result[mask_name] == 0) & (probed[mask_name] == 1)
         for name in list(result.point_data.keys()):
             array = result.point_data[name]
             other = probed.point_data.get(name)
@@ -6801,13 +6843,13 @@ def _sample_composite_categorical(
             elif fill.any():
                 array[fill] = other[fill]
     if len(blocks) > 1 and options['mark_blank']:
-        _blank_invalid_points_and_cells(result)
+        _blank_invalid_points_and_cells(result, mask_name)
     return result
 
 
-def _blank_invalid_points_and_cells(result: DataSet) -> None:
+def _blank_invalid_points_and_cells(result: DataSet, mask_name: str) -> None:
     """Mark the points which were never sampled, and every cell using one, as hidden."""
-    invalid = result[_VALID_POINT_MASK] == 0
+    invalid = result[mask_name] == 0
     if _GHOST_ARRAY in result.point_data:
         hidden_point = np.uint8(_vtk.vtkDataSetAttributes.HIDDENPOINT)
         point_ghosts = result.point_data[_GHOST_ARRAY]
@@ -7167,11 +7209,11 @@ def _check_n_points(n_points: int, max_n_points: int | None, *, requested: bool)
         raise ValueError(msg)
 
 
-def _fill_null_values(image: ImageData, null_value: float) -> None:
+def _fill_null_values(image: ImageData, null_value: float, mask_name: str) -> None:
     """Give every array one value at the points the valid-point mask marks as empty."""
-    invalid = image.point_data[_VALID_POINT_MASK] == 0
+    invalid = image.point_data[mask_name] == 0
     for name, array in image.point_data.items():
-        if name not in (_VALID_POINT_MASK, _GHOST_ARRAY):
+        if name not in (mask_name, _GHOST_ARRAY):
             _check_null_value_fits(null_value, name, array.dtype)
             array[invalid] = null_value
 
@@ -7193,25 +7235,18 @@ def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -
         raise ValueError(msg)
 
 
-def _name_valid_point_mask(image: ImageData) -> ImageData:
-    """Give VTK's validity flag a plain name, and the scalars when nothing else resampled."""
-    if _MASK_ARRAY in image.point_data:
-        return image
-    valid = image.point_data[_VALID_POINT_MASK] != 0
-    image.point_data.remove(_VALID_POINT_MASK)
-    # uint8 under a free name: the volume mapper rejects the flag's own VTK_CHAR type,
-    # and retyping it in place breaks a probe which resamples it later
-    image.point_data.set_array(valid.astype(np.uint8), _MASK_ARRAY)
-    if image.active_scalars_name is None and not _has_resampled_scalars(image):
-        image.set_active_scalars(_MASK_ARRAY)
+def _activate_mask_without_scalars(image: ImageData, mask_name: str) -> ImageData:
+    """Give the mask the scalars when the resampling produced none a caller would plot."""
+    if image.active_scalars_name is None and not _has_resampled_scalars(image, mask_name):
+        image.set_active_scalars(mask_name)
     return image
 
 
-def _has_resampled_scalars(image: ImageData) -> bool:
+def _has_resampled_scalars(image: ImageData, mask_name: str) -> bool:
     """Return whether an array a caller would rather plot than the mask was resampled."""
     data = image.point_data
     not_scalars = {
-        _MASK_ARRAY,
+        mask_name,
         _GHOST_ARRAY,
         data.active_normals_name,
         data.active_texture_coordinates_name,
@@ -7220,9 +7255,9 @@ def _has_resampled_scalars(image: ImageData) -> bool:
     return bool(set(data.keys()) - not_scalars)
 
 
-def _blank_invalid_points(image: ImageData) -> ImageData:
+def _blank_invalid_points(image: ImageData, mask_name: str) -> ImageData:
     """Hide the points which the valid-point mask marks as empty."""
-    invalid = image.point_data['vtkValidPointMask'] == 0
+    invalid = image.point_data[mask_name] == 0
     ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
     image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
     return image

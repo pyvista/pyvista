@@ -194,7 +194,7 @@ def __getattr__(name: str) -> Any:
         _warn_deprecated_pickle_format()
         return _PICKLE_FORMAT
     typing_module = importlib.import_module('pyvista.typing')
-    if name in typing_module.__all__:
+    if name in typing_module.__all__ and name not in typing_module._NEW_ALIASES:
         # Not cached either, so the deprecation warning is re-issued on each access
         return typing_module._get_deprecated_alias(__name__, name)
 
