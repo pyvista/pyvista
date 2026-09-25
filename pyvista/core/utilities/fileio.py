@@ -49,7 +49,6 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import VectorLike
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
@@ -1098,7 +1097,7 @@ def _read_grdecl(
     # Active cells
     if 'ACTNUM' in keywords:
         active = np.array(keywords['ACTNUM']) > 0.0
-        grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
+        grid.hide_cells(~active, inplace=True)
 
     # Store unused keywords in user dict
     grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
@@ -1327,7 +1326,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    def split(arr: VectorLike[int]) -> list[VectorLike[int]]:
+    def split(arr: npt.NDArray[np.signedinteger]) -> list[npt.NDArray[np.signedinteger]]:
         i = 0
         offsets: list[int] = [0]
 
@@ -1343,7 +1342,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     if polyhedron_faces:
         polyhedron_locations = split(mesh.polyhedron_face_locations)
-        polyhedral_cell_faces: list[list[VectorLike[int]]] = [
+        polyhedral_cell_faces: list[list[npt.NDArray[np.signedinteger]]] = [
             [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
         ]
 
@@ -1610,7 +1609,7 @@ def from_trimesh(
         _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
     # Handle case with no faces
-    faces: npt.NDArray[int] = mesh.faces
+    faces: npt.NDArray[np.signedinteger] = mesh.faces
     if faces.size == 0:
         faces = faces.reshape((0, 3))
     # Trimesh doesn't pad faces

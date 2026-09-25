@@ -399,7 +399,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             raise ValueError(msg)
         return image
 
-    def to_array(self) -> npt.NDArray[float]:
+    def to_array(self) -> npt.NDArray[np.floating]:
         """Return the texture as an array.
 
         Notes

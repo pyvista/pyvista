@@ -62,7 +62,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self._elevation = 0.0
         self._azimuth = 0.0
         self._is_set = False
-        self._focus: npt.NDArray[float] | None = None  # Used by BackgroundRenderer
+        self._focus: npt.NDArray[np.floating] | None = None  # Used by BackgroundRenderer
 
         if renderer:
             if not isinstance(renderer, pv.Renderer):
@@ -328,7 +328,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def model_transform_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def model_transform_matrix(self) -> npt.NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the camera's model transformation matrix.
 
         Examples
@@ -362,7 +362,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return matrix
 
     @model_transform_matrix.setter
-    def model_transform_matrix(self, matrix: npt.NDArray[float]) -> None:
+    def model_transform_matrix(self, matrix: npt.NDArray[np.floating]) -> None:
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel().tolist())
         self.SetModelTransformMatrix(vtk_matrix)
@@ -724,7 +724,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return width, height
 
     @property
-    def intrinsic_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def intrinsic_matrix(self) -> npt.NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the pinhole intrinsic matrix of the camera.
 
         The matrix is ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
@@ -817,7 +817,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def extrinsic_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def extrinsic_matrix(self) -> npt.NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the pose of the camera as a 4x4 extrinsic matrix.
 
         The matrix maps world coordinates to camera coordinates in the OpenCV

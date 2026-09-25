@@ -241,7 +241,7 @@ def plot_wave(
     frequency: float = 1,
     wavetime: float = 3,
     notebook: bool | None = None,
-) -> npt.NDArray[float]:
+) -> npt.NDArray[np.floating]:
     """Plot a 3D moving wave in a render window.
 
     Parameters

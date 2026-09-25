@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import numpy.typing as npt
 from type_assert import assert_types
 
@@ -14,9 +15,9 @@ def an_image() -> pv.ImageData:
 
 
 SKIP_RUNTIME = {
-    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': 'the runtime checker does not accept an int64 array as `npt.NDArray[int]`',
+    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': 'the runtime checker does not accept an int64 array as `npt.NDArray[np.signedinteger]`',
 }
 
 
-assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | npt.NDArray[int])
-assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | npt.NDArray[int])  # pragma: no cover
+assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | npt.NDArray[np.signedinteger])
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | npt.NDArray[np.signedinteger])  # pragma: no cover

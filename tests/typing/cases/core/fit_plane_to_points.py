@@ -11,7 +11,7 @@ import pyvista as pv
 _Meta = tuple[pv.PolyData, npt.NDArray[np.floating], npt.NDArray[np.floating]]
 
 
-def some_points() -> npt.NDArray[float]:
+def some_points() -> npt.NDArray[np.floating]:
     """Return points with a distinct variance along each axis."""
     return np.array([[0.0, 0.0, 0.0], [3.0, 0.0, 0.0], [0.0, 2.0, 0.0], [1.0, 1.0, 0.5]])
 

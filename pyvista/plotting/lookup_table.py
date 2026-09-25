@@ -1236,14 +1236,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return (*rgb, self.GetOpacity(value)) if opacity else rgb
 
     # fmt: off
+    # ruff: disable[E501]
     @overload
     def __call__(self, value: float) -> tuple[float, float, float, float]: ...
     @overload
-    def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> npt.NDArray[float]: ...
+    def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> npt.NDArray[np.float64]: ...
+    # ruff: enable[E501]
     # fmt: on
     def __call__(
         self, value: float | VectorLike[float] | _vtk.vtkDataArray
-    ) -> tuple[float, float, float, float] | npt.NDArray[float]:
+    ) -> tuple[float, float, float, float] | npt.NDArray[np.float64]:
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)

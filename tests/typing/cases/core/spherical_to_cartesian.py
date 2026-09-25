@@ -8,10 +8,10 @@ from type_assert import assert_types
 
 import pyvista as pv
 
-_Cartesian = tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]
+_Cartesian = tuple[npt.NDArray[np.floating], npt.NDArray[np.floating], npt.NDArray[np.floating]]
 
 
-def some_array() -> npt.NDArray[float]:
+def some_array() -> npt.NDArray[np.floating]:
     """Return spherical coordinates as an array."""
     return np.array([1.0, 2.0, 3.0])
 

@@ -538,7 +538,9 @@ class ImageDataFilters(DataSetFilters):
         return result
 
     @staticmethod
-    def _clip_extent(extent: VectorLike[int], *, clip_to: VectorLike[int]) -> npt.NDArray[int]:
+    def _clip_extent(
+        extent: VectorLike[int], *, clip_to: VectorLike[int]
+    ) -> npt.NDArray[np.signedinteger]:
         out = np.array(extent)
         for axis in range(3):
             min_ind = axis * 2
@@ -557,7 +559,7 @@ class ImageDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
         normalized_bounds: VectorLike[float] | None = None,
-        mask: str | ImageData | npt.NDArray[float] | Literal[True] | None = None,
+        mask: str | ImageData | npt.NDArray[np.floating] | Literal[True] | None = None,
         padding: int | VectorLike[int] | None = None,
         background_value: float | VectorLike[float] | None = None,
         keep_dimensions: bool = False,
@@ -632,7 +634,7 @@ class ImageDataFilters(DataSetFilters):
             that define a box relative to the input size. The input is cropped such that it fully
             fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-        mask : str | ImageData | npt.NDArray[float] | bool, optional
+        mask : str | ImageData | npt.NDArray[np.floating] | bool, optional
             Scalar values that define the cropping region. Set this option to:
 
             - a string denoting the name of scalars belonging to this mesh
@@ -842,7 +844,7 @@ class ImageDataFilters(DataSetFilters):
             return field, scalars
 
         def _voi_from_mask(
-            *, mask_: str | ImageData | npt.NDArray[float] | bool
+            *, mask_: str | ImageData | npt.NDArray[np.floating] | bool
         ) -> VectorLike[int]:
             """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
@@ -892,7 +894,7 @@ class ImageDataFilters(DataSetFilters):
 
             zmin, ymin, xmin = coords.min(axis=0)
             zmax, ymax, xmax = coords.max(axis=0)
-            voi: npt.NDArray[int] = np.array([xmin, xmax, ymin, ymax, zmin, zmax])
+            voi: npt.NDArray[np.signedinteger] = np.array([xmin, xmax, ymin, ymax, zmin, zmax])
 
             if padding is not None:
                 pad = _validate_padding(padding)
@@ -1930,7 +1932,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _image_threshold(
             *,
-            threshold_val: npt.NDArray[float],
+            threshold_val: npt.NDArray[np.floating],
             in_value: float | None,
             out_value: float | None,
             scalars: str,
@@ -1963,7 +1965,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _binary_image_threshold(
             *,
-            threshold_val: npt.NDArray[float],
+            threshold_val: npt.NDArray[np.floating],
             in_value: float | None,
             out_value: float | None,
             scalars: str,
@@ -2809,7 +2811,9 @@ class ImageDataFilters(DataSetFilters):
             empty.cell_data[PV_NAME] = np.empty((0, components), dtype=dtype_)
             return empty
 
-        def _validate_selection(selection: int | VectorLike[int] | None) -> npt.NDArray[int]:
+        def _validate_selection(
+            selection: int | VectorLike[int] | None,
+        ) -> npt.NDArray[np.signedinteger]:
             if selection is None:
                 return np.array([], dtype=int)
             unique = np.unique(np.atleast_1d(selection))
@@ -3708,7 +3712,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
 
-        def _get_num_components(array_: npt.NDArray[float]) -> int:
+        def _get_num_components(array_: npt.NDArray[np.floating]) -> int:
             """Return the number of components of an array."""
             return 1 if array_.ndim == 1 else array_.shape[1]
 
@@ -3864,7 +3868,7 @@ class ImageDataFilters(DataSetFilters):
         constant_value: int | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> tuple[ImageData, NDArray[int], NDArray[int]]:
+    ) -> tuple[ImageData, NDArray[np.signedinteger], NDArray[np.signedinteger]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
         Only points whose ``scalar`` value is within the ``scalar_range`` are considered for
@@ -4128,9 +4132,9 @@ class ImageDataFilters(DataSetFilters):
 
         output = _get_output(alg)
 
-        labels: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionLabels())
+        labels: NDArray[np.signedinteger] = _vtk.vtk_to_numpy(alg.GetExtractedRegionLabels())
 
-        sizes: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionSizes())
+        sizes: NDArray[np.signedinteger] = _vtk.vtk_to_numpy(alg.GetExtractedRegionSizes())
 
         if field == FieldAssociation.CELL:
             # Convert back to cell data
@@ -5271,9 +5275,9 @@ class ImageDataFilters(DataSetFilters):
     def _select_values(  # type: ignore[misc]
         self: ImageData,
         *,
-        values: npt.NDArray[float] | None,
-        ranges: npt.NDArray[float] | None,
-        array: npt.NDArray[float],
+        values: npt.NDArray[np.floating] | None,
+        ranges: npt.NDArray[np.floating] | None,
+        array: npt.NDArray[np.floating],
         component_logic: Callable[[npt.NDArray[np.bool_]], npt.NDArray[np.bool_]] | None,
         invert: bool,
         association: FieldAssociation,
@@ -5938,7 +5942,7 @@ def _validate_value_for_dtype(value: Any, dtype: np.dtype[Any], *, name: str) ->
         raise ValueError(msg)
 
 
-def _validate_padding(pad_size: int | VectorLike[int]) -> npt.NDArray[int]:
+def _validate_padding(pad_size: int | VectorLike[int]) -> npt.NDArray[np.signedinteger]:
     """Return the pad size broadcast to a length-6 extent padding."""
     # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
     padding = np.atleast_1d(pad_size)
@@ -5975,7 +5979,9 @@ def _validate_padding(pad_size: int | VectorLike[int]) -> npt.NDArray[int]:
     return all_pad_sizes
 
 
-def _pad_extent(extent: VectorLike[int], padding: VectorLike[int]) -> npt.NDArray[int]:
+def _pad_extent(
+    extent: VectorLike[int], padding: VectorLike[int]
+) -> npt.NDArray[np.signedinteger]:
     """Return the extent grown by the given padding."""
     signs = np.array([-1, 1, -1, 1, -1, 1])
     return np.asarray(extent) + signs * np.asarray(padding)
@@ -6026,7 +6032,7 @@ def _image_interpolator(
     return interpolator
 
 
-def _round_to_dtype(array: npt.NDArray[float], dtype: np.dtype[Any]) -> npt.NDArray[Any]:
+def _round_to_dtype(array: npt.NDArray[np.floating], dtype: np.dtype[Any]) -> npt.NDArray[Any]:
     """Round and clamp floating point values to an integer or boolean data type."""
     array = np.floor(array + 0.5)
     if dtype.kind in 'iu':

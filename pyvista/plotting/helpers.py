@@ -220,7 +220,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
 
 def view_vectors(
     view: _ViewOptions, *, negative: bool = False
-) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
+) -> tuple[npt.NDArray[np.signedinteger], npt.NDArray[np.signedinteger]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

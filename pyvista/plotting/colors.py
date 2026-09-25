@@ -1886,7 +1886,7 @@ class Color(_NoNewAttrMixin):
 
         # Check integers
         if isinstance(val, int) and 0 <= val <= 255:
-            return val  # type: ignore[return-value]
+            return val
         elif isinstance(val, np.uint8) or (
             arr is not None
             and np.issubdtype(arr.dtype, np.integer)

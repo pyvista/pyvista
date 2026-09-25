@@ -638,7 +638,7 @@ def normalize(
     x: npt.NDArray[Any],
     minimum: float | None = None,
     maximum: float | None = None,
-) -> npt.NDArray[float]:
+) -> npt.NDArray[np.floating]:
     """Normalize the given values to the range ``[0, 1]``.
 
     Parameters
@@ -666,7 +666,7 @@ def normalize(
 def _opacity_transfer_functions(n_colors: int) -> dict[str, npt.NDArray[np.uint8]]:
     """Return every named opacity mapping, each ``n_colors`` values long."""
 
-    def sigmoid(x: npt.NDArray[float]) -> npt.NDArray[np.uint8]:  # numpydoc ignore=PR01,RT01
+    def sigmoid(x: npt.NDArray[np.floating]) -> npt.NDArray[np.uint8]:  # numpydoc ignore=PR01,RT01
         """Map ``x`` onto the [0, 255] opacity range with a logistic curve."""
         return np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
 

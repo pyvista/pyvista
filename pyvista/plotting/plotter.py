@@ -139,6 +139,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._array_like import _Scalar
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
@@ -259,7 +260,7 @@ log.addHandler(logging.StreamHandler())
 def _attach_raw_scalars_via_callback(  # noqa: PLR0917
     algo: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
     mesh: DataSet,
-    scalars: npt.NDArray[float],
+    scalars: npt.NDArray[np.floating],
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[_vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput, DataSet]:
@@ -545,7 +546,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._gif_filename: Path | None = None
         self.ren_win: _vtk.vtkRenderWindow | None = None
         # 3D location of the last click registered by ``left_button_down``
-        self.pickpoint: npt.NDArray[float] | None = None
+        self.pickpoint: npt.NDArray[np.floating] | None = None
 
         # snapshot the theme so later edits to the source theme do not reach this plotter
         self._theme = Theme._from_theme(
@@ -616,7 +617,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.reset_key_events()
         log.debug('BasePlotter init stop')
 
-        self._image_depth_null: npt.NDArray[bool] | None = None
+        self._image_depth_null: npt.NDArray[np.bool_] | None = None
         self._window_size_unset = False
         self.last_image_depth: npt.NDArray[np.float32] | None = None
         self.last_image: npt.NDArray[np.uint8] | None = None
@@ -3633,7 +3634,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
-        scalars: str | npt.NDArray[float] | None = None,
+        scalars: str | npt.NDArray[np.floating] | None = None,
         clim: Sequence[float] | None = None,
         show_edges: bool | None = None,
         edge_color: ColorLike | None = None,
@@ -3652,7 +3653,7 @@ class BasePlotter(_BoundsSizeMixin):
         show_scalar_bar: bool | None = None,
         multi_colors: bool = False,
         name: str | None = None,
-        texture: Texture | npt.NDArray[float] | None = None,
+        texture: Texture | npt.NDArray[np.floating] | None = None,
         render_points_as_spheres: bool | None = None,
         point_shape: PointSpriteShape | str | None = None,
         render_lines_as_tubes: bool | None = None,
@@ -4796,7 +4797,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         actor: Actor,
         label: str,
-        scalars: str | npt.NDArray[float] | None,
+        scalars: str | npt.NDArray[np.floating] | None,
         color: Color,
     ) -> None:
         """Add a legend label based on an actor and its scalars."""
@@ -4820,21 +4821,21 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | npt.NDArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | npt.NDArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
+    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | npt.NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | npt.NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
     @overload
-    def add_volume(self, volume: DataSet | npt.NDArray[float], *, scalars: str | npt.NDArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | npt.NDArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
+    def add_volume(self, volume: DataSet | npt.NDArray[np.floating], *, scalars: str | npt.NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | npt.NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
     @overload
-    def add_volume(self, volume: DataSet | MultiBlock[Any] | npt.NDArray[float], *, scalars: str | npt.NDArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | npt.NDArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
+    def add_volume(self, volume: DataSet | MultiBlock[Any] | npt.NDArray[np.floating], *, scalars: str | npt.NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | npt.NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
     # ruff: enable[E501]
     # fmt: on
     def add_volume(
         self,
-        volume: DataSet | MultiBlock[Any] | npt.NDArray[float],
+        volume: DataSet | MultiBlock[Any] | npt.NDArray[np.floating],
         *,
-        scalars: str | npt.NDArray[float] | None = None,
+        scalars: str | npt.NDArray[np.floating] | None = None,
         clim: float | tuple[float, float] | None = None,
         resolution: VectorLike[float] | None = None,
-        opacity: OpacityOptions | npt.NDArray[float] = 'linear',
+        opacity: OpacityOptions | npt.NDArray[np.floating] = 'linear',
         n_colors: int = 256,
         cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
@@ -5308,7 +5309,7 @@ class BasePlotter(_BoundsSizeMixin):
             scalar_bar_args.setdefault('title', title)
         elif not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)  # type: ignore[unreachable]
-        scalars = cast('npt.NDArray[float]', scalars)
+        scalars = cast('npt.NDArray[np.floating]', scalars)
 
         if not np.issubdtype(scalars.dtype, np.number):
             msg = 'Non-numeric scalars are currently not supported for volume rendering.'
@@ -5445,7 +5446,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_silhouette(
         self,
-        mesh: npt.NDArray[float]
+        mesh: npt.NDArray[np.floating]
         | DataSet
         | MultiBlock[Any]
         | _vtk.vtkAlgorithm
@@ -6377,7 +6378,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_lines(
         self,
-        lines: npt.NDArray[float],
+        lines: npt.NDArray[np.floating],
         *,
         color: ColorLike = 'w',
         width: float = 5,
@@ -6931,7 +6932,11 @@ class BasePlotter(_BoundsSizeMixin):
         return self.add_mesh(points, style=style, **kwargs)
 
     def add_arrows(
-        self, cent: npt.NDArray[float], direction: npt.NDArray[float], mag: float = 1.0, **kwargs
+        self,
+        cent: npt.NDArray[_Scalar],
+        direction: npt.NDArray[_Scalar],
+        mag: float = 1.0,
+        **kwargs,
     ) -> Actor:
         """Add arrows to the plotter.
 

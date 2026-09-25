@@ -664,7 +664,7 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
 def _reciprocal(
     x: ArrayLike[float], tol: float = 1e-8, value_if_division_by_zero: float = 0.0
-) -> npt.NDArray[float]:
+) -> npt.NDArray[np.floating]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
     The reciprocal of elements with an absolute value less than a

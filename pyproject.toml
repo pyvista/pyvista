@@ -73,7 +73,6 @@ integration = []
 typing = [
   'meshio<5.4.0',
   'mypy<2.4.0',
-  'npt-promote==0.2',
   'numpy>=2.0.0',
   'sphinx<9.2.0',
   'trimesh<5.1.0',
@@ -362,7 +361,7 @@ native_parser = true
 no_implicit_reexport = true
 packages = ['pyvista']
 platform = 'linux'
-plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
+plugins = ['pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true

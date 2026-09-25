@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 
 def _resolve_scalars_field(
-    scalars: npt.NDArray[float],
+    scalars: npt.NDArray[np.floating],
     mesh: DataSet,
     preference: PointLiteral | CellLiteral,
 ) -> PointLiteral | CellLiteral:
@@ -152,7 +152,7 @@ def reduce_component_scalars(
 
 def _stamp_raw_numpy_scalars(  # noqa: PLR0917
     mesh: DataSet,
-    scalars: npt.NDArray[float],
+    scalars: npt.NDArray[np.floating],
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[str, PointLiteral | CellLiteral]:
@@ -200,11 +200,11 @@ def _stamp_raw_numpy_scalars(  # noqa: PLR0917
 
 def _reduce_multicomponent_scalars_on_mesh(  # noqa: PLR0917
     mesh: DataSet,
-    scalars: npt.NDArray[float],
+    scalars: npt.NDArray[np.floating],
     scalars_name: str,
     component: int | None,
     preference: PointLiteral | CellLiteral,
-) -> tuple[npt.NDArray[float], str, PointLiteral | CellLiteral]:
+) -> tuple[npt.NDArray[np.floating], str, PointLiteral | CellLiteral]:
     """Reduce 2D scalars to 1D and stamp the derived array on ``mesh``.
 
     Smooth-shading pre-processing cannot defer this reduction to
@@ -261,11 +261,11 @@ def _reduce_multicomponent_scalars_on_mesh(  # noqa: PLR0917
 
 def _remap_scalars_through_topology_change(  # noqa: PLR0917
     mesh: DataSet,
-    scalars: npt.NDArray[float],
+    scalars: npt.NDArray[np.floating],
     original_scalar_name: str | None,
     preference: PointLiteral | CellLiteral,
     input_n_points: int,
-) -> npt.NDArray[float]:
+) -> npt.NDArray[np.floating]:
     """Re-resolve ``scalars`` after smooth shading changes topology.
 
     Surface extraction and/or sharp-edge splitting may drop cells or
@@ -339,7 +339,7 @@ def process_opacity(
     opacity: float | OpacityOptions | str | VectorLike[float] | None,
     preference: PointLiteral | CellLiteral,
     n_colors: int,
-    scalars: npt.NDArray[float] | None,
+    scalars: npt.NDArray[np.floating] | None,
     use_transparency: bool,
 ) -> tuple[bool, float | npt.NDArray[Any] | None]:
     """Process opacity.
@@ -439,7 +439,7 @@ def _common_arg_parser(
     name: str | None,
     nan_color: ColorLike | None,
     nan_opacity: float,
-    texture: Texture | npt.NDArray[float] | Literal[False] | None,
+    texture: Texture | npt.NDArray[np.floating] | Literal[False] | None,
     rgb: bool | None,
     style: StyleOptions | None,
     remove_existing_actor: bool | None = None,
@@ -457,7 +457,7 @@ def _common_arg_parser(
     CullingOptions | bool | None,
     str,
     Color,
-    Texture | npt.NDArray[float] | None,
+    Texture | npt.NDArray[np.floating] | None,
     bool | None,
     InterpolationType,
     bool,

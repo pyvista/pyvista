@@ -8,15 +8,15 @@ from type_assert import assert_types
 
 import pyvista as pv
 
-_Spherical = tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]
+_Spherical = tuple[npt.NDArray[np.floating], npt.NDArray[np.floating], npt.NDArray[np.floating]]
 
 
-def a_coordinate() -> npt.NDArray[float]:
+def a_coordinate() -> npt.NDArray[np.floating]:
     """Return one Cartesian component of a few points."""
     return np.array([0.0, 1.0, 2.0])
 
 
-def a_coordinate_grid() -> npt.NDArray[float]:
+def a_coordinate_grid() -> npt.NDArray[np.floating]:
     """Return one Cartesian component of a grid of points."""
     return np.array([[0.0, 1.0], [2.0, 3.0]])
 

@@ -9,14 +9,14 @@ from type_assert import assert_types
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
 
-def a_transformation() -> npt.NDArray[float]:
+def a_transformation() -> npt.NDArray[np.floating]:
     """Return a 4x4 translation matrix."""
     matrix = np.eye(4)
     matrix[:3, 3] = [1.0, 2.0, 3.0]
     return matrix
 
 
-def some_points() -> npt.NDArray[float]:
+def some_points() -> npt.NDArray[np.floating]:
     """Return points to transform."""
     return np.zeros((4, 3))
 
@@ -26,9 +26,9 @@ def a_flag() -> bool:
     return True
 
 
-assert_types(apply_transformation_to_points(a_transformation(), some_points()), npt.NDArray[float])
-assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False), npt.NDArray[float])
+assert_types(apply_transformation_to_points(a_transformation(), some_points()), npt.NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False), npt.NDArray[np.floating])
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=True), None)
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), npt.NDArray[float] | None)
+assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), npt.NDArray[np.floating] | None)

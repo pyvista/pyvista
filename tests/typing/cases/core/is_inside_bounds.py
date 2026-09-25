@@ -14,12 +14,12 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 
-def a_point() -> npt.NDArray[float]:
+def a_point() -> npt.NDArray[np.floating]:
     """Return a point at the centre of the unit cube."""
     return np.array([0.5, 0.5, 0.5])
 
 
-def some_bounds() -> npt.NDArray[float]:
+def some_bounds() -> npt.NDArray[np.floating]:
     """Return the bounds of the unit cube."""
     return np.array([0.0, 1.0, 0.0, 1.0, 0.0, 1.0])
 

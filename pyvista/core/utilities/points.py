@@ -148,7 +148,9 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
         raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
-    lines = cast('npt.NDArray[int]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2))
+    lines = cast(
+        'npt.NDArray[np.signedinteger]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2)
+    )
     poly = pv.PolyData()
     poly.points = cast('MatrixLike[float]', points)
     poly.lines = pv.CellArray.from_regular_cells(lines)
@@ -410,9 +412,9 @@ def fit_plane_to_points(
 @overload
 def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: Literal[False] = False) -> PolyData: ...
 @overload
-def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: Literal[True]) -> tuple[PolyData, float, npt.NDArray[float]]: ...
+def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: Literal[True]) -> tuple[PolyData, float, npt.NDArray[np.float64]]: ...
 @overload
-def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: bool = ...) -> PolyData | tuple[PolyData, float, npt.NDArray[float]]: ...
+def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: bool = ...) -> PolyData | tuple[PolyData, float, npt.NDArray[np.float64]]: ...
 # ruff: enable[E501]
 # fmt: on
 def fit_line_to_points(
@@ -421,7 +423,7 @@ def fit_line_to_points(
     resolution: int = 1,
     init_direction: VectorLike[float] | str | None = None,
     return_meta: bool = False,
-) -> PolyData | tuple[PolyData, float, npt.NDArray[float]]:
+) -> PolyData | tuple[PolyData, float, npt.NDArray[np.float64]]:
     """Fit a line to points using its :func:`principal_axes`.
 
     The line is automatically sized and oriented to fit the extents of
@@ -554,7 +556,9 @@ def fit_line_to_points(
     return line_mesh
 
 
-def make_tri_mesh(points: npt.NDArray[float], faces: npt.NDArray[int]) -> PolyData:
+def make_tri_mesh(
+    points: npt.NDArray[np.floating], faces: npt.NDArray[np.signedinteger]
+) -> PolyData:
     """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
 
     Construct a mesh from an Nx3 array of points and an Mx3 array of
@@ -717,18 +721,18 @@ def vector_poly_data(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def principal_axes(points: MatrixLike[float]) -> npt.NDArray[float]: ...
+def principal_axes(points: MatrixLike[float]) -> npt.NDArray[np.floating]: ...
 @overload
-def principal_axes(points: MatrixLike[float], *, return_std: Literal[True] = True) -> tuple[npt.NDArray[float], npt.NDArray[float]]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: Literal[True] = True) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]: ...
 @overload
-def principal_axes(points: MatrixLike[float], *, return_std: Literal[False] = False) -> npt.NDArray[float]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: Literal[False] = False) -> npt.NDArray[np.floating]: ...
 @overload
-def principal_axes(points: MatrixLike[float], *, return_std: bool = ...) -> npt.NDArray[float] | tuple[npt.NDArray[float], npt.NDArray[float]]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: bool = ...) -> npt.NDArray[np.floating] | tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]: ...
 # ruff: enable[E501]
 # fmt: on
 def principal_axes(
     points: MatrixLike[float], *, return_std: bool = False
-) -> npt.NDArray[float] | tuple[npt.NDArray[float], npt.NDArray[float]]:
+) -> npt.NDArray[np.floating] | tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
     """Compute the principal axes of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes

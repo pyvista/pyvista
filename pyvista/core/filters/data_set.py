@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import overload
@@ -92,6 +93,9 @@ _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
 _CONNECTIVITY_SCALARS = '__pyvista_connectivity_scalars'
 
 
+_FloatingT = TypeVar('_FloatingT', bound=np.floating)
+
+
 def _points_inside_surface(image: ImageData, surface: PolyData) -> npt.NDArray[np.bool_]:
     """Return which points of the image a closed surface encloses, from a stencil."""
     mask = surface.voxelize_binary_mask(reference_volume=image)
@@ -100,7 +104,7 @@ def _points_inside_surface(image: ImageData, surface: PolyData) -> npt.NDArray[n
 
 def _signed_distance_near_surface(
     dataset: ImageData, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
-) -> npt.NDArray[float] | None:
+) -> npt.NDArray[np.floating] | None:
     """Build a signed distance field that is exact on the cells the surface cuts.
 
     Every point is classified inside (-1) or outside (1) the surface, and the points of
@@ -115,7 +119,7 @@ def _signed_distance_near_surface(
     is_exact = np.zeros(dataset.n_points, dtype=bool)
     points = dataset.points
 
-    def exact_distance(point_ids: npt.NDArray[int]) -> npt.NDArray[float]:
+    def exact_distance(point_ids: npt.NDArray[np.signedinteger]) -> npt.NDArray[np.floating]:
         values = _vtk.vtkDoubleArray()
         function.FunctionValue(pv.convert_array(points[point_ids]), values)
         return pv.convert_array(values)
@@ -144,7 +148,9 @@ def _signed_distance_near_surface(
     return None  # still disagreeing, so the caller evaluates the distance everywhere
 
 
-def _points_of_cells_containing(image: ImageData, points: npt.NDArray[float]) -> npt.NDArray[int]:
+def _points_of_cells_containing(
+    image: ImageData, points: npt.NDArray[np.floating]
+) -> npt.NDArray[np.signedinteger]:
     """Return the ids of the points of the image cells that contain the given points."""
     # Optimization: index arithmetic instead of a cell locator, which VTK 9.7 spends about
     # a second building for an image of a few million cells
@@ -163,7 +169,7 @@ def _points_of_cells_containing(image: ImageData, points: npt.NDArray[float]) ->
 
 def _points_of_cells_cut_by_sign(
     dataset: ImageData, inside: npt.NDArray[np.bool_]
-) -> npt.NDArray[int]:
+) -> npt.NDArray[np.signedinteger]:
     """Return the ids of the points of cells that have corners on both sides."""
     marked = dataset.copy(deep=False)
     marked.point_data[_CLIP_SURFACE_SCALARS] = inside.astype(np.float32)
@@ -185,11 +191,11 @@ def _points_of_cells_cut_by_sign(
 class _ExtractValuesInputs(NamedTuple):
     """Validated inputs shared by ``extract_values`` and ``select_values``."""
 
-    values: npt.NDArray[float] | None
-    ranges: npt.NDArray[float] | None
+    values: npt.NDArray[np.floating] | None
+    ranges: npt.NDArray[np.floating] | None
     value_names: list[str] | None
     range_names: list[str] | None
-    array: npt.NDArray[float]
+    array: npt.NDArray[np.floating]
     array_name: str
     association: FieldAssociation
     component_logic: Callable[[npt.NDArray[np.bool_]], npt.NDArray[np.bool_]] | None
@@ -204,9 +210,9 @@ class DataSetFilters(DataObjectFilters):
     @overload  # return_matrix=False
     def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_matrix=True
-    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, npt.NDArray[float]]: ...  # type: ignore[misc]
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, npt.NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # return_matrix not known
-    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, npt.NDArray[float]]: ...  # type: ignore[misc]
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, npt.NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def align(  # type: ignore[misc]
@@ -219,7 +225,7 @@ class DataSetFilters(DataObjectFilters):
         check_mean_distance: bool = True,
         start_by_matching_centroids: bool = True,
         return_matrix: bool = False,
-    ) -> _DataSetType | tuple[_DataSetType, npt.NDArray[float]]:
+    ) -> _DataSetType | tuple[_DataSetType, npt.NDArray[np.float64]]:
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
@@ -322,9 +328,9 @@ class DataSetFilters(DataObjectFilters):
     @overload  # return_matrix=False
     def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_matrix=True
-    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, npt.NDArray[float]]: ...  # type: ignore[misc]
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, npt.NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # return_matrix not known
-    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, npt.NDArray[float]]: ...  # type: ignore[misc]
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, npt.NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def align_xyz(  # type: ignore[misc]
@@ -337,7 +343,7 @@ class DataSetFilters(DataObjectFilters):
         cell_centers: bool = False,
         merge_points: bool = False,
         return_matrix: bool = False,
-    ) -> _DataSetType | tuple[_DataSetType, npt.NDArray[float]]:
+    ) -> _DataSetType | tuple[_DataSetType, npt.NDArray[np.floating]]:
         """Align a dataset to the x-y-z axes.
 
         This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
@@ -518,7 +524,7 @@ class DataSetFilters(DataObjectFilters):
 
         def _validate_vector(
             vector: VectorLike[float] | str | None, name: str
-        ) -> npt.NDArray[float] | None:
+        ) -> npt.NDArray[np.float64] | None:
             if vector is None:
                 vector_ = vector
             else:
@@ -1711,7 +1717,9 @@ class DataSetFilters(DataObjectFilters):
         alg.SetPassThroughPointIds(pass_pointid)
         alg.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
         if extent is not None:
-            extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
+            extent_ = _validation.validate_arrayN(
+                extent, must_have_length=6, dtype_out=float, to_list=True
+            )
             alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar=progress_bar, message=message)
@@ -1720,7 +1728,7 @@ class DataSetFilters(DataObjectFilters):
     def contour(  # type: ignore[misc]
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
-        scalars: str | npt.NDArray[float] | None = None,
+        scalars: str | npt.NDArray[np.floating] | None = None,
         *,
         compute_normals: bool = False,
         compute_gradients: bool = False,
@@ -2630,9 +2638,9 @@ class DataSetFilters(DataObjectFilters):
             )
             raise ValueError(msg)
 
-        region_ids_: npt.NDArray[int] = np.empty(0, dtype=int)
-        seed_ids: npt.NDArray[int] = np.empty(0, dtype=int)
-        closest_point_: npt.NDArray[float] = np.zeros(3, dtype=float)
+        region_ids_: npt.NDArray[np.signedinteger] = np.empty(0, dtype=int)
+        seed_ids: npt.NDArray[np.signedinteger] = np.empty(0, dtype=int)
+        closest_point_: npt.NDArray[np.floating] = np.zeros(3, dtype=float)
         if extraction_mode in required_input:
             input_name, given_input = required_input[extraction_mode]
             input_value: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = (
@@ -4399,7 +4407,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Get variable of interest
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        values: npt.NDArray[float] = sampled.get_array(scalars_)
+        values: npt.NDArray[np.floating] = sampled.get_array(scalars_)
         distance = sampled['Distance']
         if component is not None:
             try:
@@ -6132,10 +6140,10 @@ class DataSetFilters(DataObjectFilters):
         array: npt.NDArray[Any],
         component_logic: Callable[..., Any] | None,
         invert: bool,
-    ) -> npt.NDArray[bool]:
+    ) -> npt.NDArray[np.bool_]:
         """Build the selection mask from validated values and ranges."""
 
-        def _update_id_mask(logic_: npt.NDArray[bool]) -> None:
+        def _update_id_mask(logic_: npt.NDArray[np.bool_]) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
             # Optimization: accumulate in place, since assigning ``True`` through a boolean
@@ -7511,8 +7519,8 @@ class DataSetFilters(DataObjectFilters):
     def _bounding_box(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        matrix: npt.NDArray[float] | None,
-        inverse_matrix: npt.NDArray[float] | None,
+        matrix: npt.NDArray[np.floating] | None,
+        inverse_matrix: npt.NDArray[np.floating] | None,
         box_style: Literal['frame', 'outline', 'face'],
         oriented: bool,
         frame_width: float,
@@ -7553,8 +7561,8 @@ class DataSetFilters(DataObjectFilters):
                 axes = np.eye(3)
                 point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
             else:
-                matrix = cast('npt.NDArray[float]', matrix)
-                inverse_matrix = cast('npt.NDArray[float]', inverse_matrix)
+                matrix = cast('npt.NDArray[np.floating]', matrix)
+                inverse_matrix = cast('npt.NDArray[np.floating]', inverse_matrix)
                 axes = matrix[:3, :3]  # type: ignore[assignment]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
@@ -8293,7 +8301,7 @@ class DataSetFilters(DataObjectFilters):
                 )
                 raise ValueError(msg)
 
-        def _is_index_like(array_: npt.NDArray[Any], n_colors_: int) -> npt.NDArray[bool]:
+        def _is_index_like(array_: npt.NDArray[Any], n_colors_: int) -> npt.NDArray[np.bool_]:
             """Return which values can be used to index ``n_colors_`` colors."""
             min_value = -n_colors_ if negative_indexing else 0
             return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ < n_colors_)
@@ -8849,7 +8857,7 @@ class DataSetFilters(DataObjectFilters):
             )
 
         # Use uint8 dtype if possible
-        scalars_dtype: type[np.uint8 | float | int]
+        scalars_dtype: type[np.uint8 | np.int_ | np.float64]
         if all(
             isinstance(val, (int, np.integer)) and val < 256 and val >= 0
             for val in (background_value, foreground_value)
@@ -9424,7 +9432,7 @@ def _validate_extraction_ids(
     name: str,
     invert: bool,
     ids_name: str = 'indices',
-) -> npt.NDArray[bool]:
+) -> npt.NDArray[np.bool_]:
     """Return a boolean selection mask from integer ids or a boolean mask."""
     ids = _validation.validate_array(
         ind,
@@ -9563,7 +9571,9 @@ def _set_threshold_limit(
         raise ValueError(msg)
 
 
-def _swap_axes(vectors: npt.NDArray[float], values: VectorLike[float]) -> npt.NDArray[float]:
+def _swap_axes(
+    vectors: npt.NDArray[_FloatingT], values: VectorLike[float]
+) -> npt.NDArray[_FloatingT]:
     """Swap axes vectors based on their respective values.
 
     The vector with the larger component along its projected axis is selected to precede

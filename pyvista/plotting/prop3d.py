@@ -328,7 +328,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return self.GetCenter()
 
     @property
-    def user_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def user_matrix(self) -> npt.NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the user matrix.
 
         In addition to the instance variables such as position and orientation, the user
@@ -522,7 +522,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
 
 
 def _rotation_matrix_as_orientation(
-    array: npt.NDArray[float] | _vtk.vtkMatrix3x3,
+    array: npt.NDArray[np.floating] | _vtk.vtkMatrix3x3,
 ) -> tuple[float, float, float]:
     """Convert a 3x3 rotation matrix to x-y-z orientation angles.
 
@@ -535,7 +535,7 @@ def _rotation_matrix_as_orientation(
 
     Parameters
     ----------
-    array : npt.NDArray[float] | :vtk:`vtkMatrix3x3`
+    array : npt.NDArray[np.floating] | :vtk:`vtkMatrix3x3`
         3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix3x3`.
 
     Returns
@@ -547,7 +547,7 @@ def _rotation_matrix_as_orientation(
     return Transform().rotate(array).GetOrientation()
 
 
-def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> npt.NDArray[float]:
+def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> npt.NDArray[np.float64]:
     """Convert x-y-z orientation angles to a 3x3 matrix.
 
     The orientation angles define rotations about the world's x-y-z axes. The angles
@@ -647,7 +647,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     @property
     @functools.wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
-    def user_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def user_matrix(self) -> npt.NDArray[np.float64]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.user_matrix."""
         return self._prop3d.user_matrix
 
@@ -658,7 +658,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         self._post_set_update()
 
     @property
-    def _transformation_matrix(self) -> npt.NDArray[float]:
+    def _transformation_matrix(self) -> npt.NDArray[np.float64]:
         """Transformation matrix applied to the actor.
 
         The transformation is computed from the attributes :attr:`position`

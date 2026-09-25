@@ -14,6 +14,7 @@ from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 from ._array_like import _NumberT
+from ._array_like import _Scalar
 
 if TYPE_CHECKING or os.environ.get(
     '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
@@ -86,7 +87,7 @@ CellsLike = Union[MatrixLike[int], VectorLike[int]]
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[_NumberT, ArrayLike[_NumberT]]
+_ArrayLikeOrScalar = Union[_NumberT, _Scalar, ArrayLike[_NumberT]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 

@@ -21,7 +21,7 @@ SKIP_RUNTIME = dict.fromkeys(
         'numpy_to_idarr([0, 1], deep=True, return_ind=True)',
         'numpy_to_idarr([0, 1], return_ind=a_flag())',
     ],
-    'the runtime checker does not accept an int64 array as `npt.NDArray[int]`',
+    'the runtime checker does not accept an int64 array as `npt.NDArray[np.signedinteger]`',
 )
 
 
@@ -31,8 +31,8 @@ assert_types(numpy_to_idarr(np.array([True, False])), _vtk.vtkIdTypeArray)
 assert_types(numpy_to_idarr([0, 1], deep=True), _vtk.vtkIdTypeArray)
 assert_types(numpy_to_idarr([0, 1], return_ind=False), _vtk.vtkIdTypeArray)
 
-assert_types(numpy_to_idarr([0, 1], return_ind=True), tuple[_vtk.vtkIdTypeArray, npt.NDArray[int]])  # pragma: no cover
-assert_types(numpy_to_idarr([0, 1], deep=True, return_ind=True), tuple[_vtk.vtkIdTypeArray, npt.NDArray[int]])  # pragma: no cover
+assert_types(numpy_to_idarr([0, 1], return_ind=True), tuple[_vtk.vtkIdTypeArray, npt.NDArray[np.signedinteger]])  # pragma: no cover
+assert_types(numpy_to_idarr([0, 1], deep=True, return_ind=True), tuple[_vtk.vtkIdTypeArray, npt.NDArray[np.signedinteger]])  # pragma: no cover
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(numpy_to_idarr([0, 1], return_ind=a_flag()), tuple[_vtk.vtkIdTypeArray, npt.NDArray[int]] | _vtk.vtkIdTypeArray)  # pragma: no cover
+assert_types(numpy_to_idarr([0, 1], return_ind=a_flag()), tuple[_vtk.vtkIdTypeArray, npt.NDArray[np.signedinteger]] | _vtk.vtkIdTypeArray)  # pragma: no cover

@@ -378,7 +378,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> npt.NDArray[float] | None:
+    def active_vectors(self: Self) -> npt.NDArray[np.floating] | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
@@ -1647,7 +1647,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: npt.NDArray[float],
+        texture_coordinates: npt.NDArray[np.floating],
     ) -> None:
         """Set the active texture coordinates array.
 

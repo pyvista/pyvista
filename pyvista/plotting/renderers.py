@@ -485,7 +485,7 @@ class Renderers(_NoNewAttrMixin):
         group = group_idxs[index]
         return None if group.size == 0 else group[0]
 
-    def loc_to_index(self, loc: int | VectorLike[int]) -> int:
+    def loc_to_index(self, loc: int | np.integer | VectorLike[int]) -> int:
         """Return index of the render window given a location index.
 
         Parameters
@@ -538,7 +538,7 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._active_index
 
-    def index_to_loc(self, index: int) -> npt.NDArray[int] | np.intp:
+    def index_to_loc(self, index: int) -> npt.NDArray[np.signedinteger] | np.intp:
         """Convert a 1D index location to the 2D location on the plotting grid.
 
         Parameters

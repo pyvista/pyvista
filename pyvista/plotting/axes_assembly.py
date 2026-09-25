@@ -761,7 +761,7 @@ class AxesAssembly(_XYZAssembly):
 
     @property
     @functools.wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
-    def user_matrix(self) -> npt.NDArray[float]:  # numpydoc ignore=RT01
+    def user_matrix(self) -> npt.NDArray[np.float64]:  # numpydoc ignore=RT01
         """Wrap Prop3D.user_matrix."""
         return _Prop3DMixin.user_matrix.fget(self)  # type: ignore[attr-defined]
 
@@ -1178,7 +1178,7 @@ class AxesAssembly(_XYZAssembly):
 
     def _get_offset_label_position_vectors(
         self, position_scalars: VectorLike[float]
-    ) -> npt.NDArray[float]:
+    ) -> npt.NDArray[np.floating]:
         """Return label positions along each axis, offset radially by the tip radius."""
         source = self._shaft_and_tip_geometry_source
         radial_offset = np.multiply(source.tip_radius, source._anti_distortion_factor)

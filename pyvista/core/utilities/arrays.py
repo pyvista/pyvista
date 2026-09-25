@@ -30,6 +30,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Self
+    from typing_extensions import TypeIs
 
     from pyvista import DataObject
     from pyvista import DataSet
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._array_like import _Scalar
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
@@ -124,11 +126,21 @@ def parse_field_choice(
         raise TypeError(msg)
 
 
+def _is_floating(array: npt.NDArray[Any]) -> TypeIs[npt.NDArray[np.floating]]:
+    """Return whether ``array`` has a floating dtype."""
+    return np.issubdtype(array.dtype, np.floating)
+
+
+def _is_integer(array: npt.NDArray[Any]) -> TypeIs[npt.NDArray[np.integer]]:
+    """Return whether ``array`` has an integer dtype."""
+    return np.issubdtype(array.dtype, np.integer)
+
+
 def _coerce_pointslike_arg(
     points: MatrixLike[float] | VectorLike[float],
     *,
     copy: bool = False,
-) -> tuple[npt.NDArray[float], bool]:
+) -> tuple[npt.NDArray[_Scalar], bool]:
     """Check and coerce ``arg`` to (n, 3) np.ndarray.
 
     Parameters
@@ -732,7 +744,7 @@ def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
     return vtkarr
 
 
-def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> npt.NDArray[int]:
+def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> npt.NDArray[np.intp]:
     """Convert a :vtk:`vtkIdList` to a NumPy array.
 
     Parameters
@@ -826,7 +838,9 @@ def convert_string_array(
     return arr_out
 
 
-def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> npt.NDArray[float]:
+def array_from_vtkmatrix(
+    matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4,
+) -> npt.NDArray[np.float64]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -859,7 +873,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> npt.N
     return array
 
 
-def vtkmatrix_from_array(array: npt.NDArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
+def vtkmatrix_from_array(array: npt.NDArray[np.floating]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
     """Convert a ``numpy.ndarray`` or array-like to a vtk matrix.
 
     Parameters
