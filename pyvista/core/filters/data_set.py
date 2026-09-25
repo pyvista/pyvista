@@ -119,7 +119,7 @@ def _signed_distance_near_surface(
     is_exact = np.zeros(dataset.n_points, dtype=bool)
     points = dataset.points
 
-    def exact_distance(point_ids: NDArray[np.signedinteger]) -> NDArray[np.floating]:
+    def exact_distance(point_ids: NDArray[np.signedinteger]) -> NDArray[np.float64]:
         values = _vtk.vtkDoubleArray()
         function.FunctionValue(pv.convert_array(points[point_ids]), values)
         return pv.convert_array(values)
@@ -343,7 +343,7 @@ class DataSetFilters(DataObjectFilters):
         cell_centers: bool = False,
         merge_points: bool = False,
         return_matrix: bool = False,
-    ) -> _DataSetType | tuple[_DataSetType, NDArray[np.floating]]:
+    ) -> _DataSetType | tuple[_DataSetType, NDArray[np.float64]]:
         """Align a dataset to the x-y-z axes.
 
         This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
@@ -6277,7 +6277,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         progress_bar: bool = False,
-    ) -> NDArray[np.integer]:
+    ) -> NDArray[np.signedinteger]:
         """Return the surface indices of a grid.
 
         .. versionchanged:: 0.47

@@ -378,7 +378,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> NDArray[np.floating] | None:
+    def active_vectors(self: Self) -> pyvista_ndarray | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0

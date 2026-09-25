@@ -336,7 +336,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self: Self) -> NDArray[np.floating] | None:
+    def active_tensors(self: Self) -> pyvista_ndarray | None:
         """Return the active tensors array.
 
         Returns
@@ -610,7 +610,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
-    ) -> tuple[FieldAssociation, NDArray[np.floating] | None]:
+    ) -> tuple[FieldAssociation, pyvista_ndarray | None]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -648,7 +648,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if name is None:
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
-            return FieldAssociation.NONE, np.array([])
+            return FieldAssociation.NONE, pyvista_ndarray([])
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
             if name in self.field_data:
@@ -2091,11 +2091,11 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NDArray[np.signedinteger]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NDArray[np.int_]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NDArray[np.int_], NDArray[np.float64]]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NDArray[np.signedinteger] | tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NDArray[np.int_] | tuple[int | NDArray[np.int_], NDArray[np.float64]]: ...
     # ruff: enable[E501]
     # fmt: on
     def find_closest_cell(
@@ -2103,11 +2103,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         point: VectorLike[float] | MatrixLike[float],
         *,
         return_closest_point: bool = False,
-    ) -> (
-        int
-        | NDArray[np.signedinteger]
-        | tuple[int | NDArray[np.signedinteger], NDArray[np.floating]]
-    ):
+    ) -> int | NDArray[np.int_] | tuple[int | NDArray[np.int_], NDArray[np.floating]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
@@ -2242,7 +2238,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def find_containing_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-    ) -> int | NDArray[np.signedinteger]:
+    ) -> int | NDArray[np.int_]:
         """Find index of a cell that contains the given point.
 
         .. warning::
@@ -2390,7 +2386,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float | None = None,
-    ) -> NDArray[np.signedinteger]:
+    ) -> NDArray[np.intp]:
         """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2447,7 +2443,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         *,
         tolerance: float | None = None,
         deduplicate_points: bool = False,
-    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.intp]]:
         """Locate points and cell ids that intersect a line.
 
         .. versionadded:: 0.49

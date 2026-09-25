@@ -765,7 +765,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
-    ) -> NDArray[np.floating]:
+    ) -> NDArray[np.float64]:
         """Return the point-wise curvature of a mesh.
 
         Parameters
@@ -2780,7 +2780,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         retry: bool = False,
     ) -> tuple[
-        NDArray[np.floating], NDArray[np.signedinteger], NDArray[np.signedinteger]
+        NDArray[np.float64], NDArray[np.signedinteger], NDArray[np.signedinteger]
     ]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
@@ -2923,11 +2923,11 @@ class PolyDataFilters(DataSetFilters):
                     loc_lst.extend(locs)
 
             # sort result arrays by ray index
-            index_ray = np.array(ray_lst)
+            index_ray = np.array(ray_lst, dtype=np.intp)
             sorting_inds = index_ray.argsort()
             index_ray = index_ray[sorting_inds]
-            index_tri = np.array(tri_lst)[sorting_inds]
-            locations = np.array(loc_lst)[sorting_inds]
+            index_tri = np.array(tri_lst, dtype=np.intp)[sorting_inds]
+            locations = np.array(loc_lst, dtype=float)[sorting_inds]
 
         return locations, index_ray, index_tri
 

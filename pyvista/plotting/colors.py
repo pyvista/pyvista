@@ -49,6 +49,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
+    from pyvista.core._typing_core._array_like import _Scalar
+
     from ._typing import ColorLike
     from ._typing import ColormapOptions
 
@@ -1898,7 +1900,7 @@ class Color(_NoNewAttrMixin):
             msg = f'Unsupported color channel value provided: {val}'
             raise ValueError(msg)
 
-    def _from_rgba(self, rgba: Sequence[_ColorChannel] | NDArray[Any]) -> None:
+    def _from_rgba(self, rgba: Sequence[_ColorChannel] | NDArray[_Scalar]) -> None:
         """Construct color from an RGB(A) sequence."""
         arg = rgba
         if len(rgba) == 3:

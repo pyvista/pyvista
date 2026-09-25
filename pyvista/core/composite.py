@@ -56,8 +56,6 @@ from .utilities.writer import XMLMultiBlockDataWriter
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from numpy.typing import NDArray
-
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import VectorLike
@@ -2249,7 +2247,7 @@ class MultiBlock(
         *,
         preference: PointLiteral | CellLiteral = 'cell',
         allow_missing: bool = False,
-    ) -> tuple[FieldAssociation, NDArray[np.floating]]:
+    ) -> tuple[FieldAssociation, pyvista_ndarray]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -2283,7 +2281,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: list[tuple[FieldAssociation, NDArray[np.floating], _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, pyvista_ndarray, _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):

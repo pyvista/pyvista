@@ -8,7 +8,6 @@ import platform
 import subprocess
 import sys
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Literal
 from typing import NoReturn
 from typing import overload
@@ -635,7 +634,7 @@ def create_north_arrow() -> pv.PolyData:
 
 
 def normalize(
-    x: NDArray[Any],
+    x: NDArray[np.integer | np.floating],
     minimum: float | None = None,
     maximum: float | None = None,
 ) -> NDArray[np.floating]:

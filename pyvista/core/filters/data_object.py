@@ -87,6 +87,7 @@ if TYPE_CHECKING:
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
+    _ScalarT = TypeVar('_ScalarT', bound=np.generic)
     _RectilinearComponents = tuple[
         NDArray[np.floating], NDArray[np.floating], NDArray[np.signedinteger]
     ]
@@ -6667,7 +6668,7 @@ def _slice_image_along_axis(
     faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
     output = pv.PolyData.from_regular_faces(points, faces)
 
-    def slab(array: NDArray[Any], k: int) -> NDArray[Any]:
+    def slab(array: NDArray[_ScalarT], k: int) -> NDArray[_ScalarT]:
         # The plane of values at index k along the axis, ordered like the points
         grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
         index: list[Any] = [slice(None)] * 3

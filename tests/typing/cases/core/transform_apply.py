@@ -25,12 +25,13 @@ def a_polydata_multiblock() -> pv.MultiBlock[pv.PolyData]:
     return pv.MultiBlock([pv.Sphere()])
 
 
-assert_types(a_transform().apply(np.zeros((4, 3))), NDArray[np.floating])
-assert_types(a_transform().apply([(0.0, 0.0, 0.0)]), NDArray[np.floating])
-assert_types(a_transform().apply((0.0, 0.0, 0.0)), NDArray[np.floating])
-assert_types(a_transform().apply(np.zeros((4, 3)), 'points'), NDArray[np.floating])
-assert_types(a_transform().apply(np.zeros((4, 3)), 'vectors'), NDArray[np.floating])
-assert_types(a_transform().apply(np.zeros((4, 3)), None), NDArray[np.floating])
+assert_types(a_transform().apply(np.zeros((4, 3))), NDArray[np.float64])
+assert_types(a_transform().apply([(0.0, 0.0, 0.0)]), NDArray[np.float64])
+assert_types(a_transform().apply((0.0, 0.0, 0.0)), NDArray[np.float64])
+assert_types(a_transform().apply(np.zeros((4, 3)), 'points'), NDArray[np.float64])
+assert_types(a_transform().apply(np.zeros((4, 3)), 'vectors'), NDArray[np.float64])
+assert_types(a_transform().apply(np.zeros((4, 3)), None), NDArray[np.float64])
+assert_types(a_transform().apply(np.zeros((4, 3)), copy=False), NDArray[np.floating])
 
 # Datasets keep their own type
 assert_types(a_transform().apply(pv.Sphere()), pv.PolyData)

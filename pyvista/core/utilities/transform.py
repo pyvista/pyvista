@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TypeAlias
 from typing import cast
 from typing import overload
 
@@ -40,6 +41,14 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core.utilities.transformations import _FiveArrays
+
+    _FiveFloat64Arrays: TypeAlias = tuple[
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+    ]
 
 
 class Transform(
@@ -1603,6 +1612,8 @@ class Transform(
     @overload
     def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
+    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
     def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
     @overload
     def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
@@ -1854,6 +1865,14 @@ class Transform(
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return out if out is not None else array
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def apply_to_points(self, points: VectorLike[float] | MatrixLike[float], /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_points(self, points: VectorLike[float] | MatrixLike[float], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply_to_points(
         self,
         points: VectorLike[float] | MatrixLike[float],
@@ -1901,6 +1920,14 @@ class Transform(
         """
         return self.apply(points, 'points', inverse=inverse, copy=copy)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def apply_to_vectors(self, vectors: VectorLike[float] | MatrixLike[float], /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_vectors(self, vectors: VectorLike[float] | MatrixLike[float], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply_to_vectors(
         self,
         vectors: VectorLike[float] | MatrixLike[float],
@@ -2066,7 +2093,7 @@ class Transform(
         """
         return self.apply(actor, mode, inverse=inverse, copy=copy)
 
-    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveArrays:
+    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveFloat64Arrays:
         """Decompose the current transformation into its components.
 
         Decompose the :attr:`matrix` ``M`` into
@@ -2273,9 +2300,10 @@ class Transform(
             self._decomposition_cache = decomposition(self.matrix, homogeneous=False)
             self._decomposition_mtime = current_mtime
 
-        cache = cast('_FiveArrays', self._decomposition_cache)
+        # `self.matrix` is float64, so every component is too
+        cache = cast('_FiveFloat64Arrays', self._decomposition_cache)
         if homogeneous:
-            return _decomposition_as_homogeneous(*cache)
+            return cast('_FiveFloat64Arrays', _decomposition_as_homogeneous(*cache))
         return cache
 
     def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
@@ -2498,7 +2526,7 @@ class Transform(
         return wxyz[1:4], wxyz[0]
 
     @property
-    def rotation_matrix(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def rotation_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         The rotation is orthonormal and right-handed with positive determinant.
@@ -2604,7 +2632,7 @@ class Transform(
         return tuple(S.tolist())
 
     @property
-    def shear_matrix(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def shear_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return the shear component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         .. versionadded:: 0.47

@@ -5909,7 +5909,7 @@ class ImageDataFilters(DataSetFilters):
 
 
 def _remap_ghost_array(  # numpydoc ignore=RT01
-    array: NDArray[Any], *, points_to_cells: bool
+    array: NDArray[np.uint8], *, points_to_cells: bool
 ) -> NDArray[np.uint8]:
     """Translate ghost flags to the new association, clearing flags with no equivalent."""
     attributes = _vtk.vtkDataSetAttributes

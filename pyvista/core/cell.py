@@ -412,7 +412,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
-    def points(self: Self) -> NDArray[np.floating]:
+    def points(self: Self) -> NDArray[np.float64]:
         """Get the point coordinates of the cell.
 
         Returns
