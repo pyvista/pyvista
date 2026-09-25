@@ -58,8 +58,31 @@ _LAZY_ALIASES = {
     'PlottableType': 'pyvista.plotting._typing',
 }
 
-# Never exported from ``pyvista``, so not forwarded from there
-_NEW_ALIASES = frozenset({'PlottableType', 'WrappableType'})
+_MOVED_FROM_CORE = frozenset(
+    {
+        'ArrayLike',
+        'CellArrayLike',
+        'CellsLike',
+        'InteractionEventType',
+        'LineStyle',
+        'MatrixLike',
+        'Number',
+        'NumberType',
+        'RotationLike',
+        'TransformLike',
+        'VectorLike',
+    }
+)
+_MOVED_FROM_PLOTTING = frozenset({'CameraPositionOptions', 'Chart', 'ColorLike'})
+
+# Aliases each module provided before this one existed, forwarded from there with a warning
+_MOVED_TO_TYPING_NAMESPACE = {
+    'pyvista': _MOVED_FROM_CORE
+    | _MOVED_FROM_PLOTTING
+    | {'JupyterBackendOptions', 'MeshValidationFields'},
+    'pyvista.core': _MOVED_FROM_CORE,
+    'pyvista.plotting': _MOVED_FROM_PLOTTING,
+}
 
 
 if not TYPE_CHECKING:  # pragma: no branch
