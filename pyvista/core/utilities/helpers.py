@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _VolumeArray
     from pyvista.core._typing_core._array_like import _Scalar
     from pyvista.wrappers import _WrappableVTKDataObjectType
 
@@ -157,7 +158,7 @@ def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: .
 def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
 # Misc overloads
 @overload
-def wrap(dataset: NDArray[np.floating], *, validate: bool | None = ...) -> PolyData | ImageData: ...
+def wrap(dataset: _VolumeArray, *, validate: bool | None = ...) -> PolyData | ImageData: ...
 @overload
 def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
@@ -175,7 +176,7 @@ def wrap(  # noqa: PLR0911
     | trimesh.Trimesh
     | meshio.Mesh
     | _vtk.vtkAbstractArray
-    | NDArray[np.floating]
+    | _VolumeArray
     | None,
     *,
     validate: bool | None = None,
@@ -299,10 +300,11 @@ def wrap(  # noqa: PLR0911
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
     if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
-        if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pv.PolyData(dataset)
-        if dataset.ndim == 2 and dataset.shape[1] == 3:
-            return pv.PolyData(dataset)
+        if (dataset.ndim == 1 and dataset.shape[0] == 3) or (
+            dataset.ndim == 2 and dataset.shape[1] == 3
+        ):
+            # `PolyData` raises for points that are not real numbers
+            return pv.PolyData(cast('NDArray[_Scalar]', dataset))
         elif dataset.ndim == 3:
             mesh = pv.ImageData(dimensions=dataset.shape)
             if isinstance(dataset, pv.pyvista_ndarray):

@@ -279,7 +279,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return self.keys()
 
     def __setitem__(
-        self: Self, key: str, value: ArrayLike[Any]
+        self: Self, key: str, value: ArrayLike[Any] | NDArray[Any]
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):

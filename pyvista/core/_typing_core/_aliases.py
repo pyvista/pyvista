@@ -8,6 +8,9 @@ from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
+import numpy as np
+from numpy.typing import NDArray
+
 from pyvista import _vtk
 
 from ._array_like import _ArrayLike
@@ -88,6 +91,9 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[_NumberT, _Scalar, ArrayLike[_NumberT]]
+
+# Array wrapped as a volume, whose values become point scalars
+_VolumeArray = NDArray[Union[np.bool_, np.number]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
