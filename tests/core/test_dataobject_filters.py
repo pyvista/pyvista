@@ -4701,7 +4701,7 @@ def test_resample_to_image(tetbeam):
     assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
 
     # The interior of the beam is sampled and its arrays are interpolated
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid.any()
     assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 2])
 
@@ -4734,14 +4734,15 @@ def test_resample_to_image_masks_geometry(sphere, method):
     dims = (20, 20, 20)
     image = sphere.resample_to_image(dimensions=dims, method=method)
 
-    # An input with nothing to resample is voxelized, and the mask is the output's scalars
+    # VTK's validity flag is the mask, and an input with nothing to resample plots it
     mask = image.active_scalars
     assert image.active_scalars_name == 'mask'
     assert mask.dtype == np.uint8
-    assert np.array_equal(mask, (image['vtkValidPointMask'] != 0).astype(np.uint8))
+    assert set(np.unique(mask)) == {0, 1}
     assert 0 < mask.sum() < mask.size
+    assert 'vtkValidPointMask' not in image.point_data
 
-    # Normals and texture coordinates are not scalars, so they are voxelized too
+    # Normals and texture coordinates are not scalars, so the mask still takes them
     sphere.point_data.set_array(sphere.point_normals, 'Normals')
     sphere.point_data.active_normals_name = 'Normals'
     assert sphere.active_scalars_name is None
@@ -4749,54 +4750,41 @@ def test_resample_to_image_masks_geometry(sphere, method):
     assert attributes_only.active_scalars_name == 'mask'
     assert np.array_equal(attributes_only['mask'], mask)
 
-    # An input which resamples onto scalars keeps them instead
+    # An input which resamples onto scalars keeps them, and the mask comes along
     sphere['height'] = sphere.points[:, 2]
     resampled = sphere.resample_to_image(dimensions=dims, method=method)
     assert resampled.active_scalars_name == 'height'
-    assert 'mask' not in resampled.point_data
-
-    # `mask_geometry` asks for the mask, or refuses it, whatever the input carries
-    both = sphere.resample_to_image(dimensions=dims, method=method, mask_geometry=True)
-    assert both.active_scalars_name == 'mask'
-    assert np.array_equal(both['mask'], mask)
-    assert np.array_equal(both['height'], resampled['height'])
-
-    sphere.clear_data()
-    refused = sphere.resample_to_image(dimensions=dims, method=method, mask_geometry=False)
-    assert refused.active_scalars_name is None
-    assert 'mask' not in refused.point_data
+    assert np.array_equal(resampled['mask'], mask)
 
 
 def test_resample_to_image_masks_geometry_options(sphere):
     dims = (20, 20, 20)
 
-    # `null_value` fills resampled arrays, and never a generated mask
+    # `null_value` fills resampled arrays, and never the mask
+    sphere['height'] = sphere.points[:, 2]
     filled = sphere.resample_to_image(dimensions=dims, null_value=-99.0)
-    assert np.array_equal(np.unique(filled['mask']), [0, 1])
+    assert set(np.unique(filled['mask'])) == {0, 1}
+    assert -99.0 in filled['height']
 
-    # Blanking hides the mask's empty voxels, like those of any other array
+    # Blanking hides the mask's empty voxels
     blanked = sphere.resample_to_image(dimensions=dims, mark_blank=True)
     ghosts = blanked.point_data[pv._vtk.vtkDataSetAttributes.GhostArrayName()]
     assert np.array_equal(ghosts != 0, blanked['mask'] == 0)
 
     # A composite whose blocks share no arrays is voxelized as a whole
+    sphere.clear_data()
     blocks = pv.MultiBlock([sphere, pv.Sphere(center=(1.5, 0, 0))])
     assert blocks.resample_to_image(dimensions=dims).active_scalars_name == 'mask'
 
 
 def test_resample_to_image_masks_geometry_name_taken(sphere):
-    # An input array of the same name is resampled, and takes the output's scalars
+    # An input array of that name is resampled, so the flag keeps VTK's own name
     sphere['mask'] = np.arange(sphere.n_points, dtype=np.uint8)
-    dims = (20, 20, 20)
-    for requested in (None, False):
-        resampled = sphere.resample_to_image(dimensions=dims, mask_geometry=requested)
-        assert resampled.active_scalars_name == 'mask'
-        assert resampled['mask'].max() > 1
+    image = sphere.resample_to_image(dimensions=(20, 20, 20))
 
-    # Asking for a geometry mask as well has nowhere to put it
-    match = re.escape("A 'mask' array was resampled from the input")
-    with pytest.raises(ValueError, match=match):
-        sphere.resample_to_image(dimensions=dims, mask_geometry=True)
+    assert image.active_scalars_name == 'mask'
+    assert image['mask'].max() > 1
+    assert set(np.unique(image['vtkValidPointMask'])) == {0, 1}
 
 
 def test_resample_to_image_reference_volume(tetbeam):
@@ -4834,12 +4822,12 @@ def test_resample_to_image_method_interpolate(sphere):
 
     # Interpolating from the points fills every voxel the surface crosses
     image = sphere.resample_to_image(dimensions=dims)
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid[voxel_of_each_point(sphere.subdivide(3), image)].all()
 
     # A surface has no volume for a cell search to land in, so sampling does not
     sampled = sphere.resample_to_image(dimensions=dims, method='sample')
-    sampled_valid = sampled['vtkValidPointMask'].astype(bool)
+    sampled_valid = sampled['mask'].astype(bool)
     assert not sampled_valid[voxel_of_each_point(sphere, sampled)].all()
     assert sampled_valid.sum() < valid.sum()
 
@@ -4853,7 +4841,7 @@ def test_resample_to_image_method_interpolate(sphere):
     # A smaller radius fills fewer voxels
     half_diagonal = np.linalg.norm(image.spacing) / 2
     tight = sphere.resample_to_image(dimensions=dims, radius=half_diagonal)
-    assert tight['vtkValidPointMask'].sum() < valid.sum()
+    assert tight['mask'].sum() < valid.sum()
 
     # A point cloud has no cells to reach across, so its radius is half a voxel diagonal
     cloud = pv.PolyData(sphere.points)
@@ -4875,7 +4863,7 @@ def test_resample_to_image_multiblock():
     assert np.allclose(np.array(image.bounds_size) + np.array(image.spacing), blocks.bounds_size)
 
     # Surfaces have no volume, so the blocks are interpolated from their points
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid.any()
     assert image.point_data['vtkGhostType'].size == image.n_points
 
@@ -4899,7 +4887,7 @@ def test_resample_to_image_multiblock_volumetric():
     image = blocks.resample_to_image(target_n_points=20_000)
     assert 'height' in image.point_data
     # Volumetric blocks are sampled, which fills their interiors
-    assert image['vtkValidPointMask'].sum() > 0.3 * image.n_points
+    assert image['mask'].sum() > 0.3 * image.n_points
 
 
 def test_resample_to_image_multiblock_matches_combined():
@@ -5057,7 +5045,7 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
     for mesh, kwargs in [(sphere, dict(dimensions=(20, 20, 20))), (tetbeam, {})]:
         for method in ['sample', 'interpolate']:
             image = mesh.resample_to_image(method=method, mark_blank=True, **kwargs)
-            invalid = image['vtkValidPointMask'] == 0
+            invalid = image['mask'] == 0
             ghosts = image.point_data[ghost_name]
             assert ghosts.dtype == np.uint8
             assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
@@ -5066,7 +5054,7 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
             unmarked = mesh.resample_to_image(method=method, **kwargs)
             assert ghost_name not in unmarked.point_data
             assert ghost_name not in unmarked.cell_data
-            assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
+            assert np.array_equal(unmarked['mask'], image['mask'])
 
 
 @pytest.mark.parametrize(('method', 'kwargs'), [('sample', {}), ('interpolate', {'radius': 0.05})])
@@ -5077,7 +5065,7 @@ def test_resample_to_image_null_value(sphere, method, kwargs):
     shared = dict(dimensions=dims, method=method, **kwargs)
 
     plain = sphere.resample_to_image(**shared)
-    invalid = plain['vtkValidPointMask'] == 0
+    invalid = plain['mask'] == 0
     assert invalid.any()
     assert np.array_equal(plain['point_scalars'][invalid], np.zeros(invalid.sum()))
 
@@ -5090,7 +5078,7 @@ def test_resample_to_image_null_value(sphere, method, kwargs):
     blanked = sphere.resample_to_image(null_value=-99.0, mark_blank=True, **shared)
     hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
     ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
-    assert np.array_equal(blanked['vtkValidPointMask'], plain['vtkValidPointMask'])
+    assert np.array_equal(blanked['mask'], plain['mask'])
     assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
 
 
@@ -5110,7 +5098,7 @@ def test_resample_to_image_null_value_float_dtype(sphere):
     sphere.clear_data()
     sphere['counts'] = np.arange(sphere.n_points, dtype=np.float32)
     image = sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=-1.0)
-    assert image['counts'][image['vtkValidPointMask'] == 0].min() == -1.0
+    assert image['counts'][image['mask'] == 0].min() == -1.0
 
 
 def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
@@ -5143,7 +5131,7 @@ def test_resample_to_image_interpolate_point_cloud(sphere):
     cloud['point_scalars'] = sphere.points[:, 0]
     image = cloud.resample_to_image(dimensions=(20, 20, 20))
 
-    valid = image['vtkValidPointMask'].astype(bool)
+    valid = image['mask'].astype(bool)
     assert valid[voxel_of_each_point(cloud, image)].all()
     # Each filled voxel takes a value from points no further away than the radius
     radius = np.linalg.norm(image.spacing) / 2
@@ -5162,7 +5150,7 @@ def test_resample_to_image_flat_input(axis):
     assert image.dimensions[axis] == 1
     assert image.spacing[axis] > 0
     # Every voxel of the flat image takes a value from the plane
-    assert image['vtkValidPointMask'].all()
+    assert image['mask'].all()
 
     # The voxels are centered on the plane, so sampling its cells is exact
     exact = plane.resample_to_image(dimensions=image.dimensions, method='sample')
@@ -5176,7 +5164,7 @@ def test_resample_to_image_categorical(tetbeam):
     blended = tetbeam.resample_to_image(dimensions=dims)
     categorical = tetbeam.resample_to_image(dimensions=dims, categorical=True)
 
-    valid = categorical['vtkValidPointMask'].astype(bool)
+    valid = categorical['mask'].astype(bool)
     # Interpolating labels invents values between them, nearest neighbor does not
     assert np.array_equal(np.unique(categorical['labels'][valid]), [3.0, 7.0])
     assert len(np.unique(blended['labels'][valid])) > 2
