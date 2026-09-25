@@ -297,8 +297,8 @@ def wrap(  # noqa: PLR0911
         return cast('DataObject', dataset)
 
     if isinstance(dataset, (list, tuple)):
-        dataset = _validation.validate_array(
-            dataset, must_have_shape=[3, (-1, 3)], dtype_out=float, name='Sequence of points'
+        dataset = _validation.validate_arrayNx3(
+            dataset, dtype_out=float, name='Sequence of points'
         )
 
     # Check if dataset is a numpy array.  We do this first since
