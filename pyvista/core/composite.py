@@ -58,7 +58,7 @@ if TYPE_CHECKING:
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import VectorLike
 
     from ._typing_core import NumpyArray
     from ._typing_core._dataset_types import _DataSetType

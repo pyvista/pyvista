@@ -19,7 +19,7 @@ Camera, <class 'pyvista.plotting.camera.Camera'>
 CameraPosition, <class 'pyvista.plotting.renderer.CameraPosition'>
 Cell, <class 'pyvista.core.cell.Cell'>
 CellType, <enum 'CellType'>
-Chart, typing.Union[ForwardRef('Chart2D'), ForwardRef('ChartBox'), ForwardRef('ChartPie'), ForwardRef('ChartMPL')]
+# Chart, typing.Union[ForwardRef('Chart2D'), ForwardRef('ChartBox'), ForwardRef('ChartPie'), ForwardRef('ChartMPL')]  # deprecated, accessing it emits a warning
 Chart2D, <class 'pyvista.plotting.charts.Chart2D'>
 ChartBox, <class 'pyvista.plotting.charts.ChartBox'>
 ChartMPL, <class 'pyvista.plotting.charts.ChartMPL'>
@@ -28,7 +28,7 @@ Circle, <function Circle at 0x1641c0ca0>
 CircularArc, <function CircularArc at 0x1641c0940>
 CircularArcFromNormal, <function CircularArcFromNormal at 0x1641c09d0>
 Color, <class 'pyvista.plotting.colors.Color'>
-ColorLike, typing.Union[typing.Tuple[int, int, int], typing.Tuple[int, int, int, int], typing.Tuple[float, float, float], typing.Tuple[float, float, float, float], typing.Sequence[int], typing.Sequence[float], numpy.ndarray, typing.Dict[str, typing.Union[int, float, str]], str, ForwardRef('Color'), vtkmodules.vtkCommonDataModel.vtkColor3ub]
+# ColorLike, typing.Union[typing.Tuple[int, int, int], typing.Tuple[int, int, int, int], typing.Tuple[float, float, float], typing.Tuple[float, float, float, float], typing.Sequence[int], typing.Sequence[float], numpy.ndarray, typing.Dict[str, typing.Union[int, float, str]], str, ForwardRef('Color'), vtkmodules.vtkCommonDataModel.vtkColor3ub]  # deprecated, accessing it emits a warning
 CompositeAttributes, <class 'pyvista.plotting.composite_mapper.CompositeAttributes'>
 CompositeFilters, <class 'pyvista.core.filters.composite.CompositeFilters'>
 CompositePolyDataMapper, <class 'pyvista.plotting.composite_mapper.CompositePolyDataMapper'>

@@ -1687,11 +1687,11 @@ def _hex_to_channels(h: str) -> tuple[int, ...]:
 class Color(_NoNewAttrMixin):
     r"""Helper class to convert between different color representations used in PyVista.
 
-    Many pyvista methods accept :data:`ColorLike` parameters. This helper class
+    Many pyvista methods accept :data:`~pyvista.typing.ColorLike` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :data:`ColorLike` parameter and can be converted
+    or ``float``) is considered a :data:`~pyvista.typing.ColorLike` parameter and can be converted
     by this class.
 
     See :ref:`named_colors` for a list of supported colors.

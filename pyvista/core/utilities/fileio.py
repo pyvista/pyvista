@@ -46,11 +46,11 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid
     from pyvista import MultiBlock
-    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']

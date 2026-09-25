@@ -6,7 +6,7 @@ import numpy as np
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.plotting._typing import ColorLike
+from pyvista.typing import ColorLike
 from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image
 from tests.typing.meshes import pointset

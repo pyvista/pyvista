@@ -102,7 +102,7 @@ def load_theme(filename: str | Path) -> Theme:
 
     Returns
     -------
-    pyvista.Theme
+    pyvista.plotting.themes.Theme
         The loaded theme.
 
     Examples
