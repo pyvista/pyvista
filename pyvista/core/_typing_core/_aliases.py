@@ -10,10 +10,10 @@ from typing import Union
 
 from pyvista import _vtk
 
-from ._array_like import NumberType
 from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
+from ._array_like import _NumberT
 
 if TYPE_CHECKING or os.environ.get(
     '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
@@ -25,10 +25,11 @@ if TYPE_CHECKING or os.environ.get(
 else:
     Rotation = None
 
+# Forwarded as the deprecated `pyvista.Number`
 Number = Union[int, float]
-VectorLike = _ArrayLike1D[NumberType]
-MatrixLike = _ArrayLike2D[NumberType]
-ArrayLike = _ArrayLike[NumberType]
+VectorLike = _ArrayLike1D[_NumberT]
+MatrixLike = _ArrayLike2D[_NumberT]
+ArrayLike = _ArrayLike[_NumberT]
 
 if Rotation is not None:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
@@ -85,7 +86,7 @@ CellsLike = Union[MatrixLike[int], VectorLike[int]]
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+_ArrayLikeOrScalar = Union[_NumberT, ArrayLike[_NumberT]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 

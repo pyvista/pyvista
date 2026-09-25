@@ -19,19 +19,20 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
 def _padded_bins(
-    mesh: DataSet, density: NumpyArray[float] | Sequence[float]
-) -> list[NumpyArray[float]]:
+    mesh: DataSet, density: npt.NDArray[float] | Sequence[float]
+) -> list[npt.NDArray[float]]:
     """Construct bin edges for voxelization.
 
     Parameters
@@ -39,7 +40,7 @@ def _padded_bins(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : NumpyArray[float] | Sequence[float]
+    density : npt.NDArray[float] | Sequence[float]
         A list of densities along x,y,z directions.
 
     Returns
@@ -179,7 +180,7 @@ def voxelize(
 def _voxelize_legacy(
     mesh: DataSet | _vtk.vtkDataSet,
     *,
-    density: float | NumpyArray[float] | Sequence[float] | None = None,
+    density: float | npt.NDArray[float] | Sequence[float] | None = None,
     check_surface: bool = True,
     enclosed: bool = False,
     fit_bounds: bool = False,
@@ -508,7 +509,7 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
     u: ArrayLike[float],
     v: ArrayLike[float],
     w: ArrayLike[float],
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]:
     """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -547,8 +548,8 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
 
 
 def cartesian_to_spherical(
-    x: NumpyArray[float], y: NumpyArray[float], z: NumpyArray[float]
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    x: npt.NDArray[float], y: npt.NDArray[float], z: npt.NDArray[float]
+) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]:
     """Convert 3D Cartesian coordinates to spherical coordinates.
 
     Parameters
@@ -588,7 +589,7 @@ def cartesian_to_spherical(
 
 def spherical_to_cartesian(
     r: ArrayLike[float], phi: ArrayLike[float], theta: ArrayLike[float]
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]:
     """Convert Spherical coordinates to 3D Cartesian coordinates.
 
     Parameters

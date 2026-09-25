@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import numpy.typing as npt
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
 
 def an_image() -> pv.ImageData:
@@ -14,9 +14,9 @@ def an_image() -> pv.ImageData:
 
 
 SKIP_RUNTIME = {
-    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': 'the runtime checker does not accept an int64 array as `NumpyArray[int]`',
+    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': 'the runtime checker does not accept an int64 array as `npt.NDArray[int]`',
 }
 
 
-assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NumpyArray[int])
-assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NumpyArray[int])  # pragma: no cover
+assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | npt.NDArray[int])
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | npt.NDArray[int])  # pragma: no cover

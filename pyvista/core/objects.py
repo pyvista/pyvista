@@ -30,12 +30,12 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
+    import numpy.typing as npt
     import pandas
     import pyarrow
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -94,7 +94,7 @@ class Table(DataObject, _vtk.vtkTable):
                 raise TypeError(msg)
 
     @staticmethod
-    def _prepare_arrays(arrays: MatrixLike[float] | VectorLike[float]) -> NumpyArray[float]:
+    def _prepare_arrays(arrays: MatrixLike[float] | VectorLike[float]) -> npt.NDArray[float]:
         arrays = np.asarray(arrays)
         if arrays.ndim == 1:
             return np.reshape(arrays, (1, -1))
@@ -240,7 +240,7 @@ class Table(DataObject, _vtk.vtkTable):
         self,
         data: (
             DataSetAttributes
-            | dict[str, NumpyArray[float]]
+            | dict[str, npt.NDArray[float]]
             | MatrixLike[float]
             | VectorLike[float]
         ),
@@ -253,7 +253,7 @@ class Table(DataObject, _vtk.vtkTable):
             Other dataset attributes, mapping, or array data to update from.
 
         """
-        arrays: DataSetAttributes | dict[str, NumpyArray[float]]
+        arrays: DataSetAttributes | dict[str, npt.NDArray[float]]
         if isinstance(data, (DataSetAttributes, dict)):
             arrays = data
         else:

@@ -38,8 +38,9 @@ from .utilities.algorithms import set_algorithm_input
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    import numpy.typing as npt
+
     from pyvista import DataSet
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -65,7 +66,7 @@ _ResolveOptions = Literal['off', 'polygon_offset', 'shift_zbuffer']
 _BlendModeOptions = Literal['composite', 'maximum', 'minimum', 'average', 'additive']
 
 
-def _category_step(values: NumpyArray[float]) -> float | None:
+def _category_step(values: npt.NDArray[float]) -> float | None:
     """Return the spacing between category values, or ``None`` if they are not evenly spaced."""
     if len(values) == 1:
         return 1.0
@@ -78,7 +79,7 @@ def _category_step(values: NumpyArray[float]) -> float | None:
     return step
 
 
-def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
+def _category_range(values: npt.NDArray[float]) -> tuple[float, float]:
     """Return a scalar range that centers every category value on a table entry."""
     step = _category_step(values)
     if step is None:
@@ -96,7 +97,7 @@ def _clim_has_no_bounds(clim: float | VectorLike[float] | None) -> bool:
 
 
 def _apply_categories(
-    lut: LookupTable, values: NumpyArray[float], annotations: dict[float, str] | None
+    lut: LookupTable, values: npt.NDArray[float], annotations: dict[float, str] | None
 ) -> list[float]:
     """Give each category value its own table color and return the values to label."""
     if len(lut.values) < len(values):
@@ -883,7 +884,7 @@ class _BaseDataSetMapper(_BaseMapper):
     def _configure_scalars_mode(
         self,
         *,
-        scalars: NumpyArray[Any],
+        scalars: npt.NDArray[Any],
         scalars_name: str,
         preference: PointLiteral | CellLiteral | str,
         direct_scalars_color_mode: bool,
@@ -950,7 +951,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_scalars(
         self,
-        scalars: NumpyArray[Any] | Sequence[Any],
+        scalars: npt.NDArray[Any] | Sequence[Any],
         scalars_name: str,
         *,
         n_colors: int = 256,
@@ -966,7 +967,7 @@ class _BaseDataSetMapper(_BaseMapper):
         below_color: ColorLike | None = None,
         cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
-        opacity: NumpyArray[float] | None = None,
+        opacity: npt.NDArray[float] | None = None,
         categories: bool | int = False,
         clim: float | VectorLike[float] | None = None,
     ) -> None:
@@ -1194,7 +1195,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 # directly displaying the colors
                 hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
                 rounded = np.round(hue * n_colors) / n_colors
-                rgba: NumpyArray[float] = get_cmap_safe(cmap)(rounded) * 255
+                rgba: npt.NDArray[float] = get_cmap_safe(cmap)(rounded) * 255
                 rgba[:, -1] *= opacity
                 scalars = rgba.astype(np.uint8)
 
@@ -1297,7 +1298,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_custom_opacity(
         self,
-        opacity: NumpyArray[float],
+        opacity: npt.NDArray[float],
         *,
         color: ColorLike,
         n_colors: int,

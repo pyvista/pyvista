@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
-_Cartesian = tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]
+_Cartesian = tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]
 
 
-def some_array() -> NumpyArray[float]:
+def some_array() -> npt.NDArray[float]:
     """Return spherical coordinates as an array."""
     return np.array([1.0, 2.0, 3.0])
 

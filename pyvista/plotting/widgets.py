@@ -40,13 +40,14 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import TypeAlias
 
+    import numpy.typing as npt
+
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import RectilinearGrid
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -2629,8 +2630,8 @@ class WidgetComponent(_NoNewAttrMixin):
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
         axes: MatrixLike[float] | None = None,
-        release_callback: Callable[[NumpyArray[float]], None] | None = None,
-        interact_callback: Callable[[NumpyArray[float]], None] | None = None,
+        release_callback: Callable[[npt.NDArray[float]], None] | None = None,
+        interact_callback: Callable[[npt.NDArray[float]], None] | None = None,
     ) -> AffineWidget3D:
         """Add a 3D affine transform widget.
 

@@ -36,7 +36,6 @@ if TYPE_CHECKING:
 
     from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
-    from ._typing_core import NumpyArray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -379,7 +378,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> NumpyArray[float] | None:
+    def active_vectors(self: Self) -> npt.NDArray[float] | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
@@ -1648,7 +1647,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: NumpyArray[float],
+        texture_coordinates: npt.NDArray[float],
     ) -> None:
         """Set the active texture coordinates array.
 

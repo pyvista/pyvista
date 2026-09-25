@@ -13,16 +13,17 @@ import pyvista_validation as _validation
 from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import NumpyArray
+    import numpy.typing as npt
+
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
     _FiveArrays: TypeAlias = tuple[
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
-        NumpyArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
     ]
 
 # The default tolerances of `numpy.isclose`
@@ -36,7 +37,7 @@ def axis_angle_rotation(
     *,
     point: VectorLike[float] | None = None,
     deg: bool = True,
-) -> NumpyArray[float]:
+) -> npt.NDArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
     Rotations around an axis that contains the origin can easily be
@@ -168,7 +169,7 @@ def axis_angle_rotation(
 
 def reflection(
     normal: VectorLike[float], point: VectorLike[float] | None = None
-) -> NumpyArray[float]:
+) -> npt.NDArray[float]:
     """Return a 4x4 matrix for reflection across a normal about a point.
 
     Projection to a unit vector ``n`` can be computed using the dyadic
@@ -277,19 +278,19 @@ def reflection(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def apply_transformation_to_points(transformation: NumpyArray[float], points: NumpyArray[float], *, inplace: Literal[False] = False) -> NumpyArray[float]: ...
+def apply_transformation_to_points(transformation: npt.NDArray[float], points: npt.NDArray[float], *, inplace: Literal[False] = False) -> npt.NDArray[float]: ...
 @overload
-def apply_transformation_to_points(transformation: NumpyArray[float], points: NumpyArray[float], *, inplace: Literal[True]) -> None: ...
+def apply_transformation_to_points(transformation: npt.NDArray[float], points: npt.NDArray[float], *, inplace: Literal[True]) -> None: ...
 @overload
-def apply_transformation_to_points(transformation: NumpyArray[float], points: NumpyArray[float], *, inplace: bool = ...) -> NumpyArray[float] | None: ...
+def apply_transformation_to_points(transformation: npt.NDArray[float], points: npt.NDArray[float], *, inplace: bool = ...) -> npt.NDArray[float] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def apply_transformation_to_points(
-    transformation: NumpyArray[float],
-    points: NumpyArray[float],
+    transformation: npt.NDArray[float],
+    points: npt.NDArray[float],
     *,
     inplace: Literal[True, False] = False,
-) -> NumpyArray[float] | None:
+) -> npt.NDArray[float] | None:
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
     Parameters
@@ -515,11 +516,11 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
 
 
 def _decomposition_as_homogeneous(  # noqa: PLR0917
-    T: NumpyArray[float],  # noqa: N803
-    R: NumpyArray[float],  # noqa: N803
-    N: NumpyArray[float],  # noqa: N803
-    S: NumpyArray[float],  # noqa: N803
-    K: NumpyArray[float],  # noqa: N803
+    T: npt.NDArray[float],  # noqa: N803
+    R: npt.NDArray[float],  # noqa: N803
+    N: npt.NDArray[float],  # noqa: N803
+    S: npt.NDArray[float],  # noqa: N803
+    K: npt.NDArray[float],  # noqa: N803
 ) -> _FiveArrays:
     """Return TRNSK decomposition as homogeneous matrices."""
     dtype_out = T.dtype  # Assume all inputs have the same dtype
@@ -544,7 +545,7 @@ def _decomposition_as_homogeneous(  # noqa: PLR0917
     return T4, R4, N4, S4, K4
 
 
-def _polar_decomposition(a: NumpyArray[float]) -> tuple[NumpyArray[float], NumpyArray[float]]:
+def _polar_decomposition(a: npt.NDArray[float]) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
     # Decompose `a=up` where u is orthonormal and p is positive semi-definite
     # See scipy.linalg.polar for details
     w, s, vh = np.linalg.svd(a, full_matrices=False)

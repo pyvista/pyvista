@@ -27,10 +27,9 @@ if TYPE_CHECKING:
     from pyvista import DataSet
 
     from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
 
     _Index: TypeAlias = (
-        int | slice | EllipsisType | NumpyArray[np.integer[Any]] | NumpyArray[np.bool_]
+        int | slice | EllipsisType | npt.NDArray[np.integer[Any]] | npt.NDArray[np.bool_]
     )
 
 

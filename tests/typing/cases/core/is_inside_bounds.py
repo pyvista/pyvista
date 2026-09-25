@@ -11,15 +11,15 @@ from pyvista.core.utilities import is_inside_bounds
 from tests.typing.meshes import poly
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import NumpyArray
+    import numpy.typing as npt
 
 
-def a_point() -> NumpyArray[float]:
+def a_point() -> npt.NDArray[float]:
     """Return a point at the centre of the unit cube."""
     return np.array([0.5, 0.5, 0.5])
 
 
-def some_bounds() -> NumpyArray[float]:
+def some_bounds() -> npt.NDArray[float]:
     """Return the bounds of the unit cube."""
     return np.array([0.0, 1.0, 0.0, 1.0, 0.0, 1.0])
 

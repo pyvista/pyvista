@@ -19,7 +19,7 @@ SKIP_RUNTIME = dict.fromkeys(
         'pv.Sphere().find_closest_point((0.0, 1.0, 0.0), n=2)',
         'pv.Sphere().find_closest_point((0.0, 1.0, 0.0), n=a_count())',
     ],
-    'the runtime checker does not accept an int64 array as `NumpyArray[int]`',
+    'the runtime checker does not accept an int64 array as `npt.NDArray[int]`',
 )
 
 

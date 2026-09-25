@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     import cycler
+    import numpy.typing as npt
 
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import BorderOptions
@@ -538,7 +538,7 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._active_index
 
-    def index_to_loc(self, index: int) -> NumpyArray[int] | np.intp:
+    def index_to_loc(self, index: int) -> npt.NDArray[int] | np.intp:
         """Convert a 1D index location to the 2D location on the plotting grid.
 
         Parameters

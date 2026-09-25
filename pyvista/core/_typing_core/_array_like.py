@@ -30,57 +30,50 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-# Define numeric types
-NumberType = TypeVar(
-    'NumberType',
+_NumberT = TypeVar(
+    '_NumberT',
     bound=np.floating | np.integer | np.bool_ | float | int | bool,
 )
 
-# Create a copy of the typevar which can be used for annotating a second variable.
-# Its definition should be identical to `NumberType`
-_NumberType = TypeVar(  # noqa: PYI018
-    '_NumberType',
-    bound=np.floating | np.integer | np.bool_ | float | int | bool,
-)
-
-NumpyArray = npt.NDArray[NumberType]
+# Forwarded as the deprecated `pyvista.NumpyArray`
+NumpyArray = npt.NDArray[_NumberT]
 
 _FiniteNestedList = (
-    list[NumberType]
-    | list[list[NumberType]]
-    | list[list[list[NumberType]]]
-    | list[list[list[list[NumberType]]]]
+    list[_NumberT]
+    | list[list[_NumberT]]
+    | list[list[list[_NumberT]]]
+    | list[list[list[list[_NumberT]]]]
 )
 _FiniteNestedTuple = (
-    tuple[NumberType]
-    | tuple[tuple[NumberType]]
-    | tuple[tuple[tuple[NumberType]]]
-    | tuple[tuple[tuple[tuple[NumberType]]]]
+    tuple[_NumberT]
+    | tuple[tuple[_NumberT]]
+    | tuple[tuple[tuple[_NumberT]]]
+    | tuple[tuple[tuple[tuple[_NumberT]]]]
 )
 
 _ArrayLike1D = Union[
-    NumpyArray[NumberType],
-    Sequence[NumberType],
-    Sequence[NumpyArray[NumberType]],
+    npt.NDArray[_NumberT],
+    Sequence[_NumberT],
+    Sequence[npt.NDArray[_NumberT]],
 ]
 _ArrayLike2D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[NumberType]],
-    Sequence[Sequence[NumpyArray[NumberType]]],
+    npt.NDArray[_NumberT],
+    Sequence[Sequence[_NumberT]],
+    Sequence[Sequence[npt.NDArray[_NumberT]]],
 ]
 _ArrayLike3D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[Sequence[NumberType]]],
-    Sequence[Sequence[Sequence[NumpyArray[NumberType]]]],
+    npt.NDArray[_NumberT],
+    Sequence[Sequence[Sequence[_NumberT]]],
+    Sequence[Sequence[Sequence[npt.NDArray[_NumberT]]]],
 ]
 _ArrayLike4D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[Sequence[Sequence[NumberType]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
+    npt.NDArray[_NumberT],
+    Sequence[Sequence[Sequence[Sequence[_NumberT]]]],
+    Sequence[Sequence[Sequence[Sequence[npt.NDArray[_NumberT]]]]],
 ]
 _ArrayLike = Union[
-    _ArrayLike1D[NumberType],
-    _ArrayLike2D[NumberType],
-    _ArrayLike3D[NumberType],
-    _ArrayLike4D[NumberType],
+    _ArrayLike1D[_NumberT],
+    _ArrayLike2D[_NumberT],
+    _ArrayLike3D[_NumberT],
+    _ArrayLike4D[_NumberT],
 ]

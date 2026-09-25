@@ -17,13 +17,14 @@ from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    import numpy.typing as npt
+
     from pyvista import CellType
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
-    from pyvista.core._typing_core import NumpyArray
 
 
-def ncells_from_cells(cells: NumpyArray[int]) -> int:
+def ncells_from_cells(cells: npt.NDArray[int]) -> int:
     """Get the number of cells from a VTK cell connectivity array.
 
     Parameters
@@ -37,7 +38,7 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
         The number of cells extracted from the given cell connectivity array.
 
     """
-    consumer: deque[NumpyArray[int]] = deque(maxlen=0)
+    consumer: deque[npt.NDArray[int]] = deque(maxlen=0)
     it = cells.flat
     for n_cells in itertools.count():  # noqa: B007
         skip = next(it, None)
@@ -52,9 +53,9 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 @overload
 def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: Literal[False] = False) -> _vtk.vtkIdTypeArray: ...
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
+def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, npt.NDArray[int]]: ...
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, npt.NDArray[int]] | _vtk.vtkIdTypeArray: ...
 # ruff: enable[E501]
 # fmt: on
 def numpy_to_idarr(
@@ -62,7 +63,7 @@ def numpy_to_idarr(
     *,
     deep: bool = False,
     return_ind: bool = False,
-) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
+) -> tuple[_vtk.vtkIdTypeArray, npt.NDArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a NumPy array to a :vtk:`vtkIdTypeArray`.
 
     Parameters
@@ -130,7 +131,9 @@ def _cell_type_n_points(cell_type: CellType) -> int | None:
     return n_points if n_points > 0 else None
 
 
-def _check_cell_indices(indices: NumpyArray[int], elem_t: CellType, nr_points: int | None) -> None:
+def _check_cell_indices(
+    indices: npt.NDArray[int], elem_t: CellType, nr_points: int | None
+) -> None:
     """Validate that connectivity indices are non-negative and within the point count."""
     if np.any(indices < 0):
         msg = f'Non-valid index (<0) given for cells of type {elem_t}'
@@ -143,10 +146,10 @@ def _check_cell_indices(indices: NumpyArray[int], elem_t: CellType, nr_points: i
 def _fixed_size_cells(
     elem_t: CellType,
     nr_points_per_elem: int,
-    cells_arr: NumpyArray[int],
+    cells_arr: npt.NDArray[int],
     *,
     nr_points: int | None,
-) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
+) -> tuple[npt.NDArray[np.uint8], npt.NDArray[int]]:
     """Build the cell-type and connectivity arrays for a fixed-size cell type."""
     not_flat = _validate_fixed_size_cells(
         elem_t, nr_points_per_elem, cells_arr, nr_points=nr_points
@@ -163,10 +166,10 @@ def _fixed_size_cells(
 def _validate_fixed_size_cells(
     elem_t: CellType,
     nr_points_per_elem: int,
-    cells_arr: NumpyArray[int],
+    cells_arr: npt.NDArray[int],
     *,
     nr_points: int | None,
-) -> NumpyArray[int]:
+) -> npt.NDArray[int]:
     """Validate and reshape connectivity for a fixed-size cell type."""
     if (
         not isinstance(cells_arr, np.ndarray)  # type: ignore[redundant-expr]
@@ -188,9 +191,9 @@ def _validate_fixed_size_cells(
 
 
 def _get_regular_cells_from_dict(
-    cells_dict: dict[np.uint8, NumpyArray[int] | Sequence[ArrayLike[int]]],
+    cells_dict: dict[np.uint8, npt.NDArray[int] | Sequence[ArrayLike[int]]],
     nr_points: int,
-) -> tuple[NumpyArray[np.uint8], NumpyArray[int]] | None:
+) -> tuple[npt.NDArray[np.uint8], npt.NDArray[int]] | None:
     """Return cell types and regular connectivity for a single-type cells dict."""
     if len(cells_dict) != 1:
         return None
@@ -217,10 +220,10 @@ def _get_regular_cells_from_dict(
 
 def _variable_size_cells(
     elem_t: CellType,
-    cells_arr: NumpyArray[int] | Sequence[ArrayLike[int]],
+    cells_arr: npt.NDArray[int] | Sequence[ArrayLike[int]],
     *,
     nr_points: int | None,
-) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
+) -> tuple[npt.NDArray[np.uint8], npt.NDArray[int]]:
     """Build the cell-type and connectivity arrays for a data-defined cell type.
 
     The per-cell point count is taken from the data: a 2D ``[N, D]`` array maps to
@@ -263,7 +266,7 @@ def _variable_size_cells(
     # Optimization: check the indices and build the array for all cells at once instead
     # of concatenating one cell at a time; each cell's size is inserted ahead of its ids
     sizes = np.array([cell.size for cell in per_cell], dtype=pv.ID_TYPE)
-    connectivity: NumpyArray[int] = (
+    connectivity: npt.NDArray[int] = (
         np.concatenate(per_cell).astype(pv.ID_TYPE, copy=False)
         if per_cell
         else np.empty(0, dtype=pv.ID_TYPE)
@@ -275,9 +278,9 @@ def _variable_size_cells(
 
 
 def create_mixed_cells(
-    mixed_cell_dict: dict[np.uint8, NumpyArray[int] | Sequence[ArrayLike[int]]],
+    mixed_cell_dict: dict[np.uint8, npt.NDArray[int] | Sequence[ArrayLike[int]]],
     nr_points: int | None = None,
-) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
+) -> tuple[npt.NDArray[np.uint8], npt.NDArray[int]]:
     """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
     This function generates all required cell arrays according to a given cell
@@ -376,7 +379,7 @@ def create_mixed_cells(
 
 def get_mixed_cells(
     vtkobj: UnstructuredGrid,
-) -> dict[np.uint8, NumpyArray[int] | list[NumpyArray[int]]]:
+) -> dict[np.uint8, npt.NDArray[int] | list[npt.NDArray[int]]]:
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
     This functions creates a cells dictionary (see
@@ -453,7 +456,7 @@ def get_mixed_cells(
         cell_sizes = np.diff(offset)
         cell_starts = offset[:-1]
 
-    return_dict: dict[np.uint8, NumpyArray[int] | list[NumpyArray[int]]] = {}
+    return_dict: dict[np.uint8, npt.NDArray[int] | list[npt.NDArray[int]]] = {}
     for cell_type in distinct_cell_types:
         mask = cell_types == cell_type
         if regular_connectivity is not None:

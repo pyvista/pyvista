@@ -34,12 +34,13 @@ from .helpers import wrap
 from .misc import check_valid_vector
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -1042,7 +1043,7 @@ def SolidSphereGeneric(
         msg = 'phi resolution must be 2 or more'
         raise ValueError(msg)
 
-    def _is_sorted(a: NumpyArray[float]) -> np.bool_:
+    def _is_sorted(a: npt.NDArray[float]) -> np.bool_:
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
@@ -1083,7 +1084,7 @@ def SolidSphereGeneric(
         r: float | VectorLike[float],
         phi: float | VectorLike[float],
         theta: float | VectorLike[float],
-    ) -> NumpyArray[float]:
+    ) -> npt.NDArray[float]:
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
 
         Parameters
@@ -1108,7 +1109,7 @@ def SolidSphereGeneric(
     # Optimization: points and cells are built with array arithmetic rather than per-cell
     # loops. Block order is part of the output and must not change: origin, +axis, -axis,
     # then the (r, phi, theta) grid with theta fastest; tetras, pyramids, wedges, hexahedra.
-    point_blocks: list[NumpyArray[float]] = []
+    point_blocks: list[npt.NDArray[float]] = []
     npoints_on_axis = 0
     if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
         point_blocks.append(np.zeros((1, 3)))
@@ -1149,12 +1150,12 @@ def SolidSphereGeneric(
     point_blocks.append(_spherical_to_cartesian(radius, phi, theta))
     points = np.vstack(point_blocks)
 
-    cell_blocks: list[NumpyArray[int]] = []
-    celltype_blocks: list[NumpyArray[np.uint8]] = []
+    cell_blocks: list[npt.NDArray[int]] = []
+    celltype_blocks: list[npt.NDArray[np.uint8]] = []
 
     def _index(
-        ir: int | NumpyArray[int], iphi: int | NumpyArray[int], itheta: int | NumpyArray[int]
-    ) -> int | NumpyArray[int]:
+        ir: int | npt.NDArray[int], iphi: int | npt.NDArray[int], itheta: int | npt.NDArray[int]
+    ) -> int | npt.NDArray[int]:
         """Index for points not on axis.
 
         Values of ``ir`` and ``iphi`` are relative to the first non-axis values; all
@@ -1167,7 +1168,7 @@ def SolidSphereGeneric(
             ntheta_ = ntheta
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
-    def _add_cells(celltype: pv.CellType, *point_ids: int | NumpyArray[int]) -> None:
+    def _add_cells(celltype: pv.CellType, *point_ids: int | npt.NDArray[int]) -> None:
         """Append one block of same-type cells, one row per broadcast element."""
         ids = np.broadcast_arrays(*point_ids)
         block = np.stack([np.full_like(ids[0], len(ids)), *ids], axis=-1)
@@ -1207,7 +1208,7 @@ def SolidSphereGeneric(
             0,
         )
 
-    def _reorder_wedge(points: list[int | NumpyArray[int]]) -> list[int | NumpyArray[int]]:
+    def _reorder_wedge(points: list[int | npt.NDArray[int]]) -> list[int | npt.NDArray[int]]:
         """Swap points 1,2 and 4,5 for wedge cells."""
         points[1], points[2] = points[2], points[1]
         points[4], points[5] = points[5], points[4]

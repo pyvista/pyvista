@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from type_assert import assert_types
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core._typing_core import NumpyArray
 from pyvista.plotting.utilities import image_from_window
 
 
@@ -41,10 +41,10 @@ def a_flag() -> bool:
     return True
 
 
-assert_types(image_from_window(a_window()), NumpyArray[np.uint8])
-assert_types(image_from_window(a_window(), as_vtk=False), NumpyArray[np.uint8])
-assert_types(image_from_window(a_window(), ignore_alpha=True, scale=2), NumpyArray[np.uint8])
+assert_types(image_from_window(a_window()), npt.NDArray[np.uint8])
+assert_types(image_from_window(a_window(), as_vtk=False), npt.NDArray[np.uint8])
+assert_types(image_from_window(a_window(), ignore_alpha=True, scale=2), npt.NDArray[np.uint8])
 assert_types(image_from_window(a_window(), as_vtk=True), pv.ImageData)
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(image_from_window(a_window(), as_vtk=a_flag()), NumpyArray[np.uint8] | pv.ImageData)
+assert_types(image_from_window(a_window(), as_vtk=a_flag()), npt.NDArray[np.uint8] | pv.ImageData)

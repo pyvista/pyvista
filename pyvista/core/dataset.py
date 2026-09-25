@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from collections.abc import Iterator
 
+    import numpy.typing as npt
     import pandas
     import pyarrow
     from typing_extensions import Self
@@ -68,10 +69,9 @@ if TYPE_CHECKING:
     from pyvista import PointSet
 
     from ._typing_core import MatrixLike
-    from ._typing_core import NumberType
-    from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
     from ._typing_core import _ArrayLikeOrScalar
+    from ._typing_core._array_like import _NumberT
 
     _Dimensionality = Literal[0, 1, 2, 3]
 
@@ -336,7 +336,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self: Self) -> NumpyArray[float] | None:
+    def active_tensors(self: Self) -> npt.NDArray[float] | None:
         """Return the active tensors array.
 
         Returns
@@ -610,7 +610,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
-    ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
+    ) -> tuple[FieldAssociation, npt.NDArray[float] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -902,7 +902,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def get_data_range(
         self: Self,
-        arr_var: str | NumpyArray[float] | None = None,
+        arr_var: str | npt.NDArray[float] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
@@ -929,7 +929,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             if arr_var is None:
                 return (np.nan, np.nan)
 
-        arr: NumpyArray[Any]
+        arr: npt.NDArray[Any]
         if isinstance(arr_var, str):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
@@ -1569,7 +1569,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: _ArrayLikeOrScalar[NumberType],
+        scalars: _ArrayLikeOrScalar[_NumberT],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
@@ -2091,11 +2091,11 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | npt.NDArray[int]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | npt.NDArray[int], npt.NDArray[float]]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | npt.NDArray[int] | tuple[int | npt.NDArray[int], npt.NDArray[float]]: ...
     # ruff: enable[E501]
     # fmt: on
     def find_closest_cell(
@@ -2103,7 +2103,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         point: VectorLike[float] | MatrixLike[float],
         *,
         return_closest_point: bool = False,
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
+    ) -> int | npt.NDArray[int] | tuple[int | npt.NDArray[int], npt.NDArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
@@ -2226,7 +2226,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))  # type: ignore[call-overload]
             closest_points.append(closest_point)
 
-        out_cells: int | NumpyArray[int] = (
+        out_cells: int | npt.NDArray[int] = (
             closest_cells[0] if singular else np.array(closest_cells)
         )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
@@ -2238,7 +2238,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def find_containing_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-    ) -> int | NumpyArray[int]:
+    ) -> int | npt.NDArray[int]:
         """Find index of a cell that contains the given point.
 
         .. warning::
@@ -2308,7 +2308,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float | None = None,
-    ) -> NumpyArray[int]:
+    ) -> npt.NDArray[int]:
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2386,7 +2386,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float | None = None,
-    ) -> NumpyArray[int]:
+    ) -> npt.NDArray[int]:
         """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2443,7 +2443,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         *,
         tolerance: float | None = None,
         deduplicate_points: bool = False,
-    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+    ) -> tuple[npt.NDArray[float], npt.NDArray[int]]:
         """Locate points and cell ids that intersect a line.
 
         .. versionadded:: 0.49
@@ -2586,7 +2586,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             intersection_cells = intersection_cells[idx][::-1]
         return intersection_points, intersection_cells
 
-    def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
+    def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> npt.NDArray[int]:
         """Find the index of cells in this mesh within bounds.
 
         .. warning::
@@ -3210,7 +3210,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         ind: int,
         point: VectorLike[float] | MatrixLike[float],
-    ) -> bool | NumpyArray[np.bool_]:
+    ) -> bool | npt.NDArray[np.bool_]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
@@ -3305,7 +3305,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: NumpyArray[float],
+        texture_coordinates: npt.NDArray[float],
     ) -> None:
         """Set the active texture coordinates on the points.
 

@@ -46,12 +46,12 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import ClassVar
 
+    import numpy.typing as npt
     from typing_extensions import Self
 
     from pyvista import MultiBlock
 
     from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
     from .utilities.arrays import CellLiteral
     from .utilities.arrays import FieldLiteral
     from .utilities.arrays import PointLiteral
@@ -182,7 +182,7 @@ class DataObject(
         filename: Path | str,
         *,
         binary: bool = True,
-        texture: NumpyArray[np.uint8] | str | None = None,
+        texture: npt.NDArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
     ) -> None:

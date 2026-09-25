@@ -188,8 +188,6 @@ _DOCUMENTED_TYPES = [
     'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
-    'Number',
-    'NumberType',
     'RotationLike',
     'TransformLike',
     'VectorLike',
@@ -223,7 +221,6 @@ _UNDOCUMENTED_TYPES = [
     'LightType',
     'Mesh',
     'MeshValidationReport',
-    'NumpyArray',
     'OpacityOptions',
     'PathStrSeq',
     'PickerType',
@@ -1133,6 +1130,7 @@ def restrict_trimesh_inventory(app: Sphinx) -> None:
 # Modules that references abbreviate or reach through a private path
 _REFERENCE_PREFIXES = {
     'np.': 'numpy.',
+    'npt.': 'numpy.typing.',
     'numpy._typing._array_like.': 'numpy.typing.',
     'pv.': 'pyvista.',
 }

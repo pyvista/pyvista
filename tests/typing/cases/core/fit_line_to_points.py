@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
-_Meta = tuple[pv.PolyData, float, NumpyArray[float]]
+_Meta = tuple[pv.PolyData, float, npt.NDArray[float]]
 
 
-def some_points() -> NumpyArray[float]:
+def some_points() -> npt.NDArray[float]:
     """Return points spread along one direction."""
     return np.array([[0.0, 0.0, 0.0], [1.0, 0.1, 0.0], [2.0, 0.0, 0.1], [3.0, 0.1, 0.0]])
 

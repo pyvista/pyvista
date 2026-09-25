@@ -27,6 +27,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from types import ModuleType
 
+    import numpy.typing as npt
+
     from pyvista.examples._dataset_loader import DatasetObject
 
 _DatasetT_co = TypeVar('_DatasetT_co', covariant=True, default='DatasetObject')
@@ -467,7 +469,7 @@ def get_example(name: Literal['gourds_pnm'], *, download: bool = ...) -> Example
 @overload
 def get_example(name: Literal['gourds_texture'], *, download: bool = ...) -> Example[pv.Texture, tuple[pv.PNGReader]]: ...
 @overload
-def get_example(name: Literal['gpr_data_array'], *, download: bool = ...) -> Example[pv.NumpyArray[Any], tuple[()]]: ...
+def get_example(name: Literal['gpr_data_array'], *, download: bool = ...) -> Example[npt.NDArray[Any], tuple[()]]: ...
 @overload
 def get_example(name: Literal['gpr_path'], *, download: bool = ...) -> Example[pv.PolyData, tuple[()]]: ...
 @overload

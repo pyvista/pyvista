@@ -34,7 +34,7 @@ _GENERATED_END = '# --- end generated overloads ---\n'
 # the `load=False` half of a function's return annotation, which is not a dataset
 _PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
 # every other dataset type name is an attribute of `pv`
-_DATASET_TYPE_NAMES = {'ndarray': 'pv.NumpyArray[Any]'}
+_DATASET_TYPE_NAMES = {'ndarray': 'npt.NDArray[Any]'}
 _REGENERATE = (
     'Regenerate the generated block with\n'
     '  pytest tests/examples/test_get_example.py -k overloads_current '

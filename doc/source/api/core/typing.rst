@@ -3,7 +3,7 @@ Typing
 
 .. module:: pyvista.typing
 
-Type aliases and type variable for annotating code that uses PyVista.
+Type aliases for annotating code that uses PyVista.
 
 .. versionadded:: 0.50
    The ``pyvista.typing`` module.
@@ -12,25 +12,14 @@ Type aliases and type variable for annotating code that uses PyVista.
    Accessing these aliases from ``pyvista``, for example ``pyvista.VectorLike``,
    is deprecated. Use ``pyvista.typing.VectorLike`` instead.
 
+.. deprecated:: 0.50
+   ``pyvista.Number``, ``pyvista.NumberType`` and ``pyvista.NumpyArray`` are
+   deprecated. Use ``float``, a :class:`~typing.TypeVar` and
+   :data:`numpy.typing.NDArray` instead.
+
 
 Numeric Array-Like Types
 ------------------------
-
-pyvista.typing.NumberType
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Type variable for numeric data types.
-
-.. currentmodule:: pyvista.typing
-
-.. autotypevar:: NumberType
-
-pyvista.typing.Number
-~~~~~~~~~~~~~~~~~~~~~
-Integer or float value.
-
-.. currentmodule:: pyvista.typing
-
-.. autodata:: Number
 
 pyvista.typing.ArrayLike
 ~~~~~~~~~~~~~~~~~~~~~~~~

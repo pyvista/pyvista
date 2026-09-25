@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ._typing_core import BoundsTuple as BoundsTuple
-from ._typing_core import NumpyArray as NumpyArray
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
@@ -63,6 +62,7 @@ _TYPE_ALIASES = (
     'MatrixLike',
     'Number',
     'NumberType',
+    'NumpyArray',
     'RotationLike',
     'TransformLike',
     'VectorLike',
@@ -72,7 +72,7 @@ _TYPE_ALIASES = (
 if not TYPE_CHECKING:  # pragma: no branch
 
     def __getattr__(name: str) -> object:
-        """Forward the type aliases that moved to ``pyvista.typing`` with a deprecation warning."""
+        """Forward the deprecated type aliases with a warning."""
         if name in _TYPE_ALIASES:
             from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
 
