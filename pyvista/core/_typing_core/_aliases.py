@@ -20,10 +20,10 @@ if TYPE_CHECKING:
     import meshio
     import trimesh
 
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataobject import DataObject
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.partitioned import PartitionedDataSet
+    from pyvista import DataObject
+    from pyvista import DataSet
+    from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
 
 if TYPE_CHECKING or os.environ.get(
     '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
