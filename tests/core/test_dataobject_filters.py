@@ -2306,6 +2306,17 @@ def test_sample_mask_is_uint8(partly_covered):
     assert np.array_equal(mask, [1, 1, 0])
 
 
+def test_sample_mask_does_not_take_the_scalars(partly_covered):
+    probe, target = partly_covered
+    target.point_data.set_array(target['data'], 'other')
+    del target.point_data['data']
+    assert target.active_scalars_name is None
+
+    result = probe.sample(target)
+    assert 'mask' in result.point_data
+    assert result.active_scalars_name is None
+
+
 def test_sample_mask_name(partly_covered):
     probe, target = partly_covered
     result = probe.sample(target, mask_name='valid')
