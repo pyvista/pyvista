@@ -6201,6 +6201,7 @@ class DataObjectFilters:
         radius: float | None = None,
         sharpness: float | None = None,
         progress_bar: bool = False,
+        mask_name: str = _DEFAULT_MASK_NAME,
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
 
@@ -6258,10 +6259,20 @@ class DataObjectFilters:
         A flat input is the exception: its voxels are centered on it, so ``'sample'``
         reaches every one of them and reproduces the values exactly.
 
+        A binary ``'mask'`` array comes back alongside the resampled arrays, holding
+        ``1`` at the voxels the input reached. It is a voxelization of the input's
+        geometry, so an input carrying nothing to resample still yields a usable image.
+        Use ``mask_name`` to name it something else; the filter owns that name, so an
+        input array called ``'mask'`` is replaced by it.
+
+        Whatever VTK resamples onto the output's scalars stays active. The binary array
+        becomes them when nothing else does, since an image with no scalars plots as its
+        bounding box.
+
         .. versionadded:: 0.50
 
         .. note::
-            Voxels with no value are flagged with a ``'mask'`` point data array. Set
+            Voxels with no value hold ``0`` in the ``'mask'`` array. Set
             ``mark_blank=True`` to also hide them with a ``'vtkGhostType'`` array, so
             volume rendering the output shows those regions as transparent.
 
@@ -6352,10 +6363,11 @@ class DataObjectFilters:
 
         null_value : float, optional
             Value given to the voxels which no value could be resampled for. Every
-            array of the output takes it, and zero is used by default. Both methods
-            accept it, though only ``method='interpolate'`` has it natively; under
+            resampled array takes it, and zero is used by default. Both methods accept
+            it, though only ``method='interpolate'`` has it natively; under
             ``method='sample'`` this filter fills the voxels itself, and the value must
-            fit the data type of the arrays it fills.
+            fit the data type of the arrays it fills. The ``'mask'`` array records which
+            voxels those are, rather than holding resampled values, so it is unaffected.
 
         mark_blank : bool, default: False
             Hide the voxels which no value could be resampled for, by flagging them in a
@@ -6394,11 +6406,16 @@ class DataObjectFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        mask_name : str, default: 'mask'
+            Name of the binary point array marking which voxels the input reached. Any
+            array of that name on the input is replaced by it.
+
         Returns
         -------
         ImageData
-            Uniform grid with the input's arrays sampled onto its points. The voxels are
-            points, not :attr:`~pyvista.CellType.VOXEL` cells;
+            Uniform grid with the input's arrays sampled onto its points, plus the
+            binary mask array. The voxels are points, not
+            :attr:`~pyvista.CellType.VOXEL` cells;
             :meth:`~pyvista.ImageDataFilters.points_to_cells` converts them and carries
             the blanking over. See :ref:`image_representations_example` for the
             difference.
@@ -6418,10 +6435,11 @@ class DataObjectFilters:
             :class:`~pyvista.ImageData`.
 
         pyvista.DataSetFilters.voxelize_binary_mask
-            Voxelize the inside of a closed surface as a mask. Operates on a surface's
-            geometry and generates a new array instead of resampling existing ones. It
-            places its voxels identically to this filter, and keeps essentially the same
-            voxels that ``method='sample'`` keeps for the solid a surface encloses.
+            Voxelize the inside of a closed surface as a mask, with the labels for its
+            inside and outside as options. It labels the surface's interior, whereas this
+            filter's ``'mask'`` marks the voxels its resampling reached. It places its
+            voxels identically to this filter, and keeps essentially the same voxels that
+            ``method='sample'`` keeps for the solid a surface encloses.
 
         pyvista.create_grid
             Create a uniform grid surrounding a dataset. Its points lie on the dataset's
@@ -6452,12 +6470,22 @@ class DataObjectFilters:
         >>> solid_sphere.resample_to_image(spacing=0.05).dimensions
         (20, 20, 20)
 
+        Resample a mesh with no scalars of its own. Its geometry is voxelized, and the
+        mask is the output's scalars.
+
+        >>> voxelized = pv.Sphere().resample_to_image(spacing=0.05, mark_blank=True)
+        >>> voxelized.active_scalars_name
+        'mask'
+
+        >>> voxelized.points_to_cells().plot(show_edges=True)
+
         Compare the three kinds of input the sphere can be given as: a solid, the
-        surface enclosing it, and its points alone.
+        surface enclosing it, and its points alone. The voxels are clipped in half, since
+        the three results are alike on the outside and differ inside.
 
         >>> def resample_as_voxels(mesh):
         ...     image = mesh.resample_to_image(spacing=0.05, mark_blank=True)
-        ...     return image.points_to_cells()
+        ...     return image.points_to_cells().clip()
         >>> surface = solid_sphere.extract_surface(algorithm=None)
         >>> pointset = solid_sphere.cast_to_pointset()
         >>> datasets = {
@@ -6535,9 +6563,10 @@ class DataObjectFilters:
                 categorical=False if categorical is None else categorical,
                 mark_blank=mark_blank,
                 progress_bar=progress_bar,
+                mask_name=mask_name,
             )
             if null_value is not None:
-                _fill_null_values(sampled, null_value)
+                _fill_null_values(sampled, null_value, mask_name)
             return sampled
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
             msg = (
@@ -6557,11 +6586,14 @@ class DataObjectFilters:
             source,
             radius=radius,
             sharpness=2.0 if sharpness is None else sharpness,
-            strategy='mask_points',
+            strategy='mask_points',  # The only strategy which produces the validity mask
             null_value=0.0 if null_value is None else null_value,
             progress_bar=progress_bar,
+            mask_name=mask_name,
         )
-        return _blank_invalid_points(interpolated) if mark_blank else interpolated
+        if mark_blank:
+            _blank_invalid_points(interpolated, mask_name)
+        return interpolated
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
@@ -7184,11 +7216,11 @@ def _check_n_points(n_points: int, max_n_points: int | None, *, requested: bool)
         raise ValueError(msg)
 
 
-def _fill_null_values(image: ImageData, null_value: float) -> None:
+def _fill_null_values(image: ImageData, null_value: float, mask_name: str) -> None:
     """Give every array one value at the points the valid-point mask marks as empty."""
-    invalid = image.point_data[_DEFAULT_MASK_NAME] == 0
+    invalid = image.point_data[mask_name] == 0
     for name, array in image.point_data.items():
-        if name not in (_DEFAULT_MASK_NAME, _GHOST_ARRAY):
+        if name not in (mask_name, _GHOST_ARRAY):
             _check_null_value_fits(null_value, name, array.dtype)
             array[invalid] = null_value
 
@@ -7210,9 +7242,9 @@ def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -
         raise ValueError(msg)
 
 
-def _blank_invalid_points(image: ImageData) -> ImageData:
+def _blank_invalid_points(image: ImageData, mask_name: str) -> ImageData:
     """Hide the points which the valid-point mask marks as empty."""
-    invalid = image.point_data[_DEFAULT_MASK_NAME] == 0
+    invalid = image.point_data[mask_name] == 0
     ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
     image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
     return image
