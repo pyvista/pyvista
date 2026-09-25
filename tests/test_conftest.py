@@ -769,6 +769,12 @@ def test_vtk_output_fails_the_test(
     report = RunResultsReport(results_parser.parse(results=results))
     assert report.error == ['test_leaks', 'test_other_message']
 
+    # A marked test reports its reason, and the unmarked one, having none, reports no
+    # clause at all rather than one trailing off after 'because'.
+    stdout = results.stdout.str()
+    assert 'expects VTK output because it logs another' in stdout
+    assert not re.search(r'expects VTK output because\s*$', stdout, flags=re.MULTILINE)
+
 
 def test_vtk_output_markers_need_a_reason(pytester: pytest.Pytester):
     tests = """

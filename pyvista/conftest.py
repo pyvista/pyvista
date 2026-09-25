@@ -73,8 +73,9 @@ def fail_on_vtk_output(request: pytest.FixtureRequest) -> Generator[None, None, 
     ]:
         logged = '\n'.join(str(event) for event in unexpected)
         msg = f'VTK logged {len(unexpected)} error(s) or warning(s):\n{logged}'
-        reasons = '; '.join(marker.kwargs['reason'] for marker in markers)
-        msg += f'\n\nThis test expects VTK output because {reasons}'
+        if markers:
+            reasons = '; '.join(marker.kwargs['reason'] for marker in markers)
+            msg += f'\n\nThis test expects VTK output because {reasons}'
         pytest.fail(msg)
 
 
