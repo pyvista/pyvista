@@ -2878,6 +2878,56 @@ def test_transform_imagedata(uniform, spacing):
     assert np.allclose(translated.center, uniform.origin)
 
 
+@pytest.mark.parametrize('grid', ['uniform', 'rectilinear'])
+def test_transform_grid_without_arrays_skips_filter(grid, monkeypatch, request):
+    def fail():  # pragma: no cover -- the filter is skipped, so it never runs
+        """Fail if the transform filter is used."""
+        msg = 'The transform filter is not needed without arrays to transform.'
+        raise AssertionError(msg)
+
+    mesh = request.getfixturevalue(grid)
+    mesh['scalars'] = np.arange(mesh.n_points, dtype=float)
+    transformation = pv.Transform().rotate_z(90).translate((1, 2, 3))
+    expected = mesh.cast_to_structured_grid().transform(transformation, inplace=False)
+
+    monkeypatch.setattr(_vtk, 'vtkTransformFilter', fail)
+    transformed = mesh.transform(transformation, inplace=False)
+
+    assert isinstance(transformed, type(mesh))
+    # A rectilinear grid orders its points along its own axes, so match them first
+    order, expected_order = _matching_orders(transformed.points, expected.points)
+    assert np.allclose(transformed.points[order], expected.points[expected_order])
+    assert np.array_equal(transformed['scalars'][order], expected['scalars'][expected_order])
+    assert transformed.active_scalars_name == mesh.active_scalars_name
+    assert transformed.point_data.keys() == mesh.point_data.keys()
+    assert transformed.cell_data.keys() == mesh.cell_data.keys()
+    assert transformed.field_data.keys() == mesh.field_data.keys()
+
+    in_place = mesh.copy()
+    in_place.transform(transformation, inplace=True)
+    assert np.allclose(in_place.points, transformed.points)
+    assert np.array_equal(in_place['scalars'], transformed['scalars'])
+
+    # The output holds its own arrays, not the input's
+    transformed['scalars'][0] += 1
+    assert transformed['scalars'][0] != mesh['scalars'][0]
+
+
+@pytest.mark.parametrize('grid', ['uniform', 'rectilinear'])
+@pytest.mark.parametrize('association', ['point_data', 'cell_data'])
+@pytest.mark.parametrize('attribute', ['active_vectors_name', 'active_normals_name'])
+def test_transform_grid_with_vectors_uses_filter(grid, association, attribute, request):
+    mesh = request.getfixturevalue(grid)
+    attributes = getattr(mesh, association)
+    size = mesh.n_points if association == 'point_data' else mesh.n_cells
+    attributes['vectors'] = np.tile([1.0, 0.0, 0.0], (size, 1))
+    setattr(attributes, attribute, 'vectors')
+
+    transformed = mesh.transform(pv.Transform().rotate_z(90), inplace=False)
+
+    assert np.allclose(getattr(transformed, association)['vectors'], [0.0, 1.0, 0.0])
+
+
 def test_transform_imagedata_raises_with_shear(uniform):
     shear = np.eye(4)
     shear[0, 1] = 0.1
