@@ -188,9 +188,9 @@ pyvista.typing.PlottableType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Object accepted by :func:`~pyvista.plot` or :meth:`~pyvista.Plotter.add_mesh`.
 
-Includes PyVista and VTK datasets and composite datasets, ``trimesh`` and ``meshio``
-meshes, NumPy arrays of points or of volume values, sequences of points, and the path of
-a mesh file.
+Includes PyVista and VTK datasets, multiblock and partitioned datasets, ``trimesh`` and
+``meshio`` meshes, NumPy arrays of points or of volume values, sequences of points,
+and the path of a mesh file.
 
 .. currentmodule:: pyvista.typing
 
