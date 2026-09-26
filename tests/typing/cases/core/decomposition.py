@@ -20,6 +20,11 @@ def float32_matrix() -> NDArray[np.float32]:
     return np.eye(4, dtype=np.float32)
 
 
+def float32_3x3() -> NDArray[np.float32]:
+    """Return a float32 3x3 matrix."""
+    return np.eye(3, dtype=np.float32)
+
+
 def int32_matrix() -> NDArray[np.int32]:
     """Return an int32 4x4 matrix."""
     return np.eye(4, dtype=np.int32)
@@ -47,5 +52,6 @@ assert_types(decomposition(pv.vtkmatrix_from_array(np.eye(4))), _Five64)
 
 # A float32 4x4 matrix stays float32 but a float32 3x3 one does not
 assert_types(decomposition(float32_matrix()), _Five)
+assert_types(decomposition(float32_3x3()), _Five)
 assert_types(decomposition(float32_nested()), _Five)
 assert_types(decomposition(a_mesh_array()), _Five)

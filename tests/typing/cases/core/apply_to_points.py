@@ -44,7 +44,7 @@ def mesh_points() -> pv.pyvista_ndarray:
     return pv.Sphere().points
 
 
-assert_types(pv.Transform().scale(2.0).apply_to_points(np.zeros((2, 3), dtype=np.float32)), NDArray[np.float64])
+assert_types(pv.Transform().scale(2.0).apply_to_points(float32_array()), NDArray[np.float64])
 assert_types(pv.Transform().scale(2.0).apply_to_points([(0.0, 0.0, 0.0)]), NDArray[np.float64])
 
 # Without a copy, a floating array comes back as itself

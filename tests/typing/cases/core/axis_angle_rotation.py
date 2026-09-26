@@ -8,6 +8,12 @@ from type_assert import assert_types
 
 from pyvista.core.utilities.transformations import axis_angle_rotation
 
+
+def float32_axis() -> NDArray[np.float32]:
+    """Return a float32 axis."""
+    return np.array([0, 0, 1], dtype=np.float32)
+
+
 assert_types(axis_angle_rotation((0, 0, 1), 30), NDArray[np.float64])
 assert_types(axis_angle_rotation((0.0, 0.0, 1.0), 0.5, point=(1.0, 0.0, 0.0), deg=False), NDArray[np.float64])
-assert_types(axis_angle_rotation(np.array([0, 0, 1], dtype=np.float32), 30), NDArray[np.float64])
+assert_types(axis_angle_rotation(float32_axis(), 30), NDArray[np.float64])
