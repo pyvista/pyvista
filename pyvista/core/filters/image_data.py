@@ -6,6 +6,7 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
+import itertools
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -72,6 +73,8 @@ _InterpolationOptions = Literal[
     'bspline9',
 ]
 _BorderModeOptions = Literal['clamp', 'wrap', 'mirror']
+_SlabModeOptions = Literal['max', 'min', 'mean']
+_SlabAxisOptions = Literal['x', 'y', 'z', 'i', 'j', 'k']
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
     'strict',
@@ -5119,6 +5122,10 @@ class ImageDataFilters(DataSetFilters):
         resample
             Change an image's dimensions and spacing in its own frame.
 
+        slab_projection
+            Combine a thick slab of the image at each point of a reference image, for
+            example as a maximum intensity projection.
+
         :meth:`~pyvista.DataObjectFilters.transform`
             Move an image without resampling it, by changing its
             :attr:`~pyvista.ImageData.direction_matrix` and
@@ -6238,6 +6245,284 @@ class ImageDataFilters(DataSetFilters):
             output.offset = self.offset
         return output
 
+    def slab_projection(  # type: ignore[misc]
+        self: ImageData,
+        reference_image: ImageData | None = None,
+        thickness: float | None = None,
+        *,
+        axis: _SlabAxisOptions | None = None,
+        mode: _SlabModeOptions = 'max',
+        interpolation: _InterpolationOptions = 'nearest',
+        background_value: float = 0.0,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Project a thick slab of the image onto a reference image.
+
+        Each point of the ``reference_image`` is given one value computed from the image
+        along a line segment through that point. The segment is ``thickness`` long,
+        centered on the point, and normal to the reference. ``mode`` sets how the samples
+        along it are combined. ``'max'`` gives a maximum intensity projection (MIP), which
+        shows bright structures, such as contrast-filled vessels, anywhere within the
+        slab rather than only where they cross the plane.
+
+        The slab runs along one axis of the reference, set by ``axis``. By default it is
+        the reference's last axis with a dimension of 1, so a plane of any orientation
+        collapses the image across itself. A reference with no such axis, a volume, is
+        projected along its ``k`` axis with a separate slab centered on each of its
+        slices, which gives a sliding slab.
+
+        Without a ``reference_image``, the image is projected onto a plane through its
+        center, normal to ``axis``.
+
+        The output has the geometry of the reference. Its :attr:`~pyvista.Grid.dimensions`,
+        :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
+        :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
+        all match the reference.
+
+        This filter may be used to project either point or cell data. Cell data is
+        projected at the cell centers of the reference image, and the normal is then
+        taken from its cells rather than its points, so a single layer of cells is a
+        plane.
+
+        .. note::
+
+            Samples more than half a voxel outside the image are ignored, so a slab
+            which extends past the image is combined from the samples inside it only.
+            Reference points whose slab lies entirely outside the image are filled with
+            ``background_value``.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        reference_image : ImageData, optional
+            Image defining the points to project onto. Its geometry is matched exactly by
+            the output. By default, the image is projected onto a plane through its
+            center, normal to ``axis``. For an index axis, or a world axis parallel to an
+            axis of the image, the plane is the image's middle slice along that axis.
+            Otherwise, it is an axis-aligned plane which covers the image's bounds, with
+            the image's smallest spacing.
+
+        thickness : float, optional
+            Thickness of the slab in world units. The image is sampled along the slab at
+            its own spacing or finer, so no voxel is skipped. A thickness of ``0`` samples
+            a single slice. By default, the slab spans the whole image from every point
+            of the reference, and a greater thickness gives the same result.
+
+        axis : 'x' | 'y' | 'z' | 'i' | 'j' | 'k', optional
+            Axis the slab runs along. ``'x'``, ``'y'``, and ``'z'`` are world axes, and
+            ``'i'``, ``'j'``, and ``'k'`` are the index axes of the reference, or of the
+            image when no reference is given. A world axis must be parallel to an axis of
+            the reference. By default, the reference's last axis with a dimension of 1 is
+            used, or ``'k'`` if it has none. Without a reference, the default is ``'k'``.
+
+        mode : 'max' | 'min' | 'mean', default: 'max'
+            How the samples along the slab are combined.
+
+            - ``'max'`` - the maximum value, a maximum intensity projection.
+            - ``'min'`` - the minimum value, a minimum intensity projection.
+            - ``'mean'`` - the mean value, which resembles a thick slice.
+
+            Each component of multi-component scalars is combined separately.
+
+        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
+            Interpolation mode to use, ``'nearest'`` by default. ``'nearest'`` takes the
+            value of the closest voxel without modifying it, so a maximum or minimum
+            projection gives values present in the image. See :meth:`resample` for a
+            description of the other modes.
+
+        background_value : float, default: 0.0
+            Value to use for reference points whose slab lies outside the image.
+
+        scalars : str, optional
+            Name of scalars to project. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When scalars is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        inplace : bool, default: False
+            If ``True``, replace the image with the projection in-place. By default, a
+            new :class:`~pyvista.ImageData` instance is returned.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Projected image.
+
+        See Also
+        --------
+        reslice
+            Sample the image at each point of a reference image, which matches a slab
+            with a ``thickness`` of ``0``.
+
+        slice_index
+            Extract an axis-aligned slice, which can serve as the reference.
+
+        resample
+            Change the sampling density of a projection, with optional anti-aliasing.
+
+        :meth:`~pyvista.Plotter.add_volume`
+            Render a maximum intensity projection interactively with
+            ``blending='maximum'``.
+
+        Examples
+        --------
+        Create a volume which is empty except for a bright block between ``z = 8`` and
+        ``z = 12``.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> volume = pv.ImageData(dimensions=(20, 20, 20))
+        >>> volume['values'] = np.where(
+        ...     (volume.points[:, 2] >= 8) & (volume.points[:, 2] <= 12), 100.0, 0.0
+        ... )
+
+        Use the slice at ``z = 5`` as the reference. The block does not cross it.
+
+        >>> plane = volume.slice_index(k=5)
+        >>> float(plane['values'].max())
+        0.0
+
+        A slab ten units thick around the plane reaches the block.
+
+        >>> mip = volume.slab_projection(plane, 10)
+        >>> float(mip['values'].max())
+        100.0
+
+        The slab is sampled at ``z = 0, 1, ..., 10``. Three of those eleven samples are
+        in the block, so their mean is less than the maximum.
+
+        >>> mean = volume.slab_projection(plane, 10, mode='mean')
+        >>> round(float(mean['values'].max()), 2)
+        27.27
+
+        The output has the reference's geometry.
+
+        >>> mip.dimensions == plane.dimensions and mip.offset == plane.offset
+        True
+
+        Without a reference, the image is projected across its middle slice along
+        ``axis``. The slab spans the whole image, so every point sees the block.
+
+        >>> mip = volume.slab_projection(axis='x')
+        >>> mip.dimensions
+        (1, 20, 20)
+        >>> float(mip['values'].min()), float(mip['values'].max())
+        (0.0, 100.0)
+
+        .. pyvista-plot::
+            :force_static:
+
+            Compare a single slice of a magnetic resonance angiogram of the carotid
+            arteries with a maximum intensity projection through the whole volume.
+
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> carotid = examples.download_carotid()
+            >>> plane = carotid.slice_index(k=22)
+            >>> mip = carotid.slab_projection(axis='z')
+
+            The slice, on the left, shows only where the arteries cross it, while the
+            projection, on the right, shows their full course.
+
+            >>> pl = pv.Plotter(shape=(1, 2))
+            >>> _ = pl.add_mesh(plane, cmap='gray', show_scalar_bar=False)
+            >>> pl.view_xy()
+            >>> pl.camera.tight()
+            >>> pl.subplot(0, 1)
+            >>> _ = pl.add_mesh(mip, cmap='gray', show_scalar_bar=False)
+            >>> pl.view_xy()
+            >>> pl.camera.tight()
+            >>> pl.show()
+
+        """
+        if axis is not None:
+            _validation.check_contains(get_args(_SlabAxisOptions), must_contain=axis, name='axis')
+        if reference_image is None:
+            reference_image = _slab_reference(self, 'k' if axis is None else axis)
+        else:
+            _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
+        if thickness is not None:
+            thickness = _validation.validate_number(
+                thickness, must_be_finite=True, must_be_in_range=[0, np.inf], name='thickness'
+            )
+        _validation.check_contains(get_args(_SlabModeOptions), must_contain=mode, name='mode')
+        _validation.check_contains(
+            get_args(_InterpolationOptions), must_contain=interpolation, name='interpolation'
+        )
+        background_value = _validation.validate_number(
+            background_value, must_be_finite=True, name='background_value'
+        )
+
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = self.get_array_association(scalars, preference=preference)
+
+        # The filter operates on point scalars, so project cell scalars at the cell centers
+        processing_cell_scalars = field == FieldAssociation.CELL
+        if processing_cell_scalars:
+            array = self.cell_data[name]
+            input_image = self.cells_to_points(scalars=name, copy=False)
+            sample_grid = pv.ImageData()
+            sample_grid.copy_structure(reference_image)
+            sample_grid = sample_grid.cells_to_points(copy=False)
+        else:
+            array = self.point_data[name]
+            # Pass only the requested scalars, the filter copies any others through
+            input_image = pv.ImageData()
+            input_image.copy_structure(self)
+            sample_grid = reference_image
+
+        # 64-bit integers are not supported by the VTK image filters, so cast to float
+        input_dtype = array.dtype
+        is_int64 = input_dtype.kind in 'iu' and input_dtype.itemsize == 8
+        input_image.point_data[name] = array.astype(float) if is_int64 else array
+
+        interpolator = _image_interpolator(interpolation, 'clamp')
+        if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
+            input_image = _bspline_coefficients(
+                input_image,
+                scalars=name,
+                degree=interpolator.GetSplineDegree(),
+                border_mode='clamp',
+                progress_bar=progress_bar,
+            )
+
+        values = _project_slab(
+            input_image,
+            sample_grid=sample_grid,
+            axis=_slab_axis(sample_grid, axis),
+            thickness=thickness,
+            mode=mode,
+            interpolator=interpolator,
+            interpolation=interpolation,
+            background_value=background_value,
+            progress_bar=progress_bar,
+        )
+        if values.dtype != input_dtype:
+            values = _round_to_dtype(values, input_dtype)
+
+        output_image = pv.ImageData()
+        output_image.copy_structure(reference_image)
+        output_data = (
+            output_image.cell_data if processing_cell_scalars else output_image.point_data
+        )
+        output_data[name] = values
+
+        if inplace:
+            self.copy_from(output_image)
+            return self
+        return output_image
+
 
 def _remap_ghost_array(  # numpydoc ignore=RT01
     array: NumpyArray[Any], *, points_to_cells: bool
@@ -6435,6 +6720,135 @@ def _reslice_image(
         modes[interpolation]()
     _update_alg(alg, progress_bar=progress_bar, message='Reslicing image.')
     return _get_output(alg)
+
+
+def _project_slab(
+    image: ImageData,
+    *,
+    sample_grid: ImageData,
+    axis: int,
+    thickness: float | None,
+    mode: _SlabModeOptions,
+    interpolator: _vtk.vtkAbstractImageInterpolator,
+    interpolation: _InterpolationOptions,
+    background_value: float,
+    progress_bar: bool,
+) -> NumpyArray[Any]:
+    """Return the slab projection of an image at the points of a sample grid."""
+    # The slab runs along the output's k axis, so move the slab axis there
+    order = [*(i for i in range(3) if i != axis), axis]
+    dimensions = np.array(sample_grid.dimensions)[order]
+    spacing = np.array(sample_grid.spacing)[order]
+    direction = sample_grid.direction_matrix[:, order]
+    normal = direction[:, 2]
+    first_point = (sample_grid.index_to_physical_matrix @ [*sample_grid.offset, 1])[:3]
+
+    # Distance along the normal which moves by at most one voxel along any image axis
+    image_spacing = np.array(image.spacing)
+    index_step = np.divide(
+        image.direction_matrix.T @ normal, image_spacing, out=np.zeros(3), where=image_spacing > 0
+    )
+    largest_index_step = np.abs(index_step).max()
+    step = 1.0 / largest_index_step if largest_index_step > 0 else np.inf
+
+    # Thickness which reaches every corner of the image from every slab center
+    corners = np.array(list(itertools.product(*np.reshape(image.extent, (3, 2)))))
+    corners = (image.index_to_physical_matrix @ np.c_[corners, np.ones(8)].T)[:3].T
+    distance = (corners - first_point) @ normal
+    last_slice = (dimensions[2] - 1) * spacing[2]
+    full_thickness = 2 * max(np.abs(distance).max(), np.abs(distance - last_slice).max())
+    thickness = full_thickness if thickness is None else min(thickness, full_thickness)
+
+    # An odd count puts one sample on the reference itself
+    n_samples = 2 * int(np.ceil(thickness / (2 * step))) + 1
+    # vtkImageReslice misplaces the samples of a slab spaced exactly one slice apart
+    if dimensions[2] > 1 and n_samples > 1 and thickness / (n_samples - 1) / spacing[2] == 1:
+        n_samples += 2
+    sample_spacing = thickness / (n_samples - 1) if n_samples > 1 else 1.0
+    if dimensions[2] == 1:
+        # The spacing across a single slice is free, so keep the samples half of it apart
+        spacing[2] = 2 * sample_spacing
+
+    alg = _vtk.vtkImageReslice()
+    alg.SetInputData(image)
+    alg.SetInterpolator(interpolator)
+    # The filter overrides the interpolation mode of the basic interpolator it is given
+    modes = {
+        'nearest': alg.SetInterpolationModeToNearestNeighbor,
+        'linear': alg.SetInterpolationModeToLinear,
+        'cubic': alg.SetInterpolationModeToCubic,
+    }
+    if interpolation in modes:
+        modes[interpolation]()
+    alg.SetOutputOrigin(first_point.tolist())
+    alg.SetOutputSpacing(spacing.tolist())
+    alg.SetOutputDirection(direction.ravel().tolist())
+    alg.SetOutputExtent(0, dimensions[0] - 1, 0, dimensions[1] - 1, 0, dimensions[2] - 1)
+    alg.SetSlabNumberOfSlices(n_samples)
+    alg.SetSlabSliceSpacingFraction(sample_spacing / spacing[2])
+    slab_modes = {
+        'max': alg.SetSlabModeToMax,
+        'min': alg.SetSlabModeToMin,
+        'mean': alg.SetSlabModeToMean,
+    }
+    slab_modes[mode]()
+    alg.SetBackgroundLevel(background_value)
+    _update_alg(alg, progress_bar=progress_bar, message='Projecting slab.')
+    values = cast('pyvista_ndarray', _get_output(alg).active_scalars)
+
+    # Restore the point order of the sample grid
+    grid = values.reshape(*dimensions[::-1], -1)
+    grid = grid.transpose(*(2 - order.index(2 - i) for i in range(3)), 3)
+    return grid.reshape(values.shape)
+
+
+def _slab_axis(image: ImageData, axis: _SlabAxisOptions | None) -> int:
+    """Return the index axis of an image which a slab runs along."""
+    if axis is None:
+        dimensions = np.array(image.dimensions)
+        flat_axes = np.flatnonzero(dimensions == 1)
+        return 2 if dimensions[2] == 1 or flat_axes.size == 0 else int(flat_axes[-1])
+    if axis in 'ijk':
+        return 'ijk'.index(axis)
+    index = _parallel_index_axis(image, 'xyz'.index(axis))
+    if index is None:
+        msg = f"Axis '{axis}' is not parallel to an axis of the reference image."
+        raise ValueError(msg)
+    return index
+
+
+def _parallel_index_axis(image: ImageData, world_axis: int) -> int | None:
+    """Return the index axis of an image parallel to a world axis, if there is one."""
+    row = np.abs(image.direction_matrix[world_axis])
+    index = int(row.argmax())
+    return index if np.isclose(row[index], 1.0) else None
+
+
+def _slab_reference(image: ImageData, axis: _SlabAxisOptions) -> ImageData:
+    """Return the plane through the center of an image normal to an axis."""
+    reference = pv.ImageData()
+    index = 'ijk'.index(axis) if axis in 'ijk' else _parallel_index_axis(image, 'xyz'.index(axis))
+    if index is not None:
+        reference.copy_structure(image)
+        extent = list(image.extent)
+        middle = (extent[2 * index] + extent[2 * index + 1]) // 2
+        extent[2 * index : 2 * index + 2] = [middle, middle]
+        reference.extent = extent
+        return reference
+
+    # An oblique world axis gets an axis-aligned plane over the image's bounds
+    world_axis = 'xyz'.index(axis)
+    extended = [s for s, n in zip(image.spacing, image.dimensions, strict=True) if n > 1 and s > 0]
+    spacing = min(extended, default=1.0)
+    bounds = np.reshape(image.bounds, (3, 2))
+    dimensions = np.round((bounds[:, 1] - bounds[:, 0]) / spacing).astype(int) + 1
+    dimensions[world_axis] = 1
+    origin = bounds[:, 0].copy()
+    origin[world_axis] = bounds[world_axis].mean()
+    reference.dimensions = dimensions
+    reference.spacing = (spacing, spacing, spacing)
+    reference.origin = origin
+    return reference
 
 
 def _round_to_dtype(array: NumpyArray[float], dtype: np.dtype[Any]) -> NumpyArray[Any]:
