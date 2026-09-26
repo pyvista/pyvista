@@ -15,7 +15,6 @@ from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
 SKIP_RUNTIME = {
-    'pointset().compute_boundary_mesh_quality()': 'a `PointSet` has no cells, so the call raises',
     'poly().compute_boundary_mesh_quality()': 'a `PolyData` surface has no 3D cells, so the call raises',
 }
 
@@ -27,4 +26,4 @@ assert_types(structured().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(unstructured().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(explicit_structured().compute_boundary_mesh_quality(), pv.PolyData)
 
-assert_types(pointset().compute_boundary_mesh_quality(), Never)  # pragma: no cover
+assert_types(pointset().compute_boundary_mesh_quality(), Never)

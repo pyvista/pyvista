@@ -16,11 +16,6 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'pointset().ptc()': 'a `PointSet` has no cells, so the call raises',
-}
-
-
 # Every dataset gives back its own class
 assert_types(poly().ptc(), pv.PolyData)
 assert_types(image().ptc(), pv.ImageData)
@@ -33,4 +28,4 @@ assert_types(multiblock().ptc(), pv.MultiBlock)
 # A declared block type survives the filter
 assert_types(multiblock_poly().ptc(), pv.MultiBlock[pv.PolyData])
 
-assert_types(pointset().ptc(), Never)  # pragma: no cover
+assert_types(pointset().ptc(), Never)

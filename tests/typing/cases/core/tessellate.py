@@ -16,7 +16,6 @@ from tests.typing.meshes import unstructured
 
 SKIP_RUNTIME = {
     'poly().tessellate()': 'the filter rejects a PolyData',
-    'pointset().tessellate()': 'a `PointSet` has no cells, so the call raises',
 }
 
 
@@ -27,4 +26,4 @@ assert_types(structured().tessellate(), pv.UnstructuredGrid)
 assert_types(unstructured().tessellate(), pv.UnstructuredGrid)
 assert_types(explicit_structured().tessellate(), pv.UnstructuredGrid)
 
-assert_types(pointset().tessellate(), Never)  # pragma: no cover
+assert_types(pointset().tessellate(), Never)
