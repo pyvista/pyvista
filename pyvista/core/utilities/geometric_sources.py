@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Real
+    from pyvista_validation.typing import Real as _Real
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
@@ -3976,7 +3976,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
         """
         valid_distance = _validation.validate_array3(
-            distance,  # type: ignore[arg-type]
+            cast('VectorLike[float] | MatrixLike[float]', distance),
             broadcast=True,
             dtype_out=float,
             to_tuple=True,

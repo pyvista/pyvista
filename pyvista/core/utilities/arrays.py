@@ -30,7 +30,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 if TYPE_CHECKING:
     from numpy.typing import DTypeLike
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Scalar
+    from pyvista_validation.typing import Scalar as _Scalar
     from typing_extensions import Self
 
     from pyvista import DataObject

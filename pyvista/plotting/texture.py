@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Scalar
+    from pyvista_validation.typing import Scalar as _Scalar
 
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import FieldLiteral

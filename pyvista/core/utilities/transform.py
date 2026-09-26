@@ -29,8 +29,8 @@ from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Scalar
     from pyvista_validation._typing._array_like import _ScalarT
+    from pyvista_validation.typing import Scalar as _Scalar
     from scipy.spatial.transform import Rotation
 
     from pyvista import DataSet

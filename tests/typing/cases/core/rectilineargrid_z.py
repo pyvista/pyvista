@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
-from pyvista_validation._typing._array_like import _Real
+from pyvista_validation.typing import Real as _Real
 from type_assert import assert_types
 
 from tests.typing.meshes import rectilinear

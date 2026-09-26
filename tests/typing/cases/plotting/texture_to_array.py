@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from pyvista_validation._typing._array_like import _Scalar
+from pyvista_validation.typing import Scalar as _Scalar
 from type_assert import assert_types
 
 import pyvista as pv

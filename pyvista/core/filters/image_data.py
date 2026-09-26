@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Real
+    from pyvista_validation.typing import Real as _Real
 
     from pyvista import ImageData
     from pyvista import MultiBlock
