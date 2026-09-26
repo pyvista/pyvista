@@ -14,11 +14,6 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    "pointset().extract_surface(algorithm='dataset_surface')": ('a `PointSet` has no cells, so the call raises'),
-}
-
-
 # Every dataset with cells yields a surface
 assert_types(poly().extract_surface(algorithm='dataset_surface'), pv.PolyData)
 assert_types(image().extract_surface(algorithm='dataset_surface'), pv.PolyData)
@@ -27,4 +22,4 @@ assert_types(structured().extract_surface(algorithm='dataset_surface'), pv.PolyD
 assert_types(unstructured().extract_surface(algorithm='dataset_surface'), pv.PolyData)
 assert_types(explicit_structured().extract_surface(algorithm='dataset_surface'), pv.PolyData)
 
-assert_types(pointset().extract_surface(algorithm='dataset_surface'), Never)  # pragma: no cover
+assert_types(pointset().extract_surface(algorithm='dataset_surface'), Never)

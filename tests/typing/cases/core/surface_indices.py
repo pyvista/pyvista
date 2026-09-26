@@ -15,11 +15,6 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'pointset().surface_indices()': 'a `PointSet` has no cells, so the call raises',
-}
-
-
 assert_types(poly().surface_indices(), NumpyArray[np.integer])
 assert_types(image().surface_indices(), NumpyArray[np.integer])
 assert_types(rectilinear().surface_indices(), NumpyArray[np.integer])
@@ -27,4 +22,4 @@ assert_types(structured().surface_indices(), NumpyArray[np.integer])
 assert_types(unstructured().surface_indices(), NumpyArray[np.integer])
 assert_types(explicit_structured().surface_indices(), NumpyArray[np.integer])
 
-assert_types(pointset().surface_indices(), Never)  # pragma: no cover
+assert_types(pointset().surface_indices(), Never)

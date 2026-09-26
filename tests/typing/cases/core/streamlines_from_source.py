@@ -15,10 +15,6 @@ from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 from tests.typing.meshes import with_arrays
 
-SKIP_RUNTIME = {
-    'pointset().streamlines_from_source()': 'a `PointSet` has no cells, so the call raises',
-}
-
 assert_types(with_arrays(poly()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
 assert_types(with_arrays(image()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
 assert_types(with_arrays(rectilinear()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
@@ -26,4 +22,4 @@ assert_types(with_arrays(structured()).streamlines_from_source(pv.PolyData([[0.1
 assert_types(with_arrays(unstructured()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
 assert_types(with_arrays(explicit_structured()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
 
-assert_types(pointset().streamlines_from_source(), Never)  # pragma: no cover
+assert_types(pointset().streamlines_from_source(), Never)

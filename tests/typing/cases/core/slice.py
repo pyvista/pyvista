@@ -14,11 +14,6 @@ from tests.typing.meshes import multiblock_pointset
 from tests.typing.meshes import multiblock_poly
 from tests.typing.meshes import poly
 
-SKIP_RUNTIME = {
-    'multiblock_pointset().slice()': 'a `PointSet` has no cells, so the call raises',
-}
-
-
 # Slicing reduces any dataset to a surface, and a composite stays a composite
 assert_types(poly().slice(), pv.PolyData)
 assert_types(image().slice(), pv.PolyData)
@@ -32,4 +27,4 @@ assert_types(multiblock_image().slice(), pv.MultiBlock[pv.PolyData])
 assert_types(multiblock_optional_poly().slice(), pv.MultiBlock[pv.PolyData | None])
 
 # A composite of point clouds cannot be reduced to a surface
-assert_types(multiblock_pointset().slice(), Never)  # pragma: no cover
+assert_types(multiblock_pointset().slice(), Never)
