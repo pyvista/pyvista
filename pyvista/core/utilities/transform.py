@@ -12,7 +12,6 @@ from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
-from pyvista_validation.check import _is_floating
 
 import pyvista as pv
 from pyvista import _vtk
@@ -1864,7 +1863,11 @@ class Transform(
 
         # Validate array - make sure we have floats
         valid = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
-        array = valid if _is_floating(valid) else valid.astype(float)
+        array = (
+            cast('NDArray[np.floating]', valid)
+            if np.issubdtype(valid.dtype, np.floating)
+            else valid.astype(float)
+        )
 
         # Transform a 1D array
         out: NDArray[np.floating] | None

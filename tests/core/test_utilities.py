@@ -2190,6 +2190,9 @@ class CasesTransformApply:
     def case_array2d_float(self):
         return lambda: np.array([VECTOR], dtype=float), True, np.ndarray, float
 
+    def case_array2d_longdouble(self):
+        return lambda: np.array([VECTOR], dtype=np.longdouble), True, np.ndarray, np.longdouble
+
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
         return lambda: pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
