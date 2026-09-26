@@ -20,6 +20,11 @@ Type aliases for annotating code that uses PyVista.
 
 Numeric Array-Like Types
 ------------------------
+:data:`ArrayLike`, :data:`MatrixLike`, and :data:`VectorLike` accept boolean, integer, and
+floating NumPy arrays, and sequences of Python numbers. The parameter, as in
+``VectorLike[int]``, types the items of a sequence only: an array of any of those types is
+accepted whatever the parameter. Complex, string, and object arrays are not included;
+annotate an input that accepts them as ``NDArray[Any] | Sequence[Any]``.
 
 pyvista.typing.ArrayLike
 ~~~~~~~~~~~~~~~~~~~~~~~~
