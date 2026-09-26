@@ -2309,7 +2309,7 @@ class DatasetCard:
 
         # Assemble rst parts into main blocks used by the card
         header_block = self._create_header_block(index_name, header_name, module_badge)
-        search_text_block = self._create_search_text_block(header_name, func_name, func_doc)
+        search_text_block = self._create_search_text_block(header_name, func_name)
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
         dataset_props_block = self._create_dataset_props_block(
@@ -2557,9 +2557,9 @@ class DatasetCard:
         )
 
     @classmethod
-    def _create_search_text_block(cls, header_name, func_name, func_doc):
+    def _create_search_text_block(cls, header_name, func_name):
         """Generate the hidden search-text span used by the gallery's search box."""
-        search_text = ' '.join([header_name, func_name, func_doc or '']).lower()
+        search_text = f'{header_name} {func_name}'.lower()
         return cls._format_and_indent_from_template(
             search_text,
             template=cls.search_text_template,
