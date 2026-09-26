@@ -24,6 +24,11 @@ def float64_values() -> NDArray[np.float64]:
     return np.arange(4, dtype=np.float64)
 
 
+def int64_values() -> NDArray[np.int64]:
+    """Return int64 values."""
+    return np.arange(4, dtype=np.int64)
+
+
 def int32_values() -> NDArray[np.int32]:
     """Return int32 values."""
     return np.arange(4, dtype=np.int32)
@@ -34,7 +39,7 @@ def floating_values() -> NDArray[np.floating]:
     return np.arange(4, dtype=np.float64)
 
 
-assert_types(normalize(np.arange(4)), NDArray[np.float64])
+assert_types(normalize(int64_values()), NDArray[np.float64])
 assert_types(normalize(float16_values()), NDArray[np.float16])
 assert_types(normalize(float32_values(), minimum=0.0, maximum=3.0), NDArray[np.float32])
 assert_types(normalize(float64_values()), NDArray[np.float64])
