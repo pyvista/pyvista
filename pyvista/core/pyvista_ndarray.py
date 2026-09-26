@@ -38,7 +38,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
 
     Parameters
     ----------
-    array : array_like or :vtk:`vtkAbstractArray`
+    array : ArrayLike | numpy.ndarray | :vtk:`vtkAbstractArray`
         Array like.
 
     dataset : DataSet

@@ -48,10 +48,10 @@ def plot_arrows(
 
     Parameters
     ----------
-    cent : array_like[float]
+    cent : VectorLike[float] | MatrixLike[float]
         Accepts a single 3d point or array of 3d points.
 
-    direction : array_like[float]
+    direction : VectorLike[float] | MatrixLike[float]
         Accepts a single 3d point or array of 3d vectors.
         Must contain the same number of items as ``cent``.
 

@@ -640,7 +640,7 @@ class ImageDataFilters(DataSetFilters):
             that define a box relative to the input size. The input is cropped such that it fully
             fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-        mask : str | ImageData | array_like[float] | bool, optional
+        mask : str | ImageData | VectorLike[float] | MatrixLike[float] | bool, optional
             Scalar values that define the cropping region. Set this option to:
 
             - a string denoting the name of scalars belonging to this mesh

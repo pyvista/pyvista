@@ -130,7 +130,7 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLike[float] | MatrixLike[float]
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
@@ -173,7 +173,7 @@ def lines_from_points(
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLike[float] | MatrixLike[float]
         Points representing the vertices of the connected
         segments. For example, two line segments would be represented
         as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
@@ -259,7 +259,7 @@ def fit_plane_to_points(
 
     Parameters
     ----------
-    points : array_like[float]
+    points : MatrixLike[float]
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool, default: False
@@ -638,10 +638,10 @@ def vector_poly_data(
 
     Parameters
     ----------
-    orig : array_like[float]
+    orig : VectorLike[float] | MatrixLike[float]
         Array of vector origins.
 
-    vec : array_like[float]
+    vec : VectorLike[float] | MatrixLike[float]
         Array of vectors.
 
     Returns

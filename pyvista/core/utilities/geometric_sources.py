@@ -685,7 +685,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
 
     Parameters
     ----------
-    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points : MatrixLike[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
 
     """

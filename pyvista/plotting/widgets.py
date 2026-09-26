@@ -2657,7 +2657,7 @@ class WidgetComponent(_NoNewAttrMixin):
             Uses the theme by default. Configure the individual axis colors by
             modifying either the theme with ``pyvista.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-        axes : array_like[float], optional
+        axes : MatrixLike[float], optional
             ``(3, 3)`` array defining the X, Y, and Z axes. By default
             this matches the default coordinate system.
         release_callback : callable, optional

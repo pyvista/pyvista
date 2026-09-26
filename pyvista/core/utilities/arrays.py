@@ -287,7 +287,7 @@ def convert_array(
 
     Parameters
     ----------
-    arr : array_like | :vtk:`vtkAbstractArray`
+    arr : ArrayLike | numpy.ndarray | :vtk:`vtkAbstractArray`
         An array-like or :vtk:`vtkAbstractArray` to convert.
     name : str, optional
         The name of the data array for VTK.
@@ -871,7 +871,7 @@ def vtkmatrix_from_array(array: MatrixLike[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
 
     Parameters
     ----------
-    array : array_like[float]
+    array : MatrixLike[float]
         The array or array-like to be converted to a vtk matrix.
         Shape (3, 3) gets converted to a :vtk:`vtkMatrix3x3`, shape (4, 4)
         gets converted to a :vtk:`vtkMatrix4x4`. No other shapes are valid.

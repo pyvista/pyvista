@@ -2318,10 +2318,10 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        normal : array_like[float]
+        normal : VectorLike[float]
             Normal direction for reflection.
 
-        point : array_like[float]
+        point : VectorLike[float]
             Point which, along with ``normal``, defines the reflection
             plane. If not specified, this is the origin.
 

@@ -1751,7 +1751,7 @@ class DataSetFilters(DataObjectFilters):
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str | array_like[float], optional
+        scalars : str | VectorLike[float], optional
             Name or array of scalars to threshold on. If this is an array, the
             output of this filter will save them as ``"Contour Data"``.
             Defaults to currently active scalars.
@@ -4461,7 +4461,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        points : array_like[float]
+        points : MatrixLike[float]
             List of points defining multiple lines.
 
         tolerance : float, optional
@@ -5450,7 +5450,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : array_like | dict, optional
+        ranges : VectorLike[float] | MatrixLike[float] | dict, optional
             Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``

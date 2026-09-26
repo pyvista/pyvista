@@ -3793,7 +3793,7 @@ class BasePlotter(_BoundsSizeMixin):
 
             .. versionadded:: 0.50
 
-        opacity : float | str | array_like
+        opacity : float | str | VectorLike[float]
             Opacity of the mesh. If a single float value is given, it
             will be the global opacity of the mesh and uniformly applied
             everywhere, and must be in the range ``[0.0, 1.0]``, where
@@ -4907,7 +4907,7 @@ class BasePlotter(_BoundsSizeMixin):
             unexpected behavior. See:
             `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_.
 
-        opacity : float | str | array_like[float], optional
+        opacity : float | str | VectorLike[float], optional
             Opacity mapping for the scalars array.
 
             A string can also be specified to map the scalars range to a

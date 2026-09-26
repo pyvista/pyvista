@@ -2795,10 +2795,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origins : array_like[float]
+        origins : MatrixLike[float]
             Starting point for each trace.
 
-        directions : array_like[float]
+        directions : MatrixLike[float]
             Direction vector for each trace.
 
         first_point : bool, default: False

@@ -1007,7 +1007,7 @@ class CellArray(
         offsets : sequence[int] | numpy.ndarray
             Offsets array of length ``n_cells + 1``.
 
-        connectivity : array_like[int]
+        connectivity : CellsLike
             Connectivity array.
 
         deep : bool, default: False

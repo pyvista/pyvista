@@ -557,7 +557,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        data : array_like
+        data : ArrayLike | numpy.ndarray
             Array of data.
 
         name : str
@@ -626,7 +626,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        scalars : array_like
+        scalars : ArrayLike | numpy.ndarray
             Array of data.
 
         name : str, default: 'scalars'
