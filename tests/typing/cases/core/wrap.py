@@ -73,6 +73,8 @@ assert_types(pv.wrap(_vtk.vtkPartitionedDataSet()), pv.PartitionedDataSet)
 assert_types(pv.wrap(pv.PartitionedDataSet()), pv.PartitionedDataSet)
 
 assert_types(pv.wrap(np.zeros(shape=(100, 3))), pv.PolyData | pv.ImageData)
+assert_types(pv.wrap([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), pv.PolyData)
+assert_types(pv.wrap((1.0, 2.0, 3.0)), pv.PolyData)
 assert_types(pv.wrap(_vtk.vtkFloatArray()), pv.pyvista_ndarray)
 assert_types(pv.wrap(None), None)
 assert_types(pv.wrap(Trimesh()), pv.PolyData)

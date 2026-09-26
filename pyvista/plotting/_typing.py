@@ -13,13 +13,12 @@ from typing import Union
 import matplotlib as mpl
 
 from pyvista import _vtk
-from pyvista.core._typing_core import ArrayLike
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
-from pyvista.core._typing_core import _WrappableType
+from pyvista.core._typing_core import _MeshLike
 
 from .renderer import CameraPosition
 
@@ -37,7 +36,7 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = ArrayLike[float] | _WrappableType | str | Path
+PlottableType: TypeAlias = _MeshLike | str | Path
 
 
 NamedColormaps = Union[

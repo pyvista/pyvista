@@ -10,6 +10,9 @@ import textwrap
 import pytest
 
 from pyvista import _vtk
+from pyvista import typing as pv_typing
+from pyvista.typing import _LAZY_ALIASES
+from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
 from tests.vtk_backend_divergence import CVISTA_NAMESPACE
 
 CORE_VTKMODULES = {
@@ -342,41 +345,16 @@ def test_validation_forward_deprecated():
     assert _validation.validate_array3([1, 2, 3]).shape == (3,)
 
 
-_CORE_TYPE_ALIASES = [
-    'ArrayLike',
-    'CellArrayLike',
-    'CellsLike',
-    'InteractionEventType',
-    'LineStyle',
-    'MatrixLike',
-    'Number',
-    'NumberType',
-    'RotationLike',
-    'TransformLike',
-    'VectorLike',
-]
-_PLOTTING_TYPE_ALIASES = ['CameraPositionOptions', 'Chart', 'ColorLike']
-_NEW_TYPE_ALIASES = ['PlottableType', 'WrappableType']
-_TYPE_ALIAS_SOURCES = {
-    **dict.fromkeys(_CORE_TYPE_ALIASES, 'pyvista.core._typing_core'),
-    'WrappableType': 'pyvista.core._typing_core',
-    **dict.fromkeys(_PLOTTING_TYPE_ALIASES, 'pyvista.plotting._typing'),
-    'PlottableType': 'pyvista.plotting._typing',
-    'JupyterBackendOptions': 'pyvista.jupyter',
-    'MeshValidationFields': 'pyvista.core.filters.data_object',
-}
-
-
 def _source_alias(name):
     """Return the type alias ``name`` from the private module that provides it."""
-    return getattr(importlib.import_module(_TYPE_ALIAS_SOURCES[name]), name)
+    module = _LAZY_ALIASES.get(name, 'pyvista.core._typing_core')
+    return getattr(importlib.import_module(module), name)
 
 
 def test_typing_namespace():
     """``pyvista.typing`` exports every type alias, unchanged from the module that provides it."""
     import pyvista as pv
 
-    assert sorted(pv.typing.__all__) == sorted(_TYPE_ALIAS_SOURCES)
     for name in pv.typing.__all__:
         assert getattr(pv.typing, name) is _source_alias(name)
 
@@ -386,12 +364,34 @@ def test_typing_dir_lists_aliases_before_access():
     assert exec_success('import pyvista.typing as t; assert {*t.__all__} <= {*dir(t)}')
 
 
+def test_type_alias_forwards_from_pyvista():
+    """``pyvista`` keeps forwarding every alias it provided before ``pyvista.typing``."""
+    assert _MOVED_TO_TYPING_NAMESPACE['pyvista'] == {
+        'ArrayLike',
+        'CameraPositionOptions',
+        'CellArrayLike',
+        'CellsLike',
+        'Chart',
+        'ColorLike',
+        'InteractionEventType',
+        'JupyterBackendOptions',
+        'LineStyle',
+        'MatrixLike',
+        'MeshValidationFields',
+        'Number',
+        'NumberType',
+        'RotationLike',
+        'TransformLike',
+        'VectorLike',
+    }
+
+
 @pytest.mark.parametrize(
     ('module', 'name'),
     [
-        *(('pyvista', name) for name in _TYPE_ALIAS_SOURCES if name not in _NEW_TYPE_ALIASES),
-        *(('pyvista.core', name) for name in _CORE_TYPE_ALIASES),
-        *(('pyvista.plotting', name) for name in _PLOTTING_TYPE_ALIASES),
+        (module, name)
+        for module, names in _MOVED_TO_TYPING_NAMESPACE.items()
+        for name in sorted(names)
     ],
 )
 def test_type_alias_forward_deprecated(module, name):
@@ -402,3 +402,14 @@ def test_type_alias_forward_deprecated(module, name):
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         alias = getattr(importlib.import_module(module), name)
     assert alias is _source_alias(name)
+
+
+@pytest.mark.parametrize(
+    'name', sorted(set(pv_typing.__all__) - _MOVED_TO_TYPING_NAMESPACE['pyvista'])
+)
+def test_type_alias_not_forwarded_from_pyvista(name):
+    """A type alias that ``pyvista`` never provided is only in ``pyvista.typing``."""
+    import pyvista as pv
+
+    with pytest.raises(AttributeError):
+        getattr(pv, name)
