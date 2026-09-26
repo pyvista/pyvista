@@ -264,6 +264,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLine',
         'vtkLocator',
         'vtkMultiBlockDataSet',
+        'vtkMultiPieceDataSet',
         'vtkNonMergingPointLocator',
         'vtkPartitionedDataSet',
         'vtkPentagonalPrism',
@@ -323,7 +324,12 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkMatrix3x3',
         'vtkMatrix4x4',
     ),
-    'vtkCommonTransforms': ('vtkTransform',),
+    'vtkCommonTransforms': (
+        'vtkAbstractTransform',
+        'vtkHomogeneousTransform',
+        'vtkThinPlateSplineTransform',
+        'vtkTransform',
+    ),
     'vtkDomainsChemistry': ('vtkProteinRibbonFilter',),
     'vtkFiltersCore': (
         'VTK_BEST_FITTING_PLANE',

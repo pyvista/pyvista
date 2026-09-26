@@ -178,6 +178,9 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
                     z_max =  0.5)
 
         """
+        if self.dataset is None:
+            # The sentinel VTK leaves in an uninitialized bounding box.
+            return BoundsTuple(1.0, -1.0, 1.0, -1.0, 1.0, -1.0)
         return BoundsTuple(*self.GetBounds())
 
     @property
@@ -190,6 +193,8 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
             Center of the active renderer.
 
         """
+        if self.dataset is None:
+            return (0.0, 0.0, 0.0)
         return self.GetCenter()
 
     def copy(self) -> _BaseMapper:

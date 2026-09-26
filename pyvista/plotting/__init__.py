@@ -141,8 +141,9 @@ global_theme: _GlobalTheme = _GlobalTheme()
 
 def __getattr__(name: str) -> Any:
     """Forward the deprecated attributes of this module with a warning."""
-    if name in ('CameraPositionOptions', 'Chart', 'ColorLike'):
-        from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
+    from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
+    from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
 
+    if name in _MOVED_TO_TYPING_NAMESPACE[__name__]:
         return _get_deprecated_alias(__name__, name)
     return _colors_getattr(name)

@@ -226,6 +226,16 @@ def _parse_shape(shape: str) -> list[int] | str:
     return [int(value) for value in re.split(r'[,\s]+', shape.strip()) if value]
 
 
+def _enclosing_outline(meshes: list[pv.DataObject]) -> pv.PolyData:
+    """Return an outline enclosing every mesh, including each partition of a partitioned one."""
+    blocks = [
+        mesh.cast_to_multiblock() if isinstance(mesh, pv.PartitionedDataSet) else mesh
+        for mesh in meshes
+        if isinstance(mesh, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
+    ]
+    return pv.MultiBlock(blocks).outline()
+
+
 @CLI_APP.command(
     usage=f'Usage: [bold]{pv.__name__} compare PATH... [OPTIONS]',
     help_formatter=HELP_FORMATTER,
@@ -326,8 +336,7 @@ def _compare(
             shape=None if shape is None else _parse_shape(shape),
             link=link,
             cpos=cpos,
-            # The outline of a `MultiBlock` encloses every one of its blocks
-            reference_mesh=pv.MultiBlock(meshes).outline() if outline else None,
+            reference_mesh=_enclosing_outline(meshes) if outline else None,
             normalize=normalize,
             label_size=label_size,
             label_position=label_position,

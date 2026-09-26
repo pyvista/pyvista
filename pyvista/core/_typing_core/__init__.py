@@ -13,7 +13,9 @@ from ._aliases import Number as Number
 from ._aliases import RotationLike as RotationLike
 from ._aliases import TransformLike as TransformLike
 from ._aliases import VectorLike as VectorLike
+from ._aliases import WrappableType as WrappableType
 from ._aliases import _ArrayLikeOrScalar as _ArrayLikeOrScalar
+from ._aliases import _MeshLike as _MeshLike
 from ._array_like import NumberType as NumberType
 from ._array_like import NumpyArray as NumpyArray
 from ._array_like import _FiniteNestedList as _FiniteNestedList
