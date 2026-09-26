@@ -68,7 +68,6 @@ if TYPE_CHECKING:
     from pyvista import CellType
     from pyvista import PointSet
 
-    from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import VectorLike
     from ._typing_core import _ArrayLikeOrScalar
@@ -1569,7 +1568,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: _ArrayLikeOrScalar[float] | ArrayLike[Any] | NDArray[Any],
+        scalars: _ArrayLikeOrScalar[float] | NDArray[Any] | Sequence[Any],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 

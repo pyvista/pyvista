@@ -36,7 +36,6 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
@@ -538,7 +537,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return narray
 
     def set_array(
-        self: Self, data: ArrayLike[Any] | NDArray[Any], name: str, *, deep_copy: bool = False
+        self: Self, data: NDArray[Any] | Sequence[Any], name: str, *, deep_copy: bool = False
     ) -> None:
         """Add an array to this object.
 
@@ -558,7 +557,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        data : ArrayLike | numpy.ndarray
+        data : numpy.ndarray | sequence
             Array of data.
 
         name : str
@@ -610,7 +609,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_scalars(
         self: Self,
-        scalars: ArrayLike[Any] | NDArray[Any],
+        scalars: NDArray[Any] | Sequence[Any],
         name: str = 'scalars',
         *,
         deep_copy: bool = False,
@@ -627,7 +626,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        scalars : ArrayLike | numpy.ndarray
+        scalars : numpy.ndarray | sequence
             Array of data.
 
         name : str, default: 'scalars'
@@ -747,7 +746,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: ArrayLike[Any] | NDArray[Any],
+        data: NDArray[Any] | Sequence[Any],
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01

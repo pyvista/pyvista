@@ -286,7 +286,7 @@ def convert_array(
 
     Parameters
     ----------
-    arr : ArrayLike | numpy.ndarray | :vtk:`vtkAbstractArray`
+    arr : numpy.ndarray | sequence | :vtk:`vtkAbstractArray`
         An array-like or :vtk:`vtkAbstractArray` to convert.
     name : str, optional
         The name of the data array for VTK.
