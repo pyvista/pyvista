@@ -53,29 +53,15 @@ from .pyvista_ndarray import pyvista_ndarray as pyvista_ndarray
 from .utilities import *
 from .wrappers import _wrappers as _wrappers
 
-_TYPE_ALIASES = (
-    'ArrayLike',
-    'CellArrayLike',
-    'CellsLike',
-    'InteractionEventType',
-    'LineStyle',
-    'MatrixLike',
-    'Number',
-    'NumberType',
-    'NumpyArray',
-    'RotationLike',
-    'TransformLike',
-    'VectorLike',
-)
-
-
 if not TYPE_CHECKING:  # pragma: no branch
 
     def __getattr__(name: str) -> object:
-        """Forward the deprecated type aliases with a warning."""
-        if name in _TYPE_ALIASES:
-            from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
+        """Forward the type aliases that moved to ``pyvista.typing`` with a deprecation warning."""
+        from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
+        from pyvista.typing import _REMOVED_ALIASES  # noqa: PLC0415
+        from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
 
+        if name in _MOVED_TO_TYPING_NAMESPACE[__name__] or name in _REMOVED_ALIASES:
             return _get_deprecated_alias(__name__, name)
         msg = f'module {__name__!r} has no attribute {name!r}'
         raise AttributeError(msg)

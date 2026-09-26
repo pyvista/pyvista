@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from pyvista import Table
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import WrappableType
 
@@ -156,7 +157,9 @@ def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: .
 def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
 # Misc overloads
 @overload
-def wrap(dataset: NDArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...
+def wrap(dataset: NDArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...  # type: ignore[overload-overlap]
+@overload
+def wrap(dataset: VectorLike[float] | MatrixLike[float], *, validate: bool | None = ...) -> PolyData: ...
 @overload
 def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
@@ -178,6 +181,7 @@ def wrap(  # noqa: PLR0911
     Other formats that are supported include:
 
     * 2D :class:`numpy.ndarray` of XYZ vertices
+    * Sequence of XYZ vertices, or a single XYZ vertex
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     * 3D :class:`trimesh.Trimesh` mesh using :func:`~pyvista.from_trimesh`.
     * 3D :class:`meshio.Mesh` mesh using :func:`~pyvista.from_meshio`.
@@ -191,6 +195,10 @@ def wrap(  # noqa: PLR0911
 
         If wrapping a ``Trimesh`` object, any arrays are now wrapped directly
         (no copies).
+
+    .. versionchanged:: 0.50
+
+        Sequences of XYZ vertices are wrapped as :class:`~pyvista.PolyData`.
 
     Parameters
     ----------
@@ -287,6 +295,11 @@ def wrap(  # noqa: PLR0911
     if isinstance(dataset, tuple(pv._wrappers.values())):
         # Return object if it is already wrapped
         return cast('DataObject', dataset)
+
+    if isinstance(dataset, (list, tuple)):
+        dataset = _validation.validate_arrayNx3(
+            dataset, dtype_out=float, name='Sequence of points'
+        )
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to

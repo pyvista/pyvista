@@ -3879,15 +3879,22 @@ def test_compute_boundary_mesh_quality():
     assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
 
 
-@pytest.mark.expect_vtk_output(
-    'Input unstructured grid has non 3D cells.',
-    reason='a surface has no 3D cells, and the filter returns an empty mesh where it should raise',
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PolyData(),
+        pv.Line(),
+        pv.ImageData(dimensions=(4, 4, 1)),
+        pv.RectilinearGrid(np.arange(4.0), np.arange(4.0), np.array([0.0])),
+        pv.StructuredGrid(*np.meshgrid(np.arange(4.0), np.arange(4.0), [0.0], indexing='ij')),
+    ],
+    ids=['surface', 'empty', 'line', 'image_2d', 'rectilinear_2d', 'structured_2d'],
 )
-def test_compute_boundary_mesh_quality_surface(sphere):
-    # A surface has no 3D cells, so there are no boundary faces to measure
-    qual = sphere.compute_boundary_mesh_quality()
-    assert isinstance(qual, pv.PolyData)
-    assert qual.n_cells == 0
+def test_compute_boundary_mesh_quality_without_3d_cells_raises(mesh):
+    match = r'Boundary faces are only defined for 3D cells, but the input has none'
+    with pytest.raises(ValueError, match=match):
+        mesh.compute_boundary_mesh_quality()
 
 
 def test_compute_derivatives(random_hills):
@@ -4694,19 +4701,15 @@ def test_integrate_data_pointset(pointset):
     assert integrated.n_cells == 1
 
 
-@pytest.mark.expect_vtk_output(
-    'No cells to build',
-    reason='a PointSet has no cells for the locator, and the filter should reject it first',
-)
 @pytest.mark.parametrize('name', ['streamlines', 'streamlines_from_source'])
-def test_streamlines_pointset(pointset, name):
+def test_streamlines_pointset_raises(pointset, name):
     pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
     kwargs = {
         'streamlines': dict(n_points=2),
         'streamlines_from_source': dict(source=pv.PolyData(pointset.points[:1])),
     }[name]
-    output = getattr(pointset, name)(vectors='vectors', **kwargs)
-    assert isinstance(output, pv.PolyData)
+    with pytest.raises(pv.PointSetCellOperationError, match='PointSets contain no cells'):
+        getattr(pointset, name)(vectors='vectors', **kwargs)
 
 
 def test_integrate_data():

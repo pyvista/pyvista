@@ -328,7 +328,7 @@ markers = [
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
   'skip_vtk_backend(backend, reason="..."): skip test when `pyvista.vtk_backend()` is `backend` (e.g. `cvista`). Use for behaviour that genuinely differs on an alternative VTK build -- attach it to the test itself, with a reason naming what diverges.',
-  'skip_vtk_output_check: Disable the autouse fail_on_vtk_output fixture for this test. For a test whose point is unreadable input, where the messages depend on which readers the VTK build ships.',
+  'skip_vtk_output_check(reason="..."): disable the autouse fail_on_vtk_output fixture for this test, for a test whose point is unreadable input, where the messages depend on which readers the VTK build ships. `reason` is required and says why.',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
 ]
 minversion = "7"
