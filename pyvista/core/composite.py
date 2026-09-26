@@ -113,7 +113,8 @@ class MultiBlock(
         dictionary of datasets, or a file to read.
 
         .. versionchanged:: 0.50
-           The blocks may be given as any sequence, not only a ``list`` or ``tuple``.
+           The blocks may be given as any sequence, not only a ``list`` or ``tuple``,
+           so the partitions of a :class:`~pyvista.PartitionedDataSet` can be the blocks.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
@@ -1468,6 +1469,13 @@ class MultiBlock(
             Block name to give to dataset.  A default name is given
             depending on the block index as ``'Block-{i:02}'``.
 
+        Raises
+        ------
+        TypeError
+            If ``dataset`` is a composite which cannot be a block, such as a
+            :class:`~pyvista.PartitionedDataSet`.  Convert it with
+            :meth:`~pyvista.DataObject.cast_to_multiblock` first.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1875,6 +1883,16 @@ class MultiBlock(
 
         # this is the only spot in the class where we actually add
         # data to the MultiBlock
+
+        # These two are the only composites :vtk:`vtkMultiBlockDataSet` holds as a block
+        if isinstance(data, _vtk.vtkCompositeDataSet) and not isinstance(
+            data, (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiPieceDataSet)
+        ):
+            msg = (
+                f'A {type(data).__name__} cannot be a block of a MultiBlock. '
+                f'Call cast_to_multiblock() on it first.'
+            )
+            raise TypeError(msg)
 
         # check if we are overwriting a block
         existing_dataset = self.GetBlock(i)
