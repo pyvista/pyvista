@@ -536,9 +536,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return narray.squeeze()
         return narray
 
-    def set_array(
-        self: Self, data: NDArray[Any] | Sequence[Any], name: str, *, deep_copy: bool = False
-    ) -> None:
+    def set_array(self: Self, data: _AnyArrayLike, name: str, *, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -609,7 +607,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_scalars(
         self: Self,
-        scalars: NDArray[Any] | Sequence[Any],
+        scalars: _AnyArrayLike,
         name: str = 'scalars',
         *,
         deep_copy: bool = False,
@@ -746,7 +744,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: NDArray[Any] | Sequence[Any],
+        data: _AnyArrayLike,
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01

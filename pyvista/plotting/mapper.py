@@ -36,13 +36,12 @@ from .utilities.algorithms import ActiveScalarsAlgorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from numpy.typing import NDArray
     from pyvista_validation._typing._array_like import _Real
 
     from pyvista import DataSet
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _AnyArrayLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
@@ -957,7 +956,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_scalars(
         self,
-        scalars: NDArray[Any] | Sequence[Any],
+        scalars: _AnyArrayLike,
         scalars_name: str,
         *,
         n_colors: int = 256,

@@ -28,7 +28,6 @@ from .utilities.arrays import row_array
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
-    from collections.abc import Sequence
     from typing import Any
 
     from numpy.typing import NDArray
@@ -39,6 +38,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _AnyArrayLike
 
 
 class Table(DataObject, _vtk.vtkTable):
@@ -298,7 +298,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name: str, scalars: NDArray[Any] | Sequence[Any]) -> None:
+    def __setitem__(self, name: str, scalars: _AnyArrayLike) -> None:
         """Add/set an array in the ``row_arrays``."""
         self.row_arrays[name] = scalars
 

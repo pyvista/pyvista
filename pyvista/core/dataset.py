@@ -70,6 +70,7 @@ if TYPE_CHECKING:
 
     from ._typing_core import MatrixLike
     from ._typing_core import VectorLike
+    from ._typing_core import _AnyArrayLike
     from ._typing_core import _ArrayLikeOrScalar
 
     _Dimensionality = Literal[0, 1, 2, 3]
@@ -1568,7 +1569,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: _ArrayLikeOrScalar[float] | NDArray[Any] | Sequence[Any],
+        scalars: _ArrayLikeOrScalar[float] | _AnyArrayLike,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
