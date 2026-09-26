@@ -199,7 +199,7 @@ def _cell_array_edge_lengths(
     return np.concatenate(lengths).astype(float) if lengths else np.empty(0, dtype=float)
 
 
-def _local_edge_table(mesh: DataSet, cell_id: int) -> NDArray[np.signedinteger]:
+def _local_edge_table(mesh: DataSet, cell_id: int) -> NDArray[np.int_]:
     """Return the endpoints of each edge of a cell as indices into the cell's points."""
     cell = _vtk.vtkGenericCell()
     if isinstance(mesh, pv.ExplicitStructuredGrid):
@@ -221,7 +221,7 @@ def _local_edge_table(mesh: DataSet, cell_id: int) -> NDArray[np.signedinteger]:
     return np.array(edges, dtype=int).reshape(-1, 2)
 
 
-def _curve_edge_table(cell_type: int, n_points: int) -> NDArray[np.signedinteger]:
+def _curve_edge_table(cell_type: int, n_points: int) -> NDArray[np.int_]:
     """Return the segments of a 1D cell, which has no edges of its own."""
     if cell_type == pv.CellType.POLY_LINE:
         return np.column_stack([np.arange(n_points - 1), np.arange(1, n_points)])

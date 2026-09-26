@@ -414,12 +414,12 @@ def test_type_alias_forward_deprecated(module, name):
 def test_removed_type_alias_deprecated(module, name, advice):
     """A deprecated type alias warns and is still the same alias."""
     import pyvista as pv
-    from pyvista.typing import _REMOVED_ALIASES
+    from pyvista.typing import _DEPRECATED_ALIASES
 
     msg = f'`{module}.{name}` is deprecated; {advice}.'
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         alias = getattr(importlib.import_module(module), name)
-    source, attribute, _ = _REMOVED_ALIASES[name]
+    source, attribute, _ = _DEPRECATED_ALIASES[name]
     assert alias is getattr(importlib.import_module(source), attribute)
     assert name not in pv.typing.__all__
 

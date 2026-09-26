@@ -48,10 +48,10 @@ def plot_arrows(
 
     Parameters
     ----------
-    cent : array_like[float]
+    cent : VectorLike[float] | MatrixLike[float]
         Accepts a single 3d point or array of 3d points.
 
-    direction : array_like[float]
+    direction : VectorLike[float] | MatrixLike[float]
         Accepts a single 3d point or array of 3d vectors.
         Must contain the same number of items as ``cent``.
 
@@ -220,7 +220,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
 
 def view_vectors(
     view: _ViewOptions, *, negative: bool = False
-) -> tuple[NDArray[np.signedinteger], NDArray[np.signedinteger]]:
+) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

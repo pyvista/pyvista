@@ -16,8 +16,6 @@ from ._aliases import WrappableType as WrappableType
 from ._aliases import _ArrayLikeOrScalar as _ArrayLikeOrScalar
 from ._aliases import _MeshLike as _MeshLike
 from ._aliases import _VolumeArray as _VolumeArray
-from ._array_like import _FiniteNestedList as _FiniteNestedList
-from ._array_like import _FiniteNestedTuple as _FiniteNestedTuple
 from ._dataset_types import _DataObjectType as _DataObjectType
 from ._dataset_types import _DataSetOrMultiBlockType as _DataSetOrMultiBlockType
 from ._dataset_types import _DataSetType as _DataSetType

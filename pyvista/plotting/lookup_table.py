@@ -134,7 +134,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Flip the direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
-    values : array_like[float], optional
+    values : MatrixLike[float], optional
         Lookup table values. Either ``values`` or ``cmap`` can be set, but not
         both.
 
@@ -864,7 +864,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Parameters
         ----------
-        opacity : float | array_like[float] | str
+        opacity : float | VectorLike[float] | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
             ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to

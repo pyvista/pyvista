@@ -2630,8 +2630,8 @@ class WidgetComponent(_NoNewAttrMixin):
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
         axes: MatrixLike[float] | None = None,
-        release_callback: Callable[[NDArray[np.floating]], None] | None = None,
-        interact_callback: Callable[[NDArray[np.floating]], None] | None = None,
+        release_callback: Callable[[NDArray[np.float64]], None] | None = None,
+        interact_callback: Callable[[NDArray[np.float64]], None] | None = None,
     ) -> AffineWidget3D:
         """Add a 3D affine transform widget.
 
@@ -2657,8 +2657,8 @@ class WidgetComponent(_NoNewAttrMixin):
             Uses the theme by default. Configure the individual axis colors by
             modifying either the theme with ``pyvista.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-        axes : numpy.ndarray, optional
-            ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default
+        axes : MatrixLike[float], optional
+            ``(3, 3)`` array defining the X, Y, and Z axes. By default
             this matches the default coordinate system.
         release_callback : callable, optional
             Call this method when releasing the left mouse button. It is passed
