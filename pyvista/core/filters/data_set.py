@@ -6685,6 +6685,11 @@ class DataSetFilters(DataObjectFilters):
     ) -> PolyData:
         """Compute metrics on the boundary faces of a mesh.
 
+        .. versionchanged:: 0.50
+
+            Input without 3D cells now raises ``ValueError``. Previously an empty
+            :class:`~pyvista.PolyData` was returned.
+
         The metrics that can be computed on the boundary faces of the mesh and are:
 
         - Distance from cell center to face center
@@ -6700,6 +6705,11 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.PolyData
             Boundary faces of the 3D cells, with the computed metrics in ``cell_data``.
+
+        Raises
+        ------
+        ValueError
+            If the input has no 3D cells.
 
         Examples
         --------
@@ -6721,6 +6731,12 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        if (dimensionality := self.max_cell_dimensionality) < 3:
+            msg = (
+                'Boundary faces are only defined for 3D cells, but the input has none. '
+                f'Its highest cell dimension is {dimensionality}.'
+            )
+            raise ValueError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(
             self.cast_to_unstructured_grid() if isinstance(self, pv.PolyData) else self
