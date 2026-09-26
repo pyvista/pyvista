@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     import pandas
     import pyarrow
-    from pyvista_validation._typing._array_like import _Scalar
+    from pyvista_validation.typing import Scalar as _Scalar
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike

@@ -26,7 +26,7 @@ from .fileio import is_trimesh_mesh
 if TYPE_CHECKING:
     import meshio
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Scalar
+    from pyvista_validation.typing import Scalar as _Scalar
     import trimesh
 
     from pyvista import DataObject
