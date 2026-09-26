@@ -264,6 +264,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLine',
         'vtkLocator',
         'vtkMultiBlockDataSet',
+        'vtkMultiPieceDataSet',
         'vtkNonMergingPointLocator',
         'vtkPartitionedDataSet',
         'vtkPentagonalPrism',

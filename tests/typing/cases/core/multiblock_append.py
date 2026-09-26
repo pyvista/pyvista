@@ -7,6 +7,7 @@ from type_assert import assert_types
 import pyvista as pv
 from pyvista import MultiBlock
 from pyvista import PolyData
+from pyvista import _vtk
 
 
 def multi() -> MultiBlock:
@@ -23,6 +24,9 @@ def nested() -> MultiBlock[MultiBlock[PolyData]]:
     """Return a `MultiBlock` declared to hold only composites of `PolyData`."""
     return pv.MultiBlock([polys()])
 
+
+# A raw VTK object is wrapped on the way in, where no block type is declared
+assert_types(multi().append(_vtk.vtkPolyData()), None)
 
 # Any leaf may be appended when no block type is declared
 assert_types(multi().append(pv.PolyData()), None)

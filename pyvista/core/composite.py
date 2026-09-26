@@ -107,8 +107,13 @@ class MultiBlock(
 
     Parameters
     ----------
-    *args : dict, optional
-        Data object dictionary.
+    *args : MultiBlock | sequence[DataSet] | dict[str, DataSet] | str | Path, optional
+        Blocks for this composite, given as a composite to copy, a sequence or
+        dictionary of datasets, or a file to read.
+
+        .. versionchanged:: 0.50
+           The blocks may be given as any sequence, not only a ``list`` or ``tuple``,
+           so the partitions of a :class:`~pyvista.PartitionedDataSet` can be the blocks.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
@@ -175,6 +180,22 @@ class MultiBlock(
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # empty
+    def __init__(self, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # copy, block type known
+    def __init__(self, dataset: MultiBlock[_BlockType], /, *, deep: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # copy
+    def __init__(self, dataset: _vtk.vtkMultiBlockDataSet, /, *, deep: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # read from file
+    def __init__(self, *args: Unpack[tuple[str | Path]], validate: bool | _NestedMeshValidationFields = ..., **kwargs: Any) -> None: ...  # pragma: no cover
+    @overload  # build from blocks, named or not
+    def __init__(self, dataset: Sequence[_BlockType] | dict[str, _BlockType], /, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # build from raw VTK blocks, which are wrapped
+    def __init__(self: MultiBlock[_TypeMultiBlockLeaf], dataset: Sequence[_vtk.vtkDataObject] | dict[str, _vtk.vtkDataObject], /, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
     def __init__(
         self, *args, validate: bool | _NestedMeshValidationFields = False, **kwargs
     ) -> None:
@@ -194,14 +215,14 @@ class MultiBlock(
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], (list, tuple)):
-                for block in args[0]:
-                    self.append(block)
             elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], dict):
                 for key, block in args[0].items():
                     self.append(block, key)
+            elif isinstance(args[0], Sequence):
+                for block in args[0]:
+                    self.append(block)
             else:
                 msg = f'Type {type(args[0])} is not supported by pyvista.MultiBlock'
                 raise TypeError(msg)
@@ -1427,7 +1448,15 @@ class MultiBlock(
 
         return wrap(self.GetBlock(index))
 
-    def append(self, dataset: _BlockType, name: str | None = None) -> None:
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def append(self, dataset: _BlockType, name: str | None = ...) -> None: ...  # pragma: no cover
+    @overload
+    def append(self: MultiBlock[_TypeMultiBlockLeaf], dataset: _vtk.vtkDataObject, name: str | None = ...) -> None: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
+    def append(self, dataset, name=None) -> None:
         """Add a data set to the next block index.
 
         Parameters
@@ -1438,6 +1467,13 @@ class MultiBlock(
         name : str, optional
             Block name to give to dataset.  A default name is given
             depending on the block index as ``'Block-{i:02}'``.
+
+        Raises
+        ------
+        TypeError
+            If ``dataset`` is a composite which cannot be a block, such as a
+            :class:`~pyvista.PartitionedDataSet`.  Convert it with
+            :meth:`~pyvista.DataObject.cast_to_multiblock` first.
 
         Examples
         --------
@@ -1846,6 +1882,16 @@ class MultiBlock(
 
         # this is the only spot in the class where we actually add
         # data to the MultiBlock
+
+        # These two are the only composites :vtk:`vtkMultiBlockDataSet` holds as a block
+        if isinstance(data, _vtk.vtkCompositeDataSet) and not isinstance(
+            data, (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiPieceDataSet)
+        ):
+            msg = (
+                f'A {type(data).__name__} cannot be a block of a MultiBlock. '
+                f'Call cast_to_multiblock() on it first.'
+            )
+            raise TypeError(msg)
 
         # check if we are overwriting a block
         existing_dataset = self.GetBlock(i)
