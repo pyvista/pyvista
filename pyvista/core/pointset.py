@@ -4095,7 +4095,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         self.Modified()
 
     @property
-    def x(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def x(self) -> NDArray[_Real]:  # numpydoc ignore=RT01
         """Return the X coordinates of all points.
 
         Returns
@@ -4119,17 +4119,17 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return self._reshape_point_array(self.points[:, 0])
 
     @property
-    def y(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def y(self) -> NDArray[_Real]:  # numpydoc ignore=RT01
         """Return the Y coordinates of all points."""
         return self._reshape_point_array(self.points[:, 1])
 
     @property
-    def z(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def z(self) -> NDArray[_Real]:  # numpydoc ignore=RT01
         """Return the Z coordinates of all points."""
         return self._reshape_point_array(self.points[:, 2])
 
     @property
-    def points_matrix(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def points_matrix(self) -> NDArray[_Real]:  # numpydoc ignore=RT01
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
 

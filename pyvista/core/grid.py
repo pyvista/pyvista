@@ -41,6 +41,7 @@ from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Real
     from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
 
@@ -396,7 +397,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     @property
     def meshgrid(
         self: Self,
-    ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
+    ) -> tuple[NDArray[_Real], NDArray[_Real], NDArray[_Real]]:
         """Return a meshgrid of NumPy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -413,7 +414,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return x, y, z
 
     @property  # type: ignore[override]
-    def points(self: Self) -> NDArray[np.floating]:
+    def points(self: Self) -> NDArray[_Real]:
         """Return a copy of the points as an ``(n, 3)`` NumPy array.
 
         Returns
@@ -471,7 +472,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         raise AttributeError(msg)
 
     @property
-    def x(self: Self) -> NDArray[np.floating]:
+    def x(self: Self) -> NDArray[_Real]:
         """Return or set the coordinates along the X-direction.
 
         Returns
@@ -508,7 +509,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self.Modified()
 
     @property
-    def y(self: Self) -> NDArray[np.floating]:
+    def y(self: Self) -> NDArray[_Real]:
         """Return or set the coordinates along the Y-direction.
 
         Returns
@@ -545,7 +546,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self.Modified()
 
     @property
-    def z(self: Self) -> NDArray[np.floating]:
+    def z(self: Self) -> NDArray[_Real]:
         """Return or set the coordinates along the Z-direction.
 
         Returns

@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Real
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
@@ -697,7 +698,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
         self.points = points
 
     @property
-    def points(self: MultipleLinesSource) -> NDArray[np.floating]:
+    def points(self: MultipleLinesSource) -> NDArray[_Real]:
         """Return the points defining a broken line.
 
         Returns
