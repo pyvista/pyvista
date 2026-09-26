@@ -2684,7 +2684,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[NDArray[np.floating], NDArray[np.intp]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.int_]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin

@@ -736,7 +736,7 @@ def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
     return vtkarr
 
 
-def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NDArray[np.intp]:
+def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NDArray[np.int_]:
     """Convert a :vtk:`vtkIdList` to a NumPy array.
 
     Parameters

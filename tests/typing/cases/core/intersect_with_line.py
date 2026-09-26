@@ -8,4 +8,4 @@ from type_assert import assert_types
 
 from tests.typing.meshes import poly
 
-assert_types(poly().intersect_with_line((-1.0, 0.0, 0.0), (1.0, 0.0, 0.0)), tuple[NDArray[np.floating], NDArray[np.intp]])
+assert_types(poly().intersect_with_line((-1.0, 0.0, 0.0), (1.0, 0.0, 0.0)), tuple[NDArray[np.floating], NDArray[np.int_]])

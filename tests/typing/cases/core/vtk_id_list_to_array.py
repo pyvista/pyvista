@@ -18,4 +18,4 @@ def an_id_list() -> _vtk.vtkIdList:
     return ids
 
 
-assert_types(vtk_id_list_to_array(an_id_list()), NDArray[np.intp])
+assert_types(vtk_id_list_to_array(an_id_list()), NDArray[np.int_])

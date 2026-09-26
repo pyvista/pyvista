@@ -2308,7 +2308,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float | None = None,
-    ) -> NDArray[np.intp]:
+    ) -> NDArray[np.int_]:
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2386,7 +2386,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float | None = None,
-    ) -> NDArray[np.intp]:
+    ) -> NDArray[np.int_]:
         """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2443,7 +2443,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         *,
         tolerance: float | None = None,
         deduplicate_points: bool = False,
-    ) -> tuple[NDArray[np.floating], NDArray[np.intp]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.int_]]:
         """Locate points and cell ids that intersect a line.
 
         .. versionadded:: 0.49
@@ -2586,7 +2586,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             intersection_cells = intersection_cells[idx][::-1]
         return intersection_points, intersection_cells
 
-    def find_cells_within_bounds(self: Self, bounds: VectorLike[float]) -> NDArray[np.intp]:
+    def find_cells_within_bounds(self: Self, bounds: VectorLike[float]) -> NDArray[np.int_]:
         """Find the index of cells in this mesh within bounds.
 
         .. warning::
