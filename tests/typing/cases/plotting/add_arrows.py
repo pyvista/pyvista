@@ -18,15 +18,10 @@ def float32_centers() -> NDArray[np.float32]:
     return np.zeros((2, 3), dtype=np.float32)
 
 
-def float64_centers() -> NDArray[np.float64]:
-    """Return float64 arrow centers."""
-    return np.zeros((2, 3))
-
-
 def int32_directions() -> NDArray[np.int32]:
     """Return int32 arrow directions."""
     return np.ones((2, 3), dtype=np.int32)
 
 
-assert_types(pv.Plotter().add_arrows(float64_centers(), int32_directions()), pv.Actor)
+assert_types(pv.Plotter().add_arrows(np.zeros((2, 3)), np.ones((2, 3))), pv.Actor)
 assert_types(pv.Plotter().add_arrows(float32_centers(), int32_directions()), pv.Actor)

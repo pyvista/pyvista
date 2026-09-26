@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
     _Pixels: TypeAlias = NDArray[np.uint8] | NDArray[np.float32]
 
-    ImageCompareType: TypeAlias = str | Path | NDArray[np.uint8] | Plotter | _vtk.vtkImageData
+    ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
 
 def remove_alpha(img: _vtk.vtkImageData) -> ImageData:

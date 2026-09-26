@@ -62,7 +62,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self._elevation = 0.0
         self._azimuth = 0.0
         self._is_set = False
-        self._focus: NDArray[np.float64] | None = None  # Used by BackgroundRenderer
+        self._focus: NDArray[np.floating] | None = None  # Used by BackgroundRenderer
 
         if renderer:
             if not isinstance(renderer, pv.Renderer):

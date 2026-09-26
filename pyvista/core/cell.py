@@ -25,7 +25,6 @@ from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from typing import Any
 
     from numpy.typing import NDArray
@@ -413,7 +412,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
-    def points(self: Self) -> NDArray[np.float64]:
+    def points(self: Self) -> NDArray[np.floating]:
         """Get the point coordinates of the cell.
 
         Returns
@@ -660,7 +659,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-def _expected_legacy_cell_array_size(cells: NDArray[np.integer]) -> int | None:
+def _expected_legacy_cell_array_size(cells: NDArray[_Scalar]) -> int | None:
     """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
 
     Returns ``None`` if a negative point count makes the layout uninterpretable.
@@ -941,8 +940,8 @@ class CellArray(
 
     def _set_data(
         self: Self,
-        offsets: VectorLike[int] | NDArray[np.integer],
-        connectivity: CellsLike,
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
         *,
         deep: bool = False,
     ) -> None:
@@ -975,7 +974,7 @@ class CellArray(
     def _set_data_fixed_size(
         self: Self,
         cell_size: int,
-        connectivity: CellsLike,
+        connectivity: MatrixLike[int],
         *,
         deep: bool = False,
     ) -> None:
@@ -995,8 +994,8 @@ class CellArray(
 
     @staticmethod
     def from_arrays(
-        offsets: VectorLike[int] | NDArray[np.integer],
-        connectivity: CellsLike,
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1004,10 +1003,10 @@ class CellArray(
 
         Parameters
         ----------
-        offsets : sequence[int] | numpy.ndarray
+        offsets : MatrixLike[int]
             Offsets array of length ``n_cells + 1``.
 
-        connectivity : CellsLike
+        connectivity : MatrixLike[int]
             Connectivity array.
 
         deep : bool, default: False
@@ -1044,7 +1043,7 @@ class CellArray(
     @classmethod
     def from_regular_cells(
         cls: type[CellArray],
-        cells: MatrixLike[int] | NDArray[np.integer],
+        cells: MatrixLike[int],
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1091,23 +1090,21 @@ class CellArray(
                [1, 2, 3]]...)
 
         """
-        array = np.asarray(cells)
-        n_cells, cell_size = array.shape
-        connectivity = np.asarray(array, dtype=np.int32 if array.dtype == np.int32 else pv.ID_TYPE)
+        cells = np.asarray(cells)
+        n_cells, cell_size = cells.shape
+        if cells.dtype != np.int32:
+            cells = np.asarray(cells, dtype=pv.ID_TYPE)
 
         cellarr = cls()
         if _SUPPORTS_FIXED_SIZE_STORAGE:
-            cellarr._set_data_fixed_size(cell_size, connectivity, deep=deep)
+            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
         else:
             offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
-            cellarr._set_data(offsets, connectivity, deep=deep)
+            cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
-    def from_irregular_cells(
-        cls: type[CellArray],
-        cells: Sequence[Sequence[int | np.integer] | NDArray[np.integer]] | NDArray[np.integer],
-    ) -> CellArray:
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
         """Construct a ``CellArray`` from cells which may have different sizes.
 
         Use this method when the cells have varying numbers of points, for example, a
@@ -1122,7 +1119,7 @@ class CellArray(
 
         Parameters
         ----------
-        cells : sequence[sequence[int] | numpy.ndarray]
+        cells : Sequence[Sequence[int]]
             Sequence of length ``n_cells`` where each item is a sequence of the
             point indices for that cell. The cells may have different lengths.
 
@@ -1154,7 +1151,7 @@ class CellArray(
         """
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pv.ID_TYPE)
-        connectivity = np.concatenate([np.asarray(c) for c in cells], dtype=pv.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pv.ID_TYPE)
         return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
@@ -1189,7 +1186,7 @@ def _get_connectivity(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
 
 
 def _validate_offsets_connectivity(
-    offsets: NDArray[_Scalar], connectivity: NDArray[_Scalar]
+    offsets: NDArray[np.signedinteger], connectivity: NDArray[np.signedinteger]
 ) -> None:
     """Raise if ``offsets`` and ``connectivity`` do not describe a valid cell array."""
     for name, array in (('Offsets', offsets), ('Connectivity', connectivity)):

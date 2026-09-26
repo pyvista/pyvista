@@ -97,7 +97,7 @@ def __dir__() -> list[str]:
 
 
 # Deprecated type aliases with no counterpart in this module: (source, attribute, advice)
-_DEPRECATED_ALIASES = {
+_REMOVED_ALIASES = {
     'Number': ('pyvista.core._typing_core._aliases', 'Number', 'use `float` instead'),
     'NumberType': ('pyvista.core._typing_core._array_like', '_NumberT', 'use a `TypeVar` instead'),
     'NumpyArray': (
@@ -114,8 +114,8 @@ def _get_deprecated_alias(module: str, name: str) -> object:
     from pyvista._warn_external import warn_external  # noqa: PLC0415
     from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
-    if name in _DEPRECATED_ALIASES:
-        source, attribute, advice = _DEPRECATED_ALIASES[name]
+    if name in _REMOVED_ALIASES:
+        source, attribute, advice = _REMOVED_ALIASES[name]
         alias = getattr(importlib.import_module(source), attribute)
         msg = f'`{module}.{name}` is deprecated; {advice}.'
     else:

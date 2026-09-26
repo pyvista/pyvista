@@ -1898,9 +1898,7 @@ class Color(_NoNewAttrMixin):
             msg = f'Unsupported color channel value provided: {val}'
             raise ValueError(msg)
 
-    def _from_rgba(
-        self, rgba: Sequence[_ColorChannel] | NDArray[np.floating] | NDArray[np.integer]
-    ) -> None:
+    def _from_rgba(self, rgba: Sequence[_ColorChannel] | NDArray[Any]) -> None:
         """Construct color from an RGB(A) sequence."""
         arg = rgba
         if len(rgba) == 3:

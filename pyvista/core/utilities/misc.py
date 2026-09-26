@@ -672,7 +672,7 @@ def _reciprocal(
 
     Parameters
     ----------
-    x : ArrayLike[float]
+    x : array_like
         Input array.
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.

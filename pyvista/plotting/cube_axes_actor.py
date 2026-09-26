@@ -23,13 +23,11 @@ from pyvista.plotting.tools import parse_font_family
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from numpy.typing import NDArray
-
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
 
 
-def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> NDArray[np.float64]:
+def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
     """Cushion bounds by a percentage of their size along each axial direction."""
     _validation.check_number(padding, name='padding')
     _validation.check_range(padding, rng=(0.0, 1.0), strict_upper=True, name='padding')
@@ -45,7 +43,7 @@ def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> NDArray[np.floa
 _FLT_EPSILON = float(np.finfo(np.float32).eps)
 
 
-def _axis_label_values(vmin: float, vmax: float, n: int) -> NDArray[np.float64]:
+def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
     """Return up to ``n`` values to label, at coordinates VTK puts major ticks on.
 
     :vtk:`vtkCubeAxesActor` adopts a spacing of ``(vmax - vmin) / (n - 1)`` only while ``n``

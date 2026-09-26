@@ -13,26 +13,10 @@ import pyvista_validation as _validation
 from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Floating
-    from pyvista_validation._typing._array_like import _Integer
-    from pyvista_validation._typing._array_like import _Real
-    from pyvista_validation._typing._array_like import _Scalar
-    from pyvista_validation._typing._array_like import _ScalarT
-    from scipy.spatial.transform import Rotation
-    from typing_extensions import TypeVar
 
-    from pyvista import _vtk
-    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
-
-    # Array overload parameters, so one array infers the same type in every overload
-    _FloatingT = TypeVar('_FloatingT', bound=_Floating, default=_Floating)
-    _IntegerT = TypeVar('_IntegerT', bound=_Integer, default=_Integer)
-    _RealT = TypeVar('_RealT', bound=_Real, default=_Real)
 
     _FiveArrays: TypeAlias = tuple[
         NDArray[np.floating],
@@ -40,13 +24,6 @@ if TYPE_CHECKING:
         NDArray[np.floating],
         NDArray[np.floating],
         NDArray[np.floating],
-    ]
-    _FiveFloat64Arrays: TypeAlias = tuple[
-        NDArray[np.float64],
-        NDArray[np.float64],
-        NDArray[np.float64],
-        NDArray[np.float64],
-        NDArray[np.float64],
     ]
 
 # The default tolerances of `numpy.isclose`
@@ -301,16 +278,16 @@ def reflection(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[_RealT], *, inplace: Literal[False] = False) -> NDArray[np.floating]: ...
+def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[np.floating], *, inplace: Literal[False] = False) -> NDArray[np.floating]: ...
 @overload
-def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[_FloatingT], *, inplace: Literal[True]) -> None: ...
+def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[np.floating], *, inplace: Literal[True]) -> None: ...
 @overload
-def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[_FloatingT], *, inplace: bool = ...) -> NDArray[np.floating] | None: ...
+def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[np.floating], *, inplace: bool = ...) -> NDArray[np.floating] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def apply_transformation_to_points(
     transformation: NDArray[np.floating],
-    points: NDArray[_Real],
+    points: NDArray[np.floating],
     *,
     inplace: Literal[True, False] = False,
 ) -> NDArray[np.floating] | None:
@@ -384,25 +361,6 @@ def apply_transformation_to_points(
         return points_2
 
 
-# fmt: off
-# ruff: disable[E501]
-@overload
-def decomposition(transformation: pyvista_ndarray, *, homogeneous: bool = ...) -> _FiveArrays: ...
-@overload
-def decomposition(transformation: NDArray[np.float64], *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
-@overload
-def decomposition(transformation: NDArray[_IntegerT], *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
-@overload
-def decomposition(transformation: Sequence[Sequence[float]] | _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4 | _vtk.vtkTransform, *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
-@overload
-def decomposition(transformation: NDArray[_ScalarT], *, homogeneous: bool = ...) -> _FiveArrays: ...
-@overload
-def decomposition(transformation: Sequence[Sequence[NDArray[_Scalar]]], *, homogeneous: bool = ...) -> _FiveArrays: ...
-# `Rotation` is untyped, so it is last to keep it from matching arrays
-@overload
-def decomposition(transformation: Rotation, *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
-# ruff: enable[E501]
-# fmt: on
 def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -> _FiveArrays:
     """Decompose a transformation into its components.
 
@@ -558,18 +516,12 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
 
 
 def _decomposition_as_homogeneous(  # noqa: PLR0917
-    T: NDArray[_FloatingT],  # noqa: N803
-    R: NDArray[_FloatingT],  # noqa: N803
-    N: NDArray[_FloatingT],  # noqa: N803
-    S: NDArray[_FloatingT],  # noqa: N803
-    K: NDArray[_FloatingT],  # noqa: N803
-) -> tuple[
-    NDArray[_FloatingT],
-    NDArray[_FloatingT],
-    NDArray[_FloatingT],
-    NDArray[_FloatingT],
-    NDArray[_FloatingT],
-]:
+    T: NDArray[np.floating],  # noqa: N803
+    R: NDArray[np.floating],  # noqa: N803
+    N: NDArray[np.floating],  # noqa: N803
+    S: NDArray[np.floating],  # noqa: N803
+    K: NDArray[np.floating],  # noqa: N803
+) -> _FiveArrays:
     """Return TRNSK decomposition as homogeneous matrices."""
     dtype_out = T.dtype  # Assume all inputs have the same dtype
     I3 = np.eye(3, dtype=dtype_out)

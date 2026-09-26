@@ -207,7 +207,7 @@ def KochanekSpline(
 
     Parameters
     ----------
-    points : VectorLike[float] | MatrixLike[float]
+    points : array_like[float]
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 

@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Real
 
     from pyvista import DataSet
     from pyvista.core._typing_core import VectorLike
@@ -973,7 +972,7 @@ class _BaseDataSetMapper(_BaseMapper):
         below_color: ColorLike | None = None,
         cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
-        opacity: NDArray[_Real] | None = None,
+        opacity: NDArray[np.floating] | None = None,
         categories: bool | int = False,
         clim: float | VectorLike[float] | None = None,
     ) -> None:

@@ -1390,7 +1390,7 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
 
     Parameters
     ----------
-    points : MatrixLike[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
 
     Returns
@@ -2219,7 +2219,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
 
     Parameters
     ----------
-    points : MatrixLike[float], optional
+    points : array_like[float], optional
         Points of the pyramid.  Points are ordered such that the first
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
@@ -2281,7 +2281,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
 
     Parameters
     ----------
-    points : MatrixLike[float], optional
+    points : array_like[float], optional
         Points of the triangle.  Defaults to a right isosceles
         triangle (see example).
 
@@ -2322,7 +2322,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
 
     Parameters
     ----------
-    points : MatrixLike[float], optional
+    points : array_like[float], optional
         Points of the rectangle. Defaults to a unit square in xy-plane.
 
     Returns
@@ -2396,7 +2396,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
 
     Parameters
     ----------
-    points : MatrixLike[float], optional
+    points : array_like[float], optional
         Points of the quadrilateral.  Defaults to a unit square in xy-plane.
 
     Returns

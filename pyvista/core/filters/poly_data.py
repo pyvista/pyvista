@@ -114,7 +114,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NDArray[np.signedinteger]', pv.point_array(edges, 'point_ind'))
+        orig_id = cast('NDArray[np.floating]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -765,7 +765,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.floating]:
         """Return the point-wise curvature of a mesh.
 
         Parameters
@@ -2684,7 +2684,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[NDArray[np.floating], NDArray[np.int_]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -2779,7 +2779,9 @@ class PolyDataFilters(DataSetFilters):
         *,
         first_point: bool = False,
         retry: bool = False,
-    ) -> tuple[NDArray[np.float64], NDArray[np.intp], NDArray[np.intp]]:  # pragma: no cover
+    ) -> tuple[
+        NDArray[np.floating], NDArray[np.signedinteger], NDArray[np.signedinteger]
+    ]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -2795,10 +2797,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origins : MatrixLike[float]
+        origins : array_like[float]
             Starting point for each trace.
 
-        directions : MatrixLike[float]
+        directions : array_like[float]
             Direction vector for each trace.
 
         first_point : bool, default: False
@@ -2921,11 +2923,11 @@ class PolyDataFilters(DataSetFilters):
                     loc_lst.extend(locs)
 
             # sort result arrays by ray index
-            index_ray = np.array(ray_lst, dtype=np.intp)
+            index_ray = np.array(ray_lst)
             sorting_inds = index_ray.argsort()
             index_ray = index_ray[sorting_inds]
-            index_tri = np.array(tri_lst, dtype=np.intp)[sorting_inds]
-            locations = np.array(loc_lst, dtype=float)[sorting_inds]
+            index_tri = np.array(tri_lst)[sorting_inds]
+            locations = np.array(loc_lst)[sorting_inds]
 
         return locations, index_ray, index_tri
 
@@ -4983,11 +4985,11 @@ def _drawn_intervals(
 def _build_dashes(
     source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
 ) -> tuple[
-    NDArray[np.int64],
-    NDArray[np.int64],
-    NDArray[np.float64],
-    NDArray[np.int64],
-    NDArray[np.int64],
+    NDArray[np.signedinteger],
+    NDArray[np.signedinteger],
+    NDArray[np.floating],
+    NDArray[np.signedinteger],
+    NDArray[np.signedinteger],
 ]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points

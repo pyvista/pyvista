@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 def _padded_bins(
-    mesh: DataSet, density: NDArray[np.integer | np.floating] | Sequence[float]
+    mesh: DataSet, density: NDArray[np.floating] | Sequence[float]
 ) -> list[NDArray[np.float64]]:
     """Construct bin edges for voxelization.
 
@@ -40,7 +40,7 @@ def _padded_bins(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : NDArray[np.integer | np.floating] | sequence[float]
+    density : NDArray[np.floating] | Sequence[float]
         A list of densities along x,y,z directions.
 
     Returns
@@ -180,7 +180,7 @@ def voxelize(
 def _voxelize_legacy(
     mesh: DataSet | _vtk.vtkDataSet,
     *,
-    density: float | NDArray[np.integer | np.floating] | Sequence[float] | None = None,
+    density: float | NDArray[np.floating] | Sequence[float] | None = None,
     check_surface: bool = True,
     enclosed: bool = False,
     fit_bounds: bool = False,
@@ -548,9 +548,7 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
 
 
 def cartesian_to_spherical(
-    x: NDArray[np.integer | np.floating],
-    y: NDArray[np.integer | np.floating],
-    z: NDArray[np.integer | np.floating],
+    x: NDArray[np.floating], y: NDArray[np.floating], z: NDArray[np.floating]
 ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Convert 3D Cartesian coordinates to spherical coordinates.
 

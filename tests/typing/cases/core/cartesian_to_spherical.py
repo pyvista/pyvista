@@ -21,12 +21,6 @@ def a_coordinate_grid() -> NDArray[np.floating]:
     return np.array([[0.0, 1.0], [2.0, 3.0]])
 
 
-def an_int_coordinate() -> NDArray[np.int64]:
-    """Return one integer Cartesian component of a few points."""
-    return np.array([0, 1, 2], dtype=np.int64)
-
-
 assert_types(pv.cartesian_to_spherical(a_coordinate(), a_coordinate(), a_coordinate()), _Spherical)
 assert_types(pv.cartesian_to_spherical(x=a_coordinate(), y=a_coordinate(), z=a_coordinate()), _Spherical)
 assert_types(pv.cartesian_to_spherical(a_coordinate_grid(), a_coordinate_grid(), a_coordinate_grid()), _Spherical)
-assert_types(pv.cartesian_to_spherical(an_int_coordinate(), an_int_coordinate(), an_int_coordinate()), _Spherical)
