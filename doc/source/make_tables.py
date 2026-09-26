@@ -2299,7 +2299,7 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
-        ) = DatasetCard._generate_dataset_properties(self.loader, self.module)
+        ) = DatasetCard._generate_dataset_properties(self.loader, self.module, self.function)
 
         # Get cross-references from docs
         cross_references = self._generate_cross_references(index_name, header_name)
@@ -2346,7 +2346,7 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_dataset_properties(loader, module: ModuleType):
+    def _generate_dataset_properties(loader, module: ModuleType, function: FunctionType):
         # Get data from loader
         if isinstance(loader, _DOWNLOADABLE_TYPES):
             loader.download()
@@ -2358,7 +2358,7 @@ class DatasetCard:
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
         importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
         module_badge = DatasetPropsGenerator.generate_module_badge(module)
-        dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+        dataset_type = DatasetPropsGenerator.generate_dataset_type(function)
         celltype_field = DatasetPropsGenerator.generate_celltype_field(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
@@ -2773,12 +2773,9 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_dataset_type(loader: _DatasetLoader):
-        """Format dataset type(s) with doc references to dataset class(es)."""
-        return '\n'.join(
-            '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
-            for cls in loader.unique_dataset_types
-        )
+    def generate_dataset_type(function: FunctionType):
+        """Format the dataset type from the function's return annotation, linking each class."""
+        return _annotation_rst(_annotated_dataset_type(function))
 
     @staticmethod
     def generate_module_badge(module: ModuleType):
@@ -3136,14 +3133,80 @@ def _annotation_str(annotation: Any) -> str:
     return getattr(annotation, '__name__', str(annotation))
 
 
+def _split_union(annotation: str) -> list[str]:
+    """Split a return annotation on its top-level ``|``, ignoring any inside brackets."""
+    members, depth, start = [], 0, 0
+    for i, char in enumerate(annotation):
+        depth += {'[': 1, ']': -1}.get(char, 0)
+        if char == '|' and depth == 0:
+            members.append(annotation[start:i].strip())
+            start = i + 1
+    members.append(annotation[start:].strip())
+    return members
+
+
 def _union_members(annotation: str) -> set[str]:
     """Split a return annotation into its union members, so order does not matter."""
-    return {part.strip() for part in annotation.split('|')}
+    return set(_split_union(annotation))
+
+
+_MAX_MULTIBLOCK_DEPTH = 3
+
+
+def _multiblock_type_str(blocks: Iterable[Any], depth: int = 1) -> str:
+    """Return the generic ``MultiBlock[...]`` annotation that describes ``blocks``."""
+    if depth > _MAX_MULTIBLOCK_DEPTH:
+        return 'MultiBlock'
+    members: set[str] = set()
+    nested: list[Any] = []
+    for block in blocks:
+        if isinstance(block, pv.MultiBlock):
+            nested.extend(block)
+            members.add('MultiBlock')
+        else:
+            members.add('None' if block is None else type(block).__name__)
+    if 'MultiBlock' in members and nested:
+        members.discard('MultiBlock')
+        members.add(_multiblock_type_str(nested, depth + 1))
+    if not members:
+        return 'MultiBlock'
+    ordered = sorted(members - {'None'}) + sorted(members & {'None'})
+    return f'MultiBlock[{" | ".join(ordered)}]'
+
+
+def _dataset_type_str(dataset: Any) -> str:
+    """Return the annotation that describes a loaded dataset, including MultiBlock blocks."""
+    if isinstance(dataset, pv.MultiBlock):
+        return _multiblock_type_str(dataset)
+    return type(dataset).__name__
+
+
+def _annotated_dataset_type(function: FunctionType) -> str:
+    """Return the dataset part of a function's return annotation, without path or texture types."""
+    annotation = _annotation_str(inspect.signature(function).return_annotation)
+    non_dataset = {'str', 'tuple[str, ...]', 'Texture'}
+    return ' | '.join(m for m in _split_union(annotation) if m not in non_dataset)
+
+
+def _annotation_rst(annotation: str) -> str:
+    """Render an annotation as RST, linking each class name to its documentation."""
+
+    def link(match: re.Match[str]) -> str:
+        """Return a class reference for a PyVista or NumPy class name, or a literal otherwise."""
+        name = match.group().removeprefix('pv.')
+        cls = getattr(pv, name, None) or getattr(np, name, None)
+        if isinstance(cls, type):
+            return f':class:`~{_get_fullname(cls)}`'
+        return f'``{match.group()}``'
+
+    rst = re.sub(r'[\w.]+', link, annotation)
+    # inline markup cannot end directly before '[', so separate them with an escaped space
+    return rst.replace('`[', '`\\ [')
 
 
 def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
     """Return the dataset type an example loads and the type ``load=False`` gives back."""
-    dataset_type = type(card.loader.dataset).__name__
+    dataset_type = _dataset_type_str(card.loader.dataset)
     # `_download_dataset` collapses to a bare path only when there is one to return
     loadable = getattr(card.loader, 'loadable_paths', ())
     return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'

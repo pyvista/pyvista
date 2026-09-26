@@ -1110,10 +1110,10 @@ _dataset_head_2 = _SingleFileDownloadableDatasetLoader('head.vti')
 
 
 @overload
-def download_bolt_nut(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_bolt_nut(*, load: Literal[True] = True) -> MultiBlock[ImageData]: ...
 @overload
 def download_bolt_nut(*, load: Literal[False]) -> tuple[str, ...]: ...
-def download_bolt_nut(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
+def download_bolt_nut(*, load: bool = True) -> MultiBlock[ImageData] | tuple[str, ...]:
     """Download bolt nut dataset.
 
     Parameters
@@ -1450,10 +1450,10 @@ _dataset_lidar = _SingleFileDownloadableDatasetLoader('kafadar-lidar-interp.vtp'
 
 
 @overload
-def download_exodus(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_exodus(*, load: Literal[True] = True) -> MultiBlock[MultiBlock[UnstructuredGrid]]: ...
 @overload
 def download_exodus(*, load: Literal[False]) -> str: ...
-def download_exodus(*, load: bool = True) -> MultiBlock | str:
+def download_exodus(*, load: bool = True) -> MultiBlock[MultiBlock[UnstructuredGrid]] | str:
     """Sample ExodusII data file.
 
     Parameters
@@ -2964,10 +2964,12 @@ _dataset_doorman = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_mug(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_mug(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[UnstructuredGrid | None]]: ...
 @overload
 def download_mug(*, load: Literal[False]) -> str: ...
-def download_mug(*, load: bool = True) -> MultiBlock | str:
+def download_mug(*, load: bool = True) -> MultiBlock[MultiBlock[UnstructuredGrid | None]] | str:
     """Download mug dataset.
 
     Parameters
@@ -3000,10 +3002,14 @@ _dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
 @overload
-def download_parallel_exodus(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_parallel_exodus(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[UnstructuredGrid | None]]: ...
 @overload
 def download_parallel_exodus(*, load: Literal[False]) -> str: ...
-def download_parallel_exodus(*, load: bool = True) -> MultiBlock | str:
+def download_parallel_exodus(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[UnstructuredGrid | None]] | str:
     """Download parallel Exodus dataset.
 
     .. note::
@@ -4333,10 +4339,10 @@ __kitchen_split = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_tetra_dc_mesh(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_tetra_dc_mesh(*, load: Literal[True] = True) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_tetra_dc_mesh(*, load: Literal[False]) -> tuple[str, ...]: ...
-def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
+def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | tuple[str, ...]:
     """Download two meshes defining an electrical inverse problem.
 
     This contains a high resolution forward modeled mesh and a coarse
@@ -5319,10 +5325,12 @@ _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_backward_facing_step(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_backward_facing_step(
+    *, load: Literal[True] = True
+) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_backward_facing_step(*, load: Literal[False]) -> str: ...
-def download_backward_facing_step(*, load: bool = True) -> MultiBlock | str:
+def download_backward_facing_step(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     """Download an ensight gold case of a fluid simulation.
 
     Parameters
@@ -5923,10 +5931,10 @@ _dataset_louis_louvre = _SingleFileDownloadableDatasetLoader('louis.ply')
 
 
 @overload
-def download_cylinder_crossflow(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_cylinder_crossflow(*, load: Literal[True] = True) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_cylinder_crossflow(*, load: Literal[False]) -> str: ...
-def download_cylinder_crossflow(*, load: bool = True) -> MultiBlock | str:
+def download_cylinder_crossflow(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     """Download CFD result for cylinder in cross flow at Re=35.
 
     .. note::
@@ -5978,10 +5986,10 @@ _dataset_cylinder_crossflow = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_naca(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_naca(*, load: Literal[True] = True) -> MultiBlock[StructuredGrid]: ...
 @overload
 def download_naca(*, load: Literal[False]) -> str: ...
-def download_naca(*, load: bool = True) -> MultiBlock | str:
+def download_naca(*, load: bool = True) -> MultiBlock[StructuredGrid] | str:
     """Download NACA airfoil dataset in EnSight format.
 
     .. note::
@@ -6037,10 +6045,10 @@ _dataset_naca = _MultiFileDownloadableDatasetLoader(files_func=_naca_files_func)
 
 
 @overload
-def download_lshape(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_lshape(*, load: Literal[True] = True) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_lshape(*, load: Literal[False]) -> str: ...
-def download_lshape(*, load: bool = True) -> MultiBlock | str:
+def download_lshape(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     """Download LShape dataset in EnSight format.
 
     .. note::
@@ -6095,10 +6103,10 @@ _dataset_lshape = _MultiFileDownloadableDatasetLoader(files_func=_lshape_files_f
 
 
 @overload
-def download_wavy(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_wavy(*, load: Literal[True] = True) -> MultiBlock[StructuredGrid]: ...
 @overload
 def download_wavy(*, load: Literal[False]) -> str: ...
-def download_wavy(*, load: bool = True) -> MultiBlock | str:
+def download_wavy(*, load: bool = True) -> MultiBlock[StructuredGrid] | str:
     """Download PVD file of a 2D wave.
 
     Parameters
@@ -6131,10 +6139,10 @@ _dataset_wavy = _SingleFileDownloadableDatasetLoader('PVD/wavy.zip', target_file
 
 
 @overload
-def download_single_sphere_animation(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_single_sphere_animation(*, load: Literal[True] = True) -> MultiBlock[PolyData]: ...
 @overload
 def download_single_sphere_animation(*, load: Literal[False]) -> str: ...
-def download_single_sphere_animation(*, load: bool = True) -> MultiBlock | str:
+def download_single_sphere_animation(*, load: bool = True) -> MultiBlock[PolyData] | str:
     """Download PVD file for single sphere.
 
     Parameters
@@ -6194,10 +6202,10 @@ _dataset_single_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_dual_sphere_animation(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_dual_sphere_animation(*, load: Literal[True] = True) -> MultiBlock[PolyData]: ...
 @overload
 def download_dual_sphere_animation(*, load: Literal[False]) -> str: ...
-def download_dual_sphere_animation(*, load: bool = True) -> MultiBlock | str:
+def download_dual_sphere_animation(*, load: bool = True) -> MultiBlock[PolyData] | str:
     """Download PVD file for double sphere.
 
     Parameters
@@ -6257,10 +6265,14 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cavity(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_cavity(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[PolyData] | UnstructuredGrid]: ...
 @overload
 def download_cavity(*, load: Literal[False]) -> str: ...
-def download_cavity(*, load: bool = True) -> MultiBlock | str:
+def download_cavity(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[PolyData] | UnstructuredGrid] | str:
     """Download cavity OpenFOAM example.
 
     Retrieved from
@@ -6298,10 +6310,14 @@ _dataset_cavity = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_openfoam_tubes(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_openfoam_tubes(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[PolyData] | UnstructuredGrid]: ...
 @overload
 def download_openfoam_tubes(*, load: Literal[False]) -> str: ...
-def download_openfoam_tubes(*, load: bool = True) -> MultiBlock | str:
+def download_openfoam_tubes(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[PolyData] | UnstructuredGrid] | str:
     """Download tubes OpenFOAM example.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -6503,10 +6519,14 @@ _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_electronics_cooling(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_electronics_cooling(
+    *, load: Literal[True] = True
+) -> MultiBlock[PolyData | UnstructuredGrid]: ...
 @overload
 def download_electronics_cooling(*, load: Literal[False]) -> tuple[str, ...]: ...
-def download_electronics_cooling(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
+def download_electronics_cooling(
+    *, load: bool = True
+) -> MultiBlock[PolyData | UnstructuredGrid] | tuple[str, ...]:
     """Download the electronics cooling example datasets.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -6700,10 +6720,14 @@ _dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
 
 
 @overload
-def download_cgns_structured(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_cgns_structured(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock | StructuredGrid]]]: ...
 @overload
 def download_cgns_structured(*, load: Literal[False]) -> str: ...
-def download_cgns_structured(*, load: bool = True) -> MultiBlock | str:
+def download_cgns_structured(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock | StructuredGrid]]] | str:
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -6746,10 +6770,10 @@ _dataset_cgns_structured = _SingleFileDownloadableDatasetLoader('cgns/sqnz_s.adf
 
 
 @overload
-def download_tecplot_ascii(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_tecplot_ascii(*, load: Literal[True] = True) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_tecplot_ascii(*, load: Literal[False]) -> str: ...
-def download_tecplot_ascii(*, load: bool = True) -> MultiBlock | str:
+def download_tecplot_ascii(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     """Download the single block ASCII Tecplot dataset.
 
     Originally downloaded from Paul Bourke's
@@ -6790,10 +6814,12 @@ _dataset_tecplot_ascii = _SingleFileDownloadableDatasetLoader('tecplot_ascii.dat
 
 
 @overload
-def download_cgns_multi(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_cgns_multi(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[StructuredGrid]]: ...
 @overload
 def download_cgns_multi(*, load: Literal[False]) -> str: ...
-def download_cgns_multi(*, load: bool = True) -> MultiBlock | str:
+def download_cgns_multi(*, load: bool = True) -> MultiBlock[MultiBlock[StructuredGrid]] | str:
     """Download a multielement airfoil with a cell centered solution.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -8436,10 +8462,10 @@ _dataset_coil_magnetic_field = _SingleFileDownloadableDatasetLoader('magpylib/co
 
 
 @overload
-def download_meshio_xdmf(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_meshio_xdmf(*, load: Literal[True] = True) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_meshio_xdmf(*, load: Literal[False]) -> str: ...
-def download_meshio_xdmf(*, load: bool = True) -> MultiBlock | str:
+def download_meshio_xdmf(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     """Download xdmf file created by meshio.
 
     The dataset was created by ``test_time_series`` test function in meshio.
@@ -8618,7 +8644,7 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock: ...
+def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[ImageData | MultiBlock[ImageData]]: ...
 @overload
 def download_whole_body_ct_male(*, load: Literal[False], high_resolution: bool = False) -> str: ...
 # ruff: enable[E501]
@@ -8627,7 +8653,7 @@ def download_whole_body_ct_male(
     *,
     load: bool = True,
     high_resolution: bool = False,
-) -> MultiBlock | str:
+) -> MultiBlock[ImageData | MultiBlock[ImageData]] | str:
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -8961,7 +8987,7 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock: ...
+def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[ImageData | MultiBlock[ImageData]]: ...
 @overload
 def download_whole_body_ct_female(*, load: Literal[False], high_resolution: bool = False) -> str: ...
 # ruff: enable[E501]
@@ -8970,7 +8996,7 @@ def download_whole_body_ct_female(
     *,
     load: bool = True,
     high_resolution: bool = False,
-) -> MultiBlock | str:
+) -> MultiBlock[ImageData | MultiBlock[ImageData]] | str:
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -9149,10 +9175,10 @@ __dataset_whole_body_ct_female_high_res = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_room_cff(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_room_cff(*, load: Literal[True] = True) -> MultiBlock[UnstructuredGrid]: ...
 @overload
 def download_room_cff(*, load: Literal[False]) -> str: ...
-def download_room_cff(*, load: bool = True) -> MultiBlock | str:
+def download_room_cff(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     """Download a room model in CFF format.
 
     .. note::
@@ -9725,10 +9751,12 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 
 
 @overload
-def download_biplane(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_biplane(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[UnstructuredGrid]]: ...
 @overload
 def download_biplane(*, load: Literal[False]) -> str: ...
-def download_biplane(*, load: bool = True) -> MultiBlock | str:
+def download_biplane(*, load: bool = True) -> MultiBlock[MultiBlock[UnstructuredGrid]] | str:
     """Download biplane dataset.
 
     .. warning::
@@ -9866,10 +9894,10 @@ _dataset_warping_spheres = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_teapot_vrml(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_teapot_vrml(*, load: Literal[True] = True) -> MultiBlock[PolyData]: ...
 @overload
 def download_teapot_vrml(*, load: Literal[False]) -> str: ...
-def download_teapot_vrml(*, load: bool = True) -> MultiBlock | str:
+def download_teapot_vrml(*, load: bool = True) -> MultiBlock[PolyData] | str:
     """Download a 2-manifold solid version of the famous teapot example.
 
     The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
@@ -9911,10 +9939,10 @@ _dataset_teapot_vrml = _SingleFileDownloadableDatasetLoader('vrml/teapot.wrl')
 
 
 @overload
-def download_sextant(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_sextant(*, load: Literal[True] = True) -> MultiBlock[PolyData]: ...
 @overload
 def download_sextant(*, load: Literal[False]) -> str: ...
-def download_sextant(*, load: bool = True) -> MultiBlock | str:
+def download_sextant(*, load: bool = True) -> MultiBlock[PolyData] | str:
     """Download the sextant example.
 
     Parameters
@@ -9953,10 +9981,10 @@ _dataset_sextant = _SingleFileDownloadableDatasetLoader('vrml/sextant.wrl')
 
 
 @overload
-def download_grasshopper(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_grasshopper(*, load: Literal[True] = True) -> MultiBlock[PolyData]: ...
 @overload
 def download_grasshopper(*, load: Literal[False]) -> str: ...
-def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
+def download_grasshopper(*, load: bool = True) -> MultiBlock[PolyData] | str:
     """Download the grasshopper example.
 
     .. versionadded:: 0.45
@@ -9999,10 +10027,10 @@ _dataset_grasshopper = _SingleFileDownloadableDatasetLoader('grasshopper/grassho
 
 
 @overload
-def download_flamingo(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_flamingo(*, load: Literal[True] = True) -> MultiBlock[PolyData]: ...
 @overload
 def download_flamingo(*, load: Literal[False]) -> str: ...
-def download_flamingo(*, load: bool = True) -> MultiBlock | str:
+def download_flamingo(*, load: bool = True) -> MultiBlock[PolyData] | str:
     """Download the flamingo example.
 
     .. versionadded:: 0.44.0
@@ -10040,10 +10068,14 @@ _dataset_flamingo = _SingleFileDownloadableDatasetLoader('iflamigm.3ds')
 
 
 @overload
-def download_damaged_helmet(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_damaged_helmet(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[MultiBlock[PolyData]]]: ...
 @overload
 def download_damaged_helmet(*, load: Literal[False]) -> str: ...
-def download_damaged_helmet(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
+def download_damaged_helmet(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[MultiBlock[PolyData]]] | str:  # pragma: no cover
     """Download the damaged helmet example.
 
     Parameters
@@ -10081,10 +10113,14 @@ _dataset_damaged_helmet = _gltf_loader('damaged_helmet')
 
 
 @overload
-def download_gearbox(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_gearbox(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]]: ...
 @overload
 def download_gearbox(*, load: Literal[False]) -> str: ...
-def download_gearbox(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
+def download_gearbox(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]] | str:  # pragma: no cover
     """Download the gearbox example.
 
     Parameters
@@ -10120,10 +10156,14 @@ _dataset_gearbox = _gltf_loader('gearbox')
 
 
 @overload
-def download_avocado(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_avocado(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[MultiBlock[PolyData]]]: ...
 @overload
 def download_avocado(*, load: Literal[False]) -> str: ...
-def download_avocado(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
+def download_avocado(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[MultiBlock[PolyData]]] | str:  # pragma: no cover
     """Download the avocado example.
 
     Parameters
@@ -10159,10 +10199,14 @@ _dataset_avocado = _gltf_loader('avocado')
 
 
 @overload
-def download_milk_truck(*, load: Literal[True] = True) -> MultiBlock: ...
+def download_milk_truck(
+    *, load: Literal[True] = True
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]]: ...
 @overload
 def download_milk_truck(*, load: Literal[False]) -> str: ...
-def download_milk_truck(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
+def download_milk_truck(
+    *, load: bool = True
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]] | str:  # pragma: no cover
     """Download the milk truck example.
 
     Parameters
