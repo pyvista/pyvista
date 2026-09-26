@@ -294,6 +294,7 @@ _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
 _pending_accessors: dict[str, str] = {}
 _failed_accessors: dict[str, str] = {}
+_resolving_accessors: set[str] = set()
 
 
 def _save_registry_state() -> _AccessorRegistryState:
@@ -712,7 +713,8 @@ def _resolve_pending_accessor(name: str) -> bool:
     bool
         ``True`` if a plugin was loaded for ``name`` (and the attribute
         lookup should be retried). ``False`` if no pending plugin
-        matches ``name``.
+        matches ``name``, or if the plugin for ``name`` is already being
+        imported further up the stack.
 
     Raises
     ------
@@ -732,9 +734,13 @@ def _resolve_pending_accessor(name: str) -> bool:
     module_path = _pending_accessors.get(name)
     if module_path is None:
         return False
+    if name in _resolving_accessors:
+        # The plugin module is still executing, so its accessor is not attached yet.
+        return False
     failure = _failed_accessors.get(name)
     if failure is not None:
         raise AttributeError(failure)
+    _resolving_accessors.add(name)
     try:
         import_module(module_path)
     except Exception as exc:
@@ -745,7 +751,9 @@ def _resolve_pending_accessor(name: str) -> bool:
         _failed_accessors[name] = msg
         warn_external(msg)
         raise AttributeError(msg) from exc
-    del _pending_accessors[name]
+    finally:
+        _resolving_accessors.discard(name)
+    _pending_accessors.pop(name, None)
     return True
 
 
