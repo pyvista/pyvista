@@ -35,20 +35,21 @@ from .misc import check_valid_vector
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Scalar as _Scalar
 
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core._typing_core import _NumericArray
 
 
 def Capsule(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     radius: float = 0.5,
     cylinder_length: float = 1.0,
     resolution: int = 30,
@@ -119,8 +120,8 @@ def Capsule(
 
 def Cylinder(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     radius: float = 0.5,
     height: float = 1.0,
     resolution: int = 100,
@@ -197,10 +198,10 @@ def Cylinder(
 
 def CylinderStructured(
     *,
-    radius: float | VectorLike[float] = 0.5,
+    radius: float | VectorLikeFloat = 0.5,
     height: float = 1.0,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     theta_resolution: int = 32,
     z_resolution: int = 10,
 ) -> StructuredGrid:
@@ -308,8 +309,8 @@ def CylinderStructured(
 
 def Arrow(
     *,
-    start: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    start: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     tip_length: float = 0.25,
     tip_radius: float = 0.1,
     tip_resolution: int = 20,
@@ -384,8 +385,8 @@ def Arrow(
 def Sphere(
     *,
     radius: float = 0.5,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
     start_theta: float = 0.0,
@@ -537,9 +538,9 @@ def Sphere(
 
 def StructuredSphere(
     *,
-    radius: float | VectorLike[float] = 0.5,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    radius: float | VectorLikeFloat = 0.5,
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
     start_theta: float = 0.0,
@@ -751,8 +752,8 @@ def SolidSphere(
     start_phi: float = 0.0,
     end_phi: float | None = None,
     phi_resolution: int = 30,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     radians: bool = False,
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
@@ -903,11 +904,11 @@ def SolidSphere(
 
 def SolidSphereGeneric(
     *,
-    radius: VectorLike[float] | None = None,
-    theta: VectorLike[float] | None = None,
-    phi: VectorLike[float] | None = None,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    radius: VectorLikeFloat | None = None,
+    theta: VectorLikeFloat | None = None,
+    phi: VectorLikeFloat | None = None,
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     radians: bool = False,
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
@@ -1044,7 +1045,7 @@ def SolidSphereGeneric(
         msg = 'phi resolution must be 2 or more'
         raise ValueError(msg)
 
-    def _is_sorted(a: NDArray[_Scalar]) -> np.bool_:
+    def _is_sorted(a: _NumericArray) -> np.bool_:
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
@@ -1082,9 +1083,9 @@ def SolidSphereGeneric(
         raise ValueError(msg)
 
     def _spherical_to_cartesian(
-        r: float | VectorLike[float],
-        phi: float | VectorLike[float],
-        theta: float | VectorLike[float],
+        r: float | VectorLikeFloat,
+        phi: float | VectorLikeFloat,
+        theta: float | VectorLikeFloat,
     ) -> NDArray[np.floating]:
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
 
@@ -1103,8 +1104,8 @@ def SolidSphereGeneric(
             ``(n, 3)`` Cartesian coordinate array.
 
         """
-        r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+        r_grid, phi_grid, theta_grid = np.meshgrid(r, phi, theta, indexing='ij')
+        x, y, z = pv.spherical_to_cartesian(r_grid, phi_grid, theta_grid)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     # Optimization: points and cells are built with array arithmetic rather than per-cell
@@ -1280,8 +1281,8 @@ def SolidSphereGeneric(
 
 def Plane(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     i_size: float = 1.0,
     j_size: float = 1.0,
     i_resolution: int = 10,
@@ -1335,8 +1336,8 @@ def Plane(
 
 
 def Line(
-    pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
-    pointb: VectorLike[float] = (0.5, 0.0, 0.0),
+    pointa: VectorLikeFloat = (-0.5, 0.0, 0.0),
+    pointb: VectorLikeFloat = (0.5, 0.0, 0.0),
     *,
     resolution: int = 1,
 ) -> PolyData:
@@ -1385,7 +1386,7 @@ def Line(
     return line
 
 
-def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
+def MultipleLines(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create multiple lines.
 
     Parameters
@@ -1427,8 +1428,8 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
 
 def Tube(
     *,
-    pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
-    pointb: VectorLike[float] = (0.5, 0.0, 0.0),
+    pointa: VectorLikeFloat = (-0.5, 0.0, 0.0),
+    pointb: VectorLikeFloat = (0.5, 0.0, 0.0),
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
@@ -1478,11 +1479,11 @@ def Tube(
 
 def Cube(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     x_length: float = 1.0,
     y_length: float = 1.0,
     z_length: float = 1.0,
-    bounds: VectorLike[float] | None = None,
+    bounds: VectorLikeFloat | None = None,
     clean: bool = True,
     point_dtype: str | None = None,
     points_dtype: str | None = None,
@@ -1585,9 +1586,9 @@ def Cube(
 
 
 def Box(
-    bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+    bounds: VectorLikeFloat = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     *,
-    level: int | VectorLike[int] = 0,
+    level: int | VectorLikeInt = 0,
     quads: bool = True,
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
@@ -1598,7 +1599,7 @@ def Box(
         Specify the bounding box of the cube.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    level : int | VectorLike[int], default: 0
+    level : int | VectorLikeInt, default: 0
         Level of subdivision of the faces.
 
         .. note::
@@ -1645,8 +1646,8 @@ def Box(
 
 def Cone(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     height: float = 1.0,
     radius: float | None = None,
     capping: bool = True,
@@ -1710,9 +1711,9 @@ def Cone(
 
 def Polygon(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     radius: float = 1.0,
-    normal: VectorLike[float] = (0.0, 0.0, 1.0),
+    normal: VectorLikeFloat = (0.0, 0.0, 1.0),
     n_sides: int = 6,
     fill: bool = True,
 ) -> PolyData:
@@ -1756,10 +1757,10 @@ def Polygon(
 
 def Disc(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     inner: float = 0.25,
     outer: float = 0.5,
-    normal: VectorLike[float] = (0.0, 0.0, 1.0),
+    normal: VectorLikeFloat = (0.0, 0.0, 1.0),
     r_res: int = 1,
     c_res: int = 6,
 ) -> PolyData:
@@ -1818,8 +1819,8 @@ def Text3D(
     depth: float | None = None,
     width: float | None = None,
     height: float | None = None,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    normal: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    normal: VectorLikeFloat = (0.0, 0.0, 1.0),
 ) -> PolyData:
     """Create 3D text from a string.
 
@@ -1926,8 +1927,8 @@ def Text3D(
 
 def Wavelet(
     *,
-    extent: VectorLike[float] = (-10, 10, -10, 10, -10, 10),
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    extent: VectorLikeFloat = (-10, 10, -10, 10, -10, 10),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     maximum: float = 255.0,
     x_freq: float = 60.0,
     y_freq: float = 30.0,
@@ -2028,9 +2029,9 @@ def Wavelet(
 
 def CircularArc(
     *,
-    pointa: VectorLike[float],
-    pointb: VectorLike[float],
-    center: VectorLike[float],
+    pointa: VectorLikeFloat,
+    pointb: VectorLikeFloat,
+    center: VectorLikeFloat,
     resolution: int = 100,
     negative: bool = False,
 ) -> PolyData:
@@ -2101,13 +2102,13 @@ def CircularArc(
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
-    pointb = list(pointb)
-    pointb[0] -= 1e-10
-    pointb[1] -= 1e-10
+    point2 = [float(value) for value in pointb]
+    point2[0] -= 1e-10
+    point2[1] -= 1e-10
 
     alg = _vtk.vtkArcSource()
     alg.SetPoint1(*pointa)
-    alg.SetPoint2(*pointb)
+    alg.SetPoint2(*point2)
     alg.SetCenter(*center)
     alg.SetResolution(resolution)
     alg.SetNegative(negative)
@@ -2124,10 +2125,10 @@ def CircularArc(
 
 def CircularArcFromNormal(
     *,
-    center: VectorLike[float],
+    center: VectorLikeFloat,
     resolution: int = 100,
-    normal: VectorLike[float] | None = None,
-    polar: VectorLike[float] | None = None,
+    normal: VectorLikeFloat | None = None,
+    polar: VectorLikeFloat | None = None,
     angle: float | None = None,
 ) -> PolyData:
     """Create a circular arc defined by normal to the plane of the arc, and an angle.
@@ -2214,7 +2215,7 @@ def CircularArcFromNormal(
     return arc
 
 
-def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
+def Pyramid(points: MatrixLikeFloat | None = None) -> UnstructuredGrid:
     """Create a pyramid defined by 5 points.
 
     Parameters
@@ -2276,7 +2277,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     return _apply_points_dtype(wrap(ug))
 
 
-def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
+def Triangle(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create a triangle defined by 3 points.
 
     Parameters
@@ -2315,7 +2316,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
+def Rectangle(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create a rectangle defined by 3 points.
 
     The 3 points must define an orthogonal set of vectors.
@@ -2391,7 +2392,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
+def Quadrilateral(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create a quadrilateral defined by 4 points.
 
     Parameters
@@ -2509,8 +2510,8 @@ def Ellipse(
 
 def Superquadric(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    scale: VectorLike[float] = (1.0, 1.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    scale: VectorLikeFloat = (1.0, 1.0, 1.0),
     size: float = 0.5,
     theta_roundness: float = 1.0,
     phi_roundness: float = 1.0,
@@ -2594,7 +2595,7 @@ def Superquadric(
 
 
 def PlatonicSolid(
-    kind: str = 'tetrahedron', *, radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
+    kind: str = 'tetrahedron', *, radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)
 ) -> PolyData:
     """Create a Platonic solid of a given size.
 
@@ -2647,7 +2648,7 @@ def PlatonicSolid(
     return solid
 
 
-def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Tetrahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create a tetrahedron of a given size.
 
     A tetrahedron is composed of four congruent equilateral triangles.
@@ -2680,7 +2681,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
 
 
-def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Octahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create an octahedron of a given size.
 
     An octahedron is composed of eight congruent equilateral
@@ -2714,7 +2715,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
 
 
-def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Dodecahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create a dodecahedron of a given size.
 
     A dodecahedron is composed of twelve congruent regular pentagons.
@@ -2747,7 +2748,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
 
 
-def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Icosahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create an icosahedron of a given size.
 
     An icosahedron is composed of twenty congruent equilateral
@@ -2782,7 +2783,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
 
 
 def Icosphere(
-    radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0), nsub: int = 3
+    radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0), nsub: int = 3
 ) -> PolyData:
     """Create an icosphere.
 

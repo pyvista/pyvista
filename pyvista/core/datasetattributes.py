@@ -34,8 +34,8 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike
-    from ._typing_core import MatrixLike
+    from ._typing_core import ArrayLikeFloat
+    from ._typing_core import MatrixLikeFloat
     from ._typing_core import _AnyArrayLike
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
@@ -530,9 +530,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return narray.squeeze()
         return narray
 
-    def set_array(
-        self: Self, data: ArrayLike[float], name: str, *, deep_copy: bool = False
-    ) -> None:
+    def set_array(self: Self, data: ArrayLikeFloat, name: str, *, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -551,7 +549,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        data : ArrayLike[float]
+        data : ArrayLikeFloat
             Array of data.
 
         name : str
@@ -603,7 +601,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_scalars(
         self: Self,
-        scalars: ArrayLike[float],
+        scalars: ArrayLikeFloat,
         name: str = 'scalars',
         *,
         deep_copy: bool = False,
@@ -620,7 +618,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        scalars : ArrayLike[float]
+        scalars : ArrayLikeFloat
             Array of data.
 
         name : str, default: 'scalars'
@@ -661,7 +659,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_vectors(
         self: Self,
-        vectors: MatrixLike[float],
+        vectors: MatrixLikeFloat,
         name: str,
         *,
         deep_copy: bool = False,
@@ -676,7 +674,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        vectors : MatrixLike
+        vectors : MatrixLikeFloat
             Data shaped ``(n, 3)`` where n matches the number of points or cells.
 
         name : str
@@ -740,7 +738,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: ArrayLike[float],
+        data: ArrayLikeFloat,
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
@@ -1529,12 +1527,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @active_normals.setter
-    def active_normals(self: Self, normals: MatrixLike[float]) -> None:
+    def active_normals(self: Self, normals: MatrixLikeFloat) -> None:
         """Set the normals.
 
         Parameters
         ----------
-        normals : MatrixLike
+        normals : MatrixLikeFloat
             Normals of this dataset attribute.
 
         """

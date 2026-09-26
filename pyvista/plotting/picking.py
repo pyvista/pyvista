@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.pointset import PolyData
 
     from ._typing import ColorLike
@@ -174,7 +174,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             return pv.wrap(ds)
         return None
 
-    def get_cell(self, picked_point: VectorLike[float]) -> pv.UnstructuredGrid | None:
+    def get_cell(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
         """Get the picked cell of the picked mesh.
 
         Parameters
@@ -197,7 +197,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
 
-    def get_face(self, picked_point: VectorLike[float]) -> pv.UnstructuredGrid | None:
+    def get_face(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
         """Get the picked face of the picked cell.
 
         Parameters
@@ -234,7 +234,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return face
 
-    def get_edge(self, picked_point: VectorLike[float]) -> pv.UnstructuredGrid | None:
+    def get_edge(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
         """Get the picked edge of the picked cell.
 
         Parameters
@@ -266,7 +266,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return edge
 
-    def get_point(self, picked_point: VectorLike[float]) -> PolyData:
+    def get_point(self, picked_point: VectorLikeFloat) -> PolyData:
         """Get the picked point of the picked mesh.
 
         Parameters
@@ -293,7 +293,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             raise PyVistaPickingError(msg)
         return mesh
 
-    def __call__(self, picked_point: VectorLike[float], picker: _DataSetPicker) -> None:
+    def __call__(self, picked_point: VectorLikeFloat, picker: _DataSetPicker) -> None:
         """Perform the pick."""
         self.picker = picker
         mesh = self.get_mesh()
@@ -964,7 +964,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picked_point: VectorLike[float], picker: _DataSetPicker) -> None:
+        def _end_pick_event(picked_point: VectorLikeFloat, picker: _DataSetPicker) -> None:
             component = self_()
             if component is None:
                 return
@@ -1887,7 +1887,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         the_points = []
 
-        def _the_callback(picked_point: VectorLike[float], picker: _vtk.vtkPicker) -> None:
+        def _the_callback(picked_point: VectorLikeFloat, picker: _vtk.vtkPicker) -> None:
             component = self_()
             if component is None:
                 return
@@ -2017,7 +2017,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self.picked_geodesic = pv.PolyData()
 
-        def _the_callback(picked_point: VectorLike[float], picker: _vtk.vtkPicker) -> None:
+        def _the_callback(picked_point: VectorLikeFloat, picker: _vtk.vtkPicker) -> None:
             component = self_()
             if component is None:
                 return
@@ -2096,7 +2096,7 @@ class PickingComponent(_NoNewAttrMixin):
         /,
         callback: Callable[..., None] | None = None,
         *,
-        normal: VectorLike[float] = (0.0, 0.0, 1.0),
+        normal: VectorLikeFloat = (0.0, 0.0, 1.0),
         width: float | None = None,
         show_message: bool | str = True,
         font_size: int = 18,

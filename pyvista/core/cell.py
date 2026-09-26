@@ -28,15 +28,15 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Scalar as _Scalar
     from typing_extensions import Self
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
 
     from ._typing_core import CellsLike
-    from ._typing_core import MatrixLike
-    from ._typing_core import VectorLike
+    from ._typing_core import MatrixLikeInt
+    from ._typing_core import VectorLikeInt
+    from ._typing_core import _NumericArray
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
@@ -659,7 +659,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-def _expected_legacy_cell_array_size(cells: NDArray[_Scalar]) -> int | None:
+def _expected_legacy_cell_array_size(cells: _NumericArray) -> int | None:
     """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
 
     Returns ``None`` if a negative point count makes the layout uninterpretable.
@@ -819,7 +819,7 @@ class CellArray(
         return _get_offsets(self)
 
     @cell_offsets.setter
-    def cell_offsets(self: Self, offsets: VectorLike[int]) -> None:
+    def cell_offsets(self: Self, offsets: VectorLikeInt) -> None:
         _set_cell_array_data(self, offsets, self.cell_connectivity)
 
     @property
@@ -879,7 +879,7 @@ class CellArray(
         return _get_connectivity(self)
 
     @cell_connectivity.setter
-    def cell_connectivity(self: Self, connectivity: VectorLike[int]) -> None:
+    def cell_connectivity(self: Self, connectivity: VectorLikeInt) -> None:
         _set_cell_array_data(self, self.cell_offsets, connectivity)
 
     @property
@@ -940,8 +940,8 @@ class CellArray(
 
     def _set_data(
         self: Self,
-        offsets: MatrixLike[int],
-        connectivity: MatrixLike[int],
+        offsets: MatrixLikeInt,
+        connectivity: MatrixLikeInt,
         *,
         deep: bool = False,
     ) -> None:
@@ -974,7 +974,7 @@ class CellArray(
     def _set_data_fixed_size(
         self: Self,
         cell_size: int,
-        connectivity: MatrixLike[int],
+        connectivity: MatrixLikeInt,
         *,
         deep: bool = False,
     ) -> None:
@@ -994,8 +994,8 @@ class CellArray(
 
     @staticmethod
     def from_arrays(
-        offsets: MatrixLike[int],
-        connectivity: MatrixLike[int],
+        offsets: MatrixLikeInt,
+        connectivity: MatrixLikeInt,
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1003,10 +1003,10 @@ class CellArray(
 
         Parameters
         ----------
-        offsets : MatrixLike[int]
+        offsets : MatrixLikeInt
             Offsets array of length ``n_cells + 1``.
 
-        connectivity : MatrixLike[int]
+        connectivity : MatrixLikeInt
             Connectivity array.
 
         deep : bool, default: False
@@ -1043,7 +1043,7 @@ class CellArray(
     @classmethod
     def from_regular_cells(
         cls: type[CellArray],
-        cells: MatrixLike[int],
+        cells: MatrixLikeInt,
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1099,12 +1099,14 @@ class CellArray(
         if _SUPPORTS_FIXED_SIZE_STORAGE:
             cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
         else:
-            offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+            offsets = cell_size * cast(
+                'NDArray[np.signedinteger]', np.arange(n_cells + 1, dtype=pv.ID_TYPE)
+            )
             cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLikeInt) -> CellArray:
         """Construct a ``CellArray`` from cells which may have different sizes.
 
         Use this method when the cells have varying numbers of points, for example, a
@@ -1216,8 +1218,8 @@ def _validate_offsets_connectivity(
 
 def _set_cell_array_data(
     cellarr: CellArray,
-    offsets: VectorLike[int],
-    connectivity: VectorLike[int],
+    offsets: VectorLikeInt,
+    connectivity: VectorLikeInt,
 ) -> None:
     """Validate ``offsets`` and ``connectivity`` and store them in ``cellarr``.
 
@@ -1246,7 +1248,7 @@ def _set_cell_array_data(
         cellarr._set_data(offsets_array, connectivity_array, deep=True)
 
 
-def _make_cell_array(offsets: VectorLike[int], connectivity: VectorLike[int]) -> CellArray:
+def _make_cell_array(offsets: VectorLikeInt, connectivity: VectorLikeInt) -> CellArray:
     """Build a validated :class:`CellArray` from offsets and connectivity."""
     cellarr = CellArray()
     _set_cell_array_data(cellarr, offsets, connectivity)

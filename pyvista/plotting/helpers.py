@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.dataset import DataSet
 
     from ._typing import ColorLike
@@ -40,8 +40,8 @@ _VIEW_VECTORS: dict[_ViewOptions, tuple[tuple[int, int, int], tuple[int, int, in
 
 
 def plot_arrows(
-    cent: VectorLike[float] | MatrixLike[float],
-    direction: VectorLike[float] | MatrixLike[float],
+    cent: VectorLikeFloat | MatrixLikeFloat,
+    direction: VectorLikeFloat | MatrixLikeFloat,
     **kwargs: Any,
 ) -> Any:
     """Plot arrows as vectors.

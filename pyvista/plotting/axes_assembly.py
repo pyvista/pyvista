@@ -44,9 +44,10 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
@@ -78,8 +79,8 @@ class _AxesPropTuple(NamedTuple):
 class _OrthogonalPlanesKwargs(TypedDict):
     """Keyword arguments accepted by the orthogonal planes source."""
 
-    bounds: VectorLike[float]
-    resolution: int | VectorLike[int]
+    bounds: VectorLikeFloat
+    resolution: int | VectorLikeInt
     normal_sign: Literal['+', '-'] | Sequence[str]
 
 
@@ -128,16 +129,16 @@ class _XYZAssembly(  # numpydoc ignore=PR01
         labels: _LabelSequence | None,
         label_color: ColorLike,
         show_labels: bool,
-        label_position: float | VectorLike[float] | None,
+        label_position: float | VectorLikeFloat | None,
         label_size: int,
         x_color: ColorLike | Sequence[ColorLike] | None,
         y_color: ColorLike | Sequence[ColorLike] | None,
         z_color: ColorLike | Sequence[ColorLike] | None,
-        position: VectorLike[float],
-        orientation: VectorLike[float],
-        origin: VectorLike[float],
-        scale: float | VectorLike[float],
-        user_matrix: MatrixLike[float] | None,
+        position: VectorLikeFloat,
+        orientation: VectorLikeFloat,
+        origin: VectorLikeFloat,
+        scale: float | VectorLikeFloat,
+        user_matrix: MatrixLikeFloat | None,
         name: str | None = None,
     ) -> None:
         super().__init__()
@@ -283,7 +284,7 @@ class _XYZAssembly(  # numpydoc ignore=PR01
 
     @label_position.setter
     @abstractmethod
-    def label_position(self, position: float | VectorLike[float] | None) -> None: ...
+    def label_position(self, position: float | VectorLikeFloat | None) -> None: ...
 
     @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01
@@ -347,10 +348,10 @@ class AxesAssembly(_XYZAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    shaft_radius : float | VectorLike[float], default: 0.025
+    shaft_radius : float | VectorLikeFloat, default: 0.025
         Radius of the axes shafts.
 
-    shaft_length : float | VectorLike[float], default: 0.8
+    shaft_length : float | VectorLikeFloat, default: 0.8
         Length of the shaft for each axis.
 
     tip_type : str | DataSet, default: 'cone'
@@ -368,10 +369,10 @@ class AxesAssembly(_XYZAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    tip_radius : float | VectorLike[float], default: 0.1
+    tip_radius : float | VectorLikeFloat, default: 0.1
         Radius of the axes tips.
 
-    tip_length : float | VectorLike[float], default: 0.2
+    tip_length : float | VectorLikeFloat, default: 0.2
         Length of the tip for each axis.
 
     symmetric_bounds : bool, default: False
@@ -410,7 +411,7 @@ class AxesAssembly(_XYZAssembly):
     show_labels : bool, default: True
         Show or hide the text labels.
 
-    label_position : float | VectorLike[float], optional
+    label_position : float | VectorLikeFloat, optional
         Position of the text labels along each axis. By default, the labels are
         positioned at the ends of the shafts.
 
@@ -426,23 +427,23 @@ class AxesAssembly(_XYZAssembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
-    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+    position : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Position of the axes in space.
 
-    orientation : VectorLike[float], default: (0, 0, 0)
+    orientation : VectorLikeFloat, default: (0, 0, 0)
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
         around the y-axis first, then the x-axis, and finally the z-axis.
 
-    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+    origin : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
         rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
-    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+    scale : VectorLikeFloat, default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
 
-    user_matrix : MatrixLike[float], optional
+    user_matrix : MatrixLikeFloat, optional
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
@@ -565,11 +566,11 @@ class AxesAssembly(_XYZAssembly):
         self,
         *,
         shaft_type: AxesGeometrySource.GeometryTypes | DataSet = 'cylinder',
-        shaft_radius: float | VectorLike[float] = 0.025,
-        shaft_length: float | VectorLike[float] = 0.8,
+        shaft_radius: float | VectorLikeFloat = 0.025,
+        shaft_length: float | VectorLikeFloat = 0.8,
         tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
-        tip_radius: float | VectorLike[float] = 0.1,
-        tip_length: float | VectorLike[float] = 0.2,
+        tip_radius: float | VectorLikeFloat = 0.1,
+        tip_length: float | VectorLikeFloat = 0.2,
         symmetric_bounds: bool = False,
         scale_mode: ScaleModeOptions = 'default',
         x_label: str | None = None,
@@ -578,16 +579,16 @@ class AxesAssembly(_XYZAssembly):
         labels: _LabelSequence | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
-        label_position: float | VectorLike[float] | None = None,
+        label_position: float | VectorLikeFloat | None = None,
         label_size: int = 50,
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
-        origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
-        user_matrix: MatrixLike[float] | None = None,
+        position: VectorLikeFloat = (0.0, 0.0, 0.0),
+        orientation: VectorLikeFloat = (0.0, 0.0, 0.0),
+        origin: VectorLikeFloat = (0.0, 0.0, 0.0),
+        scale: float | VectorLikeFloat = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLikeFloat | None = None,
         name: str | None = None,
     ) -> None:
         self._scale_mode = _validate_scale_mode(scale_mode)
@@ -683,7 +684,7 @@ class AxesAssembly(_XYZAssembly):
 
     @shaft_length.setter
     @functools.wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
-    def shaft_length(self, length: float | VectorLike[float]) -> None:
+    def shaft_length(self, length: float | VectorLikeFloat) -> None:
         self._shaft_and_tip_geometry_source.shaft_length = length
         self._update_geometry()
 
@@ -695,7 +696,7 @@ class AxesAssembly(_XYZAssembly):
 
     @tip_length.setter
     @functools.wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
-    def tip_length(self, length: float | VectorLike[float]) -> None:
+    def tip_length(self, length: float | VectorLikeFloat) -> None:
         self._shaft_and_tip_geometry_source.tip_length = length
         self._update_geometry()
 
@@ -707,7 +708,7 @@ class AxesAssembly(_XYZAssembly):
 
     @shaft_radius.setter
     @functools.wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
-    def shaft_radius(self, radius: float | VectorLike[float]) -> None:
+    def shaft_radius(self, radius: float | VectorLikeFloat) -> None:
         self._shaft_and_tip_geometry_source.shaft_radius = radius
         self._update_geometry()
 
@@ -719,7 +720,7 @@ class AxesAssembly(_XYZAssembly):
 
     @tip_radius.setter
     @functools.wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
-    def tip_radius(self, radius: float | VectorLike[float]) -> None:
+    def tip_radius(self, radius: float | VectorLikeFloat) -> None:
         self._shaft_and_tip_geometry_source.tip_radius = radius
         self._update_geometry()
 
@@ -755,7 +756,7 @@ class AxesAssembly(_XYZAssembly):
 
     @scale.setter
     @functools.wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
-    def scale(self, scale: float | VectorLike[float]) -> None:
+    def scale(self, scale: float | VectorLikeFloat) -> None:
         _Prop3DMixin.scale.fset(self, scale)  # type: ignore[attr-defined]
         self._update_scale()
 
@@ -937,7 +938,7 @@ class AxesAssembly(_XYZAssembly):
         return tuple(np.add(position, extension).tolist())
 
     @label_position.setter
-    def label_position(self, position: float | VectorLike[float] | None) -> None:
+    def label_position(self, position: float | VectorLikeFloat | None) -> None:
         self._label_position = (
             None
             if position is None
@@ -1177,16 +1178,14 @@ class AxesAssembly(_XYZAssembly):
         return [part_actors[part_][axis_] for part_ in parts for axis_ in axes]
 
     def _get_offset_label_position_vectors(
-        self, position_scalars: VectorLike[float]
+        self, position_scalars: VectorLikeFloat
     ) -> NDArray[np.floating]:
         """Return label positions along each axis, offset radially by the tip radius."""
         source = self._shaft_and_tip_geometry_source
         radial_offset = np.multiply(source.tip_radius, source._anti_distortion_factor)
         return np.diag(position_scalars) + radial_offset * (1 - np.eye(3))
 
-    def _place_labels(
-        self, labels: tuple[Label, Label, Label], position: VectorLike[float]
-    ) -> None:
+    def _place_labels(self, labels: tuple[Label, Label, Label], position: VectorLikeFloat) -> None:
         """Position the labels at the given distance along each axis."""
         vectors = self._get_offset_label_position_vectors(position)
         for label, vector in zip(labels, vectors, strict=True):
@@ -1255,10 +1254,10 @@ class AxesAssemblySymmetric(AxesAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    shaft_radius : float | VectorLike[float], default: 0.025
+    shaft_radius : float | VectorLikeFloat, default: 0.025
         Radius of the axes shafts.
 
-    shaft_length : float | VectorLike[float], default: 0.8
+    shaft_length : float | VectorLikeFloat, default: 0.8
         Length of the shaft for each axis.
 
     tip_type : str | DataSet, default: 'cone'
@@ -1276,10 +1275,10 @@ class AxesAssemblySymmetric(AxesAssembly):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    tip_radius : float | VectorLike[float], default: 0.1
+    tip_radius : float | VectorLikeFloat, default: 0.1
         Radius of the axes tips.
 
-    tip_length : float | VectorLike[float], default: 0.2
+    tip_length : float | VectorLikeFloat, default: 0.2
         Length of the tip for each axis.
 
     scale_mode : 'default', 'anti_distortion', default: 'default'
@@ -1321,7 +1320,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     show_labels : bool, default: True
         Show or hide the text labels.
 
-    label_position : float | VectorLike[float], optional
+    label_position : float | VectorLikeFloat, optional
         Position of the text labels along each axis. By default, the labels are
         positioned at the ends of the shafts.
 
@@ -1337,23 +1336,23 @@ class AxesAssemblySymmetric(AxesAssembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
-    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+    position : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Position of the axes in space.
 
-    orientation : VectorLike[float], default: (0, 0, 0)
+    orientation : VectorLikeFloat, default: (0, 0, 0)
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
         around the y-axis first, then the x-axis, and finally the z-axis.
 
-    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+    origin : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
         rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
-    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+    scale : VectorLikeFloat, default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
 
-    user_matrix : MatrixLike[float], optional
+    user_matrix : MatrixLikeFloat, optional
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
@@ -1416,11 +1415,11 @@ class AxesAssemblySymmetric(AxesAssembly):
         self,
         *,
         shaft_type: AxesGeometrySource.GeometryTypes | DataSet = 'cylinder',
-        shaft_radius: float | VectorLike[float] = 0.025,
-        shaft_length: float | VectorLike[float] = 0.8,
+        shaft_radius: float | VectorLikeFloat = 0.025,
+        shaft_length: float | VectorLikeFloat = 0.8,
         tip_type: AxesGeometrySource.GeometryTypes | DataSet = 'cone',
-        tip_radius: float | VectorLike[float] = 0.1,
-        tip_length: float | VectorLike[float] = 0.2,
+        tip_radius: float | VectorLikeFloat = 0.1,
+        tip_length: float | VectorLikeFloat = 0.2,
         scale_mode: ScaleModeOptions = 'default',
         x_label: str | _LabelSequence | None = None,
         y_label: str | _LabelSequence | None = None,
@@ -1428,16 +1427,16 @@ class AxesAssemblySymmetric(AxesAssembly):
         labels: _LabelSequence | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
-        label_position: float | VectorLike[float] | None = None,
+        label_position: float | VectorLikeFloat | None = None,
         label_size: int = 50,
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
-        origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
-        user_matrix: MatrixLike[float] | None = None,
+        position: VectorLikeFloat = (0.0, 0.0, 0.0),
+        orientation: VectorLikeFloat = (0.0, 0.0, 0.0),
+        origin: VectorLikeFloat = (0.0, 0.0, 0.0),
+        scale: float | VectorLikeFloat = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLikeFloat | None = None,
         name: str | None = None,
     ) -> None:
         self._scale_mode = _validate_scale_mode(scale_mode)
@@ -1685,7 +1684,7 @@ class PlanesAssembly(_XYZAssembly):
     show_labels : bool, default: True
         Show or hide the text labels.
 
-    label_position : float | VectorLike[float], default: 0.5
+    label_position : float | VectorLikeFloat, default: 0.5
         Normalized relative position of the text labels along each plane's respective
         :attr:`label_edge`. The positions are normalized to have a range of
         ``[-1.0, 1.0]`` such that ``0.0`` is at the center of the edge and ``-1.0`` and
@@ -1729,23 +1728,23 @@ class PlanesAssembly(_XYZAssembly):
     opacity : float, default: 0.3
         Opacity of the planes.
 
-    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+    position : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Position of the planes in space.
 
-    orientation : VectorLike[float], default: (0, 0, 0)
+    orientation : VectorLikeFloat, default: (0, 0, 0)
         Orientation angles of the assembly which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
         around the y-axis first, then the x-axis, and finally the z-axis.
 
-    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+    origin : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Origin of the assembly. This is the point about which all rotations take place.
         The rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
-    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+    scale : VectorLikeFloat, default: (1.0, 1.0, 1.0)
         Scaling factor applied to the assembly.
 
-    user_matrix : MatrixLike[float], optional
+    user_matrix : MatrixLikeFloat, optional
         A 4x4 transformation matrix applied to the assembly. Defaults to the identity
         matrix. The user matrix is the last transformation applied to the actor.
 
@@ -1842,7 +1841,7 @@ class PlanesAssembly(_XYZAssembly):
         labels: _LabelSequence | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
-        label_position: float | VectorLike[float] = 0.5,
+        label_position: float | VectorLikeFloat = 0.5,
         label_edge: Literal['top', 'bottom', 'right', 'left'] | _LabelSequence = 'right',
         label_offset: float = 0.05,
         label_size: int = 50,
@@ -1850,12 +1849,12 @@ class PlanesAssembly(_XYZAssembly):
         x_color: ColorLike | None = None,
         y_color: ColorLike | None = None,
         z_color: ColorLike | None = None,
-        opacity: float | VectorLike[float] = 0.3,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
-        origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
-        user_matrix: MatrixLike[float] | None = None,
+        opacity: float | VectorLikeFloat = 0.3,
+        position: VectorLikeFloat = (0.0, 0.0, 0.0),
+        orientation: VectorLikeFloat = (0.0, 0.0, 0.0),
+        origin: VectorLikeFloat = (0.0, 0.0, 0.0),
+        scale: float | VectorLikeFloat = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLikeFloat | None = None,
         name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ) -> None:
@@ -2124,7 +2123,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: float | VectorLike[float] | None) -> None:
+    def label_position(self, position: float | VectorLikeFloat | None) -> None:
         self._label_position = _validation.validate_array3(
             0.5 if position is None else position,
             broadcast=True,
@@ -2308,7 +2307,7 @@ class PlanesAssembly(_XYZAssembly):
         offset_mag = self.planes.length * self.label_offset
 
         def transform_point(  # numpydoc ignore=PR01
-            point: VectorLike[float],
+            point: VectorLikeFloat,
         ) -> tuple[float, float, float]:
             """Return the point in the assembly's transformed coordinates."""
             x, y, z = (transformation_matrix @ (*point, 1))[:3]

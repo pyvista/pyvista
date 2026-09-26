@@ -45,9 +45,11 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeBool
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
@@ -92,8 +94,8 @@ class ImageDataFilters(DataSetFilters):
     def gaussian_smooth(  # type: ignore[misc]
         self: ImageData,
         *,
-        radius_factor: float | VectorLike[float] = 1.5,
-        std_dev: float | VectorLike[float] = 2.0,
+        radius_factor: float | VectorLikeFloat = 1.5,
+        std_dev: float | VectorLikeFloat = 2.0,
         scalars: str | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
@@ -179,7 +181,7 @@ class ImageDataFilters(DataSetFilters):
     def median_smooth(  # type: ignore[misc]
         self: ImageData,
         *,
-        kernel_size: VectorLike[int] = (3, 3, 3),
+        kernel_size: VectorLikeInt = (3, 3, 3),
         scalars: str | None = None,
         preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
@@ -263,9 +265,9 @@ class ImageDataFilters(DataSetFilters):
 
     def slice_index(  # type: ignore[misc]
         self: ImageData,
-        i: int | VectorLike[int] | slice | None = None,
-        j: int | VectorLike[int] | slice | None = None,
-        k: int | VectorLike[int] | slice | None = None,
+        i: int | VectorLikeInt | slice | None = None,
+        j: int | VectorLikeInt | slice | None = None,
+        k: int | VectorLikeInt | slice | None = None,
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
@@ -286,7 +288,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        i, j, k : int | VectorLike[int] | slice, optional
+        i, j, k : int | VectorLikeInt | slice, optional
             Indices to slice along the ``i``, ``j``, and ``k`` coordinate axes, respectively.
             Specify an integer for a single index, or two integers ``[start, stop)`` for a range
             of indices.
@@ -402,7 +404,7 @@ class ImageDataFilters(DataSetFilters):
         """
 
         def _set_default_start_and_stop(
-            rng: int | VectorLike[int] | slice | None, default_start: int, default_stop: int
+            rng: int | VectorLikeInt | slice | None, default_start: int, default_stop: int
         ) -> int | slice | tuple[int, int] | list[int]:
             """Fill in the open ends of a single-axis index range."""
             if isinstance(rng, slice):
@@ -435,8 +437,8 @@ class ImageDataFilters(DataSetFilters):
 
     def extract_subset(  # type: ignore[misc]
         self: ImageData,
-        voi: VectorLike[int],
-        rate: VectorLike[int] = (1, 1, 1),
+        voi: VectorLikeInt,
+        rate: VectorLikeInt = (1, 1, 1),
         *,
         boundary: bool = False,
         rebase_coordinates: bool = True,
@@ -539,7 +541,7 @@ class ImageDataFilters(DataSetFilters):
 
     @staticmethod
     def _clip_extent(
-        extent: VectorLike[int], *, clip_to: VectorLike[int]
+        extent: VectorLikeInt, *, clip_to: VectorLikeInt
     ) -> NDArray[np.signedinteger]:
         out = np.array(extent)
         for axis in range(3):
@@ -553,17 +555,17 @@ class ImageDataFilters(DataSetFilters):
     def crop(  # type: ignore[misc]
         self: ImageData,
         *,
-        factor: float | VectorLike[float] | None = None,
-        margin: int | VectorLike[int] | None = None,
-        offset: VectorLike[int] | None = None,
-        dimensions: VectorLike[int] | None = None,
-        extent: VectorLike[int] | None = None,
-        normalized_bounds: VectorLike[float] | None = None,
+        factor: float | VectorLikeFloat | None = None,
+        margin: int | VectorLikeInt | None = None,
+        offset: VectorLikeInt | None = None,
+        dimensions: VectorLikeInt | None = None,
+        extent: VectorLikeInt | None = None,
+        normalized_bounds: VectorLikeFloat | None = None,
         mask: str | ImageData | NDArray[np.floating] | Literal[True] | None = None,
-        padding: int | VectorLike[int] | None = None,
-        background_value: float | VectorLike[float] | None = None,
+        padding: int | VectorLikeInt | None = None,
+        background_value: float | VectorLikeFloat | None = None,
         keep_dimensions: bool = False,
-        fill_value: float | VectorLike[float] | None = None,
+        fill_value: float | VectorLikeFloat | None = None,
         rebase_coordinates: bool = False,
         progress_bar: bool = False,
     ) -> ImageData:
@@ -596,12 +598,12 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        factor : float | VectorLike[float], optional
+        factor : float | VectorLikeFloat, optional
             Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
             keep along each axis. Use a single float for uniform cropping or a vector of three
             floats for cropping each xyz-axis independently. The crop is centered in the image.
 
-        margin : int | VectorLike[int], optional
+        margin : int | VectorLikeInt, optional
             Margin to remove from each side of each axis. Specify:
 
             - A single value to remove from all boundaries equally.
@@ -614,22 +616,22 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to remove
               margin from each boundary independently.
 
-        offset : VectorLike[int], optional
+        offset : VectorLikeInt, optional
             Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.offset` indices
             where the cropping region originates. If specified, then ``dimensions`` must also be
             provided.
 
-        dimensions : VectorLike[int], optional
+        dimensions : VectorLikeInt, optional
             Length-3 vector of integers specifying the :attr:`~pyvista.Grid.dimensions` of
             the cropping region. ``offset`` may also be provided, but if it is not, the crop is
             centered in the image.
 
-        extent : VectorLike[int], optional
+        extent : VectorLikeInt, optional
             Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
             the cropping region. If the region extends beyond the extents of this mesh, it is
             clipped to the part this mesh covers.
 
-        normalized_bounds : VectorLike[float], optional
+        normalized_bounds : VectorLikeFloat, optional
             Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
             that define a box relative to the input size. The input is cropped such that it fully
             fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
@@ -647,7 +649,7 @@ class ImageDataFilters(DataSetFilters):
             This mesh will be cropped to the bounds of the foreground values of the array, that is
             values that are not equal to the specified ``background_value``.
 
-        padding : int | VectorLike[int], optional
+        padding : int | VectorLikeInt, optional
             Padding to add to foreground region `before` cropping. Only valid when using a mask to
             crop the image. Specify:
 
@@ -665,7 +667,7 @@ class ImageDataFilters(DataSetFilters):
             extends beyond the actual extents of this mesh, it is clipped and does not extend
             outside the bounds of the image.
 
-        background_value : float | VectorLike[float], optional
+        background_value : float | VectorLikeFloat, optional
             Value or multi-component vector considered to be the background. Only valid when using
             a mask to crop the image.
 
@@ -673,7 +675,7 @@ class ImageDataFilters(DataSetFilters):
             If ``True``, the cropped output is :meth:`padded <pad_image>` with ``fill_value`` to
             ensure the output dimensions match the input.
 
-        fill_value : float | VectorLike[float], optional
+        fill_value : float | VectorLikeFloat, optional
             Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
             a single float or a multi-component vector (for example, RGB vector).
 
@@ -845,7 +847,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_mask(
             *, mask_: str | ImageData | NDArray[np.floating] | bool
-        ) -> VectorLike[int]:
+        ) -> VectorLikeInt:
             """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
             # Validate scalars
@@ -909,7 +911,7 @@ class ImageDataFilters(DataSetFilters):
             # Clip voi so it doesn't extend beyond the image's extent
             return ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
 
-        def _voi_from_normalized_bounds(normalized_bounds_: VectorLike[float]) -> VectorLike[int]:
+        def _voi_from_normalized_bounds(normalized_bounds_: VectorLikeFloat) -> VectorLikeInt:
             """Return the volume of interest for bounds relative to the image size."""
             _raise_error_kwargs_not_none('normalized_bounds')
             bounds = _validation.validate_arrayN(
@@ -939,7 +941,7 @@ class ImageDataFilters(DataSetFilters):
 
             return xmin, xmax, ymin, ymax, zmin, zmax
 
-        def _voi_from_extent(extent_: VectorLike[int]) -> VectorLike[int]:
+        def _voi_from_extent(extent_: VectorLikeInt) -> VectorLikeInt:
             """Return the volume of interest for an explicit extent."""
             _raise_error_kwargs_not_none('extent')
             return _validation.validate_arrayN(
@@ -950,7 +952,7 @@ class ImageDataFilters(DataSetFilters):
                 name='extent',
             )
 
-        def _voi_from_factor(factor_: float | VectorLike[float]) -> VectorLike[int]:
+        def _voi_from_factor(factor_: float | VectorLikeFloat) -> VectorLikeInt:
             """Return the volume of interest for a fraction of the image size."""
             _raise_error_kwargs_not_none('factor')
             valid_factor = _validation.validate_array3(
@@ -972,7 +974,7 @@ class ImageDataFilters(DataSetFilters):
 
             return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
-        def _voi_from_dimensions(dimensions_: VectorLike[int]) -> VectorLike[int]:
+        def _voi_from_dimensions(dimensions_: VectorLikeInt) -> VectorLikeInt:
             """Return the volume of interest centered on the image with the given dimensions."""
             valid_dims = _validation.validate_array3(
                 dimensions_,
@@ -995,7 +997,7 @@ class ImageDataFilters(DataSetFilters):
 
             return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
-        def _voi_from_margin(margin_: int | VectorLike[int]) -> VectorLike[int]:
+        def _voi_from_margin(margin_: int | VectorLikeInt) -> VectorLikeInt:
             """Return the volume of interest left after removing a border."""
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
@@ -1006,8 +1008,8 @@ class ImageDataFilters(DataSetFilters):
             return _pad_extent(self.extent, -padding)
 
         def _voi_from_dimensions_or_offset(
-            dimensions_: VectorLike[int] | None, offset_: VectorLike[int] | None
-        ) -> VectorLike[int]:
+            dimensions_: VectorLikeInt | None, offset_: VectorLikeInt | None
+        ) -> VectorLikeInt:
             """Return the volume of interest for explicit dimensions and offset."""
             _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
             if dimensions_ is None:
@@ -1085,7 +1087,7 @@ class ImageDataFilters(DataSetFilters):
         dilate_value: float = 1.0,
         erode_value: float = 0.0,
         *,
-        kernel_size: VectorLike[int] = (3, 3, 3),
+        kernel_size: VectorLikeInt = (3, 3, 3),
         scalars: str | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
@@ -1188,7 +1190,7 @@ class ImageDataFilters(DataSetFilters):
         scalars: str,
         association: Literal[FieldAssociation.POINT],
         *,
-        binary: bool | VectorLike[float] | None,
+        binary: bool | VectorLikeFloat | None,
     ) -> tuple[float, float] | None:
         if binary is None:
             # Value is unset, so check if the scalars are actually binary
@@ -1219,7 +1221,7 @@ class ImageDataFilters(DataSetFilters):
     def _configure_dilate_erode_alg(  # type: ignore[misc]
         self: ImageData,
         *,
-        kernel_size: int | VectorLike[int],
+        kernel_size: int | VectorLikeInt,
         scalars: str,
         association: Literal[FieldAssociation.POINT],
         binary_values: tuple[float, float] | None,
@@ -1291,10 +1293,10 @@ class ImageDataFilters(DataSetFilters):
 
     def dilate(  # type: ignore[misc]
         self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        kernel_size: int | VectorLikeInt = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLikeFloat | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
         """Morphologically dilate grayscale or binary data.
@@ -1314,7 +1316,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+        kernel_size : int | VectorLikeInt, default: (3, 3, 3)
             Determines the size of the kernel along the xyz-axes. Only non-singleton
             dimensions are dilated, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
             produce the same result for 2D images.
@@ -1322,7 +1324,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], optional
+        binary : bool | VectorLikeFloat, optional
             Control if binary dilation or continuous dilation is used.
 
             If set, :vtk:`vtkImageDilateErode3D` is used to strictly dilate with two values.
@@ -1445,10 +1447,10 @@ class ImageDataFilters(DataSetFilters):
 
     def erode(  # type: ignore[misc]
         self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        kernel_size: int | VectorLikeInt = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLikeFloat | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
         """Morphologically erode grayscale or binary data.
@@ -1468,7 +1470,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+        kernel_size : int | VectorLikeInt, default: (3, 3, 3)
             Determines the size of the kernel along the xyz-axes. Only non-singleton
             dimensions are eroded, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
             produce the same result for 2D images.
@@ -1476,7 +1478,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], optional
+        binary : bool | VectorLikeFloat, optional
             Control if binary erosion or continuous erosion is used.
 
             If set, :vtk:`vtkImageDilateErode3D` is used to strictly erode with two values.
@@ -1603,10 +1605,10 @@ class ImageDataFilters(DataSetFilters):
 
     def open(  # type: ignore[misc]
         self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        kernel_size: int | VectorLikeInt = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLikeFloat | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
         """Perform morphological opening on continuous or binary data.
@@ -1619,7 +1621,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+        kernel_size : int | VectorLikeInt, default: (3, 3, 3)
             Determines the size of the kernel along the xyz-axes. Only non-singleton
             dimensions are opened, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
             produce the same result for 2D images.
@@ -1627,7 +1629,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], optional
+        binary : bool | VectorLikeFloat, optional
             Control if binary opening or continuous opening is used. Refer to
             :meth:`erode` and/or :meth:`dilate` for details about using this keyword.
 
@@ -1713,10 +1715,10 @@ class ImageDataFilters(DataSetFilters):
 
     def close(  # type: ignore[misc]
         self: ImageData,
-        kernel_size: int | VectorLike[int] = (3, 3, 3),
+        kernel_size: int | VectorLikeInt = (3, 3, 3),
         scalars: str | None = None,
         *,
-        binary: bool | VectorLike[float] | None = None,
+        binary: bool | VectorLikeFloat | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
         """Perform morphological closing on continuous or binary data.
@@ -1728,7 +1730,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : int | VectorLike[int], default: (3, 3, 3)
+        kernel_size : int | VectorLikeInt, default: (3, 3, 3)
             Determines the size of the kernel along the xyz-axes. Only non-singleton
             dimensions are closed, for example, a kernel size of ``(3, 3, 1)`` and ``(3, 3, 3)``
             produce the same result for 2D images.
@@ -1736,7 +1738,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
 
-        binary : bool | VectorLike[float], optional
+        binary : bool | VectorLikeFloat, optional
             Control if binary closing or continuous closing is used. Refer to
             :meth:`dilate` and/or :meth:`erode` for details about using this keyword.
 
@@ -1829,7 +1831,7 @@ class ImageDataFilters(DataSetFilters):
 
     def image_threshold(  # type: ignore[misc]
         self: ImageData,
-        threshold: float | VectorLike[float],
+        threshold: float | VectorLikeFloat,
         *,
         in_value: float | None = 1.0,
         out_value: float | None = 0.0,
@@ -2382,8 +2384,8 @@ class ImageDataFilters(DataSetFilters):
         boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
         *,
         background_value: int = 0,
-        select_inputs: int | VectorLike[int] | None = None,
-        select_outputs: int | VectorLike[int] | None = None,
+        select_inputs: int | VectorLikeInt | None = None,
+        select_outputs: int | VectorLikeInt | None = None,
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
@@ -2468,7 +2470,7 @@ class ImageDataFilters(DataSetFilters):
             Background value of the input image. All other values are considered
             as foreground.
 
-        select_inputs : int | VectorLike[int], default: None
+        select_inputs : int | VectorLikeInt, default: None
             Specify label ids to include as inputs to the filter. Labels that are not
             selected are removed from the input *before* generating the surface. By
             default, all label ids are used.
@@ -2486,7 +2488,7 @@ class ImageDataFilters(DataSetFilters):
                 external boundary when only one of the two foreground regions on the
                 boundary is selected.
 
-        select_outputs : int | VectorLike[int], default: None
+        select_outputs : int | VectorLikeInt, default: None
             Specify label ids to include in the output of the filter. Labels that are
             not selected are removed from the output *after* generating the surface. By
             default, all label ids are used.
@@ -2812,7 +2814,7 @@ class ImageDataFilters(DataSetFilters):
             return empty
 
         def _validate_selection(
-            selection: int | VectorLike[int] | None,
+            selection: int | VectorLikeInt | None,
         ) -> NDArray[np.signedinteger]:
             if selection is None:
                 return np.array([], dtype=int)
@@ -3032,7 +3034,7 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         scalars: str | None = None,
         *,
-        dimensionality: VectorLike[bool]
+        dimensionality: VectorLikeBool
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
     ) -> ImageData:
@@ -3090,7 +3092,7 @@ class ImageDataFilters(DataSetFilters):
             By default, all point data arrays at the input are passed through as cell
             data at the output. The ``'vtkGhostType'`` array is always included.
 
-        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
+        dimensionality : VectorLikeBool, Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
             ``'preserve'`` is used by default.
 
@@ -3237,7 +3239,7 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         scalars: str | None = None,
         *,
-        dimensionality: VectorLike[bool]
+        dimensionality: VectorLikeBool
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
     ) -> ImageData:
@@ -3294,7 +3296,7 @@ class ImageDataFilters(DataSetFilters):
             By default, all cell data arrays at the input are passed through as point
             data at the output. The ``'vtkGhostType'`` array is always included.
 
-        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
+        dimensionality : VectorLikeBool, Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
             ``'preserve'`` is used by default.
 
@@ -3400,7 +3402,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         points_to_cells: bool,
         scalars: str | None,
-        dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
+        dimensionality: VectorLikeBool | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
         copy: bool,
     ) -> ImageData:
         """Re-mesh points to cells or vice-versa.
@@ -3417,7 +3419,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str
             If set, only these scalars are passed through.
 
-        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve']
+        dimensionality : VectorLikeBool, Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve']
             Control which dimensions will be modified by the filter.
 
             - Can be specified as a sequence of 3 boolean to allow modification on a per
@@ -3546,10 +3548,10 @@ class ImageDataFilters(DataSetFilters):
 
     def pad_image(  # type: ignore[misc]
         self: ImageData,
-        pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
+        pad_value: float | VectorLikeFloat | Literal['wrap', 'mirror'] = 0.0,
         *,
-        pad_size: int | VectorLike[int] = 1,
-        dimensionality: VectorLike[bool]
+        pad_size: int | VectorLikeInt = 1,
+        dimensionality: VectorLikeBool
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
@@ -3589,7 +3591,7 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
 
-        dimensionality : VectorLike[bool], Literal[1, 2, 3, "1D", "2D", "3D", "preserve"]
+        dimensionality : VectorLikeBool, Literal[1, 2, 3, "1D", "2D", "3D", "preserve"]
             Control which dimensions will be padded by the filter.
             ``'preserve'`` is used by default.
 
@@ -3861,9 +3863,9 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         *,
         scalars: str | None = None,
-        scalar_range: (Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float]) = 'auto',
+        scalar_range: (Literal['auto', 'foreground', 'vtk_default'] | VectorLikeFloat) = 'auto',
         extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
-        point_seeds: (MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None) = None,
+        point_seeds: (MatrixLikeFloat | VectorLikeFloat | _vtk.vtkDataSet | None) = None,
         label_mode: Literal['size', 'constant', 'seeds'] = 'size',
         constant_value: int | None = None,
         inplace: bool = False,
@@ -3893,7 +3895,7 @@ class ImageDataFilters(DataSetFilters):
             Scalars to use to filter points. If ``None`` is provided, the scalars is
             automatically set, if possible.
 
-        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float]
+        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLikeFloat
             Points whose scalars value is within ``'scalar_range'`` are considered for
             connectivity. The bounds are inclusive.
 
@@ -3901,7 +3903,7 @@ class ImageDataFilters(DataSetFilters):
               :meth:`~pyvista.DataSetFilters.connectivity`.
             - ``'foreground'``: includes the full data range except the smallest value.
             - ``'vtk_default'``: default to [``0.5``, ``VTK_DOUBLE_MAX``].
-            - ``VectorLike[float]``: explicitly set the range.
+            - ``VectorLikeFloat``: explicitly set the range.
 
             The bounds are always cast to floats since vtk expects doubles. The scalars
             data are also cast to floats to avoid unexpected behavior arising from implicit
@@ -3915,7 +3917,7 @@ class ImageDataFilters(DataSetFilters):
             If ``'seeded'``, only the regions that include the points defined with
             ``point_seeds`` are extracted.
 
-        point_seeds : MatrixLike[float], VectorLike[float], :vtk:`vtkDataSet`, optional
+        point_seeds : MatrixLikeFloat, VectorLikeFloat, :vtk:`vtkDataSet`, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
             as a :vtk:`vtkDataSet`. Has no effect if ``extraction_mode`` is not
             ``'seeded'``.
@@ -4157,9 +4159,9 @@ class ImageDataFilters(DataSetFilters):
 
     def _validate_dimensional_operation(  # type: ignore[misc]
         self: ImageData,
-        operation_mask: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
+        operation_mask: VectorLikeBool | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
         operator: Callable,  # type: ignore[type-arg]
-        operation_size: int | VectorLike[int],
+        operation_size: int | VectorLikeInt,
     ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
         """Validate dimensional operations (internal helper).
 
@@ -4174,7 +4176,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        operation_mask : VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve']
+        operation_mask : VectorLikeBool, Literal['0D', '1D', '2D', '3D', 'preserve']
             The desired mask to control whether to resize dimensions.
 
             - Can be specified as a sequence of 3 boolean to allow modification on a per
@@ -4196,7 +4198,7 @@ class ImageDataFilters(DataSetFilters):
         operator: Callable
             The operation that will be perform on the dimensions. Must be a :module:`~operator`.
 
-        operation_size : int, VectorLike[int]
+        operation_size : int, VectorLikeInt
             The size of the operation, applied to all dimensions if specified as a ``int``
             or applied on a per dimension basis.
 
@@ -4314,14 +4316,14 @@ class ImageDataFilters(DataSetFilters):
 
     def resample(  # type: ignore[misc]
         self: ImageData,
-        sample_rate: float | VectorLike[float] | None = None,
+        sample_rate: float | VectorLikeFloat | None = None,
         interpolation: _InterpolationOptions = 'nearest',
         *,
         border_mode: _BorderModeOptions = 'clamp',
         reference_image: ImageData | None = None,
-        dimensions: VectorLike[int] | None = None,
-        spacing: float | VectorLike[float] | None = None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        dimensions: VectorLikeInt | None = None,
+        spacing: float | VectorLikeFloat | None = None,
+        rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         anti_aliasing: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
@@ -4370,7 +4372,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        sample_rate : float | VectorLike[float], optional
+        sample_rate : float | VectorLikeFloat, optional
             Sampling rates to use. Can be a single value or vector of three values
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
@@ -4426,7 +4428,7 @@ class ImageDataFilters(DataSetFilters):
                 applied to the result afterwards, so the values are `not` sampled at the
                 reference image's points. Use :meth:`reslice` to sample at those points.
 
-        dimensions : VectorLike[int], optional
+        dimensions : VectorLikeInt, optional
             Set the output :attr:`~pyvista.Grid.dimensions` of the resampled image.
 
             .. note::
@@ -4436,7 +4438,7 @@ class ImageDataFilters(DataSetFilters):
                 desired output cells (since there are ``N`` cells and ``N+1`` points
                 along each axis). See examples.
 
-        spacing : float | VectorLike[float], optional
+        spacing : float | VectorLikeFloat, optional
             Approximate :attr:`~pyvista.ImageData.spacing` of the resampled image. Can
             be a single value or vector of three values for each axis. Values must be
             greater than ``0``. The output dimensions are rounded to integers with
@@ -4446,7 +4448,7 @@ class ImageDataFilters(DataSetFilters):
 
             .. versionadded:: 0.50
 
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+        rounding_func : Callable[VectorLikeFloat, VectorLikeInt], optional
             Control how the dimensions computed from ``spacing`` or ``sample_rate`` are
             rounded to integers. Should accept a length-3 vector containing the
             dimension values along the three directions and return a length-3 vector.
@@ -5346,29 +5348,27 @@ class ImageDataFilters(DataSetFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # split=False
-    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[False] = ...) -> ImageData: ...  # type: ignore[misc]
+    def select_values(self: ImageData, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLikeFloat | None = ..., replacement_value: float | VectorLikeFloat | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[False] = ...) -> ImageData: ...  # type: ignore[misc]
     @overload  # split=True
-    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def select_values(self: ImageData, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLikeFloat | None = ..., replacement_value: float | VectorLikeFloat | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # split not known
-    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: bool = ...) -> ImageData | MultiBlock: ...  # type: ignore[misc]
+    def select_values(self: ImageData, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLikeFloat | None = ..., replacement_value: float | VectorLikeFloat | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: bool = ...) -> ImageData | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def select_values(  # type: ignore[misc]
         self: ImageData,
-        values: (
-            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        )
+        values: (float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str])
         | None = None,
         *,
         ranges: (
-            VectorLike[float]
-            | MatrixLike[float]
-            | dict[str, VectorLike[float]]
+            VectorLikeFloat
+            | MatrixLikeFloat
+            | dict[str, VectorLikeFloat]
             | dict[tuple[float, float], str]
         )
         | None = None,
-        fill_value: float | VectorLike[float] | None = 0,
-        replacement_value: float | VectorLike[float] | None = None,
+        fill_value: float | VectorLikeFloat | None = 0,
+        replacement_value: float | VectorLikeFloat | None = None,
         scalars: str | None = None,
         preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -5390,7 +5390,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        values : float | ArrayLike[float] | dict, optional
+        values : float | ArrayLikeFloat | dict, optional
             Values to select. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5402,7 +5402,7 @@ class ImageDataFilters(DataSetFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : ArrayLike[float] | dict, optional
+        ranges : ArrayLikeFloat | dict, optional
             Ranges of values to select. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -5420,13 +5420,13 @@ class ImageDataFilters(DataSetFilters):
                 - ``[0, float('inf')]`` to select values greater than or equal to zero.
                 - ``[float('-inf'), 0]`` to select values less than or equal to zero.
 
-        fill_value : float | VectorLike[float] | None, default: 0
+        fill_value : float | VectorLikeFloat | None, default: 0
             Value used to fill the image. Can be a single value or a multi-component
             vector. Non-selected parts of the image will have this value. Set this to
             ``None`` to keep the input array's original values for non-selected regions.
             The value must be representable by the input array's data type.
 
-        replacement_value : float | VectorLike[float], optional
+        replacement_value : float | VectorLikeFloat, optional
             Replacement value for the output array. Can be a single value or a
             multi-component vector. If provided, selected values will be replaced with
             the given value. If no value is given, the selected values are retained and
@@ -5615,8 +5615,8 @@ class ImageDataFilters(DataSetFilters):
         invert: bool,
         association: FieldAssociation,
         array_name: str,
-        fill_value: float | VectorLike[float] | None,
-        replacement_value: float | VectorLike[float] | None,
+        fill_value: float | VectorLikeFloat | None,
+        replacement_value: float | VectorLikeFloat | None,
     ) -> ImageData:
         input_array = cast(
             'pv.pyvista_ndarray',
@@ -5690,7 +5690,7 @@ class ImageDataFilters(DataSetFilters):
         mode: _ConcatenateModeOptions | None = None,
         dtype_policy: _ConcatenateDTypePolicyOptions | None = None,
         component_policy: _ConcatenateComponentPolicyOptions | None = None,
-        background_value: float | VectorLike[float] = 0.0,
+        background_value: float | VectorLikeFloat = 0.0,
         resample_kwargs: dict[str, Any] | None = None,
     ) -> ImageData:
         """Combine multiple images into one.
@@ -5772,7 +5772,7 @@ class ImageDataFilters(DataSetFilters):
               For integer ``dtypes``, the opacity is set to the max int representable by the
               ``dtype``; for floats it is set to ``1.0``.
 
-        background_value : float | VectorLike[float], default: 0
+        background_value : float | VectorLikeFloat, default: 0
             Value or multi-component vector to use as background. The output may be padded with
             this value for some ``modes`` when there are mismatched dimensions.
 
@@ -6275,7 +6275,7 @@ def _validate_value_for_dtype(value: Any, dtype: np.dtype[Any], *, name: str) ->
         raise ValueError(msg)
 
 
-def _validate_padding(pad_size: int | VectorLike[int]) -> NDArray[np.signedinteger]:
+def _validate_padding(pad_size: int | VectorLikeInt) -> NDArray[np.signedinteger]:
     """Return the pad size broadcast to a length-6 extent padding."""
     # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
     padding = np.atleast_1d(pad_size)
@@ -6312,7 +6312,7 @@ def _validate_padding(pad_size: int | VectorLike[int]) -> NDArray[np.signedinteg
     return all_pad_sizes
 
 
-def _pad_extent(extent: VectorLike[int], padding: VectorLike[int]) -> NDArray[np.signedinteger]:
+def _pad_extent(extent: VectorLikeInt, padding: VectorLikeInt) -> NDArray[np.signedinteger]:
     """Return the extent grown by the given padding."""
     signs = np.array([-1, 1, -1, 1, -1, 1])
     return np.asarray(extent) + signs * np.asarray(padding)

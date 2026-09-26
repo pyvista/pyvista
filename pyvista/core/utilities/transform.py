@@ -33,10 +33,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import Prop3D
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core.utilities.transformations import _FiveArrays
 
@@ -74,7 +74,7 @@ class Transform(
         Initialize the transform with a transformation or sequence of transformations.
         By default, the transform is initialized as the identity matrix.
 
-    point : VectorLike[float], optional
+    point : VectorLikeFloat, optional
         Point to use when composing transformations.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
@@ -262,7 +262,7 @@ class Transform(
         self: Transform,
         trans: TransformLike | Sequence[TransformLike] | None = None,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] = 'post',
     ) -> None:
         super().__init__()
@@ -283,7 +283,7 @@ class Transform(
         self._decomposition_cache: _FiveArrays | None = None
         self._decomposition_mtime = -1
 
-    def __add__(self: Transform, other: VectorLike[float]) -> Transform:
+    def __add__(self: Transform, other: VectorLikeFloat) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
         try:
             return self._copy_about_origin().translate(other, multiply_mode='post')
@@ -302,7 +302,7 @@ class Transform(
             )
             raise ValueError(msg)
 
-    def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
+    def __radd__(self: Transform, other: VectorLikeFloat) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self._copy_about_origin().translate(other, multiply_mode='pre')
@@ -321,7 +321,7 @@ class Transform(
             )
             raise ValueError(msg)
 
-    def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __mul__(self: Transform, other: float | VectorLikeFloat | TransformLike) -> Transform:
         """:meth:`compose` this transform using post-multiply semantics.
 
         Use :meth:`scale` for single numbers and length-3 vector inputs, and
@@ -351,7 +351,7 @@ class Transform(
                 raise ValueError(msg)
         return transform
 
-    def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
+    def __rmul__(self: Transform, other: float | VectorLikeFloat) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics.
 
         The operation is applied about the origin, not about this transform's
@@ -458,7 +458,7 @@ class Transform(
         return self._point
 
     @point.setter
-    def point(self: Transform, point: VectorLike[float] | None) -> None:
+    def point(self: Transform, point: VectorLikeFloat | None) -> None:
         self._point = (
             None
             if point is None
@@ -527,8 +527,8 @@ class Transform(
 
     def scale(
         self: Transform,
-        *factor: float | VectorLike[float],
-        point: VectorLike[float] | None = None,
+        *factor: float | VectorLikeFloat,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a scale matrix.
@@ -541,12 +541,12 @@ class Transform(
 
         Parameters
         ----------
-        *factor : float | VectorLike[float]
+        *factor : float | VectorLikeFloat
             Scale factors to use. Use a single number for uniform scaling or
             three numbers for non-uniform scaling. The three factors may be
             passed as a single vector (one ``arg``) or an unpacked vector (three ``args``).
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to scale from. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -634,8 +634,8 @@ class Transform(
 
     def reflect(
         self: Transform,
-        *normal: float | VectorLike[float],
-        point: VectorLike[float] | None = None,
+        *normal: float | VectorLikeFloat,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a reflection matrix.
@@ -648,11 +648,11 @@ class Transform(
 
         Parameters
         ----------
-        *normal : float | VectorLike[float]
+        *normal : float | VectorLikeFloat
             Normal direction for reflection. May be a single vector (one ``arg``) or
             unpacked vector (three ``args``).
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -715,7 +715,7 @@ class Transform(
     def flip_x(
         self: Transform,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a reflection about the x-axis.
@@ -728,7 +728,7 @@ class Transform(
 
         Parameters
         ----------
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -781,7 +781,7 @@ class Transform(
     def flip_y(
         self: Transform,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a reflection about the y-axis.
@@ -794,7 +794,7 @@ class Transform(
 
         Parameters
         ----------
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -847,7 +847,7 @@ class Transform(
     def flip_z(
         self: Transform,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a reflection about the z-axis.
@@ -860,7 +860,7 @@ class Transform(
 
         Parameters
         ----------
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -912,7 +912,7 @@ class Transform(
 
     def translate(
         self: Transform,
-        *vector: float | VectorLike[float],
+        *vector: float | VectorLikeFloat,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a translation matrix.
@@ -925,7 +925,7 @@ class Transform(
 
         Parameters
         ----------
-        *vector : float | VectorLike[float]
+        *vector : float | VectorLikeFloat
             Vector to use for translation. May be a single vector (one ``arg``) or
             unpacked vector (three ``args``).
 
@@ -981,7 +981,7 @@ class Transform(
         self: Transform,
         rotation: RotationLike,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a rotation matrix.
@@ -997,7 +997,7 @@ class Transform(
         rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -1082,7 +1082,7 @@ class Transform(
         self: Transform,
         angle: float,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a rotation about the x-axis.
@@ -1098,7 +1098,7 @@ class Transform(
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -1153,7 +1153,7 @@ class Transform(
         self: Transform,
         angle: float,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a rotation about the y-axis.
@@ -1169,7 +1169,7 @@ class Transform(
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -1224,7 +1224,7 @@ class Transform(
         self: Transform,
         angle: float,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a rotation about the z-axis.
@@ -1240,7 +1240,7 @@ class Transform(
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -1293,10 +1293,10 @@ class Transform(
 
     def rotate_vector(
         self: Transform,
-        vector: VectorLike[float],
+        vector: VectorLikeFloat,
         angle: float,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a rotation about a vector.
@@ -1309,13 +1309,13 @@ class Transform(
 
         Parameters
         ----------
-        vector : VectorLike[float]
+        vector : VectorLikeFloat
             Vector to rotate about.
 
         angle : float
             Angle in degrees to rotate about the vector.
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -1367,7 +1367,7 @@ class Transform(
         self: Transform,
         transform: TransformLike,
         *,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Compose a transformation matrix.
@@ -1383,7 +1383,7 @@ class Transform(
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
-        point : VectorLike[float], optional
+        point : VectorLikeFloat, optional
             Point to transform about. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are composed and added to
@@ -1602,14 +1602,14 @@ class Transform(
     @overload
     def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
-    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    def apply(self: Transform, obj: VectorLikeFloat | MatrixLikeFloat, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
     @overload
     def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
     # ruff: enable[E501]
     # fmt: on
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock[Any] | Prop3D,
+        obj: VectorLikeFloat | MatrixLikeFloat | DataSet | MultiBlock[Any] | Prop3D,
         /,
         mode: Literal[
             'points',
@@ -1637,7 +1637,7 @@ class Transform(
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
+        obj : VectorLikeFloat | MatrixLikeFloat | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
 
         mode : str, optional
@@ -1859,7 +1859,7 @@ class Transform(
 
     def apply_to_points(
         self,
-        points: VectorLike[float] | MatrixLike[float],
+        points: VectorLikeFloat | MatrixLikeFloat,
         /,
         *,
         inverse: bool = False,
@@ -1872,7 +1872,7 @@ class Transform(
 
         Parameters
         ----------
-        points : VectorLike[float] | MatrixLike[float]
+        points : VectorLikeFloat | MatrixLikeFloat
             Single point or ``Nx3`` points array to apply the transformation to.
 
         inverse : bool, default: False
@@ -1906,7 +1906,7 @@ class Transform(
 
     def apply_to_vectors(
         self,
-        vectors: VectorLike[float] | MatrixLike[float],
+        vectors: VectorLikeFloat | MatrixLikeFloat,
         /,
         *,
         inverse: bool = False,
@@ -1919,7 +1919,7 @@ class Transform(
 
         Parameters
         ----------
-        vectors : VectorLike[float] | MatrixLike[float]
+        vectors : VectorLikeFloat | MatrixLikeFloat
             Single vector or ``Nx3`` vectors array to apply the transformation to.
 
         inverse : bool, default: False
@@ -2376,7 +2376,7 @@ class Transform(
     def _compose_with_translations(
         self: Transform,
         transform: TransformLike,
-        point: VectorLike[float] | None = None,
+        point: VectorLikeFloat | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:
         translate_before, translate_after = self._get_point_translations(
@@ -2394,7 +2394,7 @@ class Transform(
 
     def _get_point_translations(
         self: Transform,
-        point: VectorLike[float] | None,
+        point: VectorLikeFloat | None,
         multiply_mode: Literal['pre', 'post'] | None,
     ) -> tuple[_vtk.vtkTransform | None, _vtk.vtkTransform | None]:
         point = point if point is not None else self.point

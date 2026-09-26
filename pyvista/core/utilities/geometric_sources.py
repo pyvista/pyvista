@@ -40,8 +40,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
@@ -115,8 +116,8 @@ _IDENTITY3 = np.eye(3)
 
 def _translate_and_orient(
     surf: DataSet,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
 ) -> None:
     """Translate and orient a mesh to a new center and direction.
 
@@ -203,8 +204,8 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
     def __init__(
         self: ConeSource,
         *,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
-        direction: VectorLike[float] = (1.0, 0.0, 0.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
+        direction: VectorLikeFloat = (1.0, 0.0, 0.0),
         height: float = 1.0,
         radius: float | None = None,
         capping: bool = True,
@@ -242,7 +243,7 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: ConeSource, center: VectorLike[float]) -> None:
+    def center(self: ConeSource, center: VectorLikeFloat) -> None:
         """Set the center in ``[x, y, z]``. Axis of the cone passes through this point.
 
         Parameters
@@ -268,7 +269,7 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
         return self.GetDirection()
 
     @direction.setter
-    def direction(self: ConeSource, direction: VectorLike[float]) -> None:
+    def direction(self: ConeSource, direction: VectorLikeFloat) -> None:
         """Set the direction in ``[x, y, z]``. Axis of the cone passes through this point.
 
         Parameters
@@ -474,8 +475,8 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
     def __init__(
         self: CylinderSource,
         *,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
-        direction: VectorLike[float] = (1.0, 0.0, 0.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
+        direction: VectorLikeFloat = (1.0, 0.0, 0.0),
         radius: float = 0.5,
         height: float = 1.0,
         capping: bool = True,
@@ -504,7 +505,7 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
         return self._center
 
     @center.setter
-    def center(self: CylinderSource, center: VectorLike[float]) -> None:
+    def center(self: CylinderSource, center: VectorLikeFloat) -> None:
         """Set location of the centroid in ``[x, y, z]``.
 
         Parameters
@@ -531,7 +532,7 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
         return self._direction
 
     @direction.setter
-    def direction(self: CylinderSource, direction: VectorLike[float]) -> None:
+    def direction(self: CylinderSource, direction: VectorLikeFloat) -> None:
         """Set the direction in ``[x, y, z]``. Axis of the cylinder passes through this point.
 
         Parameters
@@ -689,7 +690,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
 
     """
 
-    def __init__(self: MultipleLinesSource, points: MatrixLike[float] | None = None) -> None:
+    def __init__(self: MultipleLinesSource, points: MatrixLikeFloat | None = None) -> None:
         """Initialize the multiple lines source class."""
         if points is None:
             points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
@@ -709,12 +710,12 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self: MultipleLinesSource, points: MatrixLike[float] | VectorLike[float]) -> None:
+    def points(self: MultipleLinesSource, points: MatrixLikeFloat | VectorLikeFloat) -> None:
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
-        points : VectorLike[float] | MatrixLike[float]
+        points : VectorLikeFloat | MatrixLikeFloat
             List of points defining a broken line.
 
         """
@@ -789,8 +790,8 @@ class Text3DSource(_NoNewAttrMixin):
         depth: float | None = None,
         width: float | None = None,
         height: float | None = None,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
-        normal: VectorLike[float] = (0.0, 0.0, 1.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
+        normal: VectorLikeFloat = (0.0, 0.0, 1.0),
         process_empty_string: bool = True,
     ) -> None:
         """Initialize source."""
@@ -858,7 +859,7 @@ class Text3DSource(_NoNewAttrMixin):
         return self._center
 
     @center.setter
-    def center(self: Text3DSource, center: VectorLike[float]) -> None:
+    def center(self: Text3DSource, center: VectorLikeFloat) -> None:
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
         self._center = valid_center
 
@@ -874,7 +875,7 @@ class Text3DSource(_NoNewAttrMixin):
         return self._normal
 
     @normal.setter
-    def normal(self: Text3DSource, normal: VectorLike[float]) -> None:
+    def normal(self: Text3DSource, normal: VectorLikeFloat) -> None:
         normal_ = _validation.validate_array3(normal, dtype_out=float, to_tuple=True)
         self._normal = normal_
 
@@ -1072,11 +1073,11 @@ class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
     def __init__(
         self: CubeSource,
         *,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
         x_length: float = 1.0,
         y_length: float = 1.0,
         z_length: float = 1.0,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
         point_dtype: str | None = None,
         points_dtype: str | None = None,
     ) -> None:
@@ -1100,7 +1101,7 @@ class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
         return BoundsTuple(*bnds)
 
     @bounds.setter
-    def bounds(self: CubeSource, bounds: VectorLike[float]) -> None:
+    def bounds(self: CubeSource, bounds: VectorLikeFloat) -> None:
         if np.array(bounds).size != 6:
             msg = (
                 'Bounds must be given as length 6 tuple: '
@@ -1122,7 +1123,7 @@ class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: CubeSource, center: VectorLike[float]) -> None:
+    def center(self: CubeSource, center: VectorLikeFloat) -> None:
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -1305,7 +1306,7 @@ class DiscSource(_AlgorithmSource, _vtk.vtkDiskSource):
     def __init__(
         self: DiscSource,
         *,
-        center: VectorLike[float] | None = None,
+        center: VectorLikeFloat | None = None,
         inner: float = 0.25,
         outer: float = 0.5,
         r_res: int = 1,
@@ -1333,7 +1334,7 @@ class DiscSource(_AlgorithmSource, _vtk.vtkDiskSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: DiscSource, center: VectorLike[float]) -> None:
+    def center(self: DiscSource, center: VectorLikeFloat) -> None:
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -1473,8 +1474,8 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
 
     def __init__(
         self: LineSource,
-        pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
-        pointb: VectorLike[float] = (0.5, 0.0, 0.0),
+        pointa: VectorLikeFloat = (-0.5, 0.0, 0.0),
+        pointb: VectorLikeFloat = (0.5, 0.0, 0.0),
         resolution: int = 1,
     ) -> None:
         """Initialize source."""
@@ -1496,7 +1497,7 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
         return self.GetPoint1()
 
     @pointa.setter
-    def pointa(self: LineSource, pointa: VectorLike[float]) -> None:
+    def pointa(self: LineSource, pointa: VectorLikeFloat) -> None:
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -1520,7 +1521,7 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
         return self.GetPoint2()
 
     @pointb.setter
-    def pointb(self: LineSource, pointb: VectorLike[float]) -> None:
+    def pointb(self: LineSource, pointb: VectorLikeFloat) -> None:
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -1652,7 +1653,7 @@ class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
         self: SphereSource,
         *,
         radius: float = 0.5,
-        center: VectorLike[float] | None = None,
+        center: VectorLikeFloat | None = None,
         theta_resolution: int = 30,
         phi_resolution: int = 30,
         start_theta: float = 0.0,
@@ -1689,7 +1690,7 @@ class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: SphereSource, center: VectorLike[float]) -> None:
+    def center(self: SphereSource, center: VectorLikeFloat) -> None:
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -2005,9 +2006,9 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
     def __init__(
         self: PolygonSource,
         *,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
         radius: float = 1.0,
-        normal: VectorLike[float] = (0.0, 0.0, 1.0),
+        normal: VectorLikeFloat = (0.0, 0.0, 1.0),
         n_sides: int = 6,
         fill: bool = True,
     ) -> None:
@@ -2032,7 +2033,7 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: PolygonSource, center: VectorLike[float]) -> None:
+    def center(self: PolygonSource, center: VectorLikeFloat) -> None:
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -2080,7 +2081,7 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
         return self.GetNormal()
 
     @normal.setter
-    def normal(self: PolygonSource, normal: VectorLike[float]) -> None:
+    def normal(self: PolygonSource, normal: VectorLikeFloat) -> None:
         """Set the normal in ``[x, y, z]``.
 
         Parameters
@@ -2290,10 +2291,10 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
         *,
         i_resolution: int = 10,
         j_resolution: int = 10,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
-        origin: VectorLike[float] = (-0.5, -0.5, 0.0),
-        point_a: VectorLike[float] = (0.5, -0.5, 0.0),
-        point_b: VectorLike[float] = (-0.5, 0.5, 0.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
+        origin: VectorLikeFloat = (-0.5, -0.5, 0.0),
+        point_a: VectorLikeFloat = (0.5, -0.5, 0.0),
+        point_b: VectorLikeFloat = (-0.5, 0.5, 0.0),
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -2367,7 +2368,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: PlaneSource, center: VectorLike[float]) -> None:
+    def center(self: PlaneSource, center: VectorLikeFloat) -> None:
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -2391,7 +2392,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self: PlaneSource, origin: VectorLike[float]) -> None:
+    def origin(self: PlaneSource, origin: VectorLikeFloat) -> None:
         """Set the origin in ``[x, y, z]``.
 
         Parameters
@@ -2415,7 +2416,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
         return self.GetPoint1()
 
     @point_a.setter
-    def point_a(self: PlaneSource, point_a: VectorLike[float]) -> None:
+    def point_a(self: PlaneSource, point_a: VectorLikeFloat) -> None:
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -2439,7 +2440,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
         return self.GetPoint2()
 
     @point_b.setter
-    def point_b(self: PlaneSource, point_b: VectorLike[float]) -> None:
+    def point_b(self: PlaneSource, point_b: VectorLikeFloat) -> None:
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -2686,7 +2687,7 @@ class BoxSource(_AlgorithmSource, _vtk.vtkTessellatedBoxSource):
 
     def __init__(
         self: BoxSource,
-        bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        bounds: VectorLikeFloat = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
         level: int = 0,
         quads: bool = True,
@@ -2703,7 +2704,7 @@ class BoxSource(_AlgorithmSource, _vtk.vtkTessellatedBoxSource):
         return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self: BoxSource, bounds: VectorLike[float]) -> None:
+    def bounds(self: BoxSource, bounds: VectorLikeFloat) -> None:
         if np.array(bounds).size != 6:
             msg = (
                 'Bounds must be given as length 6 tuple: '
@@ -2820,8 +2821,8 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
     def __init__(
         self: SuperquadricSource,
         *,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
+        scale: VectorLikeFloat = (1.0, 1.0, 1.0),
         size: float = 0.5,
         theta_roundness: float = 1.0,
         phi_roundness: float = 1.0,
@@ -2855,7 +2856,7 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self: SuperquadricSource, center: VectorLike[float]) -> None:
+    def center(self: SuperquadricSource, center: VectorLikeFloat) -> None:
         """Set center of the superquadric in ``[x, y, z]``.
 
         Parameters
@@ -2879,7 +2880,7 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
         return self.GetScale()
 
     @scale.setter
-    def scale(self: SuperquadricSource, scale: VectorLike[float]) -> None:
+    def scale(self: SuperquadricSource, scale: VectorLikeFloat) -> None:
         """Set scale factors of the superquadric in ``[x, y, z]``.
 
         Parameters
@@ -3201,10 +3202,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    shaft_radius : float | VectorLike[float], default: 0.025
+    shaft_radius : float | VectorLikeFloat, default: 0.025
         Radius of the axes shafts.
 
-    shaft_length : float | VectorLike[float], default: 0.8
+    shaft_length : float | VectorLikeFloat, default: 0.8
         Length of the shaft for each axis.
 
     tip_type : str | pyvista.DataSet, default: 'cone'
@@ -3222,10 +3223,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
         specified. In this case, the dataset must be oriented such that it "points" in
         the positive z direction.
 
-    tip_radius : float | VectorLike[float], default: 0.1
+    tip_radius : float | VectorLikeFloat, default: 0.1
         Radius of the axes tips.
 
-    tip_length : float | VectorLike[float], default: 0.2
+    tip_length : float | VectorLikeFloat, default: 0.2
         Length of the tip for each axis.
 
     symmetric : bool, default: False
@@ -3253,11 +3254,11 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self: AxesGeometrySource,
         *,
         shaft_type: GeometryTypes | DataSet = 'cylinder',
-        shaft_radius: float | VectorLike[float] = 0.025,
-        shaft_length: float | VectorLike[float] = 0.8,
+        shaft_radius: float | VectorLikeFloat = 0.025,
+        shaft_length: float | VectorLikeFloat = 0.8,
         tip_type: GeometryTypes | DataSet = 'cone',
-        tip_radius: float | VectorLike[float] = 0.1,
-        tip_length: float | VectorLike[float] = 0.2,
+        tip_radius: float | VectorLikeFloat = 0.1,
+        tip_length: float | VectorLikeFloat = 0.2,
         symmetric: bool = False,
         symmetric_bounds: bool = False,
     ) -> None:
@@ -3421,7 +3422,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         return self._shaft_length
 
     @shaft_length.setter
-    def shaft_length(self: AxesGeometrySource, length: float | VectorLike[float]) -> None:
+    def shaft_length(self: AxesGeometrySource, length: float | VectorLikeFloat) -> None:
         self._shaft_length = _validation.validate_array3(
             length,
             broadcast=True,
@@ -3456,7 +3457,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         return self._tip_length
 
     @tip_length.setter
-    def tip_length(self: AxesGeometrySource, length: float | VectorLike[float]) -> None:
+    def tip_length(self: AxesGeometrySource, length: float | VectorLikeFloat) -> None:
         self._tip_length = _validation.validate_array3(
             length,
             broadcast=True,
@@ -3486,7 +3487,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         return self._tip_radius
 
     @tip_radius.setter
-    def tip_radius(self: AxesGeometrySource, radius: float | VectorLike[float]) -> None:
+    def tip_radius(self: AxesGeometrySource, radius: float | VectorLikeFloat) -> None:
         self._tip_radius = _validation.validate_array3(
             radius,
             broadcast=True,
@@ -3518,7 +3519,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         return self._shaft_radius
 
     @shaft_radius.setter
-    def shaft_radius(self: AxesGeometrySource, radius: float | VectorLike[float]) -> None:
+    def shaft_radius(self: AxesGeometrySource, radius: float | VectorLikeFloat) -> None:
         self._shaft_radius = _validation.validate_array3(
             radius,
             broadcast=True,
@@ -3769,12 +3770,12 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
     Parameters
     ----------
-    bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    bounds : VectorLikeFloat, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds of the planes in the form:
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
         The generated planes are centered in these bounds.
 
-    resolution : int | VectorLike[int], default: 2
+    resolution : int | VectorLikeInt, default: 2
         Number of points on the planes in the x-y-z directions. Use a single number
         for a uniform resolution, or three values to set independent resolutions.
 
@@ -3824,9 +3825,9 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
     def __init__(
         self: OrthogonalPlanesSource,
-        bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        bounds: VectorLikeFloat = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
-        resolution: int | VectorLike[int] = 2,
+        resolution: int | VectorLikeInt = 2,
         normal_sign: Literal['+', '-'] | Sequence[str] = '+',
         names: Sequence[str] = ('yz', 'zx', 'xy'),
     ) -> None:
@@ -3880,7 +3881,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         return self._resolution
 
     @resolution.setter
-    def resolution(self: OrthogonalPlanesSource, resolution: int | VectorLike[int]) -> None:
+    def resolution(self: OrthogonalPlanesSource, resolution: int | VectorLikeInt) -> None:
         valid_resolution = _validation.validate_array3(
             resolution,
             broadcast=True,
@@ -3908,7 +3909,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         return self._bounds
 
     @bounds.setter
-    def bounds(self: OrthogonalPlanesSource, bounds: VectorLike[float]) -> None:
+    def bounds(self: OrthogonalPlanesSource, bounds: VectorLikeFloat) -> None:
         bounds_tuple = _validation.validate_array(
             bounds,
             dtype_out=float,
@@ -3961,7 +3962,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
             output.set_block_name(i, name)
 
     def push(
-        self: OrthogonalPlanesSource, *distance: float | VectorLike[float]
+        self: OrthogonalPlanesSource, *distance: float | VectorLikeFloat
     ) -> None:  # numpydoc ignore=RT01
         """Translate each plane by the specified distance along its normal.
 
@@ -3970,12 +3971,12 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
         Parameters
         ----------
-        *distance : float | VectorLike[float], default: (0.0, 0.0, 0.0)
+        *distance : float | VectorLikeFloat, default: (0.0, 0.0, 0.0)
             Distance to move each plane.
 
         """
         valid_distance = _validation.validate_array3(
-            cast('VectorLike[float] | MatrixLike[float]', distance),
+            cast('VectorLikeFloat | MatrixLikeFloat', distance),
             broadcast=True,
             dtype_out=float,
             to_tuple=True,
@@ -4024,7 +4025,7 @@ class CubeFacesSource(CubeSource):
 
     Parameters
     ----------
-    center : VectorLike[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
 
     x_length : float, default: 1.0
@@ -4173,11 +4174,11 @@ class CubeFacesSource(CubeSource):
     def __init__(
         self: CubeFacesSource,
         *,
-        center: VectorLike[float] = (0.0, 0.0, 0.0),
+        center: VectorLikeFloat = (0.0, 0.0, 0.0),
         x_length: float = 1.0,
         y_length: float = 1.0,
         z_length: float = 1.0,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
         frame_width: float | None = None,
         shrink_factor: float | None = None,
         explode_factor: float | None = None,

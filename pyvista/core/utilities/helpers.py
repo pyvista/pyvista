@@ -42,8 +42,8 @@ if TYPE_CHECKING:
     from pyvista import Table
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import WrappableType
     from pyvista.core._typing_core import _VolumeArray
 
@@ -161,7 +161,7 @@ def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObj
 @overload
 def wrap(dataset: _VolumeArray, *, validate: bool | None = ...) -> PolyData | ImageData: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: VectorLike[float] | MatrixLike[float], *, validate: bool | None = ...) -> PolyData: ...
+def wrap(dataset: VectorLikeFloat | MatrixLikeFloat, *, validate: bool | None = ...) -> PolyData: ...
 @overload
 def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
@@ -375,7 +375,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDat
     return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
-def generate_plane(normal: VectorLike[float], origin: VectorLike[float]) -> _vtk.vtkPlane:
+def generate_plane(normal: VectorLikeFloat, origin: VectorLikeFloat) -> _vtk.vtkPlane:
     """Return a :vtk:`vtkPlane`.
 
     Parameters
@@ -403,8 +403,8 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]) -> _vtk
 
 def _validate_plane_origin_and_normal(  # noqa: PLR0917
     mesh: DataObject,
-    origin: VectorLike[float] | None,
-    normal: VectorLike[float] | _NormalsLiteral | None,
+    origin: VectorLikeFloat | None,
+    normal: VectorLikeFloat | _NormalsLiteral | None,
     plane: PolyData | None,
     default_normal: _NormalsLiteral,
 ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
@@ -513,8 +513,8 @@ def axis_rotation(
 
 
 def is_inside_bounds(
-    point: float | VectorLike[float],
-    bounds: VectorLike[float],
+    point: float | VectorLikeFloat,
+    bounds: VectorLikeFloat,
 ) -> bool:
     """Check if a point is inside a set of bounds.
 
@@ -522,7 +522,7 @@ def is_inside_bounds(
 
     Parameters
     ----------
-    point : float | VectorLike[float]
+    point : float | VectorLikeFloat
         Three item Cartesian point (that is, ``[x, y, z]``).
 
     bounds : sequence[float]
@@ -546,8 +546,8 @@ def is_inside_bounds(
 
 
 def _is_inside_bounds(
-    point: deque[float | NDArray[_Scalar]],
-    bounds: deque[float | NDArray[_Scalar]],
+    point: deque[float | np.floating | np.integer | np.bool_],
+    bounds: deque[float | np.floating | np.integer | np.bool_],
 ) -> bool:
     """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:

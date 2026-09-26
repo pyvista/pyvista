@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
     from pyvista.core.utilities.arrays import CellLiteral
@@ -336,7 +336,7 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
 def process_opacity(
     *,
     mesh: DataSet,
-    opacity: float | OpacityOptions | str | VectorLike[float] | None,
+    opacity: float | OpacityOptions | str | VectorLikeFloat | None,
     preference: PointLiteral | CellLiteral,
     n_colors: int,
     scalars: NDArray[np.floating] | None,

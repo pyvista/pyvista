@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     _FiveArrays: TypeAlias = tuple[
         NDArray[np.floating],
@@ -32,10 +32,10 @@ _RTOL = 1e-5
 
 
 def axis_angle_rotation(
-    axis: VectorLike[float],
+    axis: VectorLikeFloat,
     angle: float,
     *,
-    point: VectorLike[float] | None = None,
+    point: VectorLikeFloat | None = None,
     deg: bool = True,
 ) -> NDArray[np.float64]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
@@ -168,7 +168,7 @@ def axis_angle_rotation(
 
 
 def reflection(
-    normal: VectorLike[float], point: VectorLike[float] | None = None
+    normal: VectorLikeFloat, point: VectorLikeFloat | None = None
 ) -> NDArray[np.float64]:
     """Return a 4x4 matrix for reflection across a normal about a point.
 

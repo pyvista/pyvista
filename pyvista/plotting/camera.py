@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from .helpers import _ViewOptions
     from .renderer import Renderer
@@ -279,7 +279,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: VectorLike[float]) -> None:
+    def position(self, value: VectorLikeFloat) -> None:
         self.SetPosition(_validation.validate_array3(value, dtype_out=float, to_tuple=True))
         self._elevation = 0.0
         self._azimuth = 0.0
@@ -323,7 +323,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, point: VectorLike[float]) -> None:
+    def focal_point(self, point: VectorLikeFloat) -> None:
         self.SetFocalPoint(_validation.validate_array3(point, dtype_out=float, to_tuple=True))
         self.is_set = True
 
@@ -512,7 +512,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetViewUp()
 
     @up.setter
-    def up(self, vector: VectorLike[float]) -> None:
+    def up(self, vector: VectorLikeFloat) -> None:
         # VTK normalizes the view up vector and silently substitutes (0, 1, 0) when it
         # has no magnitude, so a zero vector must be rejected before SetViewUp.
         if np.allclose(vector, 0.0):
@@ -601,7 +601,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetClippingRange()
 
     @clipping_range.setter
-    def clipping_range(self, points: VectorLike[float]) -> None:
+    def clipping_range(self, points: VectorLikeFloat) -> None:
         near, far = float(points[0]), float(points[1])
         if near > far:
             msg = 'Near point must be lower than the far point.'
@@ -659,7 +659,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetWindowCenter()
 
     @window_center.setter
-    def window_center(self, value: VectorLike[float]) -> None:
+    def window_center(self, value: VectorLikeFloat) -> None:
         center = _validation.validate_array(
             value, must_have_shape=(2,), dtype_out=float, name='window center'
         )
@@ -788,7 +788,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         )
 
     @intrinsic_matrix.setter
-    def intrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
+    def intrinsic_matrix(self, matrix: MatrixLikeFloat) -> None:
         valid = _validation.validate_array(
             matrix, must_have_shape=(3, 3), dtype_out=float, name='intrinsic matrix'
         )
@@ -852,7 +852,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return _OPENCV_FROM_VTK @ view
 
     @extrinsic_matrix.setter
-    def extrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
+    def extrinsic_matrix(self, matrix: MatrixLikeFloat) -> None:
         valid = _validation.validate_transform4x4(matrix, name='extrinsic matrix')
         rotation = _validation.validate_rotation(
             valid[:3, :3], must_have_handedness='right', name='extrinsic matrix rotation'

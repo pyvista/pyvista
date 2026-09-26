@@ -30,16 +30,16 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 if TYPE_CHECKING:
     from numpy.typing import DTypeLike
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Scalar as _Scalar
     from typing_extensions import Self
 
     from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _AnyArrayLike
+    from pyvista.core._typing_core import _NumericArray
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
@@ -128,15 +128,15 @@ def parse_field_choice(
 
 
 def _coerce_pointslike_arg(
-    points: MatrixLike[float] | VectorLike[float],
+    points: MatrixLikeFloat | VectorLikeFloat,
     *,
     copy: bool = False,
-) -> tuple[NDArray[_Scalar], bool]:
+) -> tuple[_NumericArray, bool]:
     """Check and coerce ``arg`` to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : MatrixLike[float] | VectorLike[float]
+    points : MatrixLikeFloat | VectorLikeFloat
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -151,33 +151,31 @@ def _coerce_pointslike_arg(
         Whether the input was a single point in an array-like with shape ``(3,)``.
 
     """
-    if isinstance(points, Sequence):
-        points = np.asarray(points)
-
-    if not isinstance(points, np.ndarray):
+    array: _NumericArray = np.asarray(points) if isinstance(points, Sequence) else points
+    if not isinstance(array, np.ndarray):
         msg = 'Given points must be convertible to a numerical array.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    if points.ndim > 2:
+    if array.ndim > 2:
         msg = 'Array of points must be 1D or 2D'
         raise ValueError(msg)
 
-    if points.ndim == 2:
-        if points.shape[1] != 3:
+    if array.ndim == 2:
+        if array.shape[1] != 3:
             msg = 'Array of points must have three values per point (shape (n, 3))'
             raise ValueError(msg)
         singular = False
 
     else:
-        if points.size != 3:
+        if array.size != 3:
             msg = 'Given point must have three values'
             raise ValueError(msg)
         singular = True
-        points = np.reshape(points, [1, 3])
+        array = np.reshape(array, [1, 3])
 
     if copy:
-        return points.copy(), singular
-    return points, singular
+        return array.copy(), singular
+    return array, singular
 
 
 def copy_vtk_array(array: _vtk.vtkAbstractArray, *, deep: bool = True) -> _vtk.vtkAbstractArray:

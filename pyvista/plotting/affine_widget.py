@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
     from pyvista import Actor
     from pyvista import Renderer
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.plotting.plotter import BasePlotter
 
     from ._typing import ColorLike
@@ -33,7 +33,7 @@ DARK_YELLOW = (0.9647058823529412, 0.7450980392156863, 0)
 GLOBAL_AXES = np.eye(3)
 
 
-def _validate_axes(axes: MatrixLike[float]) -> NDArray[np.floating]:
+def _validate_axes(axes: MatrixLikeFloat) -> NDArray[np.floating]:
     """Validate and normalize input axes.
 
     Axes are expected to follow the right-hand rule (for example, third axis is the
@@ -198,13 +198,13 @@ class AffineWidget3D(_NoNewAttrMixin):
         plotter: BasePlotter,
         actor: Actor,
         *,
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         start: bool = True,
         scale: float = 0.15,
         line_radius: float = 0.02,
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
-        axes: MatrixLike[float] | None = None,
+        axes: MatrixLikeFloat | None = None,
         release_callback: Callable[[NDArray[np.floating]], None] | None = None,
         interact_callback: Callable[[NDArray[np.floating]], None] | None = None,
     ) -> None:
@@ -485,7 +485,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, axes: MatrixLike[float]) -> None:
+    def axes(self, axes: MatrixLikeFloat) -> None:
         mat = np.eye(4)
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
@@ -513,7 +513,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         return cast('tuple[float, float, float]', tuple(self._origin))
 
     @origin.setter
-    def origin(self, value: VectorLike[float]) -> None:
+    def origin(self, value: VectorLikeFloat) -> None:
         origin = np.array(value)
         diff = origin - self._origin
 

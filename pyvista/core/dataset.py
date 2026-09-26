@@ -68,10 +68,10 @@ if TYPE_CHECKING:
     from pyvista import CellType
     from pyvista import PointSet
 
-    from ._typing_core import MatrixLike
-    from ._typing_core import VectorLike
+    from ._typing_core import MatrixLikeFloat
+    from ._typing_core import VectorLikeFloat
+    from ._typing_core import VectorLikeInt
     from ._typing_core import _ArrayLikeOrScalar
-    from ._typing_core._array_like import _NumberT
 
     _Dimensionality = Literal[0, 1, 2, 3]
 
@@ -515,12 +515,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pyvista_ndarray(vtkpts.GetData(), dataset=self)
 
     @points.setter
-    def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
+    def points(self: Self, points: MatrixLikeFloat | VectorLikeFloat | _vtk.vtkPoints) -> None:
         """Set a reference to the points as a NumPy object.
 
         Parameters
         ----------
-        points : MatrixLike[float] | :vtk:`vtkPoints`
+        points : MatrixLikeFloat | VectorLikeFloat | :vtk:`vtkPoints`
             Points as a array object.
 
         """
@@ -1348,7 +1348,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return self.GetCenter()
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         valid_center = _validation.validate_array3(center, name='center')
         self.translate(valid_center - self.center, inplace=True)
 
@@ -1569,7 +1569,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: _ArrayLikeOrScalar[_NumberT] | NDArray[Any],
+        scalars: _ArrayLikeOrScalar | NDArray[Any],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
@@ -2010,16 +2010,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pset
 
     # fmt: off
-    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
-    # ruff: enable[E501]
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLikeInt: ...
     # fmt: on
-    def find_closest_point(
-        self: Self, point: Iterable[float], n: int = 1
-    ) -> int | VectorLike[int]:
+    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLikeInt:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2091,16 +2087,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NDArray[np.signedinteger]: ...
+    def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[False] = False) -> int | NDArray[np.signedinteger]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
+    def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[True]) -> tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NDArray[np.signedinteger] | tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
+    def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: bool = ...) -> int | NDArray[np.signedinteger] | tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
     # ruff: enable[E501]
     # fmt: on
     def find_closest_cell(
         self: Self,
-        point: VectorLike[float] | MatrixLike[float],
+        point: VectorLikeFloat | MatrixLikeFloat,
         *,
         return_closest_point: bool = False,
     ) -> (
@@ -2117,7 +2113,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : VectorLike[float] | MatrixLike[float]
+        point : VectorLikeFloat | MatrixLikeFloat
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2241,7 +2237,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def find_containing_cell(
         self: Self,
-        point: VectorLike[float] | MatrixLike[float],
+        point: VectorLikeFloat | MatrixLikeFloat,
     ) -> int | NDArray[np.signedinteger]:
         """Find index of a cell that contains the given point.
 
@@ -2252,7 +2248,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : VectorLike[float] | MatrixLike[float],
+        point : VectorLikeFloat | MatrixLikeFloat,
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2301,16 +2297,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         (1000,)
 
         """
-        point, singular = _coerce_pointslike_arg(point, copy=False)
+        points, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = self._static_cell_locator
-        containing_cells = [locator.FindCell(node) for node in point]
+        containing_cells = [locator.FindCell(node) for node in points]
         return containing_cells[0] if singular else np.array(containing_cells)
 
     def find_cells_along_line(
         self: Self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         tolerance: float | None = None,
     ) -> NDArray[np.intp]:
         """Find the index of cells whose bounds intersect a line.
@@ -2324,10 +2320,10 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : VectorLike
+        pointa : VectorLikeFloat
             Length 3 coordinate of the start of the line.
 
-        pointb : VectorLike
+        pointb : VectorLikeFloat
             Length 3 coordinate of the end of the line.
 
         tolerance : float, optional
@@ -2387,8 +2383,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def find_cells_intersecting_line(
         self: Self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         tolerance: float | None = None,
     ) -> NDArray[np.signedinteger]:
         """Find the index of cells that intersect a line.
@@ -2442,8 +2438,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def intersect_with_line(
         self: Self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         *,
         tolerance: float | None = None,
         deduplicate_points: bool = False,
@@ -3213,7 +3209,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def point_is_inside_cell(
         self: Self,
         ind: int,
-        point: VectorLike[float] | MatrixLike[float],
+        point: VectorLikeFloat | MatrixLikeFloat,
     ) -> bool | NDArray[np.bool_]:
         """Return whether one or more points are inside a cell.
 
@@ -3224,7 +3220,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : VectorLike[float] | MatrixLike[float]
+        point : VectorLikeFloat | MatrixLikeFloat
             Point or points to query if are inside a cell.
 
         Returns

@@ -25,7 +25,7 @@ from .colors import Color
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
@@ -44,12 +44,12 @@ SUPPORTS_OPENGL: bool | None = None
 SUPPORTS_PLOTTING: bool | None = None
 
 
-def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
+def _validate_vector(vector: VectorLikeFloat, *, name: str) -> tuple[float, float, float]:
     """Return a three-component vector as a tuple of floats."""
     return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
 
 
-def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
+def _validate_viewup(vector: VectorLikeFloat) -> tuple[float, float, float]:
     """Return a view-up vector, which is normalized and so cannot be zero."""
     viewup = _validate_vector(vector, name='viewup')
     if np.allclose(viewup, 0.0):
@@ -246,7 +246,7 @@ def create_axes_marker(
     shaft_length: float = 0.8,
     tip_length: float = 0.2,
     ambient: float = 0.5,
-    label_size: VectorLike[float] = (0.25, 0.1),
+    label_size: VectorLikeFloat = (0.25, 0.1),
 ) -> _vtk.vtkAxesActor:
     """Create an axis actor.
 
@@ -698,7 +698,7 @@ def _opacity_transfer_functions(n_colors: int) -> dict[str, NDArray[np.uint8]]:
 
 
 def opacity_transfer_function(
-    mapping: OpacityOptions | str | VectorLike[float],
+    mapping: OpacityOptions | str | VectorLikeFloat,
     n_colors: int,
     *,
     interpolate: bool = True,

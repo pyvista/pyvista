@@ -137,9 +137,9 @@ if TYPE_CHECKING:
     from pyvista import Texture
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import LineStyle
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
@@ -358,7 +358,7 @@ def _warn_xserver() -> None:  # pragma: no cover
 
 
 def _validate_distortion_coefficients(
-    coefficients: VectorLike[float],
+    coefficients: VectorLikeFloat,
 ) -> tuple[float, float, float, float]:
     """Return the Brown-Conrady coefficients as a tuple of four floats.
 
@@ -1813,7 +1813,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
 
-    def enable_camera_distortion(self, coefficients: VectorLike[float]) -> None:
+    def enable_camera_distortion(self, coefficients: VectorLikeFloat) -> None:
         """Render every actor through a distorted camera model.
 
         Brown-Conrady distortion is applied by a vertex shader replacement on
@@ -1832,7 +1832,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        coefficients : VectorLike[float]
+        coefficients : VectorLikeFloat
             Distortion coefficients ``(k1, k2, p1, p2)``. ``k1`` and ``k2``
             are the radial terms, negative for pincushion and positive for
             barrel; ``p1`` and ``p2`` are the tangential terms. Higher-order
@@ -2098,7 +2098,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(
         self, *args, **kwargs
-    ) -> list[VectorLike[float]]:  # numpydoc ignore=PR01,RT01
+    ) -> list[VectorLikeFloat]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
@@ -3641,7 +3641,7 @@ class BasePlotter(_BoundsSizeMixin):
         point_size: float | None = None,
         line_width: float | None = None,
         line_style: LineStyle | None = None,
-        opacity: float | OpacityOptions | str | VectorLike[float] | None = None,
+        opacity: float | OpacityOptions | str | VectorLikeFloat | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
@@ -4821,11 +4821,11 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
+    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLikeFloat | None = ..., opacity: OpacityOptions | NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
     @overload
-    def add_volume(self, volume: DataSet | NDArray[np.floating], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
+    def add_volume(self, volume: DataSet | NDArray[np.floating], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLikeFloat | None = ..., opacity: OpacityOptions | NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
     @overload
-    def add_volume(self, volume: DataSet | MultiBlock[Any] | NDArray[np.floating], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
+    def add_volume(self, volume: DataSet | MultiBlock[Any] | NDArray[np.floating], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLikeFloat | None = ..., opacity: OpacityOptions | NDArray[np.floating] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
     # ruff: enable[E501]
     # fmt: on
     def add_volume(
@@ -4834,7 +4834,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         scalars: str | NDArray[np.floating] | None = None,
         clim: float | tuple[float, float] | None = None,
-        resolution: VectorLike[float] | None = None,
+        resolution: VectorLikeFloat | None = None,
         opacity: OpacityOptions | NDArray[np.floating] = 'linear',
         n_colors: int = 256,
         cmap: ColormapOptions | LookupTable | None = None,
@@ -5222,7 +5222,7 @@ class BasePlotter(_BoundsSizeMixin):
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 if resolution is None and isinstance(block, pv.ImageData):
-                    block_resolution: VectorLike[float] | None = block.spacing
+                    block_resolution: VectorLikeFloat | None = block.spacing
                 else:
                     block_resolution = resolution
                 color = next(cycler) if multi_colors else cmap
@@ -6484,7 +6484,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_point_labels(
         self,
-        points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
+        points: MatrixLikeFloat | VectorLikeFloat | DataSet | _vtk.vtkAlgorithm,
         labels: Sequence[str | int] | str,
         *,
         italic: bool = False,
@@ -6794,7 +6794,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_point_scalar_labels(
         self,
-        points: MatrixLike[float] | VectorLike[float] | DataSet,
+        points: MatrixLikeFloat | VectorLikeFloat | DataSet,
         labels: list[str | int] | str,
         *,
         fmt: str | None = None,
@@ -6871,7 +6871,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_points(
         self,
-        points: MatrixLike[float] | VectorLike[float] | DataSet,
+        points: MatrixLikeFloat | VectorLikeFloat | DataSet,
         style: Literal['points', 'points_gaussian'] = 'points',
         **kwargs,
     ) -> Actor:
@@ -7279,7 +7279,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         factor: float = 3.0,
         n_points: int = 20,
-        viewup: VectorLike[float] | None = None,
+        viewup: VectorLikeFloat | None = None,
         shift: float = 0.0,
     ) -> pv.PolyData:
         """Generate an orbital path around the data scene.
@@ -7292,7 +7292,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points : int, default: 20
             Number of points on the orbital path.
 
-        viewup : VectorLike[float], optional
+        viewup : VectorLikeFloat, optional
             The normal to the orbital plane.
 
         shift : float, default: 0.0
@@ -7359,9 +7359,9 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         path: pv.PolyData | None = None,
         *,
-        focus: VectorLike[float] | None = None,
+        focus: VectorLikeFloat | None = None,
         step: float = 0.5,
-        viewup: VectorLike[float] | None = None,
+        viewup: VectorLikeFloat | None = None,
         write_frames: bool = False,
         threaded: bool = False,
         progress_bar: bool = False,
@@ -7374,14 +7374,14 @@ class BasePlotter(_BoundsSizeMixin):
             Path of orbital points. The order in the points is the order of
             travel.
 
-        focus : VectorLike[float], optional
+        focus : VectorLikeFloat, optional
             The point of focus the camera. For example ``(0.0, 0.0, 0.0)``.
 
         step : float, default: 0.5
             The timestep between flying to each camera position. Ignored when
             ``plotter.off_screen = True``.
 
-        viewup : VectorLike[float], optional
+        viewup : VectorLikeFloat, optional
             The normal to the orbital plane.
 
         write_frames : bool, default: False
