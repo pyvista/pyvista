@@ -213,4 +213,11 @@ cpos = pv.CameraPosition(
 colored.plot(cpos=cpos)
 
 # %%
+# Every slice here is cut on the dataset's own axes. See
+# :ref:`slice_oblique_anatomy_example` for slicing a structure which runs across them.
+#
+# Despite the name, :meth:`~pyvista.ImageDataFilters.reslice` is not a slicing filter.
+# It samples an image at the points of another image. See :ref:`reslice_example`.
+
+# %%
 # .. tags:: filter

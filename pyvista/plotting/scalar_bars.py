@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import math
+from typing import TYPE_CHECKING
 from typing import Any
 import weakref
 
@@ -19,19 +20,29 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from .colors import Color
 from .tools import parse_font_family
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import ItemsView
+    from collections.abc import KeysView
+    from collections.abc import Sequence
+    from collections.abc import ValuesView
+
+    from ._typing import ColorLike
+    from ._typing import ColormapOptions
+
 # The sizes VTK's constrained layout shrinks a font down to, and grows it up to
 _SMALLEST_FONT = 3
 _LARGEST_FONT = 100
 
 
-def _title_width(text_property, title, dpi):
+def _title_width(text_property: _vtk.vtkTextProperty, title: str, dpi: int) -> float:
     """Return the width in pixels of a title rendered with this text property."""
     bounds = [0, 0, 0, 0]
     _vtk.vtkFreeTypeTools.GetInstance().GetBoundingBox(text_property, title, dpi, bounds)
     return bounds[1] - bounds[0] + 1
 
 
-def _format_label(fmt, value):
+def _format_label(fmt: str, value: float) -> str:
     """Return a tick value formatted the way the scalar bar formats it."""
     try:
         return fmt % value
@@ -39,7 +50,9 @@ def _format_label(fmt, value):
         return fmt.format(value)
 
 
-def _custom_anchor(value, *, first, low, span, log_scale):
+def _custom_anchor(
+    value: float, *, first: float, low: float, span: float, log_scale: bool
+) -> float:
     """Return where along the ramp a custom tick sits, or ``-1`` where it has no place on it."""
     if span <= 0:
         # A flat range draws the one tick at its value, in the middle of the ramp
@@ -49,7 +62,7 @@ def _custom_anchor(value, *, first, low, span, log_scale):
     return (value - low) / span
 
 
-def _label_ticks(scalar_bar):
+def _label_ticks(scalar_bar: _vtk.vtkScalarBarActor) -> list[tuple[float, str]]:
     """Return the anchor along the ramp and the text of every tick label laid out."""
     fmt = scalar_bar.GetLabelFormat()
     lookup_table = scalar_bar.GetLookupTable()
@@ -75,12 +88,14 @@ def _label_ticks(scalar_bar):
     ]
 
 
-def _label_texts(scalar_bar):
+def _label_texts(scalar_bar: _vtk.vtkScalarBarActor) -> list[str]:
     """Return the text of every tick label a scalar bar lays out, drawn or not."""
     return [text for _, text in _label_ticks(scalar_bar)]
 
 
-def _label_size(scalar_bar, text_property, dpi):
+def _label_size(
+    scalar_bar: _vtk.vtkScalarBarActor, text_property: _vtk.vtkTextProperty, dpi: int
+) -> tuple[float, float]:
     """Return the size in pixels of the widest tick label a scalar bar draws."""
     fmt = scalar_bar.GetLabelFormat()
     widest, height = 0.0, 0.0
@@ -95,14 +110,14 @@ def _label_size(scalar_bar, text_property, dpi):
     return widest, height
 
 
-def _title_height(text_property, title, dpi):
+def _title_height(text_property: _vtk.vtkTextProperty, title: str, dpi: int) -> float:
     """Return the height in pixels of a title rendered with this text property."""
     bounds = [0, 0, 0, 0]
     _vtk.vtkFreeTypeTools.GetInstance().GetBoundingBox(text_property, title, dpi, bounds)
     return bounds[3] - bounds[2] + 1
 
 
-def _bar_title_height(scalar_bar, dpi):
+def _bar_title_height(scalar_bar: _vtk.vtkScalarBarActor, dpi: int) -> float:
     """Return the height of a scalar bar's title, ignoring any offset applied to it."""
     probe = _vtk.vtkTextProperty()
     probe.ShallowCopy(scalar_bar.GetTitleTextProperty())
@@ -110,12 +125,12 @@ def _bar_title_height(scalar_bar, dpi):
     return _title_height(probe, scalar_bar.GetTitle(), dpi)
 
 
-def _turned_title(scalar_bar):
+def _turned_title(scalar_bar: _vtk.vtkScalarBarActor) -> bool:
     """Return whether a scalar bar draws its title alongside the bar."""
     return pv.vtk_version_info >= (9, 4, 0) and bool(scalar_bar.GetForceVerticalTitle())
 
 
-def _title_separation(scalar_bar):
+def _title_separation(scalar_bar: _vtk.vtkScalarBarActor) -> float:
     """Return the space a scalar bar leaves between its title and its labels.
 
     Only meaningful for a title drawn across the end of the bar, since a turned
@@ -124,14 +139,14 @@ def _title_separation(scalar_bar):
     return -scalar_bar.GetTitleTextProperty().GetLineOffset()
 
 
-def _rotated_title_offset(bar_width, title_height, pad):
+def _rotated_title_offset(bar_width: float, title_height: float, pad: float) -> int:
     """Return the line offset that clears a rotated title off its bar by ``pad`` pixels."""
     # The offset moves the pen and grows the text bounds, so the title moves two pixels
     # per unit; the constant is measured across font sizes and bar widths
     return round((bar_width + title_height) / 2 - 2 + pad / 2)
 
 
-def _layout_settings(scalar_bar):
+def _layout_settings(scalar_bar: _vtk.vtkScalarBarActor) -> tuple[Any, ...]:
     """Return the box a scalar bar draws, its proportions, and the size of its text."""
     return (
         scalar_bar.GetWidth(),
@@ -146,7 +161,9 @@ def _layout_settings(scalar_bar):
     )
 
 
-def _text_size(viewport, text_property, text, *, font_size):
+def _text_size(
+    viewport: _vtk.vtkViewport, text_property: _vtk.vtkTextProperty, text: str, *, font_size: int
+) -> tuple[float, float]:
     """Return the size in pixels of text as a scalar bar's layout measures it."""
     probe = _vtk.vtkTextActor()
     probe_text = probe.GetTextProperty()
@@ -158,7 +175,7 @@ def _text_size(viewport, text_property, text, *, font_size):
     return size[0], size[1]
 
 
-def _request_layout(scalar_bar, settings):
+def _request_layout(scalar_bar: _vtk.vtkScalarBarActor, settings: tuple[Any, ...]) -> None:
     """Lay a scalar bar out the way it asked to be, for a fit to measure from."""
     (
         width,
@@ -182,7 +199,13 @@ def _request_layout(scalar_bar, settings):
     scalar_bar.GetLabelTextProperty().SetFontSize(label_font)
 
 
-def _fitting_font(size_of, target_width, target_height, *, start):
+def _fitting_font(
+    size_of: Callable[[int], tuple[float, float]],
+    target_width: float,
+    target_height: float,
+    *,
+    start: int,
+) -> int:
     """Return the font size VTK's constrained layout settles on for a target box.
 
     The layout grows the font while the text fits the box and shrinks it while it does
@@ -190,7 +213,7 @@ def _fitting_font(size_of, target_width, target_height, *, start):
     pixel height are told apart by nothing.
     """
 
-    def fits(font_size):
+    def fits(font_size: int) -> bool:
         width, height = size_of(font_size)
         return width <= target_width and height <= target_height
 
@@ -202,7 +225,7 @@ def _fitting_font(size_of, target_width, target_height, *, start):
     return font_size
 
 
-def _shrunk_font(fits, *, start, floor=False):
+def _shrunk_font(fits: Callable[[int], bool], *, start: int, floor: bool = False) -> int:
     """Return the largest font size up to ``start`` that fits.
 
     Where nothing fits, ``floor`` settles for the smallest size there is rather than
@@ -214,7 +237,15 @@ def _shrunk_font(fits, *, start, floor=False):
     return font_size if floor or fits(font_size) else start
 
 
-def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start, seat=None):
+def _fitted_label_font(
+    scalar_bar: _vtk.vtkScalarBarActor,
+    *,
+    vertical: bool,
+    title: str,
+    viewport: _vtk.vtkViewport,
+    start: int,
+    seat: Callable[[int], None] | None = None,
+) -> int:
     """Return the largest label font size up to ``start`` that keeps the labels apart.
 
     VTK centers each tick label on its own tick and, with the font size unconstrained,
@@ -247,7 +278,7 @@ def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start, seat=Non
     thickness = math.ceil(scalar_bar.GetBarRatio() * (box_width if vertical else box_height))
     ramp = int(thickness - _nudge(thickness, text_pad))
 
-    def room_for(font_size):
+    def room_for(font_size: int) -> float:
         # A title seated closer leaves the labels a longer run, so each size is measured
         # against the room it would be drawn in
         if seat is not None:
@@ -270,7 +301,7 @@ def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start, seat=Non
             text_pad=text_pad,
         )
 
-    def labels_fit(font_size):
+    def labels_fit(font_size: int) -> bool:
         # Each label has to clear the label before it
         room = room_for(font_size)
         edge = None
@@ -291,14 +322,18 @@ def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start, seat=Non
     return _shrunk_font(labels_fit, start=start)
 
 
-def _box_pixels(scalar_bar, viewport):
+def _box_pixels(
+    scalar_bar: _vtk.vtkScalarBarActor, viewport: _vtk.vtkViewport
+) -> tuple[float, float]:
     """Return the width and height in pixels VTK measures a scalar bar's box at."""
     corner = scalar_bar.GetPositionCoordinate().GetComputedViewportValue(viewport)
     far_corner = scalar_bar.GetPosition2Coordinate().GetComputedViewportValue(viewport)
     return far_corner[0] - corner[0], far_corner[1] - corner[1]
 
 
-def _set_box_height(scalar_bar, viewport, pixels):
+def _set_box_height(
+    scalar_bar: _vtk.vtkScalarBarActor, viewport: _vtk.vtkViewport, pixels: float
+) -> None:
     """Give a scalar bar the box height VTK measures as this many pixels."""
     viewport_height = viewport.GetSize()[1]
     height = pixels / viewport_height
@@ -308,7 +343,7 @@ def _set_box_height(scalar_bar, viewport, pixels):
     scalar_bar.SetHeight(height + (pixels - measured) / viewport_height)
 
 
-def _nudge(thickness, text_pad):
+def _nudge(thickness: float, text_pad: float) -> float:
     """Return how far VTK thins a bar of this thickness to keep its ramp off the frame.
 
     The nudge is an eighth of the thickness, up to a text pad.
@@ -316,7 +351,7 @@ def _nudge(thickness, text_pad):
     return min(thickness / 8, text_pad)
 
 
-def _lifted_ramp(ramp, text_pad):
+def _lifted_ramp(ramp: float, text_pad: float) -> tuple[float, int]:
     """Return the bar thickness VTK thins to ``ramp`` and how far it lifts the ramp."""
     thickness = ramp
     while int(thickness - _nudge(thickness, text_pad)) != ramp:
@@ -324,7 +359,9 @@ def _lifted_ramp(ramp, text_pad):
     return thickness, int(_nudge(thickness, text_pad))
 
 
-def _swatch_sizes(scalar_bar, length, thickness):
+def _swatch_sizes(
+    scalar_bar: _vtk.vtkScalarBarActor, length: float, thickness: float
+) -> tuple[float, ...]:
     """Return the pad VTK leaves around a bar's swatches and the size of each one."""
     notes = scalar_bar.GetLookupTable().GetNumberOfAnnotatedValues()
     per_note = int(length) // notes if notes else 0
@@ -341,10 +378,10 @@ def _swatch_sizes(scalar_bar, length, thickness):
     return (swatch_pad, *(size if is_drawn else 0 for is_drawn in drawn))
 
 
-def _ramp_room(scalar_bar, width, ramp):
+def _ramp_room(scalar_bar: _vtk.vtkScalarBarActor, width: float, ramp: float) -> float:
     """Return the length in pixels VTK leaves a horizontal ramp beside its swatches."""
     swatch_pad, nan, below, above = _swatch_sizes(scalar_bar, width, ramp)
-    room = int(width - (nan + swatch_pad))
+    room: float = int(width - (nan + swatch_pad))
     if below:
         room = int(room - (below + swatch_pad))
     if above:
@@ -354,7 +391,14 @@ def _ramp_room(scalar_bar, width, ramp):
     return room
 
 
-def _tick_run(scalar_bar, *, height, thickness, title_height, text_pad):
+def _tick_run(
+    scalar_bar: _vtk.vtkScalarBarActor,
+    *,
+    height: float,
+    thickness: float,
+    title_height: float,
+    text_pad: float,
+) -> float:
     """Return the span in pixels a vertical bar lays its tick labels out along.
 
     The ramp is cleared of every swatch and of the title drawn across its end.
@@ -369,7 +413,14 @@ def _tick_run(scalar_bar, *, height, thickness, title_height, text_pad):
     return span
 
 
-def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
+def _constrained_box(
+    scalar_bar: _vtk.vtkScalarBarActor,
+    *,
+    title: str,
+    pad: float,
+    viewport: _vtk.vtkViewport,
+    keep_height: bool = False,
+) -> tuple[float, float, float, int]:
     """Return the box that holds a horizontal bar's text at the font sizes it asked for.
 
     VTK sizes the text of a horizontal bar to the box it is given, growing each font to
@@ -389,20 +440,20 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
     box_width, box_height = _box_pixels(scalar_bar, viewport)
     # The ramp is as thick as the height asked for makes it, whichever pixel the box
     # lands on, so bars asking for the same height get the same ramp
-    thickness = math.ceil(
+    thickness: float = math.ceil(
         scalar_bar.GetHeight() * viewport.GetSize()[1] * scalar_bar.GetBarRatio()
     )
-    ramp = int(thickness - _nudge(thickness, scalar_bar.GetTextPad()))
+    ramp: float = int(thickness - _nudge(thickness, scalar_bar.GetTextPad()))
     labels = _label_texts(scalar_bar)
 
-    def title_sizes(font_size):
+    def title_sizes(font_size: int) -> tuple[float, float]:
         return _text_size(viewport, title_text, title, font_size=font_size)
 
-    def label_sizes(font_size):
+    def label_sizes(font_size: int) -> tuple[float, float]:
         sizes = [_text_size(viewport, label_text, text, font_size=font_size) for text in labels]
         return max(width for width, _ in sizes), max(height for _, height in sizes)
 
-    def title_size(text_pad):
+    def title_size(text_pad: int) -> tuple[float, float]:
         # A title wider than the box is shrunk until it fits
         if not title:
             return 0.0, 0.0
@@ -411,12 +462,12 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
             font_size -= 1
         return title_sizes(font_size)
 
-    def label_slot(text_pad, ramp):
+    def label_slot(text_pad: int, ramp: float) -> int:
         return int(
             (_ramp_room(scalar_bar, box_width, ramp) - text_pad * (len(labels) - 1)) / len(labels)
         )
 
-    def label_size(text_pad, ramp):
+    def label_size(text_pad: int, ramp: float) -> tuple[float, float]:
         # Labels wider than their share of the ramp are shrunk until they fit
         if not labels:
             return 0.0, 0.0
@@ -426,7 +477,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
             font_size -= 1
         return label_sizes(font_size)
 
-    def widest_pad(ramp):
+    def widest_pad(ramp: float) -> int:
         # The pad also spaces the labels along the ramp and the title off the sides of
         # the box, so spare room widens it only as far as it narrows neither
         cap = box_width
@@ -439,14 +490,14 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
 
     # The text is padded off the ramp and the frame by the text pad, and the title off
     # the labels by twice that less the room the ramp is lifted off the frame
-    text_pad = 1
+    text_pad: int = 1
     while 2 * text_pad - line_width - _lifted_ramp(ramp, text_pad)[1] < pad:
         text_pad += 1
     thickness, lift = _lifted_ramp(ramp, text_pad)
-    title_height = title_size(text_pad)[1]
+    title_height: float = title_size(text_pad)[1]
     title_box = math.ceil(title_height)
-    label_height = label_size(text_pad, ramp)[1]
-    height = ramp + 4 * text_pad + title_box + int(label_height)
+    label_height: float = label_size(text_pad, ramp)[1]
+    height: float = ramp + 4 * text_pad + title_box + int(label_height)
 
     if keep_height and box_height < height:
         # Too little room for the text at the sizes asked for, so the title and the
@@ -486,7 +537,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
         spare = box_height - height
         label_height = label_size(text_pad, ramp + spare)[1]
         spare = box_height - (ramp + 4 * text_pad + title_box + int(label_height))
-        text_pad = max(min(text_pad + spare // 4, widest_pad(ramp + spare)), text_pad)
+        text_pad = int(max(min(text_pad + spare // 4, widest_pad(ramp + spare)), text_pad))
         ramp = box_height - 4 * text_pad - title_box - int(label_height)
         thickness, lift = _lifted_ramp(ramp, text_pad)
         height = box_height
@@ -500,7 +551,16 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
     return height, bar_ratio, title_ratio, text_pad
 
 
-def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, viewport):
+def _fitted_box(
+    scalar_bar: _vtk.vtkScalarBarActor,
+    *,
+    vertical: bool,
+    title: str,
+    label_text: _vtk.vtkTextProperty,
+    pad: int,
+    dpi: int,
+    viewport: _vtk.vtkViewport,
+) -> tuple[float, float, float, int, int]:
     """Return the box that encloses a scalar bar's text, and the settings that fill it.
 
     The colour ramp keeps the size it was given; the box grows around it.  Returns the
@@ -528,7 +588,7 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, viewport):
         # offset carries the title and the ramp down together, so the padding between
         # them is the separation VTK leaves rather than anything the offset can buy
         offset = round(0.75 * label_height)
-        separation = pad
+        separation: int = pad
         box_height += offset + pad + text_pad
     else:
         ramp = scalar_bar.GetBarRatio() * box_height
@@ -548,7 +608,7 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, viewport):
     )
 
 
-def _title_pad(fit, scalar_bar):
+def _title_pad(fit: dict[str, Any], scalar_bar: _vtk.vtkScalarBarActor) -> int:
     """Return the padding a fitted bar's title gets, from the size its labels are drawn at."""
     return round(fit['title_pad'] * scalar_bar.GetLabelTextProperty().GetFontSize())
 
@@ -563,17 +623,17 @@ class ScalarBars(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, plotter):
+    def __init__(self, plotter: pv.Plotter) -> None:
         """Initialize ScalarBars."""
         self._plotter = weakref.proxy(plotter)
-        self._scalar_bar_ranges = {}
-        self._scalar_bar_mappers = {}
+        self._scalar_bar_ranges: dict[str, Sequence[float]] = {}
+        self._scalar_bar_mappers: dict[str, list[Any]] = {}
         self._resync_titles: set[str] = set()
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
+        self._scalar_bar_actors: dict[str, _vtk.vtkScalarBarActor] = {}
+        self._scalar_bar_widgets: dict[str, _vtk.vtkScalarBarWidget] = {}
         self._scalar_bar_fits: dict[str, dict[str, Any]] = {}
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all scalar bars and resets all scalar bar properties."""
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
@@ -587,7 +647,7 @@ class ScalarBars(_NoNewAttrMixin):
         """Release scalar-bar state when the owning plotter closes."""
         self.clear()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Nice representation of this class."""
         lines = []
         lines.append('Scalar Bar Title     Interactive')
@@ -597,7 +657,7 @@ class ScalarBars(_NoNewAttrMixin):
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
-    def _stop_fitting(self, title):
+    def _stop_fitting(self, title: str) -> None:
         """Drop the observer that keeps a scalar bar's box fitted to its text."""
         fit = self._scalar_bar_fits.pop(title, None)
         if fit is None:
@@ -606,14 +666,14 @@ class ScalarBars(_NoNewAttrMixin):
         if window is not None:
             window.RemoveObserver(fit['observer'])
 
-    def _apply_fit(self, fit, scalar_bar):
+    def _apply_fit(self, fit: dict[str, Any], scalar_bar: _vtk.vtkScalarBarActor) -> None:
         """Fit a scalar bar's box and labels, or give it back the sizes it asked for."""
         _request_layout(scalar_bar, fit['request'])
         title_text = scalar_bar.GetTitleTextProperty()
         label_text = scalar_bar.GetLabelTextProperty()
         draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
 
-        def fitted_label_font(seat=None):
+        def fitted_label_font(seat: Callable[[int], None] | None = None) -> int:
             # The labels are measured against the ramp the title they sit under leaves
             return _fitted_label_font(
                 scalar_bar,
@@ -624,7 +684,7 @@ class ScalarBars(_NoNewAttrMixin):
                 seat=seat,
             )
 
-        def seat_title(font_size):
+        def seat_title(font_size: int) -> None:
             # The title is padded off the labels by a share of the size they are drawn at
             title_text.SetLineOffset(-round(fit['title_pad'] * font_size))
 
@@ -688,7 +748,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._place_widget(fit['key'], scalar_bar)
         fit['applied'] = _layout_settings(scalar_bar)
 
-    def _size_box(self, fit, scalar_bar):
+    def _size_box(self, fit: dict[str, Any], scalar_bar: _vtk.vtkScalarBarActor) -> None:
         """Grow the box a scalar bar asked for around its text, and seat the title in it."""
         width, position = scalar_bar.GetWidth(), scalar_bar.GetPosition()
         fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
@@ -711,8 +771,16 @@ class ScalarBars(_NoNewAttrMixin):
         scalar_bar.GetTitleTextProperty().SetLineOffset(offset)
 
     def _keep_fitted(
-        self, title, scalar_bar, *, vertical, display_title, title_pad, sized, unconstrained
-    ):
+        self,
+        title: str,
+        scalar_bar: _vtk.vtkScalarBarActor,
+        *,
+        vertical: bool | None,
+        display_title: str,
+        title_pad: float,
+        sized: bool,
+        unconstrained: bool,
+    ) -> None:
         """Refit a scalar bar's box whenever the window it is drawn in changes."""
         window = self._plotter.render_window
         fit = {
@@ -730,7 +798,7 @@ class ScalarBars(_NoNewAttrMixin):
         }
         self._scalar_bar_fits[title] = fit
 
-        def refit(*_args):
+        def refit(*_args: Any) -> None:
             # The bar is looked up by the key the fit carries, so a renamed bar is
             # still the one this observer measures
             bar = self._scalar_bar_actors.get(fit['key'])
@@ -767,23 +835,35 @@ class ScalarBars(_NoNewAttrMixin):
         fit['observer'] = window.AddObserver(_vtk.vtkCommand.StartEvent, refit)
         refit()
 
-    def _place_widget(self, title, scalar_bar):
+    def _place_widget(self, title: str, scalar_bar: _vtk.vtkScalarBarActor) -> None:
         """Give a scalar bar's widget the place and size the layout gave the bar."""
         widget = self._scalar_bar_widgets.get(title)
         if widget is not None:
             # An interactive bar is drawn from its representation, which is built before
             # the bar is laid out and would otherwise put it back where it started
             rep = widget.GetRepresentation()
-            rep.GetPositionCoordinate().SetValue(*scalar_bar.GetPosition())
-            rep.GetPosition2Coordinate().SetValue(scalar_bar.GetWidth(), scalar_bar.GetHeight())
+            rep.GetPositionCoordinate().SetValue(*scalar_bar.GetPosition())  # type: ignore[attr-defined]
+            rep.GetPosition2Coordinate().SetValue(  # type: ignore[attr-defined]
+                scalar_bar.GetWidth(), scalar_bar.GetHeight()
+            )
 
-    def _stacked_neighbor(self, slot):
+    def _stacked_neighbor(self, slot: int) -> _vtk.vtkScalarBarActor:
         """Return the scalar bar actor occupying the slot below this one."""
         lookup = self._plotter._scalar_bar_slot_lookup
         title = next(name for name, taken in lookup.items() if taken == slot - 1)
         return self._scalar_bar_actors[title]
 
-    def _stacked_beside(self, scalar_bar, neighbor, *, gap, label_text, pad, dpi, constrained):
+    def _stacked_beside(
+        self,
+        scalar_bar: _vtk.vtkScalarBarActor,
+        neighbor: _vtk.vtkScalarBarActor,
+        *,
+        gap: float | None,
+        label_text: _vtk.vtkTextProperty,
+        pad: float,
+        dpi: int,
+        constrained: bool,
+    ) -> float:
         """Return the position that clears a vertical scalar bar of the one beside it."""
         viewport_width = self._plotter.renderer.GetSize()[0]
         bar_width = scalar_bar.GetWidth() * viewport_width
@@ -823,7 +903,9 @@ class ScalarBars(_NoNewAttrMixin):
             gap = reach + neighbor_reach + 0.2 * bar_width
         return (center - gap - bar_width / 2) / viewport_width
 
-    def _stacked_above(self, neighbor, *, gap, dpi):
+    def _stacked_above(
+        self, neighbor: _vtk.vtkScalarBarActor, *, gap: float | None, dpi: int
+    ) -> float:
         """Return the position that clears a horizontal scalar bar of the one below it."""
         viewport_height = self._plotter.renderer.GetSize()[1]
         if gap is None:
@@ -843,11 +925,11 @@ class ScalarBars(_NoNewAttrMixin):
 
     def _remove_mapper_from_plotter(
         self,
-        actor,
+        actor: _vtk.vtkProp,
         *,
         reset_camera: bool = False,
         render: bool = False,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's ``_scalar_bar_mappers``.
 
         This ensures that when actors are removed, their corresponding
@@ -855,7 +937,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         """
         try:
-            mapper = actor.GetMapper()
+            mapper = actor.GetMapper()  # type: ignore[attr-defined]
         except AttributeError:
             return
 
@@ -877,7 +959,7 @@ class ScalarBars(_NoNewAttrMixin):
                     self._plotter._scalar_bar_slots.add(slot)
                     self._stop_fitting(name)
 
-    def remove_scalar_bar(self, title=None, *, render: bool = True):
+    def remove_scalar_bar(self, title: str | None = None, *, render: bool = True) -> None:
         """Remove a scalar bar.
 
         Parameters
@@ -931,27 +1013,27 @@ class ScalarBars(_NoNewAttrMixin):
 
         self._stop_fitting(title)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of scalar bar actors."""
         return len(self._scalar_bar_actors)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: str) -> _vtk.vtkScalarBarActor:
         """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 
-    def keys(self):  # numpydoc ignore=RT01
+    def keys(self) -> KeysView[str]:  # numpydoc ignore=RT01
         """Scalar bar keys."""
         return self._scalar_bar_actors.keys()
 
-    def values(self):  # numpydoc ignore=RT01
+    def values(self) -> ValuesView[_vtk.vtkScalarBarActor]:  # numpydoc ignore=RT01
         """Scalar bar values."""
         return self._scalar_bar_actors.values()
 
-    def items(self):  # numpydoc ignore=RT01
+    def items(self) -> ItemsView[str, _vtk.vtkScalarBarActor]:  # numpydoc ignore=RT01
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
@@ -1029,44 +1111,44 @@ class ScalarBars(_NoNewAttrMixin):
 
     def add_scalar_bar(
         self,
-        title='',
+        title: str = '',
         *,
-        mapper=None,
-        lookup_table=None,
-        cmap=None,
-        clim=None,
-        n_labels=5,
-        tick_locations=None,
+        mapper: _vtk.vtkMapper | None = None,
+        lookup_table: _vtk.vtkLookupTable | pv.LookupTable | None = None,
+        cmap: ColormapOptions | list[str] | None = None,
+        clim: Sequence[float] | None = None,
+        n_labels: int = 5,
+        tick_locations: Sequence[float] | None = None,
         italic: bool = False,
         bold: bool = False,
-        title_font_size=None,
-        title_pad=None,
-        label_font_size=None,
-        color=None,
-        font_family=None,
+        title_font_size: float | None = None,
+        title_pad: float | None = None,
+        label_font_size: float | None = None,
+        color: ColorLike | None = None,
+        font_family: str | None = None,
         shadow: bool = False,
-        width=None,
-        height=None,
-        position_x=None,
-        position_y=None,
-        vertical=None,
+        width: float | None = None,
+        height: float | None = None,
+        position_x: float | None = None,
+        position_y: float | None = None,
+        vertical: bool | None = None,
         stacking_gap: float | None = None,
         rotate_title: bool | None = None,
-        interactive=None,
-        fmt=None,
+        interactive: bool | None = None,
+        fmt: str | None = None,
         use_opacity: bool = True,
         outline: bool = False,
         nan_annotation: bool = False,
-        below_label=None,
-        above_label=None,
-        background_color=None,
-        n_colors=None,
+        below_label: str | None = None,
+        above_label: str | None = None,
+        background_color: ColorLike | None = None,
+        n_colors: int | None = None,
         fill: bool = False,
         render: bool = False,
-        theme=None,
+        theme: pv.plotting.themes.Theme | None = None,
         unconstrained_font_size: bool = False,
         unique_bar: bool = False,
-    ):
+    ) -> _vtk.vtkScalarBarActor | None:
         """Create a scalar bar.
 
         Uses the ranges as set by the last input mesh or, alternatively, the
@@ -1452,11 +1534,11 @@ class ScalarBars(_NoNewAttrMixin):
             raise ValueError(msg)
 
         if cmap is not None:
-            lookup_table = pv.LookupTable(cmap=cmap, scalar_range=clim)
+            lookup_table = pv.LookupTable(cmap=cmap, scalar_range=clim)  # type: ignore[arg-type]
 
-        if lookup_table is not None:
+        if mapper is None:
             mapper = pv.DataSetMapper(theme=theme)
-            mapper.lookup_table = lookup_table
+            mapper.lookup_table = lookup_table  # type: ignore[assignment]
 
         if interactive is None:
             interactive = theme.interactive
@@ -1710,7 +1792,7 @@ class ScalarBars(_NoNewAttrMixin):
         unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
         # A horizontal box is laid out by VTK, which sizes the text to the box and keeps
         # it inside, so the box is sized to the text instead; only its height pins it
-        constrained = draws_box and not vertical and not unconstrained_font_size
+        constrained = bool(draws_box and not vertical and not unconstrained_font_size)
         if constrained:
             sized = given_height
         fits_box = draws_box and not sized
