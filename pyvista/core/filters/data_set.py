@@ -7151,15 +7151,15 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # as_composite=True, return_meta=False
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
     def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]] | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]] | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def oriented_bounding_box(  # type: ignore[misc]
@@ -7173,8 +7173,8 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool = False,
         as_composite: bool = True,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]
         | PolyData
         | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]
     ):
@@ -7349,15 +7349,15 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # as_composite=True, return_meta=False
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]] | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]] | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def bounding_box(  # type: ignore[misc]
@@ -7369,8 +7369,8 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool = False,
         as_composite: bool = True,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]
         | PolyData
         | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]
     ):
@@ -7533,12 +7533,12 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool,
         as_composite: bool,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NDArray[np.floating], NDArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]
         | PolyData
         | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]
     ):
-        def _multiblock_to_polydata(multiblock: MultiBlock) -> PolyData:
+        def _multiblock_to_polydata(multiblock: MultiBlock[PolyData]) -> PolyData:
             return multiblock.combine(merge_points=False).extract_surface(
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
@@ -7554,7 +7554,6 @@ class DataSetFilters(DataObjectFilters):
 
         # Modify box
         for face in box:
-            face = cast('pv.PolyData', face)
             if box_style == 'outline':
                 face.copy_from(pv.lines_from_points(face.points))
             if oriented:
@@ -8307,6 +8306,17 @@ class DataSetFilters(DataObjectFilters):
                 )
                 raise ValueError(msg)
 
+        def _float_colors_to_int(
+            color_array_: NDArray[float], n_components_: int
+        ) -> list[tuple[int, ...]]:
+            """Convert float colors in [0, 1] to int tuples, rounding like ``Color``."""
+            ints = np.rint(255 * color_array_.astype(float)).astype(int)
+            if n_components_ == 3:
+                ints = ints[:, :3]
+            elif ints.shape[1] == 3:
+                ints = np.column_stack([ints, np.full(len(ints), 255)])
+            return [tuple(row) for row in ints.tolist()]
+
         def _is_index_like(array_: NDArray[Any], n_colors_: int) -> NDArray[bool]:
             """Return which values can be used to index ``n_colors_`` colors."""
             min_value = -n_colors_ if negative_indexing else 0
@@ -8399,6 +8409,13 @@ class DataSetFilters(DataObjectFilters):
                         color_rgb_sequence = (
                             cmap_colors if n_channels == 4 else [[*c, 1.0] for c in cmap_colors]
                         )
+                        _is_rgb_sequence = True
+                    elif (
+                        n_channels in (3, 4)
+                        and np.all(color_array >= 0.0)
+                        and np.all(color_array <= 1.0)
+                    ):
+                        color_rgb_sequence = _float_colors_to_int(color_array, num_components)
                         _is_rgb_sequence = True
                     else:
                         # The colors may be an array, which is not a valid color sequence

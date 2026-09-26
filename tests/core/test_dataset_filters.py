@@ -6112,3 +6112,23 @@ def test_filters_keep_the_input_subclass():
     image = pv.ImageData(dimensions=(3, 3, 3))
     image['scalars'] = np.zeros(image.n_points)
     assert type(image.warp_by_scalar('scalars')) is pv.StructuredGrid
+
+
+@pytest.mark.parametrize('n_channels', [3, 4])
+@pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba'])
+def test_color_labels_int_colormap_matches_color(color_type, n_channels):
+    values = np.array([0.0, 0.5, 1.5, 2.5, 127.5, 128.5, 254.5, 255.0]) / 255
+    cmap_colors = np.column_stack([values, values[::-1], np.roll(values, 3), values])
+    cmap_colors = cmap_colors[:, :n_channels]
+    labels = pv.ImageData(dimensions=(len(values), 1, 1))
+    labels['labels'] = np.arange(len(values))
+    colored = labels.color_labels(ListedColormap(cmap_colors), color_type=color_type)
+    expected = [getattr(pv.Color(c), color_type) for c in cmap_colors.tolist()]
+    assert np.array_equal(colored['labels' + color_type.removeprefix('int')], expected)
+
+
+def test_color_labels_int_colormap_named_colors():
+    labels = pv.ImageData(dimensions=(2, 1, 1))
+    labels['labels'] = [0, 1]
+    colored = labels.color_labels(ListedColormap(['red', 'blue']))
+    assert np.array_equal(colored['labels_rgb'], [[255, 0, 0], [0, 0, 255]])
