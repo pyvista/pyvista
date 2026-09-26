@@ -82,6 +82,7 @@ if TYPE_CHECKING:
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
+    from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import VectorLike
     from .filters.data_object import _NestedMeshValidationFields
@@ -4474,7 +4475,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def _from_cells_points(
         self,
         dims: VectorLike[int],
-        cells: VectorLike[int] | dict[int, MatrixLike[int]],
+        cells: CellsLike | dict[int, MatrixLike[int]],
         points: MatrixLike[float],
     ) -> None:
         """Create a VTK explicit structured grid from cells and points arrays.

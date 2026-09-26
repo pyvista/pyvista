@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
 
     from pyvista import PolyData
@@ -659,7 +658,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-def _expected_legacy_cell_array_size(cells: NDArray[_Scalar]) -> int | None:
+def _expected_legacy_cell_array_size(cells: NDArray[np.integer]) -> int | None:
     """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
 
     Returns ``None`` if a negative point count makes the layout uninterpretable.
@@ -940,8 +939,8 @@ class CellArray(
 
     def _set_data(
         self: Self,
-        offsets: MatrixLike[int],
-        connectivity: MatrixLike[int],
+        offsets: VectorLike[int] | NDArray[np.integer],
+        connectivity: CellsLike,
         *,
         deep: bool = False,
     ) -> None:
@@ -974,7 +973,7 @@ class CellArray(
     def _set_data_fixed_size(
         self: Self,
         cell_size: int,
-        connectivity: MatrixLike[int],
+        connectivity: CellsLike,
         *,
         deep: bool = False,
     ) -> None:
@@ -994,8 +993,8 @@ class CellArray(
 
     @staticmethod
     def from_arrays(
-        offsets: MatrixLike[int],
-        connectivity: MatrixLike[int],
+        offsets: VectorLike[int] | NDArray[np.integer],
+        connectivity: CellsLike,
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1043,7 +1042,7 @@ class CellArray(
     @classmethod
     def from_regular_cells(
         cls: type[CellArray],
-        cells: MatrixLike[int],
+        cells: MatrixLike[int] | NDArray[np.integer],
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1090,17 +1089,16 @@ class CellArray(
                [1, 2, 3]]...)
 
         """
-        cells = np.asarray(cells)
-        n_cells, cell_size = cells.shape
-        if cells.dtype != np.int32:
-            cells = np.asarray(cells, dtype=pv.ID_TYPE)
+        array = np.asarray(cells)
+        n_cells, cell_size = array.shape
+        connectivity = np.asarray(array, dtype=np.int32 if array.dtype == np.int32 else pv.ID_TYPE)
 
         cellarr = cls()
         if _SUPPORTS_FIXED_SIZE_STORAGE:
-            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
+            cellarr._set_data_fixed_size(cell_size, connectivity, deep=deep)
         else:
             offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
-            cellarr._set_data(offsets, cells, deep=deep)
+            cellarr._set_data(offsets, connectivity, deep=deep)
         return cellarr
 
     @classmethod

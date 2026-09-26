@@ -51,15 +51,15 @@ def ncells_from_cells(cells: NDArray[np.signedinteger]) -> int:
 # fmt: off
 # ruff: disable[E501]
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: Literal[False] = False) -> _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLike[int] | NDArray[np.integer], *, deep: bool = ..., return_ind: Literal[False] = False) -> _vtk.vtkIdTypeArray: ...
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]]: ...
+def numpy_to_idarr(ind: int | ArrayLike[int] | NDArray[np.integer], *, deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]]: ...
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int], *, deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]] | _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLike[int] | NDArray[np.integer], *, deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]] | _vtk.vtkIdTypeArray: ...
 # ruff: enable[E501]
 # fmt: on
 def numpy_to_idarr(
-    ind: int | ArrayLike[int],
+    ind: int | ArrayLike[int] | NDArray[np.integer],
     *,
     deep: bool = False,
     return_ind: bool = False,

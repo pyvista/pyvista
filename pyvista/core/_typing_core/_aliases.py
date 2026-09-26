@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -94,7 +95,13 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike = Union[MatrixLike[int], VectorLike[int]]
+# Cell connectivity, which must be integers
+CellsLike = Union[
+    NDArray[np.integer],
+    Sequence[Union[int, np.integer]],
+    Sequence[Sequence[Union[int, np.integer]]],
+    Sequence[NDArray[np.integer]],
+]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
@@ -102,7 +109,7 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 _ArrayLikeOrScalar = Union[_NumberT, _Scalar, ArrayLike[_NumberT]]
 
 # Array wrapped as a volume, whose values become point scalars
-_VolumeArray = NDArray[Union[np.bool_, np.number]]
+_VolumeArray = NDArray[Union[_Scalar, np.complex64, np.complex128]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
