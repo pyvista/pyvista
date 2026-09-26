@@ -73,7 +73,10 @@ mesh.n_open_edges
 # And we can extract those edges with the ``boundary_edges`` option of
 # :func:`pyvista.DataSetFilters.extract_feature_edges`:
 edges = mesh.extract_feature_edges(
-    boundary_edges=True, feature_edges=False, manifold_edges=False
+    boundary_edges=True,
+    non_manifold_edges=False,
+    feature_edges=False,
+    manifold_edges=False,
 )
 
 pl = pv.Plotter()
