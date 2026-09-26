@@ -26,6 +26,7 @@ _T = TypeVar('_T')
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from numpy.typing import NDArray
     import pandas
@@ -279,7 +280,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return self.keys()
 
     def __setitem__(
-        self: Self, key: str, value: ArrayLike[Any] | NDArray[Any]
+        self: Self, key: str, value: NDArray[Any] | Sequence[Any]
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
@@ -1204,7 +1205,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def update(
         self: Self,
-        array_dict: Mapping[str, ArrayLike[Any]] | DataSetAttributes,
+        array_dict: Mapping[str, NDArray[Any] | Sequence[Any]] | DataSetAttributes,
         *,
         copy: bool = True,
     ) -> None:
@@ -1255,7 +1256,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self: Self,
         *,
         name: str,
-        array: ArrayLike[Any],
+        array: NDArray[Any] | Sequence[Any],
         copy: bool,
     ) -> None:
         if copy:
