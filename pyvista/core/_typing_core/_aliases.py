@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 import os
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import Union
@@ -107,6 +108,9 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[_NumberT, _Scalar, ArrayLike[_NumberT]]
+
+# Array of any dtype, or a sequence of anything
+_AnyArrayLike = Union[NDArray[Any], Sequence[Any]]
 
 # Array wrapped as a volume, whose values become point scalars
 _VolumeArray = NDArray[Union[_Scalar, np.complex64, np.complex128]]
