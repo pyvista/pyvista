@@ -5122,6 +5122,10 @@ class ImageDataFilters(DataSetFilters):
         resample
             Change an image's dimensions and spacing in its own frame.
 
+        slab_projection
+            Combine a thick slab of the image at each point of a reference image, for
+            example as a maximum intensity projection.
+
         :meth:`~pyvista.DataObjectFilters.transform`
             Move an image without resampling it, by changing its
             :attr:`~pyvista.ImageData.direction_matrix` and
@@ -6354,6 +6358,10 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        reslice
+            Sample the image at each point of a reference image, which matches a slab
+            with a ``thickness`` of ``0``.
+
         slice_index
             Extract an axis-aligned slice, which can serve as the reference.
 

@@ -3504,6 +3504,18 @@ def test_slab_projection_default_reference_cell_data():
     assert np.array_equal(projected.cell_data['values'], expected.ravel())
 
 
+@pytest.mark.parametrize('interpolation', ['nearest', 'linear', 'cubic'])
+def test_slab_projection_zero_thickness_matches_reslice(interpolation):
+    """Test a slab with zero thickness samples the same values as reslice."""
+    volume = pv.ImageData(dimensions=(12, 13, 14), spacing=(1.0, 0.5, 2.0))
+    volume['values'] = np.random.default_rng(0).random(volume.n_points)
+    reference = pv.ImageData(dimensions=(9, 7, 1), origin=(1.3, 0.7, 5.1), spacing=(0.8, 0.9, 1))
+    reference.direction_matrix = pv.Transform().rotate_x(25).rotate_z(10).matrix[:3, :3]
+    projected = volume.slab_projection(reference, 0, interpolation=interpolation)
+    resliced = volume.reslice(reference, interpolation)
+    assert np.array_equal(projected['values'], resliced['values'])
+
+
 def test_slab_projection_oblique():
     """Test an oblique plane is projected along its normal."""
     volume = pv.ImageData(dimensions=(30, 30, 30), origin=(-15, -15, -15))
