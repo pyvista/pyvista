@@ -16,6 +16,7 @@ from typing import Any
 from typing import Literal
 
 import numpy as np
+from pyvista_validation.check import _is_real
 
 import pyvista as pv
 
@@ -351,8 +352,6 @@ def plot(  # noqa: ANN202
         if len(var_item) == 2:
             first, second = var_item
             if isinstance(first, np.ndarray) and isinstance(second, np.ndarray):  # arrows
-                from pyvista.core.utilities.arrays import _is_real  # noqa: PLC0415
-
                 if not (_is_real(first) and _is_real(second)):
                     msg = (
                         f'Arrow arrays must be real numbers, got {first.dtype} and {second.dtype}.'

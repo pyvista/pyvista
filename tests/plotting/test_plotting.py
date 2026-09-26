@@ -1678,8 +1678,9 @@ def test_plot_arrows():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_arrows_rejects_complex():
-    arrows = np.zeros((2, 3), dtype=complex)
+@pytest.mark.parametrize('dtype', [complex, bool])
+def test_plot_arrows_rejects_non_real(dtype):
+    arrows = np.zeros((2, 3), dtype=dtype)
     with pytest.raises(TypeError, match='Arrow arrays must be real numbers'):
         pv.plot([arrows, arrows])
 

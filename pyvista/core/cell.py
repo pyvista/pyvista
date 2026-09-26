@@ -28,11 +28,11 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core._array_like import _Scalar
 
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike

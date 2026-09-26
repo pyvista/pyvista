@@ -12,12 +12,12 @@ from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
+from pyvista_validation.check import _is_floating
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
-from pyvista.core.utilities.arrays import _is_floating
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin

@@ -48,8 +48,7 @@ if TYPE_CHECKING:
     from typing import TypeAlias
 
     from numpy.typing import NDArray
-
-    from pyvista.core._typing_core._array_like import _Scalar
+    from pyvista_validation._typing._array_like import _Scalar
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions

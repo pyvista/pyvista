@@ -26,6 +26,7 @@ from .fileio import is_trimesh_mesh
 if TYPE_CHECKING:
     import meshio
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     import trimesh
 
     from pyvista import DataObject
@@ -45,7 +46,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import WrappableType
     from pyvista.core._typing_core import _VolumeArray
-    from pyvista.core._typing_core._array_like import _Scalar
 
 _NORMALS = {
     'x': [1, 0, 0],

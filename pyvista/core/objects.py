@@ -33,11 +33,11 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     import pandas
     import pyarrow
+    from pyvista_validation._typing._array_like import _Scalar
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._array_like import _Scalar
 
 
 class Table(DataObject, _vtk.vtkTable):

@@ -11,22 +11,8 @@ from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
+from pyvista_validation._typing._array_like import _Scalar
 from typing_extensions import TypeVar
-
-_Scalar = (
-    np.float64
-    | np.float32
-    | np.float16
-    | np.int64
-    | np.int32
-    | np.int16
-    | np.int8
-    | np.uint64
-    | np.uint32
-    | np.uint16
-    | np.uint8
-    | np.bool_
-)
 
 _NumberT = TypeVar('_NumberT', bound=float, default=float)
 

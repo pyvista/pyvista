@@ -10,6 +10,7 @@ from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
+from pyvista_validation._typing._array_like import _Scalar
 
 from pyvista import _vtk
 
@@ -17,7 +18,6 @@ from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 from ._array_like import _NumberT
-from ._array_like import _Scalar
 
 if TYPE_CHECKING:
     import meshio

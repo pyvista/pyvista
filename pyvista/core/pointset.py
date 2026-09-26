@@ -16,6 +16,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+from pyvista_validation.check import _is_integer
 
 import pyvista as pv
 from pyvista import _vtk
@@ -45,7 +46,6 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
-from .utilities.arrays import _is_integer
 from .utilities.arrays import convert_array
 from .utilities.cells import _get_regular_cells_from_dict
 from .utilities.cells import create_mixed_cells
@@ -76,9 +76,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
-
-    from pyvista.core._typing_core._array_like import _Scalar
 
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
@@ -4931,7 +4930,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         except ValueError:
             return None
         else:
-            return int(ind) if ind.ndim == 0 else ind
+            return ind if isinstance(ind, np.ndarray) else int(ind)
 
     def cell_coords(
         self,

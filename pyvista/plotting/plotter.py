@@ -126,6 +126,7 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from numpy.typing import NDArray
     from PIL.Image import Image
+    from pyvista_validation._typing._array_like import _Scalar
     from trame_pyvista.jupyter import EmbeddableWidget
     from trame_pyvista.jupyter import Widget
 
@@ -139,7 +140,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._array_like import _Scalar
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions

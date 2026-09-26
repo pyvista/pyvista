@@ -30,8 +30,8 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 if TYPE_CHECKING:
     from numpy.typing import DTypeLike
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
-    from typing_extensions import TypeIs
 
     from pyvista import DataObject
     from pyvista import DataSet
@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._array_like import _Scalar
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
@@ -126,21 +125,6 @@ def parse_field_choice(
     else:
         msg = f'Data field ({field}) not supported.'  # type: ignore[unreachable]
         raise TypeError(msg)
-
-
-def _is_floating(array: NDArray[Any]) -> TypeIs[NDArray[np.floating]]:
-    """Return whether ``array`` has a floating dtype."""
-    return np.issubdtype(array.dtype, np.floating)
-
-
-def _is_integer(array: NDArray[Any]) -> TypeIs[NDArray[np.integer]]:
-    """Return whether ``array`` has an integer dtype."""
-    return np.issubdtype(array.dtype, np.integer)
-
-
-def _is_real(array: NDArray[Any]) -> TypeIs[NDArray[_Scalar]]:
-    """Return whether ``array`` has a boolean, integer, or floating dtype of at most 64 bits."""
-    return array.dtype.kind in 'biuf' and array.dtype.itemsize <= 8
 
 
 def _coerce_pointslike_arg(

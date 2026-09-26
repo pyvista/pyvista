@@ -35,6 +35,7 @@ from .misc import check_valid_vector
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
 
     from pyvista import ImageData
     from pyvista import PolyData
@@ -42,7 +43,6 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._array_like import _Scalar
 
 
 def Capsule(
