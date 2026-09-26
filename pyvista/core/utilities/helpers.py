@@ -445,11 +445,11 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
 # fmt: off
 # ruff: disable[E501]
 @overload
-def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.floating]: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
 @overload
 def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
 @overload
-def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.floating] | None: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.float64] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def axis_rotation(
@@ -459,7 +459,7 @@ def axis_rotation(
     inplace: bool = False,
     deg: bool = True,
     axis: str = 'z',
-) -> NDArray[np.floating] | None:
+) -> NDArray[np.float64] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -509,7 +509,10 @@ def axis_rotation(
         raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
-    return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
+    return cast(
+        'NDArray[np.float64] | None',
+        transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace),
+    )
 
 
 def is_inside_bounds(
@@ -546,8 +549,8 @@ def is_inside_bounds(
 
 
 def _is_inside_bounds(
-    point: deque[float | NDArray[_Scalar]],
-    bounds: deque[float | NDArray[_Scalar]],
+    point: deque[float | _Scalar | NDArray[_Scalar]],
+    bounds: deque[float | _Scalar | NDArray[_Scalar]],
 ) -> bool:
     """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:

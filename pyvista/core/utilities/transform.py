@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TypeAlias
 from typing import cast
 from typing import overload
 
@@ -28,17 +29,25 @@ from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
+    from pyvista_validation._typing._array_like import _ScalarT
     from scipy.spatial.transform import Rotation
 
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import Prop3D
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
-    from pyvista.core.utilities.transformations import _FiveArrays
+    from pyvista.core.utilities.transformations import _FiveFloat64Arrays
+    from pyvista.core.utilities.transformations import _FloatingT
+    from pyvista.core.utilities.transformations import _IntegerT
+
+    # The members of `VectorLike` and `MatrixLike` that are sequences of arrays
+    _ArraySequence: TypeAlias = Sequence[NDArray[_Scalar]] | Sequence[Sequence[NDArray[_Scalar]]]
 
 
 class Transform(
@@ -280,7 +289,7 @@ class Transform(
             else:
                 self.compose(trans)
 
-        self._decomposition_cache: _FiveArrays | None = None
+        self._decomposition_cache: _FiveFloat64Arrays | None = None
         self._decomposition_mtime = -1
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
@@ -1498,7 +1507,7 @@ class Transform(
 
         Returns
         -------
-        NDArray[float]
+        NDArray[np.float64]
             Current transformation matrix.
 
         """
@@ -1531,7 +1540,7 @@ class Transform(
 
         Returns
         -------
-        NDArray[float]
+        NDArray[np.float64]
             Current inverse transformation matrix.
 
         """
@@ -1556,7 +1565,7 @@ class Transform(
 
         Returns
         -------
-        list[NDArray[float]]
+        list[NDArray[np.float64]]
             List of all current transformation matrices.
 
         """
@@ -1582,7 +1591,7 @@ class Transform(
 
         Returns
         -------
-        list[NDArray[float]]
+        list[NDArray[np.float64]]
             List of all current inverse transformation matrices.
 
         """
@@ -1602,7 +1611,23 @@ class Transform(
     @overload
     def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
-    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    def apply(self: Transform, obj: NDArray[_ScalarT], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply(self: Transform, obj: pyvista_ndarray, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[False]) -> NDArray[np.floating]: ...
+    @overload
+    def apply(self: Transform, obj: pyvista_ndarray, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    @overload
+    def apply(self: Transform, obj: NDArray[_FloatingT], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[False]) -> NDArray[_FloatingT]: ...
+    @overload
+    def apply(self: Transform, obj: NDArray[_IntegerT], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply(self: Transform, obj: NDArray[_ScalarT], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    @overload
+    def apply(self: Transform, obj: Sequence[float] | Sequence[Sequence[float]], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply(self: Transform, obj: _ArraySequence, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply(self: Transform, obj: _ArraySequence, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
     @overload
     def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
     # ruff: enable[E501]
@@ -1857,6 +1882,28 @@ class Transform(
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return out if out is not None else array
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def apply_to_points(self, points: NDArray[_ScalarT], /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_points(self, points: pyvista_ndarray, /, *, inverse: bool = ..., copy: Literal[False]) -> NDArray[np.floating]: ...
+    @overload
+    def apply_to_points(self, points: pyvista_ndarray, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    @overload
+    def apply_to_points(self, points: NDArray[_FloatingT], /, *, inverse: bool = ..., copy: Literal[False]) -> NDArray[_FloatingT]: ...
+    @overload
+    def apply_to_points(self, points: NDArray[_IntegerT], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_points(self, points: NDArray[_ScalarT], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    @overload
+    def apply_to_points(self, points: Sequence[float] | Sequence[Sequence[float]], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_points(self, points: _ArraySequence, /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_points(self, points: _ArraySequence, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply_to_points(
         self,
         points: VectorLike[float] | MatrixLike[float],
@@ -1904,6 +1951,28 @@ class Transform(
         """
         return self.apply(points, 'points', inverse=inverse, copy=copy)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def apply_to_vectors(self, vectors: NDArray[_ScalarT], /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_vectors(self, vectors: pyvista_ndarray, /, *, inverse: bool = ..., copy: Literal[False]) -> NDArray[np.floating]: ...
+    @overload
+    def apply_to_vectors(self, vectors: pyvista_ndarray, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    @overload
+    def apply_to_vectors(self, vectors: NDArray[_FloatingT], /, *, inverse: bool = ..., copy: Literal[False]) -> NDArray[_FloatingT]: ...
+    @overload
+    def apply_to_vectors(self, vectors: NDArray[_IntegerT], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_vectors(self, vectors: NDArray[_ScalarT], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    @overload
+    def apply_to_vectors(self, vectors: Sequence[float] | Sequence[Sequence[float]], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_vectors(self, vectors: _ArraySequence, /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    @overload
+    def apply_to_vectors(self, vectors: _ArraySequence, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply_to_vectors(
         self,
         vectors: VectorLike[float] | MatrixLike[float],
@@ -2069,7 +2138,7 @@ class Transform(
         """
         return self.apply(actor, mode, inverse=inverse, copy=copy)
 
-    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveArrays:
+    def decompose(self: Transform, *, homogeneous: bool = False) -> _FiveFloat64Arrays:
         """Decompose the current transformation into its components.
 
         Decompose the :attr:`matrix` ``M`` into
@@ -2276,7 +2345,8 @@ class Transform(
             self._decomposition_cache = decomposition(self.matrix, homogeneous=False)
             self._decomposition_mtime = current_mtime
 
-        cache = cast('_FiveArrays', self._decomposition_cache)
+        # The initial mtime never matches, so the cache is set by now
+        cache = cast('_FiveFloat64Arrays', self._decomposition_cache)
         if homogeneous:
             return _decomposition_as_homogeneous(*cache)
         return cache
@@ -2501,7 +2571,7 @@ class Transform(
         return wxyz[1:4], wxyz[0]
 
     @property
-    def rotation_matrix(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def rotation_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return the rotation component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         The rotation is orthonormal and right-handed with positive determinant.
@@ -2607,7 +2677,7 @@ class Transform(
         return tuple(S.tolist())
 
     @property
-    def shear_matrix(self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
+    def shear_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return the shear component of the current transformation :attr:`~Transform.matrix` as a 3x3 matrix.
 
         .. versionadded:: 0.47

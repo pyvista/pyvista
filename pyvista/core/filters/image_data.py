@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Real
 
     from pyvista import ImageData
     from pyvista import MultiBlock
@@ -559,7 +560,12 @@ class ImageDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
         normalized_bounds: VectorLike[float] | None = None,
-        mask: str | ImageData | NDArray[np.floating] | Literal[True] | None = None,
+        mask: str
+        | ImageData
+        | VectorLike[float]
+        | MatrixLike[float]
+        | Literal[True]
+        | None = None,
         padding: int | VectorLike[int] | None = None,
         background_value: float | VectorLike[float] | None = None,
         keep_dimensions: bool = False,
@@ -634,7 +640,7 @@ class ImageDataFilters(DataSetFilters):
             that define a box relative to the input size. The input is cropped such that it fully
             fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-        mask : str | ImageData | NDArray[np.floating] | bool, optional
+        mask : str | ImageData | VectorLike[float] | MatrixLike[float] | bool, optional
             Scalar values that define the cropping region. Set this option to:
 
             - a string denoting the name of scalars belonging to this mesh
@@ -844,7 +850,7 @@ class ImageDataFilters(DataSetFilters):
             return field, scalars
 
         def _voi_from_mask(
-            *, mask_: str | ImageData | NDArray[np.floating] | bool
+            *, mask_: str | ImageData | VectorLike[float] | MatrixLike[float] | bool
         ) -> VectorLike[int]:
             """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
@@ -3712,7 +3718,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
 
-        def _get_num_components(array_: NDArray[np.floating]) -> int:
+        def _get_num_components(array_: NDArray[Any]) -> int:
             """Return the number of components of an array."""
             return 1 if array_.ndim == 1 else array_.shape[1]
 
@@ -3942,10 +3948,10 @@ class ImageDataFilters(DataSetFilters):
             Either the input ImageData or a generated one where connected regions are
             labelled with a ``'RegionId'`` point-based or cell-based data.
 
-        NDArray[int]
+        NDArray[np.signedinteger]
             The labels of each extracted regions.
 
-        NDArray[int]
+        NDArray[np.signedinteger]
             The size (that is, number of cells) of each extracted regions.
 
         See Also
@@ -4160,7 +4166,7 @@ class ImageDataFilters(DataSetFilters):
         operation_mask: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
         operator: Callable,  # type: ignore[type-arg]
         operation_size: int | VectorLike[int],
-    ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
+    ) -> tuple[NDArray[np.bool_], NDArray[np.int64]]:
         """Validate dimensional operations (internal helper).
 
         Return a dimensional mask to apply the operation on the source ImageData as well
@@ -4202,10 +4208,10 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        NDArray[bool]
+        NDArray[np.bool_]
             A (3, ) shaped mask array that indicates which dimensions will be modified.
 
-        NDArray[int]
+        NDArray[np.int64]
             A (3, ) shaped array that with the new ImageData dimensions after applying
             the operation.
 
@@ -5608,9 +5614,9 @@ class ImageDataFilters(DataSetFilters):
     def _select_values(  # type: ignore[misc]
         self: ImageData,
         *,
-        values: NDArray[np.floating] | None,
-        ranges: NDArray[np.floating] | None,
-        array: NDArray[np.floating],
+        values: NDArray[_Real] | None,
+        ranges: NDArray[_Real] | None,
+        array: NDArray[Any],
         component_logic: Callable[[NDArray[np.bool_]], NDArray[np.bool_]] | None,
         invert: bool,
         association: FieldAssociation,
@@ -6243,7 +6249,7 @@ class ImageDataFilters(DataSetFilters):
 
 
 def _remap_ghost_array(  # numpydoc ignore=RT01
-    array: NDArray[Any], *, points_to_cells: bool
+    array: NDArray[np.uint8], *, points_to_cells: bool
 ) -> NDArray[np.uint8]:
     """Translate ghost flags to the new association, clearing flags with no equivalent."""
     attributes = _vtk.vtkDataSetAttributes
@@ -6385,7 +6391,7 @@ def _bspline_coefficients(
 
 def _resolve_reslice_transform(
     transform: TransformLike | _vtk.vtkAbstractTransform | None,
-) -> tuple[_vtk.vtkAbstractTransform | None, NDArray[np.floating]]:
+) -> tuple[_vtk.vtkAbstractTransform | None, NDArray[np.float64]]:
     """Return the sampling transform and the scale a transform applies to the image."""
     if transform is None:
         return None, np.ones(3)

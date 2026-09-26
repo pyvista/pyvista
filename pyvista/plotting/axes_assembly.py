@@ -1178,7 +1178,7 @@ class AxesAssembly(_XYZAssembly):
 
     def _get_offset_label_position_vectors(
         self, position_scalars: VectorLike[float]
-    ) -> NDArray[np.floating]:
+    ) -> NDArray[np.float64]:
         """Return label positions along each axis, offset radially by the tip radius."""
         source = self._shaft_and_tip_geometry_source
         radial_offset = np.multiply(source.tip_radius, source._anti_distortion_factor)

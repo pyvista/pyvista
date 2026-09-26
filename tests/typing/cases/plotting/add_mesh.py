@@ -43,6 +43,26 @@ def a_label_volume() -> NDArray[np.uint8]:
     return np.zeros((2, 2, 2), dtype=np.uint8)
 
 
+def int64_scalars() -> NDArray[np.int64]:
+    """Return int64 point scalars for a sphere."""
+    return np.arange(pv.Sphere().n_points, dtype=np.int64)
+
+
+def uint8_rgb_scalars() -> NDArray[np.uint8]:
+    """Return uint8 RGB point scalars for a sphere."""
+    return np.zeros((pv.Sphere().n_points, 3), dtype=np.uint8)
+
+
+def bool_scalars() -> NDArray[np.bool_]:
+    """Return boolean point scalars for a sphere."""
+    return np.zeros(pv.Sphere().n_points, dtype=np.bool_)
+
+
+def uint8_texture() -> NDArray[np.uint8]:
+    """Return a uint8 RGB texture image."""
+    return np.zeros((4, 4, 3), dtype=np.uint8)
+
+
 assert_types(pv.Plotter().add_mesh(pv.Sphere()), pv.Actor)
 assert_types(pv.Plotter().add_mesh(pv.MultiBlock([pv.Sphere()])), pv.Actor)
 assert_types(pv.Plotter().add_mesh(as_vtk_mesh()), pv.Actor)
@@ -54,3 +74,7 @@ assert_types(pv.Plotter().add_mesh(examples.antfile), pv.Actor)
 assert_types(pv.Plotter().add_mesh(Path(examples.antfile)), pv.Actor)
 assert_types(pv.Plotter().add_mesh(a_mask()), pv.Actor)
 assert_types(pv.Plotter().add_mesh(a_label_volume()), pv.Actor)
+assert_types(pv.Plotter().add_mesh(pv.Sphere(), scalars=int64_scalars()), pv.Actor)
+assert_types(pv.Plotter().add_mesh(pv.Sphere(), scalars=uint8_rgb_scalars(), rgb=True), pv.Actor)
+assert_types(pv.Plotter().add_mesh(pv.Sphere(), scalars=bool_scalars()), pv.Actor)
+assert_types(pv.Plotter().add_mesh(pv.Plane(), texture=uint8_texture()), pv.Actor)

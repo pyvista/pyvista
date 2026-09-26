@@ -287,8 +287,8 @@ def convert_array(
 
     Parameters
     ----------
-    arr : np.ndarray | :vtk:`vtkDataArray`
-        A NumPy array or :vtk:`vtkDataArray` to convert.
+    arr : numpy.ndarray | sequence | :vtk:`vtkAbstractArray`
+        An array-like or :vtk:`vtkAbstractArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
@@ -736,7 +736,7 @@ def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
     return vtkarr
 
 
-def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NDArray[np.intp]:
+def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NDArray[np.int_]:
     """Convert a :vtk:`vtkIdList` to a NumPy array.
 
     Parameters
@@ -778,16 +778,17 @@ def convert_string_array(
 
     Parameters
     ----------
-    arr : numpy.ndarray | str
-        NumPy string array to convert.
+    arr : NDArray[np.str_] | str | :vtk:`vtkStringArray`
+        NumPy string array or :vtk:`vtkStringArray` to convert.
 
     name : str, optional
         Name to set the :vtk:`vtkStringArray` to.
 
     Returns
     -------
-    :vtk:`vtkStringArray`
-        VTK string array.
+    :vtk:`vtkStringArray` | NDArray[np.str_]
+        VTK string array, or NumPy string array if the input is a
+        :vtk:`vtkStringArray`.
 
     Notes
     -----
@@ -865,12 +866,12 @@ def array_from_vtkmatrix(
     return array
 
 
-def vtkmatrix_from_array(array: NDArray[np.floating]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
+def vtkmatrix_from_array(array: MatrixLike[float]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
     """Convert a ``numpy.ndarray`` or array-like to a vtk matrix.
 
     Parameters
     ----------
-    array : array_like[float]
+    array : MatrixLike[float]
         The array or array-like to be converted to a vtk matrix.
         Shape (3, 3) gets converted to a :vtk:`vtkMatrix3x3`, shape (4, 4)
         gets converted to a :vtk:`vtkMatrix4x4`. No other shapes are valid.

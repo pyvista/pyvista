@@ -14,10 +14,5 @@ def an_image() -> pv.ImageData:
     return pv.ImageData(dimensions=(3, 3, 3))
 
 
-SKIP_RUNTIME = {
-    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': 'the runtime checker does not accept an int64 array as `NDArray[np.signedinteger]`',
-}
-
-
-assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NDArray[np.signedinteger])
-assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NDArray[np.signedinteger])  # pragma: no cover
+assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NDArray[np.int_])
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NDArray[np.int_])

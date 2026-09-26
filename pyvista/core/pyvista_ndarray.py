@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike
+    from ._typing_core import _AnyArrayLike
 
     _Index: TypeAlias = int | slice | EllipsisType | NDArray[np.integer[Any]] | NDArray[np.bool_]
 
@@ -38,7 +38,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
 
     Parameters
     ----------
-    array : ArrayLike or :vtk:`vtkAbstractArray`
+    array : numpy.ndarray | sequence | :vtk:`vtkAbstractArray`
         Array like.
 
     dataset : DataSet
@@ -72,7 +72,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
 
     def __new__(  # noqa: PYI034
         cls: type[pyvista_ndarray],
-        array: ArrayLike[float] | _vtk.vtkAbstractArray,
+        array: _AnyArrayLike | _vtk.vtkAbstractArray,
         dataset: DataSet | _vtk.vtkDataSet | _vtk.VTKObjectWrapper | None = None,
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:

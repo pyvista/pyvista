@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Real
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
@@ -684,7 +685,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
 
     Parameters
     ----------
-    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points : MatrixLike[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
 
     """
@@ -697,7 +698,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
         self.points = points
 
     @property
-    def points(self: MultipleLinesSource) -> NDArray[np.floating]:
+    def points(self: MultipleLinesSource) -> NDArray[_Real]:
         """Return the points defining a broken line.
 
         Returns
@@ -3092,8 +3093,8 @@ class _AxesPartTemplate(NamedTuple):
     """Normalized part geometry with the sign of each point and cell along the part's axis."""
 
     mesh: PolyData
-    point_sign: NDArray[np.floating]
-    cell_sign: NDArray[np.floating]
+    point_sign: NDArray[np.float64]
+    cell_sign: NDArray[np.float64]
 
 
 def _make_template(mesh: PolyData) -> _AxesPartTemplate:

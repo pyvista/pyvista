@@ -387,7 +387,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
         return self.writer.GetArrayName()  # type: ignore[attr-defined]
 
     @texture.setter
-    def texture(self, texture: str | NDArray[np.floating] | None) -> None:
+    def texture(self, texture: str | NDArray[np.uint8] | None) -> None:
         if texture is None:
             self.writer.SetArrayName(None)  # type: ignore[attr-defined]
             return
