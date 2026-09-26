@@ -76,7 +76,7 @@ def numpy_to_idarr(
 
     Parameters
     ----------
-    ind : int | sequence[int] | numpy.ndarray[bool]
+    ind : int | sequence[int] | numpy.ndarray[int] | numpy.ndarray[bool]
         Input to be converted to a :vtk:`vtkIdTypeArray`. Can be
         either a mask or an integer array-like.
     deep : bool, default: False
