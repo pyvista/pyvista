@@ -126,7 +126,7 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from numpy.typing import NDArray
     from PIL.Image import Image
-    from pyvista_validation._typing._array_like import _Scalar
+    from pyvista_validation._typing._array_like import _Real
     from trame_pyvista.jupyter import EmbeddableWidget
     from trame_pyvista.jupyter import Widget
 
@@ -6933,8 +6933,8 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_arrows(
         self,
-        cent: NDArray[_Scalar],
-        direction: NDArray[_Scalar],
+        cent: NDArray[_Real],
+        direction: NDArray[_Real],
         mag: float = 1.0,
         **kwargs,
     ) -> Actor:
