@@ -3975,7 +3975,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
         """
         valid_distance = _validation.validate_array3(
-            distance,  # type: ignore[arg-type]
+            cast('VectorLike[float] | MatrixLike[float]', distance),
             broadcast=True,
             dtype_out=float,
             to_tuple=True,
