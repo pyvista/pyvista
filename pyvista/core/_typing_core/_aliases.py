@@ -12,14 +12,14 @@ from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
+from pyvista_validation.typing import ArrayLikeFloat
+from pyvista_validation.typing import MatrixLikeFloat
+from pyvista_validation.typing import MatrixLikeInt
 from pyvista_validation.typing import Scalar as _Scalar
+from pyvista_validation.typing import VectorLikeFloat
+from pyvista_validation.typing import VectorLikeInt
 
 from pyvista import _vtk
-
-from ._array_like import _ArrayLike
-from ._array_like import _ArrayLike1D
-from ._array_like import _ArrayLike2D
-from ._array_like import _NumberT
 
 if TYPE_CHECKING:
     import meshio
@@ -42,14 +42,11 @@ else:
 
 # Forwarded as the deprecated `pyvista.Number`
 Number = Union[int, float]
-VectorLike = _ArrayLike1D[_NumberT]
-MatrixLike = _ArrayLike2D[_NumberT]
-ArrayLike = _ArrayLike[_NumberT]
 
 if Rotation is not None:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3, Rotation]
 else:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
+    RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3]  # type: ignore[misc]
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
 
 
@@ -96,15 +93,18 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike = Union[MatrixLike[int], VectorLike[int]]
+CellsLike = Union[MatrixLikeInt, VectorLikeInt]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[_NumberT, _Scalar, ArrayLike[_NumberT]]
+_ArrayLikeOrScalar = Union[float, _Scalar, ArrayLikeFloat]
 
 # Array of any dtype, or a sequence of anything
 _AnyArrayLike = Union[NDArray[Any], Sequence[Any]]
+
+# Array of any integer, floating or boolean dtype
+_NumericArray = NDArray[Union[np.floating, np.integer, np.bool_]]
 
 # Array wrapped as a volume, whose values become point scalars
 _VolumeArray = NDArray[Union[np.bool_, np.number]]
@@ -122,8 +122,8 @@ _MeshLike = Union[
     'MultiBlock',
     'PartitionedDataSet',
     _VolumeArray,
-    VectorLike[float],
-    MatrixLike[float],
+    VectorLikeFloat,
+    MatrixLikeFloat,
     'trimesh.Trimesh',
     'meshio.Mesh',
 ]

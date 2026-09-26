@@ -6,15 +6,21 @@ import importlib
 import sys
 from typing import TYPE_CHECKING
 
-from pyvista.core._typing_core import ArrayLike as ArrayLike
+from pyvista.core._typing_core import ArrayLikeBool as ArrayLikeBool
+from pyvista.core._typing_core import ArrayLikeFloat as ArrayLikeFloat
+from pyvista.core._typing_core import ArrayLikeInt as ArrayLikeInt
 from pyvista.core._typing_core import CellArrayLike as CellArrayLike
 from pyvista.core._typing_core import CellsLike as CellsLike
 from pyvista.core._typing_core import InteractionEventType as InteractionEventType
 from pyvista.core._typing_core import LineStyle as LineStyle
-from pyvista.core._typing_core import MatrixLike as MatrixLike
+from pyvista.core._typing_core import MatrixLikeBool as MatrixLikeBool
+from pyvista.core._typing_core import MatrixLikeFloat as MatrixLikeFloat
+from pyvista.core._typing_core import MatrixLikeInt as MatrixLikeInt
 from pyvista.core._typing_core import RotationLike as RotationLike
 from pyvista.core._typing_core import TransformLike as TransformLike
-from pyvista.core._typing_core import VectorLike as VectorLike
+from pyvista.core._typing_core import VectorLikeBool as VectorLikeBool
+from pyvista.core._typing_core import VectorLikeFloat as VectorLikeFloat
+from pyvista.core._typing_core import VectorLikeInt as VectorLikeInt
 from pyvista.core._typing_core import WrappableType as WrappableType
 
 if TYPE_CHECKING:
@@ -26,7 +32,9 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import PlottableType as PlottableType
 
 __all__ = [
-    'ArrayLike',
+    'ArrayLikeBool',
+    'ArrayLikeFloat',
+    'ArrayLikeInt',
     'CameraPositionOptions',
     'CellArrayLike',
     'CellsLike',
@@ -35,12 +43,16 @@ __all__ = [
     'InteractionEventType',
     'JupyterBackendOptions',
     'LineStyle',
-    'MatrixLike',
+    'MatrixLikeBool',
+    'MatrixLikeFloat',
+    'MatrixLikeInt',
     'MeshValidationFields',
     'PlottableType',
     'RotationLike',
     'TransformLike',
-    'VectorLike',
+    'VectorLikeBool',
+    'VectorLikeFloat',
+    'VectorLikeInt',
     'WrappableType',
 ]
 
@@ -56,17 +68,14 @@ _LAZY_ALIASES = {
 
 _MOVED_FROM_CORE = frozenset(
     {
-        'ArrayLike',
         'CellArrayLike',
         'CellsLike',
         'InteractionEventType',
         'JupyterBackendOptions',
         'LineStyle',
-        'MatrixLike',
         'MeshValidationFields',
         'RotationLike',
         'TransformLike',
-        'VectorLike',
     }
 )
 _MOVED_FROM_PLOTTING = frozenset({'CameraPositionOptions', 'Chart', 'ColorLike'})
@@ -104,6 +113,21 @@ _REMOVED_ALIASES = {
         'pyvista.core._typing_core._array_like',
         'NumpyArray',
         'use `numpy.typing.NDArray` instead',
+    ),
+    'ArrayLike': (
+        'pyvista.core._typing_core._array_like',
+        '_ArrayLike',
+        'use `pyvista.typing.ArrayLikeFloat`, `ArrayLikeInt` or `ArrayLikeBool` instead',
+    ),
+    'MatrixLike': (
+        'pyvista.core._typing_core._array_like',
+        '_ArrayLike2D',
+        'use `pyvista.typing.MatrixLikeFloat`, `MatrixLikeInt` or `MatrixLikeBool` instead',
+    ),
+    'VectorLike': (
+        'pyvista.core._typing_core._array_like',
+        '_ArrayLike1D',
+        'use `pyvista.typing.VectorLikeFloat`, `VectorLikeInt` or `VectorLikeBool` instead',
     ),
 }
 

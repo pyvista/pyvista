@@ -9,8 +9,8 @@ Type aliases for annotating code that uses PyVista.
    The ``pyvista.typing`` module.
 
 .. deprecated:: 0.50
-   Accessing these aliases from ``pyvista``, for example ``pyvista.VectorLike``,
-   is deprecated. Use ``pyvista.typing.VectorLike`` instead.
+   Accessing these aliases from ``pyvista``, for example ``pyvista.ColorLike``,
+   is deprecated. Use ``pyvista.typing.ColorLike`` instead.
 
 .. deprecated:: 0.50
    ``pyvista.Number``, ``pyvista.NumberType`` and ``pyvista.NumpyArray`` are
@@ -20,42 +20,90 @@ Type aliases for annotating code that uses PyVista.
 
 Numeric Array-Like Types
 ------------------------
-:data:`ArrayLike`, :data:`MatrixLike`, and :data:`VectorLike` accept boolean, integer, and
-floating NumPy arrays, and sequences of Python numbers. The parameter, as in
-``VectorLike[int]``, types the items of a sequence only: an array of any of those types is
-accepted whatever the parameter. Complex, string, and object arrays are not included;
-annotate an input that accepts them as ``NDArray[Any] | Sequence[Any]``.
+Each array-like accepts NumPy arrays and sequences of one kind of value. As in Python type
+hints, ``Float`` means :class:`float`, which also accepts :class:`int` and :class:`bool`, so
+the ``Float`` types accept integer and boolean arrays too; likewise the ``Int`` types accept
+boolean arrays. Complex, string, and object arrays are not included; annotate an input that
+accepts them as ``NDArray[Any] | Sequence[Any]``.
 
-pyvista.typing.ArrayLike
-~~~~~~~~~~~~~~~~~~~~~~~~
-Any-dimensional array-like object with numerical values.
-
-Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
-
-.. currentmodule:: pyvista.typing
-
-.. autodata:: ArrayLike
-
-pyvista.typing.MatrixLike
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Two-dimensional array-like object with numerical values.
-
-Includes singly nested sequences and numpy arrays.
+.. deprecated:: 0.50
+   ``pyvista.ArrayLike``, ``pyvista.MatrixLike`` and ``pyvista.VectorLike`` are deprecated.
+   Use the ``Float``, ``Int`` or ``Bool`` types below instead, for example
+   ``VectorLikeFloat`` in place of ``VectorLike[float]``.
 
 .. currentmodule:: pyvista.typing
 
-.. autodata:: MatrixLike
-
-
-pyvista.typing.VectorLike
-~~~~~~~~~~~~~~~~~~~~~~~~~
+pyvista.typing.VectorLikeFloat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with numerical values.
 
-Includes sequences and numpy arrays.
+Includes sequences and one-dimensional NumPy arrays.
 
-.. currentmodule:: pyvista.typing
+.. autodata:: VectorLikeFloat
 
-.. autodata:: VectorLike
+pyvista.typing.VectorLikeInt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+One-dimensional array-like object with integer values.
+
+Includes sequences and one-dimensional NumPy arrays.
+
+.. autodata:: VectorLikeInt
+
+pyvista.typing.VectorLikeBool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+One-dimensional array-like object with boolean values.
+
+Includes sequences and one-dimensional NumPy arrays.
+
+.. autodata:: VectorLikeBool
+
+pyvista.typing.MatrixLikeFloat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Two-dimensional array-like object with numerical values.
+
+Includes sequences of vectors and two-dimensional NumPy arrays.
+
+.. autodata:: MatrixLikeFloat
+
+pyvista.typing.MatrixLikeInt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Two-dimensional array-like object with integer values.
+
+Includes sequences of vectors and two-dimensional NumPy arrays.
+
+.. autodata:: MatrixLikeInt
+
+pyvista.typing.MatrixLikeBool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Two-dimensional array-like object with boolean values.
+
+Includes sequences of vectors and two-dimensional NumPy arrays.
+
+.. autodata:: MatrixLikeBool
+
+pyvista.typing.ArrayLikeFloat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Any-dimensional array-like object with numerical values.
+
+Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
+
+.. autodata:: ArrayLikeFloat
+
+pyvista.typing.ArrayLikeInt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Any-dimensional array-like object with integer values.
+
+Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
+
+.. autodata:: ArrayLikeInt
+
+pyvista.typing.ArrayLikeBool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Any-dimensional array-like object with boolean values.
+
+Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
+
+.. autodata:: ArrayLikeBool
 
 
 VTK Related Types
