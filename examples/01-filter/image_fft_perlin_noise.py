@@ -9,8 +9,8 @@ Apply an FFT to a :class:`~pyvista.ImageData` sampled from Perlin noise.
 Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
 Here, we demonstrate FFT usage by first generating Perlin noise using
-:func:`pyvista.sample_function() <pyvista.core.utilities.features.sample_function>` to
-sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`,
+:func:`pyvista.sample_function` to
+sample :func:`pyvista.perlin_noise`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 
@@ -67,7 +67,7 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, plot the noise in the frequency domain. Note how there is more high
 # frequency content in the x direction and this matches the frequencies given
-# to :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`.
+# to :func:`pyvista.perlin_noise`.
 
 # scale to make the plot viewable
 subset['scalars'] = np.abs(subset.active_scalars)

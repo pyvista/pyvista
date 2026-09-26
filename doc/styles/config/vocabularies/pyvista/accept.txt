@@ -403,6 +403,10 @@ renderers
 repo
 resample
 resampled
+resamples
+reslice
+resliced
+reslicing
 restrip
 revered
 rfft
@@ -411,6 +415,7 @@ rioxarray
 rst
 rtree
 scalar
+scapula
 scipy
 scooby
 setuptools

@@ -8,10 +8,12 @@ Colors
    :toctree: _autosummary
 
    Color
-   ColorLike
    get_cmap_safe
 
 .. seealso::
+
+   :data:`~pyvista.typing.ColorLike`
+      Type alias for any value accepted as a color.
 
    :ref:`colormap_example`
       Choose a colormap when plotting scalars.

@@ -46,11 +46,11 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid
     from pyvista import MultiBlock
-    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
@@ -488,15 +488,16 @@ def _read_dispatch(  # noqa: PLR0911
         multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
+            block = _read_dispatch(
+                each,
+                force_ext=None,
+                file_format=file_format,
+                progress_bar=progress_bar,
+                validate=validate,
+                **kwargs,
+            )
             multi.append(
-                _read_dispatch(  # type: ignore[arg-type]
-                    each,
-                    force_ext=None,
-                    file_format=file_format,
-                    progress_bar=progress_bar,
-                    validate=validate,
-                    **kwargs,
-                ),
+                block.cast_to_multiblock() if isinstance(block, pv.PartitionedDataSet) else block,
                 name,
             )
         return multi

@@ -392,7 +392,7 @@ class PolyDataFilters(DataSetFilters):
 
     # fmt: off
     # ruff: disable[E501]
-    @overload  # a composite, whose blocks decide
+    @overload  # type: ignore[override]  # a composite, whose blocks decide
     def __add__(self: PolyData, dataset: MultiBlock[Any]) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # polydata
     def __add__(self: PolyData, dataset: PolyData | Sequence[PolyData]) -> PolyData: ...  # type: ignore[misc, overload-overlap]
@@ -407,7 +407,7 @@ class PolyDataFilters(DataSetFilters):
         """Merge these two meshes."""
         return self.merge(dataset)
 
-    def __iadd__(  # type: ignore[misc]
+    def __iadd__(  # type: ignore[misc, override]
         self: PolyData,
         dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData:
@@ -4892,7 +4892,7 @@ class PolyDataFilters(DataSetFilters):
         """
         removed = (
             self.cast_to_unstructured_grid()
-            .remove_unused_points()
+            .remove_unused_points(inplace=True)
             .extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         )
         out = self if inplace else type(self)()

@@ -908,6 +908,9 @@ def test_load_as_multiblock_non_loadable_file_before_loadable_file():
     assert isinstance(multi['HeadMRVolume'], pv.ImageData)
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the loader resolves readers for empty files of several suffixes'
+)
 @pytest.mark.parametrize(
     ('filename', 'companion_names', 'reader_types'),
     [

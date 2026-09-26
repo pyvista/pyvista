@@ -800,7 +800,7 @@ def sample_function(
     ----------
     function : :vtk:`vtkImplicitFunction`
         Implicit function to evaluate.  For example, the function
-        generated from :func:`perlin_noise() <pyvista.core.utilities.features.perlin_noise>`.
+        generated from :func:`~pyvista.perlin_noise`.
 
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:

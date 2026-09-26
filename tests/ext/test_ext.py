@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import pyvista as pv
+from pyvista.ext import _embed_py_file
 from pyvista.ext import plot_directive
 from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
@@ -124,6 +125,19 @@ def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypat
     assert viewer_uri is None
     assert asset_uri is None
     assert 'is not under outdir/_images; cannot compute asset URI' in caplog.text
+
+
+def test_embed_py_file_warns_for_a_multi_file_dataset(monkeypatch, caplog):
+    monkeypatch.setattr(_embed_py_file, 'download_file', lambda _name: ['one.py', 'two.py'])
+    state_machine = SimpleNamespace(reporter=None)
+    directive = _embed_py_file.EmbedPyFileDirective(
+        'pyvista-embed-py-file', ['many'], {}, [], 1, 0, '', None, state_machine
+    )
+
+    with caplog.at_level('WARNING', logger=_embed_py_file.__name__):
+        assert directive.run() == []
+
+    assert 'many downloads to more than one file' in caplog.text
 
 
 def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypatch):
@@ -247,6 +261,7 @@ class _FakeSphinxApp:
         self.directives = {}
         self.connected = {}
         self.config_values = {}
+        self.config_rebuilds = {}
         self.setup_extension_calls = []
 
     def add_directive(self, name, directive):
@@ -255,16 +270,56 @@ class _FakeSphinxApp:
     def connect(self, event, handler):
         self.connected.setdefault(event, []).append(handler)
 
-    def add_config_value(self, name, default, rebuild):  # noqa: ARG002 -- matches Sphinx's signature
+    def add_config_value(self, name, default, rebuild):
         self.config_values[name] = default
+        self.config_rebuilds[name] = rebuild
 
     def setup_extension(self, name):
         self.setup_extension_calls.append(name)
 
 
+@pytest.mark.parametrize(
+    ('config_value', 'options'),
+    [(True, {}), (False, {'force_static': None})],
+)
+def test_run_uses_force_static_config(monkeypatch, tmp_path, config_value, options):
+    captured = {}
+
+    def fake_render_figures(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(plot_directive, 'render_figures', fake_render_figures)
+
+    config = SimpleNamespace(
+        pyvista_plot_force_static=config_value,
+        pyvista_plot_use_counter=False,
+        pyvista_plot_include_source=True,
+        pyvista_plot_skip=False,
+        pyvista_plot_skip_optional=False,
+    )
+    app = SimpleNamespace(
+        builder=SimpleNamespace(outdir=tmp_path / 'html', srcdir=tmp_path / 'src'),
+        confdir=str(tmp_path),
+        doctreedir=tmp_path / 'doctrees',
+    )
+    env = SimpleNamespace(app=app, config=config)
+    document = SimpleNamespace(
+        settings=SimpleNamespace(env=env),
+        attributes={'source': str(tmp_path / 'src' / 'index.rst')},
+    )
+    state_machine = SimpleNamespace(document=document)
+
+    plot_directive.run([], [], dict(options), state_machine, SimpleNamespace(), 1)
+
+    assert captured['force_static'] is True
+
+
 def test_setup_depends_on_sphinx_autocodelink_when_available():
     app = _FakeSphinxApp()
     plot_directive.setup(app)
+    assert app.config_values['pyvista_plot_force_static'] is False
+    assert app.config_rebuilds['pyvista_plot_force_static'] == 'env'
     assert app.setup_extension_calls == ['sphinx_autocodelink']
 
 

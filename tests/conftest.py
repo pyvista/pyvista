@@ -22,6 +22,9 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+
+# Reuse the doctest fixture for unit tests
+from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
@@ -584,6 +587,7 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/add_floor.py',
         'typing/cases/plotting/add_legend.py',
         'typing/cases/plotting/add_legend_scale.py',
+        'typing/cases/plotting/add_mesh.py',
         'typing/cases/plotting/add_north_arrow_widget.py',
         'typing/cases/plotting/add_orientation_widget.py',
         'typing/cases/plotting/add_ruler.py',

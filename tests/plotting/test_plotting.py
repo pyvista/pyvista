@@ -2432,6 +2432,10 @@ def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
     assert actor2 in actors
 
 
+@pytest.mark.expect_vtk_output(
+    'Resetting view-up since view plane normal is parallel',
+    reason='the camera looks along its own view-up, which VTK resets',
+)
 def test_image_properties() -> None:
     mesh = examples.load_uniform()
     pl = pv.Plotter()

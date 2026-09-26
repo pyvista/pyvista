@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Literal
 from typing import TypeAlias
 from typing import TypedDict
@@ -19,13 +18,11 @@ from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
+from pyvista.core._typing_core import _MeshLike
 
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.partitioned import PartitionedDataSet
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -39,9 +36,7 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = Union[
-    VectorLike[float], 'DataSet', 'MultiBlock[Any]', 'PartitionedDataSet', str, Path
-]
+PlottableType: TypeAlias = _MeshLike | str | Path
 
 
 NamedColormaps = Union[
