@@ -25,9 +25,10 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import PointLiteral
+from pyvista.core.utilities.arrays import _active_scalars_input
+from pyvista.core.utilities.arrays import _scalars_info
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
-from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
@@ -100,7 +101,8 @@ class PolyDataFilters(DataSetFilters):
         array([ True,  True,  True, ..., False, False, False])
 
         """
-        poly_data = self
+        # The ids go on a shallow copy, so they reach the algorithm but not the input
+        poly_data = self.copy(deep=False)
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -2185,9 +2187,13 @@ class PolyDataFilters(DataSetFilters):
         (1680, 3)
 
         """
-        # track original point indices
+        input_mesh = self
         if split_vertices:
-            self.point_data['pyvistaOriginalPointIds'] = np.arange(self.n_points, dtype=pv.ID_TYPE)
+            # The ids go on a shallow copy, so they reach the algorithm but not the input
+            input_mesh = self.copy(deep=False)
+            input_mesh.point_data['pyvistaOriginalPointIds'] = np.arange(
+                self.n_points, dtype=pv.ID_TYPE
+            )
 
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
@@ -2198,7 +2204,7 @@ class PolyDataFilters(DataSetFilters):
         normal.SetAutoOrientNormals(auto_orient_normals)
         normal.SetNonManifoldTraversal(non_manifold_traversal)
         normal.SetFeatureAngle(feature_angle)
-        normal.SetInputData(self)
+        normal.SetInputData(input_mesh)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
         mesh = _get_output(normal)
@@ -4369,8 +4375,9 @@ class PolyDataFilters(DataSetFilters):
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
 
+        # The filter writes its scalars into its input, so give it a shallow copy
+        poly_data = self.copy(deep=False)
         # according to VTK limitations
-        poly_data = self
         if not poly_data.is_all_triangles:
             poly_data = poly_data.triangulate()
         if not other_mesh.is_all_triangles:
@@ -4395,10 +4402,8 @@ class PolyDataFilters(DataSetFilters):
             # a nullptr.
             # See https://github.com/pyvista/pyvista/pull/1540
             #
-            # Note: Since all other cell arrays are destroyed when
-            # generate_scalars is True, we can always index the first cell
-            # array.
-            output.cell_data.GetAbstractArray(0).SetName('collision_rgba')
+            # The filter's own array is the active one; the rest are shared with the input
+            output.cell_data.GetScalars().SetName('collision_rgba')
 
         return output, alg.GetNumberOfContacts()
 
@@ -4520,9 +4525,8 @@ class PolyDataFilters(DataSetFilters):
             get_args(_BandedScalarModeOptions), must_contain=scalar_mode, name='scalar_mode'
         )
         if scalars is None:
-            set_default_active_scalars(self)
-            scalars = self.active_scalars_name
-            if self.point_data.active_scalars_name is None or scalars is None:
+            field, scalars = _scalars_info(self, None)
+            if field != FieldAssociation.POINT:
                 msg = 'No point scalars to contour.'
                 raise MissingDataError(msg)
         arr = get_array(self, scalars, preference='point', err=False)
@@ -4533,9 +4537,11 @@ class PolyDataFilters(DataSetFilters):
         if field != FieldAssociation.POINT:
             msg = 'Only point data can be contoured.'
             raise ValueError(msg)
+        # VTK below 9.5 reads the active scalars rather than the array it is given
+        input_mesh, _ = _active_scalars_input(self, scalars)
 
         if rng is None:
-            rng = self.get_data_range(self.active_scalars)
+            rng = self.get_data_range(scalars, preference='point')
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
         alg.SetInputArrayToProcess(
@@ -4546,7 +4552,7 @@ class PolyDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         alg.GenerateValues(n_contours, float(rng[0]), float(rng[1]))
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetClipping(clipping)
         if scalar_mode == 'value':
             alg.SetScalarModeToValue()
@@ -4564,12 +4570,12 @@ class PolyDataFilters(DataSetFilters):
             array = mesh.GetPointData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.point_data.active_scalars_name)
+                array.SetName(scalars)
         for i in range(mesh.GetCellData().GetNumberOfArrays()):
             array = mesh.GetCellData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.cell_data.active_scalars_name)
+                array.SetName(input_mesh.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, wrap(alg.GetContourEdgesOutput())

@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _DataSetType
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
@@ -889,6 +890,163 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
     return matrix
 
 
+def _default_active_vectors_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
+    """Return the active vectors info of a mesh, or that of its only vector-like array."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    if mesh.active_vectors_name is not None:
+        field, name = mesh.active_vectors_info
+        return _ActiveArrayExistsInfoTuple(field, cast('str', name))
+
+    possible_vectors_point = [
+        name for name, value in mesh.point_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+    possible_vectors_cell = [
+        name for name, value in mesh.cell_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+    possible_vectors = possible_vectors_point + possible_vectors_cell
+
+    if len(possible_vectors) == 1:
+        field = (
+            FieldAssociation.POINT if len(possible_vectors_point) == 1 else FieldAssociation.CELL
+        )
+        return _ActiveArrayExistsInfoTuple(field, possible_vectors[0])
+    if len(possible_vectors) < 1:
+        msg = 'No vector-like data available.'
+        raise MissingDataError(msg)
+    msg = (
+        'Multiple vector-like data available\n'
+        f'cell data: {possible_vectors_cell}.\n'
+        f'point data: {possible_vectors_point}.\n'
+        'Set one as active using DataSet.set_active_vectors(name, preference=type)'
+    )
+    raise AmbiguousDataError(msg)
+
+
+def _default_active_scalars_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
+    """Return the active scalars info of a mesh, or that of its only array."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    if mesh.active_scalars_name is not None:
+        field, name = mesh.active_scalars_info
+        return _ActiveArrayExistsInfoTuple(field, cast('str', name))
+
+    possible_scalars_point = mesh.point_data.keys()
+    possible_scalars_cell = mesh.cell_data.keys()
+    possible_scalars = possible_scalars_point + possible_scalars_cell
+
+    if len(possible_scalars) == 1:
+        field = (
+            FieldAssociation.POINT if len(possible_scalars_point) == 1 else FieldAssociation.CELL
+        )
+        return _ActiveArrayExistsInfoTuple(field, possible_scalars[0])
+    if len(possible_scalars) < 1:
+        msg = 'No data available.'
+        raise MissingDataError(msg)
+    msg = (
+        'Multiple data available\n'
+        f'cell data: {possible_scalars_cell}.\n'
+        f'point data: {possible_scalars_point}.\n'
+        'Set one as active using DataSet.set_active_scalars(name, preference=type)'
+    )
+    raise AmbiguousDataError(msg)
+
+
+def _preference_of(association: FieldAssociation) -> PointLiteral | CellLiteral:
+    """Return the ``preference`` keyword matching a field association."""
+    return 'point' if association == FieldAssociation.POINT else 'cell'
+
+
+def _shallow_copy_for_new_arrays(mesh: _DataSetType) -> _DataSetType:
+    """Return a shallow copy which can take new arrays without touching the input's metadata."""
+    copied = mesh.copy(deep=False)
+    copied.copy_meta_from(mesh, deep=True)
+    return copied
+
+
+def _array_info(
+    mesh: DataSet,
+    name: str | None,
+    preference: PointLiteral | CellLiteral,
+    *,
+    kind: Literal['scalars', 'vectors'],
+) -> _ActiveArrayExistsInfoTuple:
+    """Return the field association and name of the named or default array."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    if name is None:
+        default_info = (
+            _default_active_scalars_info if kind == 'scalars' else _default_active_vectors_info
+        )
+        return default_info(mesh)
+    return _ActiveArrayExistsInfoTuple(
+        mesh.get_array_association(name, preference=preference), name
+    )
+
+
+def _scalars_info(
+    mesh: DataSet, scalars: str | None, preference: PointLiteral | CellLiteral = 'point'
+) -> _ActiveArrayExistsInfoTuple:
+    """Return the field association and name of the given or default scalars."""
+    return _array_info(mesh, scalars, preference, kind='scalars')
+
+
+def _active_array_input(
+    mesh: _DataSetType,
+    name: str | None,
+    preference: PointLiteral | CellLiteral,
+    *,
+    kind: Literal['scalars', 'vectors'],
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a shallow copy with the named or default array active, and its field and name."""
+    info = _array_info(mesh, name, preference, kind=kind)
+    copied = mesh.copy(deep=False)
+    getattr(copied, f'set_active_{kind}')(info.name, preference=_preference_of(info.association))
+    return copied, info
+
+
+def _active_scalars_input(
+    mesh: _DataSetType, scalars: str | None, preference: PointLiteral | CellLiteral = 'point'
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a mesh with the given or default scalars active, and the field and name."""
+    return _active_array_input(mesh, scalars, preference, kind='scalars')
+
+
+def _active_vectors_input(
+    mesh: _DataSetType, vectors: str | None, preference: PointLiteral | CellLiteral = 'point'
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a mesh with the given or default vectors active, and the field and name."""
+    return _active_array_input(mesh, vectors, preference, kind='vectors')
+
+
+def _default_array_input(
+    mesh: _DataSetType,
+    name: str | None,
+    preference: PointLiteral | CellLiteral,
+    *,
+    kind: Literal['scalars', 'vectors'],
+) -> tuple[_DataSetType, str]:
+    """Return the mesh to filter and the name of the array to process."""
+    if name is not None:
+        return mesh, name
+    copied, info = _active_array_input(mesh, None, preference, kind=kind)
+    return copied, info.name
+
+
+def _default_scalars_input(
+    mesh: _DataSetType, scalars: str | None, preference: PointLiteral | CellLiteral = 'point'
+) -> tuple[_DataSetType, str]:
+    """Return the mesh to filter and the scalars name, activating the default if needed."""
+    return _default_array_input(mesh, scalars, preference, kind='scalars')
+
+
+def _default_vectors_input(
+    mesh: _DataSetType, vectors: str | None, preference: PointLiteral | CellLiteral = 'point'
+) -> tuple[_DataSetType, str]:
+    """Return the mesh to filter and the vectors name, activating the default if needed."""
+    return _default_array_input(mesh, vectors, preference, kind='vectors')
+
+
 def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     """Set a default vectors array on mesh, if not already set.
 
@@ -924,35 +1082,8 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_vectors_name is None:
-        point_data = mesh.point_data
-        cell_data = mesh.cell_data
-
-        possible_vectors_point = [
-            name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
-        ]
-        possible_vectors_cell = [
-            name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
-        ]
-
-        possible_vectors = possible_vectors_point + possible_vectors_cell
-        n_possible_vectors = len(possible_vectors)
-
-        if n_possible_vectors == 1:
-            preference: Literal['point', 'cell'] = (
-                'point' if len(possible_vectors_point) == 1 else 'cell'
-            )
-            mesh.set_active_vectors(possible_vectors[0], preference=preference)
-        elif n_possible_vectors < 1:
-            msg = 'No vector-like data available.'
-            raise MissingDataError(msg)
-        else:  # n_possible_vectors > 1:
-            msg = (
-                'Multiple vector-like data available\n'
-                f'cell data: {possible_vectors_cell}.\n'
-                f'point data: {possible_vectors_point}.\n'
-                'Set one as active using DataSet.set_active_vectors(name, preference=type)'
-            )
-            raise AmbiguousDataError(msg)
+        default = _default_active_vectors_info(mesh)
+        mesh.set_active_vectors(default.name, preference=_preference_of(default.association))
     field, name = mesh.active_vectors_info
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
@@ -992,31 +1123,8 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_scalars_name is None:
-        point_data = mesh.point_data
-        cell_data = mesh.cell_data
-
-        possible_scalars_point = point_data.keys()
-        possible_scalars_cell = cell_data.keys()
-
-        possible_scalars = possible_scalars_point + possible_scalars_cell
-        n_possible_scalars = len(possible_scalars)
-
-        if n_possible_scalars == 1:
-            preference: Literal['point', 'cell'] = (
-                'point' if len(possible_scalars_point) == 1 else 'cell'
-            )
-            mesh.set_active_scalars(possible_scalars[0], preference=preference)
-        elif n_possible_scalars < 1:
-            msg = 'No data available.'
-            raise MissingDataError(msg)
-        else:  # n_possible_scalars > 1:
-            msg = (
-                'Multiple data available\n'
-                f'cell data: {possible_scalars_cell}.\n'
-                f'point data: {possible_scalars_point}.\n'
-                'Set one as active using DataSet.set_active_scalars(name, preference=type)'
-            )
-            raise AmbiguousDataError(msg)
+        default = _default_active_scalars_info(mesh)
+        mesh.set_active_scalars(default.name, preference=_preference_of(default.association))
     field, name = mesh.active_scalars_info
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 

@@ -276,6 +276,10 @@ report.omit = [
   '*/tests/doc/vale/check_expected_failures.py', # .github/workflows/style-docstring.yml
   '*/tests/generate_test_image_report.py', # tox -e image-report
 
+  # Runs with coverage paused: its broad sweep would count lines no assertion checks.
+  '*/tests/core/filter_side_effects_cases.py',
+  '*/tests/core/test_filter_side_effects.py',
+
   # Sphinx projects used as build input, copied to a tmpdir and built in a subprocess.
   '*/tests/doc/tinypages_autoenum/*',
   '*/tests/plotting/tinypages/*',

@@ -282,6 +282,18 @@ def test_contour_labels_strict_external(channels):
     channels.contour_labels('strict_external', select_outputs=[2])
 
 
+def test_contour_labels_scalars(labeled_image):
+    other = np.zeros(labeled_image.n_points)
+    other[[13, 14]] = 7
+    labeled_image.point_data['other'] = other
+    labeled_image.set_active_scalars('labels')
+
+    contours = labeled_image.contour_labels(scalars='other')
+
+    assert np.unique(contours.cell_data['boundary_labels']).tolist() == [7]
+    assert labeled_image.active_scalars_name == 'labels'
+
+
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
@@ -290,6 +302,12 @@ def test_contour_labels_raises(labeled_image):
     # Empty inputs
     with pytest.raises(pv.MissingDataError, match='No data available'):
         pv.ImageData().contour_labels()
+
+    # Multi-component labels
+    labeled_image.point_data['vectors'] = np.zeros((labeled_image.n_points, 3))
+    match = "Scalars 'vectors' must have a single component to contour labels."
+    with pytest.raises(ValueError, match=match):
+        labeled_image.contour_labels(scalars='vectors')
 
 
 @pytest.mark.parametrize(
