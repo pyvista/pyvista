@@ -3948,10 +3948,10 @@ class ImageDataFilters(DataSetFilters):
             Either the input ImageData or a generated one where connected regions are
             labelled with a ``'RegionId'`` point-based or cell-based data.
 
-        numpy.ndarray[int]
+        NDArray[np.signedinteger]
             The labels of each extracted regions.
 
-        numpy.ndarray[int]
+        NDArray[np.signedinteger]
             The size (that is, number of cells) of each extracted regions.
 
         See Also
@@ -4208,10 +4208,10 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        numpy.ndarray[bool]
+        NDArray[np.bool_]
             A (3, ) shaped mask array that indicates which dimensions will be modified.
 
-        numpy.ndarray[int]
+        NDArray[np.int64]
             A (3, ) shaped array that with the new ImageData dimensions after applying
             the operation.
 

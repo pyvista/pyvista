@@ -1507,7 +1507,7 @@ class Transform(
 
         Returns
         -------
-        numpy.ndarray
+        NDArray[np.float64]
             Current transformation matrix.
 
         """
@@ -1540,7 +1540,7 @@ class Transform(
 
         Returns
         -------
-        numpy.ndarray
+        NDArray[np.float64]
             Current inverse transformation matrix.
 
         """
@@ -1565,7 +1565,7 @@ class Transform(
 
         Returns
         -------
-        list[numpy.ndarray]
+        list[NDArray[np.float64]]
             List of all current transformation matrices.
 
         """
@@ -1591,7 +1591,7 @@ class Transform(
 
         Returns
         -------
-        list[numpy.ndarray]
+        list[NDArray[np.float64]]
             List of all current inverse transformation matrices.
 
         """

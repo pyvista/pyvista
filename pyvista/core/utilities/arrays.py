@@ -778,7 +778,7 @@ def convert_string_array(
 
     Parameters
     ----------
-    arr : numpy.ndarray[str] | str | :vtk:`vtkStringArray`
+    arr : NDArray[np.str_] | str | :vtk:`vtkStringArray`
         NumPy string array or :vtk:`vtkStringArray` to convert.
 
     name : str, optional
@@ -786,7 +786,7 @@ def convert_string_array(
 
     Returns
     -------
-    :vtk:`vtkStringArray` | numpy.ndarray[str]
+    :vtk:`vtkStringArray` | NDArray[np.str_]
         VTK string array, or NumPy string array if the input is a
         :vtk:`vtkStringArray`.
 

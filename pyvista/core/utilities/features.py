@@ -40,7 +40,7 @@ def _padded_bins(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : sequence[float] | numpy.ndarray
+    density : NDArray[np.integer | np.floating] | sequence[float]
         A list of densities along x,y,z directions.
 
     Returns
