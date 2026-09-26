@@ -526,8 +526,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 narray = narray.view(np.complex64)  # type: ignore[assignment]
             if narray.dtype == np.float64:
                 narray = narray.view(np.complex128)  # type: ignore[assignment]
-            # remove singleton dimensions to match the behavior of the rest of 1D VTK arrays
-            return narray.squeeze()
+            # drop the component axis of the (n, 1) complex view so the array is 1D
+            return narray.squeeze(axis=-1)
         return narray
 
     def set_array(

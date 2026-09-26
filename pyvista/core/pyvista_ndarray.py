@@ -151,14 +151,10 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
     def squeeze(self, axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None) -> Self:
         """Remove axes of length one while retaining an array view.
 
-        .. versionchanged:: 0.50
-            Single-element inputs return zero-dimensional array views.
-
         Parameters
         ----------
         axis : int or tuple[int, ...], optional
             Axes to remove. By default, remove all axes of length one.
-            Selecting an axis of length greater than one raises a ``ValueError``.
 
         Returns
         -------
@@ -166,6 +162,11 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
             View of the array with the selected axes removed. If all axes are
             removed, the result is a zero-dimensional array, not a scalar.
             If the shape is unchanged, return this array.
+
+        Raises
+        ------
+        ValueError
+            If a selected axis does not have length one.
 
         Examples
         --------
