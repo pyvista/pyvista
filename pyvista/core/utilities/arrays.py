@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _AnyArrayLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
@@ -266,13 +267,13 @@ def raise_has_duplicates(arr: NDArray[Any]) -> None:
 @overload
 def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> NDArray[Any]: ...
 @overload
-def convert_array(arr: NDArray[Any] | Sequence[Any], name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
+def convert_array(arr: _AnyArrayLike, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
 @overload
 def convert_array(arr: None, name: str | None = ..., *, deep: bool = ..., array_type: int | None = ...) -> None: ...
 # ruff: enable[E501]
 # fmt: on
 def convert_array(
-    arr: NDArray[Any] | Sequence[Any] | _vtk.vtkAbstractArray | None,
+    arr: _AnyArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
     *,
     deep: bool = False,

@@ -42,7 +42,6 @@ from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_
 from .utilities.writer_registry import _missing_writer_message
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from types import FunctionType
     from typing import Any
     from typing import ClassVar
@@ -52,6 +51,7 @@ if TYPE_CHECKING:
 
     from pyvista import MultiBlock
 
+    from ._typing_core import _AnyArrayLike
     from .utilities.arrays import CellLiteral
     from .utilities.arrays import FieldLiteral
     from .utilities.arrays import PointLiteral
@@ -545,9 +545,7 @@ class DataObject(
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
-    def add_field_data(
-        self: Self, array: NDArray[Any] | Sequence[Any], name: str, *, deep: bool = True
-    ) -> None:
+    def add_field_data(self: Self, array: _AnyArrayLike, name: str, *, deep: bool = True) -> None:
         """Add field data.
 
         .. deprecated:: 0.50

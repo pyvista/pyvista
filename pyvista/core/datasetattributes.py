@@ -26,7 +26,6 @@ _T = TypeVar('_T')
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
-    from collections.abc import Sequence
 
     from numpy.typing import NDArray
     import pandas
@@ -37,6 +36,7 @@ if TYPE_CHECKING:
 
     from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
+    from ._typing_core import _AnyArrayLike
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -280,7 +280,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return self.keys()
 
     def __setitem__(
-        self: Self, key: str, value: NDArray[Any] | Sequence[Any]
+        self: Self, key: str, value: _AnyArrayLike
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
@@ -1205,7 +1205,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def update(
         self: Self,
-        array_dict: Mapping[str, NDArray[Any] | Sequence[Any]] | DataSetAttributes,
+        array_dict: Mapping[str, _AnyArrayLike] | DataSetAttributes,
         *,
         copy: bool = True,
     ) -> None:
@@ -1256,7 +1256,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self: Self,
         *,
         name: str,
-        array: NDArray[Any] | Sequence[Any],
+        array: _AnyArrayLike,
         copy: bool,
     ) -> None:
         if copy:
