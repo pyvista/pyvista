@@ -7152,15 +7152,15 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # as_composite=True, return_meta=False
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
     def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def oriented_bounding_box(  # type: ignore[misc]
@@ -7174,8 +7174,8 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool = False,
         as_composite: bool = True,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
         | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
@@ -7350,15 +7350,15 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # as_composite=True, return_meta=False
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def bounding_box(  # type: ignore[misc]
@@ -7370,8 +7370,8 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool = False,
         as_composite: bool = True,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
         | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
@@ -7534,12 +7534,12 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool,
         as_composite: bool,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
         | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
-        def _multiblock_to_polydata(multiblock: MultiBlock) -> PolyData:
+        def _multiblock_to_polydata(multiblock: MultiBlock[PolyData]) -> PolyData:
             return multiblock.combine(merge_points=False).extract_surface(
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
@@ -7555,7 +7555,6 @@ class DataSetFilters(DataObjectFilters):
 
         # Modify box
         for face in box:
-            face = cast('pv.PolyData', face)
             if box_style == 'outline':
                 face.copy_from(pv.lines_from_points(face.points))
             if oriented:
