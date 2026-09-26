@@ -114,7 +114,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NDArray[np.floating]', pv.point_array(edges, 'point_ind'))
+        orig_id = cast('NDArray[np.signedinteger]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -2684,7 +2684,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.intp]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -2779,9 +2779,7 @@ class PolyDataFilters(DataSetFilters):
         *,
         first_point: bool = False,
         retry: bool = False,
-    ) -> tuple[
-        NDArray[np.float64], NDArray[np.signedinteger], NDArray[np.signedinteger]
-    ]:  # pragma: no cover
+    ) -> tuple[NDArray[np.float64], NDArray[np.intp], NDArray[np.intp]]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -4985,11 +4983,11 @@ def _drawn_intervals(
 def _build_dashes(
     source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
 ) -> tuple[
-    NDArray[np.signedinteger],
-    NDArray[np.signedinteger],
-    NDArray[np.floating],
-    NDArray[np.signedinteger],
-    NDArray[np.signedinteger],
+    NDArray[np.int64],
+    NDArray[np.int64],
+    NDArray[np.float64],
+    NDArray[np.int64],
+    NDArray[np.int64],
 ]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points

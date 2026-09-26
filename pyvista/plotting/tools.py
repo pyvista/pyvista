@@ -22,12 +22,16 @@ from pyvista.core.errors import DeprecationError
 from .colors import Color
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
+
+    _FloatingT = TypeVar('_FloatingT', bound=np.floating)
 
 
 class FONTS(Enum):
@@ -633,6 +637,16 @@ def create_north_arrow() -> pv.PolyData:
     return pv.PolyData(points, faces)
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def normalize(x: NDArray[_FloatingT], minimum: float | None = ..., maximum: float | None = ...) -> NDArray[_FloatingT]: ...
+@overload
+def normalize(x: NDArray[np.integer], minimum: float | None = ..., maximum: float | None = ...) -> NDArray[np.float64]: ...
+@overload
+def normalize(x: NDArray[np.integer | np.floating], minimum: float | None = ..., maximum: float | None = ...) -> NDArray[np.floating]: ...
+# ruff: enable[E501]
+# fmt: on
 def normalize(
     x: NDArray[np.integer | np.floating],
     minimum: float | None = None,

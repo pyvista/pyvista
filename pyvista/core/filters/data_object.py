@@ -88,9 +88,7 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
     _ScalarT = TypeVar('_ScalarT', bound=np.generic)
-    _RectilinearComponents = tuple[
-        NDArray[np.floating], NDArray[np.floating], NDArray[np.signedinteger]
-    ]
+    _RectilinearComponents = tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.intp]]
 
 
 def _rectilinear_transform_components(
@@ -6966,7 +6964,7 @@ def _validate_spacing(spacing: float | VectorLike[float]) -> NDArray[np.float64]
 def _round_dimensions(
     dimensions: NDArray[np.floating],
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
-) -> NDArray[np.signedinteger]:
+) -> NDArray[np.int64]:
     """Round fractional dimensions to integers, with ``numpy.round`` by default."""
     rounding_func = np.round if rounding_func is None else rounding_func
     return _validation.validate_array3(
@@ -7017,7 +7015,7 @@ def _count_points(dimensions: VectorLike[int], point_offset: int) -> int:
 
 def _dimensions_within(
     size: NDArray[np.floating], max_n_points: int, point_offset: int
-) -> NDArray[np.signedinteger]:
+) -> NDArray[np.int_]:
     """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
     spacing = _spacing_for_n_points(
         size, max_n_points, name='max n points', point_offset=point_offset

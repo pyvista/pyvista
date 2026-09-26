@@ -25,9 +25,11 @@ from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
 
     from pyvista import PolyData
@@ -1002,10 +1004,10 @@ class CellArray(
 
         Parameters
         ----------
-        offsets : MatrixLike[int]
+        offsets : sequence[int] | numpy.ndarray
             Offsets array of length ``n_cells + 1``.
 
-        connectivity : MatrixLike[int]
+        connectivity : array_like[int]
             Connectivity array.
 
         deep : bool, default: False
@@ -1102,7 +1104,10 @@ class CellArray(
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
+    def from_irregular_cells(
+        cls: type[CellArray],
+        cells: Sequence[Sequence[int | np.integer] | NDArray[np.integer]] | NDArray[np.integer],
+    ) -> CellArray:
         """Construct a ``CellArray`` from cells which may have different sizes.
 
         Use this method when the cells have varying numbers of points, for example, a
@@ -1117,7 +1122,7 @@ class CellArray(
 
         Parameters
         ----------
-        cells : Sequence[Sequence[int]]
+        cells : sequence[sequence[int] | numpy.ndarray]
             Sequence of length ``n_cells`` where each item is a sequence of the
             point indices for that cell. The cells may have different lengths.
 
@@ -1149,7 +1154,7 @@ class CellArray(
         """
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pv.ID_TYPE)
-        connectivity = np.concatenate(cells, dtype=pv.ID_TYPE)
+        connectivity = np.concatenate([np.asarray(c) for c in cells], dtype=pv.ID_TYPE)
         return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
@@ -1184,7 +1189,7 @@ def _get_connectivity(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
 
 
 def _validate_offsets_connectivity(
-    offsets: NDArray[np.signedinteger], connectivity: NDArray[np.signedinteger]
+    offsets: NDArray[_Scalar], connectivity: NDArray[_Scalar]
 ) -> None:
     """Raise if ``offsets`` and ``connectivity`` do not describe a valid cell array."""
     for name, array in (('Offsets', offsets), ('Connectivity', connectivity)):

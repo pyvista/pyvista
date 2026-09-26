@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from pyvista_validation._typing._array_like import _Scalar
 
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
@@ -239,12 +240,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     def update(
         self,
-        data: (
-            DataSetAttributes
-            | dict[str, NDArray[np.floating]]
-            | MatrixLike[float]
-            | VectorLike[float]
-        ),
+        data: DataSetAttributes | dict[str, Any] | MatrixLike[float] | VectorLike[float],
     ) -> None:
         """Set the table data using a dict-like update.
 
@@ -254,7 +250,7 @@ class Table(DataObject, _vtk.vtkTable):
             Other dataset attributes, mapping, or array data to update from.
 
         """
-        arrays: DataSetAttributes | dict[str, NDArray[np.floating]]
+        arrays: DataSetAttributes | dict[str, Any]
         if isinstance(data, (DataSetAttributes, dict)):
             arrays = data
         else:
@@ -302,7 +298,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name: str, scalars: VectorLike[float]) -> None:
+    def __setitem__(self, name: str, scalars: ArrayLike[Any] | NDArray[Any]) -> None:
         """Add/set an array in the ``row_arrays``."""
         self.row_arrays[name] = scalars
 

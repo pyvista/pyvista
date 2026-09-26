@@ -287,8 +287,8 @@ def convert_array(
 
     Parameters
     ----------
-    arr : np.ndarray | :vtk:`vtkDataArray`
-        A NumPy array or :vtk:`vtkDataArray` to convert.
+    arr : array_like | :vtk:`vtkAbstractArray`
+        An array-like or :vtk:`vtkAbstractArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
@@ -778,16 +778,17 @@ def convert_string_array(
 
     Parameters
     ----------
-    arr : numpy.ndarray | str
-        NumPy string array to convert.
+    arr : numpy.ndarray[str] | str | :vtk:`vtkStringArray`
+        NumPy string array or :vtk:`vtkStringArray` to convert.
 
     name : str, optional
         Name to set the :vtk:`vtkStringArray` to.
 
     Returns
     -------
-    :vtk:`vtkStringArray`
-        VTK string array.
+    :vtk:`vtkStringArray` | numpy.ndarray[str]
+        VTK string array, or NumPy string array if the input is a
+        :vtk:`vtkStringArray`.
 
     Notes
     -----
@@ -865,7 +866,7 @@ def array_from_vtkmatrix(
     return array
 
 
-def vtkmatrix_from_array(array: NDArray[np.floating]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
+def vtkmatrix_from_array(array: MatrixLike[float]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
     """Convert a ``numpy.ndarray`` or array-like to a vtk matrix.
 
     Parameters

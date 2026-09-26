@@ -10,3 +10,4 @@ import pyvista as pv
 
 assert_types(pv.Plotter(shape=(2, 2)).renderers.index_to_loc(1), NDArray[np.intp] | np.intp)
 assert_types(pv.Plotter(shape=(1, 2)).renderers.index_to_loc(1), NDArray[np.intp] | np.intp)
+assert_types(pv.Plotter(shape=(2, 2)).renderers.index_to_loc(np.int32(1)), NDArray[np.intp] | np.intp)

@@ -68,10 +68,10 @@ if TYPE_CHECKING:
     from pyvista import CellType
     from pyvista import PointSet
 
+    from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import VectorLike
     from ._typing_core import _ArrayLikeOrScalar
-    from ._typing_core._array_like import _NumberT
 
     _Dimensionality = Literal[0, 1, 2, 3]
 
@@ -341,7 +341,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        Optional[np.ndarray]
+        Optional[pyvista_ndarray]
             Active tensors array.
 
         """
@@ -909,7 +909,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        arr_var : str, np.ndarray, optional
+        arr_var : str, numpy.ndarray, optional
             The name of the array to get the range. If ``None``, the
             active scalars is used.
 
@@ -1569,7 +1569,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: _ArrayLikeOrScalar[_NumberT] | NDArray[Any],
+        scalars: _ArrayLikeOrScalar[float] | ArrayLike[Any] | NDArray[Any],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
@@ -2103,7 +2103,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         point: VectorLike[float] | MatrixLike[float],
         *,
         return_closest_point: bool = False,
-    ) -> int | NDArray[np.int_] | tuple[int | NDArray[np.int_], NDArray[np.floating]]:
+    ) -> int | NDArray[np.int_] | tuple[int | NDArray[np.int_], NDArray[np.float64]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
@@ -2226,7 +2226,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))  # type: ignore[call-overload]
             closest_points.append(closest_point)
 
-        out_cells: int | NDArray[np.signedinteger] = (
+        out_cells: int | NDArray[np.int_] = (
             closest_cells[0] if singular else np.array(closest_cells)
         )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
@@ -2586,7 +2586,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             intersection_cells = intersection_cells[idx][::-1]
         return intersection_points, intersection_cells
 
-    def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NDArray[np.intp]:
+    def find_cells_within_bounds(self: Self, bounds: VectorLike[float]) -> NDArray[np.intp]:
         """Find the index of cells in this mesh within bounds.
 
         .. warning::
@@ -2602,8 +2602,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Returns
         -------
         numpy.ndarray
-            Index or indices of the cell in this mesh that are closest
-            to the given point.
+            Indices of the cells whose bounds intersect ``bounds``.
 
         See Also
         --------
@@ -2625,7 +2624,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             msg = 'Bounds must be a length six tuple of floats.'
             raise TypeError(msg)
         id_list = _vtk.vtkIdList()
-        self._cell_tree_locator.FindCellsWithinBounds(list(bounds), id_list)
+        self._cell_tree_locator.FindCellsWithinBounds(
+            np.asarray(bounds, dtype=float).tolist(), id_list
+        )
         return vtk_id_list_to_array(id_list)
 
     def get_cell(self: Self, index: int) -> Cell:

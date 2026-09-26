@@ -76,6 +76,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Real
     from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
 
@@ -85,8 +86,10 @@ if TYPE_CHECKING:
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import VectorLike
+    from ._typing_core._array_like import _ScalarT
     from .filters.data_object import _NestedMeshValidationFields
     from .pyvista_ndarray import pyvista_ndarray
+    from .utilities.cells import _CellsDictValue
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -2793,8 +2796,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     def _from_cells_dict(
         self,
-        cells_dict: dict[np.uint8, NDArray[np.signedinteger] | Sequence[ArrayLike[int]]],
-        points: NDArray[np.floating],
+        cells_dict: dict[np.uint8, _CellsDictValue],
+        points: NDArray[_Real],
         *,
         deep: bool = True,
     ) -> None:
@@ -2816,8 +2819,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     def _from_arrays(
         self,
-        cells: VectorLike[int] | CellArray,
-        cell_type: VectorLike[int] | NDArray[np.uint8],
+        cells: CellsLike | CellArray,
+        cell_type: VectorLike[int],
         points: MatrixLike[float],
         *,
         deep: bool = True,
@@ -2992,7 +2995,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
 
     @property
-    def faces(self) -> NDArray[np.signedinteger]:
+    def faces(self) -> NDArray[np.signedinteger] | None:
         """Return the polyhedron faces.
 
         .. deprecated:: 0.45.0
@@ -3003,7 +3006,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray | None
             Array of faces.
 
         """
@@ -3051,7 +3054,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(arr)
 
     @property
-    def face_locations(self) -> NDArray[np.signedinteger]:
+    def face_locations(self) -> NDArray[np.signedinteger] | None:
         """Return polyhedron face locations.
 
         .. deprecated:: 0.45.0
@@ -3062,7 +3065,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray | None
             Array of face locations.
 
         """
@@ -3405,7 +3408,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         -------
         dict
             A dictionary mapping containing all cells of this unstructured grid.
-            Structure: ``vtk_enum_type`` (int) -> cells (:class:`numpy.ndarray`).
+            Structure: cell type (:class:`numpy.uint8`) -> cells (:class:`numpy.ndarray`).
 
         See Also
         --------
@@ -4305,11 +4308,11 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         return explicit_grid
 
-    def _reshape_point_array(self, array: NDArray[np.floating]) -> NDArray[np.floating]:
+    def _reshape_point_array(self, array: NDArray[_ScalarT]) -> NDArray[_ScalarT]:
         """Reshape point data to a 3-D matrix."""
         return array.reshape(self.dimensions, order='F')
 
-    def _reshape_cell_array(self, array: NDArray[np.floating]) -> NDArray[np.floating]:
+    def _reshape_cell_array(self, array: NDArray[_ScalarT]) -> NDArray[_ScalarT]:
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1

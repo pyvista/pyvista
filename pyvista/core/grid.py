@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
-from typing import cast
 from typing import overload
 
 import numpy as np
@@ -42,6 +41,7 @@ from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     from typing_extensions import Self
 
     from pyvista import StructuredGrid
@@ -94,14 +94,14 @@ class Grid(DataSet):
         self.SetDimensions(*dims)
         self.Modified()
 
-    def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
+    def _convert_points_precision(self, points: NDArray[np.floating]) -> NDArray[np.floating]:
         """Apply :attr:`pyvista.core.config.Config.points_dtype` to points generated on demand."""
         # `'preserve'` leaves these alone: they are generated rather than stored, so
         # there is no dtype of the caller's to preserve.
         dtype = _points_dtype()
         if dtype is None or points.dtype == dtype:
             return points
-        return cast('pyvista_ndarray', points.astype(dtype))
+        return points.astype(dtype)
 
     def to_hexahedra(self: Self) -> UnstructuredGrid:
         """Convert voxels to hexahedra.
@@ -291,8 +291,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (np.ndarray, Sequence)):
                 self._from_arrays(
                     x=np.asanyarray(args[0]),
-                    y=None,  # type: ignore[arg-type]
-                    z=None,  # type: ignore[arg-type]
+                    y=None,
+                    z=None,
                     check_duplicates=check_duplicates,
                 )
             else:
@@ -315,7 +315,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                 self._from_arrays(
                     x=np.asanyarray(args[0]),
                     y=np.asanyarray(args[1]),
-                    z=None,  # type: ignore[arg-type]
+                    z=None,
                     check_duplicates=check_duplicates,
                 )
             else:
@@ -343,9 +343,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def _from_arrays(
         self: Self,
         *,
-        x: NDArray[np.floating],
-        y: NDArray[np.floating],
-        z: NDArray[np.floating],
+        x: NDArray[_Scalar],
+        y: NDArray[_Scalar] | None,
+        z: NDArray[_Scalar] | None,
         check_duplicates: bool = False,
     ) -> None:
         """Create VTK rectilinear grid directly from NumPy arrays.
@@ -359,10 +359,10 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         x : numpy.ndarray
             Coordinates of the points in x direction.
 
-        y : numpy.ndarray
+        y : numpy.ndarray | None
             Coordinates of the points in y direction.
 
-        z : numpy.ndarray
+        z : numpy.ndarray | None
             Coordinates of the points in z direction.
 
         check_duplicates : bool, optional
@@ -1148,7 +1148,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         Returns
         -------
-        list[NDArray[float]]
+        list[numpy.ndarray]
             Rectilinear coordinates over the three dimensions.
 
         """

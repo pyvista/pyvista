@@ -56,6 +56,7 @@ ColorLike = Union[
     Sequence[int],
     Sequence[float],
     NDArray[np.floating],
+    NDArray[np.integer],
     dict[str, int | float | str],
     str,
     'Color',

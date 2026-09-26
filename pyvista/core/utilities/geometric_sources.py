@@ -3092,8 +3092,8 @@ class _AxesPartTemplate(NamedTuple):
     """Normalized part geometry with the sign of each point and cell along the part's axis."""
 
     mesh: PolyData
-    point_sign: NDArray[np.floating]
-    cell_sign: NDArray[np.floating]
+    point_sign: NDArray[np.float64]
+    cell_sign: NDArray[np.float64]
 
 
 def _make_template(mesh: PolyData) -> _AxesPartTemplate:

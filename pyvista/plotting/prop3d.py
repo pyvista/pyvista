@@ -518,11 +518,11 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         (0.0, -180.0, -90.0)
 
         """
-        self.orientation = _rotation_matrix_as_orientation(rotation)  # type: ignore[arg-type]
+        self.orientation = _rotation_matrix_as_orientation(rotation)
 
 
 def _rotation_matrix_as_orientation(
-    array: NDArray[np.floating] | _vtk.vtkMatrix3x3,
+    array: RotationLike,
 ) -> tuple[float, float, float]:
     """Convert a 3x3 rotation matrix to x-y-z orientation angles.
 
@@ -535,8 +535,8 @@ def _rotation_matrix_as_orientation(
 
     Parameters
     ----------
-    array : NDArray[np.floating] | :vtk:`vtkMatrix3x3`
-        3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix3x3`.
+    array : RotationLike
+        3x3 rotation matrix.
 
     Returns
     -------

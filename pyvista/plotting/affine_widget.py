@@ -79,14 +79,14 @@ def _make_quarter_arc() -> pv.PolyData:
     return circ
 
 
-def get_angle(v1: NDArray[np.floating], v2: NDArray[np.floating]) -> float:
+def get_angle(v1: VectorLike[float], v2: VectorLike[float]) -> float:
     """Compute the angle between two vectors in degrees.
 
     Parameters
     ----------
-    v1 : numpy.ndarray
+    v1 : sequence[float]
         First input vector.
-    v2 : numpy.ndarray
+    v2 : sequence[float]
         Second input vector.
 
     Returns
@@ -155,8 +155,8 @@ class AffineWidget3D(_NoNewAttrMixin):
         Uses the theme by default. Configure the individual axis colors by
         modifying either the theme with ``pyvista.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-    axes : numpy.ndarray, optional
-        ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default this
+    axes : array_like[float], optional
+        ``(3, 3)`` array defining the X, Y, and Z axes. By default this
         matches the default coordinate system.
     release_callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the
@@ -205,8 +205,8 @@ class AffineWidget3D(_NoNewAttrMixin):
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
         axes: MatrixLike[float] | None = None,
-        release_callback: Callable[[NDArray[np.floating]], None] | None = None,
-        interact_callback: Callable[[NDArray[np.floating]], None] | None = None,
+        release_callback: Callable[[NDArray[np.float64]], None] | None = None,
+        interact_callback: Callable[[NDArray[np.float64]], None] | None = None,
     ) -> None:
         """Initialize the widget."""
         self._axes = np.eye(4)
@@ -214,7 +214,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         self._pl = plotter
         self._main_actor = actor
         self._selected_actor: Actor | None = None
-        self._init_position: NDArray[np.floating] | None = None
+        self._init_position: NDArray[np.float64] | None = None
         self._mouse_move_observer: int | None = None
         self._left_press_observer: int | None = None
         self._left_release_observer: int | None = None
@@ -334,7 +334,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def _get_world_coord_trans(
         self, interactor: _vtk.vtkRenderWindowInteractor
-    ) -> NDArray[np.floating]:
+    ) -> NDArray[np.float64]:
         """Get the world coordinates given an interactor.
 
         This uses a modified scaled approach to get the world coordinates that
