@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
+import numpy as np
+from numpy.typing import NDArray
+from pyvista_validation._typing._array_like import _Scalar
+
 from pyvista import _vtk
 
-from ._array_like import NumberType
-from ._array_like import NumpyArray
 from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
+from ._array_like import _NumberT
 
 if TYPE_CHECKING:
     import meshio
@@ -35,10 +40,11 @@ if TYPE_CHECKING or os.environ.get(
 else:
     Rotation = None
 
+# Forwarded as the deprecated `pyvista.Number`
 Number = Union[int, float]
-VectorLike = _ArrayLike1D[NumberType]
-MatrixLike = _ArrayLike2D[NumberType]
-ArrayLike = _ArrayLike[NumberType]
+VectorLike = _ArrayLike1D[_NumberT]
+MatrixLike = _ArrayLike2D[_NumberT]
+ArrayLike = _ArrayLike[_NumberT]
 
 if Rotation is not None:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
@@ -95,7 +101,13 @@ CellsLike = Union[MatrixLike[int], VectorLike[int]]
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+_ArrayLikeOrScalar = Union[_NumberT, _Scalar, ArrayLike[_NumberT]]
+
+# Array of any dtype, or a sequence of anything
+_AnyArrayLike = Union[NDArray[Any], Sequence[Any]]
+
+# Array wrapped as a volume, whose values become point scalars
+_VolumeArray = NDArray[Union[np.bool_, np.number]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
@@ -109,7 +121,7 @@ _MeshLike = Union[
     'DataSet',
     'MultiBlock',
     'PartitionedDataSet',
-    NumpyArray[float],
+    _VolumeArray,
     VectorLike[float],
     MatrixLike[float],
     'trimesh.Trimesh',

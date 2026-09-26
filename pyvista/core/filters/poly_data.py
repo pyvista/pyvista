@@ -42,6 +42,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
+    from numpy.typing import NDArray
+
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
@@ -49,7 +51,6 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import _PolyDataType
     from pyvista.plotting._typing import ColorLike
@@ -69,7 +70,9 @@ _CappingOptions = Literal[
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
 
-    def edge_mask(self: PolyData, angle: float, *, progress_bar: bool = False) -> NumpyArray[bool]:  # type: ignore[misc]
+    def edge_mask(  # type: ignore[misc]
+        self: PolyData, angle: float, *, progress_bar: bool = False
+    ) -> NDArray[np.bool_]:
         """Return a mask of the points of a surface mesh with a surface angle greater than angle.
 
         Parameters
@@ -111,7 +114,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NumpyArray[float]', pv.point_array(edges, 'point_ind'))
+        orig_id = cast('NDArray[np.floating]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -762,7 +765,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
-    ) -> NumpyArray[float]:
+    ) -> NDArray[np.floating]:
         """Return the point-wise curvature of a mesh.
 
         Parameters
@@ -2187,7 +2190,9 @@ class PolyDataFilters(DataSetFilters):
         """
         # track original point indices
         if split_vertices:
-            self.point_data['pyvistaOriginalPointIds'] = np.arange(self.n_points, dtype=pv.ID_TYPE)
+            self.point_data['pyvistaOriginalPointIds'] = np.arange(
+                self.n_points, dtype=np.dtype(pv.ID_TYPE)
+            )
 
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
@@ -2679,7 +2684,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -2774,7 +2779,9 @@ class PolyDataFilters(DataSetFilters):
         *,
         first_point: bool = False,
         retry: bool = False,
-    ) -> tuple[NumpyArray[float], NumpyArray[int], NumpyArray[int]]:  # pragma: no cover
+    ) -> tuple[
+        NDArray[np.floating], NDArray[np.signedinteger], NDArray[np.signedinteger]
+    ]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -3081,7 +3088,7 @@ class PolyDataFilters(DataSetFilters):
         pass_point_ids: bool | None = None,
         pass_cell_ids: bool | None = None,
         progress_bar: bool | None = None,
-    ) -> PolyData | tuple[PolyData, NumpyArray[int]]:
+    ) -> PolyData | tuple[PolyData, NDArray[np.signedinteger]]:
         """Rebuild a mesh by removing points.
 
         .. deprecated:: 0.49
@@ -3190,7 +3197,7 @@ class PolyDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
         keep_scalars = True if keep_scalars is None else keep_scalars
-        remove_array: NumpyArray[Any] = np.asarray(remove)
+        remove_array: NDArray[Any] = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
         if not issubclass(remove_array.dtype.type, (np.bool_, np.integer)):
@@ -3219,7 +3226,8 @@ class PolyDataFilters(DataSetFilters):
 
         nfaces = fmask.sum()
         faces = cast(
-            'NumpyArray[int]', np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False)
+            'NDArray[np.signedinteger]',
+            np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False),
         )
 
         newmesh = pv.PolyData.from_regular_faces(new_points, faces, deep=True)
@@ -4945,7 +4953,7 @@ def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
 
 
 def _locate(
-    ids: NumpyArray[int], cumulative: NumpyArray[float], value: float
+    ids: NDArray[np.signedinteger], cumulative: NDArray[np.floating], value: float
 ) -> tuple[int, int, float]:
     """Return the point ids bracketing a distance along a polyline and the blend weight."""
     # clamp so the pair stays inside the polyline at either end of it
@@ -4976,7 +4984,13 @@ def _drawn_intervals(
 
 def _build_dashes(
     source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
-) -> tuple[NumpyArray[int], NumpyArray[int], NumpyArray[float], NumpyArray[int], NumpyArray[int]]:
+) -> tuple[
+    NDArray[np.signedinteger],
+    NDArray[np.signedinteger],
+    NDArray[np.floating],
+    NDArray[np.signedinteger],
+    NDArray[np.signedinteger],
+]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points
     cycle = period * scale
@@ -5068,12 +5082,12 @@ def _copy_active_names(source: DataSetAttributes, output: DataSetAttributes) -> 
 
 
 def _interpolate_rows(
-    array: NumpyArray[Any],
+    array: NDArray[Any],
     *,
-    index_a: NumpyArray[int],
-    index_b: NumpyArray[int],
-    weight: NumpyArray[float],
-) -> NumpyArray[Any]:
+    index_a: NDArray[np.signedinteger],
+    index_b: NDArray[np.signedinteger],
+    weight: NDArray[np.floating],
+) -> NDArray[Any]:
     """Blend array rows between two index sets, snapping to the nearest for non-float data."""
     if not np.issubdtype(array.dtype, np.floating):
         # ids and labels cannot be averaged, so take whichever end is nearer

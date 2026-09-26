@@ -188,8 +188,6 @@ _DOCUMENTED_TYPES = [
     'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
-    'Number',
-    'NumberType',
     'PlottableType',
     'RotationLike',
     'TransformLike',
@@ -225,7 +223,6 @@ _UNDOCUMENTED_TYPES = [
     'LightType',
     'Mesh',
     'MeshValidationReport',
-    'NumpyArray',
     'OpacityOptions',
     'PathStrSeq',
     'PickerType',
@@ -1134,6 +1131,7 @@ def restrict_trimesh_inventory(app: Sphinx) -> None:
 # Modules that references abbreviate or reach through a private path
 _REFERENCE_PREFIXES = {
     'np.': 'numpy.',
+    'npt.': 'numpy.typing.',
     'numpy._typing._array_like.': 'numpy.typing.',
     'pv.': 'pyvista.',
 }
@@ -1167,6 +1165,9 @@ def resolve_python_reference(  # noqa: PLR0917
     for prefix, module in _REFERENCE_PREFIXES.items():
         if target.startswith(prefix):
             full_name = module + target.removeprefix(prefix)
+    if full_name is None and target.startswith('numpy.'):
+        # NumPy's inventory lists scalar types such as `numpy.float64` as attributes
+        full_name = target
     new_node = node.deepcopy()
     if full_name is None:
         if '.' in target or missing_reference(app, env, node, contnode):

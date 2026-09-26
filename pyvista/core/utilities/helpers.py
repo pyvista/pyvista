@@ -25,6 +25,8 @@ from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
     import meshio
+    from numpy.typing import NDArray
+    from pyvista_validation._typing._array_like import _Scalar
     import trimesh
 
     from pyvista import DataObject
@@ -41,9 +43,9 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import WrappableType
+    from pyvista.core._typing_core import _VolumeArray
 
 _NORMALS = {
     'x': [1, 0, 0],
@@ -157,7 +159,7 @@ def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: .
 def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
 # Misc overloads
 @overload
-def wrap(dataset: NumpyArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _VolumeArray, *, validate: bool | None = ...) -> PolyData | ImageData: ...  # type: ignore[overload-overlap]
 @overload
 def wrap(dataset: VectorLike[float] | MatrixLike[float], *, validate: bool | None = ...) -> PolyData: ...
 @overload
@@ -305,10 +307,11 @@ def wrap(  # noqa: PLR0911
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
     if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
-        if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pv.PolyData(dataset)
-        if dataset.ndim == 2 and dataset.shape[1] == 3:
-            return pv.PolyData(dataset)
+        if (dataset.ndim == 1 and dataset.shape[0] == 3) or (
+            dataset.ndim == 2 and dataset.shape[1] == 3
+        ):
+            # `PolyData` raises for points that are not real numbers
+            return pv.PolyData(cast('NDArray[_Scalar]', dataset))
         elif dataset.ndim == 3:
             mesh = pv.ImageData(dimensions=dataset.shape)
             if isinstance(dataset, pv.pyvista_ndarray):
@@ -404,10 +407,10 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     normal: VectorLike[float] | _NormalsLiteral | None,
     plane: PolyData | None,
     default_normal: _NormalsLiteral,
-) -> tuple[NumpyArray[float], NumpyArray[float]]:
+) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
     def _get_origin_and_normal_from_plane(
         plane_: PolyData,
-    ) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
         _validation.check_instance(plane_, pv.PolyData, name='plane')
 
         if (dimensionality := plane_.dimensionality) != 2:
@@ -442,21 +445,21 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
 # fmt: off
 # ruff: disable[E501]
 @overload
-def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NumpyArray[float]: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.floating]: ...
 @overload
-def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
 @overload
-def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NumpyArray[float] | None: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.floating] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def axis_rotation(
-    points: NumpyArray[float],
+    points: NDArray[np.floating],
     angle: float,
     *,
     inplace: bool = False,
     deg: bool = True,
     axis: str = 'z',
-) -> NumpyArray[float] | None:
+) -> NDArray[np.floating] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -543,8 +546,8 @@ def is_inside_bounds(
 
 
 def _is_inside_bounds(
-    point: deque[float | NumpyArray[float]],
-    bounds: deque[float | NumpyArray[float]],
+    point: deque[float | NDArray[_Scalar]],
+    bounds: deque[float | NDArray[_Scalar]],
 ) -> bool:
     """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:

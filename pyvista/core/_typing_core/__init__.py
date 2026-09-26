@@ -9,15 +9,14 @@ from ._aliases import CellsLike as CellsLike
 from ._aliases import InteractionEventType as InteractionEventType
 from ._aliases import LineStyle as LineStyle
 from ._aliases import MatrixLike as MatrixLike
-from ._aliases import Number as Number
 from ._aliases import RotationLike as RotationLike
 from ._aliases import TransformLike as TransformLike
 from ._aliases import VectorLike as VectorLike
 from ._aliases import WrappableType as WrappableType
+from ._aliases import _AnyArrayLike as _AnyArrayLike
 from ._aliases import _ArrayLikeOrScalar as _ArrayLikeOrScalar
 from ._aliases import _MeshLike as _MeshLike
-from ._array_like import NumberType as NumberType
-from ._array_like import NumpyArray as NumpyArray
+from ._aliases import _VolumeArray as _VolumeArray
 from ._array_like import _FiniteNestedList as _FiniteNestedList
 from ._array_like import _FiniteNestedTuple as _FiniteNestedTuple
 from ._dataset_types import _DataObjectType as _DataObjectType

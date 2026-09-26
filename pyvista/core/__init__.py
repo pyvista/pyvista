@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ._typing_core import BoundsTuple as BoundsTuple
-from ._typing_core import NumpyArray as NumpyArray
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
@@ -59,9 +58,10 @@ if not TYPE_CHECKING:  # pragma: no branch
     def __getattr__(name: str) -> object:
         """Forward the type aliases that moved to ``pyvista.typing`` with a deprecation warning."""
         from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
+        from pyvista.typing import _REMOVED_ALIASES  # noqa: PLC0415
         from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
 
-        if name in _MOVED_TO_TYPING_NAMESPACE[__name__]:
+        if name in _MOVED_TO_TYPING_NAMESPACE[__name__] or name in _REMOVED_ALIASES:
             return _get_deprecated_alias(__name__, name)
         msg = f'module {__name__!r} has no attribute {name!r}'
         raise AttributeError(msg)

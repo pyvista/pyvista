@@ -21,17 +21,14 @@ if TYPE_CHECKING:
     from typing import SupportsIndex
     from typing import TypeAlias
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import DataSet
 
     from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
 
-    _Index: TypeAlias = (
-        int | slice | EllipsisType | NumpyArray[np.integer[Any]] | NumpyArray[np.bool_]
-    )
+    _Index: TypeAlias = int | slice | EllipsisType | NDArray[np.integer[Any]] | NDArray[np.bool_]
 
 
 class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ignore=PR02
@@ -104,7 +101,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
             obj.__dict__['association'] = association
         return obj
 
-    def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
+    def __array_finalize__(self: pyvista_ndarray, obj: NDArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
         # Views and slices keep their parent's metadata; copies and ufunc results do not
         if isinstance(obj, pyvista_ndarray):

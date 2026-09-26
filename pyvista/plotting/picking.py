@@ -38,7 +38,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import TypeAlias
 
-    from pyvista.core._typing_core import NumpyArray
+    from numpy.typing import NDArray
+
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.pointset import PolyData
 
@@ -355,7 +356,7 @@ class PickingComponent(_NoNewAttrMixin):
         self._picking_left_clicking_observer: int | None = None
         self._picking_right_clicking_observer: int | None = None
         self._picker_in_use = False
-        self._picked_point: NumpyArray[float] | None = None
+        self._picked_point: NDArray[np.floating] | None = None
         # Mesh-aware picking state
         self._picked_actor: _vtk.vtkActor | None = None
         self._picked_mesh: pv.DataSet | None = None
@@ -392,7 +393,7 @@ class PickingComponent(_NoNewAttrMixin):
     # =========================================================================
 
     @property
-    def picked_point(self) -> NumpyArray[float] | None:  # numpydoc ignore=RT01
+    def picked_point(self) -> NDArray[np.floating] | None:  # numpydoc ignore=RT01
         """Return the picked point."""
         return self._picked_point
 
@@ -1880,7 +1881,7 @@ class PickingComponent(_NoNewAttrMixin):
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points: int) -> NumpyArray[int]:
+        def make_line_cells(n_points: int) -> NDArray[np.signedinteger]:
             cells = np.arange(0, n_points, dtype=np.int_)
             return np.insert(cells, 0, n_points)
 

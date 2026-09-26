@@ -1,86 +1,62 @@
 """Generic array-like type definitions.
 
-Definitions here are loosely based on code in ``numpy._typing._array_like``.
-Some key differences include:
-
-- Some npt._array_like definitions explicitly support dual-types for
-  handling Python and NumPy scalar data types separately.
-  Here, only a single generic type is used for simplicity.
-
-- The npt._array_like definitions use a recursive _NestedSequence protocol.
-  Here, finite sequences are used instead.
-
-- The npt._array_like definitions use a generic _SupportsArray protocol.
-  Here, we use ``ndarray`` directly.
-
-- The npt._array_like definitions include scalar types (for example, float, int).
-  Here they are excluded (that is, scalars are not considered to be arrays).
-
-- The npt._array_like TypeVar is bound to np.generic. Here, the
-  TypeVar is bound to a subset of numeric types only.
-
+The aliases are generic over the Python number type of a sequence's items. NumPy arrays
+of any integer, floating, or boolean dtype are accepted whatever the parameter.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TypeVar
 from typing import Union
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
+from pyvista_validation._typing._array_like import _Scalar
+from typing_extensions import TypeVar
 
-# Define numeric types
-NumberType = TypeVar(
-    'NumberType',
-    bound=np.floating | np.integer | np.bool_ | float | int | bool,
-)
+_NumberT = TypeVar('_NumberT', bound=float, default=float)
 
-# Create a copy of the typevar which can be used for annotating a second variable.
-# Its definition should be identical to `NumberType`
-_NumberType = TypeVar(  # noqa: PYI018
-    '_NumberType',
-    bound=np.floating | np.integer | np.bool_ | float | int | bool,
-)
+_ScalarT = TypeVar('_ScalarT', bound=np.generic)
 
-NumpyArray = npt.NDArray[NumberType]
+# Forwarded as the deprecated `pyvista.NumpyArray`
+NumpyArray = NDArray[_ScalarT]
 
 _FiniteNestedList = (
-    list[NumberType]
-    | list[list[NumberType]]
-    | list[list[list[NumberType]]]
-    | list[list[list[list[NumberType]]]]
+    list[_NumberT]
+    | list[list[_NumberT]]
+    | list[list[list[_NumberT]]]
+    | list[list[list[list[_NumberT]]]]
 )
 _FiniteNestedTuple = (
-    tuple[NumberType]
-    | tuple[tuple[NumberType]]
-    | tuple[tuple[tuple[NumberType]]]
-    | tuple[tuple[tuple[tuple[NumberType]]]]
+    tuple[_NumberT]
+    | tuple[tuple[_NumberT]]
+    | tuple[tuple[tuple[_NumberT]]]
+    | tuple[tuple[tuple[tuple[_NumberT]]]]
 )
 
 _ArrayLike1D = Union[
-    NumpyArray[NumberType],
-    Sequence[NumberType],
-    Sequence[NumpyArray[NumberType]],
+    NDArray[_Scalar],
+    Sequence[_NumberT],
+    Sequence[NDArray[_Scalar]],
 ]
 _ArrayLike2D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[NumberType]],
-    Sequence[Sequence[NumpyArray[NumberType]]],
+    NDArray[_Scalar],
+    Sequence[Sequence[_NumberT]],
+    Sequence[Sequence[NDArray[_Scalar]]],
 ]
 _ArrayLike3D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[Sequence[NumberType]]],
-    Sequence[Sequence[Sequence[NumpyArray[NumberType]]]],
+    NDArray[_Scalar],
+    Sequence[Sequence[Sequence[_NumberT]]],
+    Sequence[Sequence[Sequence[NDArray[_Scalar]]]],
 ]
 _ArrayLike4D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[Sequence[Sequence[NumberType]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
+    NDArray[_Scalar],
+    Sequence[Sequence[Sequence[Sequence[_NumberT]]]],
+    Sequence[Sequence[Sequence[Sequence[NDArray[_Scalar]]]]],
 ]
 _ArrayLike = Union[
-    _ArrayLike1D[NumberType],
-    _ArrayLike2D[NumberType],
-    _ArrayLike3D[NumberType],
-    _ArrayLike4D[NumberType],
+    _ArrayLike1D[_NumberT],
+    _ArrayLike2D[_NumberT],
+    _ArrayLike3D[_NumberT],
+    _ArrayLike4D[_NumberT],
 ]

@@ -41,13 +41,13 @@ from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
@@ -343,9 +343,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def _from_arrays(
         self: Self,
         *,
-        x: NumpyArray[float],
-        y: NumpyArray[float],
-        z: NumpyArray[float],
+        x: NDArray[np.floating],
+        y: NDArray[np.floating],
+        z: NDArray[np.floating],
         check_duplicates: bool = False,
     ) -> None:
         """Create VTK rectilinear grid directly from NumPy arrays.
@@ -396,7 +396,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     @property
     def meshgrid(
         self: Self,
-    ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
         """Return a meshgrid of NumPy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -409,17 +409,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             Tuple of NumPy arrays representing the points of this mesh.
 
         """
-        # Converting to tuple needed to be consistent type across numpy version
-        # Remove when support is dropped for numpy 1.x
-        # We also know this is 3-length so make it so in typing
-        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
-        # Python 3.8 does not allow subscripting tuple, but only used for type checking
-        if TYPE_CHECKING:
-            out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
-        return out
+        x, y, z = np.meshgrid(self.x, self.y, self.z, indexing='ij')
+        return x, y, z
 
     @property  # type: ignore[override]
-    def points(self: Self) -> NumpyArray[float]:
+    def points(self: Self) -> NDArray[np.floating]:
         """Return a copy of the points as an ``(n, 3)`` NumPy array.
 
         Returns
@@ -477,7 +471,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         raise AttributeError(msg)
 
     @property
-    def x(self: Self) -> NumpyArray[float]:
+    def x(self: Self) -> NDArray[np.floating]:
         """Return or set the coordinates along the X-direction.
 
         Returns
@@ -514,7 +508,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self.Modified()
 
     @property
-    def y(self: Self) -> NumpyArray[float]:
+    def y(self: Self) -> NDArray[np.floating]:
         """Return or set the coordinates along the Y-direction.
 
         Returns
@@ -551,7 +545,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self.Modified()
 
     @property
-    def z(self: Self) -> NumpyArray[float]:
+    def z(self: Self) -> NDArray[np.floating]:
         """Return or set the coordinates along the Z-direction.
 
         Returns
@@ -833,7 +827,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
-    ) -> NumpyArray[int]:
+    ) -> NDArray[np.signedinteger]:
         """Compute VOI extents from indexing values."""
         _validation.check_contains(
             ['extent', 'dimensions'], must_contain=index_mode, name='index_mode'
@@ -907,7 +901,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return clipped
 
     @property  # type: ignore[override]
-    def points(self: Self) -> NumpyArray[float]:
+    def points(self: Self) -> NDArray[np.floating]:
         """Build a copy of the implicitly defined points as a NumPy array.
 
         Returns
@@ -984,7 +978,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         raise AttributeError(msg)
 
     @property
-    def x(self: Self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def x(self: Self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
         """Return all the X points.
 
         Examples
@@ -998,7 +992,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.points[:, 0]
 
     @property
-    def y(self: Self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def y(self: Self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
         """Return all the Y points.
 
         Examples
@@ -1012,7 +1006,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.points[:, 1]
 
     @property
-    def z(self: Self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def z(self: Self) -> NDArray[np.floating]:  # numpydoc ignore=RT01
         """Return all the Z points.
 
         Examples
@@ -1149,12 +1143,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     def _generate_rectilinear_coords(
         self: Self,
-    ) -> list[NumpyArray[float]]:
+    ) -> list[NDArray[np.float64]]:
         """Generate rectilinear coordinates (internal helper).
 
         Returns
         -------
-        list[NumpyArray[float]]
+        list[NDArray[float]]
             Rectilinear coordinates over the three dimensions.
 
         """
@@ -1302,7 +1296,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
 
     @property
-    def direction_matrix(self: Self) -> NumpyArray[float]:
+    def direction_matrix(self: Self) -> NDArray[np.float64]:
         """Set or get the direction matrix.
 
         The direction matrix is a 3x3 matrix which controls the orientation of the
@@ -1323,7 +1317,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     @property
-    def index_to_physical_matrix(self: Self) -> NumpyArray[float]:
+    def index_to_physical_matrix(self: Self) -> NDArray[np.float64]:
         """Return or set 4x4 matrix to transform index space (``ijk``) to physical space (``xyz``).
 
         .. note::
@@ -1359,7 +1353,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self.spacing = S
 
     @property
-    def physical_to_index_matrix(self: Self) -> NumpyArray[float]:
+    def physical_to_index_matrix(self: Self) -> NDArray[np.float64]:
         """Return or set the 4x4 matrix from physical (``xyz``) to index (``ijk``) space.
 
         .. note::

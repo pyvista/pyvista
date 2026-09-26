@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
-_Spherical = tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]
+_Spherical = tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]
 
 
-def a_coordinate() -> NumpyArray[float]:
+def a_coordinate() -> NDArray[np.floating]:
     """Return one Cartesian component of a few points."""
     return np.array([0.0, 1.0, 2.0])
 
 
-def a_coordinate_grid() -> NumpyArray[float]:
+def a_coordinate_grid() -> NDArray[np.floating]:
     """Return one Cartesian component of a grid of points."""
     return np.array([[0.0, 1.0], [2.0, 3.0]])
 

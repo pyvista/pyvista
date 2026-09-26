@@ -11,12 +11,12 @@ from typing import TypedDict
 from typing import Union
 
 import matplotlib as mpl
+import numpy as np
+from numpy.typing import NDArray
 
 from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import MatrixLike
-from pyvista.core._typing_core import Number as Number
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
 from pyvista.core._typing_core import _MeshLike
 
@@ -55,7 +55,7 @@ ColorLike = Union[
     tuple[float, float, float, float],
     Sequence[int],
     Sequence[float],
-    NumpyArray[float],
+    NDArray[np.floating],
     dict[str, int | float | str],
     str,
     'Color',

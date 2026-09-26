@@ -194,9 +194,10 @@ def __getattr__(name: str) -> Any:
         _warn_deprecated_pickle_format()
         return _PICKLE_FORMAT
     from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
+    from pyvista.typing import _REMOVED_ALIASES  # noqa: PLC0415
     from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
 
-    if name in _MOVED_TO_TYPING_NAMESPACE[__name__]:
+    if name in _MOVED_TO_TYPING_NAMESPACE[__name__] or name in _REMOVED_ALIASES:
         # Not cached either, so the deprecation warning is re-issued on each access
         return _get_deprecated_alias(__name__, name)
 

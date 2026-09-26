@@ -378,8 +378,6 @@ def test_type_alias_forwards_from_pyvista():
         'LineStyle',
         'MatrixLike',
         'MeshValidationFields',
-        'Number',
-        'NumberType',
         'RotationLike',
         'TransformLike',
         'VectorLike',
@@ -402,6 +400,28 @@ def test_type_alias_forward_deprecated(module, name):
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         alias = getattr(importlib.import_module(module), name)
     assert alias is _source_alias(name)
+
+
+@pytest.mark.parametrize('module', ['pyvista', 'pyvista.core'])
+@pytest.mark.parametrize(
+    ('name', 'advice'),
+    [
+        ('Number', 'use `float` instead'),
+        ('NumberType', 'use a `TypeVar` instead'),
+        ('NumpyArray', 'use `numpy.typing.NDArray` instead'),
+    ],
+)
+def test_removed_type_alias_deprecated(module, name, advice):
+    """A deprecated type alias warns and is still the same alias."""
+    import pyvista as pv
+    from pyvista.typing import _REMOVED_ALIASES
+
+    msg = f'`{module}.{name}` is deprecated; {advice}.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        alias = getattr(importlib.import_module(module), name)
+    source, attribute, _ = _REMOVED_ALIASES[name]
+    assert alias is getattr(importlib.import_module(source), attribute)
+    assert name not in pv.typing.__all__
 
 
 @pytest.mark.parametrize(

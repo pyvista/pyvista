@@ -2256,6 +2256,13 @@ def test_transform_apply(transform, make_obj, return_self, return_type, return_d
     assert not transform.is_inverted
 
 
+def test_transform_apply_longdouble_in_place():
+    array = np.array([VECTOR], dtype=np.longdouble)
+    out = Transform().scale(SCALE).apply(array, copy=False)
+    assert out is array
+    assert np.array_equal(array, np.array([VECTOR]) * SCALE)
+
+
 @pytest.fixture
 def scale_transform():
     return Transform() * SCALE

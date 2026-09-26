@@ -32,7 +32,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
 
-    from pyvista.core._typing_core import NumpyArray
+    from numpy.typing import NDArray
+
     from pyvista.core._typing_core import VectorLike
 
     from .interactor_style_registry import InteractorStyleHandler
@@ -1473,7 +1474,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         # PyVista one, but types the getter as the base class.
         return cast('Renderer', self.interactor.FindPokedRenderer(x, y))
 
-    def get_event_subplot_loc(self) -> NumpyArray[int] | np.intp:
+    def get_event_subplot_loc(self) -> NDArray[np.signedinteger] | np.intp:
         """Get the subplot location of the last event.
 
         Returns

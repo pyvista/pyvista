@@ -14,6 +14,8 @@ from pyvista import _vtk
 from pyvista import examples
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from pyvista.typing import WrappableType
 
 
@@ -35,6 +37,21 @@ def as_wrappable() -> WrappableType:
 def as_meshio_mesh() -> meshio.Mesh:
     """Return a single-triangle meshio mesh."""
     return meshio.Mesh(points=np.zeros((3, 3)), cells=[('triangle', np.array([[0, 1, 2]]))])
+
+
+def a_mask() -> NDArray[np.bool_]:
+    """Return a boolean mask volume."""
+    return np.zeros((2, 2, 2), dtype=np.bool_)
+
+
+def a_label_volume() -> NDArray[np.uint8]:
+    """Return a label volume."""
+    return np.zeros((2, 2, 2), dtype=np.uint8)
+
+
+def a_spectrum() -> NDArray[np.complex128]:
+    """Return a complex volume, such as an FFT."""
+    return np.zeros((2, 2, 2), dtype=np.complex128)
 
 
 SKIP_RUNTIME = {
@@ -73,6 +90,9 @@ assert_types(pv.wrap(_vtk.vtkPartitionedDataSet()), pv.PartitionedDataSet)
 assert_types(pv.wrap(pv.PartitionedDataSet()), pv.PartitionedDataSet)
 
 assert_types(pv.wrap(np.zeros(shape=(100, 3))), pv.PolyData | pv.ImageData)
+assert_types(pv.wrap(a_mask()), pv.PolyData | pv.ImageData)
+assert_types(pv.wrap(a_label_volume()), pv.PolyData | pv.ImageData)
+assert_types(pv.wrap(a_spectrum()), pv.PolyData | pv.ImageData)
 assert_types(pv.wrap([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), pv.PolyData)
 assert_types(pv.wrap((1.0, 2.0, 3.0)), pv.PolyData)
 assert_types(pv.wrap(_vtk.vtkFloatArray()), pv.pyvista_ndarray)

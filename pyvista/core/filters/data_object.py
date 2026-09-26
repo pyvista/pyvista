@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import DataSet
@@ -73,7 +74,6 @@ if TYPE_CHECKING:
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
@@ -87,11 +87,14 @@ if TYPE_CHECKING:
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
+    _RectilinearComponents = tuple[
+        NDArray[np.floating], NDArray[np.floating], NDArray[np.signedinteger]
+    ]
 
 
 def _rectilinear_transform_components(
     transform: Transform,
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]]:
+) -> _RectilinearComponents:
     """Return the translation, scale and axis order of a transform a grid can represent."""
     # Follow similar decomposition performed by ImageData.index_to_physical_matrix
     T, R, N, S, K = transform.decompose()
@@ -193,7 +196,7 @@ def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Tr
 def _transform_rectilinear_axes(
     output: RectilinearGrid,
     dataset: RectilinearGrid,
-    components: tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]],
+    components: _RectilinearComponents,
 ) -> None:
     """Set a grid's axes to another's, permuted, scaled and translated."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
@@ -213,7 +216,7 @@ def _transform_rectilinear_axes(
 def _permute_rectilinear_arrays(
     output: RectilinearGrid,
     dimensions: tuple[int, int, int],
-    components: tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]],
+    components: _RectilinearComponents,
 ) -> None:
     """Reorder a grid's arrays to match the permutation and reversal of its axes."""
     _, scale, axes = components
@@ -223,7 +226,7 @@ def _permute_rectilinear_arrays(
 
     # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
     order = (*(2 - axes[::-1]), 3)
-    flip = tuple(2 - reversed_axes)
+    flip = tuple(int(axis) for axis in 2 - reversed_axes)
     point_dimensions = np.array(dimensions)
     cell_dimensions = np.maximum(point_dimensions - 1, 1)
     for attributes, dims in (
@@ -1915,7 +1918,7 @@ class DataObjectFilters:
 
         """
         # Use single-precision eps by default (even if points have double precision)
-        tol: float = tolerance if tolerance is not None else np.finfo(np.float32).eps
+        tol = tolerance if tolerance is not None else float(np.finfo(np.float32).eps)
 
         if planarity_tolerance is not None and pv.vtk_version_info < (9, 6, 0):
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
@@ -2275,7 +2278,7 @@ class DataObjectFilters:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             elif isinstance(output, pv.RectilinearGrid):
                 components = cast(
-                    'tuple[NumpyArray[float], NumpyArray[float], NumpyArray[int]]',
+                    '_RectilinearComponents',
                     rectilinear_components,
                 )
                 dataset = cast('pv.RectilinearGrid', self)
@@ -6523,7 +6526,7 @@ class DataObjectFilters:
         return _blank_invalid_points(interpolated) if mark_blank else interpolated
 
 
-def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
+def _convex_hull_scipy(points: NDArray[np.floating], dimensionality: Literal[1, 2, 3]) -> PolyData:
     """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
 
     Fallback for ``vtk<9.7``, which lacks :vtk:`vtkConvexHull`.
@@ -6669,7 +6672,7 @@ def _slice_image_along_axis(
     faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
     output = pv.PolyData.from_regular_faces(points, faces)
 
-    def slab(array: NumpyArray[Any], k: int) -> NumpyArray[Any]:
+    def slab(array: NDArray[Any], k: int) -> NDArray[Any]:
         # The plane of values at index k along the axis, ordered like the points
         grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
         index: list[Any] = [slice(None)] * 3
@@ -6852,7 +6855,9 @@ def _exclude_string_arrays(
     return filtered
 
 
-def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
+def _box_planes(
+    bounds: NDArray[np.floating],
+) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
@@ -6949,7 +6954,7 @@ def _validate_reference_volume_options(
         raise TypeError(msg)
 
 
-def _validate_spacing(spacing: float | VectorLike[float]) -> NumpyArray[float]:
+def _validate_spacing(spacing: float | VectorLike[float]) -> NDArray[np.float64]:
     """Return a positive, finite spacing broadcast to three axes."""
     return _validation.validate_array3(
         spacing,
@@ -6963,9 +6968,9 @@ def _validate_spacing(spacing: float | VectorLike[float]) -> NumpyArray[float]:
 
 
 def _round_dimensions(
-    dimensions: NumpyArray[float],
+    dimensions: NDArray[np.floating],
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
-) -> NumpyArray[int]:
+) -> NDArray[np.signedinteger]:
     """Round fractional dimensions to integers, with ``numpy.round`` by default."""
     rounding_func = np.round if rounding_func is None else rounding_func
     return _validation.validate_array3(
@@ -6977,7 +6982,7 @@ def _round_dimensions(
 
 
 def _spacing_for_n_points(
-    size: NumpyArray[float],
+    size: NDArray[np.floating],
     target_n_points: int,
     name: str = 'target n points',
     *,
@@ -7015,8 +7020,8 @@ def _count_points(dimensions: VectorLike[int], point_offset: int) -> int:
 
 
 def _dimensions_within(
-    size: NumpyArray[float], max_n_points: int, point_offset: int
-) -> NumpyArray[int]:
+    size: NDArray[np.floating], max_n_points: int, point_offset: int
+) -> NDArray[np.signedinteger]:
     """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
     spacing = _spacing_for_n_points(
         size, max_n_points, name='max n points', point_offset=point_offset
@@ -7176,7 +7181,7 @@ def _blank_invalid_points(image: ImageData) -> ImageData:
     """Hide the points which the valid-point mask marks as empty."""
     invalid = image.point_data['vtkValidPointMask'] == 0
     ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
-    image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+    image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())
     return image
 
 
@@ -7396,7 +7401,7 @@ class _Crinkler:
 
     @staticmethod
     def _extract_cells(
-        dataset: DataSet, ids: NumpyArray[bool], active_scalars_info_: Any
+        dataset: DataSet, ids: NDArray[np.bool_], active_scalars_info_: Any
     ) -> DataSet:
         """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
@@ -7413,7 +7418,7 @@ class _Crinkler:
     ) -> Any:
         """Extract crinkled cells from the clip output."""
 
-        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> NumpyArray[bool]:
+        def clipped_cell_mask(block_: DataSet, clipped: DataSet) -> NDArray[np.bool_]:
             # Optimization: mark the ids in a boolean array instead of collecting them in
             # Python sets, whose construction dominated the crinkle clip for large meshes
             mask = np.zeros(block_.n_cells, dtype=bool)

@@ -12,8 +12,6 @@ from pyvista.core._typing_core import CellsLike as CellsLike
 from pyvista.core._typing_core import InteractionEventType as InteractionEventType
 from pyvista.core._typing_core import LineStyle as LineStyle
 from pyvista.core._typing_core import MatrixLike as MatrixLike
-from pyvista.core._typing_core import Number as Number
-from pyvista.core._typing_core import NumberType as NumberType
 from pyvista.core._typing_core import RotationLike as RotationLike
 from pyvista.core._typing_core import TransformLike as TransformLike
 from pyvista.core._typing_core import VectorLike as VectorLike
@@ -39,8 +37,6 @@ __all__ = [
     'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
-    'Number',
-    'NumberType',
     'PlottableType',
     'RotationLike',
     'TransformLike',
@@ -68,8 +64,6 @@ _MOVED_FROM_CORE = frozenset(
         'LineStyle',
         'MatrixLike',
         'MeshValidationFields',
-        'Number',
-        'NumberType',
         'RotationLike',
         'TransformLike',
         'VectorLike',
@@ -102,14 +96,34 @@ def __dir__() -> list[str]:
     return sorted({*globals(), *__all__})
 
 
+# Deprecated type aliases with no counterpart in this module: (source, attribute, advice)
+_REMOVED_ALIASES = {
+    'Number': ('pyvista.core._typing_core._aliases', 'Number', 'use `float` instead'),
+    'NumberType': ('pyvista.core._typing_core._array_like', '_NumberT', 'use a `TypeVar` instead'),
+    'NumpyArray': (
+        'pyvista.core._typing_core._array_like',
+        'NumpyArray',
+        'use `numpy.typing.NDArray` instead',
+    ),
+}
+
+
 def _get_deprecated_alias(module: str, name: str) -> object:
     """Return a type alias with a warning that ``module`` no longer provides it."""
     from pyvista._version import _is_deprecation_due  # noqa: PLC0415
     from pyvista._warn_external import warn_external  # noqa: PLC0415
     from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
-    alias = getattr(sys.modules[__name__], name)
-    msg = f'`{module}.{name}` has moved to `pyvista.typing`; use `pyvista.typing.{name}` instead.'
+    if name in _REMOVED_ALIASES:
+        source, attribute, advice = _REMOVED_ALIASES[name]
+        alias = getattr(importlib.import_module(source), attribute)
+        msg = f'`{module}.{name}` is deprecated; {advice}.'
+    else:
+        alias = getattr(sys.modules[__name__], name)
+        msg = (
+            f'`{module}.{name}` has moved to `pyvista.typing`; '
+            f'use `pyvista.typing.{name}` instead.'
+        )
     warn_external(msg, PyVistaDeprecationWarning)
     if _is_deprecation_due((0, 53)):  # pragma: no cover
         msg = 'Convert this deprecation warning into an error.'

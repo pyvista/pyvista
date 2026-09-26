@@ -19,7 +19,6 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
-import numpy.typing as npt
 import pyvista_validation as _validation
 
 import pyvista as pv
@@ -39,6 +38,7 @@ if TYPE_CHECKING:
 
     import imageio
     import meshio
+    from numpy.typing import NDArray
     import trimesh
 
     from pyvista import BaseReader
@@ -49,8 +49,6 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
@@ -1100,7 +1098,7 @@ def _read_grdecl(
     # Active cells
     if 'ACTNUM' in keywords:
         active = np.array(keywords['ACTNUM']) > 0.0
-        grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
+        grid.hide_cells(~active, inplace=True)
 
     # Store unused keywords in user dict
     grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
@@ -1329,7 +1327,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    def split(arr: VectorLike[int]) -> list[VectorLike[int]]:
+    def split(arr: NDArray[np.signedinteger]) -> list[NDArray[np.signedinteger]]:
         i = 0
         offsets: list[int] = [0]
 
@@ -1345,7 +1343,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     if polyhedron_faces:
         polyhedron_locations = split(mesh.polyhedron_face_locations)
-        polyhedral_cell_faces: list[list[VectorLike[int]]] = [
+        polyhedral_cell_faces: list[list[NDArray[np.signedinteger]]] = [
             [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
         ]
 
@@ -1565,7 +1563,7 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
-def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, NumpyArray[Any]]:
+def _as_arrays(attributes: Mapping[str, object]) -> dict[str, NDArray[Any]]:
     """Return the attribute mapping with every value as an array."""
     return {name: np.asarray(value) for name, value in attributes.items()}
 
@@ -1612,7 +1610,7 @@ def from_trimesh(
         _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
     # Handle case with no faces
-    faces: NumpyArray[int] = mesh.faces
+    faces: NDArray[np.signedinteger] = mesh.faces
     if faces.size == 0:
         faces = faces.reshape((0, 3))
     # Trimesh doesn't pad faces
