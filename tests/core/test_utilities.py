@@ -2190,9 +2190,6 @@ class CasesTransformApply:
     def case_array2d_float(self):
         return lambda: np.array([VECTOR], dtype=float), True, np.ndarray, float
 
-    def case_array2d_longdouble(self):
-        return lambda: np.array([VECTOR], dtype=np.longdouble), True, np.ndarray, np.longdouble
-
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_float32(self):
         return lambda: pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
@@ -2257,6 +2254,13 @@ def test_transform_apply(transform, make_obj, return_self, return_type, return_d
     inverted_points = _get_points_from_object(inverted)
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted
+
+
+def test_transform_apply_longdouble_in_place():
+    array = np.array([VECTOR], dtype=np.longdouble)
+    out = Transform().scale(SCALE).apply(array, copy=False)
+    assert out is array
+    assert np.array_equal(array, np.array([VECTOR]) * SCALE)
 
 
 @pytest.fixture
