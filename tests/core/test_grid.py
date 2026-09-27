@@ -1986,6 +1986,12 @@ def test_explicit_structured_grid_cell_coords_rejects_floats():
         grid.cell_coords((19.0, 31.0))
 
 
+def test_explicit_structured_grid_cell_lookups_accept_bools():
+    grid = examples.load_explicit_structured()
+    assert grid.cell_id(np.array([True, False, True])) == grid.cell_id((1, 0, 1))
+    assert np.array_equal(grid.cell_coords(np.array([True, False])), grid.cell_coords((1, 0)))
+
+
 def test_explicit_structured_grid_neighbors():
     grid = examples.load_explicit_structured()
 
