@@ -555,13 +555,6 @@ def test_voxelize_removed(uniform):
         pv.voxelize(uniform, density=0.5)
 
 
-def test_voxelize_volume_removed(uniform):
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize_volume` is deprecated'
-    ):
-        pv.voxelize_volume(uniform, density=0.5)
-
-
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
