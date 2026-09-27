@@ -1852,7 +1852,7 @@ def Text3D(
         Center of the text, defined as the middle of the axis-aligned
         bounding box of the text. If ``None``, the text is not centered: its
         baseline starts at the origin and its back face lies in the plane
-        through the origin perpendicular to :attr:`normal`.
+        through the origin perpendicular to ``normal``.
 
         .. versionadded:: 0.43
 
