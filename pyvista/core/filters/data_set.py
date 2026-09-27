@@ -2148,7 +2148,7 @@ class DataSetFilters(DataObjectFilters):
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
-        color_mode : str, optional, default: ``'scale'``
+        color_mode : str, default: ``'scale'``
             If ``'scale'`` , color the glyphs by scale.
             If ``'scalar'`` , color the glyphs by scalar.
             If ``'vector'`` , color the glyphs by vector.

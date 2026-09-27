@@ -129,9 +129,9 @@ def _translate_and_orient(
     ----------
     surf : pyvista.core.pointset.PolyData
         Mesh to be translated and oriented.
-    center : VectorLikeFloat, optional, default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
-    direction : VectorLikeFloat, optional, default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
 
     """

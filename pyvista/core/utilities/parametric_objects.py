@@ -57,7 +57,7 @@ def Spline(
     parametrize_by : str, default: 'length'
         Parametrize spline by ``'length'`` or by point ``'index'``.
 
-    boundary_constraints : str | Sequence[str], optional, default: 'clamped'
+    boundary_constraints : str | Sequence[str], default: 'clamped'
         Derivative constraint type at both boundaries of the spline.
         Can be set by a single string or a sequence of length 2 (one for each left/right end).
         Each value must be one of:
