@@ -70,7 +70,6 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeBool
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
@@ -78,6 +77,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core._typing_core import _Real
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral

@@ -41,9 +41,9 @@ if TYPE_CHECKING:
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core._typing_core import _Real
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData

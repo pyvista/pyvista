@@ -21,14 +21,14 @@ if TYPE_CHECKING:
 
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import Integer as _Integer
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _Integer
     from pyvista.core._typing_core import _IntegerT
     from pyvista.core._typing_core import _MatrixSequence
     from pyvista.core._typing_core import _NumericArray
+    from pyvista.core._typing_core import _Real
     from pyvista.core._typing_core import _ScalarT
 
 

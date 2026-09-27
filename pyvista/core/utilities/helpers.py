@@ -42,10 +42,10 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import WrappableType
     from pyvista.core._typing_core import _NumericScalar
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core._typing_core import _VolumeArray
 
 _NORMALS = {

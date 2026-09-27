@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
     from pyvista.core.utilities.arrays import CellLiteral

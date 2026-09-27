@@ -7,11 +7,17 @@ from typing import TypeAlias
 
 import numpy as np
 from pyvista_validation.typing import Array1D
-from pyvista_validation.typing import Floating as _Floating
-from pyvista_validation.typing import Integer as _Integer
-from pyvista_validation.typing import Real as _Real
-from pyvista_validation.typing import Scalar as _Scalar
+from pyvista_validation.typing import Floating
+from pyvista_validation.typing import Integer
+from pyvista_validation.typing import Real
+from pyvista_validation.typing import Scalar
 from typing_extensions import TypeVar
+
+# The validation package's scalar aliases, under private names for pyvista
+_Floating: TypeAlias = Floating
+_Integer: TypeAlias = Integer
+_Real: TypeAlias = Real
+_Scalar: TypeAlias = Scalar
 
 # Any NumPy number or boolean, including widths the concrete aliases leave out
 _NumericScalar: TypeAlias = np.floating | np.integer | np.bool_

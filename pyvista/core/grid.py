@@ -47,12 +47,12 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import RotationLike
-    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core._typing_core import _Real
+    from pyvista.core._typing_core import _Scalar
 
     from .filters.data_object import _NestedMeshValidationFields
 

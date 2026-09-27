@@ -20,12 +20,12 @@ if TYPE_CHECKING:
 
     from pyvista import _vtk
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _IntegerT
     from pyvista.core._typing_core import _RealT
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core._typing_core import _ScalarT
 
     _FiveArrays: TypeAlias = tuple[

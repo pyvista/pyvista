@@ -46,11 +46,11 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeBool
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core._typing_core import _Real
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 

@@ -39,9 +39,9 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import DataSet
-    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _AnyArrayLike
+    from pyvista.core._typing_core import _Real
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme

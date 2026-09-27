@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from type_assert import assert_types
 
-from pyvista.core._typing_core import Real as _Real
+from pyvista.core._typing_core import _Real
 from tests.typing.meshes import rectilinear
 
 if TYPE_CHECKING:

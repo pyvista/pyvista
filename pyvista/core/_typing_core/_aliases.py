@@ -15,11 +15,12 @@ from numpy.typing import NDArray
 from pyvista_validation.typing import ArrayLikeFloat
 from pyvista_validation.typing import MatrixLikeFloat
 from pyvista_validation.typing import MatrixLikeInt
-from pyvista_validation.typing import Scalar as _Scalar
 from pyvista_validation.typing import VectorLikeFloat
 from pyvista_validation.typing import VectorLikeInt
 
 from pyvista import _vtk
+
+from ._array_types import _Scalar
 
 if TYPE_CHECKING:
     import meshio

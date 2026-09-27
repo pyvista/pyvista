@@ -137,10 +137,10 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLikeFloat
-    from pyvista.core._typing_core import Real as _Real
-    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _Real
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
