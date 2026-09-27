@@ -4927,7 +4927,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # here because this method returns invalid cell IDs when
         # `coords` is outside the grid extent.
         array = np.asarray(coords)
-        if not _is_integer(array):
+        if array.dtype != np.bool_ and not _is_integer(array):
             msg = f'Cell coordinates must be integers, got dtype {array.dtype}.'
             raise TypeError(msg)
         index = tuple(array.T) if array.ndim == 2 else array
@@ -4980,7 +4980,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         """
         index = ind if isinstance(ind, int) else np.asarray(ind)
-        if not isinstance(index, int) and not _is_integer(index):
+        if not isinstance(index, int) and index.dtype != np.bool_ and not _is_integer(index):
             msg = f'Cell IDs must be integers, got dtype {index.dtype}.'
             raise TypeError(msg)
         dims = self._dimensions()
