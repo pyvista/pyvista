@@ -589,7 +589,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         Parameters
         ----------
-        _dims : sequence
+        _dims : VectorLikeInt
             Ignored dimensions.
 
         """

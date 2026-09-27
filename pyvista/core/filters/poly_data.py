@@ -2700,10 +2700,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : sequence[float]
+        origin : VectorLikeFloat
             Start of the line segment.
 
-        end_point : sequence[float]
+        end_point : VectorLikeFloat
             End of the line segment.
 
         first_point : bool, default: False
@@ -3106,7 +3106,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        remove : sequence[bool | int], optional
+        remove : VectorLikeBool | VectorLikeInt, optional
             If remove is a ``bool`` array, points that are ``True`` will
             be removed.  Otherwise, it is treated as a list of
             indices. Only valid for all-triangle meshes.
@@ -3735,7 +3735,7 @@ class PolyDataFilters(DataSetFilters):
             Set the maximum ribbon width in terms of a multiple of the
             minimum width. The default is 2.0.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             Normal to use as default.
 
         tcoords : bool, str, optional
@@ -3845,7 +3845,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        vector : numpy.ndarray or sequence
+        vector : VectorLikeFloat
             Direction and length to extrude the mesh in.
 
         capping : bool, optional
@@ -3982,7 +3982,7 @@ class PolyDataFilters(DataSetFilters):
                a value for this keyword argument to prevent future changes
                in behavior and warnings.
 
-        rotation_axis : numpy.ndarray or sequence, optional
+        rotation_axis : VectorLikeFloat, optional
             The direction vector of the axis around which the rotation is done.
 
         progress_bar : bool, default: False
@@ -4084,7 +4084,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        direction : numpy.ndarray or sequence
+        direction : VectorLikeFloat
             Direction vector to extrude.
 
         trim_surface : pyvista.PolyData
@@ -4437,7 +4437,7 @@ class PolyDataFilters(DataSetFilters):
         n_contours : int
             Number of contours.
 
-        rng : Sequence, optional
+        rng : VectorLikeFloat, optional
             Range of the scalars. Optional and defaults to the minimum and
             maximum of the active scalars of ``scalars``.
 

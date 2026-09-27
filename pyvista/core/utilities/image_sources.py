@@ -81,7 +81,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
 
         Parameters
         ----------
-        whole_extent : sequence[int]
+        whole_extent : VectorLikeInt
             The extent of the whole output image.
 
         """
@@ -105,7 +105,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             The center of the ellipsoid.
 
         """
@@ -129,7 +129,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
 
         Parameters
         ----------
-        radius : sequence[float]
+        radius : VectorLikeFloat
             The radius of the ellipsoid.
 
         """
@@ -202,7 +202,7 @@ class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageM
 
         Parameters
         ----------
-        whole_extent : sequence[int]
+        whole_extent : VectorLikeInt
             The extent of the whole output image.
 
         """
@@ -319,7 +319,7 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
 
         Parameters
         ----------
-        whole_extent : sequence[int]
+        whole_extent : VectorLikeInt
           The extent of the whole output image.
 
         """
@@ -478,7 +478,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
 
         Parameters
         ----------
-        whole_extent : sequence[int]
+        whole_extent : VectorLikeInt
             The extent of the whole output image.
 
         """
@@ -509,7 +509,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
 
         Parameters
         ----------
-        direction : sequence[float]
+        direction : VectorLikeFloat
             The direction of the sinusoid.
 
         """
@@ -671,7 +671,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
           The center of the Gaussian.
 
         """
@@ -698,7 +698,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
 
         Parameters
         ----------
-        whole_extent : sequence[int]
+        whole_extent : VectorLikeInt
           The extent of the whole output image.
 
         """
@@ -858,7 +858,7 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
 
         Parameters
         ----------
-        extent : sequence[int]
+        extent : VectorLikeInt
             The extent of the whole output image.
 
         """
@@ -882,7 +882,7 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
 
         Parameters
         ----------
-        spacing : sequence[float]
+        spacing : VectorLikeFloat
             The pixel spacing.
 
         """

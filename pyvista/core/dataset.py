@@ -2395,10 +2395,10 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Length 3 coordinate of the start of the line.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Length 3 coordinate of the end of the line.
 
         tolerance : float, optional
@@ -2452,10 +2452,10 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Length 3 coordinate of the start of the line.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Length 3 coordinate of the end of the line.
 
         tolerance : float, optional
@@ -2593,7 +2593,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        bounds : sequence[float]
+        bounds : VectorLikeFloat
             Bounding box. The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns

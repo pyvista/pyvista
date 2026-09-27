@@ -466,7 +466,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        loc : sequence[int]
+        loc : VectorLikeInt
             Location of the renderer on the plotting grid, for example
             ``loc=(1, 1)``.
 
@@ -491,7 +491,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        loc : int | sequence[int]
+        loc : int | VectorLikeInt
             Index of the renderer to add the actor to. For example, ``loc=2``
             or ``loc=(1, 1)``.
 

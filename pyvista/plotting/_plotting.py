@@ -353,7 +353,7 @@ def process_opacity(
     mesh : pyvista.DataSet
         Dataset to process the opacity for.
 
-    opacity : float | str | sequence[float] | None
+    opacity : float | str | VectorLikeFloat | None
         Constant opacity, name of a predefined mapping such as
         ``'linear'``, ``'geom'``, ``'sigmoid'`` or ``'sigmoid_10'``,
         name of a cell or point data array, or an array of values.
@@ -381,7 +381,7 @@ def process_opacity(
     custom_opac : bool
         If using custom opacity.
 
-    opacity : float | numpy.ndarray | None
+    opacity : float | VectorLikeFloat | None
         Constant opacity, or an array containing the opacity.
 
     """

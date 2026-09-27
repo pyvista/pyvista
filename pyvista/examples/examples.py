@@ -519,9 +519,9 @@ def load_explicit_structured(
 
     Parameters
     ----------
-    dimensions : tuple(int), optional
+    dimensions : VectorLikeInt, optional
         Grid dimensions. Default is (5, 6, 7).
-    spacing : tuple(int), optional
+    spacing : VectorLikeFloat, optional
         Grid spacing. Default is (20, 10, 1).
 
     Returns

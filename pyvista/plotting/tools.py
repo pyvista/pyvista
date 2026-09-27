@@ -294,7 +294,7 @@ def create_axes_marker(
     ambient : float, default: 0.5
         The ambient of the axes arrows. Value should be between 0 and 1.
 
-    label_size : sequence[float], default: (0.25, 0.1)
+    label_size : VectorLikeFloat, default: (0.25, 0.1)
         The width and height of the axes label actors. Values should be between
         0 and 1. For example ``(0.2, 0.1)``.
 
@@ -736,7 +736,7 @@ def opacity_transfer_function(
 
     Parameters
     ----------
-    mapping : sequence[float] | str
+    mapping : VectorLikeFloat | str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
         ``'sigmoid_1'`` through ``'sigmoid_10'``, ``'sigmoid_15'``,

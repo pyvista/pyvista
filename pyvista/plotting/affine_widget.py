@@ -41,7 +41,7 @@ def _validate_axes(axes: MatrixLikeFloat) -> NDArray[np.floating]:
 
     Parameters
     ----------
-    axes : sequence
+    axes : MatrixLikeFloat
         The axes to be validated and normalized. Should be of shape (3, 3).
 
     Returns
@@ -84,9 +84,9 @@ def get_angle(v1: VectorLikeFloat, v2: VectorLikeFloat) -> float:
 
     Parameters
     ----------
-    v1 : sequence[float]
+    v1 : VectorLikeFloat
         First input vector.
-    v2 : sequence[float]
+    v2 : VectorLikeFloat
         Second input vector.
 
     Returns

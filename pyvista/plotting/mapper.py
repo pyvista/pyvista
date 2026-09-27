@@ -1076,7 +1076,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 ``True`` gives every unique value its own color instead of
                 spreading the colormap evenly over the scalar range.
 
-        clim : sequence[float] | float, optional
+        clim : VectorLikeFloat | float, optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``. A single value
             ``c`` is the range ``(-c, c)``.

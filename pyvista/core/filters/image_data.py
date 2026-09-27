@@ -104,10 +104,10 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        radius_factor : float | sequence[float], default: 1.5
+        radius_factor : float | VectorLikeFloat, default: 1.5
             Unitless factor to limit the extent of the kernel.
 
-        std_dev : float | sequence[float], default: 2.0
+        std_dev : float | VectorLikeFloat, default: 2.0
             Standard deviation of the kernel in pixel units.
 
         scalars : str, optional
@@ -198,7 +198,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        kernel_size : sequence[int], default: (3, 3, 3)
+        kernel_size : VectorLikeInt, default: (3, 3, 3)
             Size of the kernel in each dimension (units of voxels), for example
             ``(x_size, y_size, z_size)``. Default is a 3D median filter. If you
             want to do a 2D median filter, set the size to 1 in the dimension
@@ -458,12 +458,12 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        voi : sequence[int]
+        voi : VectorLikeInt
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices. Must be within this mesh's :attr:`~pyvista.ImageData.extent`.
 
-        rate : sequence[int], default: (1, 1, 1)
+        rate : VectorLikeInt, default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
@@ -1112,7 +1112,7 @@ class ImageDataFilters(DataSetFilters):
         erode_value : float, default: 0.0
             Erode value in the dataset.
 
-        kernel_size : sequence[int], default: (3, 3, 3)
+        kernel_size : VectorLikeInt, default: (3, 3, 3)
             Determines the size of the kernel along the three axes.
 
         scalars : str, optional
@@ -1855,7 +1855,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        threshold : float or sequence[float]
+        threshold : float | VectorLikeFloat
             Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. Thresholds for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
@@ -3570,7 +3570,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        pad_value : float | sequence[float] | 'mirror' | 'wrap', default: 0.0
+        pad_value : float | VectorLikeFloat | 'mirror' | 'wrap', default: 0.0
             Padding values given to new points outside the original image extent.
             Specify:
 
@@ -3579,7 +3579,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'wrap'``: New points are filled by wrapping around the padding axis.
             - ``'mirror'``: New points are filled by mirroring the padding axis.
 
-        pad_size : int | sequence[int], default: 1
+        pad_size : int | VectorLikeInt, default: 1
             Number of points to add to the image boundaries. Specify:
 
             - A single value to pad all boundaries equally.
@@ -5391,7 +5391,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        values : float | ArrayLikeFloat | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to select. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5403,7 +5403,7 @@ class ImageDataFilters(DataSetFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : ArrayLikeFloat | dict, optional
+        ranges : VectorLikeFloat | MatrixLikeFloat | dict, optional
             Ranges of values to select. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``

@@ -2841,12 +2841,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of cells.  Each cell contains the number of points in the
             cell and the node numbers of the cell.
 
-        cell_type : sequence[int]
+        cell_type : VectorLikeInt
             Cell types of each cell.  Each cell type numbers can be found from
             vtk documentation.  More efficient if using ``np.uint8``. See
             example below.
 
-        points : sequence[float]
+        points : MatrixLikeFloat
             NumPy array containing point locations.
 
         deep : bool, default: True
@@ -4188,7 +4188,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         Parameters
         ----------
-        ind : sequence[int]
+        ind : VectorLikeInt | VectorLikeBool
             List or array of cell indices to be hidden.  The array can
             also be a boolean array of the same size as the number of
             cells.
@@ -4738,7 +4738,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Parameters
         ----------
-        ind : sequence[int]
+        ind : VectorLikeInt
             Cell indices to be hidden. A boolean array of the same
             size as the number of cells also is acceptable.
 

@@ -70,10 +70,10 @@ def Capsule(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction the capsule points to in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -139,10 +139,10 @@ def Cylinder(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -213,7 +213,7 @@ def CylinderStructured(
 
     Parameters
     ----------
-    radius : float | sequence[float], default: 0.5
+    radius : float | VectorLikeFloat, default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
         specified by the ``radius``. The sequence must be sorted
@@ -222,10 +222,10 @@ def CylinderStructured(
     height : float, default: 1.0
         Height of the cylinder along its Z-axis.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction cylinder Z-axis in ``[x, y, z]``.
 
     theta_resolution : int, default: 32
@@ -322,10 +322,10 @@ def Arrow(
 
     Parameters
     ----------
-    start : sequence[float], default: (0.0, 0.0, 0.0)
+    start : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Start location in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction the arrow points to in ``[x, y, z]``.
 
     tip_length : float, default: 0.25
@@ -414,10 +414,10 @@ def Sphere(
     radius : float, default: 0.5
         Sphere radius.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -585,16 +585,16 @@ def StructuredSphere(
 
     Parameters
     ----------
-    radius : float | sequence[float], default: 0.5
+    radius : float | VectorLikeFloat, default: 0.5
         Sphere radius, which must be greater than zero. If a sequence, then
         describes the radial coordinates of the cells as a range of values, and
         generates a 3D grid with concentric layers of cells. The sequence must
         be sorted in strictly ascending order.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -816,10 +816,10 @@ def SolidSphere(
         inclusive of polar axis, that is, ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -933,25 +933,25 @@ def SolidSphereGeneric(
 
     Parameters
     ----------
-    radius : sequence[float], optional
+    radius : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying radial
         points. Must have at least two points and be non-negative.
 
-    theta : sequence[float], optional
+    theta : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``theta``
         points. Must have at least two points.  Can have any value as long
         as range is within 360 degrees. Large magnitudes may result in
         problems with endpoint overlap detection.
 
-    phi : sequence[float], optional
+    phi : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``phi``
         points. Must have at least two points.  Must be between
         0 and 180 degrees.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -1091,11 +1091,11 @@ def SolidSphereGeneric(
 
         Parameters
         ----------
-        r : sequence[float]
+        r : VectorLikeFloat
             Ordered sequence of floats of radii.
-        phi : sequence[float]
+        phi : VectorLikeFloat
             Ordered sequence of floats for phi direction.
-        theta : sequence[float]
+        theta : VectorLikeFloat
             Ordered sequence of floats for theta direction.
 
         Returns
@@ -1292,10 +1292,10 @@ def Plane(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
@@ -1345,10 +1345,10 @@ def Line(
 
     Parameters
     ----------
-    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
+    pointa : VectorLikeFloat, default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : sequence[float], default: (0.5, 0.0, 0.0)
+    pointb : VectorLikeFloat, default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
     resolution : int, default: 1
@@ -1439,10 +1439,10 @@ def Tube(
 
     Parameters
     ----------
-    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
+    pointa : VectorLikeFloat, default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : sequence[float], default: (0.5, 0.0, 0.0)
+    pointb : VectorLikeFloat, default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
     resolution : int, default: 1
@@ -1505,7 +1505,7 @@ def Cube(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
 
     x_length : float, default: 1.0
@@ -1517,7 +1517,7 @@ def Cube(
     z_length : float, default: 1.0
         Length of the cube in the z-direction.
 
-    bounds : sequence[float], optional
+    bounds : VectorLikeFloat, optional
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -1595,7 +1595,7 @@ def Box(
 
     Parameters
     ----------
-    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    bounds : VectorLikeFloat, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounding box of the cube.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -1658,11 +1658,11 @@ def Cone(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Axis of the cone passes through this
         point.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the
         cone.
 
@@ -1721,14 +1721,14 @@ def Polygon(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Central axis of the polygon passes
         through this point.
 
     radius : float, default: 1.0
         The radius of the polygon.
 
-    normal : sequence[float], default: (0.0, 0.0, 1.0)
+    normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
 
     n_sides : int, default: 6
@@ -1772,7 +1772,7 @@ def Disc(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     inner : float, default: 0.25
@@ -1781,7 +1781,7 @@ def Disc(
     outer : float, default: 0.5
         The outer radius.
 
-    normal : sequence[float], default: (0.0, 0.0, 1.0)
+    normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, default: 1
@@ -1855,13 +1855,13 @@ def Text3D(
 
         .. versionadded:: 0.43
 
-    center : Sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
         bounding box of the text.
 
         .. versionadded:: 0.43
 
-    normal : Sequence[float], default: (0.0, 0.0, 1.0)
+    normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
         ``depth`` of the text and points away from the front surface
         of the text.
@@ -1948,10 +1948,10 @@ def Wavelet(
 
     Parameters
     ----------
-    extent : sequence[int], default: (-10, 10, -10, 10, -10, 10)
+    extent : VectorLikeFloat, default: (-10, 10, -10, 10, -10, 10)
         Set/Get the extent of the whole output image.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the wavelet.
 
     maximum : float, default: 255.0
@@ -2042,13 +2042,13 @@ def CircularArc(
 
     Parameters
     ----------
-    pointa : sequence[float]
+    pointa : VectorLikeFloat
         Position of the first end point.
 
-    pointb : sequence[float]
+    pointb : VectorLikeFloat
         Position of the other end point.
 
-    center : sequence[float]
+    center : VectorLikeFloat
         Center of the circle that defines the arc.
 
     resolution : int, default: 100
@@ -2138,18 +2138,18 @@ def CircularArcFromNormal(
 
     Parameters
     ----------
-    center : sequence[float]
+    center : VectorLikeFloat
         Center of the circle that defines the arc.
 
     resolution : int, default: 100
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : sequence[float], optional
+    normal : VectorLikeFloat, optional
         The normal vector to the plane of the arc.  By default it
         points in the positive Z direction.
 
-    polar : sequence[float], optional
+    polar : VectorLikeFloat, optional
         Starting point of the arc in polar coordinates.  By default it
         is the unit vector in the positive x direction.
 
@@ -2524,10 +2524,10 @@ def Superquadric(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the superquadric in ``[x, y, z]``.
 
-    scale : sequence[float], default: (1.0, 1.0, 1.0)
+    scale : VectorLikeFloat, default: (1.0, 1.0, 1.0)
         Scale factors of the superquadric in ``[x, y, z]``.
 
     size : float, default: 0.5
@@ -2614,7 +2614,7 @@ def PlatonicSolid(
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the solid to create.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Sequence defining the center of the solid to create.
 
     Returns
@@ -2658,7 +2658,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) 
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the tetrahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the tetrahedron.
 
     Returns
@@ -2692,7 +2692,7 @@ def Octahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the octahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the octahedron.
 
     Returns
@@ -2725,7 +2725,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0))
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the dodecahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the dodecahedron.
 
     Returns
@@ -2759,7 +2759,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) 
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the icosahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the icosahedron.
 
     Returns
@@ -2801,7 +2801,7 @@ def Icosphere(
     radius : float, default: 1.0
         Radius of the icosphere.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the icosphere.
 
     nsub : int, default: 3

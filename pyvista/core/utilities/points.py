@@ -46,7 +46,7 @@ def vtk_points(
 
     Parameters
     ----------
-    points : numpy.ndarray or sequence
+    points : VectorLikeFloat | MatrixLikeFloat
         Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 

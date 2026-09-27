@@ -3084,7 +3084,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
@@ -3656,7 +3656,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        bounds : sequence[float], optional
+        bounds : VectorLikeFloat, optional
             Length 6 sequence of floats: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             Length 3 sequence of floats: distances from the min coordinate
             of the input mesh. Single float value: uniform distance from the
@@ -4123,7 +4123,7 @@ class DataObjectFilters:
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
             The ``'x'`` direction is used by default.
 
-        origin : sequence[float], optional
+        origin : VectorLikeFloat, optional
             The center ``(x, y, z)`` coordinate of the plane on which
             the slice occurs. The default is the center of the dataset.
 
@@ -4406,12 +4406,12 @@ class DataObjectFilters:
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
-        bounds : sequence[float], optional
+        bounds : VectorLikeFloat, optional
             A 6-length sequence overriding the bounds of the mesh.
             The bounds along the specified axis define the extent
             where slices are taken.
 
-        center : sequence[float], optional
+        center : VectorLikeFloat, optional
             A 3-length sequence specifying the position of the line
             along which slices are taken. Defaults to the center of
             the mesh.
@@ -5072,15 +5072,15 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        low_point : sequence[float], optional
+        low_point : VectorLikeFloat, optional
             The low point of the projection line in 3D space. Default is bottom
             center of the dataset. Otherwise pass a length 3 sequence.
 
-        high_point : sequence[float], optional
+        high_point : VectorLikeFloat, optional
             The high point of the projection line in 3D space. Default is top
             center of the dataset. Otherwise pass a length 3 sequence.
 
-        scalar_range : str | sequence[float], optional
+        scalar_range : str | VectorLikeFloat, optional
             The scalar range to project to the low and high points on the line
             that will be mapped to the dataset. If None given, the values will
             be computed from the elevation (Z component) range between the

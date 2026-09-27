@@ -1004,7 +1004,7 @@ class CellArray(
 
         Parameters
         ----------
-        offsets : sequence[int] | numpy.ndarray
+        offsets : VectorLikeInt | NDArray[np.integer]
             Offsets array of length ``n_cells + 1``.
 
         connectivity : CellsLike
@@ -1058,7 +1058,7 @@ class CellArray(
 
         Parameters
         ----------
-        cells : numpy.ndarray or list[list[int]]
+        cells : MatrixLikeInt | NDArray[np.integer]
             Cell array of shape (``n_cells``, ``cell_size``) where all cells have the same
             ``cell_size``.
 

@@ -94,7 +94,7 @@ def axis_angle_rotation(
 
     Parameters
     ----------
-    axis : sequence[float]
+    axis : VectorLikeFloat
         The direction vector of the rotation axis. It need not be a
         unit vector, but it must not be a zero vector.
 
@@ -104,7 +104,7 @@ def axis_angle_rotation(
         rotation axis. Passed either in degrees or radians depending on
         the value of ``deg``.
 
-    point : sequence[float], optional
+    point : VectorLikeFloat, optional
         The origin of the rotation (a reference point through which the
         rotation axis passes). By default the rotation axis contains the
         origin.
@@ -223,11 +223,11 @@ def reflection(
 
     Parameters
     ----------
-    normal : sequence[float]
+    normal : VectorLikeFloat
         The normal vector of the reflection plane. It need not be a unit
         vector, but it must not be a zero vector.
 
-    point : sequence[float], optional
+    point : VectorLikeFloat, optional
         The origin of the reflection (a reference point through which
         the reflection plane passes). By default the reflection plane
         contains the origin.

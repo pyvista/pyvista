@@ -420,7 +420,7 @@ def create_grid(dataset: DataSet, dimensions: VectorLikeInt | None = (101, 101, 
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple[int, int, int], default: (101, 101, 101)
+    dimensions : VectorLikeInt, default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 

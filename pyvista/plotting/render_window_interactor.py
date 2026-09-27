@@ -1682,7 +1682,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         renderer : :vtk:`vtkRenderer`
             The renderer in which the action will take place.
 
-        point : list or tuple
+        point : VectorLikeFloat
             The point to fly to.
 
         """

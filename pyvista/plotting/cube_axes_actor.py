@@ -907,7 +907,7 @@ class CubeAxesActor(
 
         Parameters
         ----------
-        bounds : sequence[float]
+        bounds : VectorLikeFloat
             Bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """

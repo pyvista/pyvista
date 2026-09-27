@@ -179,7 +179,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
@@ -202,7 +202,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
@@ -239,7 +239,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
@@ -271,7 +271,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
@@ -2121,7 +2121,7 @@ class PickingComponent(_NoNewAttrMixin):
             entire picked path is passed as the only parameter to this
             callable.
 
-        normal : sequence[float], default: (0.0, 0.0, 1.0)
+        normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
             The normal to the horizon surface's projection plane.
 
         width : float, optional

@@ -1036,7 +1036,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        value : float | sequence[float], optional
+        value : float | VectorLikeFloat, optional
             Single value or ``(min, max)`` to be used for the data threshold. If
             a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
@@ -1767,7 +1767,7 @@ class DataSetFilters(DataObjectFilters):
         compute_scalars : bool, default: True
             Preserves the scalar values that are being contoured.
 
-        rng : sequence[float], optional
+        rng : VectorLikeFloat, optional
             If an integer number of isosurfaces is specified, this is
             the range over which to generate contours. Default is the
             scalars array's full data range.
@@ -1930,15 +1930,15 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        origin : sequence[float], optional
+        origin : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             bottom left corner of the plane.
 
-        point_u : sequence[float], optional
+        point_u : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             bottom right corner of the plane.
 
-        point_v : sequence[float], optional
+        point_v : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             top left corner of the plane.
 
@@ -2017,7 +2017,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[float], optional
+        center : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             center of the sphere. If ``None``, this will be automatically
             calculated.
@@ -2125,7 +2125,7 @@ class DataSetFilters(DataObjectFilters):
                 from ``(1, 0, 0)`` to the direction of the ``orient`` vector at
                 each point.
 
-        indices : sequence[float], optional
+        indices : VectorLikeInt, optional
             Specifies the index of each glyph in the table for lookup in case
             ``geom`` is a sequence. If given, must be the same length as
             ``geom``. If missing, a default value of ``range(len(geom))`` is
@@ -2144,7 +2144,7 @@ class DataSetFilters(DataObjectFilters):
         clamping : bool, default: False
             Turn on/off clamping of "scalar" values to range.
 
-        rng : sequence[float], optional
+        rng : VectorLikeFloat, optional
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
@@ -2434,7 +2434,7 @@ class DataSetFilters(DataObjectFilters):
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
-        variable_input : float | VectorLikeFloat | VectorLikeBool, optional
+        variable_input : float | VectorLikeFloat | VectorLikeInt | VectorLikeBool, optional
             The convenience parameter used for specifying any required input
             values for some values of ``extraction_mode``. Setting
             ``variable_input`` is equivalent to setting:
@@ -2446,7 +2446,7 @@ class DataSetFilters(DataObjectFilters):
 
             It has no effect if the mode is ``'all'`` or ``'largest'``.
 
-        scalar_range : sequence[float], optional
+        scalar_range : VectorLikeFloat, optional
             Scalar range in the form ``[min, max]``. If set, the connectivity is
             restricted to cells with at least one point with scalar values in
             the specified range. The ``'largest'``, ``'cell_seed'`` and
@@ -2499,7 +2499,7 @@ class DataSetFilters(DataObjectFilters):
             Cell ids to use as seeds. A boolean mask sized to the number of cells is
             also supported. Only used if ``extraction_mode`` is ``cell_seed``.
 
-        closest_point : sequence[float], optional
+        closest_point : VectorLikeFloat, optional
             Point coordinates in ``(x, y, z)``. Only used if
             ``extraction_mode`` is ``closest``.
 
@@ -2989,7 +2989,7 @@ class DataSetFilters(DataObjectFilters):
             A scaling factor to increase the scaling effect. Alias
             ``scale_factor`` also accepted - if present, overrides ``factor``.
 
-        normal : sequence, optional
+        normal : VectorLikeFloat, optional
             User specified normal. If given, data normals will be
             ignored and the given normal will be used to project the
             warp.
@@ -3729,7 +3729,7 @@ class DataSetFilters(DataObjectFilters):
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        source_center : sequence[float], optional
+        source_center : VectorLikeFloat, optional
             Length 3 tuple of floats defining the center of the source
             particles. Defaults to the center of the dataset.
 
@@ -3740,7 +3740,7 @@ class DataSetFilters(DataObjectFilters):
         n_points : int, default: 100
             Number of particles present in source sphere or line.
 
-        start_position : sequence[float], optional
+        start_position : VectorLikeFloat, optional
             A single point.  This will override the sphere point source.
 
         return_source : bool, default: False
@@ -4057,7 +4057,7 @@ class DataSetFilters(DataObjectFilters):
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        start_position : sequence[float], optional
+        start_position : VectorLikeFloat, optional
             The seed point for generating evenly spaced streamlines.
             If not supplied, a random position in the dataset is chosen.
 
@@ -4273,10 +4273,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4349,10 +4349,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4523,13 +4523,13 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4609,7 +4609,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4617,11 +4617,11 @@ class DataSetFilters(DataObjectFilters):
             number of cells in the input mesh. Must be a positive
             integer.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
-        polar : sequence[float], optional
+        polar : VectorLikeFloat, optional
             Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
@@ -4704,13 +4704,13 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4834,7 +4834,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[int]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4842,11 +4842,11 @@ class DataSetFilters(DataObjectFilters):
             number of cells in the input mesh. Must be a positive
             integer.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
-        polar : sequence[float], optional
+        polar : VectorLikeFloat, optional
             Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
@@ -5436,7 +5436,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        values : float | ArrayLikeFloat | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5645,7 +5645,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        values : float | ArrayLikeFloat | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5657,7 +5657,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : ArrayLikeFloat | dict, optional
+        ranges : VectorLikeFloat | MatrixLikeFloat | dict, optional
             Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``

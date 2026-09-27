@@ -43,7 +43,7 @@ def Spline(
 
     Parameters
     ----------
-    points : numpy.ndarray
+    points : VectorLikeFloat | MatrixLikeFloat
         Array of points to build a spline out of. Array must be 3D and
         directionally ordered.
 
@@ -211,13 +211,13 @@ def KochanekSpline(
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
-    tension : sequence[float], default: [0.0, 0.0, 0.0]
+    tension : VectorLikeFloat, default: [0.0, 0.0, 0.0]
         Changes the length of the tangent vector.
 
-    bias : sequence[float], default: [0.0, 0.0, 0.0]
+    bias : VectorLikeFloat, default: [0.0, 0.0, 0.0]
         Primarily changes the direction of the tangent vector.
 
-    continuity : sequence[float], default: [0.0, 0.0, 0.0]
+    continuity : VectorLikeFloat, default: [0.0, 0.0, 0.0]
         Changes the sharpness in change between tangents.
 
     n_points : int, optional

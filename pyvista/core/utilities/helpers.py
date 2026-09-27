@@ -380,10 +380,10 @@ def generate_plane(normal: VectorLikeFloat, origin: VectorLikeFloat) -> _vtk.vtk
 
     Parameters
     ----------
-    normal : sequence[float]
+    normal : VectorLikeFloat
         Three item sequence representing the normal of the plane.
 
-    origin : sequence[float]
+    origin : VectorLikeFloat
         Three item sequence representing the origin of the plane.
 
     Returns
@@ -528,7 +528,7 @@ def is_inside_bounds(
     point : float | VectorLikeFloat
         Three item Cartesian point (that is, ``[x, y, z]``).
 
-    bounds : sequence[float]
+    bounds : VectorLikeFloat
         Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     Returns

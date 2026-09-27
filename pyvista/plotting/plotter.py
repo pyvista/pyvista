@@ -4901,7 +4901,7 @@ class BasePlotter(_BoundsSizeMixin):
 
             If a single value is given, the range ``[-clim, clim]`` is used.
 
-        resolution : list, optional
+        resolution : VectorLikeFloat, optional
             Block resolution. For example ``[1, 1, 1]``. Resolution must be
             non-negative. While VTK accepts negative spacing, this results in
             unexpected behavior. See:
@@ -6515,7 +6515,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        points : sequence | DataSet | :vtk:`vtkAlgorithm`
+        points : MatrixLikeFloat | VectorLikeFloat | DataSet | :vtk:`vtkAlgorithm`
             An ``n x 3`` sequence points or :class:`pyvista.DataSet` with
             points or mesh-producing algorithm.
 
@@ -6804,7 +6804,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        points : sequence[float] | np.ndarray | DataSet
+        points : MatrixLikeFloat | VectorLikeFloat | DataSet
             An ``n x 3`` ``numpy.ndarray`` or PyVista dataset with points.
 
         labels : list | str
@@ -6876,7 +6876,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        points : numpy.ndarray or pyvista.DataSet
+        points : MatrixLikeFloat | VectorLikeFloat | pyvista.DataSet
             Array of points or the points from a pyvista object.
 
         style : str, default: 'points'
