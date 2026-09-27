@@ -3197,7 +3197,7 @@ class PolyDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
         keep_scalars = True if keep_scalars is None else keep_scalars
-        remove_array: NDArray[Any] = np.asarray(remove)
+        remove_array = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
         if not issubclass(remove_array.dtype.type, (np.bool_, np.integer)):

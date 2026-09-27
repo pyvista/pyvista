@@ -309,7 +309,7 @@ def convert_array(
     if not isinstance(arr, np.ndarray):
         # Otherwise input must be a vtkDataArray
         return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
-    array: NDArray[Any] = arr
+    array = arr
     if array.ndim == 0:
         _warn_scalar_array()
         array = array.reshape(1)
