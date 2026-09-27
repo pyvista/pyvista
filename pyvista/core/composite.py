@@ -11,7 +11,6 @@ from collections.abc import MutableSequence
 from collections.abc import Sequence
 import itertools
 from pathlib import Path
-import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -2160,7 +2159,8 @@ class MultiBlock(
     def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = f'{self._inferred_type(4)} ({hex(id(self))})\n'
+        header = _inferred_type(type(self).__name__, self, 4)[0]
+        fmt = f'{header} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
         row = f'  {{:{max_len}s}}' + '{}\n'
@@ -2606,8 +2606,8 @@ class MultiBlock(
     def inferred_type(self) -> str:  # numpydoc ignore=RT01
         """Return the generic type of this composite inferred from its blocks.
 
-        Nested blocks at the same depth are described together, so every
-        :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
+        Nested blocks of the same class at the same depth are described together, so
+        every :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
         A composite without blocks is a bare ``MultiBlock``.
 
         .. versionadded:: 0.50
@@ -2631,39 +2631,7 @@ class MultiBlock(
         'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
 
         """
-        return self._inferred_type()
-
-    def _inferred_type(self, budget: float = float('inf')) -> str:
-        """Return :attr:`inferred_type` showing at most ``budget`` type names."""
-        leaves: set[str] = set()
-        nested: list[_TypeMultiBlockLeaf] = []
-        has_nested = False
-        for block in self:
-            if isinstance(block, MultiBlock):
-                has_nested = True
-                nested.extend(block)
-            else:
-                leaves.add('None' if block is None else type(block).__name__)
-        name = type(self).__name__
-        if not leaves and not has_nested:
-            return name
-        members = sorted(leaves - {'None'} | ({'MultiBlock['} if has_nested else set()))
-        members += sorted(leaves & {'None'})
-        shown: list[str] = []
-        remaining = budget - 1
-        for member in members:
-            if member != 'MultiBlock[':
-                if remaining >= 1:
-                    shown.append(member)
-                    remaining -= 1
-            # a nested composite needs room for its own name and at least one member
-            elif remaining >= (2 if nested else 1):
-                child = MultiBlock(nested)._inferred_type(remaining)
-                shown.append(child)
-                remaining -= len(re.findall(r'\w+', child))
-        if len(shown) < len(members):
-            shown.append('...')
-        return f'{name}[{" | ".join(shown)}]'
+        return _inferred_type(type(self).__name__, self, float('inf'))[0]
 
     @property
     def is_homogeneous(self) -> bool:  # numpydoc ignore=RT01
@@ -2888,3 +2856,39 @@ class MultiBlock(
                 block.clear_all_cell_data()
             elif block is not None:
                 block.clear_cell_data()
+
+
+def _inferred_type(
+    name: str, blocks: Iterable[_TypeMultiBlockLeaf], budget: float
+) -> tuple[str, int]:
+    """Return the type of composite ``name`` holding ``blocks``, and the type names shown.
+
+    At most ``budget`` type names are shown, and ``...`` marks the rest.
+    """
+    leaves: set[str] = set()
+    nested: dict[str, list[_TypeMultiBlockLeaf]] = {}
+    for block in blocks:
+        if isinstance(block, MultiBlock):
+            nested.setdefault(type(block).__name__, []).extend(block)
+        else:
+            leaves.add('None' if block is None else type(block).__name__)
+    if not leaves and not nested:
+        return name, 1
+    members = sorted([*(leaves - {'None'}), *nested]) + sorted(leaves & {'None'})
+    shown: list[str] = []
+    used = 1
+    for member in members:
+        if member in nested:
+            # a nested composite needs room for its own name and at least one member
+            if budget - used < (2 if nested[member] else 1):
+                break
+            text, count = _inferred_type(member, nested[member], budget - used)
+        elif budget - used < 1:
+            break
+        else:
+            text, count = member, 1
+        shown.append(text)
+        used += count
+    if len(shown) < len(members):
+        shown.append('...')
+    return f'{name}[{" | ".join(shown)}]', used

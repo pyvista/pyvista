@@ -1650,6 +1650,17 @@ def test_inferred_type(blocks, expected):
     assert pv.MultiBlock(blocks).inferred_type == expected
 
 
+class _SubBlock(pv.MultiBlock):
+    """MultiBlock subclass for naming tests."""
+
+
+def test_inferred_type_subclass():
+    sub = _SubBlock([pv.PolyData()])
+    assert sub.inferred_type == '_SubBlock[PolyData]'
+    multi = pv.MultiBlock([sub, pv.MultiBlock([pv.ImageData()])])
+    assert multi.inferred_type == 'MultiBlock[MultiBlock[ImageData] | _SubBlock[PolyData]]'
+
+
 def _nest(block, depth):
     """Wrap ``block`` in ``depth`` levels of MultiBlock."""
     for _ in range(depth):
@@ -1680,11 +1691,22 @@ _WIDE = [
         (_nest(pv.PolyData(), 4), 'MultiBlock[MultiBlock[MultiBlock[...]]]'),
         (
             _nest(pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.StructuredGrid()]), 2),
-            'MultiBlock[MultiBlock[MultiBlock[StructuredGrid | ...]]]',
+            'MultiBlock[MultiBlock[MultiBlock[...]]]',
         ),
         (
             pv.MultiBlock(_WIDE),
             'MultiBlock[ExplicitStructuredGrid | ImageData | PointSet | ...]',
+        ),
+        (
+            pv.MultiBlock(
+                [
+                    pv.ExplicitStructuredGrid(),
+                    pv.ImageData(),
+                    pv.MultiBlock([pv.PolyData()]),
+                    pv.PointSet(),
+                ]
+            ),
+            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
         ),
     ],
 )
