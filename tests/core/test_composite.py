@@ -432,7 +432,7 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
     assert multi._repr_html_() is not None
     pattern = (
-        r'MultiBlock \(0x[0-9a-fA-F]+\)'
+        r'MultiBlock\[.+\] \(0x[0-9a-fA-F]+\)'
         r'\s+N Blocks:\s{3}\d+'
         r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
@@ -1627,6 +1627,32 @@ def test_block_types(multiblock_all_with_nested_and_none):
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)
     assert multi.block_types == types
+
+
+@pytest.mark.parametrize(
+    ('blocks', 'expected'),
+    [
+        ([], 'MultiBlock'),
+        ([pv.PolyData(), pv.PolyData()], 'MultiBlock[PolyData]'),
+        ([pv.PolyData(), None, pv.ImageData()], 'MultiBlock[ImageData | PolyData | None]'),
+        ([pv.MultiBlock()], 'MultiBlock[MultiBlock]'),
+        (
+            [pv.MultiBlock([pv.MultiBlock([pv.PolyData()])])],
+            'MultiBlock[MultiBlock[MultiBlock[PolyData]]]',
+        ),
+        (
+            [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
+            'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
+        ),
+    ],
+)
+def test_inferred_type(blocks, expected):
+    assert pv.MultiBlock(blocks).inferred_type == expected
+
+
+def test_inferred_type_in_repr():
+    multi = pv.MultiBlock([pv.PolyData()])
+    assert repr(multi).startswith('MultiBlock[PolyData] (0x')
 
 
 def test_is_homogeneous_is_heterogeneous(multiblock_all_with_nested_and_none):

@@ -1630,7 +1630,7 @@ class MultiBlock(
         >>> nested = pv.MultiBlock([blocks])
 
         >>> nested.get_block(0)
-        MultiBlock ...
+        MultiBlock[ImageData | PolyData] ...
         >>> nested.get_block((0, 1))
         ImageData ...
 
@@ -2159,7 +2159,7 @@ class MultiBlock(
     def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = f'{type(self).__name__} ({hex(id(self))})\n'
+        fmt = f'{self.inferred_type} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
         row = f'  {{:{max_len}s}}' + '{}\n'
@@ -2602,6 +2602,37 @@ class MultiBlock(
         return {type(block) for block in self.recursive_iterator()}
 
     @property
+    def inferred_type(self) -> str:  # numpydoc ignore=RT01
+        """Return the generic type of this composite inferred from its blocks.
+
+        Nested blocks at the same depth are described together, so every
+        :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
+        A composite without blocks is a bare ``MultiBlock``.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        block_types
+        nested_block_types
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+        >>> multi.inferred_type
+        'MultiBlock[PolyData]'
+
+        Nested and empty blocks are included.
+
+        >>> nested = pv.MultiBlock([multi, pv.ImageData(), None])
+        >>> nested.inferred_type
+        'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
+
+        """
+        return _inferred_type(type(self).__name__, self)
+
+    @property
     def is_homogeneous(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if all nested blocks have the same type.
 
@@ -2824,3 +2855,22 @@ class MultiBlock(
                 block.clear_all_cell_data()
             elif block is not None:
                 block.clear_cell_data()
+
+
+def _inferred_type(name: str, blocks: Iterable[Any]) -> str:
+    """Return the generic type of a composite named ``name`` holding ``blocks``."""
+    members: set[str] = set()
+    nested: list[Any] = []
+    composite_name = None
+    for block in blocks:
+        if isinstance(block, MultiBlock):
+            composite_name = type(block).__name__
+            nested.extend(block)
+        else:
+            members.add('None' if block is None else type(block).__name__)
+    if composite_name is not None:
+        members.add(_inferred_type(composite_name, nested))
+    if not members:
+        return name
+    ordered = sorted(members - {'None'}) + sorted(members & {'None'})
+    return f'{name}[{" | ".join(ordered)}]'
