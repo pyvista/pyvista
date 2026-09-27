@@ -4103,7 +4103,7 @@ class CubeFacesSource(CubeSource):
     :class:`~pyvista.MultiBlock`.
 
     >>> output
-    MultiBlock (...)
+    MultiBlock[PolyData] (...)
       N Blocks:   6
       X Bounds:   -5.000e-01, 5.000e-01
       Y Bounds:   -5.000e-01, 5.000e-01

@@ -2806,7 +2806,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     :class:`~pyvista.MultiBlock` and its bounds are normalized to fit inside a 1x1x1 grid.
 
     >>> triangle
-    MultiBlock (...)
+    MultiBlock[UnstructuredGrid] (...)
       N Blocks:   1
       X Bounds:   0.000e+00, 1.000e+00
       Y Bounds:   -5.551e-17, 1.000e+00
