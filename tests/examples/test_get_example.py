@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import textwrap
+from typing import TYPE_CHECKING
 from typing import get_args
 import warnings
 
@@ -25,6 +26,10 @@ from pyvista.examples._get_example import _example_names
 from pyvista.examples._get_example import _get_dataset_loader
 from pyvista.examples._get_example import _resolve_paths
 from pyvista.examples._get_example import _supported_modules
+
+if TYPE_CHECKING:
+    from pyvista import MultiBlock
+    from pyvista import UnstructuredGrid
 
 _SKIP_DATASETS_WINDOWS = ['biplane']
 
@@ -295,6 +300,15 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
 def test_example_name_literal_lists_every_example():
     """``ExampleName`` is the ``Literal`` of every example name, so editors can complete it."""
     assert get_args(_get_example.ExampleName) == tuple(_all_example_names()), _REGENERATE
+
+
+def test_dataset_annotation_keeps_nested_unions():
+    """Only a top-level path member is dropped, and every class name is qualified."""
+
+    def load() -> MultiBlock[UnstructuredGrid | None] | str:
+        """Stand in for an example function without overloads."""
+
+    assert _dataset_annotation(load) == 'pv.MultiBlock[pv.UnstructuredGrid | None]'
 
 
 def test_format_overloads_renders_one_line_per_stub():
