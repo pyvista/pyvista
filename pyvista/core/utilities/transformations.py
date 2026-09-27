@@ -323,8 +323,8 @@ def apply_transformation_to_points(
 
     Returns
     -------
-    numpy.ndarray
-        Transformed points.
+    numpy.ndarray | None
+        Transformed points, or ``None`` when ``inplace=True``.
 
     Examples
     --------
