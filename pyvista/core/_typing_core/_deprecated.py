@@ -1,8 +1,4 @@
-"""Generic array-like type definitions.
-
-The aliases are generic over the Python number type of a sequence's items. NumPy arrays
-of any integer, floating, or boolean dtype are accepted whatever the parameter.
-"""
+"""Targets of the deprecated type aliases that ``pyvista.typing`` forwards."""
 
 from __future__ import annotations
 
@@ -20,6 +16,9 @@ _ScalarT = TypeVar('_ScalarT', bound=np.generic)
 
 # Forwarded as the deprecated `pyvista.NumpyArray`
 NumpyArray = NDArray[_ScalarT]
+
+# Forwarded as the deprecated `pyvista.Number`
+Number = Union[int, float]
 
 _ArrayLike1D = Union[
     NDArray[_Scalar],

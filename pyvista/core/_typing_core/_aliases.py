@@ -40,9 +40,6 @@ if TYPE_CHECKING or os.environ.get(
 else:
     Rotation = None
 
-# Forwarded as the deprecated `pyvista.Number`
-Number = Union[int, float]
-
 if Rotation is not None:
     RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3, Rotation]
 else:
