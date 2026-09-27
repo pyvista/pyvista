@@ -37,8 +37,8 @@ pyvista.typing.VectorLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with numerical values.
 
-Accepts :class:`float`, :class:`int` and :class:`bool` values, and floating, integer and
-boolean NumPy arrays and scalars.
+Accepts sequences of :class:`float`, :class:`int` and :class:`bool` values, and NumPy
+arrays of :class:`numpy.floating`, :class:`numpy.integer` or :class:`numpy.bool` dtype.
 
 Includes sequences and one-dimensional NumPy arrays.
 
@@ -48,8 +48,8 @@ pyvista.typing.VectorLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with integer values.
 
-Accepts :class:`int` and :class:`bool` values, and integer and boolean NumPy arrays and
-scalars. Floating values are not included.
+Accepts sequences of :class:`int` and :class:`bool` values, and NumPy arrays of
+:class:`numpy.integer` or :class:`numpy.bool` dtype. Floating values are not included.
 
 Includes sequences and one-dimensional NumPy arrays.
 
@@ -59,8 +59,8 @@ pyvista.typing.VectorLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with boolean values.
 
-Accepts :class:`bool` values and boolean NumPy arrays and scalars only. Integer and
-floating values are not included.
+Accepts sequences of :class:`bool` values and NumPy arrays of :class:`numpy.bool` dtype
+only. Integer and floating values are not included.
 
 Includes sequences and one-dimensional NumPy arrays.
 
@@ -70,8 +70,8 @@ pyvista.typing.MatrixLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with numerical values.
 
-Accepts :class:`float`, :class:`int` and :class:`bool` values, and floating, integer and
-boolean NumPy arrays and scalars.
+Accepts sequences of :class:`float`, :class:`int` and :class:`bool` values, and NumPy
+arrays of :class:`numpy.floating`, :class:`numpy.integer` or :class:`numpy.bool` dtype.
 
 Includes sequences of vectors and two-dimensional NumPy arrays.
 
@@ -81,8 +81,8 @@ pyvista.typing.MatrixLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with integer values.
 
-Accepts :class:`int` and :class:`bool` values, and integer and boolean NumPy arrays and
-scalars. Floating values are not included.
+Accepts sequences of :class:`int` and :class:`bool` values, and NumPy arrays of
+:class:`numpy.integer` or :class:`numpy.bool` dtype. Floating values are not included.
 
 Includes sequences of vectors and two-dimensional NumPy arrays.
 
@@ -92,8 +92,8 @@ pyvista.typing.MatrixLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with boolean values.
 
-Accepts :class:`bool` values and boolean NumPy arrays and scalars only. Integer and
-floating values are not included.
+Accepts sequences of :class:`bool` values and NumPy arrays of :class:`numpy.bool` dtype
+only. Integer and floating values are not included.
 
 Includes sequences of vectors and two-dimensional NumPy arrays.
 
@@ -103,8 +103,8 @@ pyvista.typing.ArrayLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with numerical values.
 
-Accepts :class:`float`, :class:`int` and :class:`bool` values, and floating, integer and
-boolean NumPy arrays and scalars.
+Accepts sequences of :class:`float`, :class:`int` and :class:`bool` values, and NumPy
+arrays of :class:`numpy.floating`, :class:`numpy.integer` or :class:`numpy.bool` dtype.
 
 Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
 
@@ -114,8 +114,8 @@ pyvista.typing.ArrayLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with integer values.
 
-Accepts :class:`int` and :class:`bool` values, and integer and boolean NumPy arrays and
-scalars. Floating values are not included.
+Accepts sequences of :class:`int` and :class:`bool` values, and NumPy arrays of
+:class:`numpy.integer` or :class:`numpy.bool` dtype. Floating values are not included.
 
 Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
 
@@ -125,8 +125,8 @@ pyvista.typing.ArrayLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with boolean values.
 
-Accepts :class:`bool` values and boolean NumPy arrays and scalars only. Integer and
-floating values are not included.
+Accepts sequences of :class:`bool` values and NumPy arrays of :class:`numpy.bool` dtype
+only. Integer and floating values are not included.
 
 Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
 
