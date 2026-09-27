@@ -6925,7 +6925,6 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 def test_enable_custom_trackball_style():
     def setup_plot():
         mesh = pv.Cube()
