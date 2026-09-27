@@ -941,7 +941,7 @@ class CellArray(
 
     def _set_data(
         self: Self,
-        offsets: VectorLikeInt | NDArray[np.integer],
+        offsets: VectorLikeInt,
         connectivity: CellsLike,
         *,
         deep: bool = False,
@@ -995,7 +995,7 @@ class CellArray(
 
     @staticmethod
     def from_arrays(
-        offsets: VectorLikeInt | NDArray[np.integer],
+        offsets: VectorLikeInt,
         connectivity: CellsLike,
         *,
         deep: bool = False,
@@ -1004,7 +1004,7 @@ class CellArray(
 
         Parameters
         ----------
-        offsets : VectorLikeInt | NDArray[np.integer]
+        offsets : VectorLikeInt
             Offsets array of length ``n_cells + 1``.
 
         connectivity : CellsLike
@@ -1044,7 +1044,7 @@ class CellArray(
     @classmethod
     def from_regular_cells(
         cls: type[CellArray],
-        cells: MatrixLikeInt | NDArray[np.integer],
+        cells: MatrixLikeInt,
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1058,7 +1058,7 @@ class CellArray(
 
         Parameters
         ----------
-        cells : MatrixLikeInt | NDArray[np.integer]
+        cells : MatrixLikeInt
             Cell array of shape (``n_cells``, ``cell_size``) where all cells have the same
             ``cell_size``.
 
