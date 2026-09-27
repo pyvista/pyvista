@@ -31,10 +31,14 @@ _SKIP_DATASETS_WINDOWS = ['biplane']
 _OVERLOADS_FILE = Path(_get_example.__file__)
 _GENERATED_START = '# --- generated overloads ---\n'
 _GENERATED_END = '# --- end generated overloads ---\n'
+_IMPORTS_START = '    # --- generated imports ---\n'
+_IMPORTS_END = '\n    # --- end generated imports ---\n'
 # the `load=False` half of a function's return annotation, which is not a dataset
 _PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
-# every other dataset type name is an attribute of `pv`
-_DATASET_TYPE_NAMES = {'ndarray': 'pv.NumpyArray[Any]'}
+# every other dataset type name is imported from `pyvista` under the same name
+_DATASET_TYPE_NAMES = {'ndarray': 'NumpyArray[Any]'}
+# names in the generated stubs which are not imported from `pyvista`
+_BUILTIN_NAMES = {'Any', 'None', 'tuple'}
 _REGENERATE = (
     'Regenerate the generated block with\n'
     '  pytest tests/examples/test_get_example.py -k overloads_current '
@@ -58,15 +62,13 @@ def _dataset_annotation(function):
     annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
     members = [member.strip() for member in str(annotation).split('|')]
     return ' | '.join(
-        _DATASET_TYPE_NAMES.get(member, f'pv.{member}')
-        for member in members
-        if member not in _PATH_TYPES
+        _DATASET_TYPE_NAMES.get(member, member) for member in members if member not in _PATH_TYPES
     )
 
 
 def _readers_annotation(example):
     """Render the exact tuple type of ``example.readers``."""
-    names = ', '.join(f'pv.{type(reader).__name__}' for reader in example.readers)
+    names = ', '.join(type(reader).__name__ for reader in example.readers)
     return f'tuple[{names}]' if names else 'tuple[()]'
 
 
@@ -108,6 +110,19 @@ def _format_overloads(overloads):
             f' -> Example[{dataset}, {readers}]: ...'
         )
     return '\n'.join(lines) + '\n'
+
+
+def _format_imports(overloads):
+    """Render the generated ``TYPE_CHECKING`` imports of every name the stubs use."""
+    annotations = ' '.join(f'{dataset} {readers}' for dataset, readers in overloads.values())
+    names = set(re.findall(r'[A-Za-z_]\w*', annotations)) - _BUILTIN_NAMES
+    return ''.join(f'    from pyvista import {name}\n' for name in sorted(names, key=str.lower))
+
+
+def _replace_between(source, start, end, text):
+    """Replace the text between the ``start`` and ``end`` markers of ``source``."""
+    begin = source.index(start) + len(start)
+    return source[:begin] + text + source[source.index(end) :]
 
 
 @pytest.mark.parametrize(
@@ -284,8 +299,8 @@ def test_format_overloads_renders_one_line_per_stub():
     """The generated block is the name literal, then an ``@overload`` and a one-line stub each."""
     block = _format_overloads(
         {
-            'cow': ('pv.PolyData', 'tuple[pv.XMLPolyDataReader]'),
-            'ant': ('pv.PolyData', 'tuple[pv.PLYReader]'),
+            'cow': ('PolyData', 'tuple[XMLPolyDataReader]'),
+            'ant': ('PolyData', 'tuple[PLYReader]'),
         }
     )
     assert block == (
@@ -294,10 +309,26 @@ def test_format_overloads_renders_one_line_per_stub():
         ']\n'
         '@overload\n'
         "def get_example(name: Literal['ant'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.PLYReader]]: ...\n'
+        ' -> Example[PolyData, tuple[PLYReader]]: ...\n'
         '@overload\n'
         "def get_example(name: Literal['cow'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.XMLPolyDataReader]]: ...\n'
+        ' -> Example[PolyData, tuple[XMLPolyDataReader]]: ...\n'
+    )
+
+
+def test_format_imports_lists_every_pyvista_name_once():
+    """Every name a stub uses is imported once, sorted, and builtins are skipped."""
+    imports = _format_imports(
+        {
+            'cow': ('PolyData', 'tuple[XMLPolyDataReader]'),
+            'ant': ('PolyData | None', 'tuple[()]'),
+            'gpr': ('NumpyArray[Any]', 'tuple[()]'),
+        }
+    )
+    assert imports == (
+        '    from pyvista import NumpyArray\n'
+        '    from pyvista import PolyData\n'
+        '    from pyvista import XMLPolyDataReader\n'
     )
 
 
@@ -307,15 +338,21 @@ def test_get_example_overloads_current(request):
     current = _current_overloads()
     if request.config.getoption('--regenerate_overloads'):  # pragma: no cover -- maintainer path
         source = _OVERLOADS_FILE.read_text()
-        start = source.index(_GENERATED_START) + len(_GENERATED_START)
-        end = source.index(_GENERATED_END)
-        _OVERLOADS_FILE.write_text(source[:start] + _format_overloads(current) + source[end:])
+        source = _replace_between(source, _IMPORTS_START, _IMPORTS_END, _format_imports(current))
+        source = _replace_between(
+            source, _GENERATED_START, _GENERATED_END, _format_overloads(current)
+        )
+        _OVERLOADS_FILE.write_text(source)
         return
 
     declared = _declared_overloads()
     stale = sorted(name for name in current if declared.get(name) != current[name])
     stale += sorted(set(declared) - set(current))
     assert not stale, f'The generated overloads are stale for: {stale}. {_REGENERATE}'
+    source = _OVERLOADS_FILE.read_text()
+    begin = source.index(_IMPORTS_START) + len(_IMPORTS_START)
+    imports = source[begin : source.index(_IMPORTS_END)]
+    assert imports == _format_imports(current), f'The generated imports are stale. {_REGENERATE}'
 
 
 def test_get_example_download_false_uses_local_files():
