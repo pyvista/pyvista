@@ -738,7 +738,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: ArrayLikeFloat,
+        data: _AnyArrayLike,
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
