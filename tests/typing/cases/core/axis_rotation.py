@@ -19,6 +19,11 @@ def float32_points() -> NDArray[np.float32]:
     return np.array([[1.0, 0.0, 0.0]], dtype=np.float32)
 
 
+def int32_points() -> NDArray[np.int32]:
+    """Return integer points, which rotate to float64."""
+    return np.array([[1, 0, 0]], dtype=np.int32)
+
+
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True
@@ -29,6 +34,7 @@ assert_types(pv.axis_rotation(some_points(), 90.0, inplace=False), NDArray[np.fl
 assert_types(pv.axis_rotation(some_points(), 90.0, axis='x', deg=True), NDArray[np.float64])
 assert_types(pv.axis_rotation(some_points(), np.pi / 2, axis='y', deg=False), NDArray[np.float64])
 assert_types(pv.axis_rotation(float32_points(), 90.0), NDArray[np.float64])
+assert_types(pv.axis_rotation(int32_points(), 90.0), NDArray[np.float64])
 
 assert_types(pv.axis_rotation(some_points(), 90.0, inplace=True), None)
 

@@ -447,13 +447,15 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
 @overload
 def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
 @overload
+def axis_rotation(points: NDArray[np.integer], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
+@overload
 def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
 @overload
 def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.float64] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def axis_rotation(
-    points: NDArray[np.floating],
+    points: NDArray[np.floating | np.integer],
     angle: float,
     *,
     inplace: bool = False,
@@ -483,8 +485,8 @@ def axis_rotation(
 
     Returns
     -------
-    numpy.ndarray
-        Rotated points.
+    numpy.ndarray | None
+        Rotated points as ``float64``, or ``None`` when ``inplace=True``.
 
     Examples
     --------
@@ -509,9 +511,13 @@ def axis_rotation(
         raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
+    if inplace:
+        transformations.apply_transformation_to_points(
+            rot_mat, cast('NDArray[np.floating]', points), inplace=True
+        )
+        return None
     return cast(
-        'NDArray[np.float64] | None',
-        transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace),
+        'NDArray[np.float64]', transformations.apply_transformation_to_points(rot_mat, points)
     )
 
 
