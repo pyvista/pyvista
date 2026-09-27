@@ -56,12 +56,29 @@ def _dataset_annotation(function):
     """
     overloads = get_overloads(function)
     annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
-    members = [member.strip() for member in str(annotation).split('|')]
-    return ' | '.join(
-        _DATASET_TYPE_NAMES.get(member, f'pv.{member}')
-        for member in members
-        if member not in _PATH_TYPES
-    )
+    members = _split_union(str(annotation))
+    dataset = ' | '.join(member for member in members if member not in _PATH_TYPES)
+    return re.sub(r'\b(?<!\.)[A-Za-z_]\w*', _qualify_type_name, dataset)
+
+
+def _split_union(annotation):
+    """Split an annotation on its top-level ``|``, leaving bracketed unions intact."""
+    members, depth, start = [], 0, 0
+    for i, char in enumerate(annotation):
+        depth += {'[': 1, ']': -1}.get(char, 0)
+        if char == '|' and depth == 0:
+            members.append(annotation[start:i].strip())
+            start = i + 1
+    members.append(annotation[start:].strip())
+    return members
+
+
+def _qualify_type_name(match):
+    """Return a type name as the generated overloads spell it."""
+    name = match[0]
+    if name == 'None':
+        return name
+    return _DATASET_TYPE_NAMES.get(name, f'pv.{name}')
 
 
 def _readers_annotation(example):
