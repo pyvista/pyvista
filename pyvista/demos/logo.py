@@ -105,7 +105,11 @@ def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
 
 
 def _voxelize(mesh: pv.PolyData, density: float) -> pv.UnstructuredGrid:
-    """Voxelize a closed surface into hexahedral cells spaced ``density`` apart."""
+    """Voxelize a closed surface into hexahedral cells spaced ``density`` apart.
+
+    This is a legacy voxelizer, preserved solely for generating PyVista's logo.
+    The :meth:`~pyvista.DataSetFilters.voxelize` filter is deliberately not used.
+    """
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
     x, y, z = np.meshgrid(
         np.arange(x_min, x_max, density),
