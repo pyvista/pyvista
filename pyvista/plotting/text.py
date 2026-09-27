@@ -479,7 +479,8 @@ class Label(_Prop3DMixin, Text):  # type: ignore[misc]
     @property
     def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label relative to its :attr:`~pyvista.Prop3D.position`."""
-        return tuple(self._relative_position.tolist())
+        x, y, z = self._relative_position.tolist()
+        return x, y, z
 
     @relative_position.setter
     def relative_position(self, position: VectorLikeFloat) -> None:
