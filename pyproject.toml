@@ -636,9 +636,7 @@ pyvista = "pv"
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'hooks/*' = ['INP001']
 'pyvista/_vtk.py' = ['PLC0414', 'PLC0415']
-'pyvista/core/_typing_core/*' = [
-  'TID251',
-] # the one place that imports validation types
+'pyvista/core/_typing_core/*' = ['TID251']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_types.py' = ['PYI018']
 'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
