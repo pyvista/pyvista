@@ -156,6 +156,19 @@ def test_text3d_source():
     assert len(out.split_bodies()) == 4
 
 
+def test_text3d_source_center_none():
+    src = pv.Text3DSource(string='y', depth=0.5, center=None)
+    assert src.center is None
+    x_min, _, y_min, _, z_min, z_max = src.output.bounds
+    assert x_min > 0
+    assert y_min < 0
+    assert np.isclose(z_min, 0.0)
+    assert np.isclose(z_max, 0.5)
+
+    src.center = (1.0, 2.0, 3.0)
+    assert np.allclose(src.output.center, (1.0, 2.0, 3.0))
+
+
 @pytest.mark.parametrize('name', ['depth', 'height', 'width'])
 def test_text3d_source_size_setters(name):
     src = pv.Text3DSource(string='Text')

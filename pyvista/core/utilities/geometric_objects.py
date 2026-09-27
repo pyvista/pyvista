@@ -1812,7 +1812,7 @@ def Text3D(
     depth: float | None = None,
     width: float | None = None,
     height: float | None = None,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLike[float] | None = (0.0, 0.0, 0.0),
     normal: VectorLike[float] = (0.0, 0.0, 1.0),
 ) -> PolyData:
     """Create 3D text from a string.
@@ -1848,11 +1848,16 @@ def Text3D(
 
         .. versionadded:: 0.43
 
-    center : Sequence[float], default: (0.0, 0.0, 0.0)
+    center : Sequence[float] | None, default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
-        bounding box of the text.
+        bounding box of the text. If ``None``, the text is not centered: it
+        starts at the origin with its baseline on the x-axis, and its depth
+        spans from ``0`` to :attr:`depth` along the :attr:`normal`.
 
         .. versionadded:: 0.43
+
+        .. versionchanged:: 0.50
+            Allow ``None`` to keep the text at its origin.
 
     normal : Sequence[float], default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the

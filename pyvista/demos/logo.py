@@ -26,13 +26,10 @@ from typing import overload
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
 from pyvista import examples
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.filters import _get_output
-from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.features import _voxelize_legacy
 
 if TYPE_CHECKING:
@@ -76,24 +73,6 @@ def atomize(
     return cells[0].merge(cells[1:])
 
 
-# Offset of each glyph's bounds from the text origin, which pv.Text3D centres away
-_GLYPH_OFFSETS = {
-    'P': (0.68076, 0.47747),
-    'y': (0.52902, 0.16361),
-    'V': (0.65143, 0.47767),
-    'i': (0.31428, 0.47714),
-    's': (0.52030, 0.32550),
-    't': (0.36170, 0.45554),
-    'a': (0.56255, 0.32571),
-    LOGO_TITLE: (3.05304, 0.31559),
-}
-
-
-def _logo_text(string: str, depth: float) -> pv.PolyData:
-    """Create 3D logo text extruded along +z from the text origin."""
-    return pv.Text3D(string, depth=depth).translate((*_GLYPH_OFFSETS[string], depth / 2))
-
-
 def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     """Create 3D text from a given string.
 
@@ -122,19 +101,7 @@ def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     if _is_deprecation_due((0, 54)):  # pragma: no cover
         msg = 'Remove this deprecated function.'
         raise RuntimeError(msg)
-    vec_text = _vtk.vtkVectorText()
-    vec_text.SetText(string)
-
-    extrude = _vtk.vtkLinearExtrusionFilter()
-    extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion()
-    extrude.SetVector(0, 0, 1)
-    extrude.SetScaleFactor(depth)
-
-    tri_filter = _vtk.vtkTriangleFilter()
-    tri_filter.SetInputConnection(extrude.GetOutputPort())
-    _update_alg(tri_filter)
-    return _get_output(tri_filter)
+    return pv.Text3D(string, depth=depth, center=None)
 
 
 # fmt: off
@@ -176,7 +143,7 @@ def logo_letters(
     space_factor = 0.9
     width = 0
     for letter in LOGO_TITLE:
-        mesh_letter = _logo_text(letter, depth)
+        mesh_letter = pv.Text3D(letter, depth=depth, center=None)
         this_letter_width = mesh_letter.points[:, 0].max()
         mesh_letter.translate([width * space_factor, 0, 0.0], inplace=True)
         width += this_letter_width
@@ -202,7 +169,7 @@ def logo_voxel(density: float = 0.03) -> pv.UnstructuredGrid:
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return _voxelize_legacy(_logo_text(LOGO_TITLE, 0.3), density=density)
+    return _voxelize_legacy(pv.Text3D(LOGO_TITLE, depth=0.3, center=None), density=density)
 
 
 def logo_basic() -> pv.PolyData:
