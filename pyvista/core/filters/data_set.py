@@ -2357,11 +2357,11 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     @overload
-    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501
     @overload
-    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501
     @overload
-    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501
     # fmt: on
     def connectivity(  # type: ignore[misc]
         self: _DataSetType,
@@ -2373,7 +2373,7 @@ class DataSetFilters(DataObjectFilters):
             'point_seed',
             'closest',
         ] = 'all',
-        variable_input: (float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None) = None,
+        variable_input: float | VectorLikeFloat | None = None,
         *,
         scalar_range: VectorLikeFloat | None = None,
         scalars: str | None = None,
@@ -2434,7 +2434,7 @@ class DataSetFilters(DataObjectFilters):
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
-        variable_input : float | VectorLikeFloat | VectorLikeInt | VectorLikeBool, optional
+        variable_input : float | VectorLikeFloat, optional
             The convenience parameter used for specifying any required input
             values for some values of ``extraction_mode``. Setting
             ``variable_input`` is equivalent to setting:
@@ -2644,9 +2644,7 @@ class DataSetFilters(DataObjectFilters):
         closest_point_: NDArray[np.floating] = np.zeros(3, dtype=float)
         if extraction_mode in required_input:
             input_name, given_input = required_input[extraction_mode]
-            input_value: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = (
-                given_input
-            )
+            input_value: float | VectorLikeFloat | None = given_input
             if input_value is None:
                 if variable_input is None:
                     msg = (
