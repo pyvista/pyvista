@@ -33,6 +33,12 @@ def test_logo_voxel():
     assert grid.n_cells
 
 
+def test_text_3d_deprecated():
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=r'Use `pyvista\.Text3D` instead'):
+        mesh = demos.logo.text_3d('PyVista', depth=0.3)
+    assert mesh.n_cells
+
+
 @pytest.mark.skip_mac('MacOS testing on Azure fails when downloading')
 @skip_no_plotting
 @pytest.mark.skip_windows
