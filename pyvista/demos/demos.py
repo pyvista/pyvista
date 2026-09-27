@@ -13,7 +13,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting.plotter import _ShowReturnType
