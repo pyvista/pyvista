@@ -17,6 +17,11 @@ Type aliases for annotating code that uses PyVista.
    deprecated. Use ``float``, a :class:`~typing.TypeVar` and
    :data:`numpy.typing.NDArray` instead.
 
+.. deprecated:: 0.50
+   ``pyvista.ArrayLike``, ``pyvista.MatrixLike`` and ``pyvista.VectorLike`` are
+   deprecated. Use the ``Float``, ``Int`` or ``Bool`` array-like types instead, for
+   example ``VectorLikeFloat`` in place of ``VectorLike[float]``.
+
 
 Numeric Array-Like Types
 ------------------------
@@ -25,11 +30,6 @@ hints, ``Float`` means :class:`float`, which also accepts :class:`int` and :clas
 the ``Float`` types accept integer and boolean arrays too; likewise the ``Int`` types accept
 boolean arrays. Complex, string, and object arrays are not included; annotate an input that
 accepts them as ``NDArray[Any] | Sequence[Any]``.
-
-.. deprecated:: 0.50
-   ``pyvista.ArrayLike``, ``pyvista.MatrixLike`` and ``pyvista.VectorLike`` are deprecated.
-   Use the ``Float``, ``Int`` or ``Bool`` types below instead, for example
-   ``VectorLikeFloat`` in place of ``VectorLike[float]``.
 
 .. currentmodule:: pyvista.typing
 
