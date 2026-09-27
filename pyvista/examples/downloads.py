@@ -6722,12 +6722,12 @@ _dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
 @overload
 def download_cgns_structured(
     *, load: Literal[True] = True
-) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock | StructuredGrid]]]: ...
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock[StructuredGrid] | StructuredGrid]]]: ...
 @overload
 def download_cgns_structured(*, load: Literal[False]) -> str: ...
 def download_cgns_structured(
     *, load: bool = True
-) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock | StructuredGrid]]] | str:
+) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock[StructuredGrid] | StructuredGrid]]] | str:
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -10115,12 +10115,25 @@ _dataset_damaged_helmet = _gltf_loader('damaged_helmet')
 @overload
 def download_gearbox(
     *, load: Literal[True] = True
-) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]]: ...
+) -> MultiBlock[
+    MultiBlock[
+        MultiBlock[MultiBlock[MultiBlock[MultiBlock[MultiBlock[PolyData] | PolyData] | PolyData]]]
+    ]
+]: ...
 @overload
 def download_gearbox(*, load: Literal[False]) -> str: ...
 def download_gearbox(
     *, load: bool = True
-) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]] | str:  # pragma: no cover
+) -> (
+    MultiBlock[
+        MultiBlock[
+            MultiBlock[
+                MultiBlock[MultiBlock[MultiBlock[MultiBlock[PolyData] | PolyData] | PolyData]]
+            ]
+        ]
+    ]
+    | str
+):  # pragma: no cover
     """Download the gearbox example.
 
     Parameters
@@ -10201,12 +10214,17 @@ _dataset_avocado = _gltf_loader('avocado')
 @overload
 def download_milk_truck(
     *, load: Literal[True] = True
-) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]]: ...
+) -> MultiBlock[
+    MultiBlock[MultiBlock[MultiBlock[MultiBlock[MultiBlock[PolyData]] | PolyData]]]
+]: ...
 @overload
 def download_milk_truck(*, load: Literal[False]) -> str: ...
 def download_milk_truck(
     *, load: bool = True
-) -> MultiBlock[MultiBlock[MultiBlock[MultiBlock]]] | str:  # pragma: no cover
+) -> (
+    MultiBlock[MultiBlock[MultiBlock[MultiBlock[MultiBlock[MultiBlock[PolyData]] | PolyData]]]]
+    | str
+):  # pragma: no cover
     """Download the milk truck example.
 
     Parameters

@@ -131,6 +131,12 @@
   margin-left: auto;
 }
 
+/* Keeps a multi-line Data Type indented by depth instead of right-aligned. */
+.gallery-card .field-value-primary .line-block {
+  margin: 0;
+  text-align: left;
+}
+
 /* Stacks the bar and both nav slots in one shared area, so the buttons can be positioned from the bar's own box (see .gallery-nav-button). */
 .gallery-toolbar-wrap {
   display: grid;

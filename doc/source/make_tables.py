@@ -2510,6 +2510,10 @@ class DatasetCard:
         if field_values in [None, '']:
             return None
         value_lines = str(field_values).splitlines()
+        if value_lines[0].startswith('| '):
+            # a line block stays whole, indented to the template's value column
+            block = '\n      '.join(value_lines)
+            return cls.field_grid_template.format(field_name, block)
         first_value = value_lines.pop(0)
         field = cls.field_grid_template.format(field_name, first_value)
         if len(value_lines) >= 1:
@@ -3150,37 +3154,6 @@ def _union_members(annotation: str) -> set[str]:
     return set(_split_union(annotation))
 
 
-_MAX_MULTIBLOCK_DEPTH = 3
-
-
-def _multiblock_type_str(blocks: Iterable[Any], depth: int = 1) -> str:
-    """Return the generic ``MultiBlock[...]`` annotation that describes ``blocks``."""
-    if depth > _MAX_MULTIBLOCK_DEPTH:
-        return 'MultiBlock'
-    members: set[str] = set()
-    nested: list[Any] = []
-    for block in blocks:
-        if isinstance(block, pv.MultiBlock):
-            nested.extend(block)
-            members.add('MultiBlock')
-        else:
-            members.add('None' if block is None else type(block).__name__)
-    if 'MultiBlock' in members and nested:
-        members.discard('MultiBlock')
-        members.add(_multiblock_type_str(nested, depth + 1))
-    if not members:
-        return 'MultiBlock'
-    ordered = sorted(members - {'None'}) + sorted(members & {'None'})
-    return f'MultiBlock[{" | ".join(ordered)}]'
-
-
-def _dataset_type_str(dataset: Any) -> str:
-    """Return the annotation that describes a loaded dataset, including MultiBlock blocks."""
-    if isinstance(dataset, pv.MultiBlock):
-        return _multiblock_type_str(dataset)
-    return type(dataset).__name__
-
-
 def _annotated_dataset_type(function: FunctionType) -> str:
     """Return the dataset part of a function's return annotation, without path or texture types."""
     annotation = _annotation_str(inspect.signature(function).return_annotation)
@@ -3188,25 +3161,98 @@ def _annotated_dataset_type(function: FunctionType) -> str:
     return ' | '.join(m for m in _split_union(annotation) if m not in non_dataset)
 
 
+_TypeNode = tuple[str, list['_TypeNode']]
+
+# widest Data Type line before a nested type is split over several lines
+_DATA_TYPE_WIDTH = 52
+
+
+def _parse_annotation(annotation: str) -> list[_TypeNode]:
+    """Parse the members of a union annotation into ``(name, members)`` nodes."""
+    tokens = re.findall(r'[\w.]+|[\[\]|]', annotation)
+    position = 0
+
+    def union() -> list[_TypeNode]:
+        """Parse ``|``-separated members up to a closing bracket or the end."""
+        nonlocal position
+        members = []
+        while position < len(tokens) and tokens[position] != ']':
+            if tokens[position] == '|':
+                position += 1
+                continue
+            name = tokens[position]
+            position += 1
+            args: list[_TypeNode] = []
+            if position < len(tokens) and tokens[position] == '[':
+                position += 1
+                args = union()
+                position += 1
+            members.append((name, args))
+        return members
+
+    return union()
+
+
+def _flat_type(node: _TypeNode) -> str:
+    """Render a type node on one line."""
+    name, args = node
+    return f'{name}[{" | ".join(map(_flat_type, args))}]' if args else name
+
+
+def _type_lines(node: _TypeNode, indent: int = 0) -> list[tuple[int, str]]:
+    """Lay out a type node as ``(indent, text)`` lines, splitting whatever is too wide."""
+    flat = _flat_type(node)
+    name, args = node
+    if not args or indent + len(flat) <= _DATA_TYPE_WIDTH:
+        return [(indent, flat)]
+    lines = [(indent, f'{name}[')]
+    for i, arg in enumerate(args):
+        arg_lines = _type_lines(arg, indent + 4)
+        if i:
+            first_indent, first_text = arg_lines[0]
+            arg_lines[0] = (first_indent, f'| {first_text}')
+        lines.extend(arg_lines)
+    last_indent, last_text = lines[-1]
+    lines[-1] = (last_indent, f'{last_text}]')
+    return lines
+
+
 def _annotation_rst(annotation: str) -> str:
-    """Render an annotation as RST, linking each class name to its documentation."""
+    """Render an annotation as an RST line block, linking the first use of each class."""
+    linked: set[str] = set()
 
     def link(match: re.Match[str]) -> str:
-        """Return a class reference for a PyVista or NumPy class name, or a literal otherwise."""
+        """Return a class reference for a name's first use, or a literal otherwise."""
         name = match.group().removeprefix('pv.')
         cls = getattr(pv, name, None) or getattr(np, name, None)
-        if isinstance(cls, type):
-            return f':class:`~{_get_fullname(cls)}`'
-        return f'``{match.group()}``'
+        if name in linked or not isinstance(cls, type):
+            return f'``{name}``'
+        linked.add(name)
+        return f':class:`~{_get_fullname(cls)}`'
 
-    rst = re.sub(r'[\w.]+', link, annotation)
-    # inline markup cannot end directly before '[', so separate them with an escaped space
-    return rst.replace('`[', '`\\ [')
+    lines: list[tuple[int, str]] = []
+    for i, node in enumerate(_parse_annotation(annotation)):
+        node_lines = _type_lines(node)
+        if i:
+            indent, text = node_lines[0]
+            node_lines[0] = (indent, f'| {text}')
+        lines.extend(node_lines)
+    rst_lines = []
+    for indent, text in lines:
+        rst = re.sub(r'[\w.]+', link, text)
+        # inline markup cannot end directly before '[', so separate them with an escaped space
+        rst_lines.append((indent, rst.replace('`[', '`\\ [')))
+    if len(rst_lines) == 1 or all(indent == 0 for indent, _ in rst_lines):
+        return ' '.join(text for _, text in rst_lines)
+    return '\n'.join('| ' + ' ' * indent + text for indent, text in rst_lines)
 
 
 def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
     """Return the dataset type an example loads and the type ``load=False`` gives back."""
-    dataset_type = _dataset_type_str(card.loader.dataset)
+    dataset = card.loader.dataset
+    dataset_type = (
+        dataset.inferred_type if isinstance(dataset, pv.MultiBlock) else type(dataset).__name__
+    )
     # `_download_dataset` collapses to a bare path only when there is one to return
     loadable = getattr(card.loader, 'loadable_paths', ())
     return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
