@@ -3164,7 +3164,7 @@ def _annotated_dataset_type(function: FunctionType) -> str:
 _TypeNode = tuple[str, list['_TypeNode']]
 
 # widest Data Type line before a nested type is split over several lines
-_DATA_TYPE_WIDTH = 52
+_DATA_TYPE_WIDTH = 28
 
 
 def _parse_annotation(annotation: str) -> list[_TypeNode]:
@@ -3199,18 +3199,22 @@ def _flat_type(node: _TypeNode) -> str:
     return f'{name}[{" | ".join(map(_flat_type, args))}]' if args else name
 
 
-def _type_lines(node: _TypeNode, indent: int = 0) -> list[tuple[int, str]]:
-    """Lay out a type node as ``(indent, text)`` lines, splitting whatever is too wide."""
+def _type_lines(node: _TypeNode, indent: int = 0, closers: int = 0) -> list[tuple[int, str]]:
+    """Lay out a type node as ``(indent, text)`` lines, splitting whatever is too wide.
+
+    ``closers`` counts the brackets of enclosing types that end on this node's last line.
+    """
     flat = _flat_type(node)
     name, args = node
-    if not args or indent + len(flat) <= _DATA_TYPE_WIDTH:
+    if not args or indent + len(flat) + closers <= _DATA_TYPE_WIDTH:
         return [(indent, flat)]
     lines = [(indent, f'{name}[')]
     for i, arg in enumerate(args):
-        arg_lines = _type_lines(arg, indent + 2)
-        if i:
-            first_indent, first_text = arg_lines[0]
-            arg_lines[0] = (first_indent, f'| {first_text}')
+        last = i == len(args) - 1
+        prefix = '| ' if i else ''
+        arg_lines = _type_lines(arg, indent + 2 + len(prefix), closers + 1 if last else 0)
+        first_indent, first_text = arg_lines[0]
+        arg_lines[0] = (first_indent - len(prefix), f'{prefix}{first_text}')
         lines.extend(arg_lines)
     last_indent, last_text = lines[-1]
     lines[-1] = (last_indent, f'{last_text}]')
