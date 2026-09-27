@@ -26,7 +26,6 @@ from .fileio import is_trimesh_mesh
 if TYPE_CHECKING:
     import meshio
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Scalar as _Scalar
     import trimesh
 
     from pyvista import DataObject
@@ -43,6 +42,7 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import WrappableType
     from pyvista.core._typing_core import _NumericScalar

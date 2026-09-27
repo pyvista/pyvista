@@ -41,15 +41,15 @@ from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Real as _Real
-    from pyvista_validation.typing import Scalar as _Scalar
     from typing_extensions import Self
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt

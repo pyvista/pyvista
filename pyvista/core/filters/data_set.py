@@ -59,7 +59,6 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Real as _Real
 
     from pyvista import Color
     from pyvista import DataSet
@@ -71,6 +70,7 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeBool
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt

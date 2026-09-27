@@ -38,10 +38,10 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Real as _Real
 
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core.composite import MultiBlock

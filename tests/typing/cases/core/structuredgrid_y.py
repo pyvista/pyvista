@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from pyvista_validation.typing import Real as _Real
 from type_assert import assert_types
 
 import pyvista as pv
+from pyvista.core._typing_core import Real as _Real
 from tests.typing.meshes import structured
 
 

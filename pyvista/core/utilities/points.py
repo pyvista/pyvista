@@ -18,13 +18,13 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Array1D
-    from pyvista_validation.typing import Integer as _Integer
-    from pyvista_validation.typing import Real as _Real
 
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import Array1D
+    from pyvista.core._typing_core import Integer as _Integer
     from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _IntegerT

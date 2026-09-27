@@ -16,11 +16,11 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Scalar as _Scalar
     from scipy.spatial.transform import Rotation
 
     from pyvista import _vtk
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import Scalar as _Scalar
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT

@@ -40,13 +40,13 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Real as _Real
 
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeBool
     from pyvista.core._typing_core import VectorLikeFloat

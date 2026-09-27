@@ -29,13 +29,13 @@ from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Array1D
     from scipy.spatial.transform import Rotation
 
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import Prop3D
     from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import Array1D
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike

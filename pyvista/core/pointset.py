@@ -77,8 +77,9 @@ if TYPE_CHECKING:
     from typing import Any
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Real as _Real
     from typing_extensions import Self
+
+    from pyvista.core._typing_core import Real as _Real
 
     from ._typing_core import ArrayLikeFloat
     from ._typing_core import ArrayLikeInt

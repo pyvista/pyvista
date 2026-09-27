@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from pyvista_validation.typing import Array1D as Array1D
 from pyvista_validation.typing import ArrayLikeBool as ArrayLikeBool
 from pyvista_validation.typing import ArrayLikeFloat as ArrayLikeFloat
 from pyvista_validation.typing import ArrayLikeInt as ArrayLikeInt
+from pyvista_validation.typing import Floating as Floating
+from pyvista_validation.typing import Integer as Integer
 from pyvista_validation.typing import MatrixLikeBool as MatrixLikeBool
 from pyvista_validation.typing import MatrixLikeFloat as MatrixLikeFloat
 from pyvista_validation.typing import MatrixLikeInt as MatrixLikeInt
+from pyvista_validation.typing import Real as Real
+from pyvista_validation.typing import Scalar as Scalar
 from pyvista_validation.typing import VectorLikeBool as VectorLikeBool
 from pyvista_validation.typing import VectorLikeFloat as VectorLikeFloat
 from pyvista_validation.typing import VectorLikeInt as VectorLikeInt
