@@ -107,25 +107,25 @@ def __dir__() -> list[str]:
 
 # Deprecated type aliases with no counterpart in this module: (source, attribute, advice)
 _DEPRECATED_ALIASES = {
-    'Number': ('pyvista.core._typing_core._aliases', 'Number', 'use `float` instead'),
-    'NumberType': ('pyvista.core._typing_core._array_like', '_NumberT', 'use a `TypeVar` instead'),
+    'Number': ('pyvista.core._typing_core._deprecated', 'Number', 'use `float` instead'),
+    'NumberType': ('pyvista.core._typing_core._deprecated', '_NumberT', 'use a `TypeVar` instead'),
     'NumpyArray': (
-        'pyvista.core._typing_core._array_like',
+        'pyvista.core._typing_core._deprecated',
         'NumpyArray',
         'use `numpy.typing.NDArray` instead',
     ),
     'ArrayLike': (
-        'pyvista.core._typing_core._array_like',
+        'pyvista.core._typing_core._deprecated',
         '_ArrayLike',
         'use `pyvista.typing.ArrayLikeFloat`, `ArrayLikeInt` or `ArrayLikeBool` instead',
     ),
     'MatrixLike': (
-        'pyvista.core._typing_core._array_like',
+        'pyvista.core._typing_core._deprecated',
         '_ArrayLike2D',
         'use `pyvista.typing.MatrixLikeFloat`, `MatrixLikeInt` or `MatrixLikeBool` instead',
     ),
     'VectorLike': (
-        'pyvista.core._typing_core._array_like',
+        'pyvista.core._typing_core._deprecated',
         '_ArrayLike1D',
         'use `pyvista.typing.VectorLikeFloat`, `VectorLikeInt` or `VectorLikeBool` instead',
     ),

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
+from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -91,10 +92,11 @@ if TYPE_CHECKING:
     from ._typing_core import VectorLikeFloat
     from ._typing_core import VectorLikeInt
     from ._typing_core import _NumericArray
-    from ._typing_core._array_like import _ScalarT
     from .filters.data_object import _NestedMeshValidationFields
     from .pyvista_ndarray import pyvista_ndarray
     from .utilities.cells import _CellsDictValue
+
+_ScalarT = TypeVar('_ScalarT', bound=np.generic)
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
