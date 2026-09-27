@@ -28,7 +28,9 @@ if TYPE_CHECKING:
     _CellTypeKeyT = TypeVar('_CellTypeKeyT', bound=int | np.integer)
     # One cells-dict value: an integer array, or one sequence of point ids per cell
     _CellsDictValue = (
-        NDArray[np.integer] | Sequence[Sequence[int | np.integer] | NDArray[np.integer]]
+        NDArray[np.integer]
+        | Sequence[Sequence[int]]
+        | Sequence[Sequence[np.integer] | NDArray[np.integer]]
     )
 
 
