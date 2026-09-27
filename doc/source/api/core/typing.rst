@@ -37,6 +37,9 @@ pyvista.typing.VectorLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with numerical values.
 
+Accepts :class:`float`, :class:`int` and :class:`bool` values, and floating, integer and
+boolean NumPy arrays and scalars.
+
 Includes sequences and one-dimensional NumPy arrays.
 
 .. autodata:: VectorLikeFloat
@@ -44,6 +47,9 @@ Includes sequences and one-dimensional NumPy arrays.
 pyvista.typing.VectorLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with integer values.
+
+Accepts :class:`int` and :class:`bool` values, and integer and boolean NumPy arrays and
+scalars. Floating values are not included.
 
 Includes sequences and one-dimensional NumPy arrays.
 
@@ -53,6 +59,9 @@ pyvista.typing.VectorLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One-dimensional array-like object with boolean values.
 
+Accepts :class:`bool` values and boolean NumPy arrays and scalars only. Integer and
+floating values are not included.
+
 Includes sequences and one-dimensional NumPy arrays.
 
 .. autodata:: VectorLikeBool
@@ -60,6 +69,9 @@ Includes sequences and one-dimensional NumPy arrays.
 pyvista.typing.MatrixLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with numerical values.
+
+Accepts :class:`float`, :class:`int` and :class:`bool` values, and floating, integer and
+boolean NumPy arrays and scalars.
 
 Includes sequences of vectors and two-dimensional NumPy arrays.
 
@@ -69,6 +81,9 @@ pyvista.typing.MatrixLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with integer values.
 
+Accepts :class:`int` and :class:`bool` values, and integer and boolean NumPy arrays and
+scalars. Floating values are not included.
+
 Includes sequences of vectors and two-dimensional NumPy arrays.
 
 .. autodata:: MatrixLikeInt
@@ -76,6 +91,9 @@ Includes sequences of vectors and two-dimensional NumPy arrays.
 pyvista.typing.MatrixLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Two-dimensional array-like object with boolean values.
+
+Accepts :class:`bool` values and boolean NumPy arrays and scalars only. Integer and
+floating values are not included.
 
 Includes sequences of vectors and two-dimensional NumPy arrays.
 
@@ -85,6 +103,9 @@ pyvista.typing.ArrayLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with numerical values.
 
+Accepts :class:`float`, :class:`int` and :class:`bool` values, and floating, integer and
+boolean NumPy arrays and scalars.
+
 Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
 
 .. autodata:: ArrayLikeFloat
@@ -93,6 +114,9 @@ pyvista.typing.ArrayLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with integer values.
 
+Accepts :class:`int` and :class:`bool` values, and integer and boolean NumPy arrays and
+scalars. Floating values are not included.
+
 Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
 
 .. autodata:: ArrayLikeInt
@@ -100,6 +124,9 @@ Includes NumPy arrays and sequences nested up to four deep. Scalar values are no
 pyvista.typing.ArrayLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any-dimensional array-like object with boolean values.
+
+Accepts :class:`bool` values and boolean NumPy arrays and scalars only. Integer and
+floating values are not included.
 
 Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
 
