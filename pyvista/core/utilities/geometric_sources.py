@@ -767,9 +767,9 @@ class Text3DSource(_NoNewAttrMixin):
 
     center : Sequence[float] | None, default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
-        bounding box of the text. If ``None``, the text is not centered: it
-        starts at the origin with its baseline on the x-axis, and its depth
-        spans from ``0`` to :attr:`depth` along the :attr:`normal`.
+        bounding box of the text. If ``None``, the text is not centered: its
+        baseline starts at the origin and its back face lies in the plane
+        through the origin perpendicular to :attr:`normal`.
 
         .. versionchanged:: 0.50
             Allow ``None`` to keep the text at its origin.
@@ -857,7 +857,7 @@ class Text3DSource(_NoNewAttrMixin):
         """Return or set the center of the text.
 
         The center is defined as the middle of the axis-aligned bounding box
-        of the text. If ``None``, the text is not centered and starts at the origin.
+        of the text. If ``None``, the text is not centered and its baseline starts at the origin.
         """
         return self._center
 
@@ -1014,11 +1014,9 @@ class Text3DSource(_NoNewAttrMixin):
 
         out.points[:, 2] *= scale_d
 
-        center = self.center
-        if center is None:
-            center = (0.0, 0.0, 0.0)
-        else:
+        if self.center is not None:
             out.points -= out.center
+        center = self.center or (0.0, 0.0, 0.0)
 
         # Move to final position.
         # Only rotate if non-default normal.

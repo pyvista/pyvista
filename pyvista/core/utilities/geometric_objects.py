@@ -1850,9 +1850,9 @@ def Text3D(
 
     center : Sequence[float] | None, default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
-        bounding box of the text. If ``None``, the text is not centered: it
-        starts at the origin with its baseline on the x-axis, and its depth
-        spans from ``0`` to :attr:`depth` along the :attr:`normal`.
+        bounding box of the text. If ``None``, the text is not centered: its
+        baseline starts at the origin and its back face lies in the plane
+        through the origin perpendicular to :attr:`normal`.
 
         .. versionadded:: 0.43
 

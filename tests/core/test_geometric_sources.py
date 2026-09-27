@@ -165,6 +165,11 @@ def test_text3d_source_center_none():
     assert np.isclose(z_min, 0.0)
     assert np.isclose(z_max, 0.5)
 
+    src.normal = (1.0, 0.0, 0.0)
+    x_min, x_max, *_ = src.output.bounds
+    assert np.isclose(x_min, 0.0)
+    assert np.isclose(x_max, 0.5)
+
     src.center = (1.0, 2.0, 3.0)
     assert np.allclose(src.output.center, (1.0, 2.0, 3.0))
 
