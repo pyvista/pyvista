@@ -3207,7 +3207,7 @@ def _type_lines(node: _TypeNode, indent: int = 0) -> list[tuple[int, str]]:
         return [(indent, flat)]
     lines = [(indent, f'{name}[')]
     for i, arg in enumerate(args):
-        arg_lines = _type_lines(arg, indent + 4)
+        arg_lines = _type_lines(arg, indent + 2)
         if i:
             first_indent, first_text = arg_lines[0]
             arg_lines[0] = (first_indent, f'| {first_text}')

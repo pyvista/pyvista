@@ -137,6 +137,10 @@
   text-align: left;
 }
 
+.gallery-card .field-value-primary .line-block .line-block {
+  margin-left: 2ch;
+}
+
 /* Stacks the bar and both nav slots in one shared area, so the buttons can be positioned from the bar's own box (see .gallery-nav-button). */
 .gallery-toolbar-wrap {
   display: grid;
