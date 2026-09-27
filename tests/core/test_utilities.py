@@ -548,13 +548,6 @@ def test_is_inside_bounds_raises():
         is_inside_bounds(point=None, bounds=(0,))
 
 
-def test_voxelize_removed(uniform):
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize` is deprecated'
-    ):
-        pv.voxelize(uniform, density=0.5)
-
-
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None

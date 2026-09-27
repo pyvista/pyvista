@@ -39,7 +39,6 @@ from .features import perlin_noise as perlin_noise
 from .features import sample_function as sample_function
 from .features import spherical_to_cartesian as spherical_to_cartesian
 from .features import transform_vectors_sph_to_cart as transform_vectors_sph_to_cart
-from .features import voxelize as voxelize
 from .fileio import from_meshio as from_meshio
 from .fileio import from_trimesh as from_trimesh
 from .fileio import get_ext as get_ext

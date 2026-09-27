@@ -7,14 +7,12 @@ import os
 import sys
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import NoReturn
 from typing import cast
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core.errors import DeprecationError
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
@@ -25,120 +23,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-
-
-def voxelize(
-    mesh: DataSet,  # noqa: ARG001
-    *,
-    density: float | VectorLike[float] | None = None,  # noqa: ARG001
-    check_surface: bool = True,  # noqa: ARG001
-    enclosed: bool = False,  # noqa: ARG001
-    fit_bounds: bool = False,  # noqa: ARG001
-) -> NoReturn:
-    """Voxelize mesh to UnstructuredGrid.
-
-    .. deprecated:: 0.46
-
-        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize` instead.
-
-    Parameters
-    ----------
-    mesh : pyvista.DataSet
-        Mesh to voxelize.
-
-    density : float | VectorLike[float]
-        The uniform size of the voxels when single float passed.
-        A list of densities along x,y,z directions.
-        Defaults to 1/100 of the mesh length.
-
-    check_surface : bool, default: True
-        Specify whether to check the surface for closure. If on, then the
-        algorithm first checks to see if the surface is closed and
-        manifold. If the surface is not closed and manifold, a runtime
-        error is raised.
-
-    enclosed : bool, default: False
-        If True, the voxel bounds will be outside the mesh.
-        If False, the voxel bounds will be at or inside the mesh bounds.
-
-    fit_bounds : bool, default: False
-        If enabled, the end bound of the input mesh is used as the end bound of the
-        voxel grid and the density is updated to the closest compatible one. Otherwise,
-        the end bound is excluded. Has no effect if ``enclosed`` is enabled.
-
-    Returns
-    -------
-    pyvista.UnstructuredGrid
-        Voxelized unstructured grid of the original mesh.
-
-    Notes
-    -----
-    Prior to version 0.39.0, this method improperly handled the order of
-    structured coordinates.
-
-    See Also
-    --------
-    pyvista.DataSetFilters.voxelize_rectilinear
-        Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
-
-    pyvista.DataSetFilters.voxelize_binary_mask
-        Similar function that returns a :class:`pyvista.ImageData` with point data.
-
-    Examples
-    --------
-    Create an equal density voxelized mesh.
-
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> mesh = examples.download_bunny_coarse().clean()  # doctest:+SKIP
-    >>> vox = pv.voxelize(mesh, density=0.01)  # doctest:+SKIP
-    >>> vox.plot(show_edges=True)  # doctest:+SKIP
-
-    Create a voxelized mesh using unequal density dimensions.
-
-    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])  # doctest:+SKIP
-    >>> vox.plot(show_edges=True)  # doctest:+SKIP
-
-    Create an equal density voxel volume without enclosing input mesh.
-
-    >>> vox = pv.voxelize(mesh, density=0.01)  # doctest:+SKIP
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest:+SKIP
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)  # doctest:+SKIP
-
-    Create an equal density voxel volume enclosing input mesh.
-
-    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)  # doctest:+SKIP
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest:+SKIP
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)  # doctest:+SKIP
-
-    Create a voxelized mesh that does not fit the input mesh's bounds. Notice the
-    cropped rectangular box.
-
-    >>> mesh = pv.Cube(x_length=0.25)  # doctest:+SKIP
-    >>> vox = pv.voxelize(mesh=mesh, density=0.2)  # doctest:+SKIP
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')  # doctest:+SKIP
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
-    Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
-    now complete. Notice that the voxel size was updated to fit the bounds in the first
-    direction.
-
-    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)  # doctest:+SKIP
-    >>> pl = pv.Plotter()  # doctest:+SKIP
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')  # doctest:+SKIP
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )  # doctest:+SKIP
-    >>> pl.show()  # doctest:+SKIP
-
-    """
-    # Deprecated on v0.46.0, error in v0.49.0
-    msg = '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.'
-    raise DeprecationError(msg)
 
 
 def create_grid(
