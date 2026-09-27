@@ -26,6 +26,11 @@ def int64_points() -> NDArray[np.int64]:
     return np.zeros((4, 3), dtype=np.int64)
 
 
+def integer_points() -> NDArray[np.integer]:
+    """Return points whose integer width is unknown."""
+    return np.zeros((4, 3), dtype=np.int64)
+
+
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True
@@ -36,6 +41,7 @@ assert_types(apply_transformation_to_points(a_transformation(), some_points(), i
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=True), None)
 assert_types(apply_transformation_to_points(a_transformation(), int64_points()), NDArray[np.floating])
 assert_types(apply_transformation_to_points(a_transformation(), int64_points(), inplace=False), NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), integer_points()), NDArray[np.floating])
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), NDArray[np.floating] | None)

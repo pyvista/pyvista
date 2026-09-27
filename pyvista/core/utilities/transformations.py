@@ -29,9 +29,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
 
     # Array overload parameters, so one array infers the same type in every overload
-    _FloatingT = TypeVar('_FloatingT', bound=_Floating, default=_Floating)
-    _IntegerT = TypeVar('_IntegerT', bound=_Integer, default=_Integer)
-    _RealT = TypeVar('_RealT', bound=_Real, default=_Real)
+    _FloatingT = TypeVar('_FloatingT', bound=np.floating, default=_Floating)
+    _IntegerT = TypeVar('_IntegerT', bound=np.integer, default=_Integer)
+    _RealT = TypeVar('_RealT', bound=np.floating | np.integer, default=_Real)
     _ScalarT = TypeVar('_ScalarT', bound=np.floating | np.integer | np.bool_, default=_Scalar)
 
     _FiveArrays: TypeAlias = tuple[
@@ -310,7 +310,7 @@ def apply_transformation_to_points(transformation: NDArray[np.floating], points:
 # fmt: on
 def apply_transformation_to_points(
     transformation: NDArray[np.floating],
-    points: NDArray[_Real],
+    points: NDArray[np.floating | np.integer],
     *,
     inplace: Literal[True, False] = False,
 ) -> NDArray[np.floating] | None:
