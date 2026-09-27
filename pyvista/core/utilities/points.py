@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import TypeAlias
 from typing import cast
 from typing import overload
 
@@ -27,12 +26,11 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _IntegerT
     from pyvista.core._typing_core import _NumericArray
-    from pyvista.core.utilities.transformations import _FloatingT
-    from pyvista.core.utilities.transformations import _IntegerT
-    from pyvista.core.utilities.transformations import _ScalarT
-
-    _NumericScalar: TypeAlias = np.floating | np.integer | np.bool_
+    from pyvista.core._typing_core import _NumericScalar
+    from pyvista.core._typing_core import _ScalarT
 
 
 def vtk_points(

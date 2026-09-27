@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
-from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -91,12 +90,12 @@ if TYPE_CHECKING:
     from ._typing_core import VectorLikeBool
     from ._typing_core import VectorLikeFloat
     from ._typing_core import VectorLikeInt
+    from ._typing_core import _GenericT
     from ._typing_core import _NumericArray
     from .filters.data_object import _NestedMeshValidationFields
     from .pyvista_ndarray import pyvista_ndarray
     from .utilities.cells import _CellsDictValue
 
-_ScalarT = TypeVar('_ScalarT', bound=np.generic)
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -4311,11 +4310,11 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         return explicit_grid
 
-    def _reshape_point_array(self, array: NDArray[_ScalarT]) -> NDArray[_ScalarT]:
+    def _reshape_point_array(self, array: NDArray[_GenericT]) -> NDArray[_GenericT]:
         """Reshape point data to a 3-D matrix."""
         return array.reshape(self.dimensions, order='F')
 
-    def _reshape_cell_array(self, array: NDArray[_ScalarT]) -> NDArray[_ScalarT]:
+    def _reshape_cell_array(self, array: NDArray[_GenericT]) -> NDArray[_GenericT]:
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1

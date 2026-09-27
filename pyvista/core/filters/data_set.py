@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
-from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import overload
@@ -77,6 +76,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _OutputDataSet
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.core.pyvista_ndarray import pyvista_ndarray
@@ -94,9 +94,6 @@ _RegionAssignmentMode = Literal['ascending', 'descending', 'unspecified']
 
 _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
 _CONNECTIVITY_SCALARS = '__pyvista_connectivity_scalars'
-
-
-_FloatingT = TypeVar('_FloatingT', bound=np.floating)
 
 
 def _points_inside_surface(image: ImageData, surface: PolyData) -> NDArray[np.bool_]:

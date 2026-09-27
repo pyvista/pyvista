@@ -41,13 +41,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _NumericScalar
+    from pyvista.core._typing_core import _ScalarT
     from pyvista.core.utilities.transformations import _FiveFloat64Arrays
-    from pyvista.core.utilities.transformations import _FloatingT
-    from pyvista.core.utilities.transformations import _IntegerT
-    from pyvista.core.utilities.transformations import _ScalarT
 
     # The members of `VectorLikeFloat` and `MatrixLikeFloat` that are sequences of NumPy values
-    _NumericScalar: TypeAlias = np.floating | np.integer | np.bool_
     _ArraySequence: TypeAlias = (
         Sequence[_NumericScalar] | Sequence[Sequence[_NumericScalar] | Array1D[_NumericScalar]]
     )

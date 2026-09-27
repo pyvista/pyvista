@@ -22,16 +22,13 @@ from pyvista.core.errors import DeprecationError
 from .colors import Color
 
 if TYPE_CHECKING:
-    from typing import TypeVar
-
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _FloatingT
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
-
-    _FloatingT = TypeVar('_FloatingT', bound=np.floating)
 
 
 class FONTS(Enum):

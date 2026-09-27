@@ -5,17 +5,16 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Union
 
-import numpy as np
 from numpy.typing import NDArray
 from pyvista_validation.typing import Scalar as _Scalar
 from typing_extensions import TypeVar
 
+from ._array_types import _GenericT
+
 _NumberT = TypeVar('_NumberT', bound=float, default=float)
 
-_ScalarT = TypeVar('_ScalarT', bound=np.generic)
-
 # Forwarded as the deprecated `pyvista.NumpyArray`
-NumpyArray = NDArray[_ScalarT]
+NumpyArray = NDArray[_GenericT]
 
 # Forwarded as the deprecated `pyvista.Number`
 Number = Union[int, float]

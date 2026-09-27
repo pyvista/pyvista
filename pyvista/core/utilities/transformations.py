@@ -16,23 +16,17 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Floating as _Floating
-    from pyvista_validation.typing import Integer as _Integer
-    from pyvista_validation.typing import Real as _Real
     from pyvista_validation.typing import Scalar as _Scalar
     from scipy.spatial.transform import Rotation
-    from typing_extensions import TypeVar
 
     from pyvista import _vtk
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
-
-    # Array overload parameters, so one array infers the same type in every overload
-    _FloatingT = TypeVar('_FloatingT', bound=np.floating, default=_Floating)
-    _IntegerT = TypeVar('_IntegerT', bound=np.integer, default=_Integer)
-    _RealT = TypeVar('_RealT', bound=np.floating | np.integer, default=_Real)
-    _ScalarT = TypeVar('_ScalarT', bound=np.floating | np.integer | np.bool_, default=_Scalar)
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _RealT
+    from pyvista.core._typing_core import _ScalarT
 
     _FiveArrays: TypeAlias = tuple[
         NDArray[np.floating],

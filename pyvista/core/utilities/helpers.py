@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import WrappableType
+    from pyvista.core._typing_core import _NumericScalar
     from pyvista.core._typing_core import _VolumeArray
 
 _NORMALS = {
@@ -555,8 +556,8 @@ def is_inside_bounds(
 
 
 def _is_inside_bounds(
-    point: deque[float | np.floating | np.integer | np.bool_],
-    bounds: deque[float | np.floating | np.integer | np.bool_],
+    point: deque[float | _NumericScalar],
+    bounds: deque[float | _NumericScalar],
 ) -> bool:
     """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:
