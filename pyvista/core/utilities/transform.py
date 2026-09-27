@@ -6,7 +6,6 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
-from typing import TypeAlias
 from typing import cast
 from typing import overload
 
@@ -35,7 +34,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import MultiBlock
     from pyvista import Prop3D
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import Array1D
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -43,14 +41,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _IntegerT
-    from pyvista.core._typing_core import _NumericScalar
+    from pyvista.core._typing_core import _MatrixSequence
     from pyvista.core._typing_core import _ScalarT
+    from pyvista.core._typing_core import _VectorSequence
     from pyvista.core.utilities.transformations import _FiveFloat64Arrays
-
-    # The members of `VectorLikeFloat` and `MatrixLikeFloat` that are sequences of NumPy values
-    _ArraySequence: TypeAlias = (
-        Sequence[_NumericScalar] | Sequence[Sequence[_NumericScalar] | Array1D[_NumericScalar]]
-    )
 
 
 class Transform(
@@ -1628,9 +1622,9 @@ class Transform(
     @overload
     def apply(self: Transform, obj: Sequence[float] | Sequence[Sequence[float]], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
     @overload
-    def apply(self: Transform, obj: _ArraySequence, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    def apply(self: Transform, obj: _VectorSequence | _MatrixSequence, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
     @overload
-    def apply(self: Transform, obj: _ArraySequence, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    def apply(self: Transform, obj: _VectorSequence | _MatrixSequence, /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
     @overload
     def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
     # ruff: enable[E501]
@@ -1902,9 +1896,9 @@ class Transform(
     @overload
     def apply_to_points(self, points: Sequence[float] | Sequence[Sequence[float]], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
     @overload
-    def apply_to_points(self, points: _ArraySequence, /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    def apply_to_points(self, points: _VectorSequence | _MatrixSequence, /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
     @overload
-    def apply_to_points(self, points: _ArraySequence, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    def apply_to_points(self, points: _VectorSequence | _MatrixSequence, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
     # ruff: enable[E501]
     # fmt: on
     def apply_to_points(
@@ -1971,9 +1965,9 @@ class Transform(
     @overload
     def apply_to_vectors(self, vectors: Sequence[float] | Sequence[Sequence[float]], /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.float64]: ...
     @overload
-    def apply_to_vectors(self, vectors: _ArraySequence, /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
+    def apply_to_vectors(self, vectors: _VectorSequence | _MatrixSequence, /, *, inverse: bool = ..., copy: Literal[True] = ...) -> NDArray[np.float64]: ...
     @overload
-    def apply_to_vectors(self, vectors: _ArraySequence, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
+    def apply_to_vectors(self, vectors: _VectorSequence | _MatrixSequence, /, *, inverse: bool = ..., copy: bool = ...) -> NDArray[np.floating]: ...
     # ruff: enable[E501]
     # fmt: on
     def apply_to_vectors(

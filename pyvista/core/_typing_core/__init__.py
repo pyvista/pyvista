@@ -33,9 +33,11 @@ from ._aliases import _VolumeArray as _VolumeArray
 from ._array_types import _FloatingT as _FloatingT
 from ._array_types import _GenericT as _GenericT
 from ._array_types import _IntegerT as _IntegerT
+from ._array_types import _MatrixSequence as _MatrixSequence
 from ._array_types import _NumericScalar as _NumericScalar
 from ._array_types import _RealT as _RealT
 from ._array_types import _ScalarT as _ScalarT
+from ._array_types import _VectorSequence as _VectorSequence
 from ._dataset_types import _DataObjectType as _DataObjectType
 from ._dataset_types import _DataSetOrMultiBlockType as _DataSetOrMultiBlockType
 from ._dataset_types import _DataSetType as _DataSetType

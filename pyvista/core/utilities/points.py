@@ -21,15 +21,14 @@ if TYPE_CHECKING:
 
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import Array1D
     from pyvista.core._typing_core import Integer as _Integer
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import Real as _Real
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _MatrixSequence
     from pyvista.core._typing_core import _NumericArray
-    from pyvista.core._typing_core import _NumericScalar
     from pyvista.core._typing_core import _ScalarT
 
 
@@ -744,7 +743,7 @@ def principal_axes(points: Sequence[Sequence[float]], *, return_std: Literal[Fal
 @overload
 def principal_axes(points: Sequence[Sequence[float]], *, return_std: Literal[True]) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
 @overload
-def principal_axes(points: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar] | Array1D[_NumericScalar]], *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
+def principal_axes(points: Sequence[Sequence[float]] | _MatrixSequence, *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
 # ruff: enable[E501]
 # fmt: on
 def principal_axes(
