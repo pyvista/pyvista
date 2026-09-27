@@ -585,6 +585,7 @@ pyvista = "pv"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "numpy.typing.ArrayLike".msg = "Use `pyvista.typing.ArrayLikeFloat`, `ArrayLikeInt` or `ArrayLikeBool` instead, with a scalar type added where scalars are accepted"
+"pyvista_validation.typing".msg = "Import validation types from `pyvista.core._typing_core` instead"
 "vtk".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules, and avoid pulling in the entire VTK package"
 "vtkmodules".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules"
 
@@ -635,6 +636,9 @@ pyvista = "pv"
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'hooks/*' = ['INP001']
 'pyvista/_vtk.py' = ['PLC0414', 'PLC0415']
+'pyvista/core/_typing_core/*' = [
+  'TID251',
+] # the one place that imports validation types
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_types.py' = ['PYI018']
 'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
