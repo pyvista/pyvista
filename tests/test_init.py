@@ -367,7 +367,6 @@ def test_typing_dir_lists_aliases_before_access():
 def test_type_alias_forwards_from_pyvista():
     """``pyvista`` keeps forwarding every alias it provided before ``pyvista.typing``."""
     assert _MOVED_TO_TYPING_NAMESPACE['pyvista'] == {
-        'ArrayLike',
         'CameraPositionOptions',
         'CellArrayLike',
         'CellsLike',
@@ -376,11 +375,9 @@ def test_type_alias_forwards_from_pyvista():
         'InteractionEventType',
         'JupyterBackendOptions',
         'LineStyle',
-        'MatrixLike',
         'MeshValidationFields',
         'RotationLike',
         'TransformLike',
-        'VectorLike',
     }
 
 
@@ -409,6 +406,18 @@ def test_type_alias_forward_deprecated(module, name):
         ('Number', 'use `float` instead'),
         ('NumberType', 'use a `TypeVar` instead'),
         ('NumpyArray', 'use `numpy.typing.NDArray` instead'),
+        (
+            'ArrayLike',
+            'use `pyvista.typing.ArrayLikeFloat`, `ArrayLikeInt` or `ArrayLikeBool` instead',
+        ),
+        (
+            'MatrixLike',
+            'use `pyvista.typing.MatrixLikeFloat`, `MatrixLikeInt` or `MatrixLikeBool` instead',
+        ),
+        (
+            'VectorLike',
+            'use `pyvista.typing.VectorLikeFloat`, `VectorLikeInt` or `VectorLikeBool` instead',
+        ),
     ],
 )
 def test_removed_type_alias_deprecated(module, name, advice):

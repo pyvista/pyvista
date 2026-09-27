@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
-from ._aliases import ArrayLike as ArrayLike
+from pyvista_validation.typing import ArrayLikeBool as ArrayLikeBool
+from pyvista_validation.typing import ArrayLikeFloat as ArrayLikeFloat
+from pyvista_validation.typing import ArrayLikeInt as ArrayLikeInt
+from pyvista_validation.typing import MatrixLikeBool as MatrixLikeBool
+from pyvista_validation.typing import MatrixLikeFloat as MatrixLikeFloat
+from pyvista_validation.typing import MatrixLikeInt as MatrixLikeInt
+from pyvista_validation.typing import VectorLikeBool as VectorLikeBool
+from pyvista_validation.typing import VectorLikeFloat as VectorLikeFloat
+from pyvista_validation.typing import VectorLikeInt as VectorLikeInt
+
 from ._aliases import BoundsTuple as BoundsTuple
 from ._aliases import CellArrayLike as CellArrayLike
 from ._aliases import CellsLike as CellsLike
 from ._aliases import InteractionEventType as InteractionEventType
 from ._aliases import LineStyle as LineStyle
-from ._aliases import MatrixLike as MatrixLike
 from ._aliases import RotationLike as RotationLike
 from ._aliases import TransformLike as TransformLike
-from ._aliases import VectorLike as VectorLike
 from ._aliases import WrappableType as WrappableType
 from ._aliases import _AnyArrayLike as _AnyArrayLike
 from ._aliases import _ArrayLikeOrScalar as _ArrayLikeOrScalar
 from ._aliases import _MeshLike as _MeshLike
+from ._aliases import _NumericArray as _NumericArray
 from ._aliases import _VolumeArray as _VolumeArray
 from ._dataset_types import _DataObjectType as _DataObjectType
 from ._dataset_types import _DataSetOrMultiBlockType as _DataSetOrMultiBlockType

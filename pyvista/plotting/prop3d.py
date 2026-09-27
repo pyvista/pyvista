@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
 
 class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkProp3D):
@@ -73,7 +73,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: float | VectorLike[float]) -> None:
+    def scale(self, value: float | VectorLikeFloat) -> None:
         self.SetScale(value)  # type: ignore[arg-type]
 
     @property
@@ -98,7 +98,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: VectorLike[float]) -> None:
+    def position(self, value: VectorLikeFloat) -> None:
         self.SetPosition(value)  # type: ignore[call-overload]
 
     def rotate_x(self, angle: float) -> None:
@@ -271,7 +271,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: VectorLike[float]) -> None:
+    def orientation(self, value: VectorLikeFloat) -> None:
         self.SetOrientation(value)  # type: ignore[call-overload]
 
     @property
@@ -286,7 +286,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value: VectorLike[float]) -> None:
+    def origin(self, value: VectorLikeFloat) -> None:
         self.SetOrigin(value)  # type: ignore[arg-type]
 
     @property
@@ -547,7 +547,7 @@ def _rotation_matrix_as_orientation(
     return Transform().rotate(array).GetOrientation()
 
 
-def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NDArray[np.float64]:
+def _orientation_as_rotation_matrix(orientation: VectorLikeFloat) -> NDArray[np.float64]:
     """Convert x-y-z orientation angles to a 3x3 matrix.
 
     The orientation angles define rotations about the world's x-y-z axes. The angles
@@ -559,7 +559,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NDArray[n
 
     Parameters
     ----------
-    orientation : VectorLike[float]
+    orientation : VectorLikeFloat
         The x-y-z axis orientation angles in degrees.
 
     Returns
@@ -605,7 +605,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     @scale.setter
     @functools.wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
-    def scale(self, scale: VectorLike[float]) -> None:
+    def scale(self, scale: VectorLikeFloat) -> None:
         self._prop3d.scale = scale
         self._post_set_update()
 
@@ -617,7 +617,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     @position.setter
     @functools.wraps(Prop3D.position.fset)  # type: ignore[attr-defined]
-    def position(self, position: VectorLike[float]) -> None:
+    def position(self, position: VectorLikeFloat) -> None:
         self._prop3d.position = position
         self._post_set_update()
 
@@ -629,7 +629,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     @orientation.setter
     @functools.wraps(Prop3D.orientation.fset)  # type: ignore[attr-defined]
-    def orientation(self, orientation: VectorLike[float]) -> None:
+    def orientation(self, orientation: VectorLikeFloat) -> None:
         self._prop3d.orientation = orientation
         self._post_set_update()
 
@@ -641,7 +641,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     @origin.setter
     @functools.wraps(Prop3D.origin.fset)  # type: ignore[attr-defined]
-    def origin(self, origin: VectorLike[float]) -> None:
+    def origin(self, origin: VectorLikeFloat) -> None:
         self._prop3d.origin = origin
         self._post_set_update()
 

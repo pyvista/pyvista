@@ -50,8 +50,10 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import LineStyle
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeBool
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core._dataset_types import _PolyDataType
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.plotter import _ShowReturnType
@@ -1538,7 +1540,7 @@ class PolyDataFilters(DataSetFilters):
         self: PolyData,
         style: LineStyle | None = None,
         *,
-        pattern: VectorLike[float] | None = None,
+        pattern: VectorLikeFloat | None = None,
         scale: float | None = None,
         join: bool = True,
         inplace: bool = False,
@@ -1570,7 +1572,7 @@ class PolyDataFilters(DataSetFilters):
             Every named style repeats over sixteen intervals. Defaults to ``'--'``.
             Cannot be set together with ``pattern``.
 
-        pattern : VectorLike[float], optional
+        pattern : VectorLikeFloat, optional
             Lengths of alternating drawn and undrawn intervals, starting with a
             drawn one and repeating. ``[4, 6, 2, 4]`` draws four intervals, skips
             six, draws two and skips four. Cannot be set together with ``style``.
@@ -2236,9 +2238,9 @@ class PolyDataFilters(DataSetFilters):
 
     def clip_closed_surface(  # type: ignore[misc]
         self: PolyData,
-        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        normal: VectorLikeFloat | _NormalsLiteral | None = None,
         *,
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         tolerance: float = 1e-06,
         inplace: bool = False,
         progress_bar: bool = False,
@@ -2267,13 +2269,13 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        normal : VectorLike[float] | str, optional
+        normal : VectorLikeFloat | str, optional
             Length-3 vector for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
             The ``'x'`` direction is used by default.
 
-        origin : VectorLike[float], optional
+        origin : VectorLikeFloat, optional
             The center ``(x, y, z)`` coordinate of the plane on which the clip
             occurs. The default is the center of the dataset.
 
@@ -2678,8 +2680,8 @@ class PolyDataFilters(DataSetFilters):
 
     def ray_trace(  # type: ignore[misc]
         self: PolyData,
-        origin: VectorLike[float],
-        end_point: VectorLike[float],
+        origin: VectorLikeFloat,
+        end_point: VectorLikeFloat,
         *,
         first_point: bool = False,
         plot: bool = False,
@@ -2774,8 +2776,8 @@ class PolyDataFilters(DataSetFilters):
 
     def multi_ray_trace(  # type:ignore[misc]
         self: PolyData,
-        origins: MatrixLike[float],
-        directions: MatrixLike[float],
+        origins: MatrixLikeFloat,
+        directions: MatrixLikeFloat,
         *,
         first_point: bool = False,
         retry: bool = False,
@@ -2795,10 +2797,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origins : MatrixLike[float]
+        origins : MatrixLikeFloat
             Starting point for each trace.
 
-        directions : MatrixLike[float]
+        directions : MatrixLikeFloat
             Direction vector for each trace.
 
         first_point : bool, default: False
@@ -3076,12 +3078,12 @@ class PolyDataFilters(DataSetFilters):
 
     def remove_points(  # type: ignore[misc, override]
         self: PolyData,
-        remove: VectorLike[bool] | VectorLike[int] | None = None,
+        remove: VectorLikeBool | VectorLikeInt | None = None,
         mode: Literal['any', 'all'] = 'any',
         *,
         keep_scalars: bool | None = None,
         inplace: bool = False,
-        ind: int | VectorLike[int] | VectorLike[bool] | None = None,
+        ind: int | VectorLikeInt | VectorLikeBool | None = None,
         invert: bool | None = None,
         pass_point_ids: bool | None = None,
         pass_cell_ids: bool | None = None,
@@ -3121,7 +3123,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, default: False
             Updates mesh in-place.
 
-        ind : int | VectorLike[int] | VectorLike[bool], optional
+        ind : int | VectorLikeInt | VectorLikeBool, optional
             Point indices to remove, the same as ``remove``. Passing this returns only
             the mesh. See :meth:`pyvista.DataSetFilters.remove_points`.
 
@@ -3614,8 +3616,8 @@ class PolyDataFilters(DataSetFilters):
     def project_points_to_plane(  # type: ignore[misc]
         self: PolyData,
         *,
-        origin: VectorLike[float] | None = None,
-        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        origin: VectorLikeFloat | None = None,
+        normal: VectorLikeFloat | _NormalsLiteral | None = None,
         inplace: bool = False,
         plane: PolyData | None = None,
     ) -> PolyData:
@@ -3626,12 +3628,12 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : VectorLike[float], optional
+        origin : VectorLikeFloat, optional
             Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
-        normal : VectorLike[float] | str, optional
+        normal : VectorLikeFloat | str, optional
             Length-3 vector for the plane's normal. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
@@ -3703,7 +3705,7 @@ class PolyDataFilters(DataSetFilters):
         scalars: str | None = None,
         angle: float = 0.0,
         factor: float = 2.0,
-        normal: VectorLike[float] | None = None,
+        normal: VectorLikeFloat | None = None,
         tcoords: bool | str = False,
         preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
@@ -3812,7 +3814,7 @@ class PolyDataFilters(DataSetFilters):
 
     def extrude(  # type: ignore[misc]
         self: PolyData,
-        vector: VectorLike[float],
+        vector: VectorLikeFloat,
         *,
         capping: bool | None = None,
         inplace: bool = False,
@@ -3915,7 +3917,7 @@ class PolyDataFilters(DataSetFilters):
         dradius: float = 0.0,
         angle: float = 360.0,
         capping: bool | None = None,
-        rotation_axis: VectorLike[float] = (0.0, 0.0, 1.0),
+        rotation_axis: VectorLikeFloat = (0.0, 0.0, 1.0),
         progress_bar: bool = False,
     ) -> PolyData:
         """Sweep polygonal data creating "skirt" from free edges/lines, and lines from vertices.
@@ -4064,7 +4066,7 @@ class PolyDataFilters(DataSetFilters):
 
     def extrude_trim(  # type: ignore[misc]
         self: PolyData,
-        direction: VectorLike[float],
+        direction: VectorLikeFloat,
         trim_surface: PolyData,
         *,
         extrusion: _ExtrusionOptions = 'boundary_edges',
@@ -4412,7 +4414,7 @@ class PolyDataFilters(DataSetFilters):
         self: PolyData,
         n_contours: int,
         *,
-        rng: VectorLike[float] | None = None,
+        rng: VectorLikeFloat | None = None,
         scalars: str | None = None,
         component: int = 0,
         clip_tolerance: float = 1e-6,
@@ -4775,7 +4777,7 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def ruled_surface(  # type: ignore[misc]
-        self: PolyData, *, resolution: VectorLike[int] | None = None, progress_bar: bool = False
+        self: PolyData, *, resolution: VectorLikeInt | None = None, progress_bar: bool = False
     ) -> PolyData:
         """Create a ruled surface from a polyline.
 
@@ -4800,7 +4802,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        resolution : VectorLike[int], default: (1, 1)
+        resolution : VectorLikeInt, default: (1, 1)
             Set the number of points in the output polyline.
 
         progress_bar : bool, default: False
@@ -4907,7 +4909,7 @@ class PolyDataFilters(DataSetFilters):
 
 
 def _resolve_dash_pattern(
-    style: LineStyle | None, pattern: VectorLike[float] | None
+    style: LineStyle | None, pattern: VectorLikeFloat | None
 ) -> tuple[list[tuple[float, float]] | None, float]:
     """Return the drawn intervals and the repeat length of a named style or a pattern.
 

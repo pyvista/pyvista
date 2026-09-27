@@ -58,7 +58,7 @@ if TYPE_CHECKING:
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing_core._dataset_types import _DataSetType
     from .filters.data_object import _NestedMeshValidationFields
@@ -1248,7 +1248,7 @@ class MultiBlock(
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         valid_center = _validation.validate_array3(center, name='center')
         self.translate(valid_center - self.center, inplace=True)
 

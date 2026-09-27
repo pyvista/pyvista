@@ -26,8 +26,8 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from typing_extensions import Self
 
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -134,7 +134,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Flip the direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
-    values : MatrixLike[float], optional
+    values : MatrixLikeFloat, optional
         Lookup table values. Either ``values`` or ``cmap`` can be set, but not
         both.
 
@@ -231,7 +231,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         n_values: int = 256,
         *,
         flip: bool = False,
-        values: MatrixLike[float] | None = None,
+        values: MatrixLikeFloat | None = None,
         value_range: tuple[float, float] | None = None,
         hue_range: tuple[float, float] | None = None,
         alpha_range: tuple[float, float] | None = None,
@@ -855,7 +855,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     def apply_opacity(
         self,
-        opacity: float | VectorLike[float] | OpacityOptions,
+        opacity: float | VectorLikeFloat | OpacityOptions,
         *,
         interpolate: bool = True,
         kind: str = 'quadratic',
@@ -864,7 +864,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Parameters
         ----------
-        opacity : float | VectorLike[float] | str
+        opacity : float | VectorLikeFloat | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
             ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
@@ -956,7 +956,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return lookup_table_ndarray(self.GetTable(), table=self)
 
     @values.setter
-    def values(self, new_values: MatrixLike[float]) -> None:
+    def values(self, new_values: MatrixLikeFloat) -> None:
         self._values_manual = True
         self._cmap = None
         new_values = np.asarray(new_values).astype(np.uint8, copy=False)
@@ -1239,10 +1239,10 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     @overload
     def __call__(self, value: float) -> tuple[float, float, float, float]: ...
     @overload
-    def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> NDArray[np.float64]: ...
+    def __call__(self, value: VectorLikeFloat | _vtk.vtkDataArray) -> NDArray[np.float64]: ...
     # fmt: on
     def __call__(
-        self, value: float | VectorLike[float] | _vtk.vtkDataArray
+        self, value: float | VectorLikeFloat | _vtk.vtkDataArray
     ) -> tuple[float, float, float, float] | NDArray[np.float64]:
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):

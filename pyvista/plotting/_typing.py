@@ -16,8 +16,8 @@ from numpy.typing import NDArray
 
 from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
-from pyvista.core._typing_core import MatrixLike
-from pyvista.core._typing_core import VectorLike
+from pyvista.core._typing_core import MatrixLikeFloat
+from pyvista.core._typing_core import VectorLikeFloat
 from pyvista.core._typing_core import _MeshLike
 
 from .renderer import CameraPosition
@@ -118,9 +118,9 @@ ThemeOptions = Literal[
 ]
 CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
-    | VectorLike[float]
-    | MatrixLike[float]
-    | Sequence[VectorLike[float]]
+    | VectorLikeFloat
+    | MatrixLikeFloat
+    | Sequence[VectorLikeFloat]
     | CameraPosition
 )
 

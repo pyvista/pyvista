@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
     from pyvista import CellType
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import ArrayLikeInt
 
     _CellTypeKeyT = TypeVar('_CellTypeKeyT', bound=int | np.integer)
     # One cells-dict value: an integer array, or one sequence of point ids per cell
@@ -59,15 +59,15 @@ def ncells_from_cells(cells: NDArray[np.integer]) -> int:
 # fmt: off
 # ruff: disable[E501]
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int] | NDArray[np.integer], *, deep: bool = ..., return_ind: Literal[False] = False) -> _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLikeInt | NDArray[np.integer], *, deep: bool = ..., return_ind: Literal[False] = False) -> _vtk.vtkIdTypeArray: ...
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int] | NDArray[np.integer], *, deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]]: ...
+def numpy_to_idarr(ind: int | ArrayLikeInt | NDArray[np.integer], *, deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]]: ...
 @overload
-def numpy_to_idarr(ind: int | ArrayLike[int] | NDArray[np.integer], *, deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]] | _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLikeInt | NDArray[np.integer], *, deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, NDArray[np.signedinteger]] | _vtk.vtkIdTypeArray: ...
 # ruff: enable[E501]
 # fmt: on
 def numpy_to_idarr(
-    ind: int | ArrayLike[int] | NDArray[np.integer],
+    ind: int | ArrayLikeInt | NDArray[np.integer],
     *,
     deep: bool = False,
     return_ind: bool = False,
@@ -76,7 +76,7 @@ def numpy_to_idarr(
 
     Parameters
     ----------
-    ind : int | ArrayLike[int] | NDArray[np.integer]
+    ind : int | ArrayLikeInt | NDArray[np.integer]
         Input to be converted to a :vtk:`vtkIdTypeArray`. Can be
         either a mask or an integer array-like.
     deep : bool, default: False

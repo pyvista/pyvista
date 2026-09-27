@@ -48,10 +48,11 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
 
     from .filters.data_object import _NestedMeshValidationFields
 
@@ -91,7 +92,7 @@ class Grid(DataSet):
         return self.GetDimensions()
 
     @dimensions.setter
-    def dimensions(self: Self, dims: VectorLike[int]) -> None:
+    def dimensions(self: Self, dims: VectorLikeInt) -> None:
         self.SetDimensions(*dims)
         self.Modified()
 
@@ -457,7 +458,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     @points.setter
     def points(
         self: Self,
-        points: MatrixLike[float] | _vtk.vtkPoints,  # noqa: ARG002
+        points: MatrixLikeFloat | VectorLikeFloat | _vtk.vtkPoints,  # noqa: ARG002
     ) -> None:  # numpydoc ignore=PR01
         """Raise an AttributeError.
 
@@ -503,7 +504,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetXCoordinates())
 
     @x.setter
-    def x(self: Self, coords: VectorLike[float]) -> None:
+    def x(self: Self, coords: VectorLikeFloat) -> None:
         self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -540,7 +541,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetYCoordinates())
 
     @y.setter
-    def y(self: Self, coords: VectorLike[float]) -> None:
+    def y(self: Self, coords: VectorLikeFloat) -> None:
         self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -577,13 +578,13 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetZCoordinates())
 
     @z.setter
-    def z(self: Self, coords: VectorLike[float]) -> None:
+    def z(self: Self, coords: VectorLikeFloat) -> None:
         self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore[attr-defined]
-    def dimensions(self: Self, _dims: VectorLike[int]) -> None:
+    def dimensions(self: Self, _dims: VectorLikeInt) -> None:
         """Set Dimensions.
 
         Parameters
@@ -661,7 +662,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         .. versionadded:: 0.45
 
-    offset : int | VectorLike[int], default: (0, 0, 0)
+    offset : int | VectorLikeInt, default: (0, 0, 0)
         The offset defines the minimum :attr:`extent` of the image. Offset values
         can be positive or negative. In physical space, the offset is relative
         to the image's :attr:`origin`.
@@ -739,12 +740,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self: Self,
         uinput: ImageData | _vtk.vtkImageData | str | Path | None = None,
         *,
-        dimensions: VectorLike[int] | None = None,
-        spacing: VectorLike[float] = (1.0, 1.0, 1.0),
-        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        dimensions: VectorLikeInt | None = None,
+        spacing: VectorLikeFloat = (1.0, 1.0, 1.0),
+        origin: VectorLikeFloat = (0.0, 0.0, 0.0),
         deep: bool = False,
         direction_matrix: RotationLike | None = None,
-        offset: int | VectorLike[int] | None = None,
+        offset: int | VectorLikeInt | None = None,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""
@@ -963,7 +964,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @points.setter
     def points(
         self: Self,
-        points: MatrixLike[float] | _vtk.vtkPoints,  # noqa: ARG002
+        points: MatrixLikeFloat | VectorLikeFloat | _vtk.vtkPoints,  # noqa: ARG002
     ) -> None:  # numpydoc ignore=PR01
         """Points cannot be set.
 
@@ -1054,7 +1055,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetOrigin()  # type: ignore[return-value]
 
     @origin.setter
-    def origin(self: Self, origin: VectorLike[float]) -> None:
+    def origin(self: Self, origin: VectorLikeFloat) -> None:
         self.SetOrigin(*origin)
         self.Modified()
 
@@ -1087,7 +1088,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetSpacing()
 
     @spacing.setter
-    def spacing(self: Self, spacing: VectorLike[float]) -> None:
+    def spacing(self: Self, spacing: VectorLikeFloat) -> None:
         spacing_ = _validation.validate_array3(
             spacing, must_be_in_range=[0, float('inf')], name='spacing'
         )
@@ -1219,7 +1220,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetExtent()
 
     @extent.setter
-    def extent(self: Self, new_extent: VectorLike[int]) -> None:
+    def extent(self: Self, new_extent: VectorLikeInt) -> None:
         new_extent_ = _validation.validate_arrayN(
             new_extent,
             must_be_integer=True,
@@ -1275,7 +1276,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.extent[::2]
 
     @offset.setter
-    def offset(self: Self, offset: int | VectorLike[int]) -> None:
+    def offset(self: Self, offset: int | VectorLikeInt) -> None:
         offset_ = _validation.validate_array3(
             offset, broadcast=True, must_be_integer=True, dtype_out=int
         )

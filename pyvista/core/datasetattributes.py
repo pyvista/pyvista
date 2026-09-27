@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
 
-    from ._typing_core import MatrixLike
+    from ._typing_core import MatrixLikeFloat
     from ._typing_core import _AnyArrayLike
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
@@ -665,7 +665,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_vectors(
         self: Self,
-        vectors: MatrixLike[float],
+        vectors: MatrixLikeFloat,
         name: str,
         *,
         deep_copy: bool = False,
@@ -680,7 +680,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        vectors : MatrixLike
+        vectors : MatrixLikeFloat
             Data shaped ``(n, 3)`` where n matches the number of points or cells.
 
         name : str
@@ -1533,12 +1533,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @active_normals.setter
-    def active_normals(self: Self, normals: MatrixLike[float]) -> None:
+    def active_normals(self: Self, normals: MatrixLikeFloat) -> None:
         """Set the normals.
 
         Parameters
         ----------
-        normals : MatrixLike
+        normals : MatrixLikeFloat
             Normals of this dataset attribute.
 
         """

@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from numpy.typing import NDArray
-    from pyvista_validation._typing._array_like import _ScalarT
     from pyvista_validation.typing import Floating as _Floating
     from pyvista_validation.typing import Integer as _Integer
     from pyvista_validation.typing import Real as _Real
@@ -27,12 +26,13 @@ if TYPE_CHECKING:
     from pyvista import _vtk
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     # Array overload parameters, so one array infers the same type in every overload
     _FloatingT = TypeVar('_FloatingT', bound=_Floating, default=_Floating)
     _IntegerT = TypeVar('_IntegerT', bound=_Integer, default=_Integer)
     _RealT = TypeVar('_RealT', bound=_Real, default=_Real)
+    _ScalarT = TypeVar('_ScalarT', bound=np.floating | np.integer | np.bool_, default=_Scalar)
 
     _FiveArrays: TypeAlias = tuple[
         NDArray[np.floating],
@@ -55,10 +55,10 @@ _RTOL = 1e-5
 
 
 def axis_angle_rotation(
-    axis: VectorLike[float],
+    axis: VectorLikeFloat,
     angle: float,
     *,
-    point: VectorLike[float] | None = None,
+    point: VectorLikeFloat | None = None,
     deg: bool = True,
 ) -> NDArray[np.float64]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
@@ -191,7 +191,7 @@ def axis_angle_rotation(
 
 
 def reflection(
-    normal: VectorLike[float], point: VectorLike[float] | None = None
+    normal: VectorLikeFloat, point: VectorLikeFloat | None = None
 ) -> NDArray[np.float64]:
     """Return a 4x4 matrix for reflection across a normal about a point.
 

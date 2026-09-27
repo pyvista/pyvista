@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from pyvista_validation.typing import Real as _Real
 
     from pyvista import DataSet
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _AnyArrayLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -87,7 +87,7 @@ def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
     return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
-def _clim_has_no_bounds(clim: float | VectorLike[float] | None) -> bool:
+def _clim_has_no_bounds(clim: float | VectorLikeFloat | None) -> bool:
     """Return whether a scalar range was given as a pair of ``None`` bounds."""
     if isinstance(clim, np.ndarray):
         clim = clim.tolist()
@@ -252,7 +252,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim: VectorLike[float]) -> None:
+    def scalar_range(self, clim: VectorLikeFloat) -> None:
         self.SetScalarRange(*clim)
         self.lookup_table.SetRange(*clim)
 
@@ -618,7 +618,7 @@ class _BaseDataSetMapper(_BaseMapper):
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim: VectorLike[float]) -> None:
+    def scalar_range(self, clim: VectorLikeFloat) -> None:
         self._set_scalar_range(clim, use_default=False)
 
     # Avoid ref cycles by using weakref
@@ -755,7 +755,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
         self._set_scalar_range(clim, use_default=True)
 
-    def _set_scalar_range(self, clim: VectorLike[float], *, use_default: bool) -> None:
+    def _set_scalar_range(self, clim: VectorLikeFloat, *, use_default: bool) -> None:
         """Set the scalar range and track whether it is user-defined."""
         scalar_range = (float(clim[0]), float(clim[1]))
         self.SetScalarRange(*scalar_range)
@@ -974,7 +974,7 @@ class _BaseDataSetMapper(_BaseMapper):
         flip_scalars: bool = False,
         opacity: NDArray[_Real] | None = None,
         categories: bool | int = False,
-        clim: float | VectorLike[float] | None = None,
+        clim: float | VectorLikeFloat | None = None,
     ) -> None:
         """Set the scalars on this mapper.
 
@@ -1651,10 +1651,11 @@ class _BaseVolumeMapper(_BaseMapper):
         return self._scalar_range
 
     @scalar_range.setter
-    def scalar_range(self, clim: VectorLike[float]) -> None:
+    def scalar_range(self, clim: VectorLikeFloat) -> None:
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
-        self._scalar_range = tuple(clim)
+        low, high = clim
+        self._scalar_range = (float(low), float(high))
 
     @property
     def blend_mode(self) -> _BlendModeOptions:  # numpydoc ignore=RT01

@@ -69,7 +69,7 @@ if TYPE_CHECKING:
 
     import cycler
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -1703,7 +1703,7 @@ class _CameraConfig(_ConfigBase):
         return self._position
 
     @position.setter
-    def position(self, position: VectorLike[float]) -> None:
+    def position(self, position: VectorLikeFloat) -> None:
         self._position = _validate_vector(position, name='position')
 
     @property
@@ -1721,7 +1721,7 @@ class _CameraConfig(_ConfigBase):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, viewup: VectorLike[float]) -> None:
+    def viewup(self, viewup: VectorLikeFloat) -> None:
         self._viewup = _validate_viewup(viewup)
 
     @property

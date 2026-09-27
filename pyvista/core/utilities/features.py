@@ -26,8 +26,9 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import ArrayLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import ArrayLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
 
 
 def _padded_bins(
@@ -66,7 +67,7 @@ def _padded_bins(
 def voxelize(
     mesh: DataSet,  # noqa: ARG001
     *,
-    density: float | VectorLike[float] | None = None,  # noqa: ARG001
+    density: float | VectorLikeFloat | None = None,  # noqa: ARG001
     check_surface: bool = True,  # noqa: ARG001
     enclosed: bool = False,  # noqa: ARG001
     fit_bounds: bool = False,  # noqa: ARG001
@@ -82,7 +83,7 @@ def voxelize(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : float | VectorLike[float]
+    density : float | VectorLikeFloat
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
         Defaults to 1/100 of the mesh length.
@@ -271,7 +272,7 @@ def _voxelize_legacy(
 def voxelize_volume(
     mesh: DataSet,  # noqa: ARG001
     *,
-    density: float | VectorLike[float] | None = None,  # noqa: ARG001
+    density: float | VectorLikeFloat | None = None,  # noqa: ARG001
     check_surface: bool = True,  # noqa: ARG001
     enclosed: bool = False,  # noqa: ARG001
     fit_bounds: bool = False,  # noqa: ARG001
@@ -292,7 +293,7 @@ def voxelize_volume(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : float | VectorLike[float]
+    density : float | VectorLikeFloat
         The uniform size of the voxels when single float passed.
         Nonuniform voxel size if a list of values are passed along x,y,z directions.
         Defaults to 1/100 of the mesh length.
@@ -409,9 +410,7 @@ def voxelize_volume(
     raise DeprecationError(msg)
 
 
-def create_grid(
-    dataset: DataSet, dimensions: VectorLike[int] | None = (101, 101, 101)
-) -> ImageData:
+def create_grid(dataset: DataSet, dimensions: VectorLikeInt | None = (101, 101, 101)) -> ImageData:
     """Create a uniform grid surrounding the given dataset.
 
     The output grid will have the specified dimensions and is commonly used
@@ -464,17 +463,17 @@ def create_grid(
 
 
 def grid_from_sph_coords(
-    theta: VectorLike[float], phi: VectorLike[float], r: VectorLike[float]
+    theta: VectorLikeFloat, phi: VectorLikeFloat, r: VectorLikeFloat
 ) -> StructuredGrid:
     """Create a structured grid from arrays of spherical coordinates.
 
     Parameters
     ----------
-    theta : VectorLike[float]
+    theta : VectorLikeFloat
         Azimuthal angle in degrees ``[0, 360]``.
-    phi : VectorLike[float]
+    phi : VectorLikeFloat
         Polar (zenith) angle in degrees ``[0, 180]``.
-    r : VectorLike[float]
+    r : VectorLikeFloat
         Distance (radius) from the point of origin.
 
     Returns
@@ -503,12 +502,12 @@ def grid_from_sph_coords(
 
 def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
     *,
-    theta: VectorLike[float],
-    phi: VectorLike[float],
-    r: VectorLike[float],
-    u: ArrayLike[float],
-    v: ArrayLike[float],
-    w: ArrayLike[float],
+    theta: VectorLikeFloat,
+    phi: VectorLikeFloat,
+    r: VectorLikeFloat,
+    u: ArrayLikeFloat,
+    v: ArrayLikeFloat,
+    w: ArrayLikeFloat,
 ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
@@ -516,17 +515,17 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
 
     Parameters
     ----------
-    theta : VectorLike[float]
+    theta : VectorLikeFloat
         Azimuthal angle in degrees ``[0, 360]`` of shape ``(M,)``.
-    phi : VectorLike[float]
+    phi : VectorLikeFloat
         Polar (zenith) angle in degrees ``[0, 180]`` of shape ``(N,)``.
-    r : VectorLike[float]
+    r : VectorLikeFloat
         Distance (radius) from the point of origin of shape ``(P,)``.
-    u : ArrayLike[float]
+    u : ArrayLikeFloat
         X-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
-    v : ArrayLike[float]
+    v : ArrayLikeFloat
         Y-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
-    w : ArrayLike[float]
+    w : ArrayLikeFloat
         Z-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
 
     Returns
@@ -590,20 +589,20 @@ def cartesian_to_spherical(
 
 
 def spherical_to_cartesian(
-    r: ArrayLike[float], phi: ArrayLike[float], theta: ArrayLike[float]
+    r: ArrayLikeFloat, phi: ArrayLikeFloat, theta: ArrayLikeFloat
 ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Convert Spherical coordinates to 3D Cartesian coordinates.
 
     Parameters
     ----------
-    r : ArrayLike[float]
+    r : ArrayLikeFloat
         Radial distance.
 
-    phi : ArrayLike[float]
+    phi : ArrayLikeFloat
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    theta : ArrayLike[float]
+    theta : ArrayLikeFloat
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 

@@ -177,7 +177,9 @@ duration_write_json = None
 
 # Documented in `pyvista.typing`
 _DOCUMENTED_TYPES = [
-    'ArrayLike',
+    'ArrayLikeBool',
+    'ArrayLikeFloat',
+    'ArrayLikeInt',
     'CameraPositionOptions',
     'CellArrayLike',
     'CellsLike',
@@ -186,12 +188,16 @@ _DOCUMENTED_TYPES = [
     'InteractionEventType',
     'JupyterBackendOptions',
     'LineStyle',
-    'MatrixLike',
+    'MatrixLikeBool',
+    'MatrixLikeFloat',
+    'MatrixLikeInt',
     'MeshValidationFields',
     'PlottableType',
     'RotationLike',
     'TransformLike',
-    'VectorLike',
+    'VectorLikeBool',
+    'VectorLikeFloat',
+    'VectorLikeInt',
     'WrappableType',
 ]
 
@@ -279,7 +285,7 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 numpydoc_xref_ignore = {'optional'}
-# Link docstring types such as ``VectorLike[float]`` from any module
+# Link docstring types such as ``VectorLikeFloat`` from any module
 numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in _DOCUMENTED_TYPES}
 
 sphinx_examples_as_code_conf = {

@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from .interactor_style_registry import InteractorStyleHandler
     from .plotter import BasePlotter
@@ -1674,7 +1674,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         # Set default picker to vtkWorldPointPicker
         self.picker = 'world'
 
-    def fly_to(self, renderer: _vtk.vtkRenderer, point: VectorLike[float]) -> None:
+    def fly_to(self, renderer: _vtk.vtkRenderer, point: VectorLikeFloat) -> None:
         """Fly the interactor to the given point in a renderer.
 
         Parameters
