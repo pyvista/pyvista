@@ -517,12 +517,14 @@ def test_get_array_none(hexbeam):
     assert arr is None
 
 
-def get_array_vtk(hexbeam):
+def test_get_array_vtk(hexbeam):
     # test raw VTK input
     grid_vtk = _vtk.vtkUnstructuredGrid()
     grid_vtk.DeepCopy(hexbeam)
-    get_array(grid_vtk, 'test_data')
-    get_array(grid_vtk, 'foo')
+    arr = get_array(grid_vtk, 'sample_point_scalars')
+    assert arr is not None
+    assert np.array_equal(arr, hexbeam['sample_point_scalars'])
+    assert get_array(grid_vtk, 'foo') is None
 
 
 def test_is_inside_bounds():
