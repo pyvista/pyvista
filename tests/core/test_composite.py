@@ -1650,9 +1650,51 @@ def test_inferred_type(blocks, expected):
     assert pv.MultiBlock(blocks).inferred_type == expected
 
 
-def test_inferred_type_in_repr():
-    multi = pv.MultiBlock([pv.PolyData()])
-    assert repr(multi).startswith('MultiBlock[PolyData] (0x')
+def _nest(block, depth):
+    """Wrap ``block`` in ``depth`` levels of MultiBlock."""
+    for _ in range(depth):
+        block = pv.MultiBlock([block])
+    return block
+
+
+_WIDE = [
+    pv.PolyData(),
+    pv.UnstructuredGrid(),
+    pv.ImageData(),
+    pv.PointSet(),
+    pv.StructuredGrid(),
+    pv.RectilinearGrid(),
+    pv.ExplicitStructuredGrid(),
+]
+
+
+@pytest.mark.parametrize(
+    ('multi', 'header'),
+    [
+        (pv.MultiBlock([pv.PolyData()]), 'MultiBlock[PolyData]'),
+        (_nest(pv.PolyData(), 3), 'MultiBlock[MultiBlock[MultiBlock[PolyData]]]'),
+        (
+            pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.UnstructuredGrid()]),
+            'MultiBlock[MultiBlock[PolyData] | UnstructuredGrid]',
+        ),
+        (_nest(pv.PolyData(), 4), 'MultiBlock[MultiBlock[MultiBlock[...]]]'),
+        (
+            _nest(pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.StructuredGrid()]), 2),
+            'MultiBlock[MultiBlock[MultiBlock[StructuredGrid | ...]]]',
+        ),
+        (
+            pv.MultiBlock(_WIDE),
+            'MultiBlock[ExplicitStructuredGrid | ImageData | PointSet | ...]',
+        ),
+    ],
+)
+def test_inferred_type_in_repr(multi, header):
+    assert repr(multi).startswith(f'{header} (0x')
+
+
+def test_inferred_type_not_capped():
+    assert pv.MultiBlock(_WIDE).inferred_type.count('|') == len(_WIDE) - 1
+    assert _nest(pv.PolyData(), 6).inferred_type.count('MultiBlock') == 6
 
 
 def test_is_homogeneous_is_heterogeneous(multiblock_all_with_nested_and_none):

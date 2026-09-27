@@ -11,6 +11,7 @@ from collections.abc import MutableSequence
 from collections.abc import Sequence
 import itertools
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -2159,7 +2160,7 @@ class MultiBlock(
     def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = f'{self.inferred_type} ({hex(id(self))})\n'
+        fmt = f'{self._inferred_type(4)} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
         row = f'  {{:{max_len}s}}' + '{}\n'
@@ -2630,7 +2631,39 @@ class MultiBlock(
         'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
 
         """
-        return _inferred_type(type(self).__name__, self)
+        return self._inferred_type()
+
+    def _inferred_type(self, budget: float = float('inf')) -> str:
+        """Return :attr:`inferred_type` showing at most ``budget`` type names."""
+        leaves: set[str] = set()
+        nested: list[_TypeMultiBlockLeaf] = []
+        has_nested = False
+        for block in self:
+            if isinstance(block, MultiBlock):
+                has_nested = True
+                nested.extend(block)
+            else:
+                leaves.add('None' if block is None else type(block).__name__)
+        name = type(self).__name__
+        if not leaves and not has_nested:
+            return name
+        members = sorted(leaves - {'None'} | ({'MultiBlock['} if has_nested else set()))
+        members += sorted(leaves & {'None'})
+        shown: list[str] = []
+        remaining = budget - 1
+        for member in members:
+            if member != 'MultiBlock[':
+                if remaining >= 1:
+                    shown.append(member)
+                    remaining -= 1
+            # a nested composite needs room for its own name and at least one member
+            elif remaining >= (2 if nested else 1):
+                child = MultiBlock(nested)._inferred_type(remaining)
+                shown.append(child)
+                remaining -= len(re.findall(r'\w+', child))
+        if len(shown) < len(members):
+            shown.append('...')
+        return f'{name}[{" | ".join(shown)}]'
 
     @property
     def is_homogeneous(self) -> bool:  # numpydoc ignore=RT01
@@ -2855,22 +2888,3 @@ class MultiBlock(
                 block.clear_all_cell_data()
             elif block is not None:
                 block.clear_cell_data()
-
-
-def _inferred_type(name: str, blocks: Iterable[Any]) -> str:
-    """Return the generic type of a composite named ``name`` holding ``blocks``."""
-    members: set[str] = set()
-    nested: list[Any] = []
-    composite_name = None
-    for block in blocks:
-        if isinstance(block, MultiBlock):
-            composite_name = type(block).__name__
-            nested.extend(block)
-        else:
-            members.add('None' if block is None else type(block).__name__)
-    if composite_name is not None:
-        members.add(_inferred_type(composite_name, nested))
-    if not members:
-        return name
-    ordered = sorted(members - {'None'}) + sorted(members & {'None'})
-    return f'{name}[{" | ".join(ordered)}]'
