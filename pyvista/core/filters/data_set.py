@@ -7558,7 +7558,7 @@ class DataSetFilters(DataObjectFilters):
             if box_style == 'outline':
                 face.copy_from(pv.lines_from_points(face.points))
             if oriented:
-                face.transform(inverse_matrix, inplace=True)
+                face.transform(cast('NumpyArray[float]', inverse_matrix), inplace=True)
 
         # Get output
         alg_output = box if as_composite else _multiblock_to_polydata(box)

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeAlias
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -484,7 +485,7 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
     array([4., 5., 6.])
 
     """
-    matrix4x4 = _validation.validate_transform4x4(transformation)
+    matrix4x4 = cast('NumpyArray[float]', _validation.validate_transform4x4(transformation))
 
     dtype_out = matrix4x4.dtype
     I3 = np.eye(3, dtype=dtype_out)

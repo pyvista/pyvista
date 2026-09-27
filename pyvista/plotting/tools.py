@@ -803,7 +803,7 @@ def opacity_transfer_function(
                     raise ValueError(msg)
                 from scipy.interpolate import interp1d  # noqa: PLC0415
 
-                f = interp1d(xo, values, kind=kind)
+                f = interp1d(xo, values, kind=kind)  # type: ignore[arg-type]
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0

@@ -385,7 +385,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(self, value: TransformLike) -> None:
+    def user_matrix(self, value: TransformLike | None) -> None:
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
@@ -653,7 +653,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     @user_matrix.setter
     @functools.wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
-    def user_matrix(self, matrix: TransformLike) -> None:
+    def user_matrix(self, matrix: TransformLike | None) -> None:
         self._prop3d.user_matrix = matrix
         self._post_set_update()
 

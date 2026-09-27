@@ -766,7 +766,7 @@ class AxesAssembly(_XYZAssembly):
 
     @user_matrix.setter
     @functools.wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
-    def user_matrix(self, value: TransformLike) -> None:
+    def user_matrix(self, value: TransformLike | None) -> None:
         _Prop3DMixin.user_matrix.fset(self, value)  # type: ignore[attr-defined]
         self._update_scale()
 

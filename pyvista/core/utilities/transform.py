@@ -273,10 +273,10 @@ class Transform(
             if isinstance(trans, Sequence):
                 if all(isinstance(item, Sequence) for item in trans):
                     # Init from a nested sequence array
-                    self.compose(trans)
+                    self.compose(trans)  # type: ignore[arg-type]
                 else:
                     # Init from sequence of transformations
-                    [self.compose(t) for t in trans]
+                    [self.compose(t) for t in trans]  # type: ignore[arg-type]
             else:
                 self.compose(trans)
 
@@ -333,7 +333,7 @@ class Transform(
             transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
         except (ValueError, TypeError):
             try:
-                transform = copied.compose(other, multiply_mode='post')
+                transform = copied.compose(other, multiply_mode='post')  # type: ignore[arg-type]
             except TypeError:
                 msg = (
                     f"Unsupported operand type(s) for *: '{self.__class__.__name__}' "
@@ -1069,7 +1069,7 @@ class Transform(
                [0., 0., 0., 1.]])
 
         """
-        valid_rotation = _validation.validate_rotation(rotation)
+        valid_rotation = cast('NumpyArray[float]', _validation.validate_rotation(rotation))
         return self._compose_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
@@ -2854,6 +2854,7 @@ class Transform(
 
         _, R, _, _, _ = self.decompose()
 
+        out: Rotation | NumpyArray[float]
         if representation == 'matrix':
             out = R
         else:

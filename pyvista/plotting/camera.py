@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -852,7 +853,9 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
     @extrinsic_matrix.setter
     def extrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
-        valid = _validation.validate_transform4x4(matrix, name='extrinsic matrix')
+        valid = cast(
+            'NumpyArray[float]', _validation.validate_transform4x4(matrix, name='extrinsic matrix')
+        )
         rotation = _validation.validate_rotation(
             valid[:3, :3], must_have_handedness='right', name='extrinsic matrix rotation'
         )
