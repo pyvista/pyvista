@@ -3222,16 +3222,14 @@ def _type_lines(node: _TypeNode, indent: int = 0, closers: int = 0) -> list[tupl
 
 
 def _annotation_rst(annotation: str) -> str:
-    """Render an annotation as an RST line block, linking the first use of each class."""
-    linked: set[str] = set()
+    """Render an annotation as an RST line block, linking each class."""
 
     def link(match: re.Match[str]) -> str:
-        """Return a class reference for a name's first use, or a literal otherwise."""
+        """Return a class reference for a PyVista or NumPy class name, or a literal otherwise."""
         name = match.group().removeprefix('pv.')
         cls = getattr(pv, name, None) or getattr(np, name, None)
-        if name in linked or not isinstance(cls, type):
+        if not isinstance(cls, type):
             return f'``{name}``'
-        linked.add(name)
         return f':class:`~{_get_fullname(cls)}`'
 
     lines: list[tuple[int, str]] = []
