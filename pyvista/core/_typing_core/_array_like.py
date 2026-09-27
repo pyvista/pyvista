@@ -21,19 +21,6 @@ _ScalarT = TypeVar('_ScalarT', bound=np.generic)
 # Forwarded as the deprecated `pyvista.NumpyArray`
 NumpyArray = NDArray[_ScalarT]
 
-_FiniteNestedList = (
-    list[_NumberT]
-    | list[list[_NumberT]]
-    | list[list[list[_NumberT]]]
-    | list[list[list[list[_NumberT]]]]
-)
-_FiniteNestedTuple = (
-    tuple[_NumberT]
-    | tuple[tuple[_NumberT]]
-    | tuple[tuple[tuple[_NumberT]]]
-    | tuple[tuple[tuple[tuple[_NumberT]]]]
-)
-
 _ArrayLike1D = Union[
     NDArray[_Scalar],
     Sequence[_NumberT],
