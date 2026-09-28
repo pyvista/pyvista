@@ -567,6 +567,14 @@ def test_combine_filter(multiblock_all_with_nested_and_none):
     assert isinstance(geom, pv.UnstructuredGrid)
 
 
+def test_combine_filter_without_datasets():
+    # Nothing to append, so the result is empty rather than a VTK pipeline error
+    for multi in (pv.MultiBlock(), pv.MultiBlock({'a': None})):
+        combined = multi.combine()
+        assert isinstance(combined, pv.UnstructuredGrid)
+        assert combined.n_cells == 0
+
+
 @pytest.mark.parametrize('inplace', [True, False])
 def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     # Set up

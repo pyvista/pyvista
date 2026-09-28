@@ -293,7 +293,10 @@ class CompositeFilters(DataObjectFilters):
 
         """
         alg = _vtk.vtkAppendFilter()
+        n_inputs = 0
         for block in self:  # type: ignore[attr-defined]
+            if block is None:
+                continue
             single_block = (
                 CompositeFilters.combine(
                     block,  # type: ignore[arg-type]
@@ -304,6 +307,10 @@ class CompositeFilters(DataObjectFilters):
                 else block
             )
             alg.AddInputData(single_block)
+            n_inputs += 1
+        if n_inputs == 0:
+            # Nothing to append, so give back an empty grid
+            return pv.UnstructuredGrid()
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
         _update_alg(alg)
