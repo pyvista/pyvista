@@ -476,7 +476,7 @@ class CompositeAttributes(
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr.get_block(0)
-        MultiBlock (...)
+        MultiBlock[PolyData] (...)
           N Blocks:   2
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
@@ -583,7 +583,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.dataset
-        MultiBlock (...)
+        MultiBlock[PolyData] (...)
           N Blocks:   2
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
