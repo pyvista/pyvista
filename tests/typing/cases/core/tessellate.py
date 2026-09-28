@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from type_assert import assert_types
+from type_assert import skip_runtime
 from typing_extensions import Never
 
 import pyvista as pv
@@ -14,12 +15,8 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'poly().tessellate()': 'the filter rejects a PolyData',
-}
-
-
-assert_types(poly().tessellate(), pv.UnstructuredGrid)  # pragma: no cover
+with skip_runtime(reason='the filter rejects a PolyData'):
+    assert_types(poly().tessellate(), pv.UnstructuredGrid)
 assert_types(image().tessellate(), pv.UnstructuredGrid)
 assert_types(rectilinear().tessellate(), pv.UnstructuredGrid)
 assert_types(structured().tessellate(), pv.UnstructuredGrid)

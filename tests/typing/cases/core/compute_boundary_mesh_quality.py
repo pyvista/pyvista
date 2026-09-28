@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from type_assert import assert_types
+from type_assert import skip_runtime
 from typing_extensions import Never
 
 import pyvista as pv
@@ -14,12 +15,8 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'poly().compute_boundary_mesh_quality()': 'a `PolyData` surface has no 3D cells, so the call raises',
-}
-
-
-assert_types(poly().compute_boundary_mesh_quality(), pv.PolyData)
+with skip_runtime(reason='a `PolyData` surface has no 3D cells, so the call raises'):
+    assert_types(poly().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(image().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(rectilinear().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(structured().compute_boundary_mesh_quality(), pv.PolyData)
