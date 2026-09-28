@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _MatrixSequence
     from pyvista.core._typing_core import _RealT
-    from pyvista.core._typing_core import _Scalar
     from pyvista.core._typing_core import _ScalarT
 
     _FiveArrays: TypeAlias = tuple[
@@ -391,7 +391,7 @@ def decomposition(transformation: Sequence[Sequence[float]] | _vtk.vtkMatrix3x3 
 @overload
 def decomposition(transformation: NDArray[_ScalarT], *, homogeneous: bool = ...) -> _FiveArrays: ...
 @overload
-def decomposition(transformation: Sequence[Sequence[NDArray[_Scalar]]], *, homogeneous: bool = ...) -> _FiveArrays: ...
+def decomposition(transformation: _MatrixSequence, *, homogeneous: bool = ...) -> _FiveArrays: ...
 # `Rotation` is untyped, so it is last to keep it from matching arrays
 @overload
 def decomposition(transformation: Rotation, *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
