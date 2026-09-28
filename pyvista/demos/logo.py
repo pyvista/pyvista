@@ -30,7 +30,6 @@ from pyvista import examples
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.features import _voxelize_legacy
 
 if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions
@@ -104,6 +103,24 @@ def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     return pv.Text3D(string, depth=depth, center=None)
 
 
+def _voxelize(mesh: pv.PolyData, density: float) -> pv.UnstructuredGrid:
+    """Voxelize a closed surface into hexahedral cells spaced ``density`` apart.
+
+    This is a legacy voxelizer, preserved solely for generating PyVista's logo.
+    The :meth:`~pyvista.DataSetFilters.voxelize` filter is deliberately not used.
+    """
+    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+    x, y, z = np.meshgrid(
+        np.arange(x_min, x_max, density),
+        np.arange(y_min, y_max, density),
+        np.arange(z_min, z_max, density),
+        indexing='ij',
+    )
+    grid = pv.UnstructuredGrid(pv.StructuredGrid(x, y, z))
+    selection = grid.select_interior_points(mesh, method='cell_locator', locator_tolerance=0.0)
+    return grid.extract_points(selection['selected_points'])
+
+
 # fmt: off
 # ruff: disable[E501]
 @overload
@@ -169,7 +186,7 @@ def logo_voxel(density: float = 0.03) -> pv.UnstructuredGrid:
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return _voxelize_legacy(pv.Text3D(LOGO_TITLE, depth=0.3, center=None), density=density)
+    return _voxelize(pv.Text3D(LOGO_TITLE, depth=0.3, center=None), density=density)
 
 
 def logo_basic() -> pv.PolyData:
@@ -260,7 +277,7 @@ def plot_logo(
     pl.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'
-    v_grid = _voxelize_legacy(mesh_letters['V'], density=0.08)
+    v_grid = _voxelize(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
     v_grid_atom_surf = v_grid_atom.extract_surface(algorithm=None)
@@ -276,7 +293,7 @@ def plot_logo(
     )
 
     # letter 'i'
-    i_grid = _voxelize_legacy(mesh_letters['i'], density=0.1)
+    i_grid = _voxelize(mesh_letters['i'], density=0.1)
 
     pl.add_mesh(
         i_grid.extract_surface(algorithm=None),
@@ -370,7 +387,7 @@ def logo_atomized(
     mesh_letters = logo_letters(depth=depth)
     grids = []
     for letter in mesh_letters.values():
-        grid = _voxelize_legacy(letter, density=density)
+        grid = _voxelize(letter, density=density)
         grids.append(atomize(grid, scale=scale))
 
     return grids[0].merge(grids[1:])
