@@ -517,12 +517,14 @@ def test_get_array_none(hexbeam):
     assert arr is None
 
 
-def get_array_vtk(hexbeam):
+def test_get_array_vtk(hexbeam):
     # test raw VTK input
     grid_vtk = _vtk.vtkUnstructuredGrid()
     grid_vtk.DeepCopy(hexbeam)
-    get_array(grid_vtk, 'test_data')
-    get_array(grid_vtk, 'foo')
+    arr = get_array(grid_vtk, 'sample_point_scalars')
+    assert arr is not None
+    assert np.array_equal(arr, hexbeam['sample_point_scalars'])
+    assert get_array(grid_vtk, 'foo') is None
 
 
 def test_is_inside_bounds():
@@ -546,20 +548,6 @@ def test_is_inside_bounds_raises():
         TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")
     ):
         is_inside_bounds(point=None, bounds=(0,))
-
-
-def test_voxelize_removed(uniform):
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize` is deprecated'
-    ):
-        pv.voxelize(uniform, density=0.5)
-
-
-def test_voxelize_volume_removed(uniform):
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize_volume` is deprecated'
-    ):
-        pv.voxelize_volume(uniform, density=0.5)
 
 
 def test_report():
