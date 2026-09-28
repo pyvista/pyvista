@@ -48,6 +48,6 @@ assert_types(apply_transformation_to_points(a_transformation(), some_points(), i
 
 
 # Never called; the ignore is reported as unused if integer points ever type check in place
-def int64_points_in_place() -> None:
+def int64_points_in_place() -> None:  # pragma: no cover
     """Pass integer points with ``inplace=True``, which would truncate the result."""
     apply_transformation_to_points(a_transformation(), int64_points(), inplace=True)  # type: ignore[type-var]
