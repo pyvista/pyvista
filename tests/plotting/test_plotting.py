@@ -6925,14 +6925,6 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_voxelize_volume_removed():
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista.voxelize_volume` is deprecated'
-    ):
-        pv.voxelize_volume(pv.Sphere(), density=0.15)
-
-
 def test_enable_custom_trackball_style():
     def setup_plot():
         mesh = pv.Cube()
