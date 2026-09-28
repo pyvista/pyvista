@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 
@@ -11,8 +15,16 @@ from pyvista import examples
 
 from .logo import text_3d
 
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting.plotter import _ShowReturnType
 
-def glyphs(grid_sz=3):
+_DatasetTypeOptions = Literal[
+    'PolyData', 'UnstructuredGrid', 'ImageData', 'RectilinearGrid', 'StructuredGrid'
+]
+
+
+def glyphs(grid_sz: int = 3) -> pv.PolyData:
     """Create several parametric supertoroids using VTK's glyph table functionality.
 
     Parameters
@@ -51,8 +63,8 @@ def glyphs(grid_sz=3):
     geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
     # get dataset where to put glyphs
-    grid_sz = float(grid_sz)
-    x, y, z = np.mgrid[:grid_sz, :grid_sz, :grid_sz]
+    size = float(grid_sz)
+    x, y, z = np.mgrid[:size, :size, :size]
     mesh = pv.StructuredGrid(x, y, z)
 
     # add random scalars
@@ -70,7 +82,7 @@ def glyphs(grid_sz=3):
     )
 
 
-def plot_glyphs(grid_sz=3, **kwargs):
+def plot_glyphs(grid_sz: int = 3, **kwargs: Any) -> _ShowReturnType:
     """Plot several parametric supertoroids using VTK's glyph table functionality.
 
     Parameters
@@ -109,7 +121,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
     return pl.show()
 
 
-def orientation_cube():
+def orientation_cube() -> dict[str, pv.PolyData]:
     """Return a dictionary containing the meshes composing an orientation cube.
 
     Returns
@@ -194,7 +206,7 @@ def orientation_cube():
     }
 
 
-def orientation_plotter():
+def orientation_plotter() -> pv.Plotter:
     """Return a plotter containing the orientation cube.
 
     Returns
@@ -222,7 +234,13 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(*, fps=30, frequency=1, wavetime=3, notebook=None):
+def plot_wave(
+    *,
+    fps: int = 30,
+    frequency: float = 1,
+    wavetime: float = 3,
+    notebook: bool | None = None,
+) -> NumpyArray[float]:
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -291,7 +309,7 @@ def plot_wave(*, fps=30, frequency=1, wavetime=3, notebook=None):
         telap = time.time() - tstart
         phase = telap * 2 * np.pi * frequency
         Z = np.sin(R + phase)
-        mesh.points[:, -1] = Z.ravel()  # type: ignore[index]
+        mesh.points[:, -1] = Z.ravel()
         mesh['Height'] = Z.ravel()
 
         mesh.compute_normals(inplace=True)
@@ -312,7 +330,7 @@ def plot_wave(*, fps=30, frequency=1, wavetime=3, notebook=None):
     return mesh.points
 
 
-def plot_ants_plane(notebook=None):
+def plot_ants_plane(notebook: bool | None = None) -> None:  # noqa: FBT001
     """Plot two ants and airplane.
 
     Demonstrate how to create a plot class to plot multiple meshes while
@@ -398,7 +416,7 @@ def plot_ants_plane(notebook=None):
     pl.show()
 
 
-def plot_beam(notebook=None):
+def plot_beam(notebook: bool | None = None) -> None:  # noqa: FBT001
     """Plot a beam with displacement.
 
     Parameters
@@ -441,7 +459,7 @@ def plot_beam(notebook=None):
     pl.show()
 
 
-def plot_datasets(dataset_type=None):
+def plot_datasets(dataset_type: _DatasetTypeOptions | None = None) -> None:
     """Plot the pyvista dataset types.
 
     This demo plots the following PyVista dataset types:
@@ -469,13 +487,7 @@ def plot_datasets(dataset_type=None):
     >>> demos.plot_datasets()
 
     """
-    allowable_types = [
-        'PolyData',
-        'UnstructuredGrid',
-        'ImageData',
-        'RectilinearGrid',
-        'StructuredGrid',
-    ]
+    allowable_types = list(get_args(_DatasetTypeOptions))
     if dataset_type is not None and dataset_type not in allowable_types:
         msg = (
             f'Invalid dataset_type {dataset_type}.  '

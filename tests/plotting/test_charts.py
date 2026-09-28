@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+from typing import get_args
 import weakref
 
 import numpy as np
@@ -11,6 +12,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core.utilities.misc import _LINE_STYLE_PATTERNS
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
@@ -251,6 +253,10 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
+@pytest.mark.expect_vtk_output(
+    'vtkMath::Jacobi: Error extracting eigenfunctions',
+    reason='VTK fails to extract eigenvectors while fitting the axis scale',
+)
 @pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
@@ -1230,3 +1236,11 @@ def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy
     assert chart_2d.background_texture == t_puppy
+
+
+def test_line_style_tables_agree():
+    assert (
+        list(_LINE_STYLE_PATTERNS)
+        == list(get_args(pv.typing.LineStyle))
+        == list(charts.Pen.LINE_STYLES)
+    )

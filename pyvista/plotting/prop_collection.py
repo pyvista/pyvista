@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 import pyvista_validation as _validation
@@ -27,31 +28,31 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
 
     """
 
-    def __init__(self, prop_collection: _vtk.vtkPropCollection):
+    def __init__(self, prop_collection: _vtk.vtkPropCollection) -> None:
         super().__init__()
         self._prop_collection = prop_collection
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int | np.integer[Any] | str) -> _vtk.vtkProp:  # type: ignore[override]
         if isinstance(key, (int, np.integer)):
             # lookup from index number
             key = self._validate_index(key)
-            return self._prop_collection.GetItemAsObject(int(key))
+            return cast('_vtk.vtkProp', self._prop_collection.GetItemAsObject(int(key)))
         elif isinstance(key, str):
             # lookup from actor name
             names = self.keys()
             try:
                 index = names.index(key)
-                return self._prop_collection.GetItemAsObject(index)
+                return cast('_vtk.vtkProp', self._prop_collection.GetItemAsObject(index))
             except ValueError:
                 msg = f"No item found with name '{key}'."
                 raise KeyError(msg)
-        msg = f'Key must be an index or a string, got {type(key).__name__}.'
+        msg = f'Key must be an index or a string, got {type(key).__name__}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._prop_collection.GetNumberOfItems()
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: int | np.integer[Any] | str) -> None:  # type: ignore[override]
         if isinstance(key, (int, np.integer)):
             # remove by index
             key = self._validate_index(key)
@@ -66,10 +67,12 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
                 raise KeyError(msg)
             del self[index]
         else:
-            msg = f'Key must be an index or a string, got {type(key).__name__}.'
+            msg = f'Key must be an index or a string, got {type(key).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-    def __setitem__(self, key, value):
+    def __setitem__(  # type: ignore[override]
+        self, key: int | np.integer[Any] | str, value: _vtk.vtkProp
+    ) -> None:
         _validation.check_instance(value, _vtk.vtkProp)
         if isinstance(key, (int, np.integer)):
             # set by index
@@ -83,10 +86,10 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
             index = self.keys().index(key)
             self[index] = value
         else:
-            msg = f'Key must be an index or a string, got {type(key).__name__}.'
+            msg = f'Key must be an index or a string, got {type(key).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-    def insert(self, index, value) -> None:
+    def insert(self, index: int, value: _vtk.vtkProp) -> None:
         """Insert a prop at the given index.
 
         Parameters
@@ -108,7 +111,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         index = min(index, len(self))
         self._prop_collection.InsertItem(index - 1, value)
 
-    def append(self, value: _vtk.vtkProp):
+    def append(self, value: _vtk.vtkProp) -> None:
         """Add a prop to the end of the collection.
 
         Parameters
@@ -134,7 +137,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         """Yield ``(name, prop)`` pairs for the collection."""
         yield from zip(self.keys(), self, strict=True)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self._prop_collection = None  # type: ignore[assignment]
 
     def _validate_index(self, index: int | np.integer[Any]) -> int:

@@ -22,6 +22,9 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+
+# Reuse the doctest fixture for unit tests
+from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
@@ -237,7 +240,7 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
-    pv.PICKLE_FORMAT = 'vtk'
+    pv._PICKLE_FORMAT = 'vtk'
     pv.global_config.points_dtype = None
 
 
@@ -584,6 +587,7 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/add_floor.py',
         'typing/cases/plotting/add_legend.py',
         'typing/cases/plotting/add_legend_scale.py',
+        'typing/cases/plotting/add_mesh.py',
         'typing/cases/plotting/add_north_arrow_widget.py',
         'typing/cases/plotting/add_orientation_widget.py',
         'typing/cases/plotting/add_ruler.py',
@@ -599,12 +603,14 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/image_from_window.py',
         'typing/cases/plotting/map_value.py',
         'typing/cases/plotting/plotter_set_chart_interaction.py',
+        'typing/cases/plotting/property_culling.py',
         'typing/cases/plotting/remove_actor.py',
         'typing/cases/plotting/renderer_set_chart_interaction.py',
         'typing/cases/plotting/resolve_scalars_field.py',
         'typing/cases/plotting/screenshot.py',
         'typing/cases/plotting/show_bounds.py',
         'typing/cases/plotting/show_grid.py',
+        'typing/cases/plotting/volume_prop.py',
         # These also evaluate plotting symbols at module scope, so on a
         # rendering-free backend they are skipped at collection time (see
         # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).

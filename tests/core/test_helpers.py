@@ -36,6 +36,27 @@ def test_wrap_pyvista_ndarray(sphere):
     assert isinstance(pd, pv.PolyData)
 
 
+@pytest.mark.parametrize('points', [[[0.0, 0.0, 0.0], [1.0, 2.0, 3.0]], (1, 2, 3)])
+def test_wrap_sequence(points):
+    """Wrap a sequence of points as PolyData."""
+    mesh = pv.wrap(points)
+    assert isinstance(mesh, pv.PolyData)
+    assert np.array_equal(mesh.points, np.atleast_2d(points))
+
+
+@pytest.mark.parametrize(
+    ('points', 'error', 'match'),
+    [
+        ([[0.0, 0.0], [1.0, 1.0]], ValueError, 'Sequence of points has shape (2, 2)'),
+        (['a', 'b', 'c'], TypeError, 'Sequence of points must have real numbers'),
+    ],
+)
+def test_wrap_sequence_raises(points, error, match):
+    """Reject a sequence that is not points."""
+    with pytest.raises(error, match=re.escape(match)):
+        pv.wrap(points)
+
+
 def test_wrap_raises():
     with pytest.raises(
         NotImplementedError,

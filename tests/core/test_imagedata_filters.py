@@ -10,11 +10,19 @@ from pytest_cases import parametrize_with_cases
 from pyvista_validation._cast_array import _cast_to_tuple
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 
 BOUNDARY_LABELS = 'boundary_labels'
+DUPLICATE_CELL = _vtk.vtkDataSetAttributes.DUPLICATECELL
+DUPLICATE_POINT = _vtk.vtkDataSetAttributes.DUPLICATEPOINT
+EXTERIOR_CELL = _vtk.vtkDataSetAttributes.EXTERIORCELL
+GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
+HIDDEN_CELL = _vtk.vtkDataSetAttributes.HIDDENCELL
+HIDDEN_POINT = _vtk.vtkDataSetAttributes.HIDDENPOINT
+HIGH_CONNECTIVITY_CELL = _vtk.vtkDataSetAttributes.HIGHCONNECTIVITYCELL
 MORPHOLOGICAL_MAX_VAL = 42.0
 MORPHOLOGICAL_MID_VAL = 5.0
 MORPHOLOGICAL_MIN_VAL = 0.0
@@ -284,12 +292,78 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
+@pytest.mark.parametrize(
+    ('dimensions', 'dimensionality'),
+    [
+        ((20, 20, 1), 2),
+        ((320, 220, 1), 2),
+        ((1, 20, 20), 2),
+        ((20, 1, 20), 2),
+        ((20, 1, 1), 1),
+        ((1, 1, 1), 0),
+    ],
+)
+@pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
+def test_contour_labels_not_3d_raises(dimensions, dimensionality, boundary_style):
+    image = pv.ImageData(dimensions=dimensions)
+    mask = np.zeros(image.n_points, dtype=np.uint8)
+    mask[: image.n_points // 3] = 1
+    image.point_data['mask'] = mask
+
+    match = f'Input must be 3-dimensional. Got {dimensionality}-dimensional input instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.contour_labels(boundary_style)
+
+
+def test_contour_labels_not_3d_cell_data_raises():
+    # Cell scalars are re-meshed to points, so a single cell layer is 2-dimensional
+    image = pv.ImageData(dimensions=(21, 21, 2))
+    image.cell_data['mask'] = np.ones(image.n_cells, dtype=np.uint8)
+
+    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.contour_labels()
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'expected_shape'),
+    [
+        ({'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': True}, (0,)),
+        ({'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': False}, (0, 2)),
+        ({'select_outputs': 99}, (0,)),
+        ({'select_outputs': 99, 'simplify_output': False}, (0, 2)),
+    ],
+)
+def test_contour_labels_no_boundary_cells(labeled_image, kwargs, expected_shape):
+    contours = labeled_image.contour_labels(**kwargs)
+    assert contours.is_empty
+    assert contours[BOUNDARY_LABELS].shape == expected_shape
+
+
+@pytest.mark.parametrize('simplify_output', [True, False, None])
+@pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
+def test_contour_labels_no_background(boundary_style, simplify_output):
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image.point_data['labels'] = np.full(image.n_points, 5, dtype=np.uint8)
+
+    contours = image.contour_labels(
+        boundary_style, simplify_output=simplify_output, pad_background=False
+    )
+    expected_ndim = (
+        1 if simplify_output or (simplify_output is None and 'external' in boundary_style) else 2
+    )
+    assert contours.is_empty
+    assert contours[BOUNDARY_LABELS].ndim == expected_ndim
+    assert contours[BOUNDARY_LABELS].dtype == np.uint8
+
+
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0
     assert np.allclose(voi.active_scalars, background_value)
     surface = voi.contour_labels(background_value=background_value)
     assert surface.is_empty
+    assert surface[BOUNDARY_LABELS].shape == (0,)
 
 
 @pytest.fixture
@@ -363,6 +437,150 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory
+
+
+@pytest.mark.parametrize(
+    ('filter_name', 'scalars'),
+    [('points_to_cells', 'point_data'), ('cells_to_points', 'cell_data')],
+)
+def test_points_to_cells_and_cells_to_points_direction_matrix(filter_name, scalars):
+    """Test the half-voxel shift is rotated by the direction matrix."""
+    image = pv.ImageData(dimensions=(4, 5, 6), spacing=(1.0, 2.0, 3.0))
+    image.direction_matrix = pv.Transform().rotate_z(15).rotate_x(20).matrix[:3, :3]
+    image.point_data['point_data'] = range(image.n_points)
+    image.cell_data['cell_data'] = range(image.n_cells)
+
+    output = getattr(image, filter_name)(scalars=scalars)
+
+    point_image, cell_image = (
+        (image, output) if filter_name == 'points_to_cells' else (output, image)
+    )
+    assert np.allclose(cell_image.cell_centers().points, point_image.points)
+
+
+def test_contour_labels_direction_matrix():
+    """Test cell labels of a rotated image are contoured in place."""
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    labels = np.zeros(image.n_cells, dtype=np.uint8)
+    labels.reshape(4, 4, 4)[1:3, 1:3, 1:3] = 1
+    image.cell_data['labels'] = labels
+
+    transform = pv.Transform().rotate_z(30)
+    expected = image.contour_labels().transform(transform, inplace=False)
+
+    rotated = image.copy()
+    rotated.direction_matrix = transform.matrix[:3, :3]
+    actual = rotated.contour_labels()
+
+    assert np.allclose(actual.points, expected.points)
+
+
+@pytest.mark.parametrize(
+    ('point_flags', 'expected_cell_flags'),
+    [
+        ([HIDDEN_POINT, 0], [HIDDEN_CELL, 0]),
+        ([DUPLICATE_POINT, 0], [DUPLICATE_CELL, 0]),
+        ([DUPLICATE_POINT | HIDDEN_POINT, 0], [DUPLICATE_CELL | HIDDEN_CELL, 0]),
+    ],
+)
+def test_points_to_cells_ghost_array(uniform, point_flags, expected_cell_flags):
+    ghosts = np.resize(np.array(point_flags, dtype=np.uint8), uniform.n_points)
+    uniform.point_data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = uniform.points_to_cells(copy=False)
+
+    expected = np.resize(np.array(expected_cell_flags, dtype=np.uint8), converted.n_cells)
+    assert converted.cell_data[GHOST_ARRAY_NAME].dtype == np.uint8
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
+    assert not np.shares_memory(converted.cell_data[GHOST_ARRAY_NAME], ghosts)
+    assert GHOST_ARRAY_NAME not in converted.point_data
+
+
+@pytest.mark.parametrize(
+    ('cell_flags', 'expected_point_flags'),
+    [
+        ([HIDDEN_CELL, 0], [HIDDEN_POINT, 0]),
+        ([DUPLICATE_CELL, 0], [DUPLICATE_POINT, 0]),
+        ([DUPLICATE_CELL | HIDDEN_CELL, 0], [DUPLICATE_POINT | HIDDEN_POINT, 0]),
+        ([HIGH_CONNECTIVITY_CELL, 0], [0, 0]),
+        ([HIDDEN_CELL | EXTERIOR_CELL, EXTERIOR_CELL], [HIDDEN_POINT, 0]),
+    ],
+)
+def test_cells_to_points_ghost_array(uniform, cell_flags, expected_point_flags):
+    ghosts = np.resize(np.array(cell_flags, dtype=np.uint8), uniform.n_cells)
+    uniform.cell_data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = uniform.cells_to_points()
+
+    expected = np.resize(np.array(expected_point_flags, dtype=np.uint8), converted.n_points)
+    assert converted.point_data[GHOST_ARRAY_NAME].dtype == np.uint8
+    assert np.array_equal(converted.point_data[GHOST_ARRAY_NAME], expected)
+    assert GHOST_ARRAY_NAME not in converted.cell_data
+
+
+def test_points_to_cells_ghost_array_hides_unsampled_cells(uniform):
+    solid = pv.SolidSphere(outer_radius=3.0, center=uniform.center)
+    solid['data'] = solid.points[:, 2]
+    sampled = uniform.sample(solid)
+    hidden_points = sampled.point_data[GHOST_ARRAY_NAME] == HIDDEN_POINT
+    assert 0 < hidden_points.sum() < sampled.n_points
+
+    converted = sampled.points_to_cells()
+
+    hidden_cells = converted.cell_data[GHOST_ARRAY_NAME] == HIDDEN_CELL
+    assert np.array_equal(hidden_cells, hidden_points)
+    assert np.array_equal(
+        converted.cell_data['vtkValidPointMask'], sampled.point_data['vtkValidPointMask']
+    )
+
+
+def test_points_to_cells_and_cells_to_points_ghost_array_round_trip(uniform):
+    pattern = [HIDDEN_CELL | EXTERIOR_CELL, EXTERIOR_CELL]
+    uniform.cell_data[GHOST_ARRAY_NAME] = np.resize(
+        np.array(pattern, dtype=np.uint8), uniform.n_cells
+    )
+
+    converted = uniform.cells_to_points().points_to_cells()
+
+    expected = np.resize(np.array([HIDDEN_CELL, 0], dtype=np.uint8), converted.n_cells)
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
+
+
+@pytest.mark.parametrize('filter_name', ['points_to_cells', 'cells_to_points'])
+def test_remesh_ghost_array_is_kept_with_explicit_scalars(uniform, filter_name):
+    points_to_cells = filter_name == 'points_to_cells'
+    if points_to_cells:
+        scalars, data, flag = 'Spatial Point Data', uniform.point_data, HIDDEN_POINT
+    else:
+        scalars, data, flag = 'Spatial Cell Data', uniform.cell_data, HIDDEN_CELL
+    ghosts = np.resize(np.array([flag, 0], dtype=np.uint8), len(data[scalars]))
+    data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = getattr(uniform, filter_name)(scalars)
+
+    new_data = converted.cell_data if points_to_cells else converted.point_data
+    assert set(new_data.keys()) == {scalars, GHOST_ARRAY_NAME}
+    assert converted.active_scalars_name == scalars
+    expected_flag = HIDDEN_CELL if points_to_cells else HIDDEN_POINT
+    assert np.array_equal(new_data[GHOST_ARRAY_NAME] == expected_flag, ghosts == flag)
+
+
+def test_points_to_cells_non_ghost_dtype_obeys_explicit_scalars(uniform):
+    uniform.point_data[GHOST_ARRAY_NAME] = np.zeros(uniform.n_points, dtype=float)
+
+    converted = uniform.points_to_cells('Spatial Point Data')
+
+    assert converted.cell_data.keys() == ['Spatial Point Data']
+
+
+def test_points_to_cells_ghost_array_ignores_non_ghost_dtype(uniform):
+    array = np.zeros(uniform.n_points, dtype=float)
+    uniform.point_data[GHOST_ARRAY_NAME] = array
+    assert uniform.GetPointData().GetGhostArray() is None
+
+    converted = uniform.points_to_cells()
+
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], array)
 
 
 def test_points_to_cells_scalars(uniform):
@@ -1127,6 +1345,27 @@ def test_resample_reference_image(uniform, spacing, direction_matrix, origin, di
     assert np.allclose(resampled.bounds, reference.bounds)
 
 
+def test_resample_reference_image_resizes_in_its_own_frame():
+    # The input is resized in index space and the reference's geometry is applied
+    # to the result, so the values are not sampled at the reference's points.
+    image = pv.ImageData(dimensions=(9, 2, 2), spacing=(0.25, 1, 1), origin=(-4, 0, 0))
+    image.point_data['x'] = image.points[:, 0]
+    reference = pv.ImageData(dimensions=(5, 2, 2), spacing=(0.5, 1, 1), origin=(10, 0, 0))
+
+    resampled = image.resample(reference_image=reference, interpolation='linear')
+
+    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+    # The values span the input's own x range, sampled at the reference's index fractions
+    fractions = np.linspace(0.0, 1.0, reference.dimensions[0])
+    expected = image.bounds.x_min + fractions * (image.bounds.x_max - image.bounds.x_min)
+    assert np.allclose(resampled['x'].reshape(2, 2, -1)[0, 0], expected)
+    assert not np.allclose(resampled['x'], resampled.points[:, 0])
+    # Reslice samples at the reference's points instead, which lie outside the image
+    resliced = image.reslice(reference, 'linear')
+    assert np.allclose(resliced.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert np.allclose(resliced['x'], 0.0)
+
+
 @pytest.mark.parametrize(
     ('name', 'value'),
     [
@@ -1287,20 +1526,44 @@ def test_resample_inplace(uniform):
 
 def test_resample_raises(uniform):
     match = (
-        'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
-        '`reference_image` must define the geometry exclusively.'
+        'Cannot specify a reference image along with `sample_rate`, `dimensions`, `spacing`, '
+        'or `rounding_func` parameters.\n`reference_image` must define the geometry exclusively.'
     )
-    with pytest.raises(ValueError, match=re.escape(match)):
-        uniform.resample(sample_rate=2, reference_image=uniform)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
+    for kwargs in [
+        dict(sample_rate=2),
+        dict(dimensions=(2, 2, 2)),
+        dict(spacing=1.0),
+        dict(rounding_func=np.floor),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(reference_image=uniform, **kwargs)
 
     match = (
-        'Cannot specify a sample rate along with the `dimensions` parameter.\n'
-        '`sample_rate` must define the sampling geometry exclusively.'
+        'Cannot specify `sample_rate` and `dimensions` together.\n'
+        'Only one of `sample_rate`, `dimensions`, or `spacing` may define the sampling geometry.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+    match = 'Cannot specify `sample_rate` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, spacing=1.0)
+    match = 'Cannot specify `sample_rate`, `dimensions` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2), spacing=1.0)
+    match = 'Cannot specify `dimensions` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), spacing=1.0)
+
+    match = 'Cannot specify `rounding_func` along with the `dimensions` parameter.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), rounding_func=np.floor)
+
+    match = 'spacing values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(spacing=0)
+    match = 'spacing must have finite values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(spacing=np.inf)
 
     match = '`extend_border` cannot be set when resampling cell data.'
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1458,10 +1721,13 @@ def test_resample_values_at_point_locations():
 def test_resample_fractional_dimensions():
     image = pv.ImageData(dimensions=(233, 171, 1))
     image['data'] = np.zeros(image.n_points)
-    assert np.array_equal(image.resample(0.5).dimensions, (116, 85, 1))
-    assert np.array_equal(image.resample(0.29).dimensions, (67, 49, 1))
+    # numpy.round sends 116.5 to 116 and 85.5 to 86 (half to even)
+    assert np.array_equal(image.resample(0.5).dimensions, (116, 86, 1))
+    assert np.array_equal(image.resample(0.29).dimensions, (68, 50, 1))
+    assert image.resample(0.5, rounding_func=np.floor).dimensions == (116, 85, 1)
+    assert image.resample(0.5, rounding_func=np.ceil).dimensions == (117, 86, 1)
 
-    # A rate whose product is an integer but computes just below it is rounded up
+    # A rate whose product is an integer but computes just below it is not rounded down
     image = pv.ImageData(dimensions=(100, 100, 1))
     image['data'] = np.zeros(image.n_points)
     assert 100 * 0.29 < 29.0
@@ -1488,6 +1754,71 @@ def test_resample_anti_aliasing_blur_width():
     assert not np.allclose(actual['data'], fixed['data'])
 
 
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_spacing(extend_border):
+    image = pv.ImageData(dimensions=(3, 2, 1), spacing=(1.0, 2.0, 5.0))
+    image['data'] = np.zeros(image.n_points)
+    resampled = image.resample(spacing=(0.5, 1.0, 1.0), extend_border=extend_border)
+    # A border adds half a voxel at each end, so the spacing divides the cell bounds
+    expected_dimensions = (6, 4, 1) if extend_border else (5, 3, 1)
+    assert resampled.dimensions == expected_dimensions
+    assert resampled.spacing == (0.5, 1.0, 5.0)
+    expected_bounds = image.points_to_cells().bounds if extend_border else image.bounds
+    reference = resampled.points_to_cells() if extend_border else resampled
+    assert np.allclose(reference.bounds, expected_bounds)
+
+    # A scalar spacing is broadcast
+    assert image.resample(spacing=0.5).dimensions == (6, 8, 1)
+
+
+def test_resample_spacing_rounding():
+    image = pv.ImageData(dimensions=(3, 2, 1))
+    image['data'] = np.zeros(image.n_points)
+    # 3 / 0.7 = 4.29 and 2 / 0.7 = 2.86 intervals
+    assert image.resample(spacing=0.7).dimensions == (4, 3, 1)
+    assert image.resample(spacing=0.7, rounding_func=np.floor).dimensions == (4, 2, 1)
+    assert image.resample(spacing=0.7, rounding_func=np.ceil).dimensions == (5, 3, 1)
+    # The actual spacing is the cell bounds divided by the rounded dimensions
+    assert np.allclose(image.resample(spacing=0.7, rounding_func=np.ceil).spacing, (0.6, 2 / 3, 1))
+
+    # A custom callable receives the fractional dimensions
+    received = []
+
+    def rounding_func(dimensions):
+        received.append(np.array(dimensions))
+        return np.ceil(dimensions)
+
+    image.resample(spacing=0.7, rounding_func=rounding_func)
+    assert np.allclose(received[0], (3 / 0.7, 2 / 0.7, 1))
+    assert received[0].dtype.kind == 'f'
+
+    # Singleton axes are never resampled, whatever the callable returns
+    resampled = image.resample(spacing=0.5, rounding_func=lambda _: np.full(3, 5))
+    assert resampled.dimensions == (5, 5, 1)
+    assert resampled.spacing[2] == 1.0
+
+    match = 'rounding_func output must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(spacing=0.5, rounding_func=lambda d: np.asarray(d) + 0.5)
+
+
+def test_resample_spacing_cell_data():
+    image = pv.ImageData(dimensions=(4, 3, 3), spacing=(1.0, 1.0, 1.0))
+    image.cell_data['data'] = np.zeros(image.n_cells)
+    resampled = image.resample(spacing=0.5)
+    assert resampled.dimensions == (7, 5, 5)
+    assert resampled.spacing == (0.5, 0.5, 0.5)
+    assert resampled.bounds == image.bounds
+    assert resampled.cell_data.keys() == ['data']
+
+    match = (
+        '`spacing` is too large, it must keep at least one cell along each axis when '
+        'resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(spacing=10)
+
+
 def test_resample_cell_data_sample_rate_raises():
     image = pv.ImageData(dimensions=(5, 5, 5))
     image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
@@ -1498,6 +1829,349 @@ def test_resample_cell_data_sample_rate_raises():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         image.resample(0.1)
+
+
+def test_reslice_physical_alignment():
+    # The image is sampled at the physical position of the reference's points
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image['x'] = image.points[:, 0].astype(float)
+
+    # A reference shifted along x samples the shifted region, not the whole image
+    reference = pv.ImageData(dimensions=(10, 10, 10), origin=(3.0, 0.0, 0.0))
+    resliced = image.reslice(reference, 'linear')
+    assert resliced['x'].reshape(10, 10, 10)[0, 0].tolist() == [
+        *range(3, 10),
+        0.0,
+        0.0,
+        0.0,
+    ]
+
+    # A reference covering part of the image samples that part only
+    reference = pv.ImageData(dimensions=(5, 10, 10))
+    resliced = image.reslice(reference, 'linear')
+    assert resliced['x'].reshape(10, 10, 5)[0, 0].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
+
+    # A finer reference interpolates between the image's points
+    reference = pv.ImageData(dimensions=(19, 10, 10), spacing=(0.5, 1.0, 1.0))
+    resliced = image.reslice(reference, 'linear')
+    assert np.allclose(resliced['x'], resliced.points[:, 0])
+
+
+@pytest.mark.parametrize('rotate_reference', [True, False])
+@pytest.mark.parametrize('rotate_input', [True, False])
+def test_reslice_direction_matrix(rotate_input, rotate_reference):
+    # Values follow the physical position of the points, whichever image is rotated
+    rotation = pv.Transform().rotate_vector((0, 0, 1), 30).matrix[:3, :3]
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    if rotate_input:
+        image.direction_matrix = rotation
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 10, 10))
+    if rotate_reference:
+        reference.direction_matrix = rotation
+
+    resliced = image.reslice(reference, 'linear')
+    points = resliced.points
+    # Only points inside the image are sampled from it, so select them in its index space
+    index = pv.Transform(image.physical_to_index_matrix).apply(points)
+    inside = np.all(
+        (index >= 1e-4) & (index <= np.array(image.dimensions) - 1 - 1e-4),
+        axis=1,
+    )
+    assert inside.sum() > 100
+    assert np.allclose(resliced['x'][inside], points[inside, 0], atol=1e-4)
+
+
+@pytest.mark.parametrize('offset', [None, (-4, 5, -6)])
+@pytest.mark.parametrize('direction', [None, np.diag((-1.0, 1.0, 1.0))])
+def test_reslice_geometry_matches_reference(offset, direction):
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(5, 6, 7), spacing=(2.0, 3.0, 4.0), origin=(1.0, 2.0, 3.0))
+    if offset is not None:
+        reference.offset = offset
+    if direction is not None:
+        reference.direction_matrix = direction
+
+    resliced = image.reslice(reference)
+    assert np.array_equal(resliced.dimensions, reference.dimensions)
+    assert np.allclose(resliced.spacing, reference.spacing)
+    assert np.allclose(resliced.origin, reference.origin)
+    assert np.array_equal(resliced.offset, reference.offset)
+    assert np.allclose(resliced.direction_matrix, reference.direction_matrix)
+    assert np.allclose(resliced.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert resliced.array_names == ['x']
+
+
+def test_reslice_background_value():
+    image = pv.ImageData(dimensions=(6, 6, 1))
+    image['values'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(4, 1, 1), spacing=(2.0, 1.0, 1.0), origin=(2.0, 0.0, 0.0))
+
+    assert image.reslice(reference, 'linear')['values'].tolist() == [2.0, 4.0, 0.0, 0.0]
+    resliced = image.reslice(reference, 'linear', background_value=-1.0)
+    assert resliced['values'].tolist() == [2.0, 4.0, -1.0, -1.0]
+
+
+@pytest.mark.parametrize('interpolation', get_args(_InterpolationOptions))
+def test_reslice_interpolation(interpolation):
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image['values'] = rng.random(image.n_points)
+
+    # Every mode reproduces the input values at the input points. High-degree splines
+    # are only accurate away from the boundary, where the clamped signal is not smooth.
+    resliced = image.reslice(image, interpolation)
+    interior = np.all((image.points >= 2) & (image.points <= 7), axis=1)
+    assert np.allclose(resliced['values'][interior], image['values'][interior], atol=1e-3)
+
+    # Sampling between the input points gives values the mode's own kernel decides
+    reference = pv.ImageData(dimensions=(9, 9, 9), origin=(0.5, 0.5, 0.5))
+    between = image.reslice(reference, interpolation)['values']
+    nearest = image.reslice(reference, 'nearest')['values']
+    assert between.shape == (729,)
+    if interpolation in ('nearest', 'bspline0'):
+        # A degree zero spline is nearest neighbor
+        assert np.array_equal(between, nearest)
+    else:
+        assert not np.allclose(between, nearest)
+
+
+@pytest.mark.parametrize('dtype', ['uint8', 'int32', 'int64', 'float32'])
+def test_reslice_dtype(dtype):
+    image = pv.ImageData(dimensions=(6, 6, 6))
+    image['values'] = np.arange(image.n_points).astype(dtype)
+    reference = pv.ImageData(dimensions=(6, 6, 6))
+
+    resliced = image.reslice(reference, 'linear')
+    assert resliced['values'].dtype == dtype
+    assert np.array_equal(resliced['values'], image['values'])
+
+
+def test_reslice_identity_reference():
+    # Reslicing onto the image's own grid returns the image unchanged
+    image = pv.ImageData(dimensions=(8, 9, 10), spacing=(1.1, 1.2, 1.3), origin=(1.0, 2.0, 3.0))
+    image['values'] = np.arange(image.n_points, dtype=float)
+
+    for interpolation in ['nearest', 'linear', 'cubic']:
+        resliced = image.reslice(image, interpolation)
+        assert np.allclose(resliced['values'], image['values'])
+
+
+def test_reslice_cell_data():
+    image = pv.ImageData(dimensions=(7, 7, 7))
+    image.cell_data['values'] = np.arange(image.n_cells, dtype=float)
+    reference = pv.ImageData(dimensions=(7, 7, 7))
+
+    resliced = image.reslice(reference, 'linear')
+    assert len(resliced.cell_data) == 1
+    assert len(resliced.point_data) == 0
+    assert np.array_equal(resliced.dimensions, reference.dimensions)
+    assert np.allclose(resliced.bounds, reference.bounds)
+    # Cell values are sampled at the cell centers, so an identical grid is unchanged
+    assert np.allclose(resliced.cell_data['values'], image.cell_data['values'])
+
+    # A reference which is a single cell thick keeps that axis
+    thin = pv.ImageData(dimensions=(6, 6, 2))
+    resliced = image.reslice(thin, 'linear')
+    assert np.array_equal(resliced.dimensions, thin.dimensions)
+    assert np.allclose(resliced.bounds, thin.bounds)
+    assert len(resliced.cell_data['values']) == thin.n_cells
+
+
+@pytest.mark.parametrize('interpolation', ['linear', 'lanczos'])
+def test_reslice_anti_aliasing(interpolation):
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(40, 40, 1))
+    image['values'] = rng.random(image.n_points)
+    reference = pv.ImageData(dimensions=(10, 10, 1), spacing=(4.0, 4.0, 1.0))
+
+    plain = image.reslice(reference, interpolation)['values']
+    smoothed = image.reslice(reference, interpolation, anti_aliasing=True)['values']
+    assert not np.allclose(plain, smoothed)
+    assert smoothed.std() < plain.std()
+
+    # Has no effect when the reference samples the image at least as finely
+    reference = pv.ImageData(dimensions=(40, 40, 1))
+    plain = image.reslice(reference, interpolation)['values']
+    smoothed = image.reslice(reference, interpolation, anti_aliasing=True)['values']
+    assert np.allclose(plain, smoothed)
+
+
+@pytest.mark.parametrize('scale', [0.0, 1e-9])
+def test_reslice_anti_aliasing_flattening_transform(scale):
+    # A transform which flattens an axis must not ask for an unbounded blur kernel
+    image = pv.ImageData(dimensions=(20, 20, 1))
+    image['values'] = np.arange(image.n_points, dtype=float)
+    reference = pv.ImageData(dimensions=(10, 10, 1), spacing=(2.0, 2.0, 1.0))
+
+    transform = pv.Transform().scale(scale, 1.0, 1.0)
+    resliced = image.reslice(reference, 'linear', transform=transform, anti_aliasing=True)
+    assert np.all(np.isfinite(resliced['values']))
+
+
+@pytest.mark.parametrize(
+    ('border_mode', 'expected_array'),
+    [  # Exact values aren't important, we're just checking the values differ between modes
+        ('clamp', [0.0, 0.4375, 1.0, 1.5625, 2.0]),
+        ('wrap', [0.0, 0.3125, 1.0, 1.6875, 2.0]),
+        ('mirror', [0.0, 0.375, 1.0, 1.625, 2.0]),
+    ],
+)
+def test_reslice_border_mode(border_mode, expected_array):
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['data'] = np.array([0.0, 1.0, 2.0])
+    reference = pv.ImageData(dimensions=(5, 1, 1), spacing=(0.5, 1.0, 1.0))
+
+    resliced = image.reslice(reference, 'cubic', border_mode=border_mode)
+    assert np.allclose(resliced['data'], expected_array)
+
+
+def test_reslice_scalars_not_active():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image['active'] = np.zeros(image.n_points)
+    image['other'] = np.arange(image.n_points, dtype=float)
+    image.set_active_scalars('active')
+
+    resliced = image.reslice(image, scalars='other')
+    assert resliced.array_names == ['other']
+    assert np.array_equal(resliced['other'], image['other'])
+    assert image.active_scalars_name == 'active'
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+def test_reslice_preference(preference):
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.point_data['data'] = np.arange(image.n_points, dtype=float)
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    resliced = image.reslice(image, scalars='data', preference=preference)
+    assert resliced.array_names == ['data']
+    assert np.array_equal(
+        getattr(resliced, f'{preference}_data')['data'],
+        getattr(image, f'{preference}_data')['data'],
+    )
+
+
+def test_reslice_inplace():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image['values'] = np.arange(image.n_points, dtype=float)
+    reference = pv.ImageData(dimensions=(3, 3, 3), spacing=(2.0, 2.0, 2.0))
+
+    resliced = image.reslice(reference)
+    assert resliced is not image
+    resliced = image.reslice(reference, inplace=True)
+    assert resliced is image
+    assert np.array_equal(image.dimensions, (3, 3, 3))
+
+
+def test_reslice_transform_moves_the_image():
+    # The transform moves the image, matching DataObjectFilters.transform
+    image = pv.ImageData(dimensions=(10, 1, 1))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 1, 1))
+
+    shift = pv.Transform().translate((3, 0, 0))
+    resliced = image.reslice(reference, 'linear', transform=shift, background_value=-1.0)
+    assert resliced['x'].tolist() == [-1.0, -1.0, -1.0, *range(7)]
+
+    transformed = image.transform(shift, inplace=False)
+    assert np.allclose(transformed.points[:, 0], image.points[:, 0] + 3)
+
+
+@pytest.mark.parametrize(
+    'transform',
+    [
+        pv.Transform().translate((3, -2, 1)),
+        pv.Transform().rotate_z(30),
+        pv.Transform().scale((2, 0.5, 1)),
+        pv.Transform().rotate_z(30).translate((3, -2, 1)),
+    ],
+)
+def test_reslice_transform_matches_moving_the_image(transform):
+    # Moving the image and then reslicing gives what passing the transform gives
+    image = pv.ImageData(dimensions=(9, 9, 9), spacing=(0.5, 0.5, 0.5))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(7, 7, 7), origin=(0.5, 0.5, 0.5))
+
+    shortcut = image.reslice(reference, 'linear', transform=transform, background_value=-1.0)
+    moved = image.transform(transform, inplace=False).reslice(
+        reference, 'linear', background_value=-1.0
+    )
+    assert np.allclose(shortcut['x'], moved['x'])
+
+
+@pytest.mark.parametrize(
+    'transform',
+    [
+        pv.Transform().rotate_vector((0, 0, 1), 30),
+        pv.Transform().rotate_vector((0, 0, 1), 30).matrix,
+        pv.Transform().rotate_vector((0, 0, 1), 30).matrix[:3, :3],
+    ],
+)
+def test_reslice_transform_like(transform):
+    # Any TransformLike gives the same result
+    image = pv.ImageData(dimensions=(10, 10, 1))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 10, 1))
+
+    resliced = image.reslice(reference, 'linear', transform=transform)
+    expected = image.reslice(
+        reference, 'linear', transform=pv.Transform().rotate_vector((0, 0, 1), 30)
+    )
+    assert np.allclose(resliced['x'], expected['x'])
+
+
+def test_reslice_transform_nonlinear():
+    # A non-linear transform is applied to the image like any other
+    image = pv.ImageData(dimensions=(10, 1, 1))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 1, 1))
+
+    landmarks = [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
+    spline = _vtk.vtkThinPlateSplineTransform()
+    spline.SetSourceLandmarks(pv.vtk_points([*landmarks, (9.0, 0.0, 0.0)]))
+    spline.SetTargetLandmarks(pv.vtk_points([*landmarks, (7.0, 0.0, 0.0)]))
+    spline.SetBasisToR()
+
+    resliced = image.reslice(reference, 'linear', transform=spline, background_value=-1.0)
+    # The image is compressed onto [0, 7], so the reference runs past its end
+    assert resliced['x'][-1] == -1.0
+    assert np.allclose(resliced['x'][:8], np.linspace(0, 9, 8), atol=1e-6)
+
+
+def test_reslice_transform_scale_drives_anti_aliasing():
+    # The transform's scale is part of how coarsely the image ends up sampled
+    image = pv.ImageData(dimensions=(40, 1, 1), spacing=(0.25, 1.0, 1.0))
+    image['x'] = np.sin(image.points[:, 0] * 8)
+    reference = pv.ImageData(dimensions=(10, 1, 1))
+
+    shrink = pv.Transform().scale((0.25, 1.0, 1.0))
+    blurred = image.reslice(reference, 'linear', transform=shrink, anti_aliasing=True)
+    sharp = image.reslice(reference, 'linear', transform=shrink, anti_aliasing=False)
+    assert not np.allclose(blurred['x'], sharp['x'])
+
+    # Magnifying instead makes the sampling fine, so there is nothing to anti-alias
+    grow = pv.Transform().scale((4.0, 1.0, 1.0))
+    blurred = image.reslice(reference, 'linear', transform=grow, anti_aliasing=True)
+    sharp = image.reslice(reference, 'linear', transform=grow, anti_aliasing=False)
+    assert np.allclose(blurred['x'], sharp['x'])
+
+
+def test_reslice_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image['values'] = np.arange(image.n_points, dtype=float)
+
+    with pytest.raises(TypeError, match='reference_image'):
+        image.reslice(pv.PolyData())
+    with pytest.raises(ValueError, match='interpolation'):
+        image.reslice(image, 'invalid')
+    with pytest.raises(ValueError, match='border_mode'):
+        image.reslice(image, border_mode='invalid')
+    with pytest.raises(ValueError, match='background_value'):
+        image.reslice(image, background_value=np.inf)
+    with pytest.raises(TypeError, match='Input transform must be one of'):
+        image.reslice(image, transform='invalid')
 
 
 def test_select_values(uniform):
@@ -2617,6 +3291,25 @@ def test_concatenate_preserve_extents():
     match = "The axis keyword cannot be used with 'preserve-extents' mode."
     with pytest.raises(ValueError, match=match):
         image_a.concatenate(image_b, axis=0, mode='preserve-extents')
+
+
+@pytest.mark.parametrize('mode', [None, 'strict', 'resample-match', 'crop-match'])
+def test_concatenate_offset_mismatch(mode):
+    array_a = np.arange(1, 10)
+    array_b = np.arange(10, 19)
+
+    image_a = pv.ImageData(dimensions=(3, 3, 1))
+    image_a['A'] = array_a
+    image_b = pv.ImageData(dimensions=(3, 3, 1))
+    image_b.offset = (4, 5, 6)
+    image_b['B'] = array_b
+
+    image_a.offset = (1, 2, 3)
+    concatenated = image_a.concatenate(image_b, axis='x', mode=mode)
+    assert concatenated.dimensions == (6, 3, 1)
+    assert concatenated.offset == (1, 2, 3)
+    expected = np.hstack([array_a.reshape(3, 3), array_b.reshape(3, 3)]).ravel()
+    assert np.array_equal(concatenated.active_scalars, expected)
 
 
 def test_concatenate_crop():

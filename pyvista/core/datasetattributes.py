@@ -22,10 +22,11 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
 from .utilities.misc import _NoNewAttrMixin
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
 
     import pandas
     import pyarrow
@@ -526,7 +527,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             if narray.dtype == np.float64:
                 narray = narray.view(np.complex128)  # type: ignore[assignment]
             # remove singleton dimensions to match the behavior of the rest of 1D VTK arrays
-            return narray.squeeze()  # type: ignore[return-value]
+            return narray.squeeze()
         return narray
 
     def set_array(
@@ -777,9 +778,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 f'but a length of ({array_len}) was expected.'
             )
             raise ValueError(msg)
-        if any(data.shape) and data.size == 0:
+        if data.ndim > 1 and 0 in data.shape[1:]:
             msg = (
-                f'Invalid array shape. Empty arrays are not allowed. '
+                f'Invalid array shape. Arrays with zero components are not allowed. '
                 f"Array '{name}' cannot have shape {data.shape}."
             )
             raise ValueError(msg)
@@ -908,7 +909,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self: Self, key: str, default: pyvista_ndarray | T = _SENTINEL) -> pyvista_ndarray | T:
+    def pop(
+        self: Self, key: str, default: pyvista_ndarray | _T = _SENTINEL
+    ) -> pyvista_ndarray | _T:
         """Remove an array and return it.
 
         Parameters
@@ -1202,7 +1205,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def update(
         self: Self,
-        array_dict: dict[str, NumpyArray[float]] | DataSetAttributes,
+        array_dict: Mapping[str, ArrayLike[Any]] | DataSetAttributes,
         *,
         copy: bool = True,
     ) -> None:
@@ -1214,7 +1217,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Parameters
         ----------
         array_dict : dict, DataSetAttributes
-            A dictionary of ``(array name, :class:`numpy.ndarray`)`` or a
+            A mapping of ``(array name, array)`` pairs or a
             :class:`pyvista.DataSetAttributes`.
 
         copy : bool, default: True
@@ -1253,11 +1256,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self: Self,
         *,
         name: str,
-        array: NumpyArray[float],
+        array: ArrayLike[Any],
         copy: bool,
     ) -> None:
         if copy:
-            self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
+            self[name] = array.copy() if isinstance(array, np.ndarray) else copylib.copy(array)
         else:
             self[name] = array
 

@@ -503,3 +503,8 @@ to = "/api/plotting/_autosummary/pyvista.Light.world_focal_point.html"
 from = "/api/core/_autosummary/pyvista.Light.world_position.html"
 status = 301
 to = "/api/plotting/_autosummary/pyvista.Light.world_position.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.ColorLike.html"
+status = 301
+to = "/api/core/typing.html#pyvista.typing.ColorLike"

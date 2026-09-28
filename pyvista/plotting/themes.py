@@ -41,11 +41,13 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+import pyvista_validation as _validation
+
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
-from pyvista.core.utilities.misc import _check_range
 
+from . import _property
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -56,16 +58,23 @@ from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
 from .theme_registry import _resolve_theme_like
+from .tools import _validate_vector
+from .tools import _validate_viewup
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+
+    import cycler
 
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
     from ._typing import ThemeOptions
+    from ._typing import TrameModeOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -83,17 +92,17 @@ def _set_plot_theme_from_env() -> None:
             )
 
 
-def load_theme(filename):
+def load_theme(filename: str | Path) -> Theme:
     """Load a theme from a file.
 
     Parameters
     ----------
-    filename : str
+    filename : str | Path
         Theme file. Must be ``json``.
 
     Returns
     -------
-    pyvista.Theme
+    pyvista.plotting.themes.Theme
         The loaded theme.
 
     Examples
@@ -195,7 +204,7 @@ class _LightingConfig(_ConfigBase):
         '_specular_power',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._interpolation = InterpolationType.FLAT.value
         self._metallic = 0.0
         self._roughness = 0.5
@@ -208,6 +217,8 @@ class _LightingConfig(_ConfigBase):
     @property
     def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
         """Return or set the default interpolation type.
+
+        This is the default value of :attr:`pyvista.Property.interpolation`.
 
         See :class:`pyvista.plotting.opts.InterpolationType`.
 
@@ -235,15 +246,15 @@ class _LightingConfig(_ConfigBase):
     def interpolation(
         self,
         interpolation: str | int | InterpolationType,
-    ):
+    ) -> None:
         self._interpolation = InterpolationType.from_any(interpolation).value
 
     @property
     def metallic(self) -> float:  # numpydoc ignore=RT01
         """Return or set the metallic value.
 
-        This requires that the interpolation be set to ``'Physically based
-        rendering'``. Must be between 0 and 1.
+        This is the default value of :attr:`pyvista.Property.metallic`, which
+        documents the valid range.
 
         Examples
         --------
@@ -259,17 +270,16 @@ class _LightingConfig(_ConfigBase):
         return self._metallic
 
     @metallic.setter
-    def metallic(self, metallic: float):
-        _check_range(metallic, (0, 1), 'metallic')
+    def metallic(self, metallic: float) -> None:
+        _property._check_metallic(metallic)
         self._metallic = metallic
 
     @property
     def roughness(self) -> float:  # numpydoc ignore=RT01
         """Return or set the roughness value.
 
-        This value has to be between 0 (glossy) and 1 (rough). A glossy
-        material has reflections and a high specular part. This parameter is
-        only used by PBR interpolation.
+        This is the default value of :attr:`pyvista.Property.roughness`, which
+        documents the valid range.
 
         Examples
         --------
@@ -285,17 +295,16 @@ class _LightingConfig(_ConfigBase):
         return self._roughness
 
     @roughness.setter
-    def roughness(self, roughness: float):
-        _check_range(roughness, (0, 1), 'roughness')
+    def roughness(self, roughness: float) -> None:
+        _property._check_roughness(roughness)
         self._roughness = roughness
 
     @property
     def ambient(self) -> float:  # numpydoc ignore=RT01
         """Return or set the ambient value.
 
-        When lighting is enabled, this is the amount of light in the range of 0
-        to 1 that reaches the actor when not directed at the light source
-        emitted from the viewer.
+        This is the default value of :attr:`pyvista.Property.ambient`, which
+        documents the valid range.
 
         Examples
         --------
@@ -310,18 +319,16 @@ class _LightingConfig(_ConfigBase):
         return self._ambient
 
     @ambient.setter
-    def ambient(self, ambient: float):
-        _check_range(ambient, (0, 1), 'ambient')
+    def ambient(self, ambient: float) -> None:
+        _property._check_ambient(ambient)
         self._ambient = ambient
 
     @property
     def diffuse(self) -> float:  # numpydoc ignore=RT01
         """Return or set the diffuse value.
 
-        This is the scattering of light by reflection or
-        transmission. Diffuse reflection results when light strikes an
-        irregular surface such as a frosted window or the surface of a
-        frosted or coated light bulb. Must be between 0 and 1.
+        This is the default value of :attr:`pyvista.Property.diffuse`, which
+        documents the valid range.
 
         Examples
         --------
@@ -336,16 +343,16 @@ class _LightingConfig(_ConfigBase):
         return self._diffuse
 
     @diffuse.setter
-    def diffuse(self, diffuse: float):
-        _check_range(diffuse, (0, 1), 'diffuse')
+    def diffuse(self, diffuse: float) -> None:
+        _property._check_diffuse(diffuse)
         self._diffuse = diffuse
 
     @property
     def specular(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular value.
 
-        Specular lighting simulates the bright spot of a light that appears
-        on shiny objects. Must be between 0 and 1.
+        This is the default value of :attr:`pyvista.Property.specular`, which
+        documents the valid range.
 
         Examples
         --------
@@ -360,15 +367,16 @@ class _LightingConfig(_ConfigBase):
         return self._specular
 
     @specular.setter
-    def specular(self, specular: float):
-        _check_range(specular, (0, 1), 'specular')
+    def specular(self, specular: float) -> None:
+        _property._check_specular(specular)
         self._specular = specular
 
     @property
     def specular_power(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular power value.
 
-        Must be between 0.0 and 128.0.
+        This is the default value of :attr:`pyvista.Property.specular_power`,
+        which documents the valid range.
 
         Examples
         --------
@@ -383,8 +391,8 @@ class _LightingConfig(_ConfigBase):
         return self._specular_power
 
     @specular_power.setter
-    def specular_power(self, specular_power: float):
-        _check_range(specular_power, (0, 128), 'specular_power')
+    def specular_power(self, specular_power: float) -> None:
+        _property._check_specular_power(specular_power)
         self._specular_power = specular_power
 
     @property
@@ -404,7 +412,7 @@ class _LightingConfig(_ConfigBase):
         return self._emissive
 
     @emissive.setter
-    def emissive(self, emissive: bool):
+    def emissive(self, emissive: bool) -> None:
         self._emissive = bool(emissive)
 
 
@@ -424,7 +432,7 @@ class _DepthPeelingConfig(_ConfigBase):
 
     __slots__ = ['_enabled', '_number_of_peels', '_occlusion_ratio']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._number_of_peels = 4
         self._occlusion_ratio = 0.0
         self._enabled = False
@@ -442,7 +450,7 @@ class _DepthPeelingConfig(_ConfigBase):
         return self._number_of_peels
 
     @number_of_peels.setter
-    def number_of_peels(self, number_of_peels: int):
+    def number_of_peels(self, number_of_peels: int) -> None:
         self._number_of_peels = int(number_of_peels)
 
     @property
@@ -458,7 +466,7 @@ class _DepthPeelingConfig(_ConfigBase):
         return self._occlusion_ratio
 
     @occlusion_ratio.setter
-    def occlusion_ratio(self, occlusion_ratio: float):
+    def occlusion_ratio(self, occlusion_ratio: float) -> None:
         self._occlusion_ratio = float(occlusion_ratio)
 
     @property
@@ -474,10 +482,10 @@ class _DepthPeelingConfig(_ConfigBase):
         return self._enabled
 
     @enabled.setter
-    def enabled(self, enabled: bool):
+    def enabled(self, enabled: bool) -> None:
         self._enabled = bool(enabled)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         txt = ['']
         parm = {
             'Number': 'number_of_peels',
@@ -514,12 +522,12 @@ class _SilhouetteConfig(_ConfigBase):
         '_opacity',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._color = Color('black')
-        self._line_width = 2
+        self._line_width: float = 2.0
         self._opacity = 1.0
-        self._feature_angle = None
-        self._decimate = None
+        self._feature_angle: float | None = None
+        self._decimate: float | None = None
         self._enabled = False
 
     @property
@@ -528,7 +536,7 @@ class _SilhouetteConfig(_ConfigBase):
         return self._enabled
 
     @enabled.setter
-    def enabled(self, enabled: bool):
+    def enabled(self, enabled: bool) -> None:
         self._enabled = bool(enabled)
 
     @property
@@ -544,7 +552,7 @@ class _SilhouetteConfig(_ConfigBase):
         return self._color
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike) -> None:
         self._color = Color(color)
 
     @property
@@ -560,12 +568,15 @@ class _SilhouetteConfig(_ConfigBase):
         return self._line_width
 
     @line_width.setter
-    def line_width(self, line_width: float):
-        self._line_width = float(line_width)  # type: ignore[assignment]
+    def line_width(self, line_width: float) -> None:
+        self._line_width = float(line_width)
 
     @property
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the silhouette opacity.
+
+        Must be in the range ``[0.0, 1.0]``. A value of ``1.0`` is totally
+        opaque and ``0.0`` is completely transparent.
 
         Examples
         --------
@@ -576,8 +587,8 @@ class _SilhouetteConfig(_ConfigBase):
         return self._opacity
 
     @opacity.setter
-    def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+    def opacity(self, opacity: float) -> None:
+        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
         self._opacity = float(opacity)
 
     @property
@@ -593,14 +604,16 @@ class _SilhouetteConfig(_ConfigBase):
         return self._feature_angle
 
     @feature_angle.setter
-    def feature_angle(self, feature_angle: float | None):
+    def feature_angle(self, feature_angle: float | None) -> None:
         self._feature_angle = feature_angle
 
     @property
-    def decimate(self) -> float:  # numpydoc ignore=RT01
+    def decimate(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the amount to decimate the silhouette.
 
-        Parameter must be between 0 and 1.
+        Must be in the range ``[0.0, 1.0]``. A value of ``0.0`` or ``None``
+        decimates nothing and ``1.0`` decimates as much as the algorithm
+        allows.
 
         Examples
         --------
@@ -608,17 +621,17 @@ class _SilhouetteConfig(_ConfigBase):
         >>> pv.global_theme.silhouette.decimate = 0.9
 
         """
-        return self._decimate  # type: ignore[return-value]
+        return self._decimate
 
     @decimate.setter
-    def decimate(self, decimate: float | None):
+    def decimate(self, decimate: float | None) -> None:
         if decimate is None:
             self._decimate = None
         else:
-            _check_range(decimate, (0, 1), 'decimate')
+            _validation.check_range(decimate, [0.0, 1.0], name='decimate')
             self._decimate = float(decimate)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         txt = ['']
         parm = {
             'Color': 'color',
@@ -645,13 +658,22 @@ class _ColorbarConfig(_ConfigBase):
 
     """
 
-    __slots__ = ['_height', '_position_x', '_position_y', '_width']
+    __slots__ = [
+        '_height',
+        '_position_x',
+        '_position_y',
+        '_stacking_gap',
+        '_title_pad',
+        '_width',
+    ]
 
-    def __init__(self):
-        self._width = None
-        self._height = None
-        self._position_x = None
-        self._position_y = None
+    def __init__(self) -> None:
+        self._width: float | None = None
+        self._height: float | None = None
+        self._position_x: float | None = None
+        self._position_y: float | None = None
+        self._stacking_gap: float | None = None
+        self._title_pad: float | None = None
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01
@@ -666,7 +688,7 @@ class _ColorbarConfig(_ConfigBase):
         return self._width  # type: ignore[return-value]
 
     @width.setter
-    def width(self, width: float):
+    def width(self, width: float) -> None:
         self._width = float(width)
 
     @property
@@ -682,7 +704,7 @@ class _ColorbarConfig(_ConfigBase):
         return self._height  # type: ignore[return-value]
 
     @height.setter
-    def height(self, height: float):
+    def height(self, height: float) -> None:
         self._height = float(height)
 
     @property
@@ -698,7 +720,7 @@ class _ColorbarConfig(_ConfigBase):
         return self._position_x  # type: ignore[return-value]
 
     @position_x.setter
-    def position_x(self, position_x: float):
+    def position_x(self, position_x: float) -> None:
         self._position_x = float(position_x)
 
     @property
@@ -714,22 +736,107 @@ class _ColorbarConfig(_ConfigBase):
         return self._position_y  # type: ignore[return-value]
 
     @position_y.setter
-    def position_y(self, position_y: float):
+    def position_y(self, position_y: float) -> None:
         self._position_y = float(position_y)
 
-    def __repr__(self):
+    @property
+    def title_pad(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the colorbar title padding.
+
+        The padding is the space between the title and the tick labels, as a
+        multiple of the size the labels are drawn at, or of the size they ask
+        for on a box that sizes the text itself.  A title turned alongside the
+        bar is padded off the bar by a multiple of its own size.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_horizontal.title_pad = 0.8
+
+        """
+        return self._title_pad  # type: ignore[return-value]
+
+    @title_pad.setter
+    def title_pad(self, title_pad: float) -> None:
+        self._title_pad = float(title_pad)
+
+    @property
+    def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
+        """Return or set the distance between stacked colorbars.
+
+        The distance is a fraction of the viewport.  ``None`` spaces them as
+        tightly as their titles and tick labels allow.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.stacking_gap = 0.2
+
+        """
+        return self._stacking_gap
+
+    @stacking_gap.setter
+    def stacking_gap(self, stacking_gap: float | None) -> None:
+        if stacking_gap is not None:
+            _validation.check_greater_than(stacking_gap, 0, strict=False, name='stacking_gap')
+            stacking_gap = float(stacking_gap)
+        self._stacking_gap = stacking_gap
+
+    def __repr__(self) -> str:
         txt = ['']
         parm = {
             'Width': 'width',
             'Height': 'height',
             'X Position': 'position_x',
             'Y Position': 'position_y',
+            'Title Pad': 'title_pad',
+            'Stacking Gap': 'stacking_gap',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
             txt.append(f'    {name:<21}: {setting}')
 
         return '\n'.join(txt)
+
+
+class _VerticalColorbarConfig(_ColorbarConfig):
+    """PyVista vertical colorbar configuration.
+
+    Adds the settings that only a vertical colorbar has.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> pv.global_theme.colorbar_vertical.rotate_title = True
+
+    """
+
+    __slots__ = ['_rotate_title']
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._rotate_title = False
+
+    @property
+    def rotate_title(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether a colorbar turns its title alongside the bar.
+
+        A horizontal colorbar cannot, so this is a vertical setting only.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.rotate_title = True
+
+        """
+        return self._rotate_title
+
+    @rotate_title.setter
+    def rotate_title(self, rotate_title: bool) -> None:
+        self._rotate_title = bool(rotate_title)
+
+    def __repr__(self) -> str:
+        return '\n'.join([super().__repr__(), f'    {"Rotate Title":<21}: {self.rotate_title}'])
 
 
 class _AxesConfig(_ConfigBase):
@@ -772,14 +879,14 @@ class _AxesConfig(_ConfigBase):
 
     __slots__ = ['_box', '_show', '_x_color', '_y_color', '_z_color']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         txt = ['Axes configuration']
         parm = {
             'X Color': 'x_color',
@@ -814,7 +921,7 @@ class _AxesConfig(_ConfigBase):
         return self._x_color
 
     @x_color.setter
-    def x_color(self, color: ColorLike):
+    def x_color(self, color: ColorLike) -> None:
         self._x_color = Color(color)
 
     @property
@@ -837,7 +944,7 @@ class _AxesConfig(_ConfigBase):
         return self._y_color
 
     @y_color.setter
-    def y_color(self, color: ColorLike):
+    def y_color(self, color: ColorLike) -> None:
         self._y_color = Color(color)
 
     @property
@@ -860,7 +967,7 @@ class _AxesConfig(_ConfigBase):
         return self._z_color
 
     @z_color.setter
-    def z_color(self, color: ColorLike):
+    def z_color(self, color: ColorLike) -> None:
         self._z_color = Color(color)
 
     @property
@@ -879,7 +986,7 @@ class _AxesConfig(_ConfigBase):
         return self._box
 
     @box.setter
-    def box(self, box: bool):
+    def box(self, box: bool) -> None:
         self._box = bool(box)
 
     @property
@@ -897,7 +1004,7 @@ class _AxesConfig(_ConfigBase):
         return self._show
 
     @show.setter
-    def show(self, show: bool):
+    def show(self, show: bool) -> None:
         self._show = bool(show)
 
 
@@ -936,15 +1043,15 @@ class _Font(_ConfigBase):
 
     __slots__ = ['_color', '_family', '_fmt', '_label_size', '_size', '_title_size']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._family = 'arial'
         self._size = 12
-        self._title_size = None
-        self._label_size = None
+        self._title_size: int | None = None
+        self._label_size: int | None = None
         self._color = Color('white')
-        self._fmt = None
+        self._fmt: str | None = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         txt = ['']
         parm = {
             'Family': 'family',
@@ -981,7 +1088,7 @@ class _Font(_ConfigBase):
         return self._family
 
     @family.setter
-    def family(self, family: str):
+    def family(self, family: str) -> None:
         parse_font_family(family)  # check valid font
         self._family = family
 
@@ -998,14 +1105,17 @@ class _Font(_ConfigBase):
         return self._size
 
     @size.setter
-    def size(self, size: int):
+    def size(self, size: int) -> None:
         self._size = int(size)
 
     @property
-    def title_size(self) -> int:  # numpydoc ignore=RT01
+    def title_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the title size.
 
-        If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for titles.
+        A scalar bar draws its title at this size; a box drawn around a
+        horizontal bar that is too narrow for it, or given too small a height,
+        shrinks it to fit.  Where this and :attr:`label_size` are both ``None``,
+        every size is fitted to the bar the text is drawn on.
 
         Examples
         --------
@@ -1013,20 +1123,23 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.title_size = 20
 
         """
-        return self._title_size  # type: ignore[return-value]
+        return self._title_size
 
     @title_size.setter
-    def title_size(self, title_size: int | None):
+    def title_size(self, title_size: int | None) -> None:
         if title_size is None:
             self._title_size = None
         else:
             self._title_size = int(title_size)
 
     @property
-    def label_size(self) -> int:  # numpydoc ignore=RT01
+    def label_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for labels.
+        The largest size a scalar bar draws its labels at.  They are drawn
+        smaller where the bar leaves them too little room to stay clear of
+        each other.  Where this and :attr:`title_size` are both ``None``, every
+        size is fitted to the bar the text is drawn on.
 
         Examples
         --------
@@ -1034,10 +1147,10 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.label_size = 20
 
         """
-        return self._label_size  # type: ignore[return-value]
+        return self._label_size
 
     @label_size.setter
-    def label_size(self, label_size: int | None):
+    def label_size(self, label_size: int | None) -> None:
         if label_size is None:
             self._label_size = None
         else:
@@ -1056,12 +1169,14 @@ class _Font(_ConfigBase):
         return self._color
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike) -> None:
         self._color = Color(color)
 
     @property
-    def fmt(self) -> str:  # numpydoc ignore=RT01
+    def fmt(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the string formatter used to format numerical data.
+
+        ``None``, the default, lets each actor choose its own format.
 
         Examples
         --------
@@ -1071,10 +1186,10 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
-        return self._fmt  # type: ignore[return-value]
+        return self._fmt
 
     @fmt.setter
-    def fmt(self, fmt: str):
+    def fmt(self, fmt: str | None) -> None:
         self._fmt = fmt
 
 
@@ -1093,17 +1208,17 @@ class _SliderStyleConfig(_ConfigBase):
         '_tube_width',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the slider style configuration."""
-        self._name = None
-        self._slider_length = None
-        self._slider_width = None
-        self._slider_color = None
-        self._tube_width = None
-        self._tube_color = None
-        self._cap_opacity = None
-        self._cap_length = None
-        self._cap_width = None
+        self._name: str | None = None
+        self._slider_length: float | None = None
+        self._slider_width: float | None = None
+        self._slider_color: Color | None = None
+        self._tube_width: float | None = None
+        self._tube_color: Color | None = None
+        self._cap_opacity: float | None = None
+        self._cap_length: float | None = None
+        self._cap_width: float | None = None
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
@@ -1111,7 +1226,7 @@ class _SliderStyleConfig(_ConfigBase):
         return self._name  # type: ignore[return-value]
 
     @name.setter
-    def name(self, name: str):
+    def name(self, name: str) -> None:
         self._name = name
 
     @property
@@ -1127,7 +1242,7 @@ class _SliderStyleConfig(_ConfigBase):
         return self._cap_width  # type: ignore[return-value]
 
     @cap_width.setter
-    def cap_width(self, cap_width: float):
+    def cap_width(self, cap_width: float) -> None:
         self._cap_width = float(cap_width)
 
     @property
@@ -1143,12 +1258,15 @@ class _SliderStyleConfig(_ConfigBase):
         return self._cap_length  # type: ignore[return-value]
 
     @cap_length.setter
-    def cap_length(self, cap_length: float):
+    def cap_length(self, cap_length: float) -> None:
         self._cap_length = float(cap_length)
 
     @property
     def cap_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cap opacity.
+
+        Must be in the range ``[0.0, 1.0]``. A value of ``1.0`` is totally
+        opaque and ``0.0`` is completely transparent.
 
         Examples
         --------
@@ -1159,8 +1277,8 @@ class _SliderStyleConfig(_ConfigBase):
         return self._cap_opacity  # type: ignore[return-value]
 
     @cap_opacity.setter
-    def cap_opacity(self, cap_opacity: float):
-        _check_range(cap_opacity, (0, 1), 'cap_opacity')
+    def cap_opacity(self, cap_opacity: float) -> None:
+        _validation.check_range(cap_opacity, [0.0, 1.0], name='cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -1176,7 +1294,7 @@ class _SliderStyleConfig(_ConfigBase):
         return self._tube_color  # type: ignore[return-value]
 
     @tube_color.setter
-    def tube_color(self, tube_color: ColorLike):
+    def tube_color(self, tube_color: ColorLike) -> None:
         self._tube_color = Color(tube_color)
 
     @property
@@ -1192,7 +1310,7 @@ class _SliderStyleConfig(_ConfigBase):
         return self._tube_width  # type: ignore[return-value]
 
     @tube_width.setter
-    def tube_width(self, tube_width: float):
+    def tube_width(self, tube_width: float) -> None:
         self._tube_width = float(tube_width)
 
     @property
@@ -1208,7 +1326,7 @@ class _SliderStyleConfig(_ConfigBase):
         return self._slider_color  # type: ignore[return-value]
 
     @slider_color.setter
-    def slider_color(self, slider_color: ColorLike):
+    def slider_color(self, slider_color: ColorLike) -> None:
         self._slider_color = Color(slider_color)
 
     @property
@@ -1224,7 +1342,7 @@ class _SliderStyleConfig(_ConfigBase):
         return self._slider_width  # type: ignore[return-value]
 
     @slider_width.setter
-    def slider_width(self, slider_width: float):
+    def slider_width(self, slider_width: float) -> None:
         self._slider_width = float(slider_width)
 
     @property
@@ -1240,10 +1358,10 @@ class _SliderStyleConfig(_ConfigBase):
         return self._slider_length  # type: ignore[return-value]
 
     @slider_length.setter
-    def slider_length(self, slider_length: float):
+    def slider_length(self, slider_length: float) -> None:
         self._slider_length = float(slider_length)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         txt = ['']
         parm = {
             'Slider length': 'slider_length',
@@ -1294,7 +1412,7 @@ class _SliderConfig(_ConfigBase):
 
     __slots__ = ['_classic', '_modern']
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the slider configuration."""
         self._classic = _SliderStyleConfig()
         self._classic.name = 'classic'
@@ -1324,7 +1442,7 @@ class _SliderConfig(_ConfigBase):
         return self._classic
 
     @classic.setter
-    def classic(self, config: _SliderStyleConfig):
+    def classic(self, config: _SliderStyleConfig) -> None:
         if not isinstance(config, _SliderStyleConfig):
             msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -1336,13 +1454,13 @@ class _SliderConfig(_ConfigBase):
         return self._modern
 
     @modern.setter
-    def modern(self, config: _SliderStyleConfig):
+    def modern(self, config: _SliderStyleConfig) -> None:
         if not isinstance(config, _SliderStyleConfig):
             msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._modern = config
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         txt = ['']
         parm = {
             'Classic': 'classic',
@@ -1353,7 +1471,7 @@ class _SliderConfig(_ConfigBase):
             txt.append(f'    {name:<21}: {setting}')
         return '\n'.join(txt)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         for style in [self._classic, self._modern]:
             yield style.name
 
@@ -1383,9 +1501,9 @@ class _TrameConfig(_ConfigBase):
         '_still_ratio',
     ]
 
-    def __init__(self):
-        self._interactive_ratio = 1
-        self._still_ratio = 1
+    def __init__(self) -> None:
+        self._interactive_ratio: float = 1.0
+        self._still_ratio: float = 1.0
         self._jupyter_server_name = 'pyvista-jupyter'
         self._jupyter_server_port = 0
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
@@ -1415,7 +1533,7 @@ class _TrameConfig(_ConfigBase):
         elif jupyter_mode == 'native':  # pragma: no cover
             self._jupyter_extension_enabled = False
             self._server_proxy_enabled = False
-        self._default_mode = 'trame'
+        self._default_mode: TrameModeOptions = 'trame'
 
     @property
     def interactive_ratio(self) -> float:  # numpydoc ignore=RT01
@@ -1430,8 +1548,8 @@ class _TrameConfig(_ConfigBase):
         return self._interactive_ratio
 
     @interactive_ratio.setter
-    def interactive_ratio(self, interactive_ratio: float):
-        self._interactive_ratio = interactive_ratio  # type: ignore[assignment]
+    def interactive_ratio(self, interactive_ratio: float) -> None:
+        self._interactive_ratio = interactive_ratio
 
     @property
     def still_ratio(self) -> float:  # numpydoc ignore=RT01
@@ -1446,11 +1564,11 @@ class _TrameConfig(_ConfigBase):
         return self._still_ratio
 
     @still_ratio.setter
-    def still_ratio(self, still_ratio: float):
-        self._still_ratio = still_ratio  # type: ignore[assignment]
+    def still_ratio(self, still_ratio: float) -> None:
+        self._still_ratio = still_ratio
 
     @property
-    def jupyter_server_name(self):  # numpydoc ignore=RT01
+    def jupyter_server_name(self) -> str:  # numpydoc ignore=RT01
         """Return or set the trame server name PyVista uses in Jupyter.
 
         This defaults to ``'pyvista-jupyter'``.
@@ -1464,7 +1582,7 @@ class _TrameConfig(_ConfigBase):
         return self._jupyter_server_name
 
     @jupyter_server_name.setter
-    def jupyter_server_name(self, name: str):
+    def jupyter_server_name(self, name: str) -> None:
         self._jupyter_server_name = name
 
     @property
@@ -1473,7 +1591,7 @@ class _TrameConfig(_ConfigBase):
         return self._jupyter_server_port
 
     @jupyter_server_port.setter
-    def jupyter_server_port(self, port: int):
+    def jupyter_server_port(self, port: int) -> None:
         self._jupyter_server_port = port
 
     @property
@@ -1482,7 +1600,7 @@ class _TrameConfig(_ConfigBase):
         return self._server_proxy_enabled
 
     @server_proxy_enabled.setter
-    def server_proxy_enabled(self, enabled: bool):
+    def server_proxy_enabled(self, enabled: bool) -> None:
         if enabled and self.jupyter_extension_enabled:
             warn_external('Enabling server_proxy will disable jupyter_extension')
             self._jupyter_extension_enabled = False
@@ -1490,12 +1608,12 @@ class _TrameConfig(_ConfigBase):
         self._server_proxy_enabled = bool(enabled)
 
     @property
-    def server_proxy_prefix(self):  # numpydoc ignore=RT01
+    def server_proxy_prefix(self) -> str:  # numpydoc ignore=RT01
         """Return or set URL prefix when using relative URLs with the Jupyter interface."""
         return self._server_proxy_prefix
 
     @server_proxy_prefix.setter
-    def server_proxy_prefix(self, prefix: str):
+    def server_proxy_prefix(self, prefix: str) -> None:
         self._server_proxy_prefix = prefix
 
     @property
@@ -1504,7 +1622,7 @@ class _TrameConfig(_ConfigBase):
         return self._jupyter_extension_available
 
     @jupyter_extension_available.setter
-    def jupyter_extension_available(self, _available: bool):
+    def jupyter_extension_available(self, _available: bool) -> None:
         warn_external(
             'The jupyter_extension_available flag is read only and is automatically detected.'
         )
@@ -1515,7 +1633,7 @@ class _TrameConfig(_ConfigBase):
         return self._jupyter_extension_enabled
 
     @jupyter_extension_enabled.setter
-    def jupyter_extension_enabled(self, enabled: bool):
+    def jupyter_extension_enabled(self, enabled: bool) -> None:
         if enabled and not self.jupyter_extension_available:
             msg = 'The trame_jupyter_extension is not available'
             raise ValueError(msg)
@@ -1527,7 +1645,7 @@ class _TrameConfig(_ConfigBase):
         self._jupyter_extension_enabled = bool(enabled)
 
     @property
-    def default_mode(self):  # numpydoc ignore=RT01
+    def default_mode(self) -> TrameModeOptions:  # numpydoc ignore=RT01
         """Return or set the default mode of the Trame backend.
 
         * ``'trame'``: Uses a view that can switch between client and server
@@ -1540,7 +1658,7 @@ class _TrameConfig(_ConfigBase):
         return self._default_mode
 
     @default_mode.setter
-    def default_mode(self, mode: str):
+    def default_mode(self, mode: TrameModeOptions) -> None:
         self._default_mode = mode
 
 
@@ -1564,14 +1682,14 @@ class _CameraConfig(_ConfigBase):
         '_viewup',
     ]
 
-    def __init__(self):
-        self._position = [1.0, 1.0, 1.0]
-        self._viewup = [0.0, 0.0, 1.0]
+    def __init__(self) -> None:
+        self._position = _validate_vector((1.0, 1.0, 1.0), name='position')
+        self._viewup = _validate_viewup((0.0, 0.0, 1.0))
         self._parallel_projection = False
         self._parallel_scale = 1.0
 
     @property
-    def position(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the camera position.
 
         Examples
@@ -1585,11 +1703,11 @@ class _CameraConfig(_ConfigBase):
         return self._position
 
     @position.setter
-    def position(self, position: VectorLike[float]):
-        self._position = position  # type: ignore[assignment]
+    def position(self, position: VectorLike[float]) -> None:
+        self._position = _validate_vector(position, name='position')
 
     @property
-    def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def viewup(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the camera's view-up vector.
 
         Examples
@@ -1603,8 +1721,8 @@ class _CameraConfig(_ConfigBase):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, viewup: VectorLike[float]):
-        self._viewup = viewup  # type: ignore[assignment]
+    def viewup(self, viewup: VectorLike[float]) -> None:
+        self._viewup = _validate_viewup(viewup)
 
     @property
     def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
@@ -1625,7 +1743,7 @@ class _CameraConfig(_ConfigBase):
         self._parallel_projection = value
 
     @property
-    def parallel_scale(self) -> bool:  # numpydoc ignore=RT01
+    def parallel_scale(self) -> float:  # numpydoc ignore=RT01
         """Return or set parallel scale.
 
         Examples
@@ -1636,10 +1754,10 @@ class _CameraConfig(_ConfigBase):
         >>> pv.global_theme.camera.parallel_scale = 2.0
 
         """
-        return self._parallel_scale  # type: ignore[return-value]
+        return self._parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value: bool) -> None:
+    def parallel_scale(self, value: float) -> None:
         self._parallel_scale = value
 
 
@@ -1648,7 +1766,7 @@ class _PlotCellConfig(_ConfigBase):
 
     __slots__ = ['_font_size', '_line_width', '_normals_scale', '_point_size']
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._line_width = 5
         self._point_size = 30
         self._font_size = 20
@@ -1816,20 +1934,20 @@ class Theme(_ConfigBase):
         '_window_size',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         self._name = type(self)._default_name or 'default'
         self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = _CameraConfig()
 
-        self._notebook = None
+        self._notebook: bool | None = None
         self._window_size = [1024, 768]
         self._image_scale = 1
         self._font = _Font()
         self._cmap: ColormapOptions = 'viridis'
         self._color = Color('white')
-        self._color_cycler = None
+        self._color_cycler: cycler.Cycler[str, Any] | None = None
         self._nan_color = Color('darkgray')
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
@@ -1847,12 +1965,14 @@ class Theme(_ConfigBase):
         self._colorbar_horizontal.height = 0.08
         self._colorbar_horizontal.position_x = 0.35
         self._colorbar_horizontal.position_y = 0.05
+        self._colorbar_horizontal.title_pad = 0.5
 
-        self._colorbar_vertical = _ColorbarConfig()
+        self._colorbar_vertical = _VerticalColorbarConfig()
         self._colorbar_vertical.width = 0.08
         self._colorbar_vertical.height = 0.45
         self._colorbar_vertical.position_x = 0.9
         self._colorbar_vertical.position_y = 0.02
+        self._colorbar_vertical.title_pad = 0.5
 
         self._show_scalar_bar = True
         self._show_edges = False
@@ -1862,13 +1982,13 @@ class Theme(_ConfigBase):
         self._interactor_style = 'trackball_style'
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
-        self._point_shape = None
+        self._point_shape: str | None = None
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
-        self._before_close_callback = None
+        self._before_close_callback: Callable[[pyvista.Plotter], None] | None = None
         self._allow_empty_mesh = False
 
         # Grab system flag for anti-aliasing
@@ -1884,7 +2004,7 @@ class Theme(_ConfigBase):
         self._jupyter_backend: str | None = os.environ.get('PYVISTA_JUPYTER_BACKEND')
         self._trame = _TrameConfig()
 
-        self._multi_rendering_splitting_position = None
+        self._multi_rendering_splitting_position: float | None = None
         self._volume_mapper = 'smart'
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
@@ -1892,7 +2012,7 @@ class Theme(_ConfigBase):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._anti_aliasing = 'msaa'
+        self._anti_aliasing: str | None = 'msaa'
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
@@ -1900,7 +2020,7 @@ class Theme(_ConfigBase):
         self._opacity = 1.0
         self._edge_opacity = 1.0
 
-        self._logo_file = None
+        self._logo_file: str | None = None
 
         self._resample_environment_texture: bool | float = False
 
@@ -1930,7 +2050,7 @@ class Theme(_ConfigBase):
         return self._hidden_line_removal
 
     @hidden_line_removal.setter
-    def hidden_line_removal(self, value: bool):
+    def hidden_line_removal(self, value: bool) -> None:
         self._hidden_line_removal = value
 
     @property
@@ -1986,12 +2106,15 @@ class Theme(_ConfigBase):
         return self._interpolate_before_map
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):
+    def interpolate_before_map(self, value: bool) -> None:
         self._interpolate_before_map = value
 
     @property
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity.
+
+        This is the default value of :attr:`pyvista.Property.opacity`, which
+        documents the valid range.
 
         Examples
         --------
@@ -2002,13 +2125,16 @@ class Theme(_ConfigBase):
         return self._opacity
 
     @opacity.setter
-    def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+    def opacity(self, opacity: float) -> None:
+        _property._check_opacity(opacity)
         self._opacity = float(opacity)
 
     @property
     def edge_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the edges opacity.
+
+        This is the default value of :attr:`pyvista.Property.edge_opacity`,
+        which documents the valid range.
 
         .. note::
             ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
@@ -2024,8 +2150,8 @@ class Theme(_ConfigBase):
         return self._edge_opacity
 
     @edge_opacity.setter
-    def edge_opacity(self, edge_opacity: float):
-        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+    def edge_opacity(self, edge_opacity: float) -> None:
+        _property._check_edge_opacity(edge_opacity)
         self._edge_opacity = float(edge_opacity)
 
     @property
@@ -2045,7 +2171,7 @@ class Theme(_ConfigBase):
         return self._above_range_color
 
     @above_range_color.setter
-    def above_range_color(self, value: ColorLike):
+    def above_range_color(self, value: ColorLike) -> None:
         self._above_range_color = Color(value)
 
     @property
@@ -2065,7 +2191,7 @@ class Theme(_ConfigBase):
         return self._below_range_color
 
     @below_range_color.setter
-    def below_range_color(self, value: ColorLike):
+    def below_range_color(self, value: ColorLike) -> None:
         self._below_range_color = Color(value)
 
     @property
@@ -2083,7 +2209,7 @@ class Theme(_ConfigBase):
         return self._return_cpos
 
     @return_cpos.setter
-    def return_cpos(self, value: bool):
+    def return_cpos(self, value: bool) -> None:
         self._return_cpos = value
 
     @property
@@ -2161,7 +2287,7 @@ class Theme(_ConfigBase):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: str | None):
+    def jupyter_backend(self, backend: str | None) -> None:
         from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
@@ -2172,7 +2298,7 @@ class Theme(_ConfigBase):
         return self._trame
 
     @trame.setter
-    def trame(self, config: _TrameConfig):
+    def trame(self, config: _TrameConfig) -> None:
         if not isinstance(config, _TrameConfig):
             msg = 'Configuration type must be `_TrameConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -2194,7 +2320,7 @@ class Theme(_ConfigBase):
         return self._auto_close
 
     @auto_close.setter
-    def auto_close(self, value: bool):
+    def auto_close(self, value: bool) -> None:
         self._auto_close = value
 
     @property
@@ -2212,7 +2338,7 @@ class Theme(_ConfigBase):
         return self._full_screen
 
     @full_screen.setter
-    def full_screen(self, value: bool):
+    def full_screen(self, value: bool) -> None:
         self._full_screen = value
 
     @property
@@ -2230,11 +2356,11 @@ class Theme(_ConfigBase):
         return self._enable_camera_orientation_widget
 
     @enable_camera_orientation_widget.setter
-    def enable_camera_orientation_widget(self, value: bool):
+    def enable_camera_orientation_widget(self, value: bool) -> None:
         self._enable_camera_orientation_widget = value
 
     @property
-    def camera(self):  # numpydoc ignore=RT01
+    def camera(self) -> _CameraConfig:  # numpydoc ignore=RT01
         """Return or set the default camera position.
 
         Examples
@@ -2249,13 +2375,15 @@ class Theme(_ConfigBase):
         return self._camera
 
     @camera.setter
-    def camera(self, camera):
+    def camera(self, camera: _CameraConfig | dict[str, Any]) -> None:
         if isinstance(camera, dict):
             self._camera = _CameraConfig.from_dict(camera)
         elif isinstance(camera, _CameraConfig):
             self._camera = camera
         else:
-            msg = f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}'
+            msg = (  # type: ignore[unreachable]
+                f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}'
+            )
             raise TypeError(msg)
 
     @property
@@ -2277,7 +2405,7 @@ class Theme(_ConfigBase):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value: bool | None):
+    def notebook(self, value: bool | None) -> None:
         self._notebook = value
 
     @property
@@ -2295,7 +2423,7 @@ class Theme(_ConfigBase):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: list[int]):
+    def window_size(self, window_size: list[int]) -> None:
         if len(window_size) != 2:
             msg = 'Expected a length 2 iterable for ``window_size``.'
             raise ValueError(msg)
@@ -2313,7 +2441,7 @@ class Theme(_ConfigBase):
         return self._image_scale
 
     @image_scale.setter
-    def image_scale(self, value: int):
+    def image_scale(self, value: int) -> None:
         value = int(value)
         if value < 1:
             msg = 'Scale factor must be a positive integer.'
@@ -2356,7 +2484,7 @@ class Theme(_ConfigBase):
         return self._font
 
     @font.setter
-    def font(self, config: _Font):
+    def font(self, config: _Font) -> None:
         if not isinstance(config, _Font):
             msg = 'Configuration type must be `_Font`.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -2384,7 +2512,7 @@ class Theme(_ConfigBase):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, cmap: ColormapOptions):
+    def cmap(self, cmap: ColormapOptions) -> None:
         get_cmap_safe(cmap)  # for validation
         self._cmap = cmap
 
@@ -2413,11 +2541,11 @@ class Theme(_ConfigBase):
         return self._color
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike) -> None:
         self._color = Color(color)
 
     @property
-    def color_cycler(self):  # numpydoc ignore=RT01
+    def color_cycler(self) -> cycler.Cycler[str, Any] | None:  # numpydoc ignore=RT01
         """Return or set the default color cycler used to color meshes.
 
         This color cycler is iterated over by each renderer to sequentially
@@ -2452,7 +2580,9 @@ class Theme(_ConfigBase):
         return self._color_cycler
 
     @color_cycler.setter
-    def color_cycler(self, color_cycler):
+    def color_cycler(
+        self, color_cycler: str | Sequence[ColorLike] | cycler.Cycler[str, Any] | None
+    ) -> None:
         self._color_cycler = get_cycler(color_cycler)
 
     @property
@@ -2470,7 +2600,7 @@ class Theme(_ConfigBase):
         return self._nan_color
 
     @nan_color.setter
-    def nan_color(self, nan_color: ColorLike):
+    def nan_color(self, nan_color: ColorLike) -> None:
         self._nan_color = Color(nan_color)
 
     @property
@@ -2488,12 +2618,18 @@ class Theme(_ConfigBase):
         return self._edge_color
 
     @edge_color.setter
-    def edge_color(self, edge_color: ColorLike):
+    def edge_color(self, edge_color: ColorLike) -> None:
         self._edge_color = Color(edge_color)
 
     @property
     def line_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default line width.
+
+        This is the default value of :attr:`pyvista.Property.line_width`, which
+        documents the valid range.
+
+        .. versionchanged:: 0.50
+            A negative width raises instead of being accepted.
 
         Examples
         --------
@@ -2504,12 +2640,19 @@ class Theme(_ConfigBase):
         return self._line_width
 
     @line_width.setter
-    def line_width(self, line_width: float):
+    def line_width(self, line_width: float) -> None:
+        _property._check_line_width(line_width)
         self._line_width = float(line_width)
 
     @property
     def point_size(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default point size.
+
+        This is the default value of :attr:`pyvista.Property.point_size`, which
+        documents the valid range.
+
+        .. versionchanged:: 0.50
+            A negative size raises instead of being accepted.
 
         Examples
         --------
@@ -2520,7 +2663,8 @@ class Theme(_ConfigBase):
         return self._point_size
 
     @point_size.setter
-    def point_size(self, point_size: float):
+    def point_size(self, point_size: float) -> None:
+        _property._check_point_size(point_size)
         self._point_size = float(point_size)
 
     @property
@@ -2536,7 +2680,7 @@ class Theme(_ConfigBase):
         return self._outline_color
 
     @outline_color.setter
-    def outline_color(self, outline_color: ColorLike):
+    def outline_color(self, outline_color: ColorLike) -> None:
         self._outline_color = Color(outline_color)
 
     @property
@@ -2559,7 +2703,7 @@ class Theme(_ConfigBase):
         return self._border_color
 
     @border_color.setter
-    def border_color(self, border_color: ColorLike):
+    def border_color(self, border_color: ColorLike) -> None:
         self._border_color = Color(border_color)
 
     @property
@@ -2579,7 +2723,7 @@ class Theme(_ConfigBase):
         return self._border_width
 
     @border_width.setter
-    def border_width(self, border_width: float):
+    def border_width(self, border_width: float) -> None:
         self._border_width = float(border_width)
 
     @property
@@ -2595,7 +2739,7 @@ class Theme(_ConfigBase):
         return self._floor_color
 
     @floor_color.setter
-    def floor_color(self, floor_color: ColorLike):
+    def floor_color(self, floor_color: ColorLike) -> None:
         self._floor_color = Color(floor_color)
 
     @property
@@ -2613,7 +2757,7 @@ class Theme(_ConfigBase):
         return self._colorbar_orientation
 
     @colorbar_orientation.setter
-    def colorbar_orientation(self, colorbar_orientation: str):
+    def colorbar_orientation(self, colorbar_orientation: str) -> None:
         if colorbar_orientation not in ['vertical', 'horizontal']:
             msg = 'Colorbar orientation must be either "vertical" or "horizontal"'
             raise ValueError(msg)
@@ -2638,14 +2782,14 @@ class Theme(_ConfigBase):
         return self._colorbar_horizontal
 
     @colorbar_horizontal.setter
-    def colorbar_horizontal(self, config: _ColorbarConfig):
+    def colorbar_horizontal(self, config: _ColorbarConfig) -> None:
         if not isinstance(config, _ColorbarConfig):
             msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._colorbar_horizontal = config
 
     @property
-    def colorbar_vertical(self) -> _ColorbarConfig:  # numpydoc ignore=RT01
+    def colorbar_vertical(self) -> _VerticalColorbarConfig:  # numpydoc ignore=RT01
         """Return or set the default parameters of a vertical colorbar.
 
         Examples
@@ -2664,9 +2808,9 @@ class Theme(_ConfigBase):
         return self._colorbar_vertical
 
     @colorbar_vertical.setter
-    def colorbar_vertical(self, config: _ColorbarConfig):
-        if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+    def colorbar_vertical(self, config: _VerticalColorbarConfig) -> None:
+        if not isinstance(config, _VerticalColorbarConfig):
+            msg = 'Configuration type must be `_VerticalColorbarConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._colorbar_vertical = config
 
@@ -2685,7 +2829,7 @@ class Theme(_ConfigBase):
         return self._show_scalar_bar
 
     @show_scalar_bar.setter
-    def show_scalar_bar(self, show_scalar_bar: bool):
+    def show_scalar_bar(self, show_scalar_bar: bool) -> None:
         self._show_scalar_bar = bool(show_scalar_bar)
 
     @property
@@ -2703,7 +2847,7 @@ class Theme(_ConfigBase):
         return self._show_edges
 
     @show_edges.setter
-    def show_edges(self, show_edges: bool):
+    def show_edges(self, show_edges: bool) -> None:
         self._show_edges = bool(show_edges)
 
     @property
@@ -2721,7 +2865,7 @@ class Theme(_ConfigBase):
         return self._show_vertices
 
     @show_vertices.setter
-    def show_vertices(self, show_vertices: bool):
+    def show_vertices(self, show_vertices: bool) -> None:
         self._show_vertices = bool(show_vertices)
 
     @property
@@ -2739,7 +2883,7 @@ class Theme(_ConfigBase):
         return self._lighting
 
     @lighting.setter
-    def lighting(self, lighting: bool):
+    def lighting(self, lighting: bool) -> None:
         self._lighting = lighting
 
     @property
@@ -2757,7 +2901,7 @@ class Theme(_ConfigBase):
         return self._interactive
 
     @interactive.setter
-    def interactive(self, interactive: bool):
+    def interactive(self, interactive: bool) -> None:
         self._interactive = bool(interactive)
 
     @property
@@ -2775,7 +2919,7 @@ class Theme(_ConfigBase):
         return self._render_points_as_spheres
 
     @render_points_as_spheres.setter
-    def render_points_as_spheres(self, render_points_as_spheres: bool):
+    def render_points_as_spheres(self, render_points_as_spheres: bool) -> None:
         self._render_points_as_spheres = bool(render_points_as_spheres)
 
     @property
@@ -2808,7 +2952,7 @@ class Theme(_ConfigBase):
         return self._point_shape
 
     @point_shape.setter
-    def point_shape(self, point_shape: PointSpriteShape | str | None):
+    def point_shape(self, point_shape: PointSpriteShape | str | None) -> None:
         if point_shape is not None:
             try:
                 point_shape = PointSpriteShape(point_shape)
@@ -2834,7 +2978,7 @@ class Theme(_ConfigBase):
         return self._render_lines_as_tubes
 
     @render_lines_as_tubes.setter
-    def render_lines_as_tubes(self, render_lines_as_tubes: bool):
+    def render_lines_as_tubes(self, render_lines_as_tubes: bool) -> None:
         self._render_lines_as_tubes = bool(render_lines_as_tubes)
 
     @property
@@ -2852,7 +2996,7 @@ class Theme(_ConfigBase):
         return self._transparent_background
 
     @transparent_background.setter
-    def transparent_background(self, transparent_background: bool):
+    def transparent_background(self, transparent_background: bool) -> None:
         self._transparent_background = transparent_background
 
     @property
@@ -2872,7 +3016,7 @@ class Theme(_ConfigBase):
         return self._title
 
     @title.setter
-    def title(self, title: str):
+    def title(self, title: str) -> None:
         self._title = title
 
     @property
@@ -2902,7 +3046,7 @@ class Theme(_ConfigBase):
         return self._anti_aliasing
 
     @anti_aliasing.setter
-    def anti_aliasing(self, anti_aliasing: str | None):
+    def anti_aliasing(self, anti_aliasing: str | None) -> None:
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
                 msg = 'anti_aliasing must be either "ssaa", "msaa", or "fxaa"'
@@ -2911,7 +3055,7 @@ class Theme(_ConfigBase):
             msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        self._anti_aliasing = anti_aliasing  # type: ignore[assignment]
+        self._anti_aliasing = anti_aliasing
 
     @property
     def multi_samples(self) -> int:  # numpydoc ignore=RT01
@@ -2933,12 +3077,15 @@ class Theme(_ConfigBase):
         return self._multi_samples
 
     @multi_samples.setter
-    def multi_samples(self, multi_samples: int):
+    def multi_samples(self, multi_samples: int) -> None:
         self._multi_samples = int(multi_samples)
 
     @property
-    def multi_rendering_splitting_position(self) -> float:  # numpydoc ignore=RT01
+    def multi_rendering_splitting_position(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the default splitting position for multi-rendering.
+
+        ``None``, the default, lets the renderers choose the position from the
+        number of subplots on each side.
 
         Examples
         --------
@@ -2949,13 +3096,13 @@ class Theme(_ConfigBase):
         >>> pv.global_theme.multi_rendering_splitting_position = 0.5
 
         """
-        return self._multi_rendering_splitting_position  # type: ignore[return-value]
+        return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
         self,
-        multi_rendering_splitting_position: float,
-    ):
+        multi_rendering_splitting_position: float | None,
+    ) -> None:
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
     @property
@@ -2981,7 +3128,7 @@ class Theme(_ConfigBase):
         return self._volume_mapper
 
     @volume_mapper.setter
-    def volume_mapper(self, mapper: str):
+    def volume_mapper(self, mapper: str) -> None:
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
             msg = (
@@ -3007,7 +3154,7 @@ class Theme(_ConfigBase):
         return self._smooth_shading
 
     @smooth_shading.setter
-    def smooth_shading(self, smooth_shading: bool):
+    def smooth_shading(self, smooth_shading: bool) -> None:
         self._smooth_shading = bool(smooth_shading)
 
     @property
@@ -3028,7 +3175,7 @@ class Theme(_ConfigBase):
         return self._depth_peeling
 
     @depth_peeling.setter
-    def depth_peeling(self, config: _DepthPeelingConfig):
+    def depth_peeling(self, config: _DepthPeelingConfig) -> None:
         if not isinstance(config, _DepthPeelingConfig):
             msg = 'Configuration type must be `_DepthPeelingConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -3051,7 +3198,7 @@ class Theme(_ConfigBase):
         return self._silhouette
 
     @silhouette.setter
-    def silhouette(self, config: _SilhouetteConfig):
+    def silhouette(self, config: _SilhouetteConfig) -> None:
         if not isinstance(config, _SilhouetteConfig):
             msg = 'Configuration type must be `_SilhouetteConfig`'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -3063,7 +3210,7 @@ class Theme(_ConfigBase):
         return self._slider_styles
 
     @slider_styles.setter
-    def slider_styles(self, config: _SliderConfig):
+    def slider_styles(self, config: _SliderConfig) -> None:
         if not isinstance(config, _SliderConfig):
             msg = 'Configuration type must be `_SliderConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -3093,7 +3240,7 @@ class Theme(_ConfigBase):
         return self._axes
 
     @axes.setter
-    def axes(self, config: _AxesConfig):
+    def axes(self, config: _AxesConfig) -> None:
         if not isinstance(config, _AxesConfig):
             msg = 'Configuration type must be `_AxesConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -3102,15 +3249,15 @@ class Theme(_ConfigBase):
     @property
     def before_close_callback(
         self,
-    ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
+    ) -> Callable[[pyvista.Plotter], None] | None:  # numpydoc ignore=RT01
         """Return the default callback function to run before the plotter closes."""
-        return self._before_close_callback  # type: ignore[return-value]
+        return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
         self,
-        value: Callable[[pyvista.Plotter], None],
-    ):
+        value: Callable[[pyvista.Plotter], None] | None,
+    ) -> None:
         self._before_close_callback = value
 
     @property
@@ -3134,10 +3281,10 @@ class Theme(_ConfigBase):
         return self._allow_empty_mesh
 
     @allow_empty_mesh.setter
-    def allow_empty_mesh(self, allow_empty_mesh: bool):
+    def allow_empty_mesh(self, allow_empty_mesh: bool) -> None:
         self._allow_empty_mesh = bool(allow_empty_mesh)
 
-    def restore_defaults(self):
+    def restore_defaults(self) -> None:
         """Restore the theme defaults.
 
         Examples
@@ -3148,7 +3295,7 @@ class Theme(_ConfigBase):
         """
         self.__init__()  # type: ignore[misc]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """User friendly representation of the current theme."""
         txt = [f'{self.name.capitalize()} Theme']
         txt.append('-' * len(txt[0]))
@@ -3208,7 +3355,7 @@ class Theme(_ConfigBase):
         return self._name
 
     @name.setter
-    def name(self, name: str):
+    def name(self, name: str) -> None:
         self._name = name
 
     @property
@@ -3285,7 +3432,7 @@ class Theme(_ConfigBase):
             theme = load_theme(theme)
 
         if not isinstance(theme, Theme):
-            msg = '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+            msg = '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         for attr_name in Theme.__slots__:
@@ -3356,7 +3503,7 @@ class Theme(_ConfigBase):
         return self._split_sharp_edges
 
     @split_sharp_edges.setter
-    def split_sharp_edges(self, value: bool):
+    def split_sharp_edges(self, value: bool) -> None:
         self._split_sharp_edges = value
 
     @property
@@ -3378,7 +3525,7 @@ class Theme(_ConfigBase):
         return self._sharp_edges_feature_angle
 
     @sharp_edges_feature_angle.setter
-    def sharp_edges_feature_angle(self, value: float):
+    def sharp_edges_feature_angle(self, value: float) -> None:
         self._sharp_edges_feature_angle = float(value)
 
     @property
@@ -3387,7 +3534,7 @@ class Theme(_ConfigBase):
         return self._lighting_params
 
     @lighting_params.setter
-    def lighting_params(self, config: _LightingConfig):
+    def lighting_params(self, config: _LightingConfig) -> None:
         if not isinstance(config, _LightingConfig):
             msg = 'Configuration type must be `_LightingConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -3434,7 +3581,7 @@ class Theme(_ConfigBase):
         return self._resample_environment_texture
 
     @resample_environment_texture.setter
-    def resample_environment_texture(self, value: bool | float):
+    def resample_environment_texture(self, value: bool | float) -> None:
         self._resample_environment_texture = value
 
     @property
@@ -3466,7 +3613,7 @@ class Theme(_ConfigBase):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: str | Path | None):
+    def logo_file(self, logo_file: str | Path | None) -> None:
         if logo_file is None:
             path = None
         else:
@@ -3498,12 +3645,14 @@ class DarkTheme(Theme):
 
     _default_name: ClassVar[str] = 'dark'
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.background = 'black'
         self.cmap = 'viridis'
         self.font.color = 'white'
+        self.font.title_size = 18
+        self.font.label_size = 18
         self.show_edges = False
         self.color = 'lightblue'
         self.outline_color = 'white'
@@ -3533,12 +3682,13 @@ class ParaViewTheme(Theme):
 
     _default_name: ClassVar[str] = 'paraview'
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme."""
         super().__init__()
         self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
+        self.font.title_size = 16
         self.font.label_size = 16
         self.font.color = 'white'
         self.show_edges = False
@@ -3580,7 +3730,7 @@ class DocumentTheme(Theme):
 
     _default_name: ClassVar[str] = 'document'
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.background = 'white'
@@ -3613,7 +3763,7 @@ class DocumentProTheme(DocumentTheme):
 
     _default_name: ClassVar[str] = 'document_pro'
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.anti_aliasing = 'ssaa'
@@ -3630,7 +3780,7 @@ class _DocumentBuildTheme(DocumentTheme):
 
     _default_name: ClassVar[str] = 'document_build'
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme."""
         super().__init__()
         self.window_size = [1024, 768]
@@ -3666,7 +3816,7 @@ class _TestingTheme(Theme):
 
     _default_name: ClassVar[str] = 'testing'
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.notebook = False
         self.multi_samples = 1

@@ -15,6 +15,7 @@ from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
     from pyvista.core.pointset import PolyData
 
@@ -33,7 +34,7 @@ class UnstructuredGridFilters(DataSetFilters):
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    def subdivide_tetra(self):
+    def subdivide_tetra(self) -> UnstructuredGrid:
         """Subdivide each tetrahedron into twelve tetrahedrons.
 
         Returns
@@ -63,13 +64,13 @@ class UnstructuredGridFilters(DataSetFilters):
     def clean(
         self,
         *,
-        tolerance=0,
+        tolerance: float = 0,
         remove_unused_points: bool = True,
         produce_merge_map: bool = True,
         average_point_data: bool = True,
-        merging_array_name=None,
+        merging_array_name: str | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
         This filter, merging coincident points as defined by a merging
@@ -158,7 +159,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetInputDataObject(self.copy())  # type: ignore[attr-defined]
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
-        alg.SetMergingArray(merging_array_name)
+        alg.SetMergingArray(merging_array_name)  # type: ignore[arg-type]
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
@@ -227,16 +228,21 @@ class UnstructuredGridFilters(DataSetFilters):
         if self.is_empty:
             return self if inplace else self.copy()
 
-        out = self.copy()
+        out = self if inplace else self.copy()
+        cell_ids = np.arange(out.n_cells)
 
         # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
         cell_array = out.GetCells()
+        if inplace:
+            # Another mesh may share the input's cell array with it
+            grown = _vtk.vtkCellArray()
+            grown.DeepCopy(cell_array)
+            out.SetCells(out._get_cell_types_array(), grown)
+            cell_array = grown
         cell_array.InsertNextCell(1)
 
         # Extract all the cells, except for the dummy cell
-        out = out.extract_cells(np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False)
+        extracted = out.extract_cells(cell_ids, pass_point_ids=False, pass_cell_ids=False)
 
-        if inplace:
-            self.copy_from(out)
-            return self
+        out.copy_from(extracted, deep=False)
         return out

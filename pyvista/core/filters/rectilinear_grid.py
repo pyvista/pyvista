@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -10,6 +11,9 @@ from pyvista import _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
 
 
 @abstract_class
@@ -24,7 +28,7 @@ class RectilinearGridFilters:
         pass_cell_ids: bool = True,
         pass_data: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Create a tetrahedral mesh structured grid.
 
         Parameters
@@ -64,6 +68,12 @@ class RectilinearGridFilters:
         pyvista.UnstructuredGrid
             UnstructuredGrid containing the tetrahedral cells.
 
+        Notes
+        -----
+        Splitting a cell into 12 tetrahedra adds a point at the cell's center, so the
+        output has more points than the input. With ``pass_data=True`` the point data
+        at each added point is the mean of that cell's corner values.
+
         Examples
         --------
         Divide a rectangular grid into tetrahedrons. Each cell contains by
@@ -93,14 +103,25 @@ class RectilinearGridFilters:
         """
         alg = _vtk.vtkRectilinearGridToTetrahedra()
         alg.SetRememberVoxelId(pass_cell_ids or pass_data)
+        # The filter reads 5 or 12 from the active cell scalars, so name the array on a copy
+        mesh = self
         if mixed is not False:
             if isinstance(mixed, str):
-                self.cell_data.active_scalars_name = mixed  # type: ignore[attr-defined]
+                mesh = self.copy(deep=False)  # type: ignore[attr-defined]
+                mesh.cell_data.active_scalars_name = mixed
             elif isinstance(mixed, (np.ndarray, Sequence)):
-                self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore[attr-defined]
+                mesh = self.copy(deep=False)  # type: ignore[attr-defined]
+                mesh.cell_data['_MIXED_CELLS_'] = mixed
+                mesh.cell_data.active_scalars_name = '_MIXED_CELLS_'
             elif not isinstance(mixed, bool):
                 msg = '`mixed` must be either a sequence of ints or bool'  # type: ignore[unreachable]
                 raise TypeError(msg)
+            elif self.cell_data.active_scalars_name is None:  # type: ignore[attr-defined]
+                msg = (
+                    '`mixed=True` reads the active cell scalars to choose 5 or 12 tetrahedra '
+                    'per cell, but this grid has no active cell scalars.'
+                )
+                raise ValueError(msg)
             alg.SetTetraPerCellTo5And12()
         else:
             if tetra_per_cell not in [5, 6, 12]:
@@ -118,7 +139,7 @@ class RectilinearGridFilters:
 
             alg.SetTetraPerCell(tetra_per_cell)
 
-        alg.SetInputData(self)
+        alg.SetInputData(mesh)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
         out = _get_output(alg)
 
@@ -126,12 +147,23 @@ class RectilinearGridFilters:
             # algorithm stores original cell ids in active scalars
             # this does not preserve active scalars, but we need to
             # keep active scalars until they are renamed
+            voxel_ids = np.asarray(out.cell_data.active_scalars)
             for name in self.cell_data:  # type: ignore[attr-defined]
                 if name != out.cell_data.active_scalars_name:
                     out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore[attr-defined]
 
+            # Interpolate onto the center point added to every cell split into 12
+            centers = split = None
+            if self.point_data and out.n_points > self.n_points:  # type: ignore[attr-defined]
+                split = np.flatnonzero(
+                    np.bincount(voxel_ids, minlength=self.n_cells) == 12  # type: ignore[attr-defined]
+                )
+                centers = self.point_data_to_cell_data()  # type: ignore[attr-defined]
             for name in self.point_data:  # type: ignore[attr-defined]
-                out[name] = self.point_data[name]  # type: ignore[attr-defined]
+                values = self.point_data[name]  # type: ignore[attr-defined]
+                if centers is not None:
+                    values = np.concatenate((values, centers.cell_data[name][split]))
+                out[name] = values
 
         if alg.GetRememberVoxelId():
             # original cell_ids are not named and are the active scalars

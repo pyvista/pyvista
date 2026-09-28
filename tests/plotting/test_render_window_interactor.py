@@ -315,6 +315,25 @@ def test_poked_subplot_context():
     pl.show()
 
 
+def test_poked_subplot_context_single_row():
+    pl = pv.Plotter(shape='2|1', window_size=(800, 800))
+    pl.show(auto_close=False)
+
+    pl.iren._mouse_move(600, 400)
+    with pl.iren.poked_subplot():
+        active = pl.renderers._active_index
+
+    assert active != pl.renderers._active_index
+    pl.close()
+
+
+def test_picker_scene_is_not_a_picker():
+    pl = pv.Plotter()
+
+    with pytest.raises(KeyError, match=re.escape('Picker class `PickerType.SCENE` is unknown.')):
+        pl.iren.picker = 'scene'
+
+
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:
@@ -333,6 +352,23 @@ def test_release_button_observers(event):
 
     pl.iren.interactor.GetInteractorStyle().InvokeEvent(event)
     assert cb._i == 2
+
+
+@pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
+def test_release_button_observers_can_be_removed(event):
+    calls = []
+    pl = pv.Plotter()
+    observer = pl.iren.add_observer(event, lambda *_: calls.append(event))
+    style = pl.iren.interactor.GetInteractorStyle()
+
+    style.InvokeEvent(event)
+    assert len(calls) == 1
+
+    pl.iren.remove_observer(observer)
+    style.InvokeEvent(event)
+
+    assert len(calls) == 1
+    pl.close()
 
 
 def test_enable_custom_trackball_style():

@@ -4,8 +4,10 @@ from collections.abc import Sized
 import itertools
 import re
 import sys
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
+import warnings
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -26,12 +28,15 @@ from pyvista import examples
 from pyvista.core.cell import _get_connectivity_array
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
+from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -39,6 +44,9 @@ from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 from tests.vtk_backend_divergence import CELL_STATUS_ENUM
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # CellStatus sorted by lower-case names, excluding VALID state
 CELL_STATUS_ARRAY_NAMES = [
@@ -140,6 +148,29 @@ def test_clip_inplace(mesh):
     clipped = mesh.clip(inplace=True)
     assert clipped is mesh
     assert mesh.n_points < n_points_in
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PointSet(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])),
+        pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['polydata', 'pointset', 'unstructured'],
+)
+def test_clip_inplace_return_clipped(mesh):
+    mesh = mesh.copy()
+    n_points_in = mesh.n_points
+    expected_kept, expected_removed = mesh.copy().clip(return_clipped=True)
+
+    kept, removed = mesh.clip(inplace=True, return_clipped=True)
+
+    assert kept is mesh
+    assert removed is not mesh
+    assert mesh.n_points < n_points_in
+    assert np.array_equal(kept.points, expected_kept.points)
+    assert np.array_equal(removed.points, expected_removed.points)
 
 
 @pytest.mark.parametrize(
@@ -287,6 +318,9 @@ def _cell_types(mesh):
     }
 
 
+_CELL_TYPE_MESHES = _cell_type_meshes()
+
+
 def _clip_that_removes_nothing(mesh, name):
     """Apply one clip whose region contains the whole mesh."""
     enclosing = pv.Cube(center=(0, 0, 0), x_length=99, y_length=99, z_length=99)
@@ -303,10 +337,10 @@ CLIP_FILTERS = ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar']
 
 
 @pytest.mark.parametrize('name', CLIP_FILTERS)
-@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+@pytest.mark.parametrize('mesh_type', list(_CELL_TYPE_MESHES))
 def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
     """A clip that removes nothing leaves every cell as the type it was."""
-    mesh = _cell_type_meshes()[mesh_type]
+    mesh = _CELL_TYPE_MESHES[mesh_type].copy()
 
     clipped = _clip_that_removes_nothing(mesh, name)
 
@@ -315,10 +349,10 @@ def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
 
 
 @pytest.mark.parametrize('name', CLIP_FILTERS)
-@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+@pytest.mark.parametrize('mesh_type', list(_CELL_TYPE_MESHES))
 def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
     """A clip that removes nothing neither adds nor merges points."""
-    mesh = _cell_type_meshes()[mesh_type]
+    mesh = _CELL_TYPE_MESHES[mesh_type].copy()
 
     clipped = _clip_that_removes_nothing(mesh, name)
 
@@ -327,10 +361,10 @@ def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
 
 
 @pytest.mark.parametrize('name', CLIP_FILTERS)
-@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+@pytest.mark.parametrize('mesh_type', list(_CELL_TYPE_MESHES))
 def test_clip_splits_the_mesh_in_two(mesh_type, name):
     """What a clip keeps and what it removes add up to the whole mesh."""
-    mesh = _cell_type_meshes()[mesh_type]
+    mesh = _CELL_TYPE_MESHES[mesh_type].copy()
     center = np.array(mesh.center)
     surface = pv.Sphere(
         radius=0.6,
@@ -653,12 +687,100 @@ def test_clip_box_no_unused_points(as_composite):
     assert np.allclose(clipped.bounds, new_bounds)
 
 
+def _n_unused_points(mesh):
+    """Return the number of points which no cell of the mesh refers to."""
+    used = np.unique(mesh.cast_to_unstructured_grid().cell_connectivity)
+    return mesh.n_points - len(used)
+
+
 @pytest.mark.parametrize('invert', [True, False])
 def test_clip_box_polydata_no_unused_points(invert):
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
-    used = np.unique(clipped.cast_to_unstructured_grid().cell_connectivity)
-    assert clipped.n_points == len(used)
+    assert _n_unused_points(clipped) == 0
+
+
+def test_cast_output_to_match_input_type_requires_two_composites():
+    match = 'Cannot match a composite output to a PolyData input.'
+    with pytest.raises(TypeError, match=match):
+        _cast_output_to_match_input_type(pv.MultiBlock([pv.Sphere()]), pv.Sphere())
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        lambda: pv.Plane(i_resolution=8, j_resolution=8).triangulate().strip(),
+        lambda: pv.Sphere(theta_resolution=16, phi_resolution=16),
+        lambda: (
+            pv.Plane(i_resolution=8, j_resolution=8)
+            .triangulate()
+            .merge(pv.lines_from_points(np.linspace([-1, 0, 0], [1, 0, 0], 5)))
+        ),
+        lambda: pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['strips', 'polydata', 'polydata_with_lines', 'unstructured_grid'],
+)
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='x', origin=mesh.center, return_clipped=True),
+        lambda mesh: mesh.clip_box(pv.Box(mesh.bounds).scale(0.6).bounds, merge_points=False),
+        lambda mesh: mesh.clip_slab(0.5, normal='x', origin=mesh.center),
+        lambda mesh: mesh.clip_scalar(scalars='x', value=mesh.center[0], both=True),
+    ],
+    ids=['clip', 'clip_box', 'clip_slab', 'clip_scalar'],
+)
+def test_clip_output_has_no_unused_points(make_mesh, clip_filter):
+    """Point removal is skipped after a clipper, so no clipper may leave points behind."""
+    mesh = make_mesh()
+    mesh.point_data['x'] = mesh.points[:, 0]
+
+    outputs = clip_filter(mesh)
+
+    for output in outputs if isinstance(outputs, tuple) else [outputs]:
+        assert output.n_cells
+        assert _n_unused_points(output) == 0
+
+
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='z', origin=(0, 0, 99), return_clipped=True)[1],
+        lambda mesh: mesh.clip_scalar(scalars='height', value=99, both=True)[1],
+    ],
+    ids=['clip', 'clip_scalar'],
+)
+def test_clip_empty_half_keeps_array_names(clip_filter):
+    """Removing the unused points of an empty half must not drop its arrays."""
+    mesh = pv.Plane().triangulate().strip()
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
+    assert mesh.n_strips
+
+    clipped = clip_filter(mesh)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
+
+
+def test_clip_leaves_points_alone_when_the_clipper_keeps_none(monkeypatch, hexbeam):
+    """The table-based clipper builds its own point list, so nothing follows it."""
+
+    def _fail(*_args, **_kwargs):  # pragma: no cover -- the test asserts it never runs
+        msg = 'remove_unused_points should not be called'
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(pv.UnstructuredGrid, 'remove_unused_points', _fail)
+    monkeypatch.setattr(pv.PolyData, 'remove_unused_points', _fail)
+
+    bounds = hexbeam.bounds
+    # Clip nothing away, so the output keeps the bounds of the input
+    kept, _ = hexbeam.clip(normal='x', origin=(bounds.x_max, 0.0, 0.0), return_clipped=True)
+    assert kept.n_cells == hexbeam.n_cells
+    assert hexbeam.clip_box(bounds, invert=False, merge_points=False).n_cells == hexbeam.n_cells
+    assert hexbeam.clip_slab(1e3, normal='x').n_cells == hexbeam.n_cells
 
 
 @pytest.mark.parametrize('invert', [True, False])
@@ -1178,6 +1300,9 @@ def _output_type_meshes():
     }
 
 
+_OUTPUT_TYPE_MESHES = _output_type_meshes()
+
+
 def _output_type_call(mesh, name):
     """Call one clip or slice filter with arguments valid for every input class."""
     kwargs = {
@@ -1223,7 +1348,7 @@ OUTPUT_TYPES = {
 @pytest.mark.parametrize('mesh_type', list(_CLIP_LIKE))
 def test_clip_slice_output_type(name, mesh_type):
     """Each filter gives back the class its docstring names, for every input class."""
-    mesh = _output_type_meshes()[mesh_type]
+    mesh = _OUTPUT_TYPE_MESHES[mesh_type].copy()
 
     if mesh_type == 'PointSet' and name.startswith('slice'):
         with pytest.raises(pv.PointSetDimensionReductionError):
@@ -1241,7 +1366,7 @@ def test_clip_slice_output_type(name, mesh_type):
 @pytest.mark.parametrize('name', list(OUTPUT_TYPES))
 def test_clip_slice_output_type_composite(name):
     """A composite stays a composite, with every block following the same rule."""
-    meshes = _output_type_meshes()
+    meshes = {key: mesh.copy() for key, mesh in _OUTPUT_TYPE_MESHES.items()}
     if name.startswith('slice'):
         meshes.pop('PointSet')
     flat, nested = list(meshes)[:3], list(meshes)[3:]
@@ -1296,7 +1421,7 @@ _POINTSET_REJECTS = frozenset(DATA_OBJECT_OUTPUT_TYPES) - {'cell_centers', 'elev
 
 def _data_object_call(mesh, name):
     """Call one `DataObjectFilters` filter with arguments valid for every input class."""
-    kwargs = {'sample': dict(target=_output_type_meshes()['ImageData'])}.get(name, {})
+    kwargs = {'sample': dict(target=_OUTPUT_TYPE_MESHES['ImageData'].copy())}.get(name, {})
     return getattr(mesh, name)(**kwargs)
 
 
@@ -1304,7 +1429,7 @@ def _data_object_call(mesh, name):
 @pytest.mark.parametrize('mesh_type', list(_CLIP_LIKE))
 def test_data_object_filter_output_type(name, mesh_type):
     """Each filter gives back the class its docstring names, for every input class."""
-    mesh = _output_type_meshes()[mesh_type]
+    mesh = _OUTPUT_TYPE_MESHES[mesh_type].copy()
 
     if mesh_type == 'PointSet' and name in _POINTSET_REJECTS:
         with pytest.raises((PointSetCellOperationError, PointSetNotSupported)):
@@ -1320,8 +1445,8 @@ def test_data_object_filter_output_type(name, mesh_type):
 def test_data_object_filter_output_type_composite(name):
     """A composite stays a composite, with every block following the same rule."""
     meshes = {
-        key: mesh
-        for key, mesh in _output_type_meshes().items()
+        key: mesh.copy()
+        for key, mesh in _OUTPUT_TYPE_MESHES.items()
         if not (key == 'PointSet' and name in _POINTSET_REJECTS)
     }
     expected_types = DATA_OBJECT_OUTPUT_TYPES[name]
@@ -1622,6 +1747,104 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
+_STRING_CONVERSIONS = [
+    ('point_data_to_cell_data', {}),
+    ('point_data_to_cell_data', {'categorical': True}),
+    ('cell_data_to_point_data', {}),
+]
+_STRING_CONVERSION_IDS = ['ptc', 'ptc-categorical', 'ctp']
+
+
+def _conversion_associations(filter_name):
+    """Return the source and target attribute names of a data conversion filter."""
+    source_name, _, target_name = filter_name.partition('_to_')
+    return source_name, target_name
+
+
+@pytest.mark.parametrize('unstructured', [False, True])
+@pytest.mark.parametrize('dtype', ['U', 'S'])
+@pytest.mark.parametrize('pass_data', [False, True])
+@pytest.mark.parametrize(
+    ('filter_name', 'kwargs'), _STRING_CONVERSIONS, ids=_STRING_CONVERSION_IDS
+)
+def test_data_conversion_excludes_strings(filter_name, kwargs, pass_data, dtype, unstructured):
+    mesh = pv.ImageData(dimensions=(3, 2, 2))
+    if unstructured:
+        mesh = mesh.cast_to_unstructured_grid()
+    source_name, target_name = _conversion_associations(filter_name)
+    sizes = {'point_data': mesh.n_points, 'cell_data': mesh.n_cells}
+    source = getattr(mesh, source_name)
+    source['labels'] = np.arange(sizes[source_name]).astype(dtype)
+    source['values'] = np.arange(sizes[source_name], dtype=float)
+    source['names'] = np.full(sizes[source_name], 'name', dtype=dtype)
+    getattr(mesh, target_name)['existing'] = np.full(sizes[target_name], 42.0)
+    mesh.field_data['description'] = ['metadata']
+    kwargs = {**kwargs, f'pass_{source_name}': pass_data}
+
+    # The conversion must match the same mesh without any string arrays
+    numeric = mesh.copy()
+    del getattr(numeric, source_name)['labels']
+    del getattr(numeric, source_name)['names']
+    expected = getattr(numeric, filter_name)(**kwargs)
+
+    original = mesh.copy()
+    match = 'excluded from the {}-to-{} data conversion'.format(
+        source_name.removesuffix('_data'), target_name.removesuffix('_data')
+    )
+    with pytest.warns(UserWarning, match=match + re.escape(": ['labels', 'names']")):
+        result = getattr(mesh, filter_name)(**kwargs)
+
+    assert getattr(result, target_name) == getattr(expected, target_name)
+    assert result.field_data == original.field_data
+    if pass_data:
+        assert getattr(result, source_name) == source
+        assert np.shares_memory(getattr(result, source_name)['values'], source['values'])
+    else:
+        assert getattr(result, source_name) == getattr(expected, source_name)
+    assert mesh == original
+
+
+@pytest.mark.parametrize(
+    ('filter_name', 'kwargs'), _STRING_CONVERSIONS, ids=_STRING_CONVERSION_IDS
+)
+def test_data_conversion_excludes_strings_only(filter_name, kwargs):
+    mesh = pv.ImageData(dimensions=(3, 2, 2))
+    source_name, target_name = _conversion_associations(filter_name)
+    sizes = {'point_data': mesh.n_points, 'cell_data': mesh.n_cells}
+    getattr(mesh, source_name)['labels'] = np.arange(sizes[source_name]).astype(str)
+    original = mesh.copy()
+    with pytest.warns(UserWarning, match=re.escape("conversion: ['labels']")):
+        result = getattr(mesh, filter_name)(**kwargs, **{f'pass_{source_name}': True})
+    assert getattr(result, source_name).keys() == ['labels']
+    assert not getattr(result, target_name)
+    assert mesh == original
+
+
+def test_point_data_to_cell_data_excludes_unnamed_strings():
+    mesh = pv.ImageData(dimensions=(3, 2, 2))
+    mesh.point_data['values'] = np.arange(mesh.n_points, dtype=float)
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+    mesh.point_data.VTKObject.GetAbstractArray('labels').SetName(None)
+    with pytest.warns(UserWarning, match='String arrays cannot be converted'):
+        result = mesh.point_data_to_cell_data()
+    assert result.cell_data.keys() == ['values']
+
+
+def test_point_data_to_cell_data_excludes_strings_composite():
+    numeric = pv.ImageData(dimensions=(3, 2, 2))
+    numeric.point_data['values'] = np.arange(numeric.n_points, dtype=float)
+    strings = numeric.copy()
+    strings.point_data['values'] = np.arange(strings.n_points).astype(str)
+    mesh = pv.MultiBlock({'numeric': numeric, 'nested': pv.MultiBlock([strings, None])})
+    original = mesh.copy()
+    with pytest.warns(UserWarning, match=re.escape("conversion: ['values']")):
+        result = mesh.point_data_to_cell_data()
+    assert result['numeric'].cell_data['values'][0] == 5.0
+    assert not result['nested'][0].cell_data
+    assert result['nested'][1] is None
+    assert mesh == original
+
+
 def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.point_data_to_cell_data(progress_bar=True)
@@ -1638,6 +1861,12 @@ def test_triangulate():
     tri = data.triangulate(progress_bar=True)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
+
+
+def test_triangulate_inplace_requires_an_unstructured_grid():
+    match = 'Cannot use inplace=True for ImageData input.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        examples.load_uniform().triangulate(inplace=True)
 
 
 def test_triangulate_composite(multiblock_all_no_pointset):
@@ -1669,14 +1898,305 @@ def test_sample():
     sample_test(progress_bar=True)
     sample_test(categorical=True)
     sample_test(locator=_vtk.vtkStaticCellLocator())
-    for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
-        sample_test(locator=locator)
     with pytest.raises(ValueError):  # noqa: PT011
         sample_test(locator='invalid')
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
     sample_test(snap_to_closest_point=True)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+@pytest.mark.parametrize(
+    'locator', ['cell', 'cell_tree', 'static_cell', _vtk.vtkStaticCellLocator]
+)
+def test_sample_locator(locator):
+    # An unstructured target is required: image data is probed without a cell locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    # A linear field interpolates to the same value from whichever cell is found
+    target.point_data['x'] = target.points[:, 0]
+    mesh = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    result = mesh.sample(target, locator=locator() if callable(locator) else locator)
+
+    assert result['vtkValidPointMask'].all()
+    assert np.allclose(result['x'], mesh.points[:, 0])
+
+
+@pytest.mark.needs_vtk_version(9, 7, 0)
+@pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
+def test_sample_obb_tree_locator_raises(locator):
+    locator = locator() if callable(locator) else locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+
+    match = "The 'obb_tree' locator is deprecated"
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().sample(target, locator=locator)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    'vtkMath::Jacobi: Error extracting eigenfunctions',
+    'vtkOBBTree Does not implement FindCell',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate, '
+    'and vtkOBBTree implements no FindCell',
+)
+@pytest.mark.needs_vtk_version(less_than=(9, 7, 0))
+@pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
+def test_sample_obb_tree_locator_deprecated(locator):
+    locator = locator() if callable(locator) else locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+
+    match = "The 'obb_tree' locator is deprecated"
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        pv.Sphere().sample(target, locator=locator)
+
+
+@pytest.fixture
+def categorical_probe():
+    """Image data overlapping the categorical target."""
+    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+
+
+@pytest.fixture
+def categorical_target():
+    """Target whose active point scalars are spaced apart so interpolation is detectable."""
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.clear_point_data()
+    target.point_data['labels'] = (np.arange(target.n_points) % 3) * 10.0
+    target.set_active_scalars('labels')
+    return target
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+@pytest.mark.parametrize('categorical', [True, False])
+def test_sample_categorical(categorical_probe, categorical_target, categorical):
+    result = categorical_probe.sample(categorical_target, categorical=categorical)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+@pytest.mark.parametrize('composite', [pv.MultiBlock, pv.PartitionedDataSet])
+@pytest.mark.parametrize('categorical', [True, False])
+def test_sample_categorical_composite_target(
+    categorical_probe, categorical_target, composite, categorical
+):
+    target = composite([categorical_target])
+
+    result = categorical_probe.sample(target, categorical=categorical)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {},
+        {'mark_blank': False},
+        {'pass_cell_data': False},
+        {'pass_point_data': False},
+        {'locator': 'cell'},
+        {'tolerance': 1e-3},
+    ],
+)
+def test_sample_composite_categorical_merge_matches_vtk(kwargs):
+    # A constant per block interpolates to the same values either way, so the whole
+    # output must match the composite probe VTK runs when `categorical` is off
+    lower = pv.ImageData(dimensions=(6, 6, 6), spacing=(0.2,) * 3, origin=(-0.6,) * 3)
+    upper = pv.ImageData(dimensions=(6, 6, 6), spacing=(0.2,) * 3, origin=(-0.1,) * 3)
+    for index, block in enumerate((lower, upper)):
+        block.point_data['labels'] = np.full(block.n_points, 100.0 * index)
+    target = pv.MultiBlock([lower, upper])
+    mesh = pv.PolyData(np.random.default_rng(0).random((200, 3)) * 1.4 - 0.7)
+
+    expected = mesh.sample(target, **kwargs)
+    merged = mesh.sample(target, categorical=True, **kwargs)
+
+    assert sorted(merged.point_data.keys()) == sorted(expected.point_data.keys())
+    assert sorted(merged.cell_data.keys()) == sorted(expected.cell_data.keys())
+    assert merged['labels'].any()
+    # Interpolating a constant is exact only to rounding, but the masks and ghosts are
+    for name in expected.point_data:
+        assert np.allclose(merged.point_data[name], expected.point_data[name]), name
+    for name in expected.cell_data:
+        assert np.array_equal(merged.cell_data[name], expected.cell_data[name]), name
+    assert np.array_equal(merged['vtkValidPointMask'], expected['vtkValidPointMask'])
+
+
+@pytest.fixture
+def side_by_side_blocks():
+    """Two blocks a probe of [5, 15, 25] hits in turn, with a constant `common` array."""
+    lower = pv.ImageData(dimensions=(11, 11, 1), spacing=(1.0, 1.0, 1.0))
+    upper = pv.ImageData(dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
+    lower['common'] = np.zeros(lower.n_points)
+    upper['common'] = np.ones(upper.n_points)
+    for block in (lower, upper):
+        block.set_active_scalars('common')
+    return lower, upper
+
+
+@pytest.fixture
+def side_by_side_probe():
+    """Probe points inside the lower block, inside the upper block, and outside both."""
+    return pv.PolyData([[5.0, 5.0, 0.0], [15.0, 5.0, 0.0], [25.0, 5.0, 0.0]])
+
+
+@pytest.mark.parametrize('on_upper', [True, False])
+def test_sample_composite_categorical_drops_partial_arrays(
+    side_by_side_blocks, side_by_side_probe, on_upper
+):
+    lower, upper = side_by_side_blocks
+    block = upper if on_upper else lower
+    block['partial'] = np.zeros(block.n_points)
+
+    merged = side_by_side_probe.sample(pv.MultiBlock([lower, upper]), categorical=True)
+
+    assert 'partial' not in merged.point_data
+    assert np.array_equal(merged['common'], [0.0, 1.0, 0.0])
+    assert np.array_equal(merged['vtkValidPointMask'], [1, 1, 0])
+
+
+@pytest.mark.parametrize(
+    ('lower_array', 'upper_array'),
+    [
+        (np.zeros((121, 3)), np.ones(121)),
+        (np.full(121, 2.75), np.full(121, 7, dtype=np.int32)),
+    ],
+    ids=['components', 'dtype'],
+)
+def test_sample_composite_categorical_drops_mismatched_arrays(
+    side_by_side_blocks, side_by_side_probe, lower_array, upper_array
+):
+    lower, upper = side_by_side_blocks
+    lower['mismatched'] = lower_array
+    upper['mismatched'] = upper_array
+    target = pv.MultiBlock([lower, upper])
+
+    merged = side_by_side_probe.sample(target, categorical=True)
+
+    # VTK keeps an array only where every block agrees on its components and type
+    assert sorted(merged.point_data.keys()) == sorted(
+        side_by_side_probe.sample(target).point_data.keys()
+    )
+    assert 'mismatched' not in merged.point_data
+
+
+def test_sample_empty_composite_categorical(categorical_probe):
+    result = categorical_probe.sample(pv.MultiBlock(), categorical=True)
+
+    assert result.n_points == categorical_probe.n_points
+    assert not np.any(result['vtkValidPointMask'])
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+@pytest.mark.parametrize(
+    'mesh',
+    [pv.PolyData(), pv.PointSet(np.array([[0.0, 0.0, 0.0], [9.0, 9.0, 9.0]]))],
+    ids=['empty', 'pointset'],
+)
+def test_sample_composite_categorical_without_ghost_arrays(mesh, categorical_target):
+    target = pv.MultiBlock([categorical_target, categorical_target.copy()])
+
+    result = mesh.sample(target, categorical=True)
+
+    assert result.n_points == mesh.n_points
+    assert 'labels' in result.point_data
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_composite):
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.cell_data['labels'] = np.ones(target.n_cells)
+    subject = "block 'Block-00'" if as_composite else 'target'
+    target = pv.MultiBlock([target]) if as_composite else target
+
+    match = f'Categorical sampling requires single-component point scalars on the {subject}'
+    with pytest.raises(pv.MissingDataError, match=re.escape(match)):
+        categorical_probe.sample(target, categorical=True)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+def test_sample_categorical_string_scalars_raise(categorical_probe, categorical_target):
+    categorical_target.clear_point_data()
+    categorical_target.point_data['names'] = ['a'] * categorical_target.n_points
+
+    match = 'Categorical sampling requires single-component point scalars on the target'
+    with pytest.raises(pv.MissingDataError, match=match):
+        categorical_probe.sample(categorical_target, categorical=True)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+def test_sample_categorical_activates_the_only_candidate(categorical_probe, categorical_target):
+    categorical_target.point_data.active_scalars_name = None
+
+    result = categorical_probe.sample(categorical_target, categorical=True)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert np.isin(sampled, categorical_target['labels']).all()
+    assert categorical_target.point_data.active_scalars_name is None
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+def test_sample_categorical_ambiguous_scalars_raises(categorical_probe, categorical_target):
+    categorical_target.point_data['other'] = np.ones(categorical_target.n_points)
+    categorical_target.point_data.active_scalars_name = None
+
+    match = re.escape("Make one of ['labels', 'other'] active")
+    with pytest.raises(pv.AmbiguousDataError, match=match):
+        categorical_probe.sample(categorical_target, categorical=True)
+
+
+def test_sample_non_dataset_target_raises(categorical_probe):
+    match = 'Sampling target must be a dataset or a composite of datasets, got NoneType.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        categorical_probe.sample(None)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='delaunay_3d tetrahedralises co-spherical points, which is degenerate',
+)
+def test_sample_categorical_multi_component_raises(categorical_probe):
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['vectors'] = np.ones((target.n_points, 3))
+    target.point_data.active_scalars_name = 'vectors'
+
+    match = "active point scalars 'vectors' have 3 components"
+    with pytest.raises(ValueError, match=match):
+        categorical_probe.sample(target, categorical=True)
 
 
 def test_sample_composite():
@@ -1727,6 +2247,49 @@ def test_sample_composite():
     assert 'partial_data' not in result[0].point_data
     assert 'vtkValidPointMask' in result[0].point_data
     assert 'vtkGhostType' in result[0].point_data
+
+
+def test_sample_composite_target():
+    from pyvista import _vtk
+
+    def _solid(center):
+        mesh = pv.SolidSphere(outer_radius=0.4, center=center)
+        mesh['height'] = mesh.points[:, 2]
+        mesh.cell_data['cval'] = np.arange(mesh.n_cells, dtype=float)
+        return mesh
+
+    a, b = _solid((0.0, 0.0, 0.0)), _solid((0.7, 0.0, 0.0))
+    grid = pv.ImageData(dimensions=(20, 20, 20), spacing=(0.09,) * 3, origin=(-0.8,) * 3)
+
+    flat = grid.sample(pv.MultiBlock([a, b]))
+    assert flat['vtkValidPointMask'].sum() > 0
+    assert 'height' in flat.point_data
+    assert 'cval' in flat.point_data
+
+    # Nesting and empty blocks are handled by the composite probe
+    nested = grid.sample(pv.MultiBlock([a, pv.MultiBlock([b])]))
+    assert np.array_equal(nested['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    with_none = grid.sample(pv.MultiBlock([a, None]))
+    assert 0 < with_none['vtkValidPointMask'].sum() < flat['vtkValidPointMask'].sum()
+
+    partitioned = grid.sample(pv.PartitionedDataSet([a, b]))
+    assert np.array_equal(partitioned['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    # Unwrapped composites are accepted too
+    raw = _vtk.vtkMultiBlockDataSet()
+    raw.SetNumberOfBlocks(2)
+    raw.SetBlock(0, a)
+    raw.SetBlock(1, b)
+    assert np.array_equal(grid.sample(raw)['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    raw_partitions = _vtk.vtkPartitionedDataSet()
+    raw_partitions.SetNumberOfPartitions(2)
+    raw_partitions.SetPartition(0, a)
+    raw_partitions.SetPartition(1, b)
+    assert np.array_equal(
+        grid.sample(raw_partitions)['vtkValidPointMask'], flat['vtkValidPointMask']
+    )
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
@@ -1964,6 +2527,11 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
             )
 
 
+def _matching_orders(actual_points, expected_points):
+    """Return the orders which sort two matching point sets the same way."""
+    return np.lexsort(np.round(actual_points, 8).T), np.lexsort(np.round(expected_points, 8).T)
+
+
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
     itertools.product([0, 1, 2], [0, 1, 2]),
@@ -1990,37 +2558,29 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         if num_point_data:
             assert dataset.point_data == orig_dataset.point_data
 
-        assert np.allclose(dataset.points[:, 0] * sx, transformed.points[:, 0])
-        assert np.allclose(dataset.points[:, 1] * sy, transformed.points[:, 1])
-        assert np.allclose(dataset.points[:, 2] * sz, transformed.points[:, 2])
+        scale = (sx, sy, sz)
+        expected_points = dataset.points * scale
+        # A rectilinear grid reverses the axes a negative scale would make descend, so
+        # match the points of both meshes before comparing their arrays
+        order, expected_order = _matching_orders(transformed.points, expected_points)
+        if not isinstance(dataset, pv.RectilinearGrid):
+            assert np.array_equal(order, expected_order)
+        assert np.allclose(transformed.points[order], expected_points[expected_order])
 
         if not isinstance(dataset, pv.PointSet):
+            cell_order, expected_cell_order = _matching_orders(
+                transformed.cell_centers().points, dataset.cell_centers().points * scale
+            )
             for i in range(num_cell_arrays):
                 assert np.allclose(
-                    dataset.cell_data[f'C{i}'][:, 0] * sx,
-                    transformed.cell_data[f'C{i}'][:, 0],
-                )
-                assert np.allclose(
-                    dataset.cell_data[f'C{i}'][:, 1] * sy,
-                    transformed.cell_data[f'C{i}'][:, 1],
-                )
-                assert np.allclose(
-                    dataset.cell_data[f'C{i}'][:, 2] * sz,
-                    transformed.cell_data[f'C{i}'][:, 2],
+                    transformed.cell_data[f'C{i}'][cell_order],
+                    dataset.cell_data[f'C{i}'][expected_cell_order] * scale,
                 )
 
         for i in range(num_point_data):
             assert np.allclose(
-                dataset.point_data[f'P{i}'][:, 0] * sx,
-                transformed.point_data[f'P{i}'][:, 0],
-            )
-            assert np.allclose(
-                dataset.point_data[f'P{i}'][:, 1] * sy,
-                transformed.point_data[f'P{i}'][:, 1],
-            )
-            assert np.allclose(
-                dataset.point_data[f'P{i}'][:, 2] * sz,
-                transformed.point_data[f'P{i}'][:, 2],
+                transformed.point_data[f'P{i}'][order],
+                dataset.point_data[f'P{i}'][expected_order] * scale,
             )
 
         # Verify active scalars are not changed
@@ -2031,6 +2591,53 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         expected_cell_scalars_name = orig_dataset.cell_data.active_scalars_name
         actual_cell_scalars_name = transformed.cell_data.active_scalars_name
         assert actual_cell_scalars_name == expected_cell_scalars_name
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_transform_active_attributes(datasets, inplace):
+    """Test the active scalars, vectors, normals, texture coordinates and tensors are kept."""
+
+    def set_active(attributes, prefix, n):
+        """Add an array of every attribute kind and mark them all active."""
+        attributes[f'{prefix}_scalars'] = np.random.default_rng().random(n)
+        attributes[f'{prefix}_vectors'] = np.random.default_rng().random((n, 3))
+        attributes[f'{prefix}_normals'] = np.random.default_rng().random((n, 3))
+        attributes[f'{prefix}_texture'] = np.random.default_rng().random((n, 2))
+        attributes[f'{prefix}_tensors'] = np.random.default_rng().random((n, 9))
+        attributes.active_scalars_name = f'{prefix}_scalars'
+        attributes.active_vectors_name = f'{prefix}_vectors'
+        attributes.active_normals_name = f'{prefix}_normals'
+        attributes.active_texture_coordinates_name = f'{prefix}_texture'
+        attributes.SetActiveTensors(f'{prefix}_tensors')
+
+    def assert_active(attributes, prefix):
+        """Assert an array of every attribute kind is still marked active."""
+        tensors = attributes.GetTensors()
+        assert attributes.active_scalars_name == f'{prefix}_scalars'
+        assert attributes.active_vectors_name == f'{prefix}_vectors'
+        assert attributes.active_normals_name == f'{prefix}_normals'
+        assert attributes.active_texture_coordinates_name == f'{prefix}_texture'
+        assert tensors is not None
+        assert tensors.GetName() == f'{prefix}_tensors'
+
+    scale = (1.0, 2.0, 3.0)
+    tf = pv.Transform().scale(scale)
+    for dataset in datasets:
+        dataset.clear_data()
+        has_cells = not isinstance(dataset, pv.PointSet)
+        set_active(dataset.point_data, 'point', dataset.n_points)
+        if has_cells:
+            set_active(dataset.cell_data, 'cell', dataset.n_cells)
+        dataset.active_tensors_name = 'point_tensors'
+        expected_vectors = dataset.point_data.active_vectors * scale
+
+        transformed = dataset.transform(tf, inplace=inplace)
+
+        assert_active(transformed.point_data, 'point')
+        assert transformed.active_tensors_name == 'point_tensors'
+        assert np.allclose(transformed.point_data.active_vectors, expected_vectors)
+        if has_cells:
+            assert_active(transformed.cell_data, 'cell')
 
 
 @pytest.mark.parametrize(
@@ -2085,9 +2692,9 @@ def test_transform_inplace(datasets):
 def test_transform_rectilinear_raises(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
-        'The transformation has a non-diagonal rotation component which is not supported by\n'
-        'RectilinearGrid. Cast to StructuredGrid first to fully support rotations, or use\n'
-        '`Transform.decompose()` to remove this component.'
+        'The transformation has a rotation component which is not axis-aligned and is not\n'
+        'supported by RectilinearGrid. Cast to StructuredGrid first to fully support '
+        'rotations,\nor use `Transform.decompose()` to remove this component.'
     )
 
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -2114,7 +2721,11 @@ SHEAR_MATRIX[1, 0] = 0.1
 @pytest.mark.parametrize(
     ('grid', 'transformation', 'match'),
     [
-        ('rectilinear', pv.Transform().rotate_x(30), 'non-diagonal rotation component'),
+        (
+            'rectilinear',
+            pv.Transform().rotate_x(30),
+            'rotation component which is not axis-aligned',
+        ),
         ('rectilinear', SHEAR_MATRIX, 'shear component'),
         ('uniform', SHEAR_MATRIX, 'shear component'),
     ],
@@ -2154,6 +2765,90 @@ def test_transform_rectilinear(rectilinear):
     assert transform_then_cast == cast_then_transform
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
+    [
+        pv.Transform().rotate_z(90),
+        pv.Transform().rotate_x(90).scale((2, 3, 4)).translate((5, -1, 2)),
+        pv.Transform().rotate_y(-90),
+        pv.Transform().rotate_z(180),
+        pv.Transform().rotate_z(90).rotate_x(90),
+    ],
+    ids=[
+        'rotate-z',
+        'rotate-x-scale-translate',
+        'rotate-y',
+        'rotate-z-180',
+        'rotate-z-then-x',
+    ],
+)
+def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation, inplace):
+    rectilinear.point_data['p'] = np.arange(rectilinear.n_points, dtype=float)
+    rectilinear.point_data['v'] = np.arange(rectilinear.n_points * 3, dtype=float).reshape(-1, 3)
+    rectilinear.cell_data['c'] = np.arange(rectilinear.n_cells, dtype=float)
+    expected = rectilinear.cast_to_structured_grid().transform(transformation, inplace=False)
+
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+
+    assert isinstance(transformed, pv.RectilinearGrid)
+    assert np.allclose(transformed.bounds, expected.bounds)
+    # Points are ordered along the grid's own axes, so sort both before comparing
+    actual_order = np.lexsort(np.round(transformed.points, 8).T)
+    expected_order = np.lexsort(np.round(expected.points, 8).T)
+    assert np.allclose(transformed.points[actual_order], expected.points[expected_order])
+    assert np.array_equal(transformed['p'][actual_order], expected['p'][expected_order])
+    assert np.array_equal(transformed['v'][actual_order], expected['v'][expected_order])
+    actual_cells = np.lexsort(np.round(transformed.cell_centers().points, 8).T)
+    expected_cells = np.lexsort(np.round(expected.cell_centers().points, 8).T)
+    assert np.array_equal(
+        transformed.cell_data['c'][actual_cells], expected.cell_data['c'][expected_cells]
+    )
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
+    [pv.Transform().rotate_z(90), pv.Transform().rotate_z(90).rotate_x(90)],
+    ids=['one-axis-pair', 'all-three-axes'],
+)
+def test_transform_rectilinear_rotation_active_attributes(rectilinear, transformation, inplace):
+    """Test permuting a grid's axes keeps the arrays it had marked active."""
+    rng = np.random.default_rng()
+    rectilinear.point_data['point_vectors'] = rng.random((rectilinear.n_points, 3))
+    rectilinear.point_data['point_tensors'] = rng.random((rectilinear.n_points, 9))
+    rectilinear.cell_data['cell_vectors'] = rng.random((rectilinear.n_cells, 3))
+    rectilinear.point_data.active_vectors_name = 'point_vectors'
+    rectilinear.cell_data.active_vectors_name = 'cell_vectors'
+    rectilinear.active_tensors_name = 'point_tensors'
+
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+
+    point_data = transformed.point_data
+    cell_data = transformed.cell_data
+    assert point_data.active_vectors_name == 'point_vectors'
+    assert cell_data.active_vectors_name == 'cell_vectors'
+    assert transformed.active_tensors_name == 'point_tensors'
+    # The permuted arrays are written back, so the active ones must not be the originals
+    assert np.array_equal(point_data.active_vectors, point_data['point_vectors'])
+    assert np.array_equal(cell_data.active_vectors, cell_data['cell_vectors'])
+
+
+@pytest.mark.parametrize(
+    'transformation',
+    [pv.Transform().rotate_z(90), pv.Transform().scale((-1, 1, 1))],
+    ids=['rotation', 'reflection'],
+)
+def test_transform_rectilinear_axes_ascend(rectilinear, transformation):
+    transformed = rectilinear.transform(transformation, inplace=False)
+
+    for coordinates in (transformed.x, transformed.y, transformed.z):
+        assert np.all(np.diff(coordinates) > 0)
+    # Descending coordinates are not supported by the cell locators
+    probe = pv.PolyData(transformed.cell_centers().points)
+    assert np.all(probe.sample(transformed)['vtkValidPointMask'] == 1)
+
+
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
 def test_transform_imagedata(uniform, spacing):
     # Transformations affect origin, spacing, and direction, so test these here
@@ -2181,6 +2876,56 @@ def test_transform_imagedata(uniform, spacing):
     translated = uniform.transform(translation, inplace=False)
     assert np.allclose(translated.origin, vector * 2)
     assert np.allclose(translated.center, uniform.origin)
+
+
+@pytest.mark.parametrize('grid', ['uniform', 'rectilinear'])
+def test_transform_grid_without_arrays_skips_filter(grid, monkeypatch, request):
+    def fail():  # pragma: no cover -- the filter is skipped, so it never runs
+        """Fail if the transform filter is used."""
+        msg = 'The transform filter is not needed without arrays to transform.'
+        raise AssertionError(msg)
+
+    mesh = request.getfixturevalue(grid)
+    mesh['scalars'] = np.arange(mesh.n_points, dtype=float)
+    transformation = pv.Transform().rotate_z(90).translate((1, 2, 3))
+    expected = mesh.cast_to_structured_grid().transform(transformation, inplace=False)
+
+    monkeypatch.setattr(_vtk, 'vtkTransformFilter', fail)
+    transformed = mesh.transform(transformation, inplace=False)
+
+    assert isinstance(transformed, type(mesh))
+    # A rectilinear grid orders its points along its own axes, so match them first
+    order, expected_order = _matching_orders(transformed.points, expected.points)
+    assert np.allclose(transformed.points[order], expected.points[expected_order])
+    assert np.array_equal(transformed['scalars'][order], expected['scalars'][expected_order])
+    assert transformed.active_scalars_name == mesh.active_scalars_name
+    assert transformed.point_data.keys() == mesh.point_data.keys()
+    assert transformed.cell_data.keys() == mesh.cell_data.keys()
+    assert transformed.field_data.keys() == mesh.field_data.keys()
+
+    in_place = mesh.copy()
+    in_place.transform(transformation, inplace=True)
+    assert np.allclose(in_place.points, transformed.points)
+    assert np.array_equal(in_place['scalars'], transformed['scalars'])
+
+    # The output holds its own arrays, not the input's
+    transformed['scalars'][0] += 1
+    assert transformed['scalars'][0] != mesh['scalars'][0]
+
+
+@pytest.mark.parametrize('grid', ['uniform', 'rectilinear'])
+@pytest.mark.parametrize('association', ['point_data', 'cell_data'])
+@pytest.mark.parametrize('attribute', ['active_vectors_name', 'active_normals_name'])
+def test_transform_grid_with_vectors_uses_filter(grid, association, attribute, request):
+    mesh = request.getfixturevalue(grid)
+    attributes = getattr(mesh, association)
+    size = mesh.n_points if association == 'point_data' else mesh.n_cells
+    attributes['vectors'] = np.tile([1.0, 0.0, 0.0], (size, 1))
+    setattr(attributes, attribute, 'vectors')
+
+    transformed = mesh.transform(pv.Transform().rotate_z(90), inplace=False)
+
+    assert np.allclose(getattr(transformed, association)['vectors'], [0.0, 1.0, 0.0])
 
 
 def test_transform_imagedata_raises_with_shear(uniform):
@@ -2212,8 +2957,11 @@ def test_reflect_mesh_about_point(datasets):
         reflected = dataset.reflect((1, 0, 0), point=(x_plane, 0, 0), progress_bar=True)
         assert reflected.n_cells == dataset.n_cells
         assert reflected.n_points == dataset.n_points
-        assert np.allclose(x_plane - dataset.points[:, 0], reflected.points[:, 0] - x_plane)
-        assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+        expected_points = dataset.points * (-1, 1, 1) + (2 * x_plane, 0, 0)
+        order, expected_order = _matching_orders(reflected.points, expected_points)
+        if not isinstance(dataset, pv.RectilinearGrid):
+            assert np.array_equal(order, expected_order)
+        assert np.allclose(reflected.points[order], expected_points[expected_order])
 
 
 def test_reflect_mesh_with_vectors(datasets):
@@ -2242,34 +2990,37 @@ def test_reflect_mesh_with_vectors(datasets):
         # assert isinstance(reflected, type(dataset))
         assert reflected.n_cells == dataset.n_cells
         assert reflected.n_points == dataset.n_points
-        assert np.allclose(dataset.points[:, 0], -reflected.points[:, 0])
-        assert np.allclose(dataset.points[:, 1:], reflected.points[:, 1:])
+        reflection = (-1, 1, 1)
+        expected_points = dataset.points * reflection
+        order, expected_order = _matching_orders(reflected.points, expected_points)
+        if not isinstance(dataset, pv.RectilinearGrid):
+            assert np.array_equal(order, expected_order)
+        assert np.allclose(reflected.points[order], expected_points[expected_order])
 
-        # assert normals are reflected
+        # assert vector fields and normals are reflected
+        if not isinstance(dataset, pv.PointSet):
+            cell_order, expected_cell_order = _matching_orders(
+                reflected.cell_centers().points, dataset.cell_centers().points * reflection
+            )
+            if hasattr(dataset, 'compute_normals'):
+                assert np.allclose(
+                    reflected.cell_data['Normals'][cell_order],
+                    dataset.cell_data['Normals'][expected_cell_order] * reflection,
+                )
+            assert np.allclose(
+                reflected.cell_data['C'][cell_order],
+                dataset.cell_data['C'][expected_cell_order] * reflection,
+            )
+
         if hasattr(dataset, 'compute_normals'):
             assert np.allclose(
-                dataset.cell_data['Normals'][:, 0],
-                -reflected.cell_data['Normals'][:, 0],
+                reflected.point_data['Normals'][order],
+                dataset.point_data['Normals'][expected_order] * reflection,
             )
-            assert np.allclose(
-                dataset.cell_data['Normals'][:, 1:],
-                reflected.cell_data['Normals'][:, 1:],
-            )
-            assert np.allclose(
-                dataset.point_data['Normals'][:, 0],
-                -reflected.point_data['Normals'][:, 0],
-            )
-            assert np.allclose(
-                dataset.point_data['Normals'][:, 1:],
-                reflected.point_data['Normals'][:, 1:],
-            )
-
-        # assert other vector fields are reflected
-        if not isinstance(dataset, pv.PointSet):
-            assert np.allclose(dataset.cell_data['C'][:, 0], -reflected.cell_data['C'][:, 0])
-            assert np.allclose(dataset.cell_data['C'][:, 1:], reflected.cell_data['C'][:, 1:])
-        assert np.allclose(dataset.point_data['P'][:, 0], -reflected.point_data['P'][:, 0])
-        assert np.allclose(dataset.point_data['P'][:, 1:], reflected.point_data['P'][:, 1:])
+        assert np.allclose(
+            reflected.point_data['P'][order],
+            dataset.point_data['P'][expected_order] * reflection,
+        )
 
 
 @pytest.mark.parametrize(
@@ -4286,3 +5037,535 @@ def test_convex_hull_scipy_not_installed(monkeypatch):
     monkeypatch.setitem(sys.modules, 'scipy.spatial', None)
     with pytest.raises(ImportError, match='scipy'):
         _convex_hull_scipy(pv.Sphere().points, dimensionality=3)
+
+
+def test_resample_to_image(tetbeam):
+    tetbeam['point_scalars'] = tetbeam.points[:, 2]
+    tetbeam.cell_data['cell_scalars'] = np.arange(tetbeam.n_cells, dtype=float)
+    image = tetbeam.resample_to_image()
+
+    assert isinstance(image, pv.ImageData)
+    assert 'point_scalars' in image.point_data
+    assert 'cell_scalars' in image.point_data
+    assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
+
+    # The interior of the beam is sampled and its arrays are interpolated
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 2])
+
+    # The spacing follows the input's own cells
+    coarse = tetbeam.resample_to_image(cell_length_percentile=0.9)
+    assert np.all(np.array(coarse.spacing) > image.spacing)
+
+
+def test_resample_to_image_dimensions_and_spacing(tetbeam):
+    dims = (10, 11, 12)
+    assert tetbeam.resample_to_image(dimensions=dims).dimensions == dims
+
+    image = tetbeam.resample_to_image(spacing=tetbeam.length / 20)
+    assert np.allclose(image.spacing, tetbeam.length / 20, atol=1e-2)
+    assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
+
+
+def test_resample_to_image_geometry_matches_voxelize(sphere):
+    # Both filters place their voxels identically, so their outputs can be combined
+    mask = sphere.voxelize_binary_mask(dimensions=(20, 21, 22))
+    image = sphere.resample_to_image(dimensions=(20, 21, 22))
+
+    assert image.dimensions == mask.dimensions
+    assert image.spacing == mask.spacing
+    assert image.origin == mask.origin
+
+
+def test_resample_to_image_reference_volume(tetbeam):
+    tetbeam['point_scalars'] = tetbeam.points[:, 2]
+    reference = pv.ImageData()
+    reference.extent = (2, 6, 3, 8, 4, 10)
+    reference.spacing = (0.2, 0.3, 0.4)
+    reference.origin = (0.1, 0.2, 0.3)
+    reference.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    reference['reference_scalars'] = np.arange(reference.n_points)
+
+    image = tetbeam.resample_to_image(reference_volume=reference)
+
+    assert image.extent == reference.extent
+    assert image.offset == reference.offset
+    assert image.spacing == reference.spacing
+    assert image.origin == reference.origin
+    assert np.allclose(image.direction_matrix, reference.direction_matrix)
+    # The reference only defines the geometry, its arrays are not part of the output
+    assert 'reference_scalars' not in image.array_names
+    assert 'point_scalars' in image.point_data
+
+
+def voxel_of_each_point(mesh, image):
+    """Return the flat index of the voxel containing each of the mesh's points."""
+    dims = np.array(image.dimensions)
+    ijk = np.round((mesh.points - np.array(image.origin)) / np.array(image.spacing)).astype(int)
+    ijk = np.clip(ijk, 0, dims - 1)
+    return ijk[:, 0] + dims[0] * (ijk[:, 1] + dims[1] * ijk[:, 2])
+
+
+def test_resample_to_image_method_interpolate(sphere):
+    sphere['point_scalars'] = sphere.points[:, 0]
+    dims = (20, 20, 20)
+
+    # Interpolating from the points fills every voxel the surface crosses
+    image = sphere.resample_to_image(dimensions=dims)
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid[voxel_of_each_point(sphere.subdivide(3), image)].all()
+
+    # A surface has no volume for a cell search to land in, so sampling does not
+    sampled = sphere.resample_to_image(dimensions=dims, method='sample')
+    sampled_valid = sampled['vtkValidPointMask'].astype(bool)
+    assert not sampled_valid[voxel_of_each_point(sphere, sampled)].all()
+    assert sampled_valid.sum() < valid.sum()
+
+    # Only voxels within the default radius of the surface are filled, not the interior
+    lengths = _cell_edge_lengths(sphere)
+    radius = np.quantile(lengths[lengths > 0], 0.95)
+    distance = image.compute_implicit_distance(sphere)['implicit_distance']
+    assert np.all(np.abs(distance[valid]) <= radius)
+    assert not valid[voxel_of_each_point(pv.PolyData([sphere.center]), image)].any()
+
+    # A smaller radius fills fewer voxels
+    half_diagonal = np.linalg.norm(image.spacing) / 2
+    tight = sphere.resample_to_image(dimensions=dims, radius=half_diagonal)
+    assert tight['vtkValidPointMask'].sum() < valid.sum()
+
+    # A point cloud has no cells to reach across, so its radius is half a voxel diagonal
+    cloud = pv.PolyData(sphere.points)
+    cloud['point_scalars'] = sphere['point_scalars']
+    assert cloud.resample_to_image(dimensions=dims) == cloud.resample_to_image(
+        dimensions=dims, radius=half_diagonal
+    )
+
+
+def test_resample_to_image_multiblock():
+    blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(1.5, 0, 0))])
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    image = blocks.resample_to_image(target_n_points=20_000, mark_blank=True)
+    assert isinstance(image, pv.ImageData)
+    assert 'height' in image.point_data
+    # Voxels are points, so the cells rather than the points span the input's bounds
+    assert np.allclose(np.array(image.bounds_size) + np.array(image.spacing), blocks.bounds_size)
+
+    # Surfaces have no volume, so the blocks are interpolated from their points
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    assert image.point_data['vtkGhostType'].size == image.n_points
+
+    # Each block reaches the output
+    for block in blocks:
+        ijk = np.round((block.points - np.array(image.origin)) / np.array(image.spacing)).astype(
+            int
+        )
+        ijk = np.clip(ijk, 0, np.array(image.dimensions) - 1)
+        flat = ijk[:, 0] + image.dimensions[0] * (ijk[:, 1] + image.dimensions[1] * ijk[:, 2])
+        assert valid[flat].all()
+
+
+def test_resample_to_image_multiblock_volumetric():
+    blocks = pv.MultiBlock(
+        [pv.SolidSphere(outer_radius=0.5), pv.SolidSphere(outer_radius=0.5, center=(1.2, 0, 0))]
+    )
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    image = blocks.resample_to_image(target_n_points=20_000)
+    assert 'height' in image.point_data
+    # Volumetric blocks are sampled, which fills their interiors
+    assert image['vtkValidPointMask'].sum() > 0.3 * image.n_points
+
+
+def test_resample_to_image_multiblock_matches_combined():
+    blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(0.6, 0, 0))])
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    from_blocks = blocks.resample_to_image(target_n_points=10_000)
+    from_combined = blocks.combine().resample_to_image(target_n_points=10_000)
+    assert from_blocks.dimensions == from_combined.dimensions
+    assert np.allclose(from_blocks.origin, from_combined.origin)
+    assert np.allclose(from_blocks['height'], from_combined['height'])
+
+
+@pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])
+def test_target_n_points(sphere, target):
+    image = sphere.resample_to_image(target_n_points=target)
+    assert 0.8 <= image.n_points / target <= 1.2
+    assert image.n_points == np.prod(image.dimensions)
+
+    # Both filters place their voxels identically
+    mask = sphere.voxelize_binary_mask(target_n_points=target)
+    assert mask.dimensions == image.dimensions
+    assert np.allclose(mask.origin, image.origin)
+    assert np.allclose(mask.spacing, image.spacing)
+
+    # Dimensions follow the bounds, so the spacing is isotropic up to the rounding
+    spacing = np.array(image.spacing)
+    assert spacing.max() / spacing.min() <= 1 + 1 / min(image.dimensions)
+
+
+def test_target_n_points_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=20, j_resolution=20)
+    image = plane.resample_to_image(target_n_points=10_000)
+    # The flat axis holds one point and takes no part in the count
+    assert image.dimensions[2] == 1
+    assert 0.8 <= image.n_points / 10_000 <= 1.2
+
+
+def test_max_n_points_clamps_the_defaults():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+
+    # An estimated geometry is coarsened to fit, without raising
+    assert mesh.resample_to_image().n_points > 1000
+    for cap in [1000, 500, 100, 8, 1]:
+        assert mesh.resample_to_image(max_n_points=cap).n_points <= cap
+
+
+@pytest.mark.parametrize('cap', range(1, 200, 7))
+def test_max_n_points_is_a_strict_bound(sphere, cap):
+    assert sphere.resample_to_image(max_n_points=cap).n_points <= cap
+
+
+def test_max_n_points_clamps_a_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=50, j_resolution=50)
+    image = plane.resample_to_image(max_n_points=100)
+    assert image.dimensions[2] == 1
+    assert image.n_points <= 100
+
+
+def test_max_n_points_raises_for_a_requested_geometry():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+    match = 'points, which exceeds `max_n_points=1000`'
+    for kwargs in [
+        dict(dimensions=(40, 40, 40)),
+        dict(spacing=0.02),
+        dict(cell_length_percentile=0.01),
+        dict(reference_volume=pv.ImageData(dimensions=(40, 40, 40), spacing=(0.03,) * 3)),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.resample_to_image(max_n_points=1000, **kwargs)
+
+    # A requested geometry inside the limit is left alone
+    assert mesh.resample_to_image(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_max_n_points_bounds_the_target(sphere):
+    match = 'Target n points (2000) cannot exceed max n points (1000).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(target_n_points=2000, max_n_points=1000)
+
+    # The target is approached, the limit is not exceeded
+    for target in [500, 999, 1000]:
+        assert sphere.resample_to_image(target_n_points=target, max_n_points=1000).n_points <= 1000
+
+
+def test_max_n_points_raises(sphere):
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.resample_to_image(max_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.resample_to_image(max_n_points=2.5)
+
+
+def test_target_n_points_raises(sphere):
+    match = 'Target n points cannot be set with dimensions, spacing or cell length options'
+    for kwargs in [
+        dict(dimensions=(10, 10, 10)),
+        dict(spacing=0.1),
+        dict(cell_length_percentile=0.5),
+        dict(cell_length_sample_size=100),
+    ]:
+        with pytest.raises(TypeError, match=match):
+            sphere.resample_to_image(target_n_points=1000, **kwargs)
+
+    with pytest.raises(TypeError, match='Cannot specify a reference volume'):
+        sphere.resample_to_image(target_n_points=1000, reference_volume=pv.ImageData())
+
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.resample_to_image(target_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.resample_to_image(target_n_points=2.5)
+
+
+def test_resample_to_image_interpolate_warns_on_cell_data(sphere, tetbeam):
+    sphere.clear_data()
+    sphere.cell_data['cval'] = np.arange(sphere.n_cells, dtype=float)
+
+    match = r"Cell data \['cval'\] is dropped by `method='interpolate'`, chosen for this input"
+    with pytest.warns(UserWarning, match=match):
+        image = sphere.resample_to_image(dimensions=(20, 20, 20))
+    assert 'cval' not in image.point_data
+
+    def dropped_warnings(recorded):
+        """Return only the warnings this filter raises about dropped cell data."""
+        return [w for w in recorded if 'is dropped by' in str(w.message)]
+
+    # Converting first keeps it, and warns no more
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter('always')
+        converted = sphere.cell_data_to_point_data().resample_to_image(dimensions=(20, 20, 20))
+    assert not dropped_warnings(recorded)
+    assert 'cval' in converted.point_data
+
+    # Asking for the method by name says so instead
+    with pytest.warns(UserWarning, match=r"`method='interpolate'`, which reads point data"):
+        sphere.resample_to_image(dimensions=(20, 20, 20), method='interpolate')
+
+    # `sample` carries cell data, so it does not warn
+    tetbeam.clear_data()
+    tetbeam.cell_data['cval'] = np.arange(tetbeam.n_cells, dtype=float)
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter('always')
+        sampled = tetbeam.resample_to_image(dimensions=(10, 10, 10))
+    assert not dropped_warnings(recorded)
+    assert 'cval' in sampled.point_data
+
+
+def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
+    ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
+    hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
+
+    # Both methods hide the voxels their mask flags as empty
+    for mesh, kwargs in [(sphere, dict(dimensions=(20, 20, 20))), (tetbeam, {})]:
+        for method in ['sample', 'interpolate']:
+            image = mesh.resample_to_image(method=method, mark_blank=True, **kwargs)
+            invalid = image['vtkValidPointMask'] == 0
+            ghosts = image.point_data[ghost_name]
+            assert ghosts.dtype == np.uint8
+            assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
+
+            # Blanking is off by default, which keeps the mask but hides nothing
+            unmarked = mesh.resample_to_image(method=method, **kwargs)
+            assert ghost_name not in unmarked.point_data
+            assert ghost_name not in unmarked.cell_data
+            assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
+
+
+@pytest.mark.parametrize(('method', 'kwargs'), [('sample', {}), ('interpolate', {'radius': 0.05})])
+def test_resample_to_image_null_value(sphere, method, kwargs):
+    sphere.clear_data()
+    sphere['point_scalars'] = sphere.points[:, 0]
+    dims = (20, 20, 20)
+    shared = dict(dimensions=dims, method=method, **kwargs)
+
+    plain = sphere.resample_to_image(**shared)
+    invalid = plain['vtkValidPointMask'] == 0
+    assert invalid.any()
+    assert np.array_equal(plain['point_scalars'][invalid], np.zeros(invalid.sum()))
+
+    # Both methods fill the empty voxels, and leave the rest alone
+    filled = sphere.resample_to_image(null_value=-99.0, **shared)
+    assert np.array_equal(filled['point_scalars'][invalid], np.full(invalid.sum(), -99.0))
+    assert np.array_equal(filled['point_scalars'][~invalid], plain['point_scalars'][~invalid])
+
+    # The mask and the blanking flags are not values to fill
+    blanked = sphere.resample_to_image(null_value=-99.0, mark_blank=True, **shared)
+    hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
+    ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
+    assert np.array_equal(blanked['vtkValidPointMask'], plain['vtkValidPointMask'])
+    assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
+
+
+@pytest.mark.parametrize('null_value', [-1.0, 300.0, np.nan, 1.5])
+def test_resample_to_image_null_value_dtype_raises(sphere, null_value):
+    sphere.clear_data()
+    sphere['counts'] = np.arange(sphere.n_points, dtype=np.uint8)
+    match = (
+        f"`null_value={null_value}` cannot be stored in array 'counts', whose "
+        '`uint8` data type holds integers from 0 to 255.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=null_value)
+
+
+def test_resample_to_image_null_value_float_dtype(sphere):
+    sphere.clear_data()
+    sphere['counts'] = np.arange(sphere.n_points, dtype=np.float32)
+    image = sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=-1.0)
+    assert image['counts'][image['vtkValidPointMask'] == 0].min() == -1.0
+
+
+def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
+    from pyvista.core.filters import data_object
+    from pyvista.core.filters import data_set
+
+    sample = mocker.spy(data_object.DataObjectFilters, 'sample')
+    interpolate = mocker.spy(data_set.DataSetFilters, 'interpolate')
+    dims = (20, 20, 20)
+
+    # A volumetric input is sampled from its cells
+    sphere.delaunay_3d().resample_to_image(dimensions=dims)
+    assert sample.call_count == 1
+    assert interpolate.call_count == 0
+
+    # Anything else is interpolated from its points
+    for mesh in (sphere, pv.PointSet(sphere.points), pv.Line()):
+        mesh.resample_to_image(dimensions=dims)
+    assert sample.call_count == 1
+    assert interpolate.call_count == 3
+
+    # An explicit method overrides the default
+    sphere.resample_to_image(dimensions=dims, method='sample')
+    assert sample.call_count == 2
+
+
+def test_resample_to_image_interpolate_point_cloud(sphere):
+    # A point cloud has no cells at all, so only interpolation can reach it
+    cloud = pv.PointSet(sphere.points)
+    cloud['point_scalars'] = sphere.points[:, 0]
+    image = cloud.resample_to_image(dimensions=(20, 20, 20))
+
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid[voxel_of_each_point(cloud, image)].all()
+    # Each filled voxel takes a value from points no further away than the radius
+    radius = np.linalg.norm(image.spacing) / 2
+    assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 0], atol=radius)
+
+
+@pytest.mark.parametrize('axis', [0, 1, 2])
+def test_resample_to_image_flat_input(axis):
+    direction = np.zeros(3)
+    direction[axis] = 1
+    other = (axis + 1) % 3
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3, i_resolution=9, j_resolution=9)
+    plane['point_scalars'] = plane.points[:, other]
+    image = plane.resample_to_image(dimensions=np.where(np.eye(3)[axis], 1, 10).astype(int))
+
+    assert image.dimensions[axis] == 1
+    assert image.spacing[axis] > 0
+    # Every voxel of the flat image takes a value from the plane
+    assert image['vtkValidPointMask'].all()
+
+    # The voxels are centered on the plane, so sampling its cells is exact
+    exact = plane.resample_to_image(dimensions=image.dimensions, method='sample')
+    assert np.allclose(exact['point_scalars'], exact.points[:, other])
+
+
+def test_resample_to_image_categorical(tetbeam):
+    tetbeam.point_data['labels'] = np.where(tetbeam.points[:, 2] > 2.5, 7.0, 3.0)
+    dims = (8, 8, 8)
+
+    blended = tetbeam.resample_to_image(dimensions=dims)
+    categorical = tetbeam.resample_to_image(dimensions=dims, categorical=True)
+
+    valid = categorical['vtkValidPointMask'].astype(bool)
+    # Interpolating labels invents values between them, nearest neighbor does not
+    assert np.array_equal(np.unique(categorical['labels'][valid]), [3.0, 7.0])
+    assert len(np.unique(blended['labels'][valid])) > 2
+
+
+def test_resample_to_image_raises(sphere):
+    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.resample_to_image(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+
+    match = (
+        'Cannot specify a reference volume with other geometry parameters. '
+        '`reference_volume` must define the geometry exclusively.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.resample_to_image(reference_volume=pv.ImageData(), dimensions=(1, 2, 3))
+
+    match = (
+        'Spacing cannot be estimated from the input cells. '
+        'Set `dimensions` or `spacing` explicitly.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.PointSet(np.zeros((4, 3))).resample_to_image()
+
+    with pytest.raises(ValueError, match="method 'nonsense' is not valid"):
+        sphere.resample_to_image(dimensions=(4, 5, 6), method='nonsense')
+
+    match = 'spacing values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=0)
+    match = 'spacing must have finite values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=np.inf)
+    match = 'rounding_func output must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=0.1, rounding_func=lambda d: np.asarray(d) + 0.5)
+
+    for name, value in [('radius', 0.1), ('sharpness', 4.0)]:
+        match = f"`{name}` requires `method='interpolate'`, but `method='sample'`."
+        with pytest.raises(TypeError, match=re.escape(match)):
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='sample', **{name: value})
+
+    for name, value in [('tolerance', 0.1), ('categorical', True), ('categorical', False)]:
+        match = f"`{name}` requires `method='sample'`, but `method='interpolate'`."
+        with pytest.raises(TypeError, match=re.escape(match)):
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='interpolate', **{name: value})
+
+    # The message says when the method was picked for the input rather than requested
+    match = "`radius` requires `method='interpolate'`, but `method='sample'`, chosen for this"
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.delaunay_3d().resample_to_image(dimensions=(4, 5, 6), radius=0.1)
+
+
+def _surface():
+    return pv.Sphere(theta_resolution=8, phi_resolution=8)
+
+
+def _cloud():
+    return pv.PointSet(_surface().points)
+
+
+def _plane():
+    return generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+
+
+def _line():
+    return pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)
+
+
+_COMPOSITE_FILTERS = {
+    'clip': lambda mesh: mesh.clip(),
+    'clip_box': lambda mesh: mesh.clip_box(),
+    'clip_slab': lambda mesh: mesh.clip_slab(thickness=0.5, normal='z'),
+    'slice': lambda mesh: mesh.slice(),
+    'slice_implicit': lambda mesh: mesh.slice_implicit(_plane()),
+    'slice_along_line': lambda mesh: mesh.slice_along_line(_line()),
+    'extract_all_edges': lambda mesh: mesh.extract_all_edges(),
+    'cell_centers': lambda mesh: mesh.cell_centers(),
+    'triangulate': lambda mesh: mesh.triangulate(),
+    'outline_corners': lambda mesh: mesh.outline_corners(nested=True),
+}
+
+_POINTSET_BLOCK_TYPE = {
+    'clip': pv.PointSet,
+    'clip_box': pv.PointSet,
+    'clip_slab': pv.PointSet,
+    'cell_centers': pv.PolyData,
+    'outline_corners': pv.PolyData,
+}
+
+_POINTSET_RAISES = {
+    'slice': PointSetDimensionReductionError,
+    'slice_implicit': PointSetDimensionReductionError,
+    'slice_along_line': PointSetDimensionReductionError,
+    'extract_all_edges': PointSetCellOperationError,
+    'triangulate': PointSetCellOperationError,
+}
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+def test_composite_filter_pointset_block_type(name):
+    composite = pv.MultiBlock([_cloud()])
+    if name in _POINTSET_RAISES:
+        with pytest.raises(_POINTSET_RAISES[name]):
+            _COMPOSITE_FILTERS[name](composite)
+    else:
+        assert type(_COMPOSITE_FILTERS[name](composite)[0]) is _POINTSET_BLOCK_TYPE[name]
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+def test_composite_filter_keeps_empty_block(name):
+    out = _COMPOSITE_FILTERS[name](pv.MultiBlock([_surface(), None]))
+    assert out[1] is None

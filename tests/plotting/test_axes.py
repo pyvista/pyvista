@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 import numpy as np
 import pytest
 
@@ -72,16 +70,23 @@ def test_axes_actor_shaft_len(axes_actor):
     axes_actor.shaft_length = 1
     assert axes_actor.shaft_length == (1, 1, 1)
 
-    axes_actor.shaft_length = (1, 2, 3)
-    assert axes_actor.shaft_length == (1, 2, 3)
+    axes_actor.shaft_length = (0.1, 0.5, 0.9)
+    assert axes_actor.shaft_length == (0.1, 0.5, 0.9)
 
 
 def test_axes_actor_tip_len(axes_actor):
     axes_actor.tip_length = 1
     assert axes_actor.tip_length == (1, 1, 1)
 
-    axes_actor.tip_length = (1, 2, 3)
-    assert axes_actor.tip_length == (1, 2, 3)
+    axes_actor.tip_length = (0.1, 0.5, 0.9)
+    assert axes_actor.tip_length == (0.1, 0.5, 0.9)
+
+
+@pytest.mark.parametrize('name', ['shaft_length', 'tip_length'])
+@pytest.mark.parametrize('value', [1.5, (0.1, 0.5, 2.0), -0.1])
+def test_axes_actor_normalized_length_out_of_range_raises(axes_actor, name, value):
+    with pytest.raises(ValueError, match=rf'{name} values must all be'):
+        setattr(axes_actor, name, value)
 
 
 def test_axes_actor_label_pos(axes_actor):
@@ -154,12 +159,10 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.y_label == new_labels[1]
     assert axes_actor.z_label == new_labels[2]
 
-    match = 'Labels must be a list or tuple. Got abc instead.'
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match='Labels must be an instance of'):
         axes_actor.labels = 'abc'
 
-    match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError, match='Labels must have a length equal to'):
         axes_actor.labels = ['1', '2']
 
 

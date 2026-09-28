@@ -154,6 +154,11 @@ repos:
     hooks:
       - id: shfmt
 
+  - repo: https://github.com/reteps/dockerfmt
+    rev: v0.5.4
+    hooks:
+      - id: dockerfmt
+
   - repo: https://github.com/mrtazz/checkmake.git
     rev: v0.3.0
     hooks:

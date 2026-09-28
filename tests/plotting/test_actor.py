@@ -10,6 +10,7 @@ from pyvista import _vtk
 from pyvista import examples
 from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
+from pyvista.plotting.mapper import _PolyDataMapper
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
@@ -762,3 +763,294 @@ def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor.clear_point_sprite_shape()
     assert 'point_sprite' not in actor._shader_replacements
     assert 'mip' in actor._shader_replacements
+
+
+def test_line_style_via_add_mesh():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
+    assert isinstance(actor.mapper, _PolyDataMapper)
+    assert actor.line_style == '--'
+    pl.close()
+
+
+@pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
+def test_line_style_draws_fewer_pixels(style):
+    def drawn(line_style):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 400))
+        pl.disable_anti_aliasing()
+        pl.add_mesh(
+            pv.Line((-1, 0, 0), (1, 0, 0), resolution=50),
+            color='black',
+            line_width=3,
+            line_style=line_style,
+        )
+        pl.background_color = 'white'
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        return int((image[..., 0] < 128).sum())
+
+    assert drawn(style) < drawn('-')
+
+
+def test_line_style_disable_restores_input():
+    mesh = pv.Line(resolution=20)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, line_style='--')
+    actor.line_style = None
+    assert actor.line_style is None
+    assert actor.mapper.dataset is mesh
+    pl.close()
+
+
+def test_line_style_solid_is_not_dashed():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='-')
+    assert actor.line_style is None
+    pl.close()
+
+
+def test_dash_interval():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
+    actor.dash_interval = 0.02
+    assert actor.dash_interval == 0.02
+    with pytest.raises(ValueError, match='greater than 0'):
+        actor.dash_interval = 0
+    pl.close()
+
+
+def test_line_style_requires_polydata_mapper():
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Line(resolution=20)))
+    with pytest.raises(TypeError, match='line_style'):
+        actor.line_style = '--'
+
+
+def test_line_style_invalid():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20))
+    with pytest.raises(ValueError, match='is not valid'):
+        actor.line_style = 'wrong'
+    pl.close()
+
+
+def test_line_style_foreshorten_with_distance():
+    pl = pv.Plotter(off_screen=True, window_size=(1200, 400))
+    pl.disable_anti_aliasing()
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 2), (1, 0, -2), resolution=20),
+        color='black',
+        line_width=2,
+        line_style='--',
+    )
+    actor.dash_interval = 0.01
+    pl.background_color = 'white'
+    pl.camera.position = (0, 0, 4)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.render()
+    image = pl.screenshot(return_img=True)
+    pl.close()
+
+    drawn = image[..., 0] < 128
+    row = drawn[drawn.sum(axis=1).argmax()]
+    (lit,) = np.nonzero(row)
+    dashes = np.array([len(run) for run in np.split(lit, np.nonzero(np.diff(lit) > 1)[0] + 1)])
+
+    dashes = dashes[1:-1]
+    third = len(dashes) // 3
+    assert third >= 2
+    assert dashes[:third].mean() > 2 * dashes[-third:].mean()
+
+
+def test_line_style_requires_dataset():
+    actor = pv.Actor(mapper=_PolyDataMapper())
+    with pytest.raises(ValueError, match='must have a dataset'):
+        actor.line_style = '--'
+
+
+def test_line_style_restores_the_actor_when_the_shader_fails(monkeypatch):
+    def boom(*_args):
+        msg = 'no shader'
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(pv.Actor, '_apply_dash_shader', boom)
+    actor = pv.Actor(mapper=_PolyDataMapper())
+    actor.mapper.dataset = pv.Line(resolution=10)
+    with pytest.raises(RuntimeError, match='no shader'):
+        actor.line_style = '--'
+    assert actor.line_style is None
+
+
+@pytest.mark.parametrize('style', ['--', ''])
+def test_line_style_rejects_faces(style):
+    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+    mesh.lines = np.array([2, 0, 8])
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='require a mesh of line cells'):
+        pl.add_mesh(mesh, line_style=style)
+    pl.close()
+
+
+def test_line_style_rejects_multiblock():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='not supported for `MultiBlock`'):
+        pl.add_mesh(pv.MultiBlock([pv.Line(resolution=10)]), line_style='--')
+    pl.close()
+
+
+def test_line_style_hidden():
+    pl = pv.Plotter(off_screen=True, window_size=(300, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=20),
+        color='black',
+        line_width=4,
+        line_style='',
+    )
+    pl.view_xy()
+    pl.render()
+    image = pl.screenshot(return_img=True)
+    pl.close()
+
+    assert actor.line_style == ''
+    assert not (image[..., 0] < 128).any()
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=40),
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=40).cast_to_unstructured_grid(),
+        pytest.param(
+            pv.ImageData(dimensions=(41, 1, 1), spacing=(0.05, 1, 1), origin=(-1, 0, 0)),
+            marks=pytest.mark.needs_vtk_version(
+                (9, 6, 0), reason='vtkDataSetMapper renders 1D ImageData as nothing'
+            ),
+        ),
+        pv.RectilinearGrid(np.linspace(-1, 1, 41)),
+    ],
+    ids=['polydata', 'unstructured', 'image', 'rectilinear'],
+)
+def test_line_style_dataset_types(dataset):
+    def drawn(line_style, *, disable=False):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+        pl.disable_anti_aliasing()
+        pl.background_color = 'white'
+        actor = pl.add_mesh(dataset, color='black', line_width=3, line_style=line_style)
+        if disable:
+            actor.line_style = None
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        return int((image[..., 0] < 128).sum())
+
+    solid = drawn('-')
+    assert solid > 0
+    assert 0 < drawn('--') < solid
+    assert drawn('') == 0
+    assert drawn('--', disable=True) == solid
+
+
+def test_line_style_rejects_points_gaussian():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='points_gaussian'):
+        pl.add_mesh(pv.Line(resolution=10), style='points_gaussian', line_style='--')
+    pl.close()
+
+
+def test_line_style_rejects_composite_actor():
+    pl = pv.Plotter()
+    actor, _ = pl.add_composite(pv.MultiBlock([pv.Line(resolution=10)]))
+    with pytest.raises(TypeError, match='line_style'):
+        actor.line_style = '--'
+    pl.close()
+
+
+def test_line_style_invalid_via_add_mesh():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match="line_style 'dashed' is not valid"):
+        pl.add_mesh(pv.Line(resolution=10), line_style='dashed')
+    assert not pl.actors
+    pl.close()
+
+
+def test_line_style_follows_an_algorithm_input():
+    source = _vtk.vtkLineSource()
+    source.SetPoint1(-1, 0, 0)
+    source.SetPoint2(1, 0, 0)
+    source.SetResolution(50)
+
+    pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(source, color='black', line_width=3, line_style='--')
+    pl.view_xy()
+
+    def drawn():
+        pl.render()
+        return int((pl.screenshot(return_img=True)[..., 0] < 128).sum())
+
+    before = drawn()
+    source.SetPoint2(0, 0, 0)
+    after = drawn()
+    actor.line_style = None
+    solid = drawn()
+    pl.close()
+    assert 0 < after < before
+    assert after < solid
+
+
+def test_line_style_keeps_cell_scalars():
+    points = np.zeros((5, 3))
+    points[:, 0] = np.linspace(-1, 1, 5)
+    segments = np.column_stack([np.full(4, 2), np.arange(4), np.arange(1, 5)])
+    edges = pv.PolyData(points, lines=segments.ravel())
+    edges.cell_data['c'] = np.arange(4)
+
+    def render(line_style):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+        pl.disable_anti_aliasing()
+        pl.background_color = 'white'
+        pl.add_mesh(edges, scalars='c', line_width=3, line_style=line_style, show_scalar_bar=False)
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        drawn = image[(image != 255).any(axis=-1)]
+        return len(np.unique(drawn, axis=0)), len(drawn)
+
+    solid_colors, solid_pixels = render('-')
+    dashed_colors, dashed_pixels = render('--')
+    assert solid_colors > 1
+    assert dashed_colors == solid_colors
+    assert 0 < dashed_pixels < solid_pixels
+
+
+def test_line_style_toggles_after_add():
+    pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=50),
+        color='black',
+        line_width=3,
+        line_style='--',
+    )
+    pl.view_xy()
+
+    def drawn(line_style):
+        actor.line_style = line_style
+        pl.render()
+        return int((pl.screenshot(return_img=True)[..., 0] < 128).sum())
+
+    dashed = drawn('--')
+    dotted = drawn(':')
+    solid = drawn(None)
+    assert 0 < dotted < dashed < solid
+    assert 0 < drawn('-..') < solid
+    assert drawn('-') == solid
+    pl.close()

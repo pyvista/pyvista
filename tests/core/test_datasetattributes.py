@@ -461,20 +461,13 @@ def test_should_pop_array(insert_arange_narray):
     assert 'sample_array' not in dsa
 
 
-def test_pop_should_return_arange_narray(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_bool_array(insert_bool_array):
-    dsa, sample_array = insert_bool_array
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_string_array(insert_string_array):
-    dsa, sample_array = insert_string_array
+@pytest.mark.parametrize(
+    'inserted',
+    ['insert_arange_narray', 'insert_bool_array', 'insert_string_array'],
+)
+def test_pop_should_return_array(request, inserted):
+    """`pop` returns the array that was inserted, whatever its dtype."""
+    dsa, sample_array = request.getfixturevalue(inserted)
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
 
@@ -735,6 +728,21 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
+
+
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_complex_singleton(dtype):
+    """Reading a singleton complex array returns an associated writable view."""
+    mesh = pv.PolyData(np.zeros((1, 3)))
+    mesh.point_data['values'] = np.array([1 + 2j], dtype=dtype)
+    array = mesh.point_data['values']
+    assert isinstance(array, pv.pyvista_ndarray)
+    assert array.shape == ()
+    assert array.dtype == dtype
+    assert array.item() == 1 + 2j
+    assert array.dataset.Get() is mesh
+    array[...] = 3 + 4j
+    assert mesh.point_data['values'].item() == 3 + 4j
 
 
 @pytest.mark.parametrize('copy', [True, False])

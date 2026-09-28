@@ -21,12 +21,15 @@ from .utilities.writer import XMLPartitionedDataSetWriter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import Any
     from typing import ClassVar
 
     from typing_extensions import Self
 
     from .dataset import DataSet
-    from .utilities.arrays import FieldAssociation
+    from .utilities.arrays import CellLiteral
+    from .utilities.arrays import FieldLiteral
+    from .utilities.arrays import PointLiteral
     from .utilities.writer import BaseWriter
 
 
@@ -64,7 +67,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the PartitionedDataSet."""
         super().__init__()
         if len(args) == 1:
@@ -150,7 +153,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
-    def _get_attrs(self):
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('N Partitions', self.n_partitions, '{}'))
@@ -196,10 +199,12 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """Return the number of partitions."""
         return self.n_partitions
 
-    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
+    def copy_meta_from(
+        self: Self, ido: PartitionedDataSet, *, deep: bool
+    ) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    def copy(self, *, deep: bool = True):
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the PartitionedDataSet.
 
         Parameters
@@ -232,7 +237,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             newobject.deep_copy(self)
         else:
             raise PartitionedDataSetsNotSupported
-        newobject.copy_meta_from(self, deep)
+        newobject.copy_meta_from(self, deep=deep)
         newobject.wrap_nested()
         return newobject
 
@@ -249,7 +254,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         return self.GetNumberOfPartitions()
 
     @n_partitions.setter
-    def n_partitions(self, n) -> None:
+    def n_partitions(self, n: int) -> None:
         self.SetNumberOfPartitions(n)
         self.Modified()
 
@@ -273,7 +278,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """
         return self.n_partitions == 0
 
-    def append(self, dataset) -> None:
+    def append(self, dataset: DataSet) -> None:
         """Add a data set to the next partition index.
 
         Parameters
@@ -287,7 +292,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self[index] = dataset
 
     def get_data_range(  # numpydoc ignore=RT01,PR01
-        self: Self, name: str | None, preference: FieldAssociation | str
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral | FieldLiteral
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         return DataObject.get_data_range(self, name=name, preference=preference)

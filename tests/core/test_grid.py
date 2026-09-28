@@ -1940,11 +1940,18 @@ def test_explicit_structured_grid_visible_bounds():
     assert grid.visible_bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
 
+def test_structured_grid_getitem_array():
+    grid = pv.StructuredGrid(*np.meshgrid(*[np.arange(4, dtype=float)] * 3, indexing='ij'))
+    grid.point_data['data'] = np.arange(grid.n_points)
+
+    assert np.array_equal(grid['data'], grid['data', 'point'])
+
+
 def test_explicit_structured_grid_cell_id():
     grid = examples.load_explicit_structured()
 
     ind = grid.cell_id((3, 4, 0))
-    assert np.issubdtype(ind, np.integer)
+    assert isinstance(ind, int)
     assert ind == 19
 
     ind = grid.cell_id([(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
@@ -1973,20 +1980,14 @@ def test_explicit_structured_grid_neighbors():
     with pytest.raises(ValueError, match='Invalid value for `rel`'):
         indices = grid.neighbors(0, rel='foo')
 
-    indices = grid.neighbors(0, rel='topological')
-    assert isinstance(indices, list)
-    assert all(np.issubdtype(ind, np.integer) for ind in indices)
-    assert indices == [1, 4, 20]
+    for rel in ['topological', 'connectivity', 'geometric']:
+        indices = grid.neighbors(0, rel=rel)
+        assert isinstance(indices, list)
+        assert all(isinstance(ind, int) for ind in indices)
+        assert indices == [1, 4, 20]
 
-    indices = grid.neighbors(0, rel='connectivity')
-    assert isinstance(indices, list)
-    assert all(np.issubdtype(ind, np.integer) for ind in indices)
-    assert indices == [1, 4, 20]
-
-    indices = grid.neighbors(0, rel='geometric')
-    assert isinstance(indices, list)
-    assert all(np.issubdtype(ind, np.integer) for ind in indices)
-    assert indices == [1, 4, 20]
+        # Cell zero is a neighbor like any other
+        assert grid.neighbors(1, rel=rel) == [0, 2, 5, 21]
 
 
 @pytest.mark.skipif(

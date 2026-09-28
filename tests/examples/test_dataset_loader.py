@@ -759,6 +759,9 @@ def test_download_dataset_texture():
     loaded = _download_dataset_texture(loader, texture=False, load=False)
     assert isinstance(loaded, str)
 
+    loaded = _download_dataset_texture(loader, texture=True, load=False)
+    assert isinstance(loaded, str)
+
 
 def test_source_url_invalid_base_url_raises():
     loader = _DownloadableFile('foo.vtk', base_url='not-a-url')
@@ -861,6 +864,12 @@ def test_load_and_merge_raises_when_no_loadable_files():
         _load_and_merge([_DownloadableFile('foo.vtk')])
 
 
+def test_load_and_merge_raises_for_invalid_loaded_type():
+    bad_loader = _DatasetLoader(lambda: np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match='Only DataSet objects can be merged'):
+        _load_and_merge([bad_loader])
+
+
 def test_get_file_or_folder_size_missing_path_raises(tmp_path):
     missing = str(tmp_path / 'does-not-exist')
     with pytest.raises(ValueError, match='Expected a file or folder path'):
@@ -899,6 +908,9 @@ def test_load_as_multiblock_non_loadable_file_before_loadable_file():
     assert isinstance(multi['HeadMRVolume'], pv.ImageData)
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the loader resolves readers for empty files of several suffixes'
+)
 @pytest.mark.parametrize(
     ('filename', 'companion_names', 'reader_types'),
     [

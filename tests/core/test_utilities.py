@@ -417,6 +417,14 @@ def test_read_reader_kwargs():
         pv.read(file, enable_patch_array=True)
 
 
+@pytest.mark.expect_vtk_output(
+    'Cannot find StructuredGrid element in file.',
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLStructuredGridReader',
+    'Algorithm vtkXMLMultiBlockDataReader',
+    reason='a .vtu file read as .vts fails in the reader, which is how PyVista detects it',
+)
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -429,13 +437,15 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
-    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
-    # the returned dataset is empty
+    # the file is not XML at all, and VTK only reports the parse failure from 9.7 on
     fname = ex.planefile
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        data = fileio.read(fname, force_ext='.vtm')
-    assert len(data) == 0
+        if pv.vtk_version_info >= (9, 7):
+            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
+                fileio.read(fname, force_ext='.vtm')
+        else:
+            assert len(fileio.read(fname, force_ext='.vtm')) == 0
 
     fname = ex.planefile
     with pytest.raises(IOError):  # noqa: PT011
@@ -761,6 +771,21 @@ def test_progress_monitor():
     assert isinstance(ugrid, pv.PolyData)
 
 
+def test_progress_monitor_interrupt_without_abort_execute():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    algorithm = _vtk.vtkSphereSource()
+    monitor = ProgressMonitor(algorithm)
+    monitor._interrupt_signal_received = True
+    monitor(algorithm)
+    assert algorithm.GetAbortExecute()
+
+    reader = _PVDReader()
+    monitor = ProgressMonitor(reader)
+    monitor._interrupt_signal_received = True
+    monitor(reader)
+
+
 def test_observer():
     msg = 'KIND: In PATH, line 0\nfoo (0x000000): ALERT'
     obs = Observer()
@@ -803,6 +828,20 @@ def test_observer_default_event():
     assert ret.alert == msg
 
     assert str(ret) == msg
+
+
+def test_observer_called_without_message():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    obs = Observer(event_type='ProgressEvent', log=False, store_history=True)
+    reader = _PVDReader()
+    reader.AddObserver(obs.event_type, obs)
+
+    reader.UpdateObservers(obs.event_type)
+
+    assert obs.has_event_occurred()
+    assert obs.get_message() == ''
+    assert obs.event_history[-1].alert == ''
 
 
 @pytest.mark.parametrize('point', [1, object(), None])
@@ -955,10 +994,30 @@ def test_vtk_error_catcher():
         pass
 
 
+@pytest.mark.expect_vtk_output(
+    'Error opening file this_file_does_not_exist.vtp',
+    'Algorithm vtkXMLPolyDataReader',
+    reason='the file does not exist, and _update_alg raises on the VTK error',
+)
 def test_update_alg_raises():
     reader = _vtk.vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
     with pytest.raises(pv.VTKExecutionError):
+        _update_alg(reader)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unexpected point index value: 0',
+    'Algorithm vtkOBJReader',
+    reason='the OBJ indices are out of range, and _update_alg raises on the VTK error',
+)
+def test_update_alg_raises_request_data_error(tmp_path):
+    # OBJ indices are one-based, so the line element below is out of range
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
         _update_alg(reader)
 
 
@@ -1064,6 +1123,9 @@ def test_merge(sphere, cube, datasets):
 
     with pytest.raises(TypeError, match=r'Expected pyvista.DataSet'):
         pv.merge([None, sphere])
+
+    with pytest.raises(TypeError, match=r'Expected pyvista.DataSet, not NoneType at index 1'):
+        pv.merge([sphere, None])
 
     # check polydata
     merged_poly = pv.merge([sphere, cube])
@@ -1261,6 +1323,15 @@ def test_linkcode_resolve():
     assert edit_match is not None
     assert int(edit_match[1]) == start
     assert int(edit_match[2]) == start + 1
+
+
+def test_linkcode_resolve_edit_link_targets_main_for_a_release(monkeypatch):
+    # The released docs' blob links point at that release's branch, but edits
+    # are only ever made on main
+    monkeypatch.setattr(pv, '__version__', '0.46.0')
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    assert '/blob/release/0.46/' in linkcode_resolve('py', info)
+    assert '/edit/main/' in linkcode_resolve('py', info, edit=True)
 
 
 def test_fix_edit_link_button_gallery_example():
@@ -3159,19 +3230,13 @@ def _compute_unit_cell_quality(
     return qual.active_scalars[0]
 
 
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_valid_measures(info):
-    # Ensure the computed measure is not null
-    null_value = -1
-    qual_value = _compute_unit_cell_quality(info, null_value)
-    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
-        pytest.fail(
-            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
-        )
-
-
 def xfail_wedge_negative_volume(info):
-    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
+    """Xfail the wedge volume measure, which VTK reports as negative before 9.6."""
+    if (
+        pv.vtk_version_info < (9, 6)
+        and info.cell_type == pv.CellType.WEDGE
+        and info.quality_measure == 'volume'
+    ):
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
         )
@@ -3189,25 +3254,17 @@ def xfail_distortion_returns_one(info):
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 def test_cell_quality_info_unit_cell_value(info):
-    """Test that the actual computed measure for a unit cell matches the reported value."""
+    """Test that the measure is valid for the cell type and matches the reported value."""
+    null_value = -1
+    qual_value = _compute_unit_cell_quality(info, null_value)
+    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
     xfail_wedge_negative_volume(info)
 
-    unit_cell_value = info.unit_cell_value
-    qual_value = _compute_unit_cell_quality(info)
-    assert np.isclose(qual_value, unit_cell_value)
-
-
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_acceptable_range(info):
-    """Test that the unit cell value is within the acceptable range."""
-    # Some cells / measures have bugs and return invalid values and are expected to fail
-    xfail_wedge_negative_volume(info)
-
-    acceptable_range = info.acceptable_range
-    unit_cell_value = info.unit_cell_value
-
-    assert unit_cell_value >= acceptable_range[0]
-    assert unit_cell_value <= acceptable_range[1]
+    assert np.isclose(qual_value, info.unit_cell_value)
 
 
 def _replace_range_infinity(rng):
@@ -3221,23 +3278,19 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_normal_range(info):
-    """Test that the normal range is broader than the acceptable range."""
+def test_cell_quality_info_ranges(info):
+    """Test that each range contains the next, and the unit cell value is acceptable."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
-    normal_range = _replace_range_infinity(info.normal_range)
-
-    assert normal_range[0] <= acceptable_range[0]
-    assert normal_range[1] >= acceptable_range[1]
-
-
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_full_range(info):
-    """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
     full_range = _replace_range_infinity(info.full_range)
 
+    assert normal_range[0] <= acceptable_range[0]
+    assert normal_range[1] >= acceptable_range[1]
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
+
+    assert info.unit_cell_value >= info.acceptable_range[0]
+    assert info.unit_cell_value <= info.acceptable_range[1]
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)

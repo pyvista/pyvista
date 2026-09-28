@@ -195,6 +195,30 @@ def test_above_range_color(lut):
     assert lut.above_range_color == pv.global_theme.above_range_color
 
 
+def test_range_opacity_is_none_without_color(lut):
+    assert lut.above_range_color is None
+    assert lut.above_range_opacity is None
+    assert lut.below_range_color is None
+    assert lut.below_range_opacity is None
+
+
+def test_range_opacity(lut):
+    lut.above_range_color = 'grey'
+    lut.above_range_opacity = 0.5
+    assert lut.above_range_opacity == 128
+
+    lut.below_range_color = 'grey'
+    lut.below_range_opacity = 0.5
+    assert lut.below_range_opacity == 128
+
+
+def test_nan_opacity(lut):
+    assert lut.nan_opacity == 255
+    lut.nan_color = 'grey'
+    lut.nan_opacity = 0.5
+    assert lut.nan_opacity == 128
+
+
 def test_ramp(lut):
     lut.ramp = 'linear'
     assert lut.ramp == 'linear'
@@ -291,6 +315,13 @@ def test_call_vtk_array(lut):
 
 def test_call_scalar(lut):
     assert lut(0.5) == lut.map_value(0.5)
+
+
+def test_named_opacity_matching_n_values():
+    lut = pv.LookupTable()
+    lut.apply_cmap('viridis', len('linear'))
+    lut.apply_opacity('linear')
+    assert np.array_equal(lut.values[:, -1], np.linspace(0, 255, lut.n_values, dtype=np.uint8))
 
 
 def test_custom_opacity(lut):

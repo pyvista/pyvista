@@ -90,3 +90,8 @@ cropped_skull.dimensions
 
 cropped_ct = ct.crop(mask=skull, keep_dimensions=True, fill_value=-1000)
 cropped_ct.dimensions
+
+# %%
+# The crop is measured in index space, so an image is trimmed on its own axes. See
+# :ref:`slice_oblique_anatomy_example` for cropping to a structure which runs across
+# them.

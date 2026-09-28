@@ -377,6 +377,20 @@ def test_read_forwards_kwargs_to_registered_class_in_a_sequence(tmp_path):
     assert denser[1].n_points > default[1].n_points
 
 
+def test_read_sequence_keeps_a_partitioned_dataset(tmp_path):
+    """A partitioned dataset cannot be a block, so it is converted rather than dropped."""
+    partitioned = tmp_path / 'part.vtpd'
+    poly = tmp_path / 'poly.vtp'
+    pv.PartitionedDataSet([pv.Sphere()]).save(partitioned)
+    pv.Cube().save(poly)
+
+    blocks = pv.read([partitioned, poly])
+
+    assert blocks[0] is not None
+    assert blocks[0].n_blocks == 1
+    assert isinstance(blocks[1], pv.PolyData)
+
+
 def test_progress_bar_and_validate_are_not_forwarded_to_a_handler(tmp_path):
     """A handler owns the whole read, so reader-object arguments stay behind."""
     test_file = tmp_path / 'data.myext'
@@ -419,23 +433,17 @@ def test_uri_kwargs_fall_back_to_the_builtin_reader(tmp_path):
     mock.assert_not_called()
 
 
-def test_uri_forwarded_to_custom_reader():
-    """Remote URI with a custom extension is passed directly to the handler."""
+@pytest.mark.parametrize(
+    'uri',
+    ['https://example.com/data.myformat', 's3://bucket/data.myformat'],
+)
+def test_uri_forwarded_to_custom_reader(uri):
+    """A remote URI with a custom extension is passed directly to the handler."""
     mock = MagicMock(return_value=pv.PolyData())
     pv.register_reader('.myformat', mock)
 
-    result = pv.read('https://example.com/data.myformat', normals=False)
-    mock.assert_called_once_with('https://example.com/data.myformat', normals=False)
-    assert isinstance(result, pv.PolyData)
-
-
-def test_s3_uri_forwarded_to_custom_reader():
-    """s3:// URI with a custom extension is passed directly to the handler."""
-    mock = MagicMock(return_value=pv.PolyData())
-    pv.register_reader('.myformat', mock)
-
-    result = pv.read('s3://bucket/data.myformat')
-    mock.assert_called_once_with('s3://bucket/data.myformat')
+    result = pv.read(uri, normals=False)
+    mock.assert_called_once_with(uri, normals=False)
     assert isinstance(result, pv.PolyData)
 
 

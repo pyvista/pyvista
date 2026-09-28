@@ -4,7 +4,7 @@
 Sample Function: Perlin Noise in 2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sample 2D Perlin noise using :func:`~pyvista.core.utilities.features.sample_function`.
+Sample 2D Perlin noise using :func:`~pyvista.sample_function`.
 
 Perlin noise is a type of gradient noise often used by visual effects
 artists to increase the appearance of realism in computer graphics.

@@ -9,6 +9,7 @@ them via the ``pyvista.jupyter_backends`` entry-point group.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
 from pyvista._warn_external import warn_external
@@ -34,7 +35,7 @@ def handle_plotter(
     plotter: Plotter,
     backend: JupyterBackendOptions | str | None = None,
     screenshot: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
-    **kwargs,
+    **kwargs: Any,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
 
@@ -132,5 +133,5 @@ def show_static_image(
     if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()
-        plotter.last_image = plotter.screenshot(screenshot, return_img=True)
+        plotter.last_image = plotter.screenshot(screenshot, return_img=True, render=False)
     return PIL.Image.fromarray(plotter.last_image)

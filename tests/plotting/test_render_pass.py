@@ -134,6 +134,26 @@ def test_edl_pass():
     assert not passes._passes
 
 
+def test_add_pass_keeps_one_copy_of_a_pre_pass():
+    _ren, passes = make_passes()
+    edl_pass = _vtk.vtkEDLShading()
+
+    passes._add_pass(edl_pass)
+    passes._add_pass(edl_pass)
+
+    assert passes._passes['vtkEDLShading'] == [edl_pass]
+
+
+def test_add_pass_keeps_every_copy_of_a_post_pass():
+    _ren, passes = make_passes()
+    blur_pass = _vtk.vtkGaussianBlurPass()
+
+    passes._add_pass(blur_pass)
+    passes._add_pass(blur_pass)
+
+    assert passes._passes['vtkGaussianBlurPass'] == [blur_pass, blur_pass]
+
+
 def test_ssao_pass():
     _ren, passes = make_passes()
     assert not passes._passes

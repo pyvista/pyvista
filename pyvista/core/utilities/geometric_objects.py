@@ -696,6 +696,7 @@ def StructuredSphere(
     """
     r = _validation.validate_arrayN(
         radius,
+        dtype_out=float,
         must_be_in_range=[0.0, np.inf],
         strict_lower_bound=True,
         must_be_sorted={'ascending': True, 'strict': True},
@@ -1351,6 +1352,15 @@ def Line(
     pyvista.PolyData
         Line mesh.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     Create a line between ``(0, 0, 0)`` and ``(0, 0, 1)``.
@@ -1381,6 +1391,15 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     -------
     pyvista.PolyData
         Line mesh.
+
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
 
     Examples
     --------
@@ -1431,7 +1450,7 @@ def Tube(
     capping : bool, default: False
         Turn on/off whether to cap the ends with polygons.
 
-            .. versionadded:: 0.45
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -2042,6 +2061,15 @@ def CircularArc(
     pyvista.PolyData
         Circular arc mesh.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     Create a quarter arc centered at the origin in the xy plane.
@@ -2126,6 +2154,15 @@ def CircularArcFromNormal(
     -------
     pyvista.PolyData
         Circular arc mesh.
+
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
 
     Examples
     --------

@@ -19,10 +19,12 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
+import numpy.typing as npt
 import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
@@ -32,6 +34,7 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Mapping
     import re
 
     import imageio
@@ -43,11 +46,11 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid
     from pyvista import MultiBlock
-    from pyvista import NumpyArray
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
@@ -181,8 +184,23 @@ def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
             warn_external(msg)
 
 
+def _validate_pickle_format(format: str) -> Literal['vtk', 'xml', 'legacy']:  # noqa: A002
+    """Normalize a pickle format name and raise for unsupported values."""
+    supported = {'vtk', 'xml', 'legacy'}
+    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
+    if format_ not in supported:
+        msg = (
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
+        )
+        raise ValueError(msg)
+    return format_
+
+
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
+
+    .. deprecated:: 0.50
+        The ``'vtk'`` format is the only supported pickle format and is always used.
 
     .. note::
 
@@ -204,31 +222,25 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
         - ``'xml'``: objects are serialized as an XML-formatted string.
         - ``'legacy'`` objects are serialized to bytes in VTK's binary format.
 
-        .. note::
-
-            The ``'vtk'`` format requires VTK 9.3 or greater.
-
-        .. warning::
-
-            ``'xml'`` and ``'legacy'`` are not recommended. These formats are not
-            officially supported by VTK and have limitations. For example, these
-            formats cannot be used to pickle :class:`pyvista.MultiBlock`.
-
     Raises
     ------
     ValueError
         If the provided format is not supported.
 
     """
-    supported = {'vtk', 'xml', 'legacy'}
-    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
-    if format_ not in supported:
-        msg = (
-            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
-        )
-        raise ValueError(msg)
+    msg = (
+        '`pyvista.set_pickle_format` is deprecated. The `vtk` format is the only supported '
+        'pickle format and is always used.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
-    pv.PICKLE_FORMAT = format_
+    pv._PICKLE_FORMAT = _validate_pickle_format(format)
 
 
 def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
@@ -476,15 +488,16 @@ def _read_dispatch(  # noqa: PLR0911
         multi = pv.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
+            block = _read_dispatch(
+                each,
+                force_ext=None,
+                file_format=file_format,
+                progress_bar=progress_bar,
+                validate=validate,
+                **kwargs,
+            )
             multi.append(
-                _read_dispatch(  # type: ignore[arg-type]
-                    each,
-                    force_ext=None,
-                    file_format=file_format,
-                    progress_bar=progress_bar,
-                    validate=validate,
-                    **kwargs,
-                ),
+                block.cast_to_multiblock() if isinstance(block, pv.PartitionedDataSet) else block,
                 name,
             )
         return multi
@@ -632,7 +645,7 @@ def read_texture(filename: str | Path, *, progress_bar: bool = False) -> Texture
         # initialize the reader using the extension to find it
 
         image = read(filename, progress_bar=progress_bar)
-        if image.n_points < 2:
+        if not isinstance(image, pv.ImageData) or image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
         return pv.Texture(image)
@@ -1337,25 +1350,26 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         ]
 
     # Single cell type (except POLYGON and POLYHEDRON)
+    cells: list[tuple[str, Any]]
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
         pv.CellType.POLYGON,
         pv.CellType.POLYHEDRON,
     }:
         vtk_celltype = vtk_celltypes[0]
-        cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
+        cell_ids = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
         if vtk_celltype == pv.CellType.PIXEL:
-            cells = cells[:, [0, 1, 3, 2]]
+            cell_ids = cell_ids[:, [0, 1, 3, 2]]
             celltype = 'quad'
 
         elif vtk_celltype == pv.CellType.VOXEL:
-            cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
+            cell_ids = cell_ids[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
         else:
             celltype = vtk_to_meshio_type[vtk_celltype]
 
-        cells = [(celltype, cells)]
+        cells = [(celltype, cell_ids)]
 
     # Mixed cell types
     else:
@@ -1365,7 +1379,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
         ):
-            cell = connectivity[i1:i2]
+            cell: Any = connectivity[i1:i2]
 
             if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
@@ -1410,7 +1424,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for k, v in vtk_cell_data.items()
     }
 
-    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
+    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)  # type: ignore[arg-type]
 
 
 def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
@@ -1551,6 +1565,11 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
+def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, NumpyArray[Any]]:
+    """Return the attribute mapping with every value as an array."""
+    return {name: np.asarray(value) for name, value in attributes.items()}
+
+
 def from_trimesh(
     mesh: trimesh.Trimesh, *, pass_data: _PassDataOptions = True
 ) -> PolyData:  # numpydoc ignore=RT01
@@ -1609,10 +1628,10 @@ def from_trimesh(
             and (uv := visual.uv) is not None
         ):
             polydata.active_texture_coordinates = uv
-        polydata.point_data.update(mesh.vertex_attributes, copy=False)
+        polydata.point_data.update(_as_arrays(mesh.vertex_attributes), copy=False)
 
     if pass_cell_data:
-        polydata.cell_data.update(mesh.face_attributes, copy=False)
+        polydata.cell_data.update(_as_arrays(mesh.face_attributes), copy=False)
 
     if pass_field_data:
         for key, val in mesh.metadata.items():

@@ -32,6 +32,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
 from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
+from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.arrays import convert_array
 
 if TYPE_CHECKING:
@@ -902,6 +903,13 @@ def test_gaussian_splatting(sphere: PolyData):
     assert output.dimensions == dimensions
 
 
+def test_gaussian_splatting_pointset(pointset):
+    output = pointset.gaussian_splatting(dimensions=(8, 8, 8))
+    assert isinstance(output, pv.ImageData)
+    assert output.n_cells > 0
+    assert 'SplatterValues' in output.array_names
+
+
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         if isinstance(dataset, pv.PointSet):
@@ -1044,6 +1052,10 @@ def test_texture_map_to_sphere():
     assert 'Texture Coordinates' in dataset.array_names
 
 
+@pytest.mark.expect_vtk_output(
+    'Turning indexing off: no data to index with',
+    reason='there is no array to index the glyph geometry with, so VTK turns indexing off',
+)
 def test_glyph(datasets, sphere):
     for dataset in datasets:
         dataset['vectors'] = np.ones_like(dataset.points)
@@ -1976,6 +1988,20 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
+@pytest.mark.parametrize(
+    'grid',
+    [
+        pv.ImageData(dimensions=(3, 3, 3)),
+        pv.RectilinearGrid(np.arange(3.0), np.arange(3.0), np.arange(3.0)),
+    ],
+    ids=['ImageData', 'RectilinearGrid'],
+)
+def test_delaunay_3d_grid(grid):
+    result = grid.delaunay_3d()
+    assert isinstance(result, pv.UnstructuredGrid)
+    assert result.n_cells > 0
+
+
 def test_smooth(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
     smoothed = surf.smooth()
@@ -2150,6 +2176,10 @@ def test_streamlines_errors(uniform_vec):
         uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
 
+@pytest.mark.expect_vtk_output(
+    'The update extent specified in the information',
+    reason='the seed source requests an extent the input producer does not provide',
+)
 def test_streamlines_from_source(uniform_vec):
     vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
     source = pv.PolyData(vertices)
@@ -2234,7 +2264,14 @@ def test_streamlines_evenly_spaced_2d_errors():
     with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(step_unit='not valid')
 
+    with pytest.raises(ValueError, match='requires a 2D dataset in the XY plane'):
+        mesh.rotate_x(45).streamlines_evenly_spaced_2D()
 
+
+@pytest.mark.expect_vtk_output(
+    'Algorithm vtkEvenlySpacedStreamlines2D',
+    reason='the filter supports xy-plane input only and fails on this one',
+)
 @pytest.mark.xfail
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
@@ -3564,6 +3601,106 @@ def test_interpolate():
     assert interp.n_arrays
 
 
+@pytest.mark.parametrize('cast', ['poly', 'unstructured', 'image', 'rectilinear', 'structured'])
+def test_interpolate_target_types(cast):
+    grid = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = {
+        'poly': lambda: pv.PolyData(grid.points),
+        'unstructured': grid.cast_to_unstructured_grid,
+        'image': grid.copy,
+        'rectilinear': grid.cast_to_rectilinear_grid,
+        'structured': grid.cast_to_structured_grid,
+    }[cast]()
+    # A linear field interpolates to itself wherever the kernel finds neighbours
+    target.point_data['x'] = target.points[:, 0]
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.3)
+
+    interp = surf.interpolate(target, radius=0.5)
+
+    assert interp.n_points == surf.n_points
+    assert np.allclose(interp['x'], surf.points[:, 0], atol=0.05)
+
+
+def test_interpolate_point_array_target():
+    # A point array is wrapped, the same as it is by `sample`
+    points = np.random.default_rng(0).random((10, 3))
+    surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
+
+    interp = surf.interpolate(points, radius=1.0)
+
+    assert interp.n_points == surf.n_points
+
+
+def test_interpolate_composite_target_raises():
+    target = pv.MultiBlock([pv.Sphere()])
+
+    match = 'Interpolation target must be a single dataset, got MultiBlock.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Sphere().interpolate(target)
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'match'),
+    [
+        ({'sharpness': 0.5}, 'sharpness values must all be greater than or equal to 1.'),
+        ({'radius': -1.0}, 'radius values must all be greater than or equal to 0.'),
+        ({'n_points': 0}, 'n_points values must all be greater than or equal to 1.'),
+    ],
+)
+def test_interpolate_kernel_range_raises(kwargs, match):
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Sphere().interpolate(pv.Sphere(), **kwargs)
+
+
+def test_interpolate_empty_target_raises():
+    match = 'Interpolation target has no points to interpolate from.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().interpolate(pv.PolyData())
+
+
+def test_interpolate_excludes_string_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    target.point_data['labels'] = np.array(['a'] * target.n_points)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    match = re.escape("excluded from the output: ['labels'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'values' in interp.point_data
+    assert 'labels' not in interp.point_data
+
+
+def test_interpolate_excludes_input_string_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+    surf.point_data['tag'] = np.array(['z'] * surf.n_points)
+
+    match = re.escape("excluded from the output: ['tag'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'tag' not in interp.point_data
+
+
+def test_interpolate_excludes_unnamed_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    unnamed = _vtk.vtkStringArray()
+    unnamed.SetNumberOfValues(target.n_points)
+    target.point_data.VTKObject.AddArray(unnamed)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    match = re.escape("excluded from the output: ['<unnamed>'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'values' in interp.point_data
+    assert target.point_data.VTKObject.GetNumberOfArrays() == 3
+
+
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -3730,12 +3867,34 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
+@pytest.mark.expect_vtk_output(
+    'Could not locate key vtkExodusIIReader::GLOBAL_TEMPORAL_VARIABLE',
+    reason='the downloaded file carries an Exodus key the reader cannot resolve',
+)
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
     assert 'DistanceFromCellCenterToFaceCenter' in qual.array_names
     assert 'DistanceFromCellCenterToFacePlane' in qual.array_names
     assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PolyData(),
+        pv.Line(),
+        pv.ImageData(dimensions=(4, 4, 1)),
+        pv.RectilinearGrid(np.arange(4.0), np.arange(4.0), np.array([0.0])),
+        pv.StructuredGrid(*np.meshgrid(np.arange(4.0), np.arange(4.0), [0.0], indexing='ij')),
+    ],
+    ids=['surface', 'empty', 'line', 'image_2d', 'rectilinear_2d', 'structured_2d'],
+)
+def test_compute_boundary_mesh_quality_without_3d_cells_raises(mesh):
+    match = r'Boundary faces are only defined for 3D cells, but the input has none'
+    with pytest.raises(ValueError, match=match):
+        mesh.compute_boundary_mesh_quality()
 
 
 def test_compute_derivatives(random_hills):
@@ -4240,7 +4399,7 @@ def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
     voi_1, voi_2, _structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match='`point_data` is not identical'):
         voi_1.concatenate(voi_2, axis=1)
 
 
@@ -4424,15 +4583,15 @@ def test_extrude_trim_catch():
     trim_surface = pv.Plane()
     with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, extrusion='Invalid strategy')
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match='extrusion must be an instance of'):
         _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
     with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, capping='Invalid strategy')
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match='capping must be an instance of'):
         _ = mesh.extrude_trim(direction, trim_surface, capping=0)
     with pytest.raises(TypeError):
         _ = mesh.extrude_trim('foobar', trim_surface)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match='direction has shape'):
         _ = mesh.extrude_trim([1, 2], trim_surface)
 
 
@@ -4536,6 +4695,23 @@ def test_integrate_data_datasets(datasets):
             raise ValueError(msg)
 
 
+def test_integrate_data_pointset(pointset):
+    integrated = pointset.integrate_data()
+    assert isinstance(integrated, pv.UnstructuredGrid)
+    assert integrated.n_cells == 1
+
+
+@pytest.mark.parametrize('name', ['streamlines', 'streamlines_from_source'])
+def test_streamlines_pointset_raises(pointset, name):
+    pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
+    kwargs = {
+        'streamlines': dict(n_points=2),
+        'streamlines_from_source': dict(source=pv.PolyData(pointset.points[:1])),
+    }[name]
+    with pytest.raises(pv.PointSetCellOperationError, match='PointSets contain no cells'):
+        getattr(pointset, name)(vectors='vectors', **kwargs)
+
+
 def test_integrate_data():
     """Test specific case."""
     # sphere with radius = 0.5, area = pi
@@ -4576,6 +4752,22 @@ def test_align_xyz():
 
     aligned = mesh.align_xyz(centered=False)
     assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_rectilinear():
+    grid = pv.RectilinearGrid([0, 1], [0, 2], [0, 0.5])
+    aligned = grid.align_xyz(centered=False)
+    assert isinstance(aligned, pv.RectilinearGrid)
+    expected = np.array([-1, 1, -0.5, 0.5, -0.25, 0.25]) + np.repeat(grid.center, 2)
+    assert np.allclose(aligned.bounds, expected)
+
+    grid = examples.load_rectilinear()
+    aligned = grid.align_xyz(centered=False)
+    assert sorted(aligned.dimensions) == sorted(grid.dimensions)
+    assert np.allclose(sorted(aligned['Random Data']), sorted(grid['Random Data']))
+
+    box = grid.oriented_bounding_box()
+    assert np.allclose(box.bounds, grid.bounds)
 
 
 def test_align_xyz_merge_points():
@@ -4903,6 +5095,28 @@ def test_merge_points_filter(inplace):
     assert output.n_points == 1
     assert isinstance(mesh, pv.UnstructuredGrid)
     assert (mesh is output) == inplace
+
+
+def test_merge_pointset(pointset, sphere):
+    merged = pointset.merge(sphere)
+    assert isinstance(merged, pv.UnstructuredGrid)
+    assert merged.n_cells == sphere.n_cells
+    assert merged.n_points == pointset.n_points + sphere.n_points
+
+    # Only a merge of point clouds is still a point cloud
+    clouds = pointset.merge([pointset.translate((10, 0, 0)), pointset.translate((20, 0, 0))])
+    assert isinstance(clouds, pv.PointSet)
+    assert clouds.n_points == 3 * pointset.n_points
+    assert isinstance(pointset.merge(), pv.PointSet)
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points_pointset(inplace):
+    cloud = pv.PointSet([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    output = cloud.merge_points(inplace=inplace)
+    assert isinstance(output, pv.PointSet)
+    assert output.n_points == 2
+    assert (cloud is output) == inplace
 
 
 @pytest.fixture
@@ -5338,6 +5552,195 @@ def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
+@pytest.mark.parametrize('axis', [0, 1, 2])
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {},
+        {'spacing': 0.25},
+        {'spacing': (0.1, 0.2, 0.3)},
+        {'dimensions': (5, 6, 7)},
+        {'dimensions': (1, 50, 50)},
+    ],
+    ids=['default', 'scalar_spacing', 'vector_spacing', 'dimensions', 'lopsided_dimensions'],
+)
+def test_voxelize_binary_mask_flat_input(axis, kwargs):
+    # Only the geometry is tested, since a flat surface encloses nothing to label
+    direction = np.zeros(3)
+    direction[axis] = 1
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3)
+    mask = plane.voxelize_binary_mask(**kwargs)
+
+    # The flat axis has voxels with a real thickness, not a zero spacing
+    assert mask.spacing[axis] > 0
+    if 'spacing' in kwargs:
+        expected = np.broadcast_to(kwargs['spacing'], (3,))[axis]
+        assert mask.spacing[axis] == expected
+    elif 'dimensions' in kwargs:
+        # It takes the finest of the other axes, so one voxel elsewhere cannot inflate it
+        assert mask.spacing[axis] == pytest.approx(min(np.delete(mask.spacing, axis)))
+    else:
+        # It takes the estimated spacing, like the other axes
+        assert mask.spacing[axis] == pytest.approx(_cell_length_percentile(plane, 0.1, 100_000))
+
+    cells = np.array(mask.points_to_cells(dimensionality='3D').bounds)
+
+    # The other axes still fit the input bounds
+    other = [i for i in range(3) if i != axis]
+    assert np.allclose(cells[2 * np.array(other)], np.array(plane.bounds)[2 * np.array(other)])
+
+    # The flat axis is centered on the input, so its cells contain every input point
+    assert cells[2 * axis] < plane.bounds[2 * axis]
+    assert cells[2 * axis + 1] > plane.bounds[2 * axis + 1]
+    assert cells[2 * axis] == pytest.approx(-cells[2 * axis + 1])
+
+
+@pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])
+def test_voxelize_binary_mask_target_n_points(sphere, target):
+    mask = sphere.voxelize_binary_mask(target_n_points=target)
+    assert 0.8 <= mask.n_points / target <= 1.2
+    assert mask.n_points == np.prod(mask.dimensions)
+
+    # Dimensions follow the bounds, so the spacing is isotropic up to the rounding
+    spacing = np.array(mask.spacing)
+    assert spacing.max() / spacing.min() <= 1 + 1 / min(mask.dimensions)
+
+
+def test_voxelize_binary_mask_target_n_points_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=20, j_resolution=20)
+    mask = plane.voxelize_binary_mask(target_n_points=10_000)
+    # The flat axis holds one point and takes no part in the count
+    assert mask.dimensions[2] == 1
+    assert 0.8 <= mask.n_points / 10_000 <= 1.2
+
+
+def test_voxelize_max_n_points_clamps_the_defaults():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+
+    # An estimated geometry is coarsened to fit, without raising
+    assert mesh.voxelize_binary_mask().n_points > 1000
+    for cap in [1000, 500, 100, 8, 1]:
+        assert mesh.voxelize_binary_mask(max_n_points=cap).n_points <= cap
+
+    # A limit the bounds divide evenly is met exactly, not undershot
+    cube = pv.Cube().triangulate().subdivide(4)
+    assert cube.voxelize_binary_mask(max_n_points=1000).n_points == 1000
+    assert cube.voxelize_binary_mask(max_n_points=27).n_points == 27
+
+    # The rectilinear grid counts its own points, one more than its cells along each axis
+    rectilinear = mesh.voxelize_rectilinear(max_n_points=1000)
+    assert rectilinear.n_points <= 1000
+    assert rectilinear.n_cells > 500
+
+
+@pytest.mark.parametrize('cap', range(1, 200, 7))
+def test_voxelize_max_n_points_is_a_strict_bound(sphere, cap):
+    assert sphere.voxelize_binary_mask(max_n_points=cap).n_points <= cap
+
+
+def test_voxelize_max_n_points_clamps_a_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=50, j_resolution=50)
+    mask = plane.voxelize_binary_mask(max_n_points=100)
+    assert mask.dimensions[2] == 1
+    assert mask.n_points <= 100
+
+
+def test_voxelize_max_n_points_coarsens_a_rounded_up_estimate():
+    # The grid sized for the limit rounds to 10 x 5 x 1, which is above it
+    box = pv.Box(bounds=(0, 6.4059, 0, 2.7709, 0, 0.5056))
+    mask = box.voxelize_binary_mask(max_n_points=39)
+    assert mask.dimensions == (7, 5, 1)
+    assert mask.n_points <= 39
+
+
+def test_voxelize_max_n_points_raises_for_a_requested_geometry():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+    match = 'points, which exceeds `max_n_points=1000`'
+    for kwargs in [
+        dict(dimensions=(40, 40, 40)),
+        dict(spacing=0.02),
+        dict(cell_length_percentile=0.01),
+        dict(reference_volume=pv.ImageData(dimensions=(40, 40, 40), spacing=(0.03,) * 3)),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.voxelize_binary_mask(max_n_points=1000, **kwargs)
+
+    # A requested geometry inside the limit is left alone
+    assert mesh.voxelize_binary_mask(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_voxelize_rectilinear_n_points(sphere):
+    grid = sphere.voxelize_rectilinear(target_n_points=1000)
+    assert grid.dimensions == (10, 10, 10)
+    assert grid.n_points == 1000
+
+    # A flat input has two point layers along its flat axis
+    grid = pv.Plane().voxelize_rectilinear(max_n_points=100)
+    assert grid.dimensions[2] == 2
+    assert grid.n_points <= 100
+
+    match = '`max_n_points=4` is below the 8 points of a grid with one cell along each axis.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.voxelize_rectilinear(max_n_points=4)
+
+    # Only the foreground is returned, so a bound on it cannot be honoured
+    with pytest.raises(TypeError, match='unexpected keyword'):
+        sphere.voxelize(max_n_points=1000)
+
+
+def test_voxelize_max_n_points_bounds_the_target(sphere):
+    match = 'Target n points (2000) cannot exceed max n points (1000).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.voxelize_binary_mask(target_n_points=2000, max_n_points=1000)
+
+    # The target is approached, the limit is not exceeded
+    for target in [500, 999, 1000]:
+        assert (
+            sphere.voxelize_binary_mask(target_n_points=target, max_n_points=1000).n_points <= 1000
+        )
+
+    # A target which rounds above the limit is coarsened back under it
+    box = pv.Box()
+    assert box.voxelize_binary_mask(target_n_points=1300).n_points == 1331
+    clamped = box.voxelize_binary_mask(target_n_points=1300, max_n_points=1300)
+    assert 1000 < clamped.n_points <= 1300
+
+
+def test_voxelize_max_n_points_raises(sphere):
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.voxelize_binary_mask(max_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.voxelize_binary_mask(max_n_points=2.5)
+
+
+def test_voxelize_target_n_points_raises_for_an_input_with_no_extent():
+    match = 'Spacing cannot be estimated for an input with no extent.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Box(bounds=(1, 1, 1, 1, 1, 1)).voxelize_binary_mask(target_n_points=100)
+
+
+def test_voxelize_target_n_points_raises(sphere):
+    match = 'Target n points cannot be set with dimensions, spacing or cell length options'
+    for kwargs in [
+        dict(dimensions=(10, 10, 10)),
+        dict(spacing=0.1),
+        dict(cell_length_percentile=0.5),
+        dict(cell_length_sample_size=100),
+    ]:
+        with pytest.raises(TypeError, match=match):
+            sphere.voxelize_binary_mask(target_n_points=1000, **kwargs)
+
+    with pytest.raises(TypeError, match='Cannot specify a reference volume'):
+        sphere.voxelize_binary_mask(target_n_points=1000, reference_volume=pv.ImageData())
+
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.voxelize_binary_mask(target_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.voxelize_binary_mask(target_n_points=2.5)
+
+
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
     mask = sphere.voxelize_binary_mask(dimensions=dims)
@@ -5371,18 +5774,16 @@ def test_voxelize_binary_mask_spacing(ant):
 
 
 def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
-    from pyvista import _vtk
-    from pyvista.core.filters import data_set
+    from pyvista.core.utilities import _cell_lengths
 
     sample_sizes = []
-    update_alg = data_set._update_alg
+    cell_edge_lengths = _cell_lengths._cell_edge_lengths
 
-    def _record_sample_size(alg, **kwargs):
-        if isinstance(alg, _vtk.vtkLengthDistribution):
-            sample_sizes.append(alg.GetSampleSize())
-        return update_alg(alg, **kwargs)
+    def _record_sample_size(mesh, cell_ids=None):
+        sample_sizes.append(mesh.n_cells if cell_ids is None else len(cell_ids))
+        return cell_edge_lengths(mesh, cell_ids)
 
-    mocker.patch.object(data_set, '_update_alg', _record_sample_size)
+    mocker.patch.object(_cell_lengths, '_cell_edge_lengths', _record_sample_size)
 
     # Sample size is used when sampling cell lengths
     ant.voxelize_binary_mask(cell_length_sample_size=100)
@@ -5391,14 +5792,15 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     # Default sample size covers all cells
     sample_sizes.clear()
     ant.voxelize_binary_mask()
-    assert sample_sizes[0] > ant.n_cells
+    assert sample_sizes == [ant.n_cells]
 
-    # Sampling all cells is not random, so the spacing is reproducible
-    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    mask_all_cells_again = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    assert mask_all_cells.spacing == mask_all_cells_again.spacing
+    # Sampling is deterministic, so the spacing is reproducible
+    mask_sampled = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    mask_sampled_again = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    assert mask_sampled.spacing == mask_sampled_again.spacing
 
     # Sample sizes larger than the number of cells are clamped
+    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
     mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
     assert mask_clamped.spacing == mask_all_cells.spacing
 
@@ -5406,6 +5808,45 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     sample_sizes.clear()
     ant.voxelize_binary_mask(dimensions=(10, 10, 10))
     assert sample_sizes == []
+
+    match = 'cell_length_sample_size values must all be greater than or equal to 1'
+    with pytest.raises(ValueError, match=match):
+        ant.voxelize_binary_mask(cell_length_sample_size=0)
+    match = 'cell_length_percentile values must all be less than or equal to 1.0'
+    with pytest.raises(ValueError, match=match):
+        ant.voxelize_binary_mask(cell_length_percentile=1.1)
+
+
+def test_voxelize_binary_mask_cell_length_ignores_vertices(sphere):
+    verts = np.column_stack([np.ones(sphere.n_points, dtype=int), np.arange(sphere.n_points)])
+    with_verts = pv.PolyData(sphere.points, faces=sphere.faces, verts=verts.ravel())
+    assert with_verts.n_verts
+    assert with_verts.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
+
+
+def test_voxelize_binary_mask_image_input():
+    image = pv.ImageData(dimensions=(4, 5, 6), spacing=(2, 2, 2))
+    mask = image.voxelize_binary_mask()
+    assert np.allclose(mask.spacing, image.spacing)
+    assert mask.points_to_cells().dimensions == image.dimensions
+    assert np.allclose(mask.points_to_cells().bounds, image.bounds)
+
+
+def test_voxelize_binary_mask_degenerate_cells(sphere):
+    n_degenerate = 2 * sphere.n_cells
+    degenerate = np.column_stack(
+        [np.full(n_degenerate, 3), np.zeros((n_degenerate, 3), dtype=int)]
+    )
+    faces = np.concatenate([sphere.faces, degenerate.ravel()])
+    mesh = pv.PolyData(sphere.points, faces=faces)
+
+    # Zero-length edges are ignored
+    assert mesh.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
+
+    match = 'The sampled cells have no edges with nonzero length'
+    mesh = pv.PolyData(sphere.points, faces=degenerate.ravel())
+    with pytest.raises(ValueError, match=match):
+        mesh.voxelize_binary_mask()
 
 
 @pytest.mark.parametrize(
@@ -5644,3 +6085,50 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
+
+
+def test_filters_keep_the_input_subclass():
+    class _Grid(pv.UnstructuredGrid):
+        pass
+
+    mesh = _Grid(pv.Cube(clean=False).cast_to_unstructured_grid())
+    mesh['vectors'] = np.zeros((mesh.n_points, 3))
+    mesh['labels'] = np.arange(mesh.n_points) % 3
+    mesh['scalars'] = np.zeros(mesh.n_points)
+    source = pv.Cube().cast_to_unstructured_grid()
+    source['data'] = np.arange(source.n_points, dtype=float)
+
+    assert type(mesh.warp_by_vector('vectors')) is _Grid
+    assert type(mesh.warp_by_scalar('scalars')) is _Grid
+    assert type(mesh.texture_map_to_plane()) is _Grid
+    assert type(mesh.texture_map_to_sphere()) is _Grid
+    assert type(mesh.compute_derivative('vectors')) is _Grid
+    assert type(mesh.extract_cells_by_type(pv.CellType.QUAD)) is _Grid
+    assert type(mesh.pack_labels(scalars='labels')) is _Grid
+    assert type(mesh.sort_labels(scalars='labels')) is _Grid
+    assert type(mesh.interpolate(source)) is _Grid
+
+    # A warp still changes the class where it is meant to
+    image = pv.ImageData(dimensions=(3, 3, 3))
+    image['scalars'] = np.zeros(image.n_points)
+    assert type(image.warp_by_scalar('scalars')) is pv.StructuredGrid
+
+
+@pytest.mark.parametrize('n_channels', [3, 4])
+@pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba'])
+def test_color_labels_int_colormap_matches_color(color_type, n_channels):
+    values = np.array([0.0, 0.5, 1.5, 2.5, 127.5, 128.5, 254.5, 255.0]) / 255
+    cmap_colors = np.column_stack([values, values[::-1], np.roll(values, 3), values])
+    cmap_colors = cmap_colors[:, :n_channels]
+    labels = pv.ImageData(dimensions=(len(values), 1, 1))
+    labels['labels'] = np.arange(len(values))
+    colored = labels.color_labels(ListedColormap(cmap_colors), color_type=color_type)
+    expected = [getattr(pv.Color(c), color_type) for c in cmap_colors.tolist()]
+    assert np.array_equal(colored['labels' + color_type.removeprefix('int')], expected)
+
+
+def test_color_labels_int_colormap_named_colors():
+    labels = pv.ImageData(dimensions=(2, 1, 1))
+    labels['labels'] = [0, 1]
+    colored = labels.color_labels(ListedColormap(['red', 'blue']))
+    assert np.array_equal(colored['labels_rgb'], [[255, 0, 0], [0, 0, 255]])

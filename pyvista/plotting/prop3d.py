@@ -395,7 +395,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         multiply_mode: Literal['pre', 'post'] = 'post',
         *,
         inplace: bool = False,
-    ):
+    ) -> Self:
         """Apply a transformation to this object's :attr:`~pyvista.Prop3D.user_matrix`.
 
         .. note::
@@ -658,7 +658,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         self._post_set_update()
 
     @property
-    def _transformation_matrix(self):
+    def _transformation_matrix(self) -> NumpyArray[float]:
         """Transformation matrix applied to the actor.
 
         The transformation is computed from the attributes :attr:`position`
@@ -669,7 +669,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         return array_from_vtkmatrix(self._prop3d.GetMatrix())
 
     @abstractmethod
-    def _post_set_update(self):
+    def _post_set_update(self) -> None:
         """Update object after setting Prop3D attributes."""
 
     @abstractmethod

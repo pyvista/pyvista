@@ -18,13 +18,11 @@ from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
+from pyvista.core._typing_core import _MeshLike
 
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.partitioned import PartitionedDataSet
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -38,9 +36,7 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = Union[
-    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
-]
+PlottableType: TypeAlias = _MeshLike | str | Path
 
 
 NamedColormaps = Union[
@@ -70,9 +66,7 @@ Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']
 OpacityOptions = Literal[
     'linear',
-    'linear_r',
     'geom',
-    'geom_r',
     'sigmoid',
     'sigmoid_1',
     'sigmoid_2',
@@ -86,11 +80,30 @@ OpacityOptions = Literal[
     'sigmoid_10',
     'sigmoid_15',
     'sigmoid_20',
+    'linear_r',
+    'geom_r',
+    'sigmoid_r',
+    'sigmoid_1_r',
+    'sigmoid_2_r',
+    'sigmoid_3_r',
+    'sigmoid_4_r',
+    'sigmoid_5_r',
+    'sigmoid_6_r',
+    'sigmoid_7_r',
+    'sigmoid_8_r',
+    'sigmoid_9_r',
+    'sigmoid_10_r',
+    'sigmoid_15_r',
+    'sigmoid_20_r',
     'foreground',
 ]
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
-StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
+# `Property` also takes bools and disables culling by name
+PropertyCullingOptions = CullingOptions | Literal['none'] | bool
+RepresentationOptions = Literal['surface', 'wireframe', 'points']
+StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+TrameModeOptions = Literal['trame', 'server', 'client']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
@@ -117,7 +130,7 @@ class BackfaceArgs(TypedDict, total=False):
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
-    style: StyleOptions
+    style: RepresentationOptions
     metallic: float
     roughness: float
     point_size: float
@@ -132,7 +145,7 @@ class BackfaceArgs(TypedDict, total=False):
     render_lines_as_tubes: bool
     lighting: bool
     line_width: float
-    culling: CullingOptions | bool
+    culling: PropertyCullingOptions
     edge_opacity: float
 
 
@@ -142,9 +155,11 @@ class ScalarBarArgs(TypedDict, total=False):
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
+    tick_locations: Sequence[float]
     italic: bool
     bold: bool
     title_font_size: float
+    title_pad: float
     label_font_size: float
     color: ColorLike
     font_family: FontFamilyOptions
@@ -154,6 +169,8 @@ class ScalarBarArgs(TypedDict, total=False):
     position_x: float
     position_y: float
     vertical: bool
+    stacking_gap: float
+    rotate_title: bool
     interactive: bool
     fmt: str
     use_opacity: bool

@@ -14,10 +14,11 @@ with namespace_data.open() as f:
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
 
 
-@pytest.mark.parametrize('name', namespace)
-def test_plotting_top_namespace(name):
+def test_plotting_top_namespace():
+    """Every recorded name is still reachable from `pyvista.plotting`."""
     module = importlib.import_module('pyvista.plotting')
-    assert hasattr(module, name)
+    missing = [name for name in namespace if not hasattr(module, name)]
+    assert not missing, f'Missing from the `pyvista.plotting` namespace: {missing}'
 
 
 def test_common_plotting_import_paths():

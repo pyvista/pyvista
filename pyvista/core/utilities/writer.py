@@ -20,8 +20,8 @@ from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from pyvista import DataObject
-    from pyvista import NumpyArray
     from pyvista import _vtk
+    from pyvista.core._typing_core import NumpyArray
 
 _DataFormatOptions = Literal['binary', 'ascii']
 

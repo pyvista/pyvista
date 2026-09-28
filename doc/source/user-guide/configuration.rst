@@ -134,8 +134,11 @@ change the behavior of the whole process:
 
 ``pv.PICKLE_FORMAT`` (default: ``'vtk'``)
     In-memory serialization format used when pickling a
-    :class:`~pyvista.DataObject`. Set it with
-    :func:`pyvista.set_pickle_format`.
+    :class:`~pyvista.DataObject`.
+
+    .. deprecated:: 0.50
+        The ``'vtk'`` format is the only supported pickle format and is
+        always used.
 
 ``pv.DEFAULT_SCALARS_NAME`` (default: ``'Data'``)
     Name given to data arrays added without a name.

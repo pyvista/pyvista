@@ -79,6 +79,7 @@ READERS_DIR = 'api/readers'
 MESHIO_DIR = 'api/utilities/io_table'
 CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
+PLOTTING_TABLE_DIR = 'api/plotting'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
 COLORMAP_TABLE_DIR = 'api/utilities/colormap_table'
@@ -664,7 +665,7 @@ class CellQualityInfoTablePYRAMID(CellQualityInfoTable):
 class LineStyleTable(DocTable):
     """Class to generate line style table."""
 
-    path = f'{CHARTS_TABLE_DIR}/pen_line_styles.rst'
+    path = f'{PLOTTING_TABLE_DIR}/line_styles.rst'
     header = _aligned_dedent(
         """
         |.. list-table:: Line styles

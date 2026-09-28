@@ -342,6 +342,9 @@ def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     assert e.value.code == 1
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     # Create a dummy .vtp file with empty contents
@@ -358,6 +361,28 @@ def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     assert '╭─ PyVista Error ─' in err, err
     assert 'Path is not readable by PyVista:' in err, err
     assert name in err, err
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_read_error_keeps_install_hint(
+    tmp_path: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
+):
+    """An ImportError names the package to install, so it must reach the console intact."""
+    file_in = tmp_path / 'dummy.pv'
+    file_in.write_text('')
+    message = 'Needs `pyvista-zstd`.\npip install pyvista[io]'
+    mocker.patch.object(pv, 'read', side_effect=ImportError(message))
+
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(file_in)!r} .ply')
+
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Path is not readable by PyVista:' not in err, err
+    assert 'Needs `pyvista-zstd`.' in err, err
+    # Square brackets are rich markup, so an unescaped extra would vanish from the panel.
+    assert 'pip install pyvista[io]' in err, err
     assert e.value.code == 1
 
 
@@ -1603,6 +1628,9 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
         assert error in err, err
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.needs_vtk_version(9, 4, reason='workers crash older vtk')
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_skip_unreadable_hint(
@@ -1704,35 +1732,34 @@ def test_validate_glob_expands_files(
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_report_help(capsys: pytest.CaptureFixture):
-    main('report --help')
+@pytest.mark.parametrize(
+    ('command', 'usage', 'summary'),
+    [
+        (
+            'report',
+            'Usage: pyvista report [ARGS]',
+            'Generate a PyVista software environment report.',
+        ),
+        (
+            'plot',
+            'Usage: pyvista plot PATH... [OPTIONS]',
+            'Plot one or more mesh files in an interactive window.',
+        ),
+        (
+            'compare',
+            'Usage: pyvista compare PATH... [OPTIONS]',
+            'Compare two or more mesh files side-by-side.',
+        ),
+    ],
+    ids=['report', 'plot', 'compare'],
+)
+def test_command_help(command, usage, summary, capsys: pytest.CaptureFixture):
+    """Each command's help opens with its usage line and its one-line summary."""
+    main(f'{command} --help')
 
-    expected = textwrap.dedent(
-        """\
-            Usage: pyvista report [ARGS]
-
-            Generate a PyVista software environment report.
-       """
-    )
     out, err = capture_out_err(capsys)
     assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
-
-
-@pytest.mark.usefixtures('patch_app_console')
-def test_plot_help(capsys: pytest.CaptureFixture):
-    main('plot --help')
-
-    expected = textwrap.dedent(
-        """\
-        Usage: pyvista plot PATH... [OPTIONS]
-
-        Plot one or more mesh files in an interactive window.
-        """
-    )
-    out, err = capture_out_err(capsys)
-    assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
+    assert '\n'.join(out.split('\n')[:4]) == f'{usage}\n\n{summary}\n'
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -1831,6 +1858,9 @@ def test_convert_resolve_collisions_counter_increment(
     assert 'ant.vtp → ant_2.pv' in err, err
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """A single unreadable file with --skip-unreadable announces the skip and does not save."""
@@ -1843,6 +1873,9 @@ def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.Ca
     assert not (tmp_example_dir / 'bad.pv').exists()
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """Unreadable files are skipped and reported after the summary; all-skipped -> 0 saved."""
@@ -1913,6 +1946,9 @@ def test_validate_multiple_files_single_mesh_invalid(
     assert '1 invalid mesh out of 1 mesh validated.' in err, err
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_validate_skip_unreadable(
     tmp_example_dir: Path,
@@ -1973,7 +2009,6 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
 
 
 @parametrize(
-    as_script=[True, False],
     tokens_err_codes=[
         ('--foo', 1),
         ('report --foo', 1),
@@ -1984,20 +2019,32 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
         ('--help', 0),
     ],
 )
-def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
-    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
-
+def test_cli_exit_code(tokens_err_codes: tuple[str, int]):
+    """An unknown command or option exits non-zero; help and a bare call exit clean."""
     argv, exit_code_expected = tokens_err_codes
-    args += [*shlex.split(argv)]
+
+    if exit_code_expected:
+        with pytest.raises(SystemExit) as e:
+            main(shlex.split(argv))
+        assert e.value.code == exit_code_expected
+    else:
+        assert main(shlex.split(argv)) is None
+
+
+@parametrize(as_script=[True, False])
+def test_cli_entry_point(as_script: bool):
+    """Both `pyvista` and `python -m pyvista` reach the same application."""
+    args = ['pyvista'] if as_script else [sys.executable, '-m', 'pyvista']
 
     process = subprocess.run(
-        args,
+        [*args, '--help'],
         check=False,
         capture_output=True,
         encoding='utf-8',
     )
 
-    assert process.returncode == exit_code_expected
+    assert process.returncode == 0
+    assert 'Usage: pyvista COMMAND' in process.stdout
 
 
 @parametrize(func=['plot', 'report'])
@@ -2075,6 +2122,7 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         ('--border=false', 'border', False),
         ('--border interior', 'border', 'interior'),
         ('--border=exterior', 'border', 'exterior'),
+        ("--color=\"['red','blue']\"", 'color', ['red', 'blue']),
     ],
     ids=[
         'link_default',
@@ -2097,6 +2145,7 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         'border_false',
         'border_interior',
         'border_exterior',
+        'color_per_subplot',
     ],
 )
 def test_compare_forwards_arguments(
@@ -2113,6 +2162,25 @@ def test_compare_forwards_arguments(
     main(shlex.split(f'compare {names} {tokens}'))
 
     assert mock_plot_compare.call_args.kwargs[argument] == expected
+
+
+def test_compare_draws_a_value_for_each_subplot(
+    tmp_compare_files: list[Path], monkeypatch: pytest.MonkeyPatch
+):
+    """A keyword given one value per file draws each subplot with its own value."""
+    drawn: list[Any] = []
+    add_mesh = pv.Plotter.add_mesh
+
+    def record(self, mesh, **kwargs):
+        """Draw the mesh, recording the color it is drawn with."""
+        drawn.append(kwargs.get('color'))
+        return add_mesh(self, mesh, **kwargs)
+
+    monkeypatch.setattr(pv.Plotter, 'add_mesh', record)
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(shlex.split(f"""compare {names} --color="['red','blue']" --off_screen=True"""))
+
+    assert drawn == ['red', 'blue']
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -2219,6 +2287,20 @@ def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare
     outline = mock_plot_compare.call_args.kwargs['reference_mesh']
     meshes = pv.MultiBlock([pv.read(path) for path in tmp_compare_files])
     assert outline.bounds == meshes.bounds
+
+
+def test_compare_called_outline_partitioned(tmp_example_dir: Path, mock_plot_compare: MagicMock):
+    """Test that the outline encloses a partitioned dataset, which cannot be a block."""
+    partitioned = pv.PartitionedDataSet([pv.Sphere(radius=5.0)])
+    partitioned.save(tmp_example_dir / 'part.vtpd')
+    # Wider than the sphere in x, narrower in y and z, so every bound needs both meshes
+    cube = pv.Cube(x_length=20.0, y_length=1.0, z_length=1.0)
+    cube.save(tmp_example_dir / 'cube.vtp')
+
+    main('compare part.vtpd cube.vtp --outline')
+
+    outline = mock_plot_compare.call_args.kwargs['reference_mesh']
+    assert outline.bounds == pv.MultiBlock([pv.Sphere(radius=5.0), cube]).bounds
 
 
 def test_compare_label_positions_are_the_ones_which_can_be_drawn():
@@ -2344,18 +2426,3 @@ def test_compare_raises(tmp_compare_files: list[Path], capsys: pytest.CaptureFix
     assert 'The following exception has been raised when calling  ' in err
     assert 'pv.plot_compare' in err
     assert 'Number of labels (1) must match the number of datasets (2).' in err
-
-
-def test_compare_help(capsys: pytest.CaptureFixture):
-    main('compare --help')
-
-    expected = textwrap.dedent(
-        """\
-        Usage: pyvista compare PATH... [OPTIONS]
-
-        Compare two or more mesh files side-by-side.
-        """
-    )
-    out, err = capture_out_err(capsys)
-    assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
