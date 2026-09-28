@@ -1,18 +1,13 @@
-"""Core type aliases."""
+"""Type aliases for PyVista and VTK objects; NumPy-only aliases live in ``_array_types``."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import os
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
-import numpy as np
-from numpy.typing import NDArray
-from pyvista_validation.typing import ArrayLikeFloat
 from pyvista_validation.typing import MatrixLikeFloat
 from pyvista_validation.typing import MatrixLikeInt
 from pyvista_validation.typing import VectorLikeFloat
@@ -20,7 +15,7 @@ from pyvista_validation.typing import VectorLikeInt
 
 from pyvista import _vtk
 
-from ._array_types import _Scalar
+from ._array_types import _VolumeArray
 
 if TYPE_CHECKING:
     import meshio
@@ -94,18 +89,6 @@ class BoundsTuple(NamedTuple):
 CellsLike = Union[MatrixLikeInt, VectorLikeInt]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
-
-# Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[float, _Scalar, ArrayLikeFloat]
-
-# Array of any dtype, or a sequence of anything
-_AnyArrayLike = Union[NDArray[Any], Sequence[Any]]
-
-# Array of any integer, floating or boolean dtype
-_NumericArray = NDArray[Union[np.floating, np.integer, np.bool_]]
-
-# Array wrapped as a volume, whose values become point scalars
-_VolumeArray = NDArray[Union[_Scalar, np.complex64, np.complex128]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 

@@ -1,12 +1,15 @@
-"""NumPy scalar aliases and TypeVars for array annotations."""
+"""NumPy scalar and array aliases and TypeVars for array annotations."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 from typing import TypeAlias
 
 import numpy as np
+from numpy.typing import NDArray
 from pyvista_validation.typing import Array1D
+from pyvista_validation.typing import ArrayLikeFloat
 from pyvista_validation.typing import Floating
 from pyvista_validation.typing import Integer
 from pyvista_validation.typing import Real
@@ -25,6 +28,18 @@ _NumericScalar: TypeAlias = np.floating | np.integer | np.bool_
 # The members of `VectorLikeFloat` and `MatrixLikeFloat` that are sequences of NumPy values
 _VectorSequence: TypeAlias = Sequence[_NumericScalar]
 _MatrixSequence: TypeAlias = Sequence[Sequence[_NumericScalar] | Array1D[_NumericScalar]]
+
+# Array of any integer, floating or boolean dtype
+_NumericArray: TypeAlias = NDArray[_NumericScalar]
+
+# Array wrapped as a volume, whose values become point scalars
+_VolumeArray: TypeAlias = NDArray[_Scalar | np.complex64 | np.complex128]
+
+# Array of any dtype, or a sequence of anything
+_AnyArrayLike: TypeAlias = NDArray[Any] | Sequence[Any]
+
+# A float array-like or a single number
+_ArrayLikeOrScalar: TypeAlias = float | _Scalar | ArrayLikeFloat
 
 # Abstract bounds accept any width; the concrete defaults apply when nothing binds
 _FloatingT = TypeVar('_FloatingT', bound=np.floating, default=_Floating)

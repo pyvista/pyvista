@@ -12,6 +12,7 @@ from pyvista_validation.typing import VectorLikeBool as VectorLikeBool
 from pyvista_validation.typing import VectorLikeFloat as VectorLikeFloat
 from pyvista_validation.typing import VectorLikeInt as VectorLikeInt
 
+# Aliases for PyVista and VTK objects
 from ._aliases import BoundsTuple as BoundsTuple
 from ._aliases import CellArrayLike as CellArrayLike
 from ._aliases import CellsLike as CellsLike
@@ -20,23 +21,25 @@ from ._aliases import LineStyle as LineStyle
 from ._aliases import RotationLike as RotationLike
 from ._aliases import TransformLike as TransformLike
 from ._aliases import WrappableType as WrappableType
-from ._aliases import _AnyArrayLike as _AnyArrayLike
-from ._aliases import _ArrayLikeOrScalar as _ArrayLikeOrScalar
 from ._aliases import _MeshLike as _MeshLike
-from ._aliases import _NumericArray as _NumericArray
-from ._aliases import _VolumeArray as _VolumeArray
+
+# NumPy scalar and array aliases and TypeVars, built only from NumPy and validation types
+from ._array_types import _AnyArrayLike as _AnyArrayLike
+from ._array_types import _ArrayLikeOrScalar as _ArrayLikeOrScalar
 from ._array_types import _Floating as _Floating
 from ._array_types import _FloatingT as _FloatingT
 from ._array_types import _GenericT as _GenericT
 from ._array_types import _Integer as _Integer
 from ._array_types import _IntegerT as _IntegerT
 from ._array_types import _MatrixSequence as _MatrixSequence
+from ._array_types import _NumericArray as _NumericArray
 from ._array_types import _NumericScalar as _NumericScalar
 from ._array_types import _Real as _Real
 from ._array_types import _RealT as _RealT
 from ._array_types import _Scalar as _Scalar
 from ._array_types import _ScalarT as _ScalarT
 from ._array_types import _VectorSequence as _VectorSequence
+from ._array_types import _VolumeArray as _VolumeArray
 from ._dataset_types import _DataObjectType as _DataObjectType
 from ._dataset_types import _DataSetOrMultiBlockType as _DataSetOrMultiBlockType
 from ._dataset_types import _DataSetType as _DataSetType
