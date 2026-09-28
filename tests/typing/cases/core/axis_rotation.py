@@ -40,3 +40,9 @@ assert_types(pv.axis_rotation(some_points(), 90.0, inplace=True), None)
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(pv.axis_rotation(some_points(), 90.0, inplace=a_flag()), NDArray[np.float64] | None)
+
+
+# Never called; the ignore is reported as unused if integer points ever type check in place
+def int32_points_in_place() -> None:
+    """Pass integer points with ``inplace=True``, which would truncate the result."""
+    pv.axis_rotation(int32_points(), 45, inplace=True)  # type: ignore[arg-type]

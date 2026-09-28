@@ -45,3 +45,9 @@ assert_types(apply_transformation_to_points(a_transformation(), integer_points()
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), NDArray[np.floating] | None)
+
+
+# Never called; the ignore is reported as unused if integer points ever type check in place
+def int64_points_in_place() -> None:
+    """Pass integer points with ``inplace=True``, which would truncate the result."""
+    apply_transformation_to_points(a_transformation(), int64_points(), inplace=True)  # type: ignore[type-var]
