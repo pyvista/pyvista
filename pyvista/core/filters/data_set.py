@@ -44,6 +44,12 @@ from pyvista.core.filters.data_object import _remove_unused_points_post_clip
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.filters.data_object import _validate_reference_volume_options
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import _active_scalars_input
+from pyvista.core.utilities.arrays import _active_vectors_input
+from pyvista.core.utilities.arrays import _default_scalars_input
+from pyvista.core.utilities.arrays import _default_vectors_input
+from pyvista.core.utilities.arrays import _scalars_info
+from pyvista.core.utilities.arrays import _shallow_copy_for_new_arrays
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -73,6 +79,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral
@@ -184,6 +191,7 @@ def _points_of_cells_cut_by_sign(
 class _ExtractValuesInputs(NamedTuple):
     """Validated inputs shared by ``extract_values`` and ``select_values``."""
 
+    mesh: DataSet
     values: NumpyArray[float] | None
     ranges: NumpyArray[float] | None
     value_names: list[str] | None
@@ -819,12 +827,7 @@ class DataSetFilters(DataObjectFilters):
             if both:
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
-        # Activate the scalars on a shallow copy so the input's active scalars are untouched
-        source = cast('DataSet', _clip_input(self)).copy(deep=False)
-        if scalars is None:
-            set_default_active_scalars(source)
-        else:
-            source.set_active_scalars(scalars)
+        source, _ = _active_scalars_input(cast('DataSet', _clip_input(self)), scalars, 'cell')
         alg.SetInputDataObject(source)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
@@ -1148,18 +1151,18 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # set the scalars to threshold on
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        arr = get_array(self, scalars_, preference=preference, err=False)
+        input_mesh, scalars_ = _default_scalars_input(self, scalars, preference)
+        arr = get_array(input_mesh, scalars_, preference=preference, err=False)
         if arr is None:
             msg = 'No arrays present to threshold.'
             raise ValueError(msg)
 
-        field = get_array_association(self, scalars_, preference=preference)
+        field = get_array_association(input_mesh, scalars_, preference=preference)
 
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
         alg.SetAllScalars(all_scalars)
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -1171,7 +1174,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetUseContinuousCellRange(continuous)
         # use valid range if no value given
         if value is None:
-            value = self.get_data_range(scalars)
+            value = input_mesh.get_data_range(scalars_)
 
         _set_threshold_limit(alg, value=value, method=method, invert=invert)
 
@@ -1294,7 +1297,7 @@ class DataSetFilters(DataObjectFilters):
         See :ref:`using_filters_example` for more examples using a similar filter.
 
         """
-        tscalars = set_default_active_scalars(self).name if scalars is None else scalars
+        tscalars = _scalars_info(self, scalars, preference).name
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
         def _check_percent(percent: float) -> float:
@@ -1444,24 +1447,24 @@ class DataSetFilters(DataObjectFilters):
                 )
                 .cast_to_pointset()
             )
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        arr = get_array(self, scalars_, preference=preference, err=False)
+        input_mesh, scalars_ = _default_scalars_input(self, scalars, preference)
+        arr = get_array(input_mesh, scalars_, preference=preference, err=False)
         if arr is None:
             msg = f'No array {scalars_!r} found to remove NaN cells from.'
             raise ValueError(msg)
         # Integer, boolean, and non-numeric arrays cannot contain NaN values.
         if arr.dtype == bool or not np.issubdtype(arr.dtype, np.floating):
-            return self.cast_to_unstructured_grid()
+            return input_mesh.cast_to_unstructured_grid()
         if arr.size == 0 or bool(np.all(np.isnan(arr))):
             # Entire array is NaN (or empty)—no cells survive. Avoid passing
             # a (nan, nan) range into VTK's threshold filter.
-            return self.extract_cells(
+            return input_mesh.extract_cells(
                 np.array([], dtype=int),
                 pass_cell_ids=False,
                 pass_point_ids=False,
             )
         return DataSetFilters.threshold(
-            self,
+            input_mesh,
             scalars=scalars_,
             preference=preference,
             all_scalars=True,
@@ -1744,7 +1747,7 @@ class DataSetFilters(DataObjectFilters):
         scalars : str | array_like[float], optional
             Name or array of scalars to threshold on. If this is an array, the
             output of this filter will save them as ``"Contour Data"``.
-            Defaults to currently active scalars.
+            Defaults to currently active scalars. Must have a single component.
 
         compute_normals : bool, default: False
             Compute normals for the dataset.
@@ -1777,6 +1780,14 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.PolyData
             Contoured surface.
+
+        Raises
+        ------
+        TypeError
+            If the scalars are not point data.
+
+        ValueError
+            If the scalars have more than one component.
 
         Examples
         --------
@@ -1838,13 +1849,16 @@ class DataSetFilters(DataObjectFilters):
             msg = f"Method '{method}' is not supported"  # type: ignore[unreachable]
             raise ValueError(msg)
 
+        input_mesh: DataSet = self
         if isinstance(scalars, str):
             scalars_name = scalars
         elif isinstance(scalars, (Sequence, np.ndarray)) and not isinstance(scalars, str):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars
+            # The array goes on a shallow copy, so it reaches the output but not the input
+            input_mesh = _shallow_copy_for_new_arrays(self)
+            input_mesh[scalars_name] = scalars
         elif scalars is None:
-            scalars_name = set_default_active_scalars(self).name
+            input_mesh, scalars_name = _default_scalars_input(self, None)
         else:
             msg = (
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -1853,19 +1867,24 @@ class DataSetFilters(DataObjectFilters):
             raise TypeError(msg)
 
         # Make sure the input has scalars to contour on
-        if self.n_arrays < 1:
+        if input_mesh.n_arrays < 1:
             msg = 'Input dataset for the contour filter must have scalar.'
             raise ValueError(msg)
 
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        field = get_array_association(self, scalars_name, preference=preference)
+        field = get_array_association(input_mesh, scalars_name, preference=preference)
         if field != FieldAssociation.POINT:
             msg = 'Contour filter only works on point data.'
             raise TypeError(msg)
+        # VTK reads past the end of its buffers when a structured grid is contoured
+        # on a multi-component array
+        if input_mesh.point_data[scalars_name].ndim > 1:
+            msg = f'Scalars {scalars_name!r} must have a single component to contour.'
+            raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -1877,7 +1896,7 @@ class DataSetFilters(DataObjectFilters):
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng_: list[float] = list(self.get_data_range(scalars_name))
+                rng_: list[float] = list(input_mesh.get_data_range(scalars_name))
             else:
                 rng_ = list(_validation.validate_data_range(rng, name='rng'))
             alg.GenerateValues(isosurfaces, rng_)
@@ -2171,7 +2190,8 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        dataset = self
+        # The active arrays are set on a shallow copy, so the input's are untouched
+        dataset = self.copy(deep=False)
 
         # Make glyphing geometry if necessary
         if geom is None:
@@ -2226,7 +2246,7 @@ class DataSetFilters(DataObjectFilters):
             do_scale = True
         elif scale:
             try:
-                set_default_active_scalars(self)
+                set_default_active_scalars(dataset)
             except MissingDataError:
                 warn_external(
                     'No data to use for scale. scale will be set to False.'
@@ -2242,9 +2262,20 @@ class DataSetFilters(DataObjectFilters):
         else:
             do_scale = False
 
+        scale_by_vector = False
         if do_scale:
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
+                    scale_by_vector = True
+                    if not orient:
+                        # This mode scales by the active vectors, not the active scalars
+                        scalars_field = dataset.active_scalars_info.association
+                        dataset.set_active_vectors(
+                            dataset.active_scalars_name,
+                            preference='point'
+                            if scalars_field == FieldAssociation.POINT
+                            else 'cell',
+                        )
                     alg.SetScaleModeToScaleByVector()
                 else:
                     alg.SetScaleModeToScaleByScalar()
@@ -2311,7 +2342,7 @@ class DataSetFilters(DataObjectFilters):
         if set_actives_on_source_data:
             if scale:
                 source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
-            if orient:
+            if orient or scale_by_vector:
                 source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
 
         if color_mode == 'scale':
@@ -2699,20 +2730,14 @@ class DataSetFilters(DataObjectFilters):
         # Store active scalars info to restore later if needed
         active_field, active_name = self.active_scalars_info
 
-        # The copy's scalars and cells may be modified
-        input_mesh = self.copy(deep=False)
+        input_mesh = self
         if scalar_range is not None:
-            if scalars is None:
-                set_default_active_scalars(input_mesh)
-            else:
-                input_mesh.set_active_scalars(scalars)
-            field, name = input_mesh.active_scalars_info
+            # The copy's scalars may be modified
+            input_mesh, (field, name) = _active_scalars_input(self, scalars, 'cell')
             if field == FieldAssociation.CELL:
                 # The filter reads the active point scalars
                 converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
-                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[
-                    cast('str', name)
-                ]
+                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[name]
                 input_mesh.set_active_scalars(_CONNECTIVITY_SCALARS, preference='point')
 
             if extraction_mode in ('all', 'specified', 'closest'):
@@ -3034,16 +3059,16 @@ class DataSetFilters(DataObjectFilters):
         """
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        _ = get_array(self, scalars_, preference='point', err=True)
+        input_mesh, scalars_ = _default_scalars_input(self, scalars)
+        _ = get_array(input_mesh, scalars_, preference='point', err=True)
 
-        field = get_array_association(self, scalars_, preference='point')
+        field = get_array_association(input_mesh, scalars_, preference='point')
         if field != FieldAssociation.POINT:
-            msg = 'Dataset can only by warped by a point data array.'
+            msg = 'Dataset can only be warped by a point data array.'
             raise TypeError(msg)
         # Run the algorithm
         alg = _vtk.vtkWarpScalar()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -3137,12 +3162,15 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
-        arr = get_array(self, vectors_, preference='point')
-        field = get_array_association(self, vectors_, preference='point')
+        input_mesh, vectors_ = _default_vectors_input(self, vectors)
+        arr = get_array(input_mesh, vectors_, preference='point')
+        field = get_array_association(input_mesh, vectors_, preference='point')
         if arr is None:
             msg = 'No vectors present to warp by vector.'
             raise ValueError(msg)
+        if field != FieldAssociation.POINT:
+            msg = 'Dataset can only be warped by a point data array.'
+            raise TypeError(msg)
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
@@ -3152,7 +3180,7 @@ class DataSetFilters(DataObjectFilters):
             )
             raise ValueError(msg)
         alg = _vtk.vtkWarpVector()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors_)
         alg.SetScaleFactor(factor)
         _update_alg(alg, progress_bar=progress_bar, message='Warping by Vector')
@@ -3471,7 +3499,7 @@ class DataSetFilters(DataObjectFilters):
             )
             raise RuntimeError(msg)
 
-        out = self.copy(deep=False)
+        out = _shallow_copy_for_new_arrays(self)
         if surface.n_cells == 0:
             bools = np.full(self.n_points, inside_out, dtype=bool)
         elif method == 'signed_distance':
@@ -3939,6 +3967,10 @@ class DataSetFilters(DataObjectFilters):
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
             msg = "Interpolator type must be either 'cell' or 'point'"
             raise ValueError(msg)
+        # vtkCellLocatorInterpolatedVelocityField segfaults on a mesh without cells
+        if interpolator_type in ['c', 'cell'] and self.n_cells == 0:
+            msg = "The 'cell' interpolator requires a mesh with cells; use 'point' instead."
+            raise ValueError(msg)
         if step_unit not in ['l', 'cl']:
             msg = "Step unit must be either 'l' or 'cl'"
             raise ValueError(msg)
@@ -3946,11 +3978,7 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
-        if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
-        elif vectors is None:
-            set_default_active_vectors(self)
+        input_mesh, _ = _streamlines_input(self, vectors)
 
         if max_time is not None:
             msg = (
@@ -3971,7 +3999,7 @@ class DataSetFilters(DataObjectFilters):
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetSourceData(source)
 
         # general parameters
@@ -4153,18 +4181,21 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
-        if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
-        elif vectors is None:
-            set_default_active_vectors(self)
+        input_mesh, info = _streamlines_input(self, vectors)
+        # vtkEvenlySpacedStreamlines2D segfaults when the vectors are cell data
+        if info.association != FieldAssociation.POINT:
+            msg = (
+                f'This filter requires point vectors, but {info.name!r} is '
+                f'{info.association.name.lower()} data.'
+            )
+            raise TypeError(msg)
 
         loop_angle = loop_angle * np.pi / 180
 
         # Build the algorithm
         alg = _vtk.vtkEvenlySpacedStreamlines2D()
         # Inputs
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
 
         # Seed for starting position
         if start_position is not None:
@@ -4397,7 +4428,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Get variable of interest
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _scalars_info(self, scalars).name
         values: NumpyArray[float] = sampled.get_array(scalars_)
         distance = sampled['Distance']
         if component is not None:
@@ -4770,7 +4801,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Get variable of interest
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _scalars_info(self, scalars).name
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
@@ -4908,7 +4939,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Get variable of interest
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _scalars_info(self, scalars).name
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
@@ -5902,14 +5933,14 @@ class DataSetFilters(DataObjectFilters):
         )
 
         if split:
-            return self._split_values(
-                method=self._extract_values,
+            return validated.mesh._split_values(
+                method=validated.mesh._extract_values,
                 value_names=validated.value_names,
                 range_names=validated.range_names,
                 **kwargs,
             )
 
-        return cast('PointSet | UnstructuredGrid', self._extract_values(**kwargs))
+        return cast('PointSet | UnstructuredGrid', validated.mesh._extract_values(**kwargs))
 
     def _validate_extract_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -5924,12 +5955,12 @@ class DataSetFilters(DataObjectFilters):
     ) -> _ExtractValuesInputs | DataSet | MultiBlock:
         def _validate_scalar_array(
             scalars_: str | None, preference_: PointLiteral | CellLiteral
-        ) -> tuple[pyvista_ndarray, str, FieldAssociation]:
+        ) -> tuple[_DataSetType, pyvista_ndarray, str, FieldAssociation]:
             # Get the scalar array and field association to use for extraction
-            scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
-            array_ = get_array(self, scalars_, preference=preference_, err=True)
-            association_ = get_array_association(self, scalars_, preference=preference_)
-            return array_, scalars_, association_
+            mesh_, scalars_ = _default_scalars_input(self, scalars_, preference_)
+            array_ = get_array(mesh_, scalars_, preference=preference_, err=True)
+            association_ = get_array_association(mesh_, scalars_, preference=preference_)
+            return mesh_, array_, scalars_, association_
 
         def _validate_component_mode(
             array_: NumpyArray[Any], component_mode_: Any
@@ -6076,7 +6107,7 @@ class DataSetFilters(DataObjectFilters):
                 return pv.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
             return out
 
-        scalar_array, array_name, association = _validate_scalar_array(scalars, preference)
+        mesh, scalar_array, array_name, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(
             scalar_array, component_mode
         )
@@ -6091,6 +6122,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         return _ExtractValuesInputs(
+            mesh=mesh,
             values=valid_values,
             ranges=valid_ranges,
             value_names=value_names,
@@ -6818,7 +6850,7 @@ class DataSetFilters(DataObjectFilters):
         """
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        input_mesh, scalars_ = _default_scalars_input(self, scalars, preference)
         if not isinstance(scalars_, str):
             msg = 'scalars array must be given as a string name'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -6840,10 +6872,10 @@ class DataSetFilters(DataObjectFilters):
         alg.SetQCriterionArrayName('qcriterion' if isinstance(qcriterion, bool) else qcriterion)
 
         alg.SetFasterApproximation(faster)
-        field = get_array_association(self, scalars_, preference=preference)
+        field = get_array_association(input_mesh, scalars_, preference=preference)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars_)
-        alg.SetInputData(self)
+        alg.SetInputData(input_mesh)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
         return _as_input_class(_get_output(alg), self)
 
@@ -7954,8 +7986,8 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Set a input scalars
-        scalars = set_default_active_scalars(self).name if scalars is None else scalars
-        field = get_array_association(self, scalars, preference=preference)
+        input_mesh, scalars = _default_scalars_input(self, scalars, preference)
+        field = get_array_association(input_mesh, scalars, preference=preference)
 
         # Determine output scalars
         default_output_scalars = 'packed_labels'
@@ -7967,7 +7999,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Do packing
         alg = _vtk.vtkPackLabels()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         if sort:
             alg.SortByLabelCount()
@@ -8342,11 +8374,7 @@ class DataSetFilters(DataObjectFilters):
             default_channel_value = 0
             color_dtype = 'uint8'
 
-        if scalars is None:
-            field, name = set_default_active_scalars(self)
-        else:
-            name = scalars
-            field = get_array_association(self, name, preference=preference, err=True)
+        field, name = _scalars_info(self, scalars, preference)
         output_mesh = self if inplace else self.copy()
         data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
         array = data[name]
@@ -9365,6 +9393,16 @@ class DataSetFilters(DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
+
+
+def _streamlines_input(
+    mesh: _DataSetType, vectors: str | None
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a shallow copy with the vectors active, as scalars too if named, and their info."""
+    input_mesh, info = _active_vectors_input(mesh, vectors)
+    if vectors is not None:
+        input_mesh.set_active_scalars(vectors)
+    return input_mesh, info
 
 
 _STENCIL_SLAB_SLICES = 8
