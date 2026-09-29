@@ -268,11 +268,8 @@ def test_override_reads_a_local_file(tmp_path, monkeypatch):
     monkeypatch.setenv(_dataset_metadata._METADATA_VARNAME, str(path))
     _dataset_metadata._metadata_index.cache_clear()
 
-    def fail() -> str:
-        msg = 'the override must not download'
-        raise AssertionError(msg)
-
-    monkeypatch.setattr(_dataset_metadata, '_download_metadata_file', fail)
+    # A download would call this and fail on a non-callable.
+    monkeypatch.setattr(_dataset_metadata, '_download_metadata_file', None)
     assert _dataset_metadata._metadata_index().match('plain.vtk').name == 'plain'
     _dataset_metadata._metadata_index.cache_clear()
 
