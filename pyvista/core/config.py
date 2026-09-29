@@ -64,7 +64,7 @@ import numpy as np
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    from numpy.typing import DTypeLike
     from typing_extensions import Self
 
 _PointsDtypeOptions = Literal['preserve', 'float32', 'float64'] | None
@@ -411,7 +411,7 @@ class Config(_ConfigBase):
         return self._points_dtype
 
     @points_dtype.setter
-    def points_dtype(self, value: _PointsDtypeOptions | npt.DTypeLike) -> None:
+    def points_dtype(self, value: _PointsDtypeOptions | DTypeLike) -> None:
         if value is None:
             self._points_dtype = None
             return

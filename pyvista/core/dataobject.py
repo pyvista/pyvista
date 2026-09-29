@@ -46,12 +46,12 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import ClassVar
 
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import MultiBlock
 
-    from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
+    from ._typing_core import _AnyArrayLike
     from .utilities.arrays import CellLiteral
     from .utilities.arrays import FieldLiteral
     from .utilities.arrays import PointLiteral
@@ -182,7 +182,7 @@ class DataObject(
         filename: Path | str,
         *,
         binary: bool = True,
-        texture: NumpyArray[np.uint8] | str | None = None,
+        texture: NDArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
     ) -> None:
@@ -545,7 +545,7 @@ class DataObject(
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
-    def add_field_data(self: Self, array: ArrayLike[Any], name: str, *, deep: bool = True) -> None:
+    def add_field_data(self: Self, array: _AnyArrayLike, name: str, *, deep: bool = True) -> None:
         """Add field data.
 
         .. deprecated:: 0.50
@@ -558,7 +558,7 @@ class DataObject(
 
         Parameters
         ----------
-        array : ArrayLike[Any]
+        array : numpy.ndarray | sequence
             Array of data to add to the dataset as a field array. Field data
             is not tied to the geometry, so numeric, boolean, and string data
             are all accepted.

@@ -13,7 +13,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeInt
 
 
 @abstract_class
@@ -22,8 +22,8 @@ class StructuredGridFilters(DataSetFilters):
 
     def extract_subset(
         self,
-        voi: VectorLike[int],
-        rate: VectorLike[int] = (1, 1, 1),
+        voi: VectorLikeInt,
+        rate: VectorLikeInt = (1, 1, 1),
         *,
         boundary: bool = False,
     ) -> pv.StructuredGrid:
@@ -41,12 +41,12 @@ class StructuredGridFilters(DataSetFilters):
 
         Parameters
         ----------
-        voi : sequence[int]
+        voi : VectorLikeInt
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
-        rate : sequence[int], default: (1, 1, 1)
+        rate : VectorLikeInt, default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False

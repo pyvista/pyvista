@@ -7,9 +7,9 @@ import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
+from typing import overload
 
 import numpy as np
-import numpy.typing as npt
 
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -28,15 +28,15 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
 
+    from numpy.typing import NDArray
     import pandas
     import pyarrow
     from typing_extensions import Self
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike
-    from ._typing_core import MatrixLike
-    from ._typing_core import NumpyArray
+    from ._typing_core import MatrixLikeFloat
+    from ._typing_core import _AnyArrayLike
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -228,7 +228,13 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
 
-    def get(self: Self, key: str, value: Any | None = None) -> pyvista_ndarray | None:
+    # fmt: off
+    @overload
+    def get(self: Self, key: str, value: None = None) -> pyvista_ndarray | None: ...
+    @overload
+    def get(self: Self, key: str, value: _T) -> pyvista_ndarray | _T: ...
+    # fmt: on
+    def get(self: Self, key: str, value: _T | None = None) -> pyvista_ndarray | _T | None:
         """Return the value of the item with the specified key.
 
         Parameters
@@ -280,7 +286,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return self.keys()
 
     def __setitem__(
-        self: Self, key: str, value: ArrayLike[Any]
+        self: Self, key: str, value: _AnyArrayLike
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
@@ -379,7 +385,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> NumpyArray[float] | None:
+    def active_vectors(self: Self) -> pyvista_ndarray | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
@@ -390,7 +396,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        Optional[np.ndarray]
+        Optional[pyvista_ndarray]
             Active vectors as a ``pyvista_ndarray``.
 
         Examples
@@ -530,9 +536,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return narray.squeeze()
         return narray
 
-    def set_array(
-        self: Self, data: ArrayLike[float], name: str, *, deep_copy: bool = False
-    ) -> None:
+    def set_array(self: Self, data: _AnyArrayLike, name: str, *, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -551,7 +555,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        data : ArrayLike[float]
+        data : numpy.ndarray | sequence
             Array of data.
 
         name : str
@@ -603,7 +607,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_scalars(
         self: Self,
-        scalars: ArrayLike[float],
+        scalars: _AnyArrayLike,
         name: str = 'scalars',
         *,
         deep_copy: bool = False,
@@ -620,7 +624,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        scalars : ArrayLike[float]
+        scalars : numpy.ndarray | sequence
             Array of data.
 
         name : str, default: 'scalars'
@@ -661,7 +665,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_vectors(
         self: Self,
-        vectors: MatrixLike[float],
+        vectors: MatrixLikeFloat,
         name: str,
         *,
         deep_copy: bool = False,
@@ -676,7 +680,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        vectors : MatrixLike
+        vectors : MatrixLikeFloat
             Data shaped ``(n, 3)`` where n matches the number of points or cells.
 
         name : str
@@ -740,7 +744,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _prepare_array(
         self: Self,
         *,
-        data: npt.ArrayLike,
+        data: _AnyArrayLike,
         name: str,
         deep_copy: bool,
     ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
@@ -1023,7 +1027,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """
         return [self.get_array(name) for name in self.keys()]
 
-    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, npt.NDArray[Any]]]:
+    def _iter_flat_columns(self: Self) -> Iterator[tuple[str, NDArray[Any]]]:
         """Yield ``(column_name, 1d_ndarray)`` pairs with multi-component arrays expanded.
 
         Shared helper for :meth:`to_arrow`, :meth:`to_pandas`, and
@@ -1042,7 +1046,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             raise ValueError(msg)
         seen: set[str] = set()
 
-        def _emit(col_name: str, values: npt.NDArray[Any]) -> tuple[str, npt.NDArray[Any]]:
+        def _emit(col_name: str, values: NDArray[Any]) -> tuple[str, NDArray[Any]]:
             if col_name in seen:
                 msg = (
                     f'Column name collision on {col_name!r}: multiple arrays would map '
@@ -1205,7 +1209,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def update(
         self: Self,
-        array_dict: Mapping[str, ArrayLike[Any]] | DataSetAttributes,
+        array_dict: Mapping[str, _AnyArrayLike] | DataSetAttributes,
         *,
         copy: bool = True,
     ) -> None:
@@ -1256,7 +1260,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self: Self,
         *,
         name: str,
-        array: ArrayLike[Any],
+        array: _AnyArrayLike,
         copy: bool,
     ) -> None:
         if copy:
@@ -1438,7 +1442,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def __eq__(self: Self, other: object) -> bool:
         """Test dict-like equivalency."""
 
-        def array_equal_nan(array1: npt.ArrayLike, array2: npt.ArrayLike) -> bool:
+        def array_equal_nan(array1: NDArray[Any], array2: NDArray[Any]) -> bool:
             # Check with `equal_nan=True` but only for floats since this fails for strings
             # See numpy/numpy#16377
             return (
@@ -1529,12 +1533,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @active_normals.setter
-    def active_normals(self: Self, normals: MatrixLike[float]) -> None:
+    def active_normals(self: Self, normals: MatrixLikeFloat) -> None:
         """Set the normals.
 
         Parameters
         ----------
-        normals : MatrixLike
+        normals : MatrixLikeFloat
             Normals of this dataset attribute.
 
         """
@@ -1648,7 +1652,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: NumpyArray[float],
+        texture_coordinates: NDArray[np.floating],
     ) -> None:
         """Set the active texture coordinates array.
 

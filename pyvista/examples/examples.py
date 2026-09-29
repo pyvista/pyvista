@@ -31,7 +31,8 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import Texture
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
 
 # get location of this folder and the example files
 dir_path = str(Path(os.path.realpath(__file__)).parent)
@@ -512,15 +513,15 @@ _dataset_sphere_vectors = _DatasetLoader(_sphere_vectors_load_func)
 
 
 def load_explicit_structured(
-    dimensions: VectorLike[int] = (5, 6, 7), spacing: VectorLike[float] = (20, 10, 1)
+    dimensions: VectorLikeInt = (5, 6, 7), spacing: VectorLikeFloat = (20, 10, 1)
 ) -> ExplicitStructuredGrid:
     """Load a simple explicit structured grid.
 
     Parameters
     ----------
-    dimensions : tuple(int), optional
+    dimensions : VectorLikeInt, optional
         Grid dimensions. Default is (5, 6, 7).
-    spacing : tuple(int), optional
+    spacing : VectorLikeFloat, optional
         Grid spacing. Default is (20, 10, 1).
 
     Returns
@@ -544,13 +545,13 @@ def load_explicit_structured(
 
 
 def _explicit_structured_load_func(
-    dimensions: VectorLike[int] = (5, 6, 7), spacing: VectorLike[float] = (20, 10, 1)
+    dimensions: VectorLikeInt = (5, 6, 7), spacing: VectorLikeFloat = (20, 10, 1)
 ) -> pv.ExplicitStructuredGrid:
     ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
-    xi = np.arange(0.0, (ni + 1) * si, si)  # type:ignore[arg-type]
-    yi = np.arange(0.0, (nj + 1) * sj, sj)  # type:ignore[arg-type]
-    zi = np.arange(0.0, (nk + 1) * sk, sk)  # type:ignore[arg-type]
+    xi = np.arange(0.0, (ni + 1) * si, si)
+    yi = np.arange(0.0, (nj + 1) * sj, sj)
+    zi = np.arange(0.0, (nk + 1) * sk, sk)
 
     return pv.StructuredGrid(
         *np.meshgrid(xi, yi, zi, indexing='ij')

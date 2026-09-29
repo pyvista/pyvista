@@ -16,7 +16,6 @@ from typing import cast
 from typing import overload
 
 import numpy as np
-import numpy.typing as npt
 
 import pyvista as pv
 from pyvista import _vtk
@@ -29,15 +28,18 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
+    from numpy.typing import DTypeLike
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _AnyArrayLike
+    from pyvista.core._typing_core import _NumericArray
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
@@ -126,15 +128,15 @@ def parse_field_choice(
 
 
 def _coerce_pointslike_arg(
-    points: MatrixLike[float] | VectorLike[float],
+    points: MatrixLikeFloat | VectorLikeFloat,
     *,
     copy: bool = False,
-) -> tuple[NumpyArray[float], bool]:
+) -> tuple[_NumericArray, bool]:
     """Check and coerce ``arg`` to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : MatrixLike[float] | VectorLike[float]
+    points : MatrixLikeFloat | VectorLikeFloat
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -149,33 +151,31 @@ def _coerce_pointslike_arg(
         Whether the input was a single point in an array-like with shape ``(3,)``.
 
     """
-    if isinstance(points, Sequence):
-        points = np.asarray(points)
-
-    if not isinstance(points, np.ndarray):
+    array: _NumericArray = np.asarray(points) if isinstance(points, Sequence) else points
+    if not isinstance(array, np.ndarray):
         msg = 'Given points must be convertible to a numerical array.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    if points.ndim > 2:
+    if array.ndim > 2:
         msg = 'Array of points must be 1D or 2D'
         raise ValueError(msg)
 
-    if points.ndim == 2:
-        if points.shape[1] != 3:
+    if array.ndim == 2:
+        if array.shape[1] != 3:
             msg = 'Array of points must have three values per point (shape (n, 3))'
             raise ValueError(msg)
         singular = False
 
     else:
-        if points.size != 3:
+        if array.size != 3:
             msg = 'Given point must have three values'
             raise ValueError(msg)
         singular = True
-        points = np.reshape(points, [1, 3])
+        array = np.reshape(array, [1, 3])
 
     if copy:
-        return points.copy(), singular
-    return points, singular
+        return array.copy(), singular
+    return array, singular
 
 
 def copy_vtk_array(array: _vtk.vtkAbstractArray, *, deep: bool = True) -> _vtk.vtkAbstractArray:
@@ -223,7 +223,7 @@ def copy_vtk_array(array: _vtk.vtkAbstractArray, *, deep: bool = True) -> _vtk.v
     return new_array
 
 
-def has_duplicates(arr: NumpyArray[Any]) -> bool:
+def has_duplicates(arr: NDArray[Any]) -> bool:
     """Return if an array has any duplicates.
 
     Parameters
@@ -241,7 +241,7 @@ def has_duplicates(arr: NumpyArray[Any]) -> bool:
     return (s[1:] == s[:-1]).any()
 
 
-def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
+def raise_has_duplicates(arr: NDArray[Any]) -> None:
     """Raise a ValueError if an array is not unique.
 
     Parameters
@@ -263,20 +263,20 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
 # fmt: off
 # ruff: disable[E501]
 @overload
-def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> npt.NDArray[Any]: ...
+def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> NDArray[Any]: ...
 @overload
-def convert_array(arr: npt.ArrayLike, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
+def convert_array(arr: _AnyArrayLike, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
 @overload
 def convert_array(arr: None, name: str | None = ..., *, deep: bool = ..., array_type: int | None = ...) -> None: ...
 # ruff: enable[E501]
 # fmt: on
 def convert_array(
-    arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
+    arr: _AnyArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
     *,
     deep: bool = False,
     array_type: int | None = None,
-) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
+) -> NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
 
     .. deprecated:: 0.50
@@ -285,8 +285,8 @@ def convert_array(
 
     Parameters
     ----------
-    arr : np.ndarray | :vtk:`vtkDataArray`
-        A NumPy array or :vtk:`vtkDataArray` to convert.
+    arr : numpy.ndarray | sequence | :vtk:`vtkAbstractArray`
+        An array-like or :vtk:`vtkAbstractArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
@@ -309,25 +309,26 @@ def convert_array(
     if not isinstance(arr, np.ndarray):
         # Otherwise input must be a vtkDataArray
         return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
-    if arr.ndim == 0:
+    array = arr
+    if array.ndim == 0:
         _warn_scalar_array()
-        arr = arr.reshape(1)
+        array = array.reshape(1)
 
-    kind = arr.dtype.kind
+    kind = array.dtype.kind
     if kind == 'O':  # np.object_
-        arr = arr.astype('|S')
+        array = array.astype('|S')
         kind = 'S'  # np.bytes_
     if kind in 'US':  # np.str_ or np.bytes_
-        vtk_data: _vtk.vtkAbstractArray = convert_string_array(arr)
+        vtk_data: _vtk.vtkAbstractArray = convert_string_array(array)
     else:
         # numpy_to_vtk makes the data contiguous
-        vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
+        vtk_data = _vtk.numpy_to_vtk(num_array=array, deep=deep, array_type=array_type)
     if isinstance(name, str):
         vtk_data.SetName(name)
     return vtk_data
 
 
-def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
+def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> NDArray[Any]:
     """Convert a VTK data, bit or string array to a NumPy array."""
     if isinstance(arr, _vtk.vtkDataArray):
         if isinstance(arr, _vtk.vtkBitArray):
@@ -531,7 +532,7 @@ def _warn_scalar_array(
     warn_external(msg, PyVistaDeprecationWarning)
 
 
-def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> None:
+def raise_not_matching(scalars: NDArray[Any], dataset: DataSet | Table) -> None:
     """Raise exception about inconsistencies.
 
     Parameters
@@ -687,7 +688,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
         return None
 
 
-def get_vtk_type(typ: npt.DTypeLike) -> int:
+def get_vtk_type(typ: DTypeLike) -> int:
     """Look up the VTK type for a given NumPy data type.
 
     Corrects for string type mapping issues.
@@ -733,7 +734,7 @@ def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
     return vtkarr
 
 
-def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
+def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NDArray[np.int_]:
     """Convert a :vtk:`vtkIdList` to a NumPy array.
 
     Parameters
@@ -754,14 +755,14 @@ def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
 # fmt: off
 # ruff: disable[E501]
 @overload
-def convert_string_array(arr: _vtk.vtkStringArray, name: str | None = ...) -> npt.NDArray[np.str_]: ...
+def convert_string_array(arr: _vtk.vtkStringArray, name: str | None = ...) -> NDArray[np.str_]: ...
 @overload
-def convert_string_array(arr: str | npt.NDArray[np.str_], name: str | None = ...) -> _vtk.vtkStringArray: ...
+def convert_string_array(arr: str | NDArray[np.str_], name: str | None = ...) -> _vtk.vtkStringArray: ...
 # ruff: enable[E501]
 # fmt: on
 def convert_string_array(
-    arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
-) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
+    arr: str | NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
+) -> NDArray[np.str_] | _vtk.vtkStringArray:
     """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
     .. versionchanged:: 0.49
@@ -775,16 +776,17 @@ def convert_string_array(
 
     Parameters
     ----------
-    arr : numpy.ndarray | str
-        NumPy string array to convert.
+    arr : NDArray[np.str_] | str | :vtk:`vtkStringArray`
+        NumPy string array or :vtk:`vtkStringArray` to convert.
 
     name : str, optional
         Name to set the :vtk:`vtkStringArray` to.
 
     Returns
     -------
-    :vtk:`vtkStringArray`
-        VTK string array.
+    :vtk:`vtkStringArray` | NDArray[np.str_]
+        VTK string array, or NumPy string array if the input is a
+        :vtk:`vtkStringArray`.
 
     Notes
     -----
@@ -827,7 +829,9 @@ def convert_string_array(
     return arr_out
 
 
-def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> NumpyArray[float]:
+def array_from_vtkmatrix(
+    matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4,
+) -> NDArray[np.float64]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -860,12 +864,12 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
     return array
 
 
-def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
+def vtkmatrix_from_array(array: MatrixLikeFloat) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
     """Convert a ``numpy.ndarray`` or array-like to a vtk matrix.
 
     Parameters
     ----------
-    array : array_like[float]
+    array : MatrixLikeFloat
         The array or array-like to be converted to a vtk matrix.
         Shape (3, 3) gets converted to a :vtk:`vtkMatrix3x3`, shape (4, 4)
         gets converted to a :vtk:`vtkMatrix4x4`. No other shapes are valid.

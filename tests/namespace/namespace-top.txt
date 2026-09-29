@@ -334,7 +334,7 @@ utilities, <module 'pyvista.utilities' from 'pyvista/pyvista/utilities/__init__.
 vector_poly_data, <function vector_poly_data at 0x163f405e0>
 # volume, <module 'pyvista.plotting.volume' from 'pyvista/pyvista/plotting/volume.py'>
 # volume_property, <module 'pyvista.plotting.volume_property' from 'pyvista/pyvista/plotting/volume_property.py'>
-voxelize, <function voxelize at 0x1641b3670>
+# voxelize, <function voxelize at 0x1641b3670>
 vtk_bit_array_to_char, <function vtk_bit_array_to_char at 0x163f3ec10>
 vtk_id_list_to_array, <function vtk_id_list_to_array at 0x163f3eca0>
 vtk_points, <function vtk_points at 0x163f403a0>
