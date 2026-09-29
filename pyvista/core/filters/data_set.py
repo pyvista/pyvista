@@ -5815,7 +5815,7 @@ class DataSetFilters(DataObjectFilters):
         ...     values=18, ranges=[[0, 8], [29, 40]], split=True
         ... )
         >>> extracted
-        MultiBlock (...)
+        MultiBlock[UnstructuredGrid] (...)
           N Blocks:   3
           X Bounds:   0.000e+00, 1.000e+00
           Y Bounds:   0.000e+00, 1.000e+00

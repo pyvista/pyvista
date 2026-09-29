@@ -767,9 +767,14 @@ class Text3DSource(_NoNewAttrMixin):
         Height of the text. If ``None``, the height is scaled
         proportional to :attr:`width`.
 
-    center : Sequence[float], default: (0.0, 0.0, 0.0)
+    center : Sequence[float] | None, default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
-        bounding box of the text.
+        bounding box of the text. If ``None``, the text is not centered: its
+        baseline starts at the origin and its back face lies in the plane
+        through the origin perpendicular to :attr:`normal`.
+
+        .. versionchanged:: 0.50
+            Allow ``None`` to keep the text at its origin.
 
     normal : Sequence[float], default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
@@ -790,7 +795,7 @@ class Text3DSource(_NoNewAttrMixin):
         depth: float | None = None,
         width: float | None = None,
         height: float | None = None,
-        center: VectorLikeFloat = (0.0, 0.0, 0.0),
+        center: VectorLikeFloat | None = (0.0, 0.0, 0.0),
         normal: VectorLikeFloat = (0.0, 0.0, 1.0),
         process_empty_string: bool = True,
     ) -> None:
@@ -850,18 +855,21 @@ class Text3DSource(_NoNewAttrMixin):
     @property
     def center(
         self: Text3DSource,
-    ) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    ) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
         """Return or set the center of the text.
 
         The center is defined as the middle of the axis-aligned bounding box
-        of the text.
+        of the text. If ``None``, the text is not centered and its baseline starts at the origin.
         """
         return self._center
 
     @center.setter
-    def center(self: Text3DSource, center: VectorLikeFloat) -> None:
-        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = valid_center
+    def center(self: Text3DSource, center: VectorLikeFloat | None) -> None:
+        self._center = (
+            None
+            if center is None
+            else _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        )
 
     @property
     def normal(
@@ -1008,17 +1016,18 @@ class Text3DSource(_NoNewAttrMixin):
 
         out.points[:, 2] *= scale_d
 
-        # Center points at origin
-        out.points -= out.center
+        if self.center is not None:
+            out.points -= out.center
+        center = self.center or (0.0, 0.0, 0.0)
 
         # Move to final position.
         # Only rotate if non-default normal.
         if not np.array_equal(self.normal, (0, 0, 1)):
             out.rotate_x(90, inplace=True)
             out.rotate_z(90, inplace=True)
-            _translate_and_orient(out, self.center, self.normal)
+            _translate_and_orient(out, center, self.normal)
         else:
-            out.points += self.center
+            out.points += center
 
 
 class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
@@ -4105,7 +4114,7 @@ class CubeFacesSource(CubeSource):
     :class:`~pyvista.MultiBlock`.
 
     >>> output
-    MultiBlock (...)
+    MultiBlock[PolyData] (...)
       N Blocks:   6
       X Bounds:   -5.000e-01, 5.000e-01
       Y Bounds:   -5.000e-01, 5.000e-01
