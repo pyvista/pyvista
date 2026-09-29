@@ -2993,7 +2993,7 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(pillow_get_data(frame.convert('RGB')), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
+            self._data_object.point_data.set_array(data, f'frame{i}')
             self.UpdateObservers(6)
 
         if 'frame0' in self._data_object.point_data:

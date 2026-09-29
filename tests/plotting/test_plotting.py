@@ -1677,6 +1677,14 @@ def test_plot_arrows():
     pv.plot_arrows(cent, direction)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('dtype', [complex, bool])
+def test_plot_arrows_rejects_non_real(dtype):
+    arrows = np.zeros((2, 3), dtype=dtype)
+    with pytest.raises(TypeError, match='Arrow arrays must be real numbers'):
+        pv.plot([arrows, arrows])
+
+
 def test_add_arrows():
     vector = np.array([1, 0, 0])
     center = np.array([0, 0, 0])
@@ -6923,14 +6931,6 @@ def test_no_empty_meshes():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Empty meshes'):
         pl.add_mesh(pv.PolyData())
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_voxelize_volume_removed():
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista.voxelize_volume` is deprecated'
-    ):
-        pv.voxelize_volume(pv.Sphere(), density=0.15)
 
 
 def test_enable_custom_trackball_style():

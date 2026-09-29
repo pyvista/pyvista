@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import cast
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -21,9 +20,10 @@ from .helpers import view_vectors
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from .helpers import _ViewOptions
     from .renderer import Renderer
@@ -62,7 +62,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self._elevation = 0.0
         self._azimuth = 0.0
         self._is_set = False
-        self._focus: NumpyArray[float] | None = None  # Used by BackgroundRenderer
+        self._focus: NDArray[np.float64] | None = None  # Used by BackgroundRenderer
 
         if renderer:
             if not isinstance(renderer, pv.Renderer):
@@ -279,7 +279,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: VectorLike[float]) -> None:
+    def position(self, value: VectorLikeFloat) -> None:
         self.SetPosition(_validation.validate_array3(value, dtype_out=float, to_tuple=True))
         self._elevation = 0.0
         self._azimuth = 0.0
@@ -323,12 +323,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, point: VectorLike[float]) -> None:
+    def focal_point(self, point: VectorLikeFloat) -> None:
         self.SetFocalPoint(_validation.validate_array3(point, dtype_out=float, to_tuple=True))
         self.is_set = True
 
     @property
-    def model_transform_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def model_transform_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the camera's model transformation matrix.
 
         Examples
@@ -362,7 +362,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return matrix
 
     @model_transform_matrix.setter
-    def model_transform_matrix(self, matrix: NumpyArray[float]) -> None:
+    def model_transform_matrix(self, matrix: NDArray[np.floating]) -> None:
         vtk_matrix = _vtk.vtkMatrix4x4()
         vtk_matrix.DeepCopy(matrix.ravel().tolist())
         self.SetModelTransformMatrix(vtk_matrix)
@@ -512,7 +512,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetViewUp()
 
     @up.setter
-    def up(self, vector: VectorLike[float]) -> None:
+    def up(self, vector: VectorLikeFloat) -> None:
         # VTK normalizes the view up vector and silently substitutes (0, 1, 0) when it
         # has no magnitude, so a zero vector must be rejected before SetViewUp.
         if np.allclose(vector, 0.0):
@@ -601,7 +601,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetClippingRange()
 
     @clipping_range.setter
-    def clipping_range(self, points: VectorLike[float]) -> None:
+    def clipping_range(self, points: VectorLikeFloat) -> None:
         near, far = float(points[0]), float(points[1])
         if near > far:
             msg = 'Near point must be lower than the far point.'
@@ -659,7 +659,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetWindowCenter()
 
     @window_center.setter
-    def window_center(self, value: VectorLike[float]) -> None:
+    def window_center(self, value: VectorLikeFloat) -> None:
         center = _validation.validate_array(
             value, must_have_shape=(2,), dtype_out=float, name='window center'
         )
@@ -724,7 +724,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return width, height
 
     @property
-    def intrinsic_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def intrinsic_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the pinhole intrinsic matrix of the camera.
 
         The matrix is ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
@@ -788,7 +788,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         )
 
     @intrinsic_matrix.setter
-    def intrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
+    def intrinsic_matrix(self, matrix: MatrixLikeFloat) -> None:
         valid = _validation.validate_array(
             matrix, must_have_shape=(3, 3), dtype_out=float, name='intrinsic matrix'
         )
@@ -817,7 +817,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def extrinsic_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def extrinsic_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
         """Return or set the pose of the camera as a 4x4 extrinsic matrix.
 
         The matrix maps world coordinates to camera coordinates in the OpenCV
@@ -852,10 +852,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return _OPENCV_FROM_VTK @ view
 
     @extrinsic_matrix.setter
-    def extrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
-        valid = cast(
-            'NumpyArray[float]', _validation.validate_transform4x4(matrix, name='extrinsic matrix')
-        )
+    def extrinsic_matrix(self, matrix: MatrixLikeFloat) -> None:
+        valid = _validation.validate_transform4x4(matrix, name='extrinsic matrix')
         rotation = _validation.validate_rotation(
             valid[:3, :3], must_have_handedness='right', name='extrinsic matrix rotation'
         )

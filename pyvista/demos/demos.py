@@ -13,10 +13,9 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-from .logo import text_3d
-
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import NumpyArray
+    from numpy.typing import NDArray
+
     from pyvista.plotting.plotter import _ShowReturnType
 
 _DatasetTypeOptions = Literal[
@@ -150,7 +149,7 @@ def orientation_cube() -> dict[str, pv.PolyData]:
     """
     cube = pv.Cube()
 
-    x_p = text_3d('X+', depth=0.2)
+    x_p = pv.Text3D('X+', depth=0.2)
     x_p.points *= 0.45
     x_p.rotate_y(90, inplace=True)
     x_p.rotate_x(90, inplace=True)
@@ -158,7 +157,7 @@ def orientation_cube() -> dict[str, pv.PolyData]:
     x_p.translate([0.5, 0, 0], inplace=True)
     # x_p.point_data['mesh'] = 1
 
-    x_n = text_3d('X-', depth=0.2)
+    x_n = pv.Text3D('X-', depth=0.2)
     x_n.points *= 0.45
     x_n.rotate_y(90, inplace=True)
     x_n.rotate_x(90, inplace=True)
@@ -167,7 +166,7 @@ def orientation_cube() -> dict[str, pv.PolyData]:
     x_n.translate([-0.5, 0, 0], inplace=True)
     # x_n.point_data['mesh'] = 2
 
-    y_p = text_3d('Y+', depth=0.2)
+    y_p = pv.Text3D('Y+', depth=0.2)
     y_p.points *= 0.45
     y_p.rotate_x(90, inplace=True)
     y_p.rotate_z(180, inplace=True)
@@ -175,21 +174,21 @@ def orientation_cube() -> dict[str, pv.PolyData]:
     y_p.translate([0, 0.5, 0], inplace=True)
     # y_p.point_data['mesh'] = 3
 
-    y_n = text_3d('Y-', depth=0.2)
+    y_n = pv.Text3D('Y-', depth=0.2)
     y_n.points *= 0.45
     y_n.rotate_x(90, inplace=True)
     y_n.translate(-np.array(y_n.center), inplace=True)
     y_n.translate([0, -0.5, 0], inplace=True)
     # y_n.point_data['mesh'] = 4
 
-    z_p = text_3d('Z+', depth=0.2)
+    z_p = pv.Text3D('Z+', depth=0.2)
     z_p.points *= 0.45
     z_p.rotate_z(90, inplace=True)
     z_p.translate(-np.array(z_p.center), inplace=True)
     z_p.translate([0, 0, 0.5], inplace=True)
     # z_p.point_data['mesh'] = 5
 
-    z_n = text_3d('Z-', depth=0.2)
+    z_n = pv.Text3D('Z-', depth=0.2)
     z_n.points *= 0.45
     z_n.rotate_x(180, inplace=True)
     z_n.translate(-np.array(z_n.center), inplace=True)
@@ -240,7 +239,7 @@ def plot_wave(
     frequency: float = 1,
     wavetime: float = 3,
     notebook: bool | None = None,
-) -> NumpyArray[float]:
+) -> NDArray[np.floating]:
     """Plot a 3D moving wave in a render window.
 
     Parameters

@@ -6,17 +6,21 @@ import importlib
 import sys
 from typing import TYPE_CHECKING
 
-from pyvista.core._typing_core import ArrayLike as ArrayLike
+from pyvista.core._typing_core import ArrayLikeBool as ArrayLikeBool
+from pyvista.core._typing_core import ArrayLikeFloat as ArrayLikeFloat
+from pyvista.core._typing_core import ArrayLikeInt as ArrayLikeInt
 from pyvista.core._typing_core import CellArrayLike as CellArrayLike
 from pyvista.core._typing_core import CellsLike as CellsLike
 from pyvista.core._typing_core import InteractionEventType as InteractionEventType
 from pyvista.core._typing_core import LineStyle as LineStyle
-from pyvista.core._typing_core import MatrixLike as MatrixLike
-from pyvista.core._typing_core import Number as Number
-from pyvista.core._typing_core import NumberType as NumberType
+from pyvista.core._typing_core import MatrixLikeBool as MatrixLikeBool
+from pyvista.core._typing_core import MatrixLikeFloat as MatrixLikeFloat
+from pyvista.core._typing_core import MatrixLikeInt as MatrixLikeInt
 from pyvista.core._typing_core import RotationLike as RotationLike
 from pyvista.core._typing_core import TransformLike as TransformLike
-from pyvista.core._typing_core import VectorLike as VectorLike
+from pyvista.core._typing_core import VectorLikeBool as VectorLikeBool
+from pyvista.core._typing_core import VectorLikeFloat as VectorLikeFloat
+from pyvista.core._typing_core import VectorLikeInt as VectorLikeInt
 from pyvista.core._typing_core import WrappableType as WrappableType
 
 if TYPE_CHECKING:
@@ -28,7 +32,9 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import PlottableType as PlottableType
 
 __all__ = [
-    'ArrayLike',
+    'ArrayLikeBool',
+    'ArrayLikeFloat',
+    'ArrayLikeInt',
     'CameraPositionOptions',
     'CellArrayLike',
     'CellsLike',
@@ -37,14 +43,16 @@ __all__ = [
     'InteractionEventType',
     'JupyterBackendOptions',
     'LineStyle',
-    'MatrixLike',
+    'MatrixLikeBool',
+    'MatrixLikeFloat',
+    'MatrixLikeInt',
     'MeshValidationFields',
-    'Number',
-    'NumberType',
     'PlottableType',
     'RotationLike',
     'TransformLike',
-    'VectorLike',
+    'VectorLikeBool',
+    'VectorLikeFloat',
+    'VectorLikeInt',
     'WrappableType',
 ]
 
@@ -60,19 +68,14 @@ _LAZY_ALIASES = {
 
 _MOVED_FROM_CORE = frozenset(
     {
-        'ArrayLike',
         'CellArrayLike',
         'CellsLike',
         'InteractionEventType',
         'JupyterBackendOptions',
         'LineStyle',
-        'MatrixLike',
         'MeshValidationFields',
-        'Number',
-        'NumberType',
         'RotationLike',
         'TransformLike',
-        'VectorLike',
     }
 )
 _MOVED_FROM_PLOTTING = frozenset({'CameraPositionOptions', 'Chart', 'ColorLike'})
@@ -102,14 +105,49 @@ def __dir__() -> list[str]:
     return sorted({*globals(), *__all__})
 
 
+# Deprecated type aliases with no counterpart in this module: (source, attribute, advice)
+_DEPRECATED_ALIASES = {
+    'Number': ('pyvista.core._typing_core._deprecated', 'Number', 'use `float` instead'),
+    'NumberType': ('pyvista.core._typing_core._deprecated', '_NumberT', 'use a `TypeVar` instead'),
+    'NumpyArray': (
+        'pyvista.core._typing_core._deprecated',
+        'NumpyArray',
+        'use `numpy.typing.NDArray` instead',
+    ),
+    'ArrayLike': (
+        'pyvista.core._typing_core._deprecated',
+        '_ArrayLike',
+        'use `pyvista.typing.ArrayLikeFloat`, `ArrayLikeInt` or `ArrayLikeBool` instead',
+    ),
+    'MatrixLike': (
+        'pyvista.core._typing_core._deprecated',
+        '_ArrayLike2D',
+        'use `pyvista.typing.MatrixLikeFloat`, `MatrixLikeInt` or `MatrixLikeBool` instead',
+    ),
+    'VectorLike': (
+        'pyvista.core._typing_core._deprecated',
+        '_ArrayLike1D',
+        'use `pyvista.typing.VectorLikeFloat`, `VectorLikeInt` or `VectorLikeBool` instead',
+    ),
+}
+
+
 def _get_deprecated_alias(module: str, name: str) -> object:
     """Return a type alias with a warning that ``module`` no longer provides it."""
     from pyvista._version import _is_deprecation_due  # noqa: PLC0415
     from pyvista._warn_external import warn_external  # noqa: PLC0415
     from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
-    alias = getattr(sys.modules[__name__], name)
-    msg = f'`{module}.{name}` has moved to `pyvista.typing`; use `pyvista.typing.{name}` instead.'
+    if name in _DEPRECATED_ALIASES:
+        source, attribute, advice = _DEPRECATED_ALIASES[name]
+        alias = getattr(importlib.import_module(source), attribute)
+        msg = f'`{module}.{name}` is deprecated; {advice}.'
+    else:
+        alias = getattr(sys.modules[__name__], name)
+        msg = (
+            f'`{module}.{name}` has moved to `pyvista.typing`; '
+            f'use `pyvista.typing.{name}` instead.'
+        )
     warn_external(msg, PyVistaDeprecationWarning)
     if _is_deprecation_due((0, 53)):  # pragma: no cover
         msg = 'Convert this deprecation warning into an error.'

@@ -8,7 +8,6 @@ import platform
 import subprocess
 import sys
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Literal
 from typing import NoReturn
 from typing import overload
@@ -23,8 +22,10 @@ from pyvista.core.errors import DeprecationError
 from .colors import Color
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _FloatingT
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
@@ -43,12 +44,12 @@ SUPPORTS_OPENGL: bool | None = None
 SUPPORTS_PLOTTING: bool | None = None
 
 
-def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
+def _validate_vector(vector: VectorLikeFloat, *, name: str) -> tuple[float, float, float]:
     """Return a three-component vector as a tuple of floats."""
     return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
 
 
-def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
+def _validate_viewup(vector: VectorLikeFloat) -> tuple[float, float, float]:
     """Return a view-up vector, which is normalized and so cannot be zero."""
     viewup = _validate_vector(vector, name='viewup')
     if np.allclose(viewup, 0.0):
@@ -245,7 +246,7 @@ def create_axes_marker(
     shaft_length: float = 0.8,
     tip_length: float = 0.2,
     ambient: float = 0.5,
-    label_size: VectorLike[float] = (0.25, 0.1),
+    label_size: VectorLikeFloat = (0.25, 0.1),
 ) -> _vtk.vtkAxesActor:
     """Create an axis actor.
 
@@ -290,7 +291,7 @@ def create_axes_marker(
     ambient : float, default: 0.5
         The ambient of the axes arrows. Value should be between 0 and 1.
 
-    label_size : sequence[float], default: (0.25, 0.1)
+    label_size : VectorLikeFloat, default: (0.25, 0.1)
         The width and height of the axes label actors. Values should be between
         0 and 1. For example ``(0.2, 0.1)``.
 
@@ -633,11 +634,21 @@ def create_north_arrow() -> pv.PolyData:
     return pv.PolyData(points, faces)
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def normalize(x: NDArray[_FloatingT], minimum: float | None = ..., maximum: float | None = ...) -> NDArray[_FloatingT]: ...
+@overload
+def normalize(x: NDArray[np.integer], minimum: float | None = ..., maximum: float | None = ...) -> NDArray[np.float64]: ...
+@overload
+def normalize(x: NDArray[np.integer | np.floating], minimum: float | None = ..., maximum: float | None = ...) -> NDArray[np.floating]: ...
+# ruff: enable[E501]
+# fmt: on
 def normalize(
-    x: NumpyArray[Any],
+    x: NDArray[np.integer | np.floating],
     minimum: float | None = None,
     maximum: float | None = None,
-) -> NumpyArray[float]:
+) -> NDArray[np.floating]:
     """Normalize the given values to the range ``[0, 1]``.
 
     Parameters
@@ -662,14 +673,14 @@ def normalize(
     return (x - low) / (high - low)
 
 
-def _opacity_transfer_functions(n_colors: int) -> dict[str, NumpyArray[np.uint8]]:
+def _opacity_transfer_functions(n_colors: int) -> dict[str, NDArray[np.uint8]]:
     """Return every named opacity mapping, each ``n_colors`` values long."""
 
-    def sigmoid(x: NumpyArray[float]) -> NumpyArray[np.uint8]:  # numpydoc ignore=PR01,RT01
+    def sigmoid(x: NDArray[np.floating]) -> NDArray[np.uint8]:  # numpydoc ignore=PR01,RT01
         """Map ``x`` onto the [0, 255] opacity range with a logistic curve."""
         return np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
 
-    transfer_func: dict[str, NumpyArray[np.uint8]] = {
+    transfer_func: dict[str, NDArray[np.uint8]] = {
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
@@ -697,12 +708,12 @@ def _opacity_transfer_functions(n_colors: int) -> dict[str, NumpyArray[np.uint8]
 
 
 def opacity_transfer_function(
-    mapping: OpacityOptions | str | VectorLike[float],
+    mapping: OpacityOptions | str | VectorLikeFloat,
     n_colors: int,
     *,
     interpolate: bool = True,
     kind: str = 'linear',
-) -> NumpyArray[np.uint8]:
+) -> NDArray[np.uint8]:
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -722,7 +733,7 @@ def opacity_transfer_function(
 
     Parameters
     ----------
-    mapping : sequence[float] | str
+    mapping : VectorLikeFloat | str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
         ``'sigmoid_1'`` through ``'sigmoid_10'``, ``'sigmoid_15'``,

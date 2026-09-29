@@ -25,17 +25,19 @@ from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
+    from numpy.typing import NDArray
     from typing_extensions import Self
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
 
     from ._typing_core import CellsLike
-    from ._typing_core import MatrixLike
-    from ._typing_core import NumpyArray
-    from ._typing_core import VectorLike
+    from ._typing_core import MatrixLikeInt
+    from ._typing_core import VectorLikeInt
+    from ._typing_core import _NumericArray
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
@@ -411,7 +413,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
-    def points(self: Self) -> NumpyArray[float]:
+    def points(self: Self) -> NDArray[np.float64]:
         """Get the point coordinates of the cell.
 
         Returns
@@ -658,7 +660,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-def _expected_legacy_cell_array_size(cells: NumpyArray[int]) -> int | None:
+def _expected_legacy_cell_array_size(cells: NDArray[np.integer | np.bool_]) -> int | None:
     """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
 
     Returns ``None`` if a negative point count makes the layout uninterpretable.
@@ -722,7 +724,7 @@ class CellArray(
             self.cells = cells
 
     @property
-    def cells(self: Self) -> NumpyArray[int]:
+    def cells(self: Self) -> NDArray[np.signedinteger]:
         """Return a NumPy array of the cells.
 
         Returns
@@ -776,7 +778,7 @@ class CellArray(
         return self.GetNumberOfCells()
 
     @property
-    def cell_offsets(self: Self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+    def cell_offsets(self: Self) -> NDArray[np.signedinteger]:  # numpydoc ignore=RT01
         """Return the offsets array.
 
         The offsets array has ``n_cells + 1`` values and stores the index into
@@ -818,11 +820,11 @@ class CellArray(
         return _get_offsets(self)
 
     @cell_offsets.setter
-    def cell_offsets(self: Self, offsets: VectorLike[int]) -> None:
+    def cell_offsets(self: Self, offsets: VectorLikeInt) -> None:
         _set_cell_array_data(self, offsets, self.cell_connectivity)
 
     @property
-    def cell_connectivity(self: Self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+    def cell_connectivity(self: Self) -> NDArray[np.signedinteger]:  # numpydoc ignore=RT01
         """Return the connectivity array.
 
         The connectivity array stores the point ids of every cell, one cell after
@@ -878,11 +880,11 @@ class CellArray(
         return _get_connectivity(self)
 
     @cell_connectivity.setter
-    def cell_connectivity(self: Self, connectivity: VectorLike[int]) -> None:
+    def cell_connectivity(self: Self, connectivity: VectorLikeInt) -> None:
         _set_cell_array_data(self, self.cell_offsets, connectivity)
 
     @property
-    def connectivity_array(self: Self) -> NumpyArray[int]:
+    def connectivity_array(self: Self) -> NDArray[np.signedinteger]:
         """Return the array with the point ids that define the cells' connectivity.
 
         .. deprecated:: 0.49
@@ -910,7 +912,7 @@ class CellArray(
         return _get_connectivity_array(self)
 
     @property
-    def offset_array(self: Self) -> NumpyArray[int]:
+    def offset_array(self: Self) -> NDArray[np.signedinteger]:
         """Return the array used to store cell offsets.
 
         .. deprecated:: 0.49
@@ -939,8 +941,8 @@ class CellArray(
 
     def _set_data(
         self: Self,
-        offsets: MatrixLike[int],
-        connectivity: MatrixLike[int],
+        offsets: VectorLikeInt,
+        connectivity: CellsLike,
         *,
         deep: bool = False,
     ) -> None:
@@ -973,7 +975,7 @@ class CellArray(
     def _set_data_fixed_size(
         self: Self,
         cell_size: int,
-        connectivity: MatrixLike[int],
+        connectivity: CellsLike,
         *,
         deep: bool = False,
     ) -> None:
@@ -993,8 +995,8 @@ class CellArray(
 
     @staticmethod
     def from_arrays(
-        offsets: MatrixLike[int],
-        connectivity: MatrixLike[int],
+        offsets: VectorLikeInt,
+        connectivity: CellsLike,
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1002,10 +1004,10 @@ class CellArray(
 
         Parameters
         ----------
-        offsets : MatrixLike[int]
+        offsets : VectorLikeInt
             Offsets array of length ``n_cells + 1``.
 
-        connectivity : MatrixLike[int]
+        connectivity : CellsLike
             Connectivity array.
 
         deep : bool, default: False
@@ -1022,7 +1024,7 @@ class CellArray(
         return cellarr
 
     @property
-    def regular_cells(self: Self) -> NumpyArray[int]:
+    def regular_cells(self: Self) -> NDArray[np.signedinteger]:
         """Return a (``n_cells``, cell_size)-shaped array of point indices for equal-sized faces.
 
         Returns
@@ -1042,7 +1044,7 @@ class CellArray(
     @classmethod
     def from_regular_cells(
         cls: type[CellArray],
-        cells: MatrixLike[int],
+        cells: MatrixLikeInt,
         *,
         deep: bool = False,
     ) -> CellArray:
@@ -1056,7 +1058,7 @@ class CellArray(
 
         Parameters
         ----------
-        cells : numpy.ndarray or list[list[int]]
+        cells : MatrixLikeInt
             Cell array of shape (``n_cells``, ``cell_size``) where all cells have the same
             ``cell_size``.
 
@@ -1089,21 +1091,23 @@ class CellArray(
                [1, 2, 3]]...)
 
         """
-        cells = np.asarray(cells)
-        n_cells, cell_size = cells.shape
-        if cells.dtype != np.int32:
-            cells = np.asarray(cells, dtype=pv.ID_TYPE)
+        array = np.asarray(cells)
+        n_cells, cell_size = array.shape
+        connectivity = np.asarray(array, dtype=np.int32 if array.dtype == np.int32 else pv.ID_TYPE)
 
         cellarr = cls()
         if _SUPPORTS_FIXED_SIZE_STORAGE:
-            cellarr._set_data_fixed_size(cell_size, cells, deep=deep)
+            cellarr._set_data_fixed_size(cell_size, connectivity, deep=deep)
         else:
             offsets = cell_size * np.arange(n_cells + 1, dtype=pv.ID_TYPE)
-            cellarr._set_data(offsets, cells, deep=deep)
+            cellarr._set_data(offsets, connectivity, deep=deep)
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
+    def from_irregular_cells(
+        cls: type[CellArray],
+        cells: Sequence[Sequence[int | np.integer] | NDArray[np.integer]] | NDArray[np.integer],
+    ) -> CellArray:
         """Construct a ``CellArray`` from cells which may have different sizes.
 
         Use this method when the cells have varying numbers of points, for example, a
@@ -1118,7 +1122,7 @@ class CellArray(
 
         Parameters
         ----------
-        cells : Sequence[Sequence[int]]
+        cells : sequence[sequence[int] | numpy.ndarray]
             Sequence of length ``n_cells`` where each item is a sequence of the
             point indices for that cell. The cells may have different lengths.
 
@@ -1150,7 +1154,7 @@ class CellArray(
         """
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pv.ID_TYPE)
-        connectivity = np.concatenate(cells, dtype=pv.ID_TYPE)
+        connectivity = np.concatenate([np.asarray(c) for c in cells], dtype=pv.ID_TYPE)
         return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
@@ -1160,33 +1164,31 @@ class CellArray(
 # returned as CellArrays
 
 
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     """Return the array with the point ids that define the cells' connectivity."""
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
 
-def _get_offsets(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+def _get_offsets(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     """Return a read-only array of the cell offsets."""
     array = _get_offset_array(cellarr)
     array.flags['WRITEABLE'] = False
     return array
 
 
-def _get_connectivity(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+def _get_connectivity(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     """Return a read-only array of the cell connectivity."""
     array = _get_connectivity_array(cellarr)
     array.flags['WRITEABLE'] = False
     return array
 
 
-def _validate_offsets_connectivity(
-    offsets: NumpyArray[int], connectivity: NumpyArray[int]
-) -> None:
+def _validate_offsets_connectivity(offsets: _NumericArray, connectivity: _NumericArray) -> None:
     """Raise if ``offsets`` and ``connectivity`` do not describe a valid cell array."""
     for name, array in (('Offsets', offsets), ('Connectivity', connectivity)):
         if array.ndim != 1:
@@ -1215,8 +1217,8 @@ def _validate_offsets_connectivity(
 
 def _set_cell_array_data(
     cellarr: CellArray,
-    offsets: VectorLike[int],
-    connectivity: VectorLike[int],
+    offsets: VectorLikeInt,
+    connectivity: VectorLikeInt,
 ) -> None:
     """Validate ``offsets`` and ``connectivity`` and store them in ``cellarr``.
 
@@ -1245,14 +1247,14 @@ def _set_cell_array_data(
         cellarr._set_data(offsets_array, connectivity_array, deep=True)
 
 
-def _make_cell_array(offsets: VectorLike[int], connectivity: VectorLike[int]) -> CellArray:
+def _make_cell_array(offsets: VectorLikeInt, connectivity: VectorLikeInt) -> CellArray:
     """Build a validated :class:`CellArray` from offsets and connectivity."""
     cellarr = CellArray()
     _set_cell_array_data(cellarr, offsets, connectivity)
     return cellarr
 
 
-def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     """Return a (``n_cells``, cell_size)-shaped array of point indices for equal-sized faces."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
@@ -1276,7 +1278,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
         raise ValueError(msg)
 
 
-def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NDArray[np.signedinteger], ...]:
     """Return a tuple of length ``n_cells`` of each cell's point indices."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
