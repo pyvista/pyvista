@@ -22,6 +22,7 @@ import pyvista as pv
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _FileProps
+from pyvista.examples._dataset_metadata import Usage
 from pyvista.examples._dataset_metadata import _metadata_for_source_names
 
 if TYPE_CHECKING:
@@ -30,7 +31,6 @@ if TYPE_CHECKING:
 
     from pyvista.examples._dataset_loader import DatasetObject
     from pyvista.examples._dataset_metadata import ExampleMetadata
-    from pyvista.examples._dataset_metadata import Usage
 
 _DatasetT_co = TypeVar('_DatasetT_co', covariant=True, default='DatasetObject')
 _ReadersT_co = TypeVar(
