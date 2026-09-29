@@ -58,9 +58,8 @@ if TYPE_CHECKING:
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
-    from ._typing_core import NumpyArray
     from ._typing_core._dataset_types import _DataSetType
     from .filters.data_object import _NestedMeshValidationFields
     from .utilities.writer import BaseWriter
@@ -1249,7 +1248,7 @@ class MultiBlock(
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         valid_center = _validation.validate_array3(center, name='center')
         self.translate(valid_center - self.center, inplace=True)
 
@@ -2295,7 +2294,7 @@ class MultiBlock(
         *,
         preference: PointLiteral | CellLiteral = 'cell',
         allow_missing: bool = False,
-    ) -> tuple[FieldAssociation, NumpyArray[float]]:
+    ) -> tuple[FieldAssociation, pyvista_ndarray]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -2329,7 +2328,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: list[tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, pyvista_ndarray, _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):

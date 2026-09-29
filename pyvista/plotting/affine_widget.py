@@ -17,11 +17,12 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Sequence
 
+    from numpy.typing import NDArray
+
     from pyvista import Actor
     from pyvista import Renderer
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.plotting.plotter import BasePlotter
 
     from ._typing import ColorLike
@@ -32,7 +33,7 @@ DARK_YELLOW = (0.9647058823529412, 0.7450980392156863, 0)
 GLOBAL_AXES = np.eye(3)
 
 
-def _validate_axes(axes: MatrixLike[float]) -> NumpyArray[float]:
+def _validate_axes(axes: MatrixLikeFloat) -> NDArray[np.floating]:
     """Validate and normalize input axes.
 
     Axes are expected to follow the right-hand rule (for example, third axis is the
@@ -40,7 +41,7 @@ def _validate_axes(axes: MatrixLike[float]) -> NumpyArray[float]:
 
     Parameters
     ----------
-    axes : sequence
+    axes : MatrixLikeFloat
         The axes to be validated and normalized. Should be of shape (3, 3).
 
     Returns
@@ -78,14 +79,14 @@ def _make_quarter_arc() -> pv.PolyData:
     return circ
 
 
-def get_angle(v1: NumpyArray[float], v2: NumpyArray[float]) -> float:
+def get_angle(v1: VectorLikeFloat, v2: VectorLikeFloat) -> float:
     """Compute the angle between two vectors in degrees.
 
     Parameters
     ----------
-    v1 : numpy.ndarray
+    v1 : VectorLikeFloat
         First input vector.
-    v2 : numpy.ndarray
+    v2 : VectorLikeFloat
         Second input vector.
 
     Returns
@@ -99,11 +100,11 @@ def get_angle(v1: NumpyArray[float], v2: NumpyArray[float]) -> float:
 
 def ray_plane_intersection(
     *,
-    start_point: NumpyArray[float],
-    direction: NumpyArray[float],
-    plane_point: NumpyArray[float],
-    normal: NumpyArray[float],
-) -> NumpyArray[float]:
+    start_point: NDArray[np.floating],
+    direction: NDArray[np.floating],
+    plane_point: NDArray[np.floating],
+    normal: NDArray[np.floating],
+) -> NDArray[np.floating]:
     """Compute the intersection between a ray and a plane.
 
     Parameters
@@ -154,8 +155,8 @@ class AffineWidget3D(_NoNewAttrMixin):
         Uses the theme by default. Configure the individual axis colors by
         modifying either the theme with ``pyvista.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-    axes : numpy.ndarray, optional
-        ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default this
+    axes : MatrixLikeFloat, optional
+        ``(3, 3)`` array defining the X, Y, and Z axes. By default this
         matches the default coordinate system.
     release_callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the
@@ -197,15 +198,15 @@ class AffineWidget3D(_NoNewAttrMixin):
         plotter: BasePlotter,
         actor: Actor,
         *,
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         start: bool = True,
         scale: float = 0.15,
         line_radius: float = 0.02,
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
-        axes: MatrixLike[float] | None = None,
-        release_callback: Callable[[NumpyArray[float]], None] | None = None,
-        interact_callback: Callable[[NumpyArray[float]], None] | None = None,
+        axes: MatrixLikeFloat | None = None,
+        release_callback: Callable[[NDArray[np.float64]], None] | None = None,
+        interact_callback: Callable[[NDArray[np.float64]], None] | None = None,
     ) -> None:
         """Initialize the widget."""
         self._axes = np.eye(4)
@@ -213,7 +214,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         self._pl = plotter
         self._main_actor = actor
         self._selected_actor: Actor | None = None
-        self._init_position: NumpyArray[float] | None = None
+        self._init_position: NDArray[np.float64] | None = None
         self._mouse_move_observer: int | None = None
         self._left_press_observer: int | None = None
         self._left_release_observer: int | None = None
@@ -306,7 +307,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def _get_world_coord_rot(
         self, interactor: _vtk.vtkRenderWindowInteractor
-    ) -> NumpyArray[float]:
+    ) -> NDArray[np.float64]:
         """Get the world coordinates given an interactor.
 
         Unlike ``_get_world_coord_trans``, these coordinates are physically
@@ -333,7 +334,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def _get_world_coord_trans(
         self, interactor: _vtk.vtkRenderWindowInteractor
-    ) -> NumpyArray[float]:
+    ) -> NDArray[np.float64]:
         """Get the world coordinates given an interactor.
 
         This uses a modified scaled approach to get the world coordinates that
@@ -469,7 +470,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         self._cached_matrix = np.eye(4)
 
     @property
-    def axes(self) -> NumpyArray[float]:
+    def axes(self) -> NDArray[np.float64]:
         """Return or set the axes of the widget.
 
         The axes will be checked for orthogonality. Non-orthogonal axes will
@@ -484,7 +485,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, axes: MatrixLike[float]) -> None:
+    def axes(self, axes: MatrixLikeFloat) -> None:
         mat = np.eye(4)
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
@@ -512,7 +513,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         return cast('tuple[float, float, float]', tuple(self._origin))
 
     @origin.setter
-    def origin(self, value: VectorLike[float]) -> None:
+    def origin(self, value: VectorLikeFloat) -> None:
         origin = np.array(value)
         diff = origin - self._origin
 

@@ -3,22 +3,32 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from type_assert import assert_types
 
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 
 
-def a_transformation() -> NumpyArray[float]:
+def a_transformation() -> NDArray[np.floating]:
     """Return a 4x4 translation matrix."""
     matrix = np.eye(4)
     matrix[:3, 3] = [1.0, 2.0, 3.0]
     return matrix
 
 
-def some_points() -> NumpyArray[float]:
+def some_points() -> NDArray[np.floating]:
     """Return points to transform."""
     return np.zeros((4, 3))
+
+
+def int64_points() -> NDArray[np.int64]:
+    """Return integer points, which only the copying path accepts."""
+    return np.zeros((4, 3), dtype=np.int64)
+
+
+def integer_points() -> NDArray[np.integer]:
+    """Return points whose integer width is unknown."""
+    return np.zeros((4, 3), dtype=np.int64)
 
 
 def a_flag() -> bool:
@@ -26,9 +36,18 @@ def a_flag() -> bool:
     return True
 
 
-assert_types(apply_transformation_to_points(a_transformation(), some_points()), NumpyArray[float])
-assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False), NumpyArray[float])
+assert_types(apply_transformation_to_points(a_transformation(), some_points()), NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False), NDArray[np.floating])
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=True), None)
+assert_types(apply_transformation_to_points(a_transformation(), int64_points()), NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), int64_points(), inplace=False), NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), integer_points()), NDArray[np.floating])
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), NumpyArray[float] | None)
+assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), NDArray[np.floating] | None)
+
+
+# Never called; the ignore is reported as unused if integer points ever type check in place
+def int64_points_in_place() -> None:  # pragma: no cover
+    """Pass integer points with ``inplace=True``, which would truncate the result."""
+    apply_transformation_to_points(a_transformation(), int64_points(), inplace=True)  # type: ignore[type-var]

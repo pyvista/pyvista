@@ -34,19 +34,22 @@ from .helpers import wrap
 from .misc import check_valid_vector
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core._typing_core import _NumericArray
 
 
 def Capsule(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     radius: float = 0.5,
     cylinder_length: float = 1.0,
     resolution: int = 30,
@@ -67,10 +70,10 @@ def Capsule(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction the capsule points to in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -117,8 +120,8 @@ def Capsule(
 
 def Cylinder(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     radius: float = 0.5,
     height: float = 1.0,
     resolution: int = 100,
@@ -136,10 +139,10 @@ def Cylinder(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction cylinder points to  in ``[x, y, z]``.
 
     radius : float, default: 0.5
@@ -195,10 +198,10 @@ def Cylinder(
 
 def CylinderStructured(
     *,
-    radius: float | VectorLike[float] = 0.5,
+    radius: float | VectorLikeFloat = 0.5,
     height: float = 1.0,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     theta_resolution: int = 32,
     z_resolution: int = 10,
 ) -> StructuredGrid:
@@ -210,7 +213,7 @@ def CylinderStructured(
 
     Parameters
     ----------
-    radius : float | sequence[float], default: 0.5
+    radius : float | VectorLikeFloat, default: 0.5
         Radius of the cylinder. If a sequence, then describes the
         radial coordinates of the cells as a range of values as
         specified by the ``radius``. The sequence must be sorted
@@ -219,10 +222,10 @@ def CylinderStructured(
     height : float, default: 1.0
         Height of the cylinder along its Z-axis.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction cylinder Z-axis in ``[x, y, z]``.
 
     theta_resolution : int, default: 32
@@ -306,8 +309,8 @@ def CylinderStructured(
 
 def Arrow(
     *,
-    start: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    start: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     tip_length: float = 0.25,
     tip_radius: float = 0.1,
     tip_resolution: int = 20,
@@ -319,10 +322,10 @@ def Arrow(
 
     Parameters
     ----------
-    start : sequence[float], default: (0.0, 0.0, 0.0)
+    start : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Start location in ``[x, y, z]``.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction the arrow points to in ``[x, y, z]``.
 
     tip_length : float, default: 0.25
@@ -382,8 +385,8 @@ def Arrow(
 def Sphere(
     *,
     radius: float = 0.5,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
     start_theta: float = 0.0,
@@ -411,10 +414,10 @@ def Sphere(
     radius : float, default: 0.5
         Sphere radius.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -535,9 +538,9 @@ def Sphere(
 
 def StructuredSphere(
     *,
-    radius: float | VectorLike[float] = 0.5,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    radius: float | VectorLikeFloat = 0.5,
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     theta_resolution: int = 30,
     phi_resolution: int = 30,
     start_theta: float = 0.0,
@@ -582,16 +585,16 @@ def StructuredSphere(
 
     Parameters
     ----------
-    radius : float | sequence[float], default: 0.5
+    radius : float | VectorLikeFloat, default: 0.5
         Sphere radius, which must be greater than zero. If a sequence, then
         describes the radial coordinates of the cells as a range of values, and
         generates a 3D grid with concentric layers of cells. The sequence must
         be sorted in strictly ascending order.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -749,8 +752,8 @@ def SolidSphere(
     start_phi: float = 0.0,
     end_phi: float | None = None,
     phi_resolution: int = 30,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     radians: bool = False,
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
@@ -813,10 +816,10 @@ def SolidSphere(
         inclusive of polar axis, that is, ``phi=0`` and ``phi=180``
         in degrees, if applicable.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -901,11 +904,11 @@ def SolidSphere(
 
 def SolidSphereGeneric(
     *,
-    radius: VectorLike[float] | None = None,
-    theta: VectorLike[float] | None = None,
-    phi: VectorLike[float] | None = None,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    radius: VectorLikeFloat | None = None,
+    theta: VectorLikeFloat | None = None,
+    phi: VectorLikeFloat | None = None,
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     radians: bool = False,
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
@@ -930,25 +933,25 @@ def SolidSphereGeneric(
 
     Parameters
     ----------
-    radius : sequence[float], optional
+    radius : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying radial
         points. Must have at least two points and be non-negative.
 
-    theta : sequence[float], optional
+    theta : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``theta``
         points. Must have at least two points.  Can have any value as long
         as range is within 360 degrees. Large magnitudes may result in
         problems with endpoint overlap detection.
 
-    phi : sequence[float], optional
+    phi : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``phi``
         points. Must have at least two points.  Must be between
         0 and 180 degrees.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
         the sphere's North Pole at zero degrees ``phi``.
 
@@ -1042,7 +1045,7 @@ def SolidSphereGeneric(
         msg = 'phi resolution must be 2 or more'
         raise ValueError(msg)
 
-    def _is_sorted(a: NumpyArray[float]) -> np.bool_:
+    def _is_sorted(a: _NumericArray) -> np.bool_:
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
@@ -1080,19 +1083,19 @@ def SolidSphereGeneric(
         raise ValueError(msg)
 
     def _spherical_to_cartesian(
-        r: float | VectorLike[float],
-        phi: float | VectorLike[float],
-        theta: float | VectorLike[float],
-    ) -> NumpyArray[float]:
+        r: float | VectorLikeFloat,
+        phi: float | VectorLikeFloat,
+        theta: float | VectorLikeFloat,
+    ) -> NDArray[np.floating]:
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
 
         Parameters
         ----------
-        r : sequence[float]
+        r : VectorLikeFloat
             Ordered sequence of floats of radii.
-        phi : sequence[float]
+        phi : VectorLikeFloat
             Ordered sequence of floats for phi direction.
-        theta : sequence[float]
+        theta : VectorLikeFloat
             Ordered sequence of floats for theta direction.
 
         Returns
@@ -1101,14 +1104,14 @@ def SolidSphereGeneric(
             ``(n, 3)`` Cartesian coordinate array.
 
         """
-        r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
-        x, y, z = pv.spherical_to_cartesian(r, phi, theta)
+        r_grid, phi_grid, theta_grid = np.meshgrid(r, phi, theta, indexing='ij')
+        x, y, z = pv.spherical_to_cartesian(r_grid, phi_grid, theta_grid)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
     # Optimization: points and cells are built with array arithmetic rather than per-cell
     # loops. Block order is part of the output and must not change: origin, +axis, -axis,
     # then the (r, phi, theta) grid with theta fastest; tetras, pyramids, wedges, hexahedra.
-    point_blocks: list[NumpyArray[float]] = []
+    point_blocks: list[NDArray[np.floating]] = []
     npoints_on_axis = 0
     if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
         point_blocks.append(np.zeros((1, 3)))
@@ -1149,12 +1152,14 @@ def SolidSphereGeneric(
     point_blocks.append(_spherical_to_cartesian(radius, phi, theta))
     points = np.vstack(point_blocks)
 
-    cell_blocks: list[NumpyArray[int]] = []
-    celltype_blocks: list[NumpyArray[np.uint8]] = []
+    cell_blocks: list[NDArray[np.signedinteger]] = []
+    celltype_blocks: list[NDArray[np.uint8]] = []
 
     def _index(
-        ir: int | NumpyArray[int], iphi: int | NumpyArray[int], itheta: int | NumpyArray[int]
-    ) -> int | NumpyArray[int]:
+        ir: int | NDArray[np.signedinteger],
+        iphi: int | NDArray[np.signedinteger],
+        itheta: int | NDArray[np.signedinteger],
+    ) -> int | NDArray[np.signedinteger]:
         """Index for points not on axis.
 
         Values of ``ir`` and ``iphi`` are relative to the first non-axis values; all
@@ -1167,7 +1172,7 @@ def SolidSphereGeneric(
             ntheta_ = ntheta
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
-    def _add_cells(celltype: pv.CellType, *point_ids: int | NumpyArray[int]) -> None:
+    def _add_cells(celltype: pv.CellType, *point_ids: int | NDArray[np.signedinteger]) -> None:
         """Append one block of same-type cells, one row per broadcast element."""
         ids = np.broadcast_arrays(*point_ids)
         block = np.stack([np.full_like(ids[0], len(ids)), *ids], axis=-1)
@@ -1207,7 +1212,9 @@ def SolidSphereGeneric(
             0,
         )
 
-    def _reorder_wedge(points: list[int | NumpyArray[int]]) -> list[int | NumpyArray[int]]:
+    def _reorder_wedge(
+        points: list[int | NDArray[np.signedinteger]],
+    ) -> list[int | NDArray[np.signedinteger]]:
         """Swap points 1,2 and 4,5 for wedge cells."""
         points[1], points[2] = points[2], points[1]
         points[4], points[5] = points[5], points[4]
@@ -1274,8 +1281,8 @@ def SolidSphereGeneric(
 
 def Plane(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (0.0, 0.0, 1.0),
     i_size: float = 1.0,
     j_size: float = 1.0,
     i_resolution: int = 10,
@@ -1285,10 +1292,10 @@ def Plane(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Location of the centroid in ``[x, y, z]``.
 
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
+    direction : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction of the plane's normal in ``[x, y, z]``.
 
     i_size : float, default: 1.0
@@ -1329,8 +1336,8 @@ def Plane(
 
 
 def Line(
-    pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
-    pointb: VectorLike[float] = (0.5, 0.0, 0.0),
+    pointa: VectorLikeFloat = (-0.5, 0.0, 0.0),
+    pointb: VectorLikeFloat = (0.5, 0.0, 0.0),
     *,
     resolution: int = 1,
 ) -> PolyData:
@@ -1338,10 +1345,10 @@ def Line(
 
     Parameters
     ----------
-    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
+    pointa : VectorLikeFloat, default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : sequence[float], default: (0.5, 0.0, 0.0)
+    pointb : VectorLikeFloat, default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
     resolution : int, default: 1
@@ -1379,12 +1386,12 @@ def Line(
     return line
 
 
-def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
+def MultipleLines(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create multiple lines.
 
     Parameters
     ----------
-    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points : MatrixLikeFloat, default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
 
     Returns
@@ -1421,8 +1428,8 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
 
 def Tube(
     *,
-    pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
-    pointb: VectorLike[float] = (0.5, 0.0, 0.0),
+    pointa: VectorLikeFloat = (-0.5, 0.0, 0.0),
+    pointb: VectorLikeFloat = (0.5, 0.0, 0.0),
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
@@ -1432,10 +1439,10 @@ def Tube(
 
     Parameters
     ----------
-    pointa : sequence[float], default: (-0.5, 0.0, 0.0)
+    pointa : VectorLikeFloat, default: (-0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : sequence[float], default: (0.5, 0.0, 0.0)
+    pointb : VectorLikeFloat, default: (0.5, 0.0, 0.0)
         Location in ``[x, y, z]``.
 
     resolution : int, default: 1
@@ -1472,11 +1479,11 @@ def Tube(
 
 def Cube(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     x_length: float = 1.0,
     y_length: float = 1.0,
     z_length: float = 1.0,
-    bounds: VectorLike[float] | None = None,
+    bounds: VectorLikeFloat | None = None,
     clean: bool = True,
     point_dtype: str | None = None,
     points_dtype: str | None = None,
@@ -1498,7 +1505,7 @@ def Cube(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``.
 
     x_length : float, default: 1.0
@@ -1510,7 +1517,7 @@ def Cube(
     z_length : float, default: 1.0
         Length of the cube in the z-direction.
 
-    bounds : sequence[float], optional
+    bounds : VectorLikeFloat, optional
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -1579,20 +1586,20 @@ def Cube(
 
 
 def Box(
-    bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+    bounds: VectorLikeFloat = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     *,
-    level: int | VectorLike[int] = 0,
+    level: int | VectorLikeInt = 0,
     quads: bool = True,
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
 
     Parameters
     ----------
-    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    bounds : VectorLikeFloat, default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounding box of the cube.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    level : int | VectorLike[int], default: 0
+    level : int | VectorLikeInt, default: 0
         Level of subdivision of the faces.
 
         .. note::
@@ -1639,8 +1646,8 @@ def Box(
 
 def Cone(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    direction: VectorLike[float] = (1.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    direction: VectorLikeFloat = (1.0, 0.0, 0.0),
     height: float = 1.0,
     radius: float | None = None,
     capping: bool = True,
@@ -1651,11 +1658,11 @@ def Cone(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Axis of the cone passes through this
         point.
 
-    direction : sequence[float], default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the
         cone.
 
@@ -1704,9 +1711,9 @@ def Cone(
 
 def Polygon(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     radius: float = 1.0,
-    normal: VectorLike[float] = (0.0, 0.0, 1.0),
+    normal: VectorLikeFloat = (0.0, 0.0, 1.0),
     n_sides: int = 6,
     fill: bool = True,
 ) -> PolyData:
@@ -1714,14 +1721,14 @@ def Polygon(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Central axis of the polygon passes
         through this point.
 
     radius : float, default: 1.0
         The radius of the polygon.
 
-    normal : sequence[float], default: (0.0, 0.0, 1.0)
+    normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the polygon.
 
     n_sides : int, default: 6
@@ -1750,10 +1757,10 @@ def Polygon(
 
 def Disc(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     inner: float = 0.25,
     outer: float = 0.5,
-    normal: VectorLike[float] = (0.0, 0.0, 1.0),
+    normal: VectorLikeFloat = (0.0, 0.0, 1.0),
     r_res: int = 1,
     c_res: int = 6,
 ) -> PolyData:
@@ -1765,7 +1772,7 @@ def Disc(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center in ``[x, y, z]``. Middle of the axis of the disc.
 
     inner : float, default: 0.25
@@ -1774,7 +1781,7 @@ def Disc(
     outer : float, default: 0.5
         The outer radius.
 
-    normal : sequence[float], default: (0.0, 0.0, 1.0)
+    normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Direction vector in ``[x, y, z]``. Orientation vector of the disc.
 
     r_res : int, default: 1
@@ -1812,8 +1819,8 @@ def Text3D(
     depth: float | None = None,
     width: float | None = None,
     height: float | None = None,
-    center: VectorLike[float] | None = (0.0, 0.0, 0.0),
-    normal: VectorLike[float] = (0.0, 0.0, 1.0),
+    center: VectorLikeFloat | None = (0.0, 0.0, 0.0),
+    normal: VectorLikeFloat = (0.0, 0.0, 1.0),
 ) -> PolyData:
     """Create 3D text from a string.
 
@@ -1848,7 +1855,7 @@ def Text3D(
 
         .. versionadded:: 0.43
 
-    center : Sequence[float] | None, default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat | None, default: (0.0, 0.0, 0.0)
         Center of the text, defined as the middle of the axis-aligned
         bounding box of the text. If ``None``, the text is not centered: its
         baseline starts at the origin and its back face lies in the plane
@@ -1859,7 +1866,7 @@ def Text3D(
         .. versionchanged:: 0.50
             Allow ``None`` to keep the text at its origin.
 
-    normal : Sequence[float], default: (0.0, 0.0, 1.0)
+    normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
         ``depth`` of the text and points away from the front surface
         of the text.
@@ -1925,8 +1932,8 @@ def Text3D(
 
 def Wavelet(
     *,
-    extent: VectorLike[float] = (-10, 10, -10, 10, -10, 10),
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
+    extent: VectorLikeFloat = (-10, 10, -10, 10, -10, 10),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
     maximum: float = 255.0,
     x_freq: float = 60.0,
     y_freq: float = 30.0,
@@ -1946,10 +1953,10 @@ def Wavelet(
 
     Parameters
     ----------
-    extent : sequence[int], default: (-10, 10, -10, 10, -10, 10)
+    extent : VectorLikeFloat, default: (-10, 10, -10, 10, -10, 10)
         Set/Get the extent of the whole output image.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the wavelet.
 
     maximum : float, default: 255.0
@@ -2027,9 +2034,9 @@ def Wavelet(
 
 def CircularArc(
     *,
-    pointa: VectorLike[float],
-    pointb: VectorLike[float],
-    center: VectorLike[float],
+    pointa: VectorLikeFloat,
+    pointb: VectorLikeFloat,
+    center: VectorLikeFloat,
     resolution: int = 100,
     negative: bool = False,
 ) -> PolyData:
@@ -2040,13 +2047,13 @@ def CircularArc(
 
     Parameters
     ----------
-    pointa : sequence[float]
+    pointa : VectorLikeFloat
         Position of the first end point.
 
-    pointb : sequence[float]
+    pointb : VectorLikeFloat
         Position of the other end point.
 
-    center : sequence[float]
+    center : VectorLikeFloat
         Center of the circle that defines the arc.
 
     resolution : int, default: 100
@@ -2100,13 +2107,13 @@ def CircularArc(
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
-    pointb = list(pointb)
-    pointb[0] -= 1e-10
-    pointb[1] -= 1e-10
+    point2 = [float(value) for value in pointb]
+    point2[0] -= 1e-10
+    point2[1] -= 1e-10
 
     alg = _vtk.vtkArcSource()
     alg.SetPoint1(*pointa)
-    alg.SetPoint2(*pointb)
+    alg.SetPoint2(*point2)
     alg.SetCenter(*center)
     alg.SetResolution(resolution)
     alg.SetNegative(negative)
@@ -2123,10 +2130,10 @@ def CircularArc(
 
 def CircularArcFromNormal(
     *,
-    center: VectorLike[float],
+    center: VectorLikeFloat,
     resolution: int = 100,
-    normal: VectorLike[float] | None = None,
-    polar: VectorLike[float] | None = None,
+    normal: VectorLikeFloat | None = None,
+    polar: VectorLikeFloat | None = None,
     angle: float | None = None,
 ) -> PolyData:
     """Create a circular arc defined by normal to the plane of the arc, and an angle.
@@ -2136,18 +2143,18 @@ def CircularArcFromNormal(
 
     Parameters
     ----------
-    center : sequence[float]
+    center : VectorLikeFloat
         Center of the circle that defines the arc.
 
     resolution : int, default: 100
         The number of segments of the polyline that draws the arc.
         Resolution of 1 will just create a line.
 
-    normal : sequence[float], optional
+    normal : VectorLikeFloat, optional
         The normal vector to the plane of the arc.  By default it
         points in the positive Z direction.
 
-    polar : sequence[float], optional
+    polar : VectorLikeFloat, optional
         Starting point of the arc in polar coordinates.  By default it
         is the unit vector in the positive x direction.
 
@@ -2213,12 +2220,12 @@ def CircularArcFromNormal(
     return arc
 
 
-def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
+def Pyramid(points: MatrixLikeFloat | None = None) -> UnstructuredGrid:
     """Create a pyramid defined by 5 points.
 
     Parameters
     ----------
-    points : array_like[float], optional
+    points : MatrixLikeFloat, optional
         Points of the pyramid.  Points are ordered such that the first
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
@@ -2275,12 +2282,12 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     return _apply_points_dtype(wrap(ug))
 
 
-def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
+def Triangle(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create a triangle defined by 3 points.
 
     Parameters
     ----------
-    points : array_like[float], optional
+    points : MatrixLikeFloat, optional
         Points of the triangle.  Defaults to a right isosceles
         triangle (see example).
 
@@ -2314,14 +2321,14 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
+def Rectangle(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create a rectangle defined by 3 points.
 
     The 3 points must define an orthogonal set of vectors.
 
     Parameters
     ----------
-    points : array_like[float], optional
+    points : MatrixLikeFloat, optional
         Points of the rectangle. Defaults to a unit square in xy-plane.
 
     Returns
@@ -2390,12 +2397,12 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
+def Quadrilateral(points: MatrixLikeFloat | None = None) -> PolyData:
     """Create a quadrilateral defined by 4 points.
 
     Parameters
     ----------
-    points : array_like[float], optional
+    points : MatrixLikeFloat, optional
         Points of the quadrilateral.  Defaults to a unit square in xy-plane.
 
     Returns
@@ -2508,8 +2515,8 @@ def Ellipse(
 
 def Superquadric(
     *,
-    center: VectorLike[float] = (0.0, 0.0, 0.0),
-    scale: VectorLike[float] = (1.0, 1.0, 1.0),
+    center: VectorLikeFloat = (0.0, 0.0, 0.0),
+    scale: VectorLikeFloat = (1.0, 1.0, 1.0),
     size: float = 0.5,
     theta_roundness: float = 1.0,
     phi_roundness: float = 1.0,
@@ -2522,10 +2529,10 @@ def Superquadric(
 
     Parameters
     ----------
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the superquadric in ``[x, y, z]``.
 
-    scale : sequence[float], default: (1.0, 1.0, 1.0)
+    scale : VectorLikeFloat, default: (1.0, 1.0, 1.0)
         Scale factors of the superquadric in ``[x, y, z]``.
 
     size : float, default: 0.5
@@ -2593,7 +2600,7 @@ def Superquadric(
 
 
 def PlatonicSolid(
-    kind: str = 'tetrahedron', *, radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
+    kind: str = 'tetrahedron', *, radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)
 ) -> PolyData:
     """Create a Platonic solid of a given size.
 
@@ -2612,7 +2619,7 @@ def PlatonicSolid(
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the solid to create.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Sequence defining the center of the solid to create.
 
     Returns
@@ -2646,7 +2653,7 @@ def PlatonicSolid(
     return solid
 
 
-def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Tetrahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create a tetrahedron of a given size.
 
     A tetrahedron is composed of four congruent equilateral triangles.
@@ -2656,7 +2663,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the tetrahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the tetrahedron.
 
     Returns
@@ -2679,7 +2686,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
 
 
-def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Octahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create an octahedron of a given size.
 
     An octahedron is composed of eight congruent equilateral
@@ -2690,7 +2697,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the octahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the octahedron.
 
     Returns
@@ -2713,7 +2720,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
 
 
-def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Dodecahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create a dodecahedron of a given size.
 
     A dodecahedron is composed of twelve congruent regular pentagons.
@@ -2723,7 +2730,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the dodecahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the dodecahedron.
 
     Returns
@@ -2746,7 +2753,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
 
 
-def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)) -> PolyData:
+def Icosahedron(radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0)) -> PolyData:
     """Create an icosahedron of a given size.
 
     An icosahedron is composed of twenty congruent equilateral
@@ -2757,7 +2764,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     radius : float, default: 1.0
         The radius of the circumscribed sphere for the icosahedron.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Three-length sequence defining the center of the icosahedron.
 
     Returns
@@ -2781,7 +2788,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
 
 
 def Icosphere(
-    radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0), nsub: int = 3
+    radius: float = 1.0, center: VectorLikeFloat = (0.0, 0.0, 0.0), nsub: int = 3
 ) -> PolyData:
     """Create an icosphere.
 
@@ -2799,7 +2806,7 @@ def Icosphere(
     radius : float, default: 1.0
         Radius of the icosphere.
 
-    center : sequence[float], default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center of the icosphere.
 
     nsub : int, default: 3

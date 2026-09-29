@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataObject
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
@@ -724,7 +724,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         nan_color: ColorLike | None,
         above_color: ColorLike | None,
         below_color: ColorLike | None,
-        clim: VectorLike[float] | None,
+        clim: VectorLikeFloat | None,
         cmap: ColormapOptions | LookupTable | None,
         flip_scalars: bool,
         log_scale: bool,
@@ -780,7 +780,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
 
-        clim : Sequence
+        clim : VectorLikeFloat
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.

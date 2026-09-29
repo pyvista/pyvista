@@ -25,9 +25,10 @@ if TYPE_CHECKING:
     from typing import Any
 
     import cycler
+    from numpy.typing import NDArray
 
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
 
     from ._typing import BorderOptions
     from ._typing import Chart
@@ -222,10 +223,10 @@ class Renderers(_NoNewAttrMixin):
         self,
         plotter: BasePlotter,
         *,
-        shape: str | VectorLike[int] = (1, 1),
+        shape: str | VectorLikeInt = (1, 1),
         splitting_position: float | None = None,
-        row_weights: VectorLike[float] | None = None,
-        col_weights: VectorLike[float] | None = None,
+        row_weights: VectorLikeFloat | None = None,
+        col_weights: VectorLikeFloat | None = None,
         groups: Sequence[Sequence[int | slice]] | None = None,
         border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
@@ -306,7 +307,7 @@ class Renderers(_NoNewAttrMixin):
                     arenderer.viewport = (i / m, xsplit, (i + 1) / m, 1)
                 self._renderers.append(arenderer)
 
-            self._shape = (n + m,)
+            self._shape: tuple[int] | tuple[int, int] = (n + m,)
             self._render_idxs = np.arange(n + m)
 
         else:
@@ -319,7 +320,7 @@ class Renderers(_NoNewAttrMixin):
                 msg = '"shape" must contain only positive integers.'
                 raise ValueError(msg)
             # always assign shape as a tuple of native ints
-            self._shape = tuple(size.item() for size in shape)
+            self._shape = (int(shape[0]), int(shape[1]))
             self._render_idxs = np.empty(self._shape, dtype=int)
             # Check if row and col weights correspond to given shape,
             # or initialize them to defaults (equally weighted).
@@ -460,12 +461,12 @@ class Renderers(_NoNewAttrMixin):
         self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
-    def loc_to_group(self, loc: VectorLike[int]) -> int | None:
+    def loc_to_group(self, loc: VectorLikeInt) -> int | None:
         """Return index of the render window given a location index.
 
         Parameters
         ----------
-        loc : sequence[int]
+        loc : VectorLikeInt
             Location of the renderer on the plotting grid, for example
             ``loc=(1, 1)``.
 
@@ -485,12 +486,12 @@ class Renderers(_NoNewAttrMixin):
         group = group_idxs[index]
         return None if group.size == 0 else group[0]
 
-    def loc_to_index(self, loc: int | VectorLike[int]) -> int:
+    def loc_to_index(self, loc: int | np.integer | VectorLikeInt) -> int:
         """Return index of the render window given a location index.
 
         Parameters
         ----------
-        loc : int | sequence[int]
+        loc : int | VectorLikeInt
             Index of the renderer to add the actor to. For example, ``loc=2``
             or ``loc=(1, 1)``.
 
@@ -538,7 +539,7 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._active_index
 
-    def index_to_loc(self, index: int) -> NumpyArray[int] | np.intp:
+    def index_to_loc(self, index: int | np.integer) -> NDArray[np.intp] | np.intp:
         """Convert a 1D index location to the 2D location on the plotting grid.
 
         Parameters
@@ -548,7 +549,7 @@ class Renderers(_NoNewAttrMixin):
 
         Returns
         -------
-        output : numpy.ndarray | numpy.int64
+        output : numpy.ndarray | numpy.intp
             2D location on the plotting grid.
 
         """

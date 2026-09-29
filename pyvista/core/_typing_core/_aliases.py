@@ -1,4 +1,4 @@
-"""Core type aliases."""
+"""Type aliases for PyVista and VTK objects; NumPy-only aliases live in ``_array_types``."""
 
 from __future__ import annotations
 
@@ -8,13 +8,14 @@ from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
+from pyvista_validation.typing import MatrixLikeFloat
+from pyvista_validation.typing import MatrixLikeInt
+from pyvista_validation.typing import VectorLikeFloat
+from pyvista_validation.typing import VectorLikeInt
+
 from pyvista import _vtk
 
-from ._array_like import NumberType
-from ._array_like import NumpyArray
-from ._array_like import _ArrayLike
-from ._array_like import _ArrayLike1D
-from ._array_like import _ArrayLike2D
+from ._array_types import _VolumeArray
 
 if TYPE_CHECKING:
     import meshio
@@ -35,15 +36,10 @@ if TYPE_CHECKING or os.environ.get(
 else:
     Rotation = None
 
-Number = Union[int, float]
-VectorLike = _ArrayLike1D[NumberType]
-MatrixLike = _ArrayLike2D[NumberType]
-ArrayLike = _ArrayLike[NumberType]
-
 if Rotation is not None:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3, Rotation]
 else:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
+    RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3]  # type: ignore[misc]
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
 
 
@@ -90,12 +86,9 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike = Union[MatrixLike[int], VectorLike[int]]
+CellsLike = Union[MatrixLikeInt, VectorLikeInt]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
-
-# Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
@@ -109,9 +102,9 @@ _MeshLike = Union[
     'DataSet',
     'MultiBlock',
     'PartitionedDataSet',
-    NumpyArray[float],
-    VectorLike[float],
-    MatrixLike[float],
+    _VolumeArray,
+    VectorLikeFloat,
+    MatrixLikeFloat,
     'trimesh.Trimesh',
     'meshio.Mesh',
 ]

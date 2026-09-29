@@ -608,7 +608,7 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
             if isinstance(wrapped, pv.PolyData):
                 surface = wrapped.copy(deep=False)
                 surface.point_data[self.ORIGINAL_POINT_IDS_NAME] = np.arange(
-                    surface.n_points, dtype=pv.ID_TYPE
+                    surface.n_points, dtype=np.dtype(pv.ID_TYPE)
                 )
             else:
                 surface = wrapped.extract_surface(

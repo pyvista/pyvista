@@ -36,11 +36,12 @@ from .utilities.algorithms import ActiveScalarsAlgorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from numpy.typing import NDArray
 
     from pyvista import DataSet
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _AnyArrayLike
+    from pyvista.core._typing_core import _Real
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
@@ -65,7 +66,7 @@ _ResolveOptions = Literal['off', 'polygon_offset', 'shift_zbuffer']
 _BlendModeOptions = Literal['composite', 'maximum', 'minimum', 'average', 'additive']
 
 
-def _category_step(values: NumpyArray[float]) -> float | None:
+def _category_step(values: NDArray[np.floating]) -> float | None:
     """Return the spacing between category values, or ``None`` if they are not evenly spaced."""
     if len(values) == 1:
         return 1.0
@@ -78,7 +79,7 @@ def _category_step(values: NumpyArray[float]) -> float | None:
     return step
 
 
-def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
+def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
     """Return a scalar range that centers every category value on a table entry."""
     step = _category_step(values)
     if step is None:
@@ -86,7 +87,7 @@ def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
     return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
-def _clim_has_no_bounds(clim: float | VectorLike[float] | None) -> bool:
+def _clim_has_no_bounds(clim: float | VectorLikeFloat | None) -> bool:
     """Return whether a scalar range was given as a pair of ``None`` bounds."""
     if isinstance(clim, np.ndarray):
         clim = clim.tolist()
@@ -96,7 +97,7 @@ def _clim_has_no_bounds(clim: float | VectorLike[float] | None) -> bool:
 
 
 def _apply_categories(
-    lut: LookupTable, values: NumpyArray[float], annotations: dict[float, str] | None
+    lut: LookupTable, values: NDArray[np.floating], annotations: dict[float, str] | None
 ) -> list[float]:
     """Give each category value its own table color and return the values to label."""
     if len(lut.values) < len(values):
@@ -251,7 +252,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim: VectorLike[float]) -> None:
+    def scalar_range(self, clim: VectorLikeFloat) -> None:
         self.SetScalarRange(*clim)
         self.lookup_table.SetRange(*clim)
 
@@ -617,7 +618,7 @@ class _BaseDataSetMapper(_BaseMapper):
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim: VectorLike[float]) -> None:
+    def scalar_range(self, clim: VectorLikeFloat) -> None:
         self._set_scalar_range(clim, use_default=False)
 
     # Avoid ref cycles by using weakref
@@ -754,7 +755,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
         self._set_scalar_range(clim, use_default=True)
 
-    def _set_scalar_range(self, clim: VectorLike[float], *, use_default: bool) -> None:
+    def _set_scalar_range(self, clim: VectorLikeFloat, *, use_default: bool) -> None:
         """Set the scalar range and track whether it is user-defined."""
         scalar_range = (float(clim[0]), float(clim[1]))
         self.SetScalarRange(*scalar_range)
@@ -888,7 +889,7 @@ class _BaseDataSetMapper(_BaseMapper):
     def _configure_scalars_mode(
         self,
         *,
-        scalars: NumpyArray[Any],
+        scalars: NDArray[Any],
         scalars_name: str,
         preference: PointLiteral | CellLiteral | str,
         direct_scalars_color_mode: bool,
@@ -955,7 +956,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_scalars(
         self,
-        scalars: NumpyArray[Any] | Sequence[Any],
+        scalars: _AnyArrayLike,
         scalars_name: str,
         *,
         n_colors: int = 256,
@@ -971,9 +972,9 @@ class _BaseDataSetMapper(_BaseMapper):
         below_color: ColorLike | None = None,
         cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
-        opacity: NumpyArray[float] | None = None,
+        opacity: NDArray[_Real] | None = None,
         categories: bool | int = False,
-        clim: float | VectorLike[float] | None = None,
+        clim: float | VectorLikeFloat | None = None,
     ) -> None:
         """Set the scalars on this mapper.
 
@@ -1075,7 +1076,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 ``True`` gives every unique value its own color instead of
                 spreading the colormap evenly over the scalar range.
 
-        clim : sequence[float] | float, optional
+        clim : VectorLikeFloat | float, optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``. A single value
             ``c`` is the range ``(-c, c)``.
@@ -1199,7 +1200,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 # directly displaying the colors
                 hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
                 rounded = np.round(hue * n_colors) / n_colors
-                rgba: NumpyArray[float] = get_cmap_safe(cmap)(rounded) * 255
+                rgba: NDArray[np.floating] = get_cmap_safe(cmap)(rounded) * 255
                 rgba[:, -1] *= opacity
                 scalars = rgba.astype(np.uint8)
 
@@ -1302,7 +1303,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_custom_opacity(
         self,
-        opacity: NumpyArray[float],
+        opacity: NDArray[np.floating],
         *,
         color: ColorLike,
         n_colors: int,
@@ -1650,10 +1651,11 @@ class _BaseVolumeMapper(_BaseMapper):
         return self._scalar_range
 
     @scalar_range.setter
-    def scalar_range(self, clim: VectorLike[float]) -> None:
+    def scalar_range(self, clim: VectorLikeFloat) -> None:
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
-        self._scalar_range = tuple(clim)
+        low, high = clim
+        self._scalar_range = (float(low), float(high))
 
     @property
     def blend_mode(self) -> _BlendModeOptions:  # numpydoc ignore=RT01

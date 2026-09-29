@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 from pyvista import _vtk
@@ -19,8 +19,8 @@ def a_vtk_string_array() -> _vtk.vtkStringArray:
     return array
 
 
-assert_types(convert_string_array(a_vtk_string_array()), npt.NDArray[np.str_])
-assert_types(convert_string_array(a_vtk_string_array(), 'data'), npt.NDArray[np.str_])
+assert_types(convert_string_array(a_vtk_string_array()), NDArray[np.str_])
+assert_types(convert_string_array(a_vtk_string_array(), 'data'), NDArray[np.str_])
 
 assert_types(convert_string_array(np.array(['a', 'b'])), _vtk.vtkStringArray)
 assert_types(convert_string_array(np.array(['a']), 'data'), _vtk.vtkStringArray)

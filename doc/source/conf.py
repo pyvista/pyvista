@@ -177,7 +177,9 @@ duration_write_json = None
 
 # Documented in `pyvista.typing`
 _DOCUMENTED_TYPES = [
-    'ArrayLike',
+    'ArrayLikeBool',
+    'ArrayLikeFloat',
+    'ArrayLikeInt',
     'CameraPositionOptions',
     'CellArrayLike',
     'CellsLike',
@@ -186,14 +188,16 @@ _DOCUMENTED_TYPES = [
     'InteractionEventType',
     'JupyterBackendOptions',
     'LineStyle',
-    'MatrixLike',
+    'MatrixLikeBool',
+    'MatrixLikeFloat',
+    'MatrixLikeInt',
     'MeshValidationFields',
-    'Number',
-    'NumberType',
     'PlottableType',
     'RotationLike',
     'TransformLike',
-    'VectorLike',
+    'VectorLikeBool',
+    'VectorLikeFloat',
+    'VectorLikeInt',
     'WrappableType',
 ]
 
@@ -225,7 +229,6 @@ _UNDOCUMENTED_TYPES = [
     'LightType',
     'Mesh',
     'MeshValidationReport',
-    'NumpyArray',
     'OpacityOptions',
     'PathStrSeq',
     'PickerType',
@@ -282,7 +285,7 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 numpydoc_xref_ignore = {'optional'}
-# Link docstring types such as ``VectorLike[float]`` from any module
+# Link docstring types such as ``VectorLikeFloat`` from any module
 numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in _DOCUMENTED_TYPES}
 
 sphinx_examples_as_code_conf = {
@@ -1134,6 +1137,7 @@ def restrict_trimesh_inventory(app: Sphinx) -> None:
 # Modules that references abbreviate or reach through a private path
 _REFERENCE_PREFIXES = {
     'np.': 'numpy.',
+    'npt.': 'numpy.typing.',
     'numpy._typing._array_like.': 'numpy.typing.',
     'pv.': 'pyvista.',
 }
@@ -1167,6 +1171,9 @@ def resolve_python_reference(  # noqa: PLR0917
     for prefix, module in _REFERENCE_PREFIXES.items():
         if target.startswith(prefix):
             full_name = module + target.removeprefix(prefix)
+    if full_name is None and target.startswith('numpy.'):
+        # NumPy's inventory lists scalar types such as `numpy.float64` as attributes
+        full_name = target
     new_node = node.deepcopy()
     if full_name is None:
         if '.' in target or missing_reference(app, env, node, contnode):

@@ -31,9 +31,10 @@ from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pyvista._typing_core import ArrayLike
-    from pyvista._typing_core import NumpyArray
-    from pyvista._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista._typing_core import ArrayLikeFloat
+    from pyvista._typing_core import VectorLikeFloat
 
     _T = TypeVar('_T')
 
@@ -86,12 +87,12 @@ def assert_empty_kwargs(**kwargs) -> bool:
     raise TypeError(message)
 
 
-def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
+def check_valid_vector(point: VectorLikeFloat, name: str = '') -> None:
     """Check if a vector contains three components.
 
     Parameters
     ----------
-    point : VectorLike[float]
+    point : VectorLikeFloat
         Input vector to check. Must be an iterable with exactly three components.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
@@ -662,8 +663,8 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
 
 def _reciprocal(
-    x: ArrayLike[float], tol: float = 1e-8, value_if_division_by_zero: float = 0.0
-) -> NumpyArray[float]:
+    x: ArrayLikeFloat, tol: float = 1e-8, value_if_division_by_zero: float = 0.0
+) -> NDArray[np.floating]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
     The reciprocal of elements with an absolute value less than a
@@ -671,7 +672,7 @@ def _reciprocal(
 
     Parameters
     ----------
-    x : array_like
+    x : ArrayLikeFloat
         Input array.
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
