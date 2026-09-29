@@ -2032,8 +2032,9 @@ def _rst_from_prose(text: str) -> str:
 
     The text is written in another repository, so anything reStructuredText
     would read as markup is escaped. Single backticks mean inline code there,
-    which is a double backtick here, and bare URLs become literals so that a
-    trailing underscore cannot be parsed as a reference.
+    which is a double backtick here, bare URLs become literals so that a
+    trailing underscore cannot be parsed as a reference, and an indented
+    paragraph is emitted unescaped as a literal block.
     """
 
     def literal(match: re.Match[str]) -> str:
@@ -2047,13 +2048,19 @@ def _rst_from_prose(text: str) -> str:
             for part in re.split(r'(``[^`]+``)', chunk)
         )
 
-    out, last = [], 0
-    for match in _INLINE_CODE_RE.finditer(text):
-        out.append(escape(text[last : match.start()]))
-        out.append(literal(match))
-        last = match.end()
-    out.append(escape(text[last:]))
-    return ''.join(out)
+    def inline(paragraph: str) -> str:
+        out, last = [], 0
+        for match in _INLINE_CODE_RE.finditer(paragraph):
+            out.append(escape(paragraph[last : match.start()]))
+            out.append(literal(match))
+            last = match.end()
+        out.append(escape(paragraph[last:]))
+        return ''.join(out)
+
+    return '\n\n'.join(
+        f'::\n\n{paragraph}' if paragraph.startswith((' ', '\t')) else inline(paragraph)
+        for paragraph in re.split(r'\n[ \t]*\n', text)
+    )
 
 
 def _indent_multi_line_string(
@@ -2835,8 +2842,8 @@ class DatasetCard:
                 ('Collection', gen.generate_collection_field(metadata)),
                 ('Redistributed from', gen.generate_redistributor_field(metadata)),
                 ('Provenance', gen.generate_provenance_field(metadata)),
-                ('Authors', '\n'.join(metadata.authors) or None),
-                ('Copyright', '\n'.join(metadata.copyright) or None),
+                ('Authors', '\n'.join(map(_rst_from_prose, metadata.authors)) or None),
+                ('Copyright', '\n'.join(map(_rst_from_prose, metadata.copyright)) or None),
             ]
         fields.append(('Files', datasource_links))
         parts = [cls._generate_field_block(fields)]
