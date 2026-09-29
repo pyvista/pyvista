@@ -15,6 +15,7 @@ import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import cast
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -456,8 +457,11 @@ def _download_metadata_file() -> str:
         registry={_METADATA_FILENAME: None},
         retry_if_failed=3,
     )
-    return _locked_fetch(
-        fetcher, _METADATA_FILENAME, downloader=_file_copier if _FILE_CACHE else None
+    return cast(
+        'str',
+        _locked_fetch(
+            fetcher, _METADATA_FILENAME, downloader=_file_copier if _FILE_CACHE else None
+        ),
     )
 
 
