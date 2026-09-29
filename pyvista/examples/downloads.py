@@ -6458,8 +6458,9 @@ def download_electronics_cooling(*, load: Literal[False]) -> tuple[str, ...]: ..
 def download_electronics_cooling(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
     """Download the electronics cooling example datasets.
 
-    Data generated from public SimScale examples at `SimScale Project Library -
-    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+    Data generated from the public SimScale tutorial `Thermal management CHT
+    analysis of an electronics box
+    <https://www.simscale.com/docs/tutorials/thermal-management-cht-analysis-electronics-box/>`_.
 
     Licensing for this dataset is granted to freely and without restriction
     reproduce, distribute, publish according to the `SimScale Terms and
@@ -8195,8 +8196,9 @@ def download_aero_bracket(*, load: Literal[False]) -> str: ...
 def download_aero_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the finite element solution of an aero bracket.
 
-    Data generated from public SimScale examples at `SimScale Project Library -
-    Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
+    Data generated from the public SimScale project `Aircraft engine bearing
+    bracket analysis
+    <https://www.simscale.com/projects/simscale/aircraft_engine_bearing_bracket_analysis/>`_.
 
     Licensing for this dataset is granted to freely and without restriction
     reproduce, distribute, publish according to the `SimScale Terms and

@@ -41,6 +41,15 @@ text_source = "https://spdx.org/licenses/MIT.json"
 title = "MIT License"
 url = "https://opensource.org/licenses/MIT"
 
+[license."LicenseRef-LBNL-WholeFrog"]
+attribution_required = true
+commercial_use = false
+file = "LICENSES/LicenseRef-LBNL-WholeFrog.txt"
+share_alike = false
+text_source = "https://froggy.lbl.gov/images/whole.frog/data/Copyright.Notice"
+title = "Lawrence Berkeley National Laboratory Whole Frog Project data terms"
+url = "https://froggy.lbl.gov/images/whole.frog/data/"
+
 [license."LicenseRef-Unknown"]
 attribution_required = false
 commercial_use = false
@@ -157,26 +166,36 @@ provenance = "verified"
 title = "Earth day map"
 
 [[dataset]]
-SPDX-License-Identifier = "LicenseRef-Unknown"
-authors = ["Lawrence Berkeley National Laboratory"]
-description = "Tissue segmentation labels for the frog volume, 500 by 470 by 136 voxels with 30 label values."
+SPDX-FileCopyrightText = ["Lawrence Berkeley Laboratory"]
+SPDX-License-Identifier = "LicenseRef-LBNL-WholeFrog"
+attribution = "Whole Frog Project, Lawrence Berkeley National Laboratory (https://froggy.lbl.gov/), images and data by Bill Johnston and Wing Nip; provided for scientific research, commercial use requires prior agreement with the laboratory."
+authors = ["Bill Johnston", "Wing Nip"]
+description = "Tissue segmentation labels for the frog volume, 500 by 470 by 136 voxels, with 25 non-zero label values between 1 and 29."
 modification = "Converted from the MetaImage pair `froggy/frogtissue.mhd` and `froggy/frogtissue.zraw` to VTK XML ImageData."
 modified = true
 name = "frog_tissues"
 notes = """
-The dimensions, spacing, element type and array name all match
-`Data/froggy/frogtissue.mhd` in the pyvista/data repository, so this is a
-conversion of that volume rather than a separate scan, and it carries the same
-terms. That volume is the Lawrence Berkeley National Laboratory frog, which
-reached pyvista/data through `lorensen/VTKExamples`; the permission on record
-covered the VTK textbook's CD-ROM, and no licence for wider redistribution has
-been found, so the terms are undetermined.
+Saved from `Data/froggy/frogtissue.mhd` and `frogtissue.zraw` in pyvista/data
+by pyvista/pyvista#6110 (merged June 2024), whose description states the
+conversion: "The dataset is saved as a `.vti` file instead of the original
+`.mhd` and `.zraw` files". The dimensions (500 by 470 by 136), spacing
+(1, 1, 1.5) and element type (unsigned 8-bit) match that header. The file
+holds 26 distinct values: 0 and 25 labels between 1 and 29.
+
+That volume is the Lawrence Berkeley National Laboratory Whole Frog Project
+frog, whose `frog` entry in pyvista/data records the laboratory's terms:
+provided for scientific research, with commercial use requiring the
+laboratory's prior agreement. It reached pyvista/data in April 2019 from
+`src/Testing/Data/Frog` in `lorensen/VTKExamples`.
 """
-origin_title = "Lawrence Berkeley National Laboratory"
-origin_url = "https://www.lbl.gov/"
+origin_title = "LBNL Whole Frog Project, slice image data"
+origin_url = "https://froggy.lbl.gov/images/whole.frog/data/"
 path = ["frog_tissues.vti"]
-provenance = "inferred"
-redistributed_from = ["https://github.com/lorensen/VTKExamples"]
+provenance = "verified"
+redistributed_from = [
+  "https://github.com/lorensen/VTKExamples/tree/master/src/Testing/Data/Frog",
+  "https://github.com/pyvista/data/tree/master/Data/froggy",
+]
 title = "Frog tissue labels"
 
 [[dataset]]
@@ -235,8 +254,9 @@ attribution = "PyVista, MIT License."
 collection = "pyvista"
 description = "The PyVista logo as a raster image."
 name = "logo"
+notes = "Byte-identical to `logo/pyvista_sm.png` in the pyvista repository (blob 078029a1); both were added by pyvista/pyvista#7115 \"New vector graphic PyVista logo\", merged 2025-01-28, replacing the copy first packaged by #5103 in October 2023. `doc/source/_static/pyvista_logo.png` is a different image (blob 293f4053)."
 origin_title = "PyVista"
-origin_url = "https://github.com/pyvista/pyvista/tree/main/doc/source/_static"
+origin_url = "https://github.com/pyvista/pyvista/tree/main/logo"
 path = ["pyvista_logo.png"]
 provenance = "verified"
 title = "PyVista logo"
@@ -314,7 +334,7 @@ attribution = "PyVista, MIT License."
 collection = "pyvista"
 description = "Triangulated sphere of 422 points and 840 faces."
 name = "sphere"
-notes = "Present in the first commit of this project, in May 2017. A generated sphere written by VTK, carrying no data."
+notes = "Added on the project's first day, 31 May 2017, in the commit after the initial one (068c3021e, \"updated readme again\"). A generated sphere written by VTK, carrying no data."
 origin_title = "PyVista"
 origin_url = "https://github.com/pyvista/pyvista"
 path = ["sphere.ply"]
