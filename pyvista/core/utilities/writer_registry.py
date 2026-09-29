@@ -62,7 +62,6 @@ class _RegistryState(TypedDict):
     ext: dict[str, WriterHandler]
     sources: dict[str, str]
     pending: dict[str, list[EntryPoint]]
-    failed: dict[str, str]
     entry_points_loaded: bool
 
 
@@ -74,8 +73,6 @@ _custom_ext_writer_sources: dict[str, str] = {}
 # actually requested via :func:`_get_ext_handler`, keeping ``pv.save``
 # calls for built-in formats free of third-party plugin import cost.
 _pending_ext_writers: dict[str, list[EntryPoint]] = {}
-_failed_ext_writers: dict[str, str] = {}
-_resolving_ext_writers: set[str] = set()
 _entry_points_loaded: bool = False
 _builtin_writer_exts: frozenset[str] | None = None
 
@@ -86,7 +83,6 @@ def _save_registry_state() -> _RegistryState:
         'ext': _custom_ext_writers.copy(),
         'sources': _custom_ext_writer_sources.copy(),
         'pending': {k: list(v) for k, v in _pending_ext_writers.items()},
-        'failed': _failed_ext_writers.copy(),
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -100,8 +96,6 @@ def _restore_registry_state(state: _RegistryState) -> None:
     _custom_ext_writer_sources.update(state['sources'])
     _pending_ext_writers.clear()
     _pending_ext_writers.update({k: list(v) for k, v in state['pending'].items()})
-    _failed_ext_writers.clear()
-    _failed_ext_writers.update(state['failed'])
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -326,32 +320,26 @@ def _resolve_pending_writer(ext: str) -> bool:
 
     Notes
     -----
-    A plugin that fails to import emits a ``UserWarning`` once and stays
-    pending, marked failed: later lookups fall straight through to the
-    built-in writer without re-importing or re-warning, and
-    :func:`registered_writers` retries it.
+    A plugin that fails to import emits a ``UserWarning`` and is dropped
+    from the pending list, so subsequent lookups of the same extension
+    fall straight through without re-triggering the import or
+    re-emitting the warning.
 
     """
-    eps = _pending_ext_writers.get(ext)
+    eps = _pending_ext_writers.pop(ext, None)
     if not eps:
         return False
-    if ext in _failed_ext_writers or ext in _resolving_ext_writers:
-        return False
     winner = eps[0]
-    _resolving_ext_writers.add(ext)
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
         # cannot take down every pyvista.save call.
         handler = winner.load()
     except Exception as err:  # noqa: BLE001
-        msg = f'Failed to load pyvista.writers entry point "{winner.value}" for "{ext}": {err}'
-        _failed_ext_writers[ext] = msg
-        warn_external(msg)
+        warn_external(
+            f'Failed to load pyvista.writers entry point "{winner.value}" for "{ext}": {err}'
+        )
         return False
-    finally:
-        _resolving_ext_writers.discard(ext)
-    _pending_ext_writers.pop(ext, None)
     _custom_ext_writers[ext] = handler
     _custom_ext_writer_sources[ext] = winner.value
     if len(eps) > 1:
@@ -372,9 +360,7 @@ def _list_custom_exts() -> list[str]:
     imported.
     """
     _ensure_entry_points()
-    return list(
-        _custom_ext_writers.keys() | (_pending_ext_writers.keys() - _failed_ext_writers.keys())
-    )
+    return list(_custom_ext_writers.keys() | _pending_ext_writers.keys())
 
 
 def registered_writers() -> tuple[WriterRegistration, ...]:
@@ -386,11 +372,6 @@ def registered_writers() -> tuple[WriterRegistration, ...]:
     in the result.
 
     .. versionadded:: 0.48.0
-
-    .. versionchanged:: 0.50.0
-        A plugin whose import failed stays pending and is retried on
-        every call, so a writer whose dependency was installed after the
-        failure becomes available again.
 
     Returns
     -------
@@ -412,7 +393,6 @@ def registered_writers() -> tuple[WriterRegistration, ...]:
 
     """
     _ensure_entry_points()
-    _failed_ext_writers.clear()
     for ext in list(_pending_ext_writers):
         _resolve_pending_writer(ext)
     return tuple(

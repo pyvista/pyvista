@@ -112,7 +112,6 @@ class _RegistryState(TypedDict):
     sources: dict[str, str]
     overrides: set[str]
     pending: dict[str, list[EntryPoint]]
-    failed: dict[str, str]
     entry_points_loaded: bool
 
 
@@ -152,8 +151,6 @@ _override_ext_readers: set[str] = set()
 # ``pv.read``/``pv.save`` calls for built-in formats free of third-party
 # plugin import cost.
 _pending_ext_readers: dict[str, list[EntryPoint]] = {}
-_failed_ext_readers: dict[str, str] = {}
-_resolving_ext_readers: set[str] = set()
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 _temp_dirs: list[str] = []
@@ -180,7 +177,6 @@ def _save_registry_state() -> _RegistryState:
         'sources': _custom_ext_reader_sources.copy(),
         'overrides': _override_ext_readers.copy(),
         'pending': {k: list(v) for k, v in _pending_ext_readers.items()},
-        'failed': _failed_ext_readers.copy(),
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -198,8 +194,6 @@ def _restore_registry_state(state: _RegistryState) -> None:
     _override_ext_readers.update(state['overrides'])
     _pending_ext_readers.clear()
     _pending_ext_readers.update({k: list(v) for k, v in state['pending'].items()})
-    _failed_ext_readers.clear()
-    _failed_ext_readers.update(state['failed'])
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -600,10 +594,10 @@ def _resolve_pending_reader(ext: str) -> bool:
 
     Notes
     -----
-    A plugin that fails to import emits a ``UserWarning`` once and stays
-    pending, marked failed: later lookups fall straight through to the
-    built-in reader without re-importing or re-warning, and
-    :func:`registered_readers` retries it.
+    A plugin that fails to import emits a ``UserWarning`` and is dropped
+    from the pending list, so subsequent lookups of the same extension
+    fall straight through without re-triggering the import or
+    re-emitting the warning.
 
     An entry point may resolve to either a callable handler or a
     :class:`~pyvista.BaseReader` subclass; the loaded object decides
@@ -615,24 +609,20 @@ def _resolve_pending_reader(ext: str) -> bool:
         return False
     winner = eps[0]
     if ext in CLASS_READERS and ext not in _override_ext_readers:
-        # The entry survives, so a second read raises too.
+        # Before the pop, so the entry survives and the second read raises
+        # too rather than falling through to the built-in.
         raise ValueError(_undeclared_override_message(ext, winner))
-    if ext in _failed_ext_readers or ext in _resolving_ext_readers:
-        return False
-    _resolving_ext_readers.add(ext)
+    del _pending_ext_readers[ext]
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
         # cannot take down every pyvista.read call.
         handler = winner.load()
     except Exception as err:  # noqa: BLE001
-        msg = f'Failed to load pyvista.readers entry point "{winner.value}" for "{ext}": {err}'
-        _failed_ext_readers[ext] = msg
-        warn_external(msg)
+        warn_external(
+            f'Failed to load pyvista.readers entry point "{winner.value}" for "{ext}": {err}'
+        )
         return False
-    finally:
-        _resolving_ext_readers.discard(ext)
-    _pending_ext_readers.pop(ext, None)
     if _is_reader_class(handler):
         _custom_class_readers[ext] = handler
     else:
@@ -659,7 +649,7 @@ def _list_custom_exts() -> list[str]:
     return list(
         _custom_ext_readers.keys()
         | _custom_class_readers.keys()
-        | (_pending_ext_readers.keys() - _failed_ext_readers.keys())
+        | _pending_ext_readers.keys()
         | installed_optional
     )
 
@@ -682,11 +672,6 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
     .. versionchanged:: 0.49.0
         Records carry ``reader_class`` and ``override``.
 
-    .. versionchanged:: 0.50.0
-        A plugin whose import failed stays pending and is retried on
-        every call, so a reader whose dependency was installed after the
-        failure becomes available again.
-
     Returns
     -------
     tuple[ReaderRegistration, ...]
@@ -708,7 +693,6 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
 
     """
     _ensure_entry_points()
-    _failed_ext_readers.clear()
     for ext in list(_pending_ext_readers):
         try:
             _resolve_pending_reader(ext)
