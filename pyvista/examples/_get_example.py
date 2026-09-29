@@ -127,8 +127,9 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
         .. versionadded:: 0.50
 
-        The published table is downloaded once per session on first access, whatever
-        ``download`` was passed to :func:`~pyvista.examples.get_example`. The record mirrors one entry of the ``DATASETS.toml`` table in
+        The published table is downloaded on first access, whatever ``download`` was
+        passed to :func:`~pyvista.examples.get_example`, and the cached copy is reused by
+        every later session until it is deleted. The record mirrors one entry of the ``DATASETS.toml`` table in
         `pyvista/data <https://github.com/pyvista/data>`_ and carries what this
         class leaves out: who made the data, where it came from, how sure the origin
         is, every license in full, what was changed, and what to cite.

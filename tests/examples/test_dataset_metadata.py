@@ -252,8 +252,9 @@ def test_metadata_for_source_names(index, monkeypatch):
     assert _dataset_metadata._metadata_for_source_names(['nothing.vtk']) is None
 
     match = 'span more than one dataset entry: plain, shark'
-    with pytest.raises(ValueError, match=match):
-        _dataset_metadata._metadata_for_source_names(['shark/a.stl', 'plain.vtk'])
+    with pytest.warns(UserWarning, match=match):
+        spanned = _dataset_metadata._metadata_for_source_names(['shark/a.stl', 'plain.vtk'])
+    assert spanned.name == 'plain'
 
 
 def test_override_reads_a_local_file(tmp_path, monkeypatch):
@@ -343,6 +344,15 @@ UNKNOWN = _license('LicenseRef-Unknown', commercial=False, credit=False, share=F
 )
 def test_usage(record, expected):
     assert record.usage == expected
+
+
+def test_undetermined_license_is_not_a_permission():
+    """`LicenseRef-Unknown` resolves to a table but grants nothing."""
+    record = _record('LicenseRef-Unknown', UNKNOWN)
+
+    assert record.commercial_use is False
+    assert record.attribution_required is True
+    assert record.usage == 'undetermined'
 
 
 def test_usage_reads_the_published_flags(index):

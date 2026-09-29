@@ -212,7 +212,10 @@ class ExampleMetadata:
             ``True`` when credit is required.
 
         """
-        return not self.licenses or any(lic.attribution_required for lic in self.licenses)
+        return not self.licenses or any(
+            lic.attribution_required or lic.spdx_id == _UNDETERMINED_LICENSE
+            for lic in self.licenses
+        )
 
     @property
     def share_alike(self) -> bool:
@@ -492,7 +495,11 @@ def _metadata_for_source_names(source_names: Iterable[str]) -> ExampleMetadata |
     if not matched:
         return None
     if len(matched) > 1:
+        from pyvista._warn_external import warn_external  # noqa: PLC0415
+
         spanned = ', '.join(sorted(matched))
-        msg = f'Example files span more than one dataset entry: {spanned}.'
-        raise ValueError(msg)
-    return next(iter(matched.values()))
+        warn_external(
+            f'Example files span more than one dataset entry: {spanned}. Reporting the '
+            'first; please report it at https://github.com/pyvista/data/issues.'
+        )
+    return matched[min(matched)]
