@@ -91,6 +91,7 @@ See the API reference for details:
 
    examples.get_example
    examples.Example
+   examples.Collection
    examples.ExampleMetadata
    examples.License
    examples.Reference

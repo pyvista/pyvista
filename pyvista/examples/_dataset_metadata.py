@@ -89,6 +89,23 @@ class Reference:
 
 
 @dataclass(frozen=True)
+class Collection:
+    """An upstream collection that several example datasets share."""
+
+    key: str
+    """Key of the collection in the table."""
+
+    title: str
+    """Human-readable name of the collection."""
+
+    url: str
+    """Page of the collection."""
+
+    description: str
+    """What the collection holds and who publishes it."""
+
+
+@dataclass(frozen=True)
 class ExampleMetadata:
     """Where an example dataset came from and how it may be used.
 
@@ -141,7 +158,7 @@ class ExampleMetadata:
     origin_title: str | None = None
     """Human-readable name of the source."""
 
-    collection: str | None = None
+    collection: Collection | None = None
     """Upstream collection the data belongs to, when several datasets share one."""
 
     authors: tuple[str, ...] = ()
@@ -153,8 +170,8 @@ class ExampleMetadata:
     attribution: str | None = None
     """Credit line the license requires, when it requires one."""
 
-    redistributed_from: str | None = None
-    """Intermediate redistributor the file reached this project through."""
+    redistributed_from: tuple[str, ...] = ()
+    """Redistributors the file passed through, ordered from the origin toward PyVista."""
 
     modified: bool = False
     """Whether the file differs from what the source published."""
@@ -240,7 +257,7 @@ class _MetadataIndex:
     """Every dataset entry, with the license table needed to resolve them."""
 
     licenses: Mapping[str, License]
-    collections: Mapping[str, Mapping[str, str]]
+    collections: Mapping[str, Collection]
     entries: tuple[ExampleMetadata, ...]
     _by_path: dict[str, ExampleMetadata] = field(default_factory=dict, repr=False)
 
@@ -267,37 +284,47 @@ class _MetadataIndex:
         return None
 
 
-def _pattern_regex(pattern: str) -> re.Pattern[str]:
-    """Compile a path pattern, where ``*`` stops at a separator and ``**`` crosses one."""
-    out: list[str] = []
-    index = 0
-    while index < len(pattern):
-        char = pattern[index]
-        if char == '*':
-            if pattern[index + 1 : index + 2] == '*':
-                out.append('.*')
-                index += 2
-                continue
-            out.append('[^/]*')
-        elif char == '?':
-            out.append('[^/]')
+def _segment_matches(pattern: str, name: str) -> bool:
+    """Match one path segment, where ``*`` and ``?`` never cross a separator."""
+    p = n = 0
+    star, mark = -1, 0
+    while n < len(name):
+        if p < len(pattern) and pattern[p] == '*':
+            star, mark = p, n
+            p += 1
+        elif p < len(pattern) and pattern[p] in ('?', name[n]):
+            p += 1
+            n += 1
+        elif star != -1:
+            mark += 1
+            p, n = star + 1, mark
         else:
-            out.append(re.escape(char))
-        index += 1
-    return re.compile('^' + ''.join(out) + '$')
+            return False
+    return pattern[p:].strip('*') == ''
 
 
-@functools.cache
-def _compiled(pattern: str) -> re.Pattern[str]:
-    """Return the compiled form of a path pattern."""
-    return _pattern_regex(pattern)
+def _segments_match(pattern: list[str], path: list[str]) -> bool:
+    """Match pattern segments against path segments, where ``**`` spans any number of them."""
+    if not pattern:
+        return not path
+    if pattern[0] == '**':
+        first = 1 if len(pattern) == 1 else 0
+        return any(_segments_match(pattern[1:], path[i:]) for i in range(first, len(path) + 1))
+    return (
+        bool(path)
+        and _segment_matches(pattern[0], path[0])
+        and _segments_match(pattern[1:], path[1:])
+    )
 
 
 def _matches(pattern: str, path: str) -> bool:
     """Match a path pattern against a path relative to ``Data/``."""
-    if pattern.endswith('/**'):
-        return path.startswith(pattern[:-2])
-    return bool(_compiled(pattern).match(path))
+    return _segments_match(pattern.split('/'), path.split('/'))
+
+
+def _as_tuple(value: str | list[str]) -> tuple[str, ...]:
+    """Return a string or a list of strings as a tuple."""
+    return (value,) if isinstance(value, str) else tuple(value)
 
 
 def _license_terms(expression: str) -> list[str]:
@@ -355,6 +382,12 @@ def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
         )
         for key, table in document.get('license', {}).items()
     }
+    collections = {
+        key: Collection(
+            key=key, title=table['title'], url=table['url'], description=table['description']
+        )
+        for key, table in document.get('collection', {}).items()
+    }
     entries = tuple(
         ExampleMetadata(
             name=entry['name'],
@@ -372,11 +405,11 @@ def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
             paths=tuple(entry['path']),
             origin_url=entry.get('origin_url'),
             origin_title=entry.get('origin_title'),
-            collection=entry.get('collection'),
+            collection=collections.get(entry.get('collection', '')),
             authors=tuple(entry.get('authors', ())),
             copyright=tuple(entry.get('SPDX-FileCopyrightText', ())),
             attribution=entry.get('attribution'),
-            redistributed_from=entry.get('redistributed_from'),
+            redistributed_from=_as_tuple(entry.get('redistributed_from', ())),
             modified=entry.get('modified', False),
             modification=entry.get('modification'),
             notes=entry.get('notes'),
@@ -393,7 +426,7 @@ def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
     )
     return _MetadataIndex(
         licenses=licenses,
-        collections=document.get('collection', {}),
+        collections=collections,
         entries=entries,
     )
 

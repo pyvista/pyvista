@@ -54,7 +54,7 @@ provenance = "inferred"
 origin_url = "https://www.thingiverse.com/thing:1"
 origin_title = "Thing one"
 collection = "thingiverse"
-redistributed_from = "https://example.org/mirror/shark.stl"
+redistributed_from = ["https://example.org/mirror/shark.stl", "a private archive"]
 authors = ["Someone"]
 attribution = "Shark by Someone."
 modified = true
@@ -110,6 +110,13 @@ def index():
         ('froggy/**', 'froggy/sub/frog.mhd', True),
         ('froggy/*', 'froggy/sub/frog.mhd', False),
         ('**/frog.mhd', 'a/b/frog.mhd', True),
+        ('**/frog.mhd', 'frog.mhd', True),
+        ('a/**/b.vtk', 'a/b.vtk', True),
+        ('dir/*/**', 'dir/x/y.vtk', True),
+        # A trailing `**` claims what is under the directory, not a file of that name.
+        ('froggy/**', 'froggy', False),
+        # Many stars against a near miss must not backtrack.
+        ('*a' * 25 + '*b', 'a' * 60, False),
         # A dot in the pattern is literal, not a wildcard.
         ('a.vtk', 'axvtk', False),
     ],
@@ -146,8 +153,8 @@ def test_build_index_reads_every_field(index):
         paths=('shark/**',),
         origin_url='https://www.thingiverse.com/thing:1',
         origin_title='Thing one',
-        redistributed_from='https://example.org/mirror/shark.stl',
-        collection='thingiverse',
+        redistributed_from=('https://example.org/mirror/shark.stl', 'a private archive'),
+        collection=index.collections['thingiverse'],
         authors=('Someone',),
         copyright=('2013 someone',),
         attribution='Shark by Someone.',

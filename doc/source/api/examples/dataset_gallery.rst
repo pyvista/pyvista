@@ -53,7 +53,8 @@ learning PyVista.
      - ``'undetermined'``
    * - :bdg-muted-line:`Not recorded`
      - The file is not catalogued in `pyvista/data <https://github.com/pyvista/data>`_
-       yet, so nothing has been checked. Treat it like ``Terms undetermined``.
+       or in the table bundled with PyVista, so nothing has been checked. Treat it
+       like ``Terms undetermined``.
      - ``None``
 
 A dataset generated in code carries no badge, because there is no data file to

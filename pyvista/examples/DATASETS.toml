@@ -1,6 +1,7 @@
-# Provenance for the example files in this directory, in the same schema as the
-# DATASETS.toml published by pyvista/data, whose CONTRIBUTING.md documents how
-# to establish and check an entry. See _dataset_metadata.py for the reader.
+# Provenance for the example files in this directory and for the examples fetched
+# from hosts other than pyvista/data, in the same schema as the DATASETS.toml
+# published by pyvista/data, whose CONTRIBUTING.md documents how to establish and
+# check an entry. See _dataset_metadata.py for the reader.
 
 schema_version = 1
 
@@ -12,6 +13,24 @@ share_alike = false
 text_source = "https://spdx.org/licenses/CC-BY-4.0.json"
 title = "Creative Commons Attribution 4.0 International"
 url = "https://creativecommons.org/licenses/by/4.0/"
+
+[license."CC-BY-NC-4.0"]
+attribution_required = true
+commercial_use = false
+file = "https://spdx.org/licenses/CC-BY-NC-4.0.txt"
+share_alike = false
+text_source = "https://spdx.org/licenses/CC-BY-NC-4.0.json"
+title = "Creative Commons Attribution Non Commercial 4.0 International"
+url = "https://creativecommons.org/licenses/by-nc/4.0/"
+
+[license."CC0-1.0"]
+attribution_required = false
+commercial_use = true
+file = "LICENSES/CC0-1.0.txt"
+share_alike = false
+text_source = "https://spdx.org/licenses/CC0-1.0.json"
+title = "Creative Commons Zero v1.0 Universal"
+url = "https://creativecommons.org/publicdomain/zero/1.0/"
 
 [license."MIT"]
 attribution_required = true
@@ -30,6 +49,11 @@ share_alike = false
 text_source = "Written for this repository; the file states what it is based on."
 title = "Undetermined license"
 url = "https://github.com/pyvista/data/blob/master/LICENSES/LicenseRef-Unknown.txt"
+
+[collection."khronos-gltf-sample-models"]
+description = "Sample glTF 2.0 assets published by the Khronos Group, each with its own licence stated in a README beside the files."
+title = "Khronos glTF Sample Models"
+url = "https://github.com/KhronosGroup/glTF-Sample-Models"
 
 [collection."pyvista"]
 description = "Datasets authored by the PyVista project and distributed inside the package."
@@ -69,6 +93,19 @@ provenance = "unknown"
 title = "Ant"
 
 [[dataset]]
+SPDX-License-Identifier = "CC0-1.0"
+attribution = "Avocado by Microsoft (https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Avocado), dedicated to the public domain under CC0 1.0."
+authors = ["Microsoft"]
+collection = "khronos-gltf-sample-models"
+description = "Textured surface model of an avocado, a Khronos glTF sample asset, in binary glTF form."
+name = "avocado"
+origin_title = "Khronos glTF Sample Models, Avocado"
+origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Avocado"
+path = ["Avocado/glTF-Binary/Avocado.glb"]
+provenance = "verified"
+title = "Avocado"
+
+[[dataset]]
 SPDX-License-Identifier = "LicenseRef-Unknown"
 description = "Facies model of fluvial channels in the subsurface, on a 251 by 251 by 101 uniform grid."
 name = "channels"
@@ -81,6 +118,25 @@ widely circulated in that field, but the specific model was not identified.
 path = ["channels.vti"]
 provenance = "unknown"
 title = "Fluvial channels"
+
+[[dataset]]
+SPDX-FileCopyrightText = ["2016 theblueturtle_", "2018 ctxwing"]
+SPDX-License-Identifier = "CC-BY-4.0 AND CC-BY-NC-4.0"
+attribution = "Battle Damaged Sci-fi Helmet - PBR by theblueturtle_ (https://sketchfab.com/theblueturtle_), CC BY-NC 4.0; rebuilt and converted to glTF by ctxwing, CC BY 4.0."
+authors = ["ctxwing", "theblueturtle_"]
+collection = "khronos-gltf-sample-models"
+description = "Textured surface model of a battle-damaged science fiction helmet, a Khronos glTF sample asset, in embedded glTF form."
+name = "damaged_helmet"
+notes = """
+The README beside the file names a Creative Commons Attribution-NonCommercial
+licence without a version; the successor repository, glTF-Sample-Assets, records
+the versions used here. The non-commercial term follows the model into any use.
+"""
+origin_title = "Khronos glTF Sample Models, DamagedHelmet"
+origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/DamagedHelmet"
+path = ["DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf"]
+provenance = "verified"
+title = "Damaged helmet"
 
 [[dataset]]
 SPDX-FileCopyrightText = ["Solar System Scope (INOVE)"]
@@ -120,8 +176,25 @@ origin_title = "Lawrence Berkeley National Laboratory"
 origin_url = "https://www.lbl.gov/"
 path = ["frog_tissues.vti"]
 provenance = "inferred"
-redistributed_from = "https://github.com/lorensen/VTKExamples"
+redistributed_from = ["https://github.com/lorensen/VTKExamples"]
 title = "Frog tissue labels"
+
+[[dataset]]
+SPDX-License-Identifier = "LicenseRef-Unknown"
+collection = "khronos-gltf-sample-models"
+description = "Surface model of a gearbox assembly, a Khronos glTF sample asset, in binary glTF form."
+name = "gearbox"
+notes = """
+The README beside the file says only that Okino Computer Graphics converted the
+model from JT to COLLADA for Khronos; it names no author and states no terms,
+and the successor repository, glTF-Sample-Assets, does not list the model. Ask
+the Khronos Group before using it for more than running the example.
+"""
+origin_title = "Khronos glTF Sample Models, GearboxAssy"
+origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/GearboxAssy"
+path = ["GearboxAssy/glTF-Binary/GearboxAssy.glb"]
+provenance = "verified"
+title = "Gearbox assembly"
 
 [[dataset]]
 SPDX-FileCopyrightText = ["2017-2026 The PyVista Developers"]
@@ -169,6 +242,24 @@ provenance = "verified"
 title = "PyVista logo"
 
 [[dataset]]
+SPDX-FileCopyrightText = ["2017 Cesium"]
+SPDX-License-Identifier = "CC-BY-4.0"
+attribution = "Cesium Milk Truck by Cesium (https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck), licensed under CC BY 4.0."
+authors = ["Cesium"]
+collection = "khronos-gltf-sample-models"
+description = "Textured surface model of a milk truck with a spinning wheel animation, a Khronos glTF sample asset, in binary glTF form."
+name = "milk_truck"
+notes = """
+The Cesium logo on the truck is a trademark; the successor repository,
+glTF-Sample-Assets, lists it separately as a non-copyrightable mark.
+"""
+origin_title = "Khronos glTF Sample Models, CesiumMilkTruck"
+origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck"
+path = ["CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb"]
+provenance = "verified"
+title = "Cesium milk truck"
+
+[[dataset]]
 SPDX-License-Identifier = "LicenseRef-Unknown"
 description = "Surface mesh of a hex nut, 523 points and 1046 faces, used to demonstrate sharp-edge splitting."
 name = "nut"
@@ -197,6 +288,24 @@ origin_url = "https://github.com/pyvista/pyvista"
 path = ["rectilinear.vtk"]
 provenance = "verified"
 title = "Rectilinear grid"
+
+[[dataset]]
+SPDX-FileCopyrightText = ["2020 Wayfair LLC"]
+SPDX-License-Identifier = "CC-BY-4.0"
+attribution = "Sheen Chair, copyright 2020 Wayfair LLC, model and textures by Eric Chadwick (https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/SheenChair), licensed under CC BY 4.0."
+authors = ["Eric Chadwick"]
+collection = "khronos-gltf-sample-models"
+description = "Textured surface model of a slipper chair using the KHR_materials_sheen extension, a Khronos glTF sample asset, in binary glTF form."
+name = "sheen_chair"
+notes = """
+The README beside the file states CC BY 4.0; the successor repository,
+glTF-Sample-Assets, lists the same model under CC0 1.0.
+"""
+origin_title = "Khronos glTF Sample Models, SheenChair"
+origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/SheenChair"
+path = ["SheenChair/glTF-Binary/SheenChair.glb"]
+provenance = "verified"
+title = "Sheen chair"
 
 [[dataset]]
 SPDX-FileCopyrightText = ["2017-2026 The PyVista Developers"]

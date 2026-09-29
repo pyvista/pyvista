@@ -2827,7 +2827,7 @@ class DatasetCard:
                 ('Attribution required', _yes_or_no(metadata.attribution_required)),
                 ('Share alike', _yes_or_no(metadata.share_alike)),
                 ('Origin', gen.generate_origin_field(metadata)),
-                ('Collection', metadata.collection),
+                ('Collection', gen.generate_collection_field(metadata)),
                 ('Redistributed from', gen.generate_redistributor_field(metadata)),
                 ('Provenance', gen.generate_provenance_field(metadata)),
                 ('Authors', '\n'.join(metadata.authors) or None),
@@ -3027,15 +3027,26 @@ class DatasetPropsGenerator:
         return f'`{name} <{metadata.origin_url}>`__'
 
     @staticmethod
-    def generate_redistributor_field(metadata) -> str | None:
-        """Format `redistributed_from` as a link, falling back to the bare value."""
-        url = metadata.redistributed_from
-        if not url:
+    def generate_collection_field(metadata) -> str | None:
+        """Format `collection` as a link titled by the collection's name."""
+        if metadata.collection is None:
             return None
-        if not url.startswith(('http://', 'https://')):
-            return f'``{url}``'
-        # The full URL is often long enough to break the nowrap field grid.
-        return f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`__'
+        # Anonymous, since the same title links a different URL on another card.
+        return f'`{metadata.collection.title} <{metadata.collection.url}>`__'
+
+    @staticmethod
+    def generate_redistributor_field(metadata) -> str | None:
+        """Format each `redistributed_from` hop as a host link, falling back to the bare value."""
+        if not metadata.redistributed_from:
+            return None
+        hops = []
+        for url in metadata.redistributed_from:
+            if not url.startswith(('http://', 'https://')):
+                hops.append(f'``{url}``')
+                continue
+            # The full URL is often long enough to break the nowrap field grid.
+            hops.append(f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`__')
+        return ', '.join(hops)
 
     @staticmethod
     def generate_references_field(metadata) -> str | None:

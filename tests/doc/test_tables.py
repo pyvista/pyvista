@@ -289,7 +289,10 @@ def metadata():
         provenance='verified',
         origin_url='https://humus.name/',
         origin_title='Humus texture library',
-        redistributed_from='https://gitlab.kitware.com/vtk/vtk-examples/-/tree/master/x',
+        redistributed_from=(
+            'https://gitlab.kitware.com/vtk/vtk-examples/-/tree/master/x',
+            'https://github.com/lorensen/VTKExamples',
+        ),
     )
 
 
@@ -397,13 +400,14 @@ def test_license_field_falls_back_to_the_issuer_page(metadata):
 def test_redistributor_shows_the_host_not_the_whole_url(metadata):
     field = make_tables.DatasetPropsGenerator.generate_redistributor_field(metadata)
     bare = make_tables.DatasetPropsGenerator.generate_redistributor_field(
-        replace(metadata, redistributed_from='a private archive')
+        replace(metadata, redistributed_from=('a private archive',))
     )
     missing = make_tables.DatasetPropsGenerator.generate_redistributor_field(
-        replace(metadata, redistributed_from=None)
+        replace(metadata, redistributed_from=())
     )
 
     assert field.startswith('`gitlab.kitware.com <https://gitlab.kitware.com/')
+    assert field.endswith('`github.com <https://github.com/lorensen/VTKExamples>`__')
     assert bare == '``a private archive``'
     assert missing is None
 

@@ -6,6 +6,7 @@ import importlib
 from typing import TYPE_CHECKING
 
 from . import planets as planets
+from ._dataset_metadata import Collection as Collection
 from ._dataset_metadata import ExampleMetadata as ExampleMetadata
 from ._dataset_metadata import License as License
 from ._dataset_metadata import Reference as Reference
