@@ -733,13 +733,15 @@ def _fake_importer(name: str, body: str):
     the module — inside whatever ``pytest.warns`` / ``catch_warnings``
     context the test wraps around it.
 
-    A body that raises leaves nothing in ``sys.modules``, the way
-    ``import_module`` does, so a later retry re-executes it.
+    Like ``import_module``, a re-entrant call returns the half-built
+    module and a body that raises leaves nothing in ``sys.modules``.
     """
     compiled = compile(body, f'<fake {name}>', 'exec')
 
     def _import(module_path: str) -> ModuleType:
         assert module_path == name
+        if (existing := sys.modules.get(name)) is not None:
+            return existing
         module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
