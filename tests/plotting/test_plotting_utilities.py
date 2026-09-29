@@ -17,6 +17,8 @@ from pyvista.plotting._plotting import _resolve_scalars_field
 from pyvista.plotting._plotting import reduce_component_scalars
 from pyvista.plotting.helpers import view_vectors
 from pyvista.plotting.utilities.gl_checks import _QT_GUI_MODULES
+from pyvista.plotting.utilities.gl_checks import _gl_platform_from_maps
+from pyvista.plotting.utilities.gl_checks import _loaded_gl_platform
 from pyvista.plotting.utilities.gl_checks import _offscreen_probe_render_window
 from pyvista.plotting.utilities.gl_checks import _process_uses_egl
 from pyvista.plotting.utilities.gl_checks import _qt_platform_name
@@ -268,6 +270,13 @@ def test_add_mesh_raw_numpy_mismatched_length_raises():
         pl.add_mesh(sphere, scalars=np.zeros(42, dtype=np.float32))
 
 
+@pytest.fixture
+def no_loaded_gl(monkeypatch):
+    """Hide the GL libraries this test process has mapped from the probes."""
+    monkeypatch.setattr('pyvista.plotting.utilities.gl_checks._loaded_gl_platform', lambda: None)
+
+
+@pytest.mark.usefixtures('no_loaded_gl')
 def test_offscreen_probe_render_window(monkeypatch):
     """GL probes must not create GLX windows inside a Wayland session.
 
@@ -281,15 +290,19 @@ def test_offscreen_probe_render_window(monkeypatch):
     assert issubclass(default_cls, pv._vtk.vtkRenderWindow)
 
     monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    monkeypatch.delenv('DISPLAY', raising=False)
     if not pv._vtk.has_attr('vtkEGLRenderWindow'):
         pytest.skip('VTK build lacks vtkEGLRenderWindow')
     assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
 
     # an explicit VTK_DEFAULT_OPENGL_WINDOW override wins over the heuristic
-    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', default_cls.__name__)
-    assert type(_offscreen_probe_render_window()) is default_cls
+    monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', 'vtkXOpenGLRenderWindow')
+    sentinel = object()
+    monkeypatch.setattr(pv._vtk, 'vtkRenderWindow', lambda: sentinel)
+    assert _offscreen_probe_render_window() is sentinel
 
 
+@pytest.mark.usefixtures('no_loaded_gl')
 def test_uses_egl_wayland(monkeypatch):
     """uses_egl must not instantiate the factory render window under Wayland.
 
@@ -297,6 +310,7 @@ def test_uses_egl_wayland(monkeypatch):
     already using EGL. See pyvista/pyvistaqt#445.
     """
     monkeypatch.setenv('WAYLAND_DISPLAY', 'wayland-0')
+    monkeypatch.delenv('DISPLAY', raising=False)
     monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
     has_x = pv._vtk.has_attr('vtkXOpenGLRenderWindow')
     assert uses_egl() is not has_x
@@ -305,6 +319,16 @@ def test_uses_egl_wayland(monkeypatch):
     assert uses_egl() is True
     monkeypatch.setenv('VTK_DEFAULT_OPENGL_WINDOW', 'vtkXOpenGLRenderWindow')
     assert uses_egl() is False
+
+
+def test_uses_egl_loaded_egl(monkeypatch):
+    """A mapped libEGL answers uses_egl even when VTK was built with X."""
+    monkeypatch.setattr('pyvista.plotting.utilities.gl_checks._loaded_gl_platform', lambda: 'egl')
+    monkeypatch.setattr(pv._vtk, 'has_attr', lambda name: name == 'vtkXOpenGLRenderWindow')
+    monkeypatch.delenv('VTK_DEFAULT_OPENGL_WINDOW', raising=False)
+    for name in _QT_GUI_MODULES:
+        monkeypatch.delitem(sys.modules, name, raising=False)
+    assert uses_egl() is True
 
 
 class _FakeApp:
@@ -339,25 +363,35 @@ def test_qt_platform_name_no_application(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ('wayland_display', 'platform_name', 'expected'),
+    ('wayland_display', 'display', 'platform_name', 'loaded', 'expected'),
     [
         # The case this exists for: QT_QPA_PLATFORM=xcb runs Qt through
         # XWayland inside a Wayland session, so the process's GL is GLX even
         # though a compositor is running.
-        ('wayland-0', 'xcb', False),
-        ('wayland-0', 'wayland', True),
-        # Without a Qt application there is nothing better than the session.
-        ('wayland-0', None, True),
-        (None, None, False),
+        ('wayland-0', ':0', 'xcb', None, False),
+        ('wayland-0', ':0', 'wayland', None, True),
+        # Qt outranks the mapped libraries, which it may load for either.
+        ('wayland-0', ':0', 'xcb', 'egl', False),
+        # A host other than Qt, e.g. GTK on native Wayland with XWayland's
+        # DISPLAY set, is known by the GL library it has loaded.
+        ('wayland-0', ':0', None, 'egl', True),
+        ('wayland-0', None, None, 'glx', False),
+        # With neither, VTK's factory uses GLX whenever DISPLAY is set, e.g.
+        # a Jupyter kernel in a Wayland session.
+        ('wayland-0', ':0', None, None, False),
+        ('wayland-0', None, None, None, True),
+        (None, None, None, None, False),
         # A Qt application on X11 with no compositor at all.
-        (None, 'xcb', False),
+        (None, ':0', 'xcb', None, False),
     ],
 )
-def test_process_uses_egl(monkeypatch, wayland_display, platform_name, expected):
-    """A running Qt application outranks the session variable."""
-    monkeypatch.delenv('WAYLAND_DISPLAY', raising=False)
-    if wayland_display is not None:
-        monkeypatch.setenv('WAYLAND_DISPLAY', wayland_display)
+def test_process_uses_egl(monkeypatch, wayland_display, display, platform_name, loaded, expected):
+    """A running Qt application outranks the mapped libraries and the session variables."""
+    monkeypatch.setattr('pyvista.plotting.utilities.gl_checks._loaded_gl_platform', lambda: loaded)
+    for var, value in (('WAYLAND_DISPLAY', wayland_display), ('DISPLAY', display)):
+        monkeypatch.delenv(var, raising=False)
+        if value is not None:
+            monkeypatch.setenv(var, value)
     for name in _QT_GUI_MODULES:
         monkeypatch.delitem(sys.modules, name, raising=False)
     if platform_name is not None:
@@ -381,3 +415,42 @@ def test_offscreen_probe_follows_qt_platform(monkeypatch):
 
     _fake_binding(monkeypatch, _QT_GUI_MODULES[0], 'wayland')
     assert isinstance(_offscreen_probe_render_window(), pv._vtk.vtkEGLRenderWindow)
+
+
+_EGL_LINE = '7f00-7f01 r--p 00000000 103:02 1 /usr/lib/x86_64-linux-gnu/libEGL.so.1.1.0\n'
+_GLX_LINE = '7f02-7f03 r--p 00000000 103:02 2 /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0\n'
+_GL_LINE = '7f04-7f05 r--p 00000000 103:02 3 /usr/lib/x86_64-linux-gnu/libGL.so.1.7.0\n'
+
+
+@pytest.mark.parametrize(
+    ('maps', 'expected'),
+    [
+        (_EGL_LINE, 'egl'),
+        (_GLX_LINE, 'glx'),
+        (_EGL_LINE + _GLX_LINE, None),
+        ('', None),
+        # libGL alone is linked by EGL programs too, so it decides nothing
+        (_GL_LINE, None),
+        (_GL_LINE + _EGL_LINE, 'egl'),
+    ],
+)
+def test_gl_platform_from_maps(maps, expected):
+    """Exactly one of libEGL and libGLX mapped names the GL platform."""
+    assert _gl_platform_from_maps(maps) == expected
+
+
+def test_loaded_gl_platform(monkeypatch, tmp_path):
+    """The process's memory map is read, and its absence answers nothing."""
+    maps = tmp_path / 'maps'
+    maps.write_text(_EGL_LINE, encoding='utf-8')
+    monkeypatch.setattr('pyvista.plotting.utilities.gl_checks._PROC_MAPS', maps)
+    assert _loaded_gl_platform() == 'egl'
+
+    # any file can be mapped, so paths need not be valid UTF-8
+    maps.write_bytes(
+        b'7f06-7f07 r--p 00000000 103:02 4 /data/r\xe9sum\xe9.bin\n' + _EGL_LINE.encode()
+    )
+    assert _loaded_gl_platform() == 'egl'
+
+    monkeypatch.setattr('pyvista.plotting.utilities.gl_checks._PROC_MAPS', tmp_path / 'missing')
+    assert _loaded_gl_platform() is None

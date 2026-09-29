@@ -20,13 +20,12 @@ from pyvista.core._typing_core._dataset_types import (
 from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetType
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
-from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._typing_core._dataset_types import _PointSetBaseType as _PointSetBaseType
 from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core._vtk_utilities import vtk_backend as vtk_backend
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
-from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
 from pyvista.core.utilities.accessor_registry import AccessorRegistration as AccessorRegistration
 from pyvista.core.utilities.accessor_registry import DataSetAccessor as DataSetAccessor
 from pyvista.core.utilities.accessor_registry import (
@@ -46,7 +45,6 @@ from pyvista.core.utilities.writer_registry import WriterRegistration as WriterR
 from pyvista.core.utilities.writer_registry import register_writer as register_writer
 from pyvista.core.utilities.writer_registry import registered_writers as registered_writers
 from pyvista.core.wrappers import _wrappers as _wrappers
-from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
 from pyvista.jupyter import JupyterBackendRegistration as JupyterBackendRegistration
 from pyvista.jupyter import register_jupyter_backend as register_jupyter_backend
 from pyvista.jupyter import registered_jupyter_backends as registered_jupyter_backends
@@ -59,6 +57,8 @@ from pyvista.report import get_gpu_info as get_gpu_info
 
 if TYPE_CHECKING:
     import numpy as np
+
+    from pyvista.plotting.themes import Theme
 
 # get the int type from vtk
 ID_TYPE: type[np.int32 | np.longlong] = _get_vtk_id_type()
@@ -84,7 +84,7 @@ ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'tru
 send_errors_to_logging()
 
 # theme to use by default for the plot directive
-PLOT_DIRECTIVE_THEME = None
+PLOT_DIRECTIVE_THEME: Theme | str | None = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
@@ -108,6 +108,7 @@ if TYPE_CHECKING:
     from pyvista import examples as examples
     from pyvista import ext as ext
     from pyvista import trame as trame
+    from pyvista import typing as typing
     from pyvista import utilities as utilities
     from pyvista.plotting import *
 
@@ -120,7 +121,7 @@ _env_theme_applied: bool = False
 
 
 # Lazily import/access the plotting module
-def _get_deprecated_validation():
+def _get_deprecated_validation() -> ModuleType:
     """Forward ``pyvista._validation`` to the ``pyvista_validation`` package with a warning."""
     import pyvista_validation  # noqa: PLC0415
 
@@ -141,7 +142,7 @@ def _get_deprecated_validation():
     return pyvista_validation
 
 
-def _warn_deprecated_pickle_format():
+def _warn_deprecated_pickle_format() -> None:
     """Warn that the pickle format selector is deprecated."""
     from pyvista._version import _is_deprecation_due  # noqa: PLC0415
     from pyvista._warn_external import warn_external  # noqa: PLC0415
@@ -160,7 +161,7 @@ def _warn_deprecated_pickle_format():
         raise RuntimeError(msg)
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
     This override is implemented to prevent importing all of the plotting module
@@ -175,7 +176,7 @@ def __getattr__(name):
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
 
-    def _cache_attr_and_return(obj):
+    def _cache_attr_and_return(obj: Any) -> Any:
         # Cache the attr on this module to avoid calls to __getattr__ on next access
         globals()[name] = obj
         return obj
@@ -192,6 +193,12 @@ def __getattr__(name):
         # Not cached either, so the deprecation warning is re-issued on each access
         _warn_deprecated_pickle_format()
         return _PICKLE_FORMAT
+    from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
+    from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
+
+    if name in _MOVED_TO_TYPING_NAMESPACE[__name__]:
+        # Not cached either, so the deprecation warning is re-issued on each access
+        return _get_deprecated_alias(__name__, name)
 
     allow = {
         'demos',

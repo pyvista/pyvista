@@ -129,6 +129,47 @@ def test_remove_unused_points(mesh_type, inplace):
     assert out.array_names == [key]
 
 
+def _with_an_unused_point(mesh_type):
+    """Return a cube of the given type with one point no cell refers to."""
+    mesh = pv.Cube(clean=False)
+    mesh.clear_point_data()
+    if mesh_type is pv.UnstructuredGrid:
+        mesh = mesh.cast_to_unstructured_grid()
+    mesh.points = np.append(mesh.points, [[9.0, 9.0, 9.0]], axis=0)
+    return mesh
+
+
+@pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
+def test_remove_unused_points_leaves_input_alone(mesh_type):
+    """A copy is only removed from, never the input it was made from."""
+    mesh = _with_an_unused_point(mesh_type)
+    mesh.field_data['meta'] = np.array([1.0, 2.0, 3.0])
+    before = mesh.copy()
+
+    out = mesh.remove_unused_points()
+
+    assert out.n_points == mesh.n_points - 1
+    assert mesh.cast_to_unstructured_grid() == before.cast_to_unstructured_grid()
+    # Field data is the one array vtkExtractCells passes straight through
+    assert not np.shares_memory(mesh.field_data['meta'], out.field_data['meta'])
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
+def test_remove_unused_points_leaves_a_shallow_copy_alone(mesh_type, inplace):
+    """The cells the filter grows must not be cells another mesh shares."""
+    mesh = _with_an_unused_point(mesh_type)
+    sibling = mesh.copy(deep=False)
+    before = mesh.copy()
+
+    out = mesh.remove_unused_points(inplace=inplace)
+
+    assert out.n_points == before.n_points - 1
+    assert sibling.n_cells == before.n_cells
+    assert sibling.cast_to_unstructured_grid() == before.cast_to_unstructured_grid()
+    sibling.validate_mesh('cells', action='error')
+
+
 @pytest.mark.parametrize('inplace', [True, False])
 def test_remove_unused_points_keeps_subclass(inplace):
     class _Grid(pv.UnstructuredGrid):

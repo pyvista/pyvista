@@ -178,6 +178,9 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
                     z_max =  0.5)
 
         """
+        if self.dataset is None:
+            # The sentinel VTK leaves in an uninitialized bounding box.
+            return BoundsTuple(1.0, -1.0, 1.0, -1.0, 1.0, -1.0)
         return BoundsTuple(*self.GetBounds())
 
     @property
@@ -190,6 +193,8 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
             Center of the active renderer.
 
         """
+        if self.dataset is None:
+            return (0.0, 0.0, 0.0)
         return self.GetCenter()
 
     def copy(self) -> _BaseMapper:
@@ -1021,16 +1026,16 @@ class _BaseDataSetMapper(_BaseMapper):
             than zero are mapped to the smallest representable
             positive float.
 
-        nan_color : pyvista.ColorLike, optional
+        nan_color : ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
             scalar array.
 
-        above_color : pyvista.ColorLike, optional
+        above_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``above_label`` to ``'above'``.
 
-        below_color : pyvista.ColorLike, optional
+        below_color : ColorLike, optional
             Solid color for values below the scalars range
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
@@ -1311,7 +1316,7 @@ class _BaseDataSetMapper(_BaseMapper):
             Opacity array to color the dataset. Array length must match either
             the number of points or cells.
 
-        color : pyvista.ColorLike
+        color : ColorLike
             The color to use with the opacity array.
 
         n_colors : int
@@ -1402,12 +1407,36 @@ class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
+class _PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
+    """Wrap :vtk:`vtkPolyDataMapper`.
+
+    Maps vertex attributes directly, as :attr:`pyvista.Actor.line_style` requires.
+
+    Parameters
+    ----------
+    dataset : pyvista.PolyData, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
+
+    def __init__(
+        self,
+        dataset: DataSet | None = None,
+        theme: Theme | None = None,
+    ) -> None:
+        """Initialize this class."""
+        super().__init__(dataset=dataset, theme=theme)
+
+
 class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
     ----------
-    theme : pyvista.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         The theme to be used.
     emissive : bool, optional
         Whether or not the point should appear emissive. Default is set by the
@@ -1777,6 +1806,12 @@ def _mapper_has_data_set_input(mapper: Any) -> bool:
     been standardized to ``GetDataSetInput`` in VTK >= 9.5.
     """
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
+
+
+def _prop_get_data_set_input(prop: _vtk.vtkProp) -> _vtk.vtkDataSet | None:
+    """Return the data set a prop's mapper reads, or ``None`` when it has no such mapper."""
+    mapper = prop.GetMapper() if hasattr(prop, 'GetMapper') else None
+    return _mapper_get_data_set_input(mapper) if _mapper_has_data_set_input(mapper) else None
 
 
 def _mapper_get_data_set_input(mapper: Any) -> _vtk.vtkDataSet:

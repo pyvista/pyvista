@@ -5,8 +5,13 @@ from __future__ import annotations
 import itertools
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import cast
+from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -21,6 +26,7 @@ from pyvista.core.utilities.misc import try_callback
 
 from .affine_widget import AffineWidget3D
 from .colors import Color
+from .colors import _validate_color_sequence
 from .opts import PickerType
 from .utilities.algorithms import add_ids_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -30,12 +36,43 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Sequence
+    from typing import TypeAlias
+
+    from pyvista import DataSet
     from pyvista import ImageData
+    from pyvista import MultiBlock
+    from pyvista import RectilinearGrid
     from pyvista.core._typing_core import InteractionEventType
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.core.utilities.helpers import _NormalsLiteral
+
+    from ._typing import ColorLike
+    from .actor import Actor
+    from .plotter import BasePlotter
+    from .text import Text
+    from .volume import Volume
+
+    _PlaneWidget: TypeAlias = _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget
+
+_CLOSED_PLOTTER_MSG = 'Cannot add a widget to a closed plotter.'
+_SliderStyleOptions = Literal['classic', 'modern']
+_SphereStyleOptions = Literal['surface', 'wireframe']
 
 
-def _parse_interaction_event(interaction_event: InteractionEventType):
+def _float_list(values: VectorLike[float]) -> list[float]:
+    """Return the values as a plain list of floats."""
+    return [float(value) for value in values]
+
+
+def _parse_interaction_event(
+    interaction_event: InteractionEventType,
+) -> _vtk.vtkCommand.EventIds:
     """Parse the interaction event.
 
     Parameters
@@ -148,42 +185,42 @@ class WidgetComponent(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, plotter):
+    def __init__(self, plotter: BasePlotter) -> None:
         """Initialize the widget component."""
         self._plotter = plotter
-        self.camera_widgets = []
-        self.box_widgets = []
-        self.box_clipped_meshes = []
-        self.plane_widgets = []
-        self.plane_clipped_meshes = []
-        self.plane_sliced_meshes = []
-        self.line_widgets = []
-        self.slider_widgets = []
-        self.threshold_meshes = []
-        self.isovalue_meshes = []
-        self.spline_widgets = []
-        self.spline_sliced_meshes = []
-        self.sphere_widgets = []
-        self.button_widgets = []
-        self.radio_button_widget_dict = {}
-        self.radio_button_title_dict = {}
-        self.distance_widgets = []
-        self.logo_widgets = []
-        self.camera3d_widgets = []
+        self.camera_widgets: list[_vtk.vtkCameraOrientationWidget] = []
+        self.box_widgets: list[_vtk.vtkBoxWidget] = []
+        self.box_clipped_meshes: list[DataSet] = []
+        self.plane_widgets: list[_PlaneWidget] = []
+        self.plane_clipped_meshes: list[DataSet] = []
+        self.plane_sliced_meshes: list[DataSet] = []
+        self.line_widgets: list[_vtk.vtkLineWidget] = []
+        self.slider_widgets: list[_vtk.vtkSliderWidget] = []
+        self.threshold_meshes: list[DataSet] = []
+        self.isovalue_meshes: list[DataSet] = []
+        self.spline_widgets: list[_vtk.vtkSplineWidget] = []
+        self.spline_sliced_meshes: list[DataSet] = []
+        self.sphere_widgets: list[_vtk.vtkSphereWidget] = []
+        self.button_widgets: list[_vtk.vtkButtonWidget] = []
+        self.radio_button_widget_dict: dict[str, list[_vtk.vtkButtonWidget]] = {}
+        self.radio_button_title_dict: dict[str, list[Text]] = {}
+        self.distance_widgets: list[_vtk.vtkDistanceWidget] = []
+        self.logo_widgets: list[_vtk.vtkLogoWidget] = []
+        self.camera3d_widgets: list[_vtk.vtkCamera3DWidget] = []
 
     def add_box_widget(
         self,
-        callback,
+        callback: Callable[..., object] | None,
         *,
-        bounds=None,
-        factor=1.25,
+        bounds: VectorLike[float] | None = None,
+        factor: float = 1.25,
         rotation_enabled: bool = True,
-        color=None,
+        color: ColorLike | None = None,
         use_planes: bool = False,
         outline_translation: bool = True,
         pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
-    ):
+    ) -> _vtk.vtkBoxWidget:
         """Add a box widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -271,16 +308,15 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        if bounds is None:
-            bounds = self._plotter.bounds
+        widget_bounds = _float_list(self._plotter.bounds if bounds is None else bounds)
 
-        def _the_callback(box_widget, _event):
+        def _the_callback(box_widget: _vtk.vtkBoxWidget, _event: str | None) -> None:
             the_box = pv.PolyData()
             box_widget.GetPolyData(the_box)
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                args = [planes] if use_planes else [the_box]
+                args: list[Any] = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
@@ -289,12 +325,12 @@ class WidgetComponent(_NoNewAttrMixin):
         box_widget.GetOutlineProperty().SetColor(
             Color(color, default_color=pv.global_theme.font.color).float_rgb,
         )
-        box_widget.SetInteractor(self._plotter.iren.interactor)
+        box_widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         box_widget.SetCurrentRenderer(self._plotter.renderer)
         box_widget.SetPlaceFactor(factor)
         box_widget.SetRotationEnabled(rotation_enabled)
         box_widget.SetTranslationEnabled(outline_translation)
-        box_widget.PlaceWidget(bounds)
+        box_widget.PlaceWidget(widget_bounds)
         box_widget.On()
         box_widget.AddObserver(
             _parse_interaction_event(interaction_event),
@@ -305,7 +341,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.box_widgets.append(box_widget)
         return box_widget
 
-    def clear_box_widgets(self):
+    def clear_box_widgets(self) -> None:
         """Remove all of the box widgets."""
         for box_widget in self.box_widgets:
             box_widget.Off()
@@ -314,18 +350,18 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_clip_box(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
         invert: bool = False,
         rotation_enabled: bool = True,
-        widget_color=None,
+        widget_color: ColorLike | None = None,
         outline_translation: bool = True,
         merge_points: bool = True,
         crinkle: bool = False,
         interaction_event: InteractionEventType = 'end',
-        factor=1.25,
-        **kwargs,
-    ):
+        factor: float = 1.25,
+        **kwargs: Any,
+    ) -> Actor:
         """Clip a mesh using a box widget.
 
         Add a mesh to the scene with a box widget that is used to clip
@@ -430,8 +466,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         self.box_clipped_meshes.append(box_clipped_mesh)
 
-        def callback(planes):
-            bounds = []
+        def callback(planes: _vtk.vtkPlanes) -> None:
+            bounds: list[Any] = []
             for i in range(planes.GetNumberOfPlanes()):
                 plane = planes.GetPlane(i)
                 bounds.append(plane.GetNormal())
@@ -462,14 +498,14 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_plane_widget(
         self,
-        callback,
+        callback: Callable[..., object] | None,
         *,
-        normal='x',
-        origin=None,
-        bounds=None,
-        factor=1.25,
-        color=None,
-        assign_to_axis=None,
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
+        origin: VectorLike[float] | None = None,
+        bounds: VectorLike[float] | None = None,
+        factor: float = 1.25,
+        color: ColorLike | None = None,
+        assign_to_axis: str | int | None = None,
         tubing: bool = False,
         outline_translation: bool = False,
         origin_translation: bool = True,
@@ -478,8 +514,8 @@ class WidgetComponent(_NoNewAttrMixin):
         test_callback: bool = True,
         normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
-        outline_opacity=None,
-    ):
+        outline_opacity: bool | float | None = None,
+    ) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget:
         """Add a plane widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -590,106 +626,110 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        if origin is None:
-            origin = self._plotter.center
-        if bounds is None:
-            bounds = self._plotter.bounds
+        widget_origin = _float_list(self._plotter.center if origin is None else origin)
+        widget_bounds = _float_list(self._plotter.bounds if bounds is None else bounds)
 
-        if isinstance(normal, str):
-            normal = _NORMALS[normal.lower()]
+        normal_vector = _float_list(
+            _NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        )
 
-        color = Color(color, default_color=pv.global_theme.font.color)
+        widget_color_ = Color(color, default_color=pv.global_theme.font.color)
 
         if assign_to_axis:
             normal_rotation = False
 
-        def _the_callback(widget, _event):
+        def _the_callback(widget: _PlaneWidget, _event: str | None) -> None:
             the_plane = _vtk.vtkPlane()
             widget.GetPlane(the_plane)
-            normal = the_plane.GetNormal()
-            origin = the_plane.GetOrigin()
+            plane_normal = the_plane.GetNormal()
+            plane_origin = the_plane.GetOrigin()
             if callable(callback):
                 if pass_widget:
-                    try_callback(callback, normal, origin, widget)
+                    try_callback(callback, plane_normal, plane_origin, widget)
                 else:
-                    try_callback(callback, normal, origin)
+                    try_callback(callback, plane_normal, plane_origin)
 
+        plane_widget: _PlaneWidget
         if implicit:
-            plane_widget = _vtk.vtkImplicitPlaneWidget()
-            plane_widget.GetNormalProperty().SetColor(color.float_rgb)
-            plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
-            plane_widget.GetOutlineProperty().SetColor(color.float_rgb)
-            plane_widget.GetOutlineProperty().SetOpacity(color.opacity)
-            plane_widget.SetTubing(tubing)
-            plane_widget.SetOutlineTranslation(outline_translation)
-            plane_widget.SetOriginTranslation(origin_translation)
+            implicit_widget = _vtk.vtkImplicitPlaneWidget()
+            implicit_widget.GetNormalProperty().SetColor(widget_color_.float_rgb)
+            implicit_widget.GetOutlineProperty().SetColor(widget_color_.float_rgb)
+            implicit_widget.GetOutlineProperty().SetOpacity(widget_color_.opacity)
+            implicit_widget.SetTubing(tubing)
+            implicit_widget.SetOutlineTranslation(outline_translation)
+            implicit_widget.SetOriginTranslation(origin_translation)
 
             _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)  # noqa: ARG005
             _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)  # noqa: ARG005
 
-            plane_widget.SetDrawPlane(False)
-            plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
-            plane_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
-            plane_widget.SetPlaceFactor(factor)
-            plane_widget.PlaceWidget(bounds)
-            plane_widget.SetOrigin(origin)
+            implicit_widget.SetDrawPlane(False)
+            implicit_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
+            implicit_widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            implicit_widget.SetPlaceFactor(factor)
+            implicit_widget.PlaceWidget(widget_bounds)
+            implicit_widget.SetOrigin(widget_origin)
 
             if not normal_rotation:
-                plane_widget.GetNormalProperty().SetOpacity(0)
+                implicit_widget.GetNormalProperty().SetOpacity(0)
 
             if outline_opacity is not None:
-                plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
+                implicit_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
 
+            plane_widget = implicit_widget
         else:
             # Position of the small plane
             source = _vtk.vtkPlaneSource()
-            source.SetNormal(normal)
-            source.SetCenter(origin)
+            source.SetNormal(*normal_vector)
+            source.SetCenter(*widget_origin)
             source.SetPoint1(
-                origin[0] + (bounds[1] - bounds[0]) * 0.01,
-                origin[1] - (bounds[3] - bounds[2]) * 0.01,
-                origin[2],
+                widget_origin[0] + (widget_bounds[1] - widget_bounds[0]) * 0.01,
+                widget_origin[1] - (widget_bounds[3] - widget_bounds[2]) * 0.01,
+                widget_origin[2],
             )
             source.SetPoint2(
-                origin[0] - (bounds[1] - bounds[0]) * 0.01,
-                origin[1] + (bounds[3] - bounds[2]) * 0.01,
-                origin[2],
+                widget_origin[0] - (widget_bounds[1] - widget_bounds[0]) * 0.01,
+                widget_origin[1] + (widget_bounds[3] - widget_bounds[2]) * 0.01,
+                widget_origin[2],
             )
             source.Update()
-            plane_widget = _vtk.vtkPlaneWidget()  # type: ignore[assignment]
-            plane_widget.SetHandleSize(0.01)
+            poly_widget = _vtk.vtkPlaneWidget()
+            poly_widget.SetHandleSize(0.01)
             # Position of the widget
-            plane_widget.SetInputData(source.GetOutput())
-            plane_widget.SetRepresentationToOutline()  # type: ignore[attr-defined]
-            plane_widget.SetPlaceFactor(factor)
-            plane_widget.PlaceWidget(bounds)
-            plane_widget.SetCenter(origin)  # type: ignore[attr-defined] # Necessary
-            plane_widget.GetPlaneProperty().SetColor(color.float_rgb)  # self.C_LOT[fn])
-            plane_widget.GetHandleProperty().SetColor(color.float_rgb)  # type: ignore[attr-defined]
+            poly_widget.SetInputData(source.GetOutput())
+            poly_widget.SetRepresentationToOutline()
+            poly_widget.SetPlaceFactor(factor)
+            poly_widget.PlaceWidget(widget_bounds)
+            poly_widget.SetCenter(*widget_origin)  # Necessary
+            poly_widget.GetPlaneProperty().SetColor(widget_color_.float_rgb)  # self.C_LOT[fn])
+            poly_widget.GetHandleProperty().SetColor(widget_color_.float_rgb)
 
             if not normal_rotation:
-                plane_widget.GetHandleProperty().SetOpacity(0)  # type: ignore[attr-defined]
+                poly_widget.GetHandleProperty().SetOpacity(0)
+
+            plane_widget = poly_widget
 
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        plane_widget.SetInteractor(self._plotter.iren.interactor)
+        plane_widget.SetInteractor(
+            self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor
+        )
         plane_widget.SetCurrentRenderer(self._plotter.renderer)
 
         if assign_to_axis:
             # Note that normal_rotation was forced to False
             if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(_NORMALS['x'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(*_NORMALS['x'])
             elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(_NORMALS['y'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(*_NORMALS['y'])
             elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(_NORMALS['z'])  # type: ignore[arg-type]
+                plane_widget.SetNormal(*_NORMALS['z'])
             else:
                 msg = 'assign_to_axis not understood'
                 raise RuntimeError(msg)
         else:
-            plane_widget.SetNormal(normal)
+            plane_widget.SetNormal(*normal_vector)
 
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
@@ -704,7 +744,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.plane_widgets.append(plane_widget)
         return plane_widget
 
-    def clear_plane_widgets(self):
+    def clear_plane_widgets(self) -> None:
         """Remove all of the plane widgets."""
         for plane_widget in self.plane_widgets:
             plane_widget.Off()
@@ -713,14 +753,14 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_clip_plane(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        normal='x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         invert: bool = False,
-        widget_color=None,
-        value=0.0,
-        factor=1.25,
-        assign_to_axis=None,
+        widget_color: ColorLike | None = None,
+        value: float = 0.0,
+        factor: float = 1.25,
+        assign_to_axis: str | int | None = None,
         tubing: bool = False,
         origin_translation: bool = True,
         outline_translation: bool = False,
@@ -728,10 +768,10 @@ class WidgetComponent(_NoNewAttrMixin):
         normal_rotation: bool = True,
         crinkle: bool = False,
         interaction_event: InteractionEventType = 'end',
-        origin=None,
-        outline_opacity=None,
-        **kwargs,
-    ):
+        origin: VectorLike[float] | None = None,
+        outline_opacity: bool | float | None = None,
+        **kwargs: Any,
+    ) -> Actor:
         """Clip a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to clip
@@ -866,8 +906,8 @@ class WidgetComponent(_NoNewAttrMixin):
             plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, loc):
-            function = generate_plane(normal, loc)
+        def callback(plane_normal: VectorLike[float], loc: VectorLike[float]) -> None:
+            function = generate_plane(plane_normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
             if crinkle:
@@ -900,24 +940,24 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_volume_clip_plane(
         self,
         /,
-        volume,
+        volume: Volume | ImageData | RectilinearGrid,
         *,
-        normal='x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         invert: bool = False,  # noqa: ARG002
-        widget_color=None,
-        value=0.0,  # noqa: ARG002
-        factor=1.25,
-        assign_to_axis=None,
+        widget_color: ColorLike | None = None,
+        value: float = 0.0,  # noqa: ARG002
+        factor: float = 1.25,
+        assign_to_axis: str | int | None = None,
         tubing: bool = False,
         origin_translation: bool = True,
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
-        origin=None,
-        outline_opacity=None,
-        **kwargs,
-    ):
+        origin: VectorLike[float] | None = None,
+        outline_opacity: bool | float | None = None,
+        **kwargs: Any,
+    ) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget:
         """Clip a volume using a plane widget.
 
         Parameters
@@ -996,9 +1036,9 @@ class WidgetComponent(_NoNewAttrMixin):
 
         """
         if isinstance(volume, (pv.ImageData, pv.RectilinearGrid)):
-            volume = self._plotter.add_volume(volume, **kwargs)
+            volume_actor = self._plotter.add_volume(volume, **kwargs)
         elif not isinstance(volume, pv.plotting.volume.Volume):
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
                 'from `Plotter.add_volume`.'
@@ -1006,17 +1046,20 @@ class WidgetComponent(_NoNewAttrMixin):
             raise TypeError(msg)
         else:
             assert_empty_kwargs(**kwargs)
+            volume_actor = volume
 
         plane = _vtk.vtkPlane()
 
-        def callback(normal, origin):  # numpydoc ignore=PR01
+        def callback(
+            plane_normal: VectorLike[float], plane_origin: VectorLike[float]
+        ) -> None:  # numpydoc ignore=PR01
             """Update the plane used to clip the volume."""
-            plane.SetNormal(normal)
-            plane.SetOrigin(origin)
+            plane.SetNormal(*plane_normal)
+            plane.SetOrigin(*plane_origin)
 
         widget = self.add_plane_widget(
             callback=callback,
-            bounds=volume.bounds,
+            bounds=volume_actor.bounds,
             factor=factor,
             normal=normal,
             color=widget_color,
@@ -1031,20 +1074,19 @@ class WidgetComponent(_NoNewAttrMixin):
             outline_opacity=outline_opacity,
         )
         widget.GetPlane(plane)
-        volume.mapper.AddClippingPlane(plane)
-        self.plane_widgets.append(widget)
+        volume_actor.mapper.AddClippingPlane(plane)
 
         return widget
 
     def add_mesh_slice(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        normal='x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         generate_triangles: bool = False,
-        widget_color=None,
-        assign_to_axis=None,
+        widget_color: ColorLike | None = None,
+        assign_to_axis: str | int | None = None,
         tubing: bool = False,
         factor: float = 1.25,
         origin_translation: bool = True,
@@ -1052,10 +1094,10 @@ class WidgetComponent(_NoNewAttrMixin):
         implicit: bool = True,
         normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
-        origin=None,
-        outline_opacity=None,
-        **kwargs,
-    ):
+        origin: VectorLike[float] | None = None,
+        outline_opacity: bool | float | None = None,
+        **kwargs: Any,
+    ) -> Actor:
         """Slice a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to slice
@@ -1169,9 +1211,9 @@ class WidgetComponent(_NoNewAttrMixin):
         plane_sliced_mesh = pv.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
-        def callback(normal, origin):
+        def callback(plane_normal: VectorLike[float], plane_origin: VectorLike[float]) -> None:
             # create the plane for clipping
-            plane = generate_plane(normal, origin)
+            plane = generate_plane(plane_normal, plane_origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
             alg.Update()  # Perform the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
@@ -1198,14 +1240,14 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_slice_orthogonal(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
         generate_triangles: bool = False,
-        widget_color=None,
+        widget_color: ColorLike | None = None,
         tubing: bool = False,
         interaction_event: InteractionEventType = 'end',
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> list[Actor]:
         """Slice a mesh with three interactive planes.
 
         Adds three interactive plane slicing widgets for orthogonal slicing
@@ -1261,7 +1303,7 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        actors = []
+        actors: list[Actor] = []
         name = kwargs.pop('name', None)
         for ax in ['x', 'y', 'z']:
             axkwargs = kwargs.copy()
@@ -1284,16 +1326,16 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_line_widget(
         self,
-        callback,
+        callback: Callable[..., object] | None,
         *,
-        bounds=None,
-        factor=1.25,
-        resolution=100,
-        color=None,
+        bounds: VectorLike[float] | None = None,
+        factor: float = 1.25,
+        resolution: int = 100,
+        color: ColorLike | None = None,
         use_vertices: bool = False,
         pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
-    ):
+    ) -> _vtk.vtkLineWidget:
         """Add a line widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -1361,15 +1403,15 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        if bounds is None:
-            bounds = self._plotter.bounds
+        widget_bounds = _float_list(self._plotter.bounds if bounds is None else bounds)
 
-        color = Color(color, default_color=pv.global_theme.font.color)
+        line_color = Color(color, default_color=pv.global_theme.font.color)
 
-        def _the_callback(widget, _event):
+        def _the_callback(widget: _vtk.vtkLineWidget, _event: str | None) -> None:
             pointa = widget.GetPoint1()
             pointb = widget.GetPoint2()
             if callable(callback):
+                args: list[Any]
                 if use_vertices:
                     args = [pointa, pointb]
                 else:
@@ -1380,11 +1422,11 @@ class WidgetComponent(_NoNewAttrMixin):
                 try_callback(callback, *args)
 
         line_widget = _vtk.vtkLineWidget()
-        line_widget.GetLineProperty().SetColor(color.float_rgb)
-        line_widget.SetInteractor(self._plotter.iren.interactor)
+        line_widget.GetLineProperty().SetColor(line_color.float_rgb)
+        line_widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         line_widget.SetCurrentRenderer(self._plotter.renderer)
         line_widget.SetPlaceFactor(factor)
-        line_widget.PlaceWidget(bounds)
+        line_widget.PlaceWidget(widget_bounds)
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
@@ -1397,7 +1439,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.line_widgets.append(line_widget)
         return line_widget
 
-    def clear_line_widgets(self):
+    def clear_line_widgets(self) -> None:
         """Remove all of the line widgets."""
         for line_widget in self.line_widgets:
             line_widget.Off()
@@ -1405,16 +1447,16 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_text_slider_widget(
         self,
-        callback,
-        data,
+        callback: Callable[..., object] | None,
+        data: list[str],
         *,
-        value=None,
-        pointa=(0.4, 0.9),
-        pointb=(0.9, 0.9),
-        color=None,
+        value: float | None = None,
+        pointa: VectorLike[float] = (0.4, 0.9),
+        pointb: VectorLike[float] = (0.9, 0.9),
+        color: ColorLike | None = None,
         interaction_event: InteractionEventType = 'end',
-        style=None,
-    ):
+        style: _SliderStyleOptions | None = None,
+    ) -> _vtk.vtkSliderWidget:
         """Add a text slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -1468,7 +1510,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         """
         if not isinstance(data, list):
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'The `data` parameter must be a list but {type(data).__name__} was passed instead'
             )
             raise TypeError(msg)
@@ -1480,9 +1522,9 @@ class WidgetComponent(_NoNewAttrMixin):
         # avoid division by zero in case there is only one element
         delta = 1 if delta == 0 else delta
 
-        def _the_callback(value):
-            if isinstance(value, float):
-                idx = int(value / delta)
+        def _the_callback(slider_value: float) -> None:
+            if isinstance(slider_value, float):
+                idx = int(slider_value / delta)
                 # handle limit index
                 if idx == n_states:
                     idx = n_states - 1
@@ -1499,12 +1541,11 @@ class WidgetComponent(_NoNewAttrMixin):
             interaction_event=interaction_event,
             style=style,
         )
-        slider_rep = slider_widget.GetRepresentation()
+        slider_rep = cast('_vtk.vtkSliderRepresentation2D', slider_widget.GetRepresentation())
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, _event):
-            value = widget.GetRepresentation().GetValue()
-            idx = int(value / delta)
+        def title_callback(widget: _vtk.vtkSliderWidget, _event: str | None) -> None:  # noqa: ARG001
+            idx = int(slider_rep.GetValue() / delta)
             # handle limit index
             if idx == n_states:
                 idx = n_states - 1
@@ -1516,24 +1557,24 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_slider_widget(
         self,
-        callback,
-        rng,
+        callback: Callable[..., object] | None,
+        rng: VectorLike[float],
         *,
-        value=None,
-        title=None,
-        pointa=(0.4, 0.9),
-        pointb=(0.9, 0.9),
-        color=None,
+        value: float | None = None,
+        title: str | None = None,
+        pointa: VectorLike[float] = (0.4, 0.9),
+        pointb: VectorLike[float] = (0.9, 0.9),
+        color: ColorLike | None = None,
         pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
-        style=None,
-        title_height=0.03,
-        title_opacity=1.0,
-        title_color=None,
-        fmt=None,
-        slider_width=None,
-        tube_width=None,
-    ):
+        style: _SliderStyleOptions | None = None,
+        title_height: float = 0.03,
+        title_opacity: float = 1.0,
+        title_color: ColorLike | None = None,
+        fmt: str | None = None,
+        slider_width: float | None = None,
+        tube_width: float | None = None,
+    ) -> _vtk.vtkSliderWidget:
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a
@@ -1635,49 +1676,51 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        iren = self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
-        if value is None:
-            value = ((rng[1] - rng[0]) / 2) + rng[0]
+        rng_ = _float_list(rng)
+        slider_value = ((rng_[1] - rng_[0]) / 2) + rng_[0] if value is None else float(value)
 
-        color = Color(color, default_color=pv.global_theme.font.color)
-        title_color = Color(title_color, default_color=color)
+        slider_color = Color(color, default_color=pv.global_theme.font.color)
+        slider_title_color = Color(title_color, default_color=slider_color)
 
         if fmt is None:
             fmt = pv.global_theme.font.fmt
 
-        def normalize(point, viewport):
+        def normalize(
+            point: VectorLike[float], viewport: tuple[float, float, float, float]
+        ) -> tuple[float, float]:
+            point_ = _float_list(point)
             return (
-                point[0] * (viewport[2] - viewport[0]),
-                point[1] * (viewport[3] - viewport[1]),
+                point_[0] * (viewport[2] - viewport[0]),
+                point_[1] * (viewport[3] - viewport[1]),
             )
 
-        pointa = normalize(pointa, self._plotter.renderer.GetViewport())
-        pointb = normalize(pointb, self._plotter.renderer.GetViewport())
+        pointa_ = normalize(pointa, self._plotter.renderer.GetViewport())
+        pointb_ = normalize(pointb, self._plotter.renderer.GetViewport())
 
         slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
-        slider_rep.SetMinimumValue(rng[0])
-        slider_rep.SetMaximumValue(rng[1])
-        slider_rep.SetValue(value)
-        slider_rep.SetTitleText(title)
-        slider_rep.GetTitleProperty().SetColor(color.float_rgb)
-        slider_rep.GetSliderProperty().SetColor(color.float_rgb)
-        slider_rep.GetCapProperty().SetColor(color.float_rgb)
-        slider_rep.GetLabelProperty().SetColor(color.float_rgb)
-        slider_rep.GetTubeProperty().SetColor(color.float_rgb)
+        slider_rep.SetMinimumValue(rng_[0])
+        slider_rep.SetMaximumValue(rng_[1])
+        slider_rep.SetValue(slider_value)
+        slider_rep.SetTitleText(title)  # type: ignore[arg-type] # VTK accepts a null title
+        slider_rep.GetTitleProperty().SetColor(slider_color.float_rgb)
+        slider_rep.GetSliderProperty().SetColor(slider_color.float_rgb)
+        slider_rep.GetCapProperty().SetColor(slider_color.float_rgb)
+        slider_rep.GetLabelProperty().SetColor(slider_color.float_rgb)
+        slider_rep.GetTubeProperty().SetColor(slider_color.float_rgb)
         slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
-        slider_rep.GetPoint1Coordinate().SetValue(pointa[0], pointa[1])
+        slider_rep.GetPoint1Coordinate().SetValue(pointa_[0], pointa_[1])
         slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
-        slider_rep.GetPoint2Coordinate().SetValue(pointb[0], pointb[1])
+        slider_rep.GetPoint2Coordinate().SetValue(pointb_[0], pointb_[1])
         slider_rep.SetSliderLength(0.05)
         slider_rep.SetSliderWidth(0.05)
         slider_rep.SetEndCapLength(0.01)
 
         if style is not None:
             if not isinstance(style, str):
-                msg = f'Expected type for ``style`` is str but {type(style).__name__} was given.'
+                msg = f'Expected type for ``style`` is str but {type(style).__name__} was given.'  # type: ignore[unreachable]
                 raise TypeError(msg)
             slider_style = getattr(pv.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1694,23 +1737,23 @@ class WidgetComponent(_NoNewAttrMixin):
         if tube_width is not None:
             slider_rep.SetTubeWidth(tube_width)
 
-        def _the_callback(widget, _event):
-            value = widget.GetRepresentation().GetValue()
+        def _the_callback(widget: _vtk.vtkSliderWidget, _event: str | None) -> None:
+            current = slider_rep.GetValue()
             if callable(callback):
                 if pass_widget:
-                    try_callback(callback, value, widget)
+                    try_callback(callback, current, widget)
                 else:
-                    try_callback(callback, value)
+                    try_callback(callback, current)
 
         slider_widget = _vtk.vtkSliderWidget()
         slider_widget.SetInteractor(iren.interactor)
         slider_widget.SetCurrentRenderer(self._plotter.renderer)
         slider_widget.SetRepresentation(slider_rep)
-        slider_widget.GetRepresentation().SetTitleHeight(title_height)  # type: ignore[attr-defined]
-        slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)  # type: ignore[attr-defined]
-        slider_widget.GetRepresentation().GetTitleProperty().SetColor(title_color.float_rgb)  # type: ignore[attr-defined]
+        slider_rep.SetTitleHeight(title_height)
+        slider_rep.GetTitleProperty().SetOpacity(title_opacity)
+        slider_rep.GetTitleProperty().SetColor(slider_title_color.float_rgb)
         if fmt is not None:
-            slider_widget.GetRepresentation().SetLabelFormat(fmt)  # type: ignore[attr-defined]
+            slider_rep.SetLabelFormat(fmt)
         slider_widget.On()
         slider_widget.AddObserver(_parse_interaction_event(interaction_event), _the_callback)
         _the_callback(slider_widget, None)
@@ -1718,7 +1761,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.slider_widgets.append(slider_widget)
         return slider_widget
 
-    def clear_slider_widgets(self):
+    def clear_slider_widgets(self) -> None:
         """Remove all of the slider widgets."""
         for slider_widget in self.slider_widgets:
             slider_widget.Off()
@@ -1727,20 +1770,20 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_threshold(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        scalars=None,
+        scalars: str | None = None,
         invert: bool = False,
-        widget_color=None,
-        preference='cell',
-        title=None,
-        pointa=(0.4, 0.9),
-        pointb=(0.9, 0.9),
+        widget_color: ColorLike | None = None,
+        preference: PointLiteral | CellLiteral = 'cell',
+        title: str | None = None,
+        pointa: VectorLike[float] = (0.4, 0.9),
+        pointb: VectorLike[float] = (0.9, 0.9),
         continuous: bool = False,
         all_scalars: bool = False,
-        method='upper',
-        **kwargs,
-    ):
+        method: Literal['upper', 'lower'] = 'upper',
+        **kwargs: Any,
+    ) -> Actor:
         """Apply a threshold on a mesh with a slider.
 
         Add a mesh to the scene with a slider widget that is used to
@@ -1831,12 +1874,16 @@ class WidgetComponent(_NoNewAttrMixin):
             algo = pointset_to_polydata_algorithm(algo or mesh)
             mesh, algo = algorithm_to_mesh_handler(algo)
 
-        if isinstance(mesh, pv.MultiBlock):
+        # The handler is declared to return a dataset, but an algorithm may output a composite
+        if isinstance(cast('DataSet | MultiBlock', mesh), pv.MultiBlock):
             msg = 'MultiBlock datasets are not supported for threshold widget.'
             raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
+        if scalars is None:
+            msg = 'No arrays present to threshold.'
+            raise ValueError(msg)
         arr = get_array(mesh, scalars, preference=preference)
         if arr is None:
             msg = 'No arrays present to threshold.'
@@ -1868,7 +1915,7 @@ class WidgetComponent(_NoNewAttrMixin):
         threshold_mesh = pv.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
-        def callback(value):
+        def callback(value: float) -> None:
             _set_threshold_limit(alg, value=value, method=method, invert=invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
@@ -1888,19 +1935,19 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_isovalue(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        scalars=None,
+        scalars: str | None = None,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
-        preference='point',
-        title=None,
-        pointa=(0.4, 0.9),
-        pointb=(0.9, 0.9),
-        widget_color=None,
-        **kwargs,
-    ):
+        preference: PointLiteral | CellLiteral = 'point',
+        title: str | None = None,
+        pointa: VectorLike[float] = (0.4, 0.9),
+        pointb: VectorLike[float] = (0.9, 0.9),
+        widget_color: ColorLike | None = None,
+        **kwargs: Any,
+    ) -> Actor:
         """Create a contour of a mesh with a slider.
 
         Add a mesh to the scene with a slider widget that is used to
@@ -1995,7 +2042,8 @@ class WidgetComponent(_NoNewAttrMixin):
         if isinstance(mesh, pv.PointSet):
             msg = 'PointSets are 0-dimensional and thus cannot produce contours.'
             raise TypeError(msg)
-        if isinstance(mesh, pv.MultiBlock):
+        # The handler is declared to return a dataset, but an algorithm may output a composite
+        if isinstance(cast('DataSet | MultiBlock', mesh), pv.MultiBlock):
             msg = 'MultiBlock datasets are not supported for this widget.'
             raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
@@ -2007,6 +2055,9 @@ class WidgetComponent(_NoNewAttrMixin):
             field, scalars = mesh.active_scalars_info
         else:
             field = get_array_association(mesh, scalars, preference=preference)
+        if scalars is None:
+            msg = 'No active scalars to contour. Set `scalars` explicitly.'
+            raise ValueError(msg)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pv.FieldAssociation.POINT:
             msg = (
@@ -2035,7 +2086,7 @@ class WidgetComponent(_NoNewAttrMixin):
         isovalue_mesh = pv.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
-        def callback(value):
+        def callback(value: float) -> None:
             alg.SetValue(0, value)
             alg.Update()
             isovalue_mesh.shallow_copy(alg.GetOutput())
@@ -2054,21 +2105,21 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_spline_widget(
         self,
-        callback,
+        callback: Callable[..., object] | None,
         *,
-        bounds=None,
-        factor=1.25,
-        n_handles=5,
-        resolution=25,
-        color='yellow',
+        bounds: VectorLike[float] | None = None,
+        factor: float = 1.25,
+        n_handles: int = 5,
+        resolution: int = 25,
+        color: ColorLike | None = 'yellow',
         show_ribbon: bool = False,
-        ribbon_color='pink',
-        ribbon_opacity=0.5,
+        ribbon_color: ColorLike | None = 'pink',
+        ribbon_opacity: float = 0.5,
         pass_widget: bool = False,
         closed: bool = False,
-        initial_points=None,
+        initial_points: MatrixLike[float] | None = None,
         interaction_event: InteractionEventType = 'end',
-    ):
+    ) -> _vtk.vtkSplineWidget:
         """Create and add a spline widget to the scene.
 
         Use the bounds argument to place this widget. Several "handles" are
@@ -2146,14 +2197,13 @@ class WidgetComponent(_NoNewAttrMixin):
             msg = '`initial_points` must be length `n_handles`.'
             raise ValueError(msg)
 
-        color = Color(color, default_color=pv.global_theme.color)
+        spline_color = Color(color, default_color=pv.global_theme.color)
 
-        if bounds is None:
-            bounds = self._plotter.bounds
+        widget_bounds = _float_list(self._plotter.bounds if bounds is None else bounds)
 
         ribbon = pv.PolyData()
 
-        def _the_callback(widget, _event):
+        def _the_callback(widget: _vtk.vtkSplineWidget, _event: str | None) -> None:
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
             _update_alg(para_source)
@@ -2166,12 +2216,14 @@ class WidgetComponent(_NoNewAttrMixin):
                     try_callback(callback, polyline)
 
         spline_widget = _vtk.vtkSplineWidget()
-        spline_widget.GetLineProperty().SetColor(color.float_rgb)
+        spline_widget.GetLineProperty().SetColor(spline_color.float_rgb)
         spline_widget.SetNumberOfHandles(n_handles)
-        spline_widget.SetInteractor(self._plotter.iren.interactor)
+        spline_widget.SetInteractor(
+            self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor
+        )
         spline_widget.SetCurrentRenderer(self._plotter.renderer)
         spline_widget.SetPlaceFactor(factor)
-        spline_widget.PlaceWidget(bounds)
+        spline_widget.PlaceWidget(widget_bounds)
         spline_widget.SetResolution(resolution)
         if initial_points is not None:
             spline_widget.InitializeHandles(pv.vtk_points(initial_points))
@@ -2191,7 +2243,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.spline_widgets.append(spline_widget)
         return spline_widget
 
-    def clear_spline_widgets(self):
+    def clear_spline_widgets(self) -> None:
         """Remove all of the spline widgets."""
         for spline_widget in self.spline_widgets:
             spline_widget.Off()
@@ -2200,21 +2252,21 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_slice_spline(
         self,
         /,
-        mesh,
+        mesh: DataSet | _vtk.vtkAlgorithm,
         *,
         generate_triangles: bool = False,
-        factor=1.25,
-        n_handles=5,
-        resolution=25,
-        widget_color=None,
+        factor: float = 1.25,
+        n_handles: int = 5,
+        resolution: int = 25,
+        widget_color: ColorLike | None = None,
         show_ribbon: bool = False,
-        ribbon_color='pink',
-        ribbon_opacity=0.5,
-        initial_points=None,
+        ribbon_color: ColorLike | None = 'pink',
+        ribbon_opacity: float = 0.5,
+        initial_points: MatrixLike[float] | None = None,
         closed: bool = False,
         interaction_event: InteractionEventType = 'end',
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> Actor:
         """Slice a mesh with a spline widget.
 
         Add a mesh to the scene with a spline widget that is used to slice
@@ -2308,8 +2360,8 @@ class WidgetComponent(_NoNewAttrMixin):
         spline_sliced_mesh = pv.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline):
-            polyline = spline.GetCell(0)
+        def callback(spline: pv.PolyData) -> None:
+            polyline = cast('_vtk.vtkPolyLine', spline.GetCell(0))
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
@@ -2336,9 +2388,10 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_measurement_widget(
         self,
-        callback=None,
-        color=None,
-    ):
+        callback: Callable[[tuple[float, float, float], tuple[float, float, float], float], object]
+        | None = None,
+        color: ColorLike | None = None,
+    ) -> _vtk.vtkDistanceWidget:
         """Interactively measure distance with a distance widget.
 
         Creates an overlay documenting the selected line and total
@@ -2350,7 +2403,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Parameters
         ----------
-        callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
+        callback : Callable[[VectorLike[float], VectorLike[float], float], object], optional
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
             point and end point as Cartesian coordinate tuples
@@ -2365,12 +2418,9 @@ class WidgetComponent(_NoNewAttrMixin):
             The newly created distance widget.
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        iren = self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
-        if color is None:
-            color = pv.global_theme.font.color.float_rgb
-        color = Color(color)
+        measure_color = Color(color, default_color=pv.global_theme.font.color.float_rgb)
 
         compute = lambda a, b: np.sqrt(np.sum((np.array(b) - np.array(a)) ** 2))
 
@@ -2381,22 +2431,22 @@ class WidgetComponent(_NoNewAttrMixin):
         widget.SetInteractor(iren.interactor)
         widget.SetRepresentation(representation)
 
-        handle.GetProperty().SetColor(*color.float_rgb)
-        representation.GetLabelProperty().SetColor(*color.float_rgb)
-        representation.GetLineProperty().SetColor(*color.float_rgb)
+        handle.GetProperty().SetColor(*measure_color.float_rgb)
+        representation.GetLabelProperty().SetColor(*measure_color.float_rgb)
+        representation.GetLineProperty().SetColor(*measure_color.float_rgb)
 
         iren.picker = PickerType.POINT
 
-        def place_point(*_):
-            p1 = [0, 0, 0]
-            p2 = [0, 0, 0]
-            representation.GetPoint1DisplayPosition(p1)  # type: ignore[arg-type]
-            representation.GetPoint2DisplayPosition(p2)  # type: ignore[arg-type]
+        def place_point(*_: Any) -> None:
+            p1 = [0.0, 0.0, 0.0]
+            p2 = [0.0, 0.0, 0.0]
+            representation.GetPoint1DisplayPosition(p1)
+            representation.GetPoint2DisplayPosition(p2)
             if iren.picker.Pick(p1, self._plotter.renderer):
-                pos1 = iren.picker.GetPickPosition()
+                pos1 = list(iren.picker.GetPickPosition())
                 representation.GetPoint1Representation().SetWorldPosition(pos1)
             if iren.picker.Pick(p2, self._plotter.renderer):
-                pos2 = iren.picker.GetPickPosition()
+                pos2 = list(iren.picker.GetPickPosition())
                 representation.GetPoint2Representation().SetWorldPosition(pos2)
             representation.BuildRepresentation()
 
@@ -2411,7 +2461,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.distance_widgets.append(widget)
         return widget
 
-    def clear_measure_widgets(self):
+    def clear_measure_widgets(self) -> None:
         """Remove all of the measurement widgets."""
         for distance_widget in self.distance_widgets:
             distance_widget.Off()
@@ -2419,20 +2469,20 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_sphere_widget(
         self,
-        callback,
+        callback: Callable[..., object] | None,
         *,
-        center=(0, 0, 0),
-        radius=0.5,
-        theta_resolution=30,
-        phi_resolution=30,
-        color=None,
-        style='surface',
-        selected_color='pink',
-        indices=None,
+        center: VectorLike[float] | MatrixLike[float] = (0, 0, 0),
+        radius: float = 0.5,
+        theta_resolution: int = 30,
+        phi_resolution: int = 30,
+        color: ColorLike | Sequence[ColorLike] | None = None,
+        style: _SphereStyleOptions = 'surface',
+        selected_color: ColorLike = 'pink',
+        indices: Sequence[int] | None = None,
         pass_widget: bool = False,
         test_callback: bool = True,
         interaction_event: InteractionEventType = 'end',
-    ):
+    ) -> _vtk.vtkSphereWidget | list[_vtk.vtkSphereWidget]:
         """Add one or many sphere widgets to a scene.
 
         Use a sphere widget to control a vertex location.
@@ -2473,8 +2523,8 @@ class WidgetComponent(_NoNewAttrMixin):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        style : str, optional
-            Representation style: ``'surface'`` or ``'wireframe'``.
+        style : 'surface' | 'wireframe', optional
+            Representation style of the sphere.
 
         selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
@@ -2497,32 +2547,29 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkSphereWidget`
-            The sphere widget.
+        :vtk:`vtkSphereWidget` | list[:vtk:`vtkSphereWidget`]
+            The sphere widget, or the list of widgets when more than one center
+            is given.
 
         """
-        if color is None:
-            color = pv.global_theme.color.float_rgb
-        selected_color = Color(selected_color)
+        sphere_color = pv.global_theme.color.float_rgb if color is None else color
+        _validation.check_contains(
+            list(get_args(_SphereStyleOptions)), must_contain=style, name='style'
+        )
+        selected = Color(selected_color)
 
-        center = np.array(center)
+        centers = np.array(center)
         num = 1
-        if center.ndim > 1:
-            num = len(center)
+        if centers.ndim > 1:
+            num = len(centers)
 
-        if isinstance(color, (list, tuple, np.ndarray)):
-            if len(color) == num and not isinstance(color[0], float):
-                colors = color
-            else:
-                colors = [color] * num
-        else:
-            colors = [color] * num
+        colors = _validate_color_sequence(sphere_color, num)
 
-        def _the_callback(widget, _event):
+        def _the_callback(widget: _vtk.vtkSphereWidget, _event: str | None) -> None:
             point = widget.GetCenter()
-            index = widget.WIDGET_INDEX
+            index = widget.WIDGET_INDEX  # type: ignore[attr-defined]
             if callable(callback):
-                args = [point, index] if num > 1 else [point]
+                args: list[Any] = [point, index] if num > 1 else [point]
                 if pass_widget:
                     args.append(widget)
                 try_callback(callback, *args)
@@ -2530,20 +2577,22 @@ class WidgetComponent(_NoNewAttrMixin):
         if indices is None:
             indices = list(range(num))
 
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
+        new_widgets = []
         for i in range(num):
-            loc = center[i] if center.ndim > 1 else center
+            loc = centers[i] if centers.ndim > 1 else centers
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # type: ignore[attr-defined] # Monkey patch the index
-            if style in 'wireframe':
+            if style == 'wireframe':
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()
-            sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).float_rgb)
-            sphere_widget.GetSelectedSphereProperty().SetColor(selected_color.float_rgb)
-            sphere_widget.SetInteractor(self._plotter.iren.interactor)
+            sphere_widget.GetSphereProperty().SetColor(colors[i].float_rgb)
+            sphere_widget.GetSelectedSphereProperty().SetColor(selected.float_rgb)
+            sphere_widget.SetInteractor(iren.interactor)
             sphere_widget.SetCurrentRenderer(self._plotter.renderer)
             sphere_widget.SetRadius(radius)
-            sphere_widget.SetCenter(loc)
+            sphere_widget.SetCenter(*_float_list(loc))
             sphere_widget.SetThetaResolution(theta_resolution)
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
@@ -2552,17 +2601,18 @@ class WidgetComponent(_NoNewAttrMixin):
                 _parse_interaction_event(interaction_event),
                 _the_callback,
             )
+            new_widgets.append(sphere_widget)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
             # Test call back in the last
             _the_callback(sphere_widget, None)
         if num > 1:
-            return self.sphere_widgets
+            return new_widgets
 
         return sphere_widget
 
-    def clear_sphere_widgets(self):
+    def clear_sphere_widgets(self) -> None:
         """Remove all of the sphere widgets."""
         for sphere_widget in self.sphere_widgets:
             sphere_widget.Off()
@@ -2570,18 +2620,18 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_affine_transform_widget(
         self,
-        actor,
+        actor: Actor,
         *,
-        origin=None,
+        origin: VectorLike[float] | None = None,
         start: bool = True,
-        scale=0.15,
-        line_radius=0.02,
+        scale: float = 0.15,
+        line_radius: float = 0.02,
         always_visible: bool = True,
-        axes_colors=None,
-        axes=None,
-        release_callback=None,
-        interact_callback=None,
-    ):
+        axes_colors: Sequence[ColorLike] | None = None,
+        axes: MatrixLike[float] | None = None,
+        release_callback: Callable[[NumpyArray[float]], None] | None = None,
+        interact_callback: Callable[[NumpyArray[float]], None] | None = None,
+    ) -> AffineWidget3D:
         """Add a 3D affine transform widget.
 
         This widget allows interactive transformations including translation and
@@ -2664,16 +2714,16 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_checkbox_button_widget(
         self,
-        callback,
+        callback: Callable[[bool], object] | None,
         *,
         value: bool = False,
-        position=(10.0, 10.0),
-        size=50,
-        border_size=5,
-        color_on='blue',
-        color_off='grey',
-        background_color='white',
-    ):
+        position: VectorLike[float] = (10.0, 10.0),
+        size: int = 50,
+        border_size: int = 5,
+        color_on: ColorLike = 'blue',
+        color_off: ColorLike = 'grey',
+        background_color: ColorLike = 'white',
+    ) -> _vtk.vtkButtonWidget:
         """Add a checkbox button widget to the scene.
 
         This is useless without a callback function. You can pass a callable
@@ -2726,20 +2776,25 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
-        def create_button(color1, color2, color3, *, dims=(size, size, 1)):
-            color1 = np.array(Color(color1).int_rgb)
-            color2 = np.array(Color(color2).int_rgb)
-            color3 = np.array(Color(color3).int_rgb)
+        def create_button(
+            color1: ColorLike,
+            color2: ColorLike,
+            color3: ColorLike,
+            *,
+            dims: tuple[int, int, int] = (size, size, 1),
+        ) -> pv.ImageData:
+            rgb1 = np.array(Color(color1).int_rgb)
+            rgb2 = np.array(Color(color2).int_rgb)
+            rgb3 = np.array(Color(color3).int_rgb)
 
             n_points = dims[0] * dims[1]
             button = pv.ImageData(dimensions=dims)
-            arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
-            arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
+            arr = np.array([rgb1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
+            arr[1 : dims[0] - 1, 1 : dims[1] - 1] = rgb2  # apply color2
             arr[border_size : dims[0] - border_size, border_size : dims[1] - border_size] = (
-                color3  # apply color3
+                rgb3  # apply color3
             )
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
@@ -2747,14 +2802,8 @@ class WidgetComponent(_NoNewAttrMixin):
         button_on = create_button(color_on, background_color, color_on)
         button_off = create_button(color_on, background_color, color_off)
 
-        bounds = [
-            position[0],
-            position[0] + size,
-            position[1],
-            position[1] + size,
-            0.0,
-            0.0,
-        ]
+        origin_x, origin_y = _float_list(position)
+        bounds = [origin_x, origin_x + size, origin_y, origin_y + size, 0.0, 0.0]
 
         button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
@@ -2765,13 +2814,13 @@ class WidgetComponent(_NoNewAttrMixin):
         button_rep.PlaceWidget(bounds)
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self._plotter.iren.interactor)
+        button_widget.SetInteractor(iren.interactor)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self._plotter.renderer)
         button_widget.On()
 
-        def _the_callback(widget, _event):
-            state = widget.GetRepresentation().GetState()
+        def _the_callback(widget: _vtk.vtkButtonWidget, _event: str | None) -> None:  # noqa: ARG001
+            state = button_rep.GetState()
             if callable(callback):
                 try_callback(callback, bool(state))
 
@@ -2781,18 +2830,18 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_radio_button_widget(
         self,
-        callback,
-        radio_button_group,
+        callback: Callable[[], object] | None,
+        radio_button_group: str,
         *,
         value: bool = False,
-        title=None,
-        position=(10.0, 10.0),
-        size=50,
-        border_size=8,
-        color_on='blue',
-        color_off='grey',
-        background_color=None,
-    ):
+        title: str | None = None,
+        position: VectorLike[float] = (10.0, 10.0),
+        size: int = 50,
+        border_size: int = 8,
+        color_on: ColorLike = 'blue',
+        color_off: ColorLike = 'grey',
+        background_color: ColorLike | None = None,
+    ) -> _vtk.vtkButtonWidget:
         """Add a radio button widget to the scene.
 
         Radio buttons work in groups. Only one button in a group can be on
@@ -2878,8 +2927,9 @@ class WidgetComponent(_NoNewAttrMixin):
             >>> pl.show()
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
+
+        origin_x, origin_y = _float_list(position)
 
         if radio_button_group not in self.radio_button_widget_dict:
             self.radio_button_widget_dict[radio_button_group] = []
@@ -2888,22 +2938,24 @@ class WidgetComponent(_NoNewAttrMixin):
                 self.radio_button_title_dict[radio_button_group] = []
             button_title = self._plotter.add_text(
                 title,
-                position=(position[0] + size + 10.0, position[1] + 7.5),
+                position=(origin_x + size + 10.0, origin_y + 7.5),
                 font_size=15,
             )
             self.radio_button_title_dict[radio_button_group].append(button_title)
 
-        color_on = Color(color_on)
-        color_off = Color(color_off)
-        background_color = Color(background_color, default_color=self._plotter.background_color)
+        on_color = Color(color_on)
+        off_color = Color(color_off)
+        bg = Color(background_color, default_color=self._plotter.background_color)
 
-        def create_radio_button(fg_color, bg_color, size=size, smooth=2):  # noqa: PLR0917
-            fg_color = np.array(fg_color.int_rgb)
-            bg_color = np.array(bg_color.int_rgb)
+        def create_radio_button(  # noqa: PLR0917
+            fg_color: Color, bg_color: Color, size: int = size, smooth: int = 2
+        ) -> pv.ImageData:
+            fg_rgb = np.array(fg_color.int_rgb)
+            bg_rgb = np.array(bg_color.int_rgb)
 
             n_points = size**2
             button = pv.ImageData(dimensions=(size, size, 1))
-            arr = np.array([bg_color] * n_points).reshape(size, size, 3)  # fill background
+            arr = np.array([bg_rgb] * n_points).reshape(size, size, 3)  # fill background
 
             centre = size / 2
             rad_outer = centre
@@ -2912,28 +2964,21 @@ class WidgetComponent(_NoNewAttrMixin):
             for i, j in itertools.product(range(size), range(size)):
                 distance = np.sqrt((i - size / 2) ** 2 + (j - size / 2) ** 2)
                 if distance < rad_inner:
-                    arr[i, j] = fg_color
+                    arr[i, j] = fg_rgb
                 elif rad_inner <= distance <= rad_inner + smooth:
                     blend = (distance - rad_inner) / smooth
-                    arr[i, j] = (1 - blend) * fg_color + blend * bg_color
+                    arr[i, j] = (1 - blend) * fg_rgb + blend * bg_rgb
                 elif rad_outer - 2 * smooth <= distance <= rad_outer:
                     blend = abs(distance - rad_outer + smooth) / smooth
-                    arr[i, j] = (1 - blend) * fg_color + blend * bg_color
+                    arr[i, j] = (1 - blend) * fg_rgb + blend * bg_rgb
 
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
 
-        button_on = create_radio_button(color_on, background_color)
-        button_off = create_radio_button(color_off, background_color)
+        button_on = create_radio_button(on_color, bg)
+        button_off = create_radio_button(off_color, bg)
 
-        bounds = [
-            position[0],
-            position[0] + size,
-            position[1],
-            position[1] + size,
-            0.0,
-            0.0,
-        ]
+        bounds = [origin_x, origin_x + size, origin_y, origin_y + size, 0.0, 0.0]
 
         button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
@@ -2945,25 +2990,22 @@ class WidgetComponent(_NoNewAttrMixin):
         button_rep.GetProperty().SetColor((1, 1, 1))
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self._plotter.iren.interactor)
+        button_widget.SetInteractor(iren.interactor)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self._plotter.renderer)
         button_widget.On()
 
-        def toggle_other_buttons_off(widget):
+        def toggle_other_buttons_off(widget: _vtk.vtkButtonWidget) -> None:
             other_buttons = [
                 w for w in self.radio_button_widget_dict[radio_button_group] if w is not widget
             ]
             for w in other_buttons:
-                w.GetRepresentation().SetState(0)
+                cast('_vtk.vtkTexturedButtonRepresentation2D', w.GetRepresentation()).SetState(0)
 
-        def _the_callback(widget, _event):
-            widget_rep = widget.GetRepresentation()
-            state = widget_rep.GetState()
+        def _the_callback(widget: _vtk.vtkButtonWidget, _event: str | None) -> None:
             # Toggle back on, if button was already on, and was clicked off
-            if not state:
-                widget_rep.SetState(1)
-                state = True
+            if not button_rep.GetState():
+                button_rep.SetState(1)
             else:
                 toggle_other_buttons_off(widget)
             if callable(callback):
@@ -2975,7 +3017,7 @@ class WidgetComponent(_NoNewAttrMixin):
             toggle_other_buttons_off(button_widget)
         return button_widget
 
-    def clear_radio_button_widgets(self):
+    def clear_radio_button_widgets(self) -> None:
         """Remove all of the radio button widgets."""
         for widgets in self.radio_button_widget_dict.values():
             for widget in widgets:
@@ -2986,7 +3028,9 @@ class WidgetComponent(_NoNewAttrMixin):
                 title.VisibilityOff()
         self.radio_button_title_dict.clear()
 
-    def add_camera_orientation_widget(self, *, animate: bool = True, n_frames=20):
+    def add_camera_orientation_widget(
+        self, *, animate: bool = True, n_frames: int = 20
+    ) -> _vtk.vtkCameraOrientationWidget:
         """Add a camera orientation widget to the active renderer.
 
         Parameters
@@ -3030,13 +3074,13 @@ class WidgetComponent(_NoNewAttrMixin):
         self.camera_widgets.append(widget)
         return widget
 
-    def clear_camera_widgets(self):
+    def clear_camera_widgets(self) -> None:
         """Remove all of the camera widgets."""
         for camera_widget in self.camera_widgets:
             camera_widget.Off()
         self.camera_widgets.clear()
 
-    def clear_button_widgets(self):
+    def clear_button_widgets(self) -> None:
         """Remove all of the button widgets."""
         for button_widget in self.button_widgets:
             button_widget.Off()
@@ -3049,7 +3093,7 @@ class WidgetComponent(_NoNewAttrMixin):
         position: VectorLike[float] = (0.75, 0.8),
         size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,
-    ):
+    ) -> _vtk.vtkLogoWidget:
         """Add a logo widget to the top of the viewport.
 
         If no logo is passed, the PyVista logo will be used.
@@ -3111,19 +3155,19 @@ class WidgetComponent(_NoNewAttrMixin):
         representation.SetPosition2(*size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
-        widget.SetInteractor(self._plotter.iren.interactor)
+        widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         widget.SetRepresentation(representation)
         widget.On()
         self.logo_widgets.append(widget)
         return widget
 
-    def clear_logo_widgets(self):
+    def clear_logo_widgets(self) -> None:
         """Remove all of the logo widgets."""
         for logo_widget in self.logo_widgets:
             logo_widget.Off()
         self.logo_widgets.clear()
 
-    def add_camera3d_widget(self):
+    def add_camera3d_widget(self) -> _vtk.vtkCamera3DWidget:
         """Add a camera3d widget allow to move the camera.
 
         .. note::
@@ -3151,13 +3195,13 @@ class WidgetComponent(_NoNewAttrMixin):
         representation = _vtk.vtkCamera3DRepresentation()
         representation.SetCamera(self._plotter.renderer.GetActiveCamera())
         widget = _vtk.vtkCamera3DWidget()
-        widget.SetInteractor(self._plotter.iren.interactor)
+        widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         widget.SetRepresentation(representation)
         widget.On()
         self.camera3d_widgets.append(widget)
         return widget
 
-    def clear_camera3d_widgets(self):
+    def clear_camera3d_widgets(self) -> None:
         """Remove all of the camera3d widgets."""
         for camera3d_widget in self.camera3d_widgets:
             camera3d_widget.Off()

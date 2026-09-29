@@ -14,6 +14,7 @@ from typing import NoReturn
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -40,6 +41,20 @@ class FONTS(Enum):
 # Track render window support and plotting
 SUPPORTS_OPENGL: bool | None = None
 SUPPORTS_PLOTTING: bool | None = None
+
+
+def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
+    """Return a three-component vector as a tuple of floats."""
+    return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
+
+
+def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
+    """Return a view-up vector, which is normalized and so cannot be zero."""
+    viewup = _validate_vector(vector, name='viewup')
+    if np.allclose(viewup, 0.0):
+        msg = 'Camera up vector cannot be zero.'
+        raise ValueError(msg)
+    return viewup
 
 
 def _prepare_offscreen_macos_render_window(  # pragma: no cover
@@ -682,7 +697,7 @@ def _opacity_transfer_functions(n_colors: int) -> dict[str, NumpyArray[np.uint8]
 
 
 def opacity_transfer_function(
-    mapping: OpacityOptions | VectorLike[float],
+    mapping: OpacityOptions | str | VectorLike[float],
     n_colors: int,
     *,
     interpolate: bool = True,

@@ -342,6 +342,9 @@ def test_convert_file_not_found(capsys: pytest.CaptureFixture):
     assert e.value.code == 1
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     # Create a dummy .vtp file with empty contents
@@ -1625,6 +1628,9 @@ def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.Captur
         assert error in err, err
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.needs_vtk_version(9, 4, reason='workers crash older vtk')
 @pytest.mark.usefixtures('patch_app_console')
 def test_plot_skip_unreadable_hint(
@@ -1852,6 +1858,9 @@ def test_convert_resolve_collisions_counter_increment(
     assert 'ant.vtp → ant_2.pv' in err, err
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console')
 def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """A single unreadable file with --skip-unreadable announces the skip and does not save."""
@@ -1864,6 +1873,9 @@ def test_convert_skip_unreadable_single(tmp_example_dir: Path, capsys: pytest.Ca
     assert not (tmp_example_dir / 'bad.pv').exists()
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_convert_skip_unreadable_many(tmp_example_dir: Path, capsys: pytest.CaptureFixture):
     """Unreadable files are skipped and reported after the summary; all-skipped -> 0 saved."""
@@ -1934,6 +1946,9 @@ def test_validate_multiple_files_single_mesh_invalid(
     assert '1 invalid mesh out of 1 mesh validated.' in err, err
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the empty file is handed to whichever reader its suffix selects'
+)
 @pytest.mark.usefixtures('patch_app_console', 'tmp_ant_file')
 def test_validate_skip_unreadable(
     tmp_example_dir: Path,
@@ -2107,6 +2122,7 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         ('--border=false', 'border', False),
         ('--border interior', 'border', 'interior'),
         ('--border=exterior', 'border', 'exterior'),
+        ("--color=\"['red','blue']\"", 'color', ['red', 'blue']),
     ],
     ids=[
         'link_default',
@@ -2129,6 +2145,7 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         'border_false',
         'border_interior',
         'border_exterior',
+        'color_per_subplot',
     ],
 )
 def test_compare_forwards_arguments(
@@ -2145,6 +2162,25 @@ def test_compare_forwards_arguments(
     main(shlex.split(f'compare {names} {tokens}'))
 
     assert mock_plot_compare.call_args.kwargs[argument] == expected
+
+
+def test_compare_draws_a_value_for_each_subplot(
+    tmp_compare_files: list[Path], monkeypatch: pytest.MonkeyPatch
+):
+    """A keyword given one value per file draws each subplot with its own value."""
+    drawn: list[Any] = []
+    add_mesh = pv.Plotter.add_mesh
+
+    def record(self, mesh, **kwargs):
+        """Draw the mesh, recording the color it is drawn with."""
+        drawn.append(kwargs.get('color'))
+        return add_mesh(self, mesh, **kwargs)
+
+    monkeypatch.setattr(pv.Plotter, 'add_mesh', record)
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(shlex.split(f"""compare {names} --color="['red','blue']" --off_screen=True"""))
+
+    assert drawn == ['red', 'blue']
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -2251,6 +2287,20 @@ def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare
     outline = mock_plot_compare.call_args.kwargs['reference_mesh']
     meshes = pv.MultiBlock([pv.read(path) for path in tmp_compare_files])
     assert outline.bounds == meshes.bounds
+
+
+def test_compare_called_outline_partitioned(tmp_example_dir: Path, mock_plot_compare: MagicMock):
+    """Test that the outline encloses a partitioned dataset, which cannot be a block."""
+    partitioned = pv.PartitionedDataSet([pv.Sphere(radius=5.0)])
+    partitioned.save(tmp_example_dir / 'part.vtpd')
+    # Wider than the sphere in x, narrower in y and z, so every bound needs both meshes
+    cube = pv.Cube(x_length=20.0, y_length=1.0, z_length=1.0)
+    cube.save(tmp_example_dir / 'cube.vtp')
+
+    main('compare part.vtpd cube.vtp --outline')
+
+    outline = mock_plot_compare.call_args.kwargs['reference_mesh']
+    assert outline.bounds == pv.MultiBlock([pv.Sphere(radius=5.0), cube]).bounds
 
 
 def test_compare_label_positions_are_the_ones_which_can_be_drawn():

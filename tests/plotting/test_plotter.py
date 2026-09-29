@@ -423,7 +423,7 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), _vtk.vtkAlgorithm()
+    m.return_value = pv.PolyData(), _vtk.vtkSphereSource()
 
     pl = pv.Plotter()
     match = re.escape(
@@ -773,6 +773,14 @@ def test_add_points_invalid_style(sphere):
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Should be either "points"'):
         pl.add_points(sphere, style='wireframe')
+
+
+@pytest.mark.parametrize('points', [[[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]], (1.0, 2.0, 3.0)])
+def test_add_points_sequence(points):
+    """Plot points given as a plain sequence."""
+    pl = pv.Plotter()
+    actor = pl.add_points(points)
+    assert np.array_equal(actor.mapper.dataset.points, np.atleast_2d(points))
 
 
 @pytest.mark.parametrize(('connected', 'n_lines'), [(False, 2), (True, 3)])

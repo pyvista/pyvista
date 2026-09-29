@@ -18,11 +18,11 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyvista import Actor
-    from pyvista import Plotter
     from pyvista import Renderer
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.plotting.plotter import BasePlotter
 
     from ._typing import ColorLike
 
@@ -194,7 +194,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def __init__(
         self,
-        plotter: Plotter,
+        plotter: BasePlotter,
         actor: Actor,
         *,
         origin: VectorLike[float] | None = None,

@@ -3,9 +3,8 @@ Charts
 .. currentmodule:: pyvista
 
 Charts API reference. These dedicated classes can be used to embed
-charts in plotting windows.
-
-.. data:: Chart
+charts in plotting windows. The :data:`~pyvista.typing.Chart` type alias
+covers all of them.
 
 .. autosummary::
    :toctree: _autosummary

@@ -16,8 +16,10 @@ from .utilities.arrays import _vtk_array_to_numpy
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
+    from types import EllipsisType
     from typing import Any
     from typing import SupportsIndex
+    from typing import TypeAlias
 
     import numpy.typing as npt
     from typing_extensions import Self
@@ -26,6 +28,10 @@ if TYPE_CHECKING:
 
     from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
+
+    _Index: TypeAlias = (
+        int | slice | EllipsisType | NumpyArray[np.integer[Any]] | NumpyArray[np.bool_]
+    )
 
 
 class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ignore=PR02
@@ -121,7 +127,9 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
                 VTKObject=getattr(obj, 'VTKObject', None),
             )
 
-    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:  # type: ignore[override]
+    def __setitem__(  # type: ignore[override]
+        self: pyvista_ndarray, key: _Index | tuple[_Index, ...], value: Any
+    ) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

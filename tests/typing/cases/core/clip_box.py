@@ -5,30 +5,31 @@ from __future__ import annotations
 from type_assert import assert_types
 
 import pyvista as pv
-
-
-def poly() -> pv.PolyData:
-    """Return a sphere."""
-    return pv.Sphere(theta_resolution=8, phi_resolution=8)
-
-
-def pointset() -> pv.PointSet:
-    """Return a point cloud."""
-    return pv.PointSet(poly().points)
-
-
-def image() -> pv.ImageData:
-    """Return a small uniform grid."""
-    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
-
-
-def multiblock() -> pv.MultiBlock:
-    """Return a composite of two meshes."""
-    return pv.MultiBlock([poly(), image()])
-
+from tests.typing.meshes import image
+from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_image
+from tests.typing.meshes import multiblock_optional_pointset
+from tests.typing.meshes import multiblock_optional_poly
+from tests.typing.meshes import multiblock_pointset
+from tests.typing.meshes import multiblock_poly
+from tests.typing.meshes import multiblock_unstructured
+from tests.typing.meshes import pointset
+from tests.typing.meshes import poly
 
 # A box clip splits the cells it cuts, and clips a point cloud through its vertices
 assert_types(poly().clip_box(), pv.PolyData)
 assert_types(pointset().clip_box(), pv.PointSet)
 assert_types(image().clip_box(), pv.UnstructuredGrid)
 assert_types(multiblock().clip_box(), pv.MultiBlock)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().clip_box(), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().clip_box(), pv.MultiBlock[pv.UnstructuredGrid])
+assert_types(multiblock_pointset().clip_box(), pv.MultiBlock[pv.PointSet])
+assert_types(multiblock_unstructured().clip_box(), pv.MultiBlock[pv.UnstructuredGrid])
+
+# An empty block survives the filter
+assert_types(multiblock_optional_poly().clip_box(), pv.MultiBlock[pv.PolyData | None])
+assert_types(multiblock_optional_image().clip_box(), pv.MultiBlock[pv.UnstructuredGrid | None])
+assert_types(multiblock_optional_pointset().clip_box(), pv.MultiBlock[pv.PointSet | None])

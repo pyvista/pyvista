@@ -70,16 +70,23 @@ def test_axes_actor_shaft_len(axes_actor):
     axes_actor.shaft_length = 1
     assert axes_actor.shaft_length == (1, 1, 1)
 
-    axes_actor.shaft_length = (1, 2, 3)
-    assert axes_actor.shaft_length == (1, 2, 3)
+    axes_actor.shaft_length = (0.1, 0.5, 0.9)
+    assert axes_actor.shaft_length == (0.1, 0.5, 0.9)
 
 
 def test_axes_actor_tip_len(axes_actor):
     axes_actor.tip_length = 1
     assert axes_actor.tip_length == (1, 1, 1)
 
-    axes_actor.tip_length = (1, 2, 3)
-    assert axes_actor.tip_length == (1, 2, 3)
+    axes_actor.tip_length = (0.1, 0.5, 0.9)
+    assert axes_actor.tip_length == (0.1, 0.5, 0.9)
+
+
+@pytest.mark.parametrize('name', ['shaft_length', 'tip_length'])
+@pytest.mark.parametrize('value', [1.5, (0.1, 0.5, 2.0), -0.1])
+def test_axes_actor_normalized_length_out_of_range_raises(axes_actor, name, value):
+    with pytest.raises(ValueError, match=rf'{name} values must all be'):
+        setattr(axes_actor, name, value)
 
 
 def test_axes_actor_label_pos(axes_actor):

@@ -326,6 +326,12 @@ def test_usage_badge_marks_an_uncatalogued_file_but_not_generated_data():
     assert gen.generate_usage_badge(None) == ''
 
 
+@pytest.mark.expect_vtk_output(
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLPolyDataReader',
+    reason='the reader probes a file that exists but holds nothing it can read',
+)
 def test_card_header_carries_the_module_and_usage_badges(monkeypatch, metadata, tmp_path):
     path = tmp_path / 'mesh.vtp'
     path.touch()
@@ -426,6 +432,12 @@ def test_origin_field_falls_back_to_a_literal_for_a_non_url(metadata):
     assert missing is None
 
 
+@pytest.mark.expect_vtk_output(
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLPolyDataReader',
+    reason='the readers probe a file that exists but holds nothing they can read',
+)
 @pytest.mark.parametrize(
     ('filename', 'field', 'slug', 'label'),
     [
@@ -468,6 +480,12 @@ def test_dataset_card_reader_field(tmp_path, filename, field, slug, label):
     assert class_option(slug) == [slug]
 
 
+@pytest.mark.expect_vtk_output(
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLPolyDataReader',
+    reason='the readers probe a file that exists but holds nothing they can read',
+)
 def test_dataset_card_reader_field_mixed(tmp_path):
     """A loader with both kinds of file lists both readers rather than one N/A."""
     paths = [tmp_path / 'mesh.vtp', tmp_path / 'mesh.frd']

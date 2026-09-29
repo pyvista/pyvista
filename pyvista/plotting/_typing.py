@@ -18,13 +18,11 @@ from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core._typing_core import VectorLike
+from pyvista.core._typing_core import _MeshLike
 
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.partitioned import PartitionedDataSet
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -38,9 +36,7 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = Union[
-    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
-]
+PlottableType: TypeAlias = _MeshLike | str | Path
 
 
 NamedColormaps = Union[
@@ -107,6 +103,7 @@ PropertyCullingOptions = CullingOptions | Literal['none'] | bool
 RepresentationOptions = Literal['surface', 'wireframe', 'points']
 StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+TrameModeOptions = Literal['trame', 'server', 'client']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and

@@ -9,6 +9,7 @@ them via the ``pyvista.jupyter_backends`` entry-point group.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
 from pyvista._warn_external import warn_external
@@ -34,7 +35,7 @@ def handle_plotter(
     plotter: Plotter,
     backend: JupyterBackendOptions | str | None = None,
     screenshot: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
-    **kwargs,
+    **kwargs: Any,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
 

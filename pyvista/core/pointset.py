@@ -471,6 +471,14 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
+    def streamlines(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def streamlines_from_source(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
     def find_cells_along_line(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError

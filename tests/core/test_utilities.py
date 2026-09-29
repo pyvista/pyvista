@@ -417,6 +417,14 @@ def test_read_reader_kwargs():
         pv.read(file, enable_patch_array=True)
 
 
+@pytest.mark.expect_vtk_output(
+    'Cannot find StructuredGrid element in file.',
+    'Error parsing XML in stream',
+    'Error parsing input file.',
+    'Algorithm vtkXMLStructuredGridReader',
+    'Algorithm vtkXMLMultiBlockDataReader',
+    reason='a .vtu file read as .vts fails in the reader, which is how PyVista detects it',
+)
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -509,12 +517,14 @@ def test_get_array_none(hexbeam):
     assert arr is None
 
 
-def get_array_vtk(hexbeam):
+def test_get_array_vtk(hexbeam):
     # test raw VTK input
     grid_vtk = _vtk.vtkUnstructuredGrid()
     grid_vtk.DeepCopy(hexbeam)
-    get_array(grid_vtk, 'test_data')
-    get_array(grid_vtk, 'foo')
+    arr = get_array(grid_vtk, 'sample_point_scalars')
+    assert arr is not None
+    assert np.array_equal(arr, hexbeam['sample_point_scalars'])
+    assert get_array(grid_vtk, 'foo') is None
 
 
 def test_is_inside_bounds():
@@ -538,20 +548,6 @@ def test_is_inside_bounds_raises():
         TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")
     ):
         is_inside_bounds(point=None, bounds=(0,))
-
-
-def test_voxelize_removed(uniform):
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize` is deprecated'
-    ):
-        pv.voxelize(uniform, density=0.5)
-
-
-def test_voxelize_volume_removed(uniform):
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista\.voxelize_volume` is deprecated'
-    ):
-        pv.voxelize_volume(uniform, density=0.5)
 
 
 def test_report():
@@ -988,6 +984,11 @@ def test_vtk_error_catcher():
         pass
 
 
+@pytest.mark.expect_vtk_output(
+    'Error opening file this_file_does_not_exist.vtp',
+    'Algorithm vtkXMLPolyDataReader',
+    reason='the file does not exist, and _update_alg raises on the VTK error',
+)
 def test_update_alg_raises():
     reader = _vtk.vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
@@ -995,6 +996,11 @@ def test_update_alg_raises():
         _update_alg(reader)
 
 
+@pytest.mark.expect_vtk_output(
+    'Unexpected point index value: 0',
+    'Algorithm vtkOBJReader',
+    reason='the OBJ indices are out of range, and _update_alg raises on the VTK error',
+)
 def test_update_alg_raises_request_data_error(tmp_path):
     # OBJ indices are one-based, so the line element below is out of range
     obj_file = tmp_path / 'bad.obj'

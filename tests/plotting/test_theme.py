@@ -448,8 +448,20 @@ def test_camera(default_theme):
     camera = {'position': [1, 0, 1], 'viewup': [1, 0, 1]}
     default_theme.camera = camera
 
-    assert default_theme.camera.position == camera['position']
-    assert default_theme.camera.viewup == camera['viewup']
+    assert default_theme.camera.position == tuple(camera['position'])
+    assert default_theme.camera.viewup == tuple(camera['viewup'])
+
+
+def test_camera_vectors_are_validated(default_theme):
+    default_theme.camera.position = np.array([1, 2, 3])
+
+    assert default_theme.camera.position == (1.0, 2.0, 3.0)
+
+    with pytest.raises(ValueError, match='which is not allowed'):
+        default_theme.camera.position = [1, 2]
+
+    with pytest.raises(ValueError, match=re.escape('Camera up vector cannot be zero.')):
+        default_theme.camera.viewup = [0, 0, 0]
 
 
 def test_camera_parallel_projection(default_theme):

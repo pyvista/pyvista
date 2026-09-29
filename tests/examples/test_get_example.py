@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import textwrap
+from typing import TYPE_CHECKING
 from typing import get_args
 import warnings
 
@@ -25,6 +26,10 @@ from pyvista.examples._get_example import _example_names
 from pyvista.examples._get_example import _get_dataset_loader
 from pyvista.examples._get_example import _resolve_paths
 from pyvista.examples._get_example import _supported_modules
+
+if TYPE_CHECKING:
+    from pyvista import MultiBlock
+    from pyvista import UnstructuredGrid
 
 _SKIP_DATASETS_WINDOWS = ['biplane']
 
@@ -56,12 +61,29 @@ def _dataset_annotation(function):
     """
     overloads = get_overloads(function)
     annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
-    members = [member.strip() for member in str(annotation).split('|')]
-    return ' | '.join(
-        _DATASET_TYPE_NAMES.get(member, f'pv.{member}')
-        for member in members
-        if member not in _PATH_TYPES
-    )
+    members = _split_union(str(annotation))
+    dataset = ' | '.join(member for member in members if member not in _PATH_TYPES)
+    return re.sub(r'\b(?<!\.)[A-Za-z_]\w*', _qualify_type_name, dataset)
+
+
+def _split_union(annotation):
+    """Split an annotation on its top-level ``|``, leaving bracketed unions intact."""
+    members, depth, start = [], 0, 0
+    for i, char in enumerate(annotation):
+        depth += {'[': 1, ']': -1}.get(char, 0)
+        if char == '|' and depth == 0:
+            members.append(annotation[start:i].strip())
+            start = i + 1
+    members.append(annotation[start:].strip())
+    return members
+
+
+def _qualify_type_name(match):
+    """Return a type name as the generated overloads spell it."""
+    name = match[0]
+    if name == 'None':
+        return name
+    return _DATASET_TYPE_NAMES.get(name, f'pv.{name}')
 
 
 def _readers_annotation(example):
@@ -259,6 +281,15 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
 def test_example_name_literal_lists_every_example():
     """``ExampleName`` is the ``Literal`` of every example name, so editors can complete it."""
     assert get_args(_get_example.ExampleName) == tuple(_all_example_names()), _REGENERATE
+
+
+def test_dataset_annotation_keeps_nested_unions():
+    """Only a top-level path member is dropped, and every class name is qualified."""
+
+    def load() -> MultiBlock[UnstructuredGrid | None] | str:
+        """Stand in for an example function without overloads."""
+
+    assert _dataset_annotation(load) == 'pv.MultiBlock[pv.UnstructuredGrid | None]'
 
 
 def test_format_overloads_renders_one_line_per_stub():

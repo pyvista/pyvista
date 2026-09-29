@@ -6,6 +6,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.mapper import DataSetMapper
+from pyvista.plotting.mapper import _PolyDataMapper
 from pyvista.plotting.utilities import algorithms
 from tests.plotting.conftest import get_actor_mapper_input
 
@@ -50,6 +51,28 @@ def test_scalar_range(dataset_mapper):
 def test_bounds(dataset_mapper):
     assert isinstance(dataset_mapper.bounds, tuple)
     assert dataset_mapper.bounds == (-126.0, 125.0, -127.0, 126.0, -127.0, 127.0)
+
+
+def test_center(dataset_mapper):
+    assert dataset_mapper.center == dataset_mapper.dataset.center
+
+
+@pytest.mark.parametrize(
+    'mapper_type',
+    [
+        pv.DataSetMapper,
+        pv.PointGaussianMapper,
+        pv.FixedPointVolumeRayCastMapper,
+        pv.CompositePolyDataMapper,
+    ],
+)
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [('bounds', (1.0, -1.0, 1.0, -1.0, 1.0, -1.0)), ('center', (0.0, 0.0, 0.0))],
+)
+def test_bounds_and_center_without_a_dataset(mapper_type, name, expected):
+    """Every mapper family reports the uninitialized sentinel, without asking VTK."""
+    assert getattr(mapper_type(), name) == expected
 
 
 def test_lookup_table(dataset_mapper):
@@ -104,7 +127,7 @@ def test_copy(dataset_mapper, sphere):
     dataset_mapper.interpolate_before_map = False
     dataset_mapper.scalar_range = (2, 5)
     map_cp = dataset_mapper.copy()
-    assert isinstance(map_cp, DataSetMapper)
+    assert isinstance(map_cp, type(dataset_mapper))
     assert map_cp is not dataset_mapper
     assert map_cp.scalar_range == dataset_mapper.scalar_range
     assert map_cp.dataset is dataset_mapper.dataset
@@ -803,3 +826,39 @@ def test_active_scalars_algo_not_leaked_by_ghost_dict():
 
     leaked = [obj for obj in gc.get_objects() if _is_algo(obj)]
     assert leaked == []
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.Sphere(),
+        pv.Sphere().cast_to_unstructured_grid(),
+        pv.ImageData(dimensions=(5, 5, 5)),
+        pv.PointSet(np.zeros((4, 3))),
+    ],
+)
+def test_add_mesh_mapper_type(dataset):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(dataset)
+    assert type(actor.mapper) is DataSetMapper
+    pl.close()
+
+
+@pytest.mark.parametrize('dataset', [pv.Line(resolution=10), pv.PointSet(np.zeros((4, 3)))])
+def test_add_mesh_mapper_type_line_style(dataset):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(dataset, line_style='--')
+    assert type(actor.mapper) is _PolyDataMapper
+    pl.close()
+
+
+def test_add_mesh_mapper_type_from_algorithm():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(_vtk.vtkSphereSource())
+    assert type(actor.mapper) is DataSetMapper
+    pl.close()
+
+
+def test_polydata_mapper_dataset(sphere):
+    mapper = _PolyDataMapper(dataset=sphere)
+    assert mapper.dataset is sphere

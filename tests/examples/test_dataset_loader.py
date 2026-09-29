@@ -759,6 +759,9 @@ def test_download_dataset_texture():
     loaded = _download_dataset_texture(loader, texture=False, load=False)
     assert isinstance(loaded, str)
 
+    loaded = _download_dataset_texture(loader, texture=True, load=False)
+    assert isinstance(loaded, str)
+
 
 def test_source_url_invalid_base_url_raises():
     loader = _DownloadableFile('foo.vtk', base_url='not-a-url')
@@ -905,6 +908,9 @@ def test_load_as_multiblock_non_loadable_file_before_loadable_file():
     assert isinstance(multi['HeadMRVolume'], pv.ImageData)
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='the loader resolves readers for empty files of several suffixes'
+)
 @pytest.mark.parametrize(
     ('filename', 'companion_names', 'reader_types'),
     [

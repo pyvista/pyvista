@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import functools
 from typing import TYPE_CHECKING
+from typing import cast
 import weakref
 
 import numpy as np
@@ -29,14 +30,26 @@ from pyvista.core.utilities.misc import try_callback
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
 from .mapper import _mapper_get_data_set_input
-from .mapper import _mapper_has_data_set_input
+from .mapper import _prop_get_data_set_input
 from .opts import ElementType
 from .opts import PickerType
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable
+    from typing import TypeAlias
 
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core.pointset import PolyData
+
+    from ._typing import ColorLike
+    from ._typing import StyleOptions
+    from .plotter import BasePlotter
+    from .render_window_interactor import InteractorStyleCaptureMixin
+    from .text import CornerAnnotation
+
+    # Pickers that resolve a dataset.
+    _DataSetPicker: TypeAlias = _vtk.vtkPicker | _vtk.vtkHardwarePicker
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',
@@ -50,19 +63,22 @@ PICKED_REPRESENTATION_NAMES = {
 }
 
 
-def _launch_pick_event(interactor, _event):
+def _launch_pick_event(interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
     """Create a Pick event based on coordinate or left-click."""
     click_x, click_y = interactor.GetEventPosition()
     click_z = 0
 
     picker = interactor.GetPicker()
-    renderer = interactor.GetInteractorStyle()._parent()._plotter.iren.get_poked_renderer()
-    picker.Pick(click_x, click_y, click_z, renderer)
+    style = cast('InteractorStyleCaptureMixin', interactor.GetInteractorStyle())
+    parent = style._parent()
+    if parent is None:  # pragma: no cover
+        return
+    picker.Pick(click_x, click_y, click_z, parent.get_poked_renderer())
 
 
-def _poked_context_callback(plotter, *args, **kwargs):
+def _poked_context_callback(plotter: BasePlotter, *args, **kwargs) -> None:
     """Invoke a picking callback from within a poked renderer subplot context."""
-    with plotter.iren.poked_subplot():
+    with plotter._get_iren_not_none().poked_subplot():
         try_callback(*args, **kwargs)
 
 
@@ -78,7 +94,9 @@ class RectangleSelection(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, frustum, viewport):
+    def __init__(
+        self, frustum: _vtk.vtkPlanes, viewport: tuple[float, float, float, float]
+    ) -> None:
         self._frustum = frustum
         self._viewport = viewport
 
@@ -119,27 +137,35 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, mode: ElementType = ElementType.CELL, callback=None):
-        self._picker_ = None
+    def __init__(
+        self,
+        mode: ElementType | str | int = ElementType.CELL,
+        callback: Callable[..., None] | None = None,
+    ) -> None:
+        self._picker_: weakref.ref[_DataSetPicker] | None = None
         self.callback = callback
         self.mode = ElementType.from_any(mode)
 
     @property
-    def picker(self):  # numpydoc ignore=RT01
+    def picker(self) -> _DataSetPicker:  # numpydoc ignore=RT01
         """Get or set the picker instance."""
-        return self._picker_()  # type: ignore[misc]
+        picker = None if self._picker_ is None else self._picker_()
+        if picker is None:  # pragma: no cover
+            msg = 'No picker has been set on this handler.'
+            raise PyVistaPickingError(msg)
+        return picker
 
     @picker.setter
-    def picker(self, picker):
-        self._picker_ = weakref.ref(picker)  # type: ignore[assignment]
+    def picker(self, picker: _DataSetPicker) -> None:
+        self._picker_ = weakref.ref(picker)
 
-    def get_mesh(self):
+    def get_mesh(self) -> pv.DataSet | None:
         """Get the picked mesh.
 
         Returns
         -------
-        pyvista.DataSet
-            Picked mesh.
+        pyvista.DataSet | None
+            Picked mesh, or ``None`` when the pick missed every mesh.
 
         """
         ds = self.picker.GetDataSet()
@@ -147,7 +173,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             return pv.wrap(ds)
         return None
 
-    def get_cell(self, picked_point):
+    def get_cell(self, picked_point: VectorLike[float]) -> pv.UnstructuredGrid | None:
         """Get the picked cell of the picked mesh.
 
         Parameters
@@ -157,11 +183,12 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the picked cell.
+        pyvista.UnstructuredGrid | None
+            UnstructuredGrid containing the picked cell, or ``None`` when no
+            cell contains the point.
 
         """
-        mesh = self.get_mesh()
+        mesh = self._get_mesh_not_none()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
         if cell_id < 0:
             return None  # TODO: this happens but shouldn't  # pragma: no cover
@@ -169,7 +196,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
 
-    def get_face(self, picked_point):
+    def get_face(self, picked_point: VectorLike[float]) -> pv.UnstructuredGrid | None:
         """Get the picked face of the picked cell.
 
         Parameters
@@ -179,29 +206,34 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the picked face.
+        pyvista.UnstructuredGrid | None
+            UnstructuredGrid containing the picked face, or ``None`` when no
+            cell contains the point.
 
         """
-        cell = self.get_cell(picked_point).get_cell(0)
+        picked_cell = self.get_cell(picked_point)
+        if picked_cell is None:  # pragma: no cover
+            return None
+        cell = picked_cell.get_cell(0)
         if cell.n_faces > 1:
-            for face in cell.faces:
-                contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
-                if contains > -1:
+            face = None
+            for face_id, cell_face in enumerate(cell.faces):
+                grid = cell_face.cast_to_unstructured_grid()
+                if grid.find_containing_cell(picked_point) > -1:
+                    face = grid
+                    face.field_data['vtkOriginalFaceIds'] = np.array([face_id])
                     break
-            if contains < 0:
+            if face is None:
                 # this shouldn't happen
                 msg = 'Trouble aligning point with face.'
                 raise RuntimeError(msg)
-            face = face.cast_to_unstructured_grid()
-            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
 
         return face
 
-    def get_edge(self, picked_point):
+    def get_edge(self, picked_point: VectorLike[float]) -> pv.UnstructuredGrid | None:
         """Get the picked edge of the picked cell.
 
         Parameters
@@ -211,11 +243,15 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the picked edge.
+        pyvista.UnstructuredGrid | None
+            UnstructuredGrid containing the picked edge, or ``None`` when no
+            cell contains the point.
 
         """
-        cell = self.get_cell(picked_point).get_cell(0)
+        picked_cell = self.get_cell(picked_point)
+        if picked_cell is None:  # pragma: no cover
+            return None
+        cell = picked_cell.get_cell(0)
         if cell.n_edges > 1:
             ei = (
                 cell.cast_to_unstructured_grid()
@@ -229,7 +265,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return edge
 
-    def get_point(self, picked_point: Sequence[float]) -> PolyData:
+    def get_point(self, picked_point: VectorLike[float]) -> PolyData:
         """Get the picked point of the picked mesh.
 
         Parameters
@@ -243,30 +279,39 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             Picked mesh containing the point.
 
         """
-        mesh = self.get_mesh()
-        pid = mesh.find_closest_point(picked_point)
+        mesh = self._get_mesh_not_none()
+        pid = mesh.find_closest_point(np.asarray(picked_point))
         picked = mesh.extract_points(pid, adjacent_cells=False, include_cells=False)
         return picked.cast_to_poly_points()
 
-    def __call__(self, picked_point, picker):
+    def _get_mesh_not_none(self) -> pv.DataSet:
+        """Return the picked mesh, raising when the pick missed every mesh."""
+        mesh = self.get_mesh()
+        if mesh is None:  # pragma: no cover
+            msg = 'The pick did not hit a mesh.'
+            raise PyVistaPickingError(msg)
+        return mesh
+
+    def __call__(self, picked_point: VectorLike[float], picker: _DataSetPicker) -> None:
         """Perform the pick."""
         self.picker = picker
         mesh = self.get_mesh()
         if mesh is None:
             return  # No selected mesh (point not on surface of mesh)
 
+        picked: pv.DataSet | None
         if self.mode == ElementType.MESH:
             picked = mesh
         elif self.mode == ElementType.CELL:
             picked = self.get_cell(picked_point)
-            if picked is None:
-                return  # TODO: handle
         elif self.mode == ElementType.FACE:
             picked = self.get_face(picked_point)
         elif self.mode == ElementType.EDGE:
             picked = self.get_edge(picked_point)
-        elif self.mode == ElementType.POINT:
+        else:
             picked = self.get_point(picked_point)
+        if picked is None:
+            return  # TODO: handle
 
         if self.callback:
             try_callback(self.callback, picked)
@@ -303,29 +348,36 @@ class PickingComponent(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, plotter):
+    def __init__(self, plotter: BasePlotter) -> None:
         """Initialize the picking component."""
         self._plotter = plotter
         # Low-level picking state
-        self._picking_left_clicking_observer = None
-        self._picking_right_clicking_observer = None
+        self._picking_left_clicking_observer: int | None = None
+        self._picking_right_clicking_observer: int | None = None
         self._picker_in_use = False
-        self._picked_point = None
+        self._picked_point: NumpyArray[float] | None = None
         # Mesh-aware picking state
-        self._picked_actor = None
-        self._picked_mesh = None
-        self._picked_cell: pv.MultiBlock | pv.UnstructuredGrid | None = None
-        self._picking_text = None
-        self._picked_block_index = None
+        self._picked_actor: _vtk.vtkActor | None = None
+        self._picked_mesh: pv.DataSet | None = None
+        self._picked_cell: pv.UnstructuredGrid | pv.MultiBlock | None = None
+        self._picking_text: CornerAnnotation | None = None
+        self._picked_block_index: int | None = None
         # Path / geodesic / horizon state
-        self.picked_path = None
-        self.picked_geodesic = None
-        self.picked_horizon = None
+        self.picked_path: pv.PolyData | None = None
+        self.picked_geodesic: pv.PolyData | None = None
+        self.picked_horizon: pv.PolyData | None = None
         self._last_picked_idx: int | None = None
 
     # =========================================================================
     # Lifecycle
     # =========================================================================
+
+    def _get_picked_mesh_not_none(self) -> pv.DataSet:
+        """Return the picked mesh, raising when nothing has been picked."""
+        if self._picked_mesh is None:  # pragma: no cover
+            msg = 'No mesh has been picked.'
+            raise PyVistaPickingError(msg)
+        return self._picked_mesh
 
     def __plotter_close__(self) -> None:
         """Release picking observers when the owning plotter closes."""
@@ -340,17 +392,17 @@ class PickingComponent(_NoNewAttrMixin):
     # =========================================================================
 
     @property
-    def picked_point(self):  # numpydoc ignore=RT01
+    def picked_point(self) -> NumpyArray[float] | None:  # numpydoc ignore=RT01
         """Return the picked point."""
         return self._picked_point
 
     @property
-    def picked_actor(self):  # numpydoc ignore=RT01
+    def picked_actor(self) -> _vtk.vtkActor | None:  # numpydoc ignore=RT01
         """Return the picked actor."""
         return self._picked_actor
 
     @property
-    def picked_mesh(self):  # numpydoc ignore=RT01
+    def picked_mesh(self) -> pv.DataSet | None:  # numpydoc ignore=RT01
         """Return the picked mesh."""
         return self._picked_mesh
 
@@ -367,7 +419,7 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_cell
 
     @property
-    def picked_block_index(self):  # numpydoc ignore=RT01
+    def picked_block_index(self) -> int | None:  # numpydoc ignore=RT01
         """Return the picked block index."""
         return self._picked_block_index
 
@@ -375,7 +427,7 @@ class PickingComponent(_NoNewAttrMixin):
     # Pick position helpers
     # =========================================================================
 
-    def get_pick_position(self):
+    def get_pick_position(self) -> tuple[int, int, int, int]:
         """Get the pick position or area.
 
         Returns
@@ -384,10 +436,10 @@ class PickingComponent(_NoNewAttrMixin):
             Picked position or area as ``(x0, y0, x1, y1)``.
 
         """
-        renderer = self._plotter.iren.get_poked_renderer()
+        renderer = self._plotter._get_iren_not_none().get_poked_renderer()
         return renderer.get_pick_position()
 
-    def pick_click_position(self):
+    def pick_click_position(self) -> tuple[float, float, float]:
         """Get corresponding click location in the 3D plot.
 
         Returns
@@ -399,11 +451,12 @@ class PickingComponent(_NoNewAttrMixin):
         plotter = self._plotter
         if plotter.click_position is None:
             plotter.store_click_position()
-        renderer = plotter.iren.get_poked_renderer()
-        plotter.iren.picker.Pick(plotter.click_position[0], plotter.click_position[1], 0, renderer)
-        return plotter.iren.picker.GetPickPosition()
+        click_position = plotter.click_position or (0, 0)
+        iren = plotter._get_iren_not_none()
+        iren.picker.Pick(click_position[0], click_position[1], 0, iren.get_poked_renderer())
+        return iren.picker.GetPickPosition()
 
-    def pick_mouse_position(self):
+    def pick_mouse_position(self) -> tuple[float, float, float]:
         """Get corresponding mouse location in the 3D plot.
 
         Returns
@@ -415,32 +468,35 @@ class PickingComponent(_NoNewAttrMixin):
         plotter = self._plotter
         if plotter.mouse_position is None:
             plotter.store_mouse_position()
-        renderer = plotter.iren.get_poked_renderer()
-        plotter.iren.picker.Pick(plotter.mouse_position[0], plotter.mouse_position[1], 0, renderer)
-        return plotter.iren.picker.GetPickPosition()
+        mouse_position = plotter.mouse_position or (0, 0)
+        iren = plotter._get_iren_not_none()
+        iren.picker.Pick(mouse_position[0], mouse_position[1], 0, iren.get_poked_renderer())
+        return iren.picker.GetPickPosition()
 
     # =========================================================================
     # Internal helpers
     # =========================================================================
 
-    def _clear_picking_representations(self):
+    def _clear_picking_representations(self) -> None:
         """Clear all picking representations."""
         for name in PICKED_REPRESENTATION_NAMES.values():
             self._plotter.remove_actor(name)
 
-    def _init_click_picking_callback(self, *, left_clicking=False):
+    def _init_click_picking_callback(self, *, left_clicking: bool = False) -> None:
         if left_clicking:
-            self._picking_left_clicking_observer = self._plotter.iren.add_observer(
+            self._picking_left_clicking_observer = self._plotter._get_iren_not_none().add_observer(
                 'LeftButtonPressEvent',
                 functools.partial(try_callback, _launch_pick_event),
             )
         else:
-            self._picking_right_clicking_observer = self._plotter.iren.add_observer(
-                'RightButtonPressEvent',
-                functools.partial(try_callback, _launch_pick_event),
+            self._picking_right_clicking_observer = (
+                self._plotter._get_iren_not_none().add_observer(
+                    'RightButtonPressEvent',
+                    functools.partial(try_callback, _launch_pick_event),
+                )
             )
 
-    def _validate_picker_not_in_use(self):
+    def _validate_picker_not_in_use(self) -> None:
         if self._picker_in_use:
             msg = (
                 'Picking is already enabled, please disable previous picking '
@@ -491,21 +547,21 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_point_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        tolerance=0.025,
-        left_clicking=False,
-        picker=PickerType.POINT,
-        show_message=True,
-        font_size=18,
-        color='pink',
-        point_size=10,
-        show_point=True,
-        use_picker=False,
-        pickable_window=False,
-        clear_on_no_selection=True,
+        tolerance: float = 0.025,
+        left_clicking: bool = False,
+        picker: PickerType | str | int | None = PickerType.POINT,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        show_point: bool = True,
+        use_picker: bool = False,
+        pickable_window: bool = False,
+        clear_on_no_selection: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking at points under the cursor.
 
         Enable picking a point at the mouse location in the render
@@ -539,10 +595,10 @@ class PickingComponent(_NoNewAttrMixin):
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
+                  performant for large geometries.
                 * ``'cell'``: Uses :vtk:`vtkCellPicker`.
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
-                  points on the surface of the mesh.
+                  points on the surface of the mesh (default).
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         show_message : bool | str, default: True
@@ -599,7 +655,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picker, _event):
+        def _end_pick_event(picker: _vtk.vtkAbstractPicker, _event: str) -> None:
             component = self_()
             if component is None:
                 return
@@ -611,17 +667,17 @@ class PickingComponent(_NoNewAttrMixin):
             ):
                 component._picked_point = None
                 if clear_on_no_selection:
-                    with plotter.iren.poked_subplot():
+                    with plotter._get_iren_not_none().poked_subplot():
                         component._clear_picking_representations()
                 return
-            with plotter.iren.poked_subplot():
+            with plotter._get_iren_not_none().poked_subplot():
                 point = np.array(picker.GetPickPosition())
                 point /= plotter.scale  # HACK: handle scale
                 component._picked_point = point
                 if show_point:
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
-                        component.picked_point,
+                        point,
                         color=color,
                         point_size=point_size,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
@@ -631,22 +687,27 @@ class PickingComponent(_NoNewAttrMixin):
                     )
                 if callable(callback):
                     if use_picker:
-                        _poked_context_callback(plotter, callback, component.picked_point, picker)
+                        _poked_context_callback(plotter, callback, point, picker)
                     elif use_mesh:  # Lower priority
+                        # Only a picker that resolves a dataset and a point id
+                        # can serve this deprecated mode.
+                        point_picker = cast('_vtk.vtkPointPicker', picker)
                         _poked_context_callback(
                             plotter,
                             callback,
-                            picker.GetDataSet(),
-                            picker.GetPointId(),
+                            point_picker.GetDataSet(),
+                            point_picker.GetPointId(),
                         )
                     else:
-                        _poked_context_callback(plotter, callback, component.picked_point)
+                        _poked_context_callback(plotter, callback, point)
 
+        iren = self._plotter._get_iren_not_none()
         if picker is not None:  # If None, use the already-set picker
-            self._plotter.iren.picker = picker
-        if hasattr(self._plotter.iren.picker, 'SetTolerance'):
-            self._plotter.iren.picker.SetTolerance(tolerance)
-        self._plotter.iren.add_pick_observer(_end_pick_event)
+            iren.picker = picker
+        active_picker = iren.picker
+        if hasattr(active_picker, 'SetTolerance'):
+            active_picker.SetTolerance(tolerance)
+        iren.add_pick_observer(_end_pick_event)
         self._init_click_picking_callback(left_clicking=left_clicking)
         self._picker_in_use = True
 
@@ -663,16 +724,16 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_rectangle_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show_message=True,
-        font_size=18,
-        start=False,
-        show_frustum=False,
-        style='wireframe',
-        color='pink',
+        show_message: bool | str = True,
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
+        style: StyleOptions = 'wireframe',
+        color: ColorLike = 'pink',
         **kwargs,
-    ):
+    ) -> None:
         """Enable rectangle based picking at cells.
 
         Press ``"r"`` to enable rectangle based selection. Press
@@ -737,7 +798,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self_ = weakref.ref(self)
 
-        def _end_pick_helper(picker, *_):
+        def _end_pick_helper(picker: _vtk.vtkAreaPicker, *_) -> None:
             component = self_()
             if component is None:
                 return
@@ -751,7 +812,7 @@ class PickingComponent(_NoNewAttrMixin):
             selection = RectangleSelection(frustum=picker.GetFrustum(), viewport=(x0, y0, x1, y1))
 
             if show_frustum:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         selection.frustum_mesh,
@@ -767,8 +828,8 @@ class PickingComponent(_NoNewAttrMixin):
                 _poked_context_callback(plotter, callback, selection)
 
         self._plotter.enable_rubber_band_style()
-        self._plotter.iren.picker = 'rendered'
-        self._plotter.iren.add_pick_observer(_end_pick_helper)
+        self._plotter._get_iren_not_none().picker = 'rendered'
+        self._plotter._get_iren_not_none().add_pick_observer(_end_pick_helper)
         self._picker_in_use = True
 
         if show_message:
@@ -781,7 +842,11 @@ class PickingComponent(_NoNewAttrMixin):
             )
 
         if start:
-            self._plotter.iren._style_class.StartSelect()
+            rubber_band_style = cast(
+                '_vtk.vtkInteractorStyleRubberBandPick',
+                self._plotter._get_iren_not_none().style,
+            )
+            rubber_band_style.StartSelect()
 
     # =========================================================================
     # Mesh-aware picking
@@ -790,28 +855,28 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_surface_point_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show_message=True,
-        font_size=18,
-        color='pink',
-        show_point=True,
-        point_size=10,
-        tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
-        picker=PickerType.CELL,
-        use_picker=False,
-        clear_on_no_selection=True,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        show_point: bool = True,
+        point_size: float = 10,
+        tolerance: float = 0.025,
+        pickable_window: bool = False,
+        left_clicking: bool = False,
+        picker: PickerType | str | int = PickerType.CELL,
+        use_picker: bool = False,
+        clear_on_no_selection: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking of a point on the surface of a mesh.
 
         Parameters
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            picked point is input as the first parameter to this callable.
 
         show_message : bool | str, default: True
             Show the message about how to use the mesh picking tool. If this
@@ -852,8 +917,8 @@ class PickingComponent(_NoNewAttrMixin):
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -898,7 +963,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picked_point, picker):
+        def _end_pick_event(picked_point: VectorLike[float], picker: _DataSetPicker) -> None:
             component = self_()
             if component is None:
                 return
@@ -908,14 +973,14 @@ class PickingComponent(_NoNewAttrMixin):
                 component._picked_actor = None
                 component._picked_mesh = None
                 if clear_on_no_selection:
-                    with plotter.iren.poked_subplot():
+                    with plotter._get_iren_not_none().poked_subplot():
                         component._clear_picking_representations()
                 return
             component._picked_actor = picker.GetActor()
-            component._picked_mesh = picker.GetDataSet()
+            component._picked_mesh = cast('pv.DataSet | None', picker.GetDataSet())
 
             if show_point:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         picked_point,
@@ -948,19 +1013,19 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_mesh_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show=True,
-        show_message=True,
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        font_size=18,
-        left_clicking=False,
-        use_actor=False,
-        picker=PickerType.CELL,
+        show: bool = True,
+        show_message: bool | str = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        font_size: int = 18,
+        left_clicking: bool = False,
+        use_actor: bool = False,
+        picker: PickerType | str | int = PickerType.CELL,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking of a mesh.
 
         Parameters
@@ -1044,7 +1109,7 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):  # noqa: ARG001
+        def end_pick_call_back(*args) -> None:  # noqa: ARG001
             component = self_()
             if component is None:
                 return
@@ -1058,15 +1123,15 @@ class PickingComponent(_NoNewAttrMixin):
             if show:
                 # Select the renderer where the mesh is added.
                 active_renderer_index = plotter.renderers._active_index
-                loc = plotter.iren.get_event_subplot_loc()
-                plotter.subplot(*loc)
+                loc = plotter._get_iren_not_none().get_event_subplot_loc()
+                plotter.subplot(*np.atleast_1d(loc))
 
                 # Use try in case selection is empty or invalid
                 try:
-                    with plotter.iren.poked_subplot():
+                    with plotter._get_iren_not_none().poked_subplot():
                         _kwargs = kwargs.copy()
                         plotter.add_mesh(
-                            component._picked_mesh,
+                            component._get_picked_mesh_not_none(),
                             name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['mesh']),
                             style=style,
                             color=color,
@@ -1080,7 +1145,7 @@ class PickingComponent(_NoNewAttrMixin):
 
                 # Reset to the active renderer.
                 loc = plotter.renderers.index_to_loc(active_renderer_index)
-                plotter.subplot(*loc)
+                plotter.subplot(*np.atleast_1d(loc))
 
                 # render here prior to running the callback
                 plotter.render()
@@ -1103,18 +1168,18 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_rectangle_through_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show=True,
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        show_message=True,
-        font_size=18,
-        start=False,
-        show_frustum=False,
+        show: bool = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        show_message: bool | str = True,
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Enable rectangle based cell picking through the scene.
 
         Parameters
@@ -1158,21 +1223,21 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):
+        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             if picked is None:
                 # Indicates invalid pick
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     component._clear_picking_representations()
                 return
 
             component._picked_cell = picked
 
             if show:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         picked,
@@ -1188,20 +1253,17 @@ class PickingComponent(_NoNewAttrMixin):
             if callback is not None:
                 _poked_context_callback(plotter, callback, component.picked_cells)
 
-        def through_pick_callback(selection: RectangleSelection):
+        def through_pick_callback(selection: RectangleSelection) -> None:
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             picked = pv.MultiBlock()
-            renderer = plotter.iren.get_poked_renderer()
+            renderer = plotter._get_iren_not_none().get_poked_renderer()
             for actor in renderer.actors.values():
-                if (
-                    (mapper := actor.GetMapper())
-                    and _mapper_has_data_set_input(mapper)
-                    and actor.GetPickable()
-                ):
-                    input_mesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
+                dataset = _prop_get_data_set_input(actor)
+                if dataset is not None and actor.GetPickable():
+                    input_mesh = pv.wrap(dataset)
                     input_mesh.cell_data['original_cell_ids'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
@@ -1214,7 +1276,7 @@ class PickingComponent(_NoNewAttrMixin):
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 component._picked_cell = None
             elif picked.n_blocks == 1:
-                component._picked_cell = picked[0]  # type: ignore[assignment]
+                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
             else:
                 component._picked_cell = picked
 
@@ -1233,18 +1295,18 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_rectangle_visible_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show=True,
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        show_message=True,
-        font_size=18,
-        start=False,
-        show_frustum=False,
+        show: bool = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        show_message: bool | str = True,
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Enable rectangle based cell picking on visible surfaces.
 
         Parameters
@@ -1288,18 +1350,18 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):
+        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             if picked is None:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     component._clear_picking_representations()
                 return
 
             if show:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         picked,
@@ -1315,23 +1377,23 @@ class PickingComponent(_NoNewAttrMixin):
             if callback is not None:
                 _poked_context_callback(plotter, callback, picked)
 
-        def visible_pick_callback(selection):
+        def visible_pick_callback(selection: RectangleSelection) -> None:  # noqa: ARG001
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             picked = pv.MultiBlock()
-            renderer = plotter.iren.get_poked_renderer()
+            renderer = plotter._get_iren_not_none().get_poked_renderer()
             x0, y0, x1, y1 = renderer.get_pick_position()
             if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
                 selector = _vtk.vtkOpenGLHardwareSelector()
                 selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
                 selector.SetRenderer(renderer)
                 selector.SetArea(x0, y0, x1, y1)
-                selection = selector.Select()
+                hardware_selection = selector.Select()
 
-                for node in range(selection.GetNumberOfNodes()):
-                    selection_node = selection.GetNode(node)
+                for node in range(hardware_selection.GetNumberOfNodes()):
+                    selection_node = hardware_selection.GetNode(node)
                     if selection_node is None:  # pragma: no cover
                         continue
                     cids = pv.convert_array(selection_node.GetSelectionList())
@@ -1361,12 +1423,12 @@ class PickingComponent(_NoNewAttrMixin):
 
                 # memory leak issues on vtk==9.0.20210612.dev0
                 # See https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
-                selection.UnRegister(selection)
+                hardware_selection.UnRegister(hardware_selection)
 
             if len(picked) == 0 or picked.combine().n_cells < 1:
                 component._picked_cell = None
             elif len(picked) == 1:
-                component._picked_cell = picked[0]  # type: ignore[assignment]
+                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
             else:
                 component._picked_cell = picked
 
@@ -1385,19 +1447,19 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_cell_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        through=True,
-        show=True,
-        show_message=True,
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        font_size=18,
-        start=False,
-        show_frustum=False,
+        through: bool = True,
+        show: bool = True,
+        show_message: bool | str = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking of cells with a rectangle selection tool.
 
         Press ``"r"`` to enable rectangle based selection.  Press
@@ -1496,25 +1558,26 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_element_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        mode='cell',
-        show=True,
-        show_message=True,
-        font_size=18,
-        tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
-        picker=PickerType.CELL,
+        mode: ElementType | str | int = 'cell',
+        show: bool = True,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        tolerance: float = 0.025,
+        pickable_window: bool = False,
+        left_clicking: bool = False,
+        picker: PickerType | str | int = PickerType.CELL,
         **kwargs,
-    ):
+    ) -> None:
         """Select individual elements on a mesh.
 
         Parameters
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            picked element is input as the first parameter to this callable,
+            or the mesh when ``mode`` is ``"mesh"``.
 
         mode : str | ElementType, default: "cell"
             The picking mode. Either ``"mesh"``, ``"cell"``, ``"face"``,
@@ -1553,8 +1616,8 @@ class PickingComponent(_NoNewAttrMixin):
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -1567,7 +1630,7 @@ class PickingComponent(_NoNewAttrMixin):
         mode = ElementType.from_any(mode)
         self_ = weakref.ref(self)
 
-        def _end_handler(picked):
+        def _end_handler(picked: pv.DataSet) -> None:
             component = self_()
             if component is None:
                 return
@@ -1576,7 +1639,7 @@ class PickingComponent(_NoNewAttrMixin):
                 _poked_context_callback(plotter, callback, picked)
 
             if mode == ElementType.CELL:
-                component._picked_cell = picked
+                component._picked_cell = cast('pv.UnstructuredGrid', picked)
 
             if show:
                 if mode == ElementType.CELL:
@@ -1589,7 +1652,7 @@ class PickingComponent(_NoNewAttrMixin):
                 if mode in [ElementType.CELL, ElementType.FACE]:
                     picked = picked.extract_all_edges()
 
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         picked,
@@ -1616,7 +1679,9 @@ class PickingComponent(_NoNewAttrMixin):
             **kwargs,
         )
 
-    def enable_block_picking(self, callback=None, side='left'):
+    def enable_block_picking(
+        self, callback: Callable[..., None] | None = None, side: str = 'left'
+    ) -> None:
         """Enable composite block picking.
 
         Use this picker to return the index of a DataSet when using composite
@@ -1663,13 +1728,16 @@ class PickingComponent(_NoNewAttrMixin):
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # noqa: ARG001  # numpydoc ignore=PR01
+        def get_picked_block(*args, **kwargs) -> None:  # noqa: ARG001  # numpydoc ignore=PR01
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
-            x, y = plotter.mouse_position
-            loc = plotter.iren.get_event_subplot_loc()
+            mouse_position = plotter.mouse_position
+            if mouse_position is None:  # pragma: no cover
+                return
+            x, y = mouse_position
+            loc = plotter._get_iren_not_none().get_event_subplot_loc()
             index = plotter.renderers.loc_to_index(loc)
             renderer = plotter.renderers[index]
 
@@ -1703,7 +1771,7 @@ class PickingComponent(_NoNewAttrMixin):
     # Higher-level convenience pickers
     # =========================================================================
 
-    def fly_to_mouse_position(self, *, focus=False):
+    def fly_to_mouse_position(self, *, focus: bool = False) -> None:
         """Focus on last stored mouse position.
 
         Parameters
@@ -1721,7 +1789,7 @@ class PickingComponent(_NoNewAttrMixin):
         else:
             plotter.fly_to(click_point)
 
-    def enable_fly_to_right_click(self, callback=None):
+    def enable_fly_to_right_click(self, callback: Callable[..., None] | None = None) -> None:
         """Set the camera to track right click positions.
 
         A convenience method to track right click positions and fly to
@@ -1736,7 +1804,7 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def _the_callback(*_):
+        def _the_callback(*_) -> None:
             component = self_()
             if component is None:
                 return
@@ -1751,17 +1819,17 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_path_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show_message=True,
-        font_size=18,
-        color='pink',
-        point_size=10,
-        line_width=5,
-        show_path=True,
-        tolerance=0.025,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        line_width: float = 5,
+        show_path: bool = True,
+        tolerance: float = 0.025,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking at paths.
 
         This is a convenience method for :func:`enable_point_picking
@@ -1812,13 +1880,13 @@ class PickingComponent(_NoNewAttrMixin):
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points):
+        def make_line_cells(n_points: int) -> NumpyArray[int]:
             cells = np.arange(0, n_points, dtype=np.int_)
             return np.insert(cells, 0, n_points)
 
         the_points = []
 
-        def _the_callback(picked_point, picker):
+        def _the_callback(picked_point: VectorLike[float], picker: _vtk.vtkPicker) -> None:
             component = self_()
             if component is None:
                 return
@@ -1829,7 +1897,7 @@ class PickingComponent(_NoNewAttrMixin):
             component.picked_path = pv.PolyData(np.array(the_points))
             component.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         component.picked_path,
@@ -1844,13 +1912,13 @@ class PickingComponent(_NoNewAttrMixin):
             if callable(callback):
                 _poked_context_callback(plotter, callback, component.picked_path)
 
-        def _clear_path_event_watcher():
+        def _clear_path_event_watcher() -> None:
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             del the_points[:]
-            with plotter.iren.poked_subplot():
+            with plotter._get_iren_not_none().poked_subplot():
                 component._clear_picking_representations()
 
         self._plotter.add_key_event('c', _clear_path_event_watcher)
@@ -1870,18 +1938,18 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_geodesic_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        show_message=True,
-        font_size=18,
-        color='pink',
-        point_size=10,
-        line_width=5,
-        tolerance=0.025,
-        show_path=True,
-        keep_order=True,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        line_width: float = 5,
+        tolerance: float = 0.025,
+        show_path: bool = True,
+        keep_order: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to
@@ -1948,7 +2016,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self.picked_geodesic = pv.PolyData()
 
-        def _the_callback(picked_point, picker):
+        def _the_callback(picked_point: VectorLike[float], picker: _vtk.vtkPicker) -> None:
             component = self_()
             if component is None:
                 return
@@ -1956,7 +2024,7 @@ class PickingComponent(_NoNewAttrMixin):
             if picker.GetDataSet() is None:
                 return
             mesh = pv.wrap(picker.GetDataSet())
-            idx = mesh.find_closest_point(picked_point)
+            idx = mesh.find_closest_point(np.asarray(picked_point))
             point = mesh.points[idx]
             if component._last_picked_idx is None:
                 component.picked_geodesic = pv.PolyData(point)
@@ -1968,6 +2036,8 @@ class PickingComponent(_NoNewAttrMixin):
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[component._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
+                if component.picked_geodesic is None:  # pragma: no cover
+                    return
                 component.picked_geodesic += surface.geodesic(
                     start_idx, end_idx, keep_order=keep_order
                 )
@@ -1981,7 +2051,7 @@ class PickingComponent(_NoNewAttrMixin):
             component._last_picked_idx = idx
 
             if show_path:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         component.picked_geodesic,
@@ -1996,13 +2066,13 @@ class PickingComponent(_NoNewAttrMixin):
             if callable(callback):
                 _poked_context_callback(plotter, callback, component.picked_geodesic)
 
-        def _clear_g_path_event_watcher():
+        def _clear_g_path_event_watcher() -> None:
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             component.picked_geodesic = pv.PolyData()
-            with plotter.iren.poked_subplot():
+            with plotter._get_iren_not_none().poked_subplot():
                 component._clear_picking_representations()
             component._last_picked_idx = None
 
@@ -2023,20 +2093,20 @@ class PickingComponent(_NoNewAttrMixin):
     def enable_horizon_picking(
         self,
         /,
-        callback=None,
+        callback: Callable[..., None] | None = None,
         *,
-        normal=(0.0, 0.0, 1.0),
-        width=None,
-        show_message=True,
-        font_size=18,
-        color='pink',
-        point_size=10,
-        line_width=5,
-        show_path=True,
-        opacity=0.75,
-        show_horizon=True,
+        normal: VectorLike[float] = (0.0, 0.0, 1.0),
+        width: float | None = None,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        line_width: float = 5,
+        show_path: bool = True,
+        opacity: float = 0.75,
+        show_horizon: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable horizon picking.
 
         Helper for the ``enable_path_picking`` method to also show a
@@ -2093,18 +2163,18 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def _clear_horizon_event_watcher():
+        def _clear_horizon_event_watcher() -> None:
             component = self_()
             if component is None:
                 return
             plotter = component._plotter
             component.picked_horizon = pv.PolyData()
-            with plotter.iren.poked_subplot():
+            with plotter._get_iren_not_none().poked_subplot():
                 component._clear_picking_representations()
 
         self._plotter.add_key_event('c', _clear_horizon_event_watcher)
 
-        def _the_callback(path):
+        def _the_callback(path: pv.PolyData) -> None:
             component = self_()
             if component is None:
                 return
@@ -2115,7 +2185,7 @@ class PickingComponent(_NoNewAttrMixin):
             component.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                with plotter.iren.poked_subplot():
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
                     plotter.add_mesh(
                         component.picked_horizon,

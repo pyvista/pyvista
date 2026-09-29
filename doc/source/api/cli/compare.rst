@@ -17,8 +17,10 @@ Examples
         cd $(python -c "import pyvista.examples, pathlib; print(pathlib.Path(pyvista.examples.__file__).parent)")
 
 Compare two mesh files. Each is drawn in its own subplot and labeled with its filename.
+A keyword given one value per file is drawn one value per subplot, so the two meshes
+here are drawn in two colors.
 
-.. command-output:: pyvista compare ant.ply nut.ply
+.. command-output:: pyvista compare ant.ply nut.ply --color="['red','blue']"
    :extraargs: --off-screen
    :cwd: /_local_examples
 
@@ -28,7 +30,10 @@ Compare two mesh files. Each is drawn in its own subplot and labeled with its fi
    import pyvista as pv
    from pathlib import Path
    examples = Path('source') / '_local_examples'
-   pv.plot_compare({p.stem: pv.read(p) for p in [examples / 'ant.ply', examples / 'nut.ply']})
+   pv.plot_compare(
+       {p.stem: pv.read(p) for p in [examples / 'ant.ply', examples / 'nut.ply']},
+       color=['red', 'blue'],
+   )
 
 Compare any number of files using wildcard patterns. The subplots are arranged in a
 compact grid which is never taller than it is wide.

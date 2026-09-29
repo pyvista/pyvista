@@ -11,6 +11,7 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import itertools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
@@ -27,7 +28,7 @@ from pyvista._warn_external import warn_external
 if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import CameraPositionOptions
 
 
@@ -58,7 +59,7 @@ _NOT_SUPPORTED_PARAMETRIC = [
 
 
 def plot_cell(  # noqa: ANN201
-    grid: DataSet | MultiBlock,
+    grid: DataSet | MultiBlock[Any],
     cpos: CameraPositionOptions | None = None,
     *,
     line_width: int | None = None,
@@ -2805,7 +2806,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     :class:`~pyvista.MultiBlock` and its bounds are normalized to fit inside a 1x1x1 grid.
 
     >>> triangle
-    MultiBlock (...)
+    MultiBlock[UnstructuredGrid] (...)
       N Blocks:   1
       X Bounds:   0.000e+00, 1.000e+00
       Y Bounds:   -5.551e-17, 1.000e+00

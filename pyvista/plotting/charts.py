@@ -18,6 +18,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
@@ -28,6 +29,8 @@ from .colors import _formatted_color_synonyms
 from .colors import _formatted_hex_colors
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core import LineStyle
+
     from ._typing import Chart
 
 
@@ -191,12 +194,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     LINE_STYLES : dict
         Dictionary containing all allowed line styles as its keys.
 
-        .. include:: ../pen_line_styles.rst
+        .. include:: /api/plotting/line_styles.rst
 
     """
 
     LINE_STYLES: ClassVar[
-        dict[str, dict[str, int | str]]
+        dict[LineStyle, dict[str, int | str]]
     ] = {  # descr is used in the documentation, set to None to hide it from the docs.
         '': {'id': _vtk.vtkPen.NO_PEN, 'descr': 'Hidden'},
         '-': {'id': _vtk.vtkPen.SOLID_LINE, 'descr': 'Solid'},
@@ -286,13 +289,9 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     def style(self, val):
         if val is None:
             val = ''
-        try:
-            self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
-            self._line_style = val
-        except KeyError:
-            formatted_styles = '", "'.join(self.LINE_STYLES.keys())
-            msg = f'Invalid line style. Allowed line styles: "{formatted_styles}"'
-            raise ValueError(msg)
+        _check_line_style(val)
+        self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
+        self._line_style = val
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):

@@ -205,6 +205,13 @@ class AxesActor(
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
+        Value must be in the range ``[0, 1]``.
+
+        .. versionchanged:: 0.50
+
+            Values outside ``[0, 1]`` now raise ``ValueError``. Previously they were
+            stored and clamped by VTK.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -225,13 +232,24 @@ class AxesActor(
     def shaft_length(self, length: float | VectorLike[float]) -> None:
         self.SetNormalizedShaftLength(
             *_validation.validate_array3(
-                length, broadcast=True, dtype_out=float, name='shaft_length'
+                length,
+                broadcast=True,
+                dtype_out=float,
+                name='shaft_length',
+                must_be_in_range=[0, 1],
             )
         )
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
+
+        Value must be in the range ``[0, 1]``.
+
+        .. versionchanged:: 0.50
+
+            Values outside ``[0, 1]`` now raise ``ValueError``. Previously they were
+            stored and clamped by VTK.
 
         Examples
         --------
@@ -253,7 +271,11 @@ class AxesActor(
     def tip_length(self, length: float | VectorLike[float]) -> None:
         self.SetNormalizedTipLength(
             *_validation.validate_array3(
-                length, broadcast=True, dtype_out=float, name='tip_length'
+                length,
+                broadcast=True,
+                dtype_out=float,
+                name='tip_length',
+                must_be_in_range=[0, 1],
             )
         )
 

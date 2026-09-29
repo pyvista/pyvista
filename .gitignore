@@ -91,7 +91,7 @@ doc/source/api/examples/dataset-gallery
 doc/source/api/readers/readers_table.rst
 doc/source/images/charts
 doc/source/images/colormaps
-doc/source/api/plotting/charts/pen_line_styles.rst
+doc/source/api/plotting/line_styles.rst
 doc/source/api/plotting/charts/plot_color_schemes.rst
 doc/source/api/plotting/charts/scatter_marker_styles.rst
 doc/source/api/utilities/color_table

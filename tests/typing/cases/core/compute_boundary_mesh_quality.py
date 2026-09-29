@@ -16,6 +16,7 @@ from tests.typing.meshes import unstructured
 
 SKIP_RUNTIME = {
     'pointset().compute_boundary_mesh_quality()': 'a `PointSet` has no cells, so the call raises',
+    'poly().compute_boundary_mesh_quality()': 'a `PolyData` surface has no 3D cells, so the call raises',
 }
 
 

@@ -9,6 +9,7 @@ import pyvista as pv
 from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image
 from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_poly
 from tests.typing.meshes import pointset
 from tests.typing.meshes import poly
 from tests.typing.meshes import rectilinear
@@ -28,5 +29,8 @@ assert_types(structured().compute_cell_sizes(), pv.StructuredGrid)
 assert_types(unstructured().compute_cell_sizes(), pv.UnstructuredGrid)
 assert_types(explicit_structured().compute_cell_sizes(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().compute_cell_sizes(), pv.MultiBlock)
+
+# A declared block type survives the filter
+assert_types(multiblock_poly().compute_cell_sizes(), pv.MultiBlock[pv.PolyData])
 
 assert_types(pointset().compute_cell_sizes(), Never)  # pragma: no cover

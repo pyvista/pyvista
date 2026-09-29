@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import itertools
+from typing import TYPE_CHECKING
+from typing import cast
 import weakref
 
 from pyvista import _vtk
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+
+if TYPE_CHECKING:
+    from typing import TypeAlias
+
+    # Every pass added to a renderer delegates to the one before it
+    _DelegatingPass: TypeAlias = '_vtk.vtkImageProcessingPass | _vtk.vtkSSAAPass'
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
@@ -42,25 +50,25 @@ class RenderPasses(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, renderer):
+    def __init__(self, renderer: _vtk.vtkRenderer) -> None:
         """Initialize render passes."""
         self._renderer_ref = weakref.ref(renderer)
         self._closed = False
 
-        self._passes = {}
-        self._fxaa_pass = None
-        self._shadow_map_pass = None
-        self._edl_pass = None
-        self._dof_pass = None
-        self._ssaa_pass = None
-        self._ssao_pass = None
-        self._blur_passes = []
-        self.__pass_collection = None
-        self.__seq_pass = None
-        self.__camera_pass = None
+        self._passes: dict[str, list[_DelegatingPass]] = {}
+        self._fxaa_pass: _vtk.vtkOpenGLFXAAPass | None = None
+        self._shadow_map_pass: _vtk.vtkShadowMapPass | None = None
+        self._edl_pass: _vtk.vtkEDLShading | None = None
+        self._dof_pass: _vtk.vtkDepthOfFieldPass | None = None
+        self._ssaa_pass: _vtk.vtkSSAAPass | None = None
+        self._ssao_pass: _vtk.vtkSSAOPass | None = None
+        self._blur_passes: list[_vtk.vtkGaussianBlurPass] = []
+        self.__pass_collection: _vtk.vtkRenderPassCollection | None = None
+        self.__seq_pass: _vtk.vtkSequencePass | None = None
+        self.__camera_pass: _vtk.vtkCameraPass | None = None
 
     @property
-    def _pass_collection(self):
+    def _pass_collection(self) -> _vtk.vtkRenderPassCollection:
         """Initialize (when necessary) the pass collection and return it.
 
         This lets us lazily generate the pass collection only when we need it
@@ -69,10 +77,10 @@ class RenderPasses(_NoNewAttrMixin):
         """
         if self.__pass_collection is None:
             self._init_passes()
-        return self.__pass_collection
+        return cast('_vtk.vtkRenderPassCollection', self.__pass_collection)
 
     @property
-    def _seq_pass(self):
+    def _seq_pass(self) -> _vtk.vtkSequencePass:
         """Initialize (when necessary) the sequence collection and return it.
 
         This lets us lazily generate the sequence collection only when we need it
@@ -81,10 +89,10 @@ class RenderPasses(_NoNewAttrMixin):
         """
         if self.__seq_pass is None:
             self._init_passes()
-        return self.__seq_pass
+        return cast('_vtk.vtkSequencePass', self.__seq_pass)
 
     @property
-    def _camera_pass(self):
+    def _camera_pass(self) -> _vtk.vtkCameraPass:
         """Initialize (when necessary) the camera pass and return it.
 
         This lets us lazily generate the camera pass only when we need it
@@ -93,9 +101,9 @@ class RenderPasses(_NoNewAttrMixin):
         """
         if self.__camera_pass is None:
             self._init_passes()
-        return self.__camera_pass
+        return cast('_vtk.vtkCameraPass', self.__camera_pass)
 
-    def _init_passes(self):
+    def _init_passes(self) -> None:
         """Initialize the renderer's standard passes."""
         # simulate the standard VTK rendering passes and put them in a sequence
         self.__pass_collection = _vtk.vtkRenderPassCollection()
@@ -109,19 +117,19 @@ class RenderPasses(_NoNewAttrMixin):
         self.__camera_pass.SetDelegatePass(self._seq_pass)
 
     @property
-    def _renderer(self):
+    def _renderer(self) -> _vtk.vtkRenderer | None:
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
         return None  # type: ignore[unreachable]
 
-    def _check_closed(self):
+    def _check_closed(self) -> None:
         """Raise if the renderer has already been closed."""
         if self._closed:
             msg = 'The renderer has been closed.'
             raise RuntimeError(msg)
 
-    def close(self):
+    def close(self) -> None:
         """Delete all render passes and mark them permanently unusable.
 
         Unlike plain ``deep_clean()``, this is only called once the owning
@@ -132,7 +140,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._closed = True
         self.deep_clean()
 
-    def deep_clean(self):
+    def deep_clean(self) -> None:
         """Delete all render passes."""
         for render_pass in (
             *itertools.chain.from_iterable(self._passes.values()),
@@ -142,10 +150,10 @@ class RenderPasses(_NoNewAttrMixin):
             if render_pass is not None:
                 self._release_graphics_resources(render_pass)
         if self._renderer is not None:
-            self._renderer.SetPass(None)
+            self._renderer.SetPass(None)  # type: ignore[arg-type]
         self._renderer_ref = None  # type: ignore[assignment]
         if self.__seq_pass is not None:
-            self.__seq_pass.SetPasses(None)
+            self.__seq_pass.SetPasses(None)  # type: ignore[arg-type]
         self.__seq_pass = None
         self.__pass_collection = None
         self.__camera_pass = None
@@ -157,7 +165,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._ssao_pass = None
         self._blur_passes = []
 
-    def enable_edl_pass(self):
+    def enable_edl_pass(self) -> _vtk.vtkEDLShading | None:
         """Enable the EDL pass.
 
         Returns
@@ -172,7 +180,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._add_pass(self._edl_pass)
         return self._edl_pass
 
-    def disable_edl_pass(self):
+    def disable_edl_pass(self) -> None:
         """Disable the EDL pass."""
         self._check_closed()
         if self._edl_pass is None:
@@ -180,7 +188,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._remove_pass(self._edl_pass)
         self._edl_pass = None
 
-    def add_blur_pass(self):
+    def add_blur_pass(self) -> _vtk.vtkGaussianBlurPass:
         """Add a :vtk:`vtkGaussianBlurPass` pass.
 
         This is a :vtk:`vtkImageProcessingPass` and delegates to the last pass.
@@ -196,14 +204,14 @@ class RenderPasses(_NoNewAttrMixin):
         self._blur_passes.append(blur_pass)
         return blur_pass
 
-    def remove_blur_pass(self):
+    def remove_blur_pass(self) -> None:
         """Remove a single :vtk:`vtkGaussianBlurPass` pass."""
         self._check_closed()
         if self._blur_passes:
             # order of the blur passes does not matter
             self._remove_pass(self._blur_passes.pop())
 
-    def enable_shadow_pass(self):
+    def enable_shadow_pass(self) -> _vtk.vtkShadowMapPass | None:
         """Enable shadow pass.
 
         Returns
@@ -222,7 +230,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._update_passes()
         return self._shadow_map_pass
 
-    def disable_shadow_pass(self):
+    def disable_shadow_pass(self) -> None:
         """Disable shadow pass."""
         self._check_closed()
         if self._shadow_map_pass is None:
@@ -233,7 +241,9 @@ class RenderPasses(_NoNewAttrMixin):
         self._shadow_map_pass = None
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, *, automatic_focal_distance: bool = True):
+    def enable_depth_of_field_pass(
+        self, *, automatic_focal_distance: bool = True
+    ) -> _vtk.vtkDepthOfFieldPass | None:
         """Enable the depth of field pass.
 
         Parameters
@@ -260,7 +270,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._add_pass(self._dof_pass)
         return self._dof_pass
 
-    def disable_depth_of_field_pass(self):
+    def disable_depth_of_field_pass(self) -> None:
         """Disable the depth of field pass."""
         self._check_closed()
         if self._dof_pass is None:
@@ -268,7 +278,9 @@ class RenderPasses(_NoNewAttrMixin):
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
 
-    def enable_ssao_pass(self, *, radius, bias, kernel_size, blur):
+    def enable_ssao_pass(
+        self, *, radius: float, bias: float, kernel_size: int, blur: bool
+    ) -> _vtk.vtkSSAOPass | None:
         """Enable the screen space ambient occlusion pass.
 
         Parameters
@@ -302,7 +314,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._add_pass(self._ssao_pass)
         return self._ssao_pass
 
-    def disable_ssao_pass(self):
+    def disable_ssao_pass(self) -> None:
         """Disable the screen space ambient occlusion pass."""
         self._check_closed()
         if self._ssao_pass is None:
@@ -310,7 +322,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._remove_pass(self._ssao_pass)
         self._ssao_pass = None
 
-    def enable_ssaa_pass(self):
+    def enable_ssaa_pass(self) -> _vtk.vtkSSAAPass | None:
         """Enable super-sample anti-aliasing pass.
 
         Returns
@@ -325,7 +337,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._add_pass(self._ssaa_pass)
         return self._ssaa_pass
 
-    def disable_ssaa_pass(self):
+    def disable_ssaa_pass(self) -> None:
         """Disable super-sample anti-aliasing pass."""
         self._check_closed()
         if self._ssaa_pass is None:
@@ -333,11 +345,11 @@ class RenderPasses(_NoNewAttrMixin):
         self._remove_pass(self._ssaa_pass)
         self._ssaa_pass = None
 
-    def _update_passes(self):
+    def _update_passes(self) -> None:
         """Reassemble pass delegation."""
         self._check_closed()
 
-        current_pass = self._camera_pass
+        current_pass: _vtk.vtkRenderPass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:
             if class_name in self._passes:
                 for render_pass in self._passes[class_name]:
@@ -346,15 +358,15 @@ class RenderPasses(_NoNewAttrMixin):
 
         # reset to the default rendering if no special passes have been added
         if current_pass is self._camera_pass and self._shadow_map_pass is None:
-            self._renderer.SetPass(None)
+            self._renderer.SetPass(None)  # type: ignore[union-attr, arg-type]
         else:
-            self._renderer.SetPass(current_pass)
+            self._renderer.SetPass(current_pass)  # type: ignore[union-attr]
 
-    def _add_pass(self, render_pass):
+    def _add_pass(self, render_pass: _DelegatingPass) -> None:
         """Add a render pass."""
         class_name = render_pass.GetClassName()
 
-        if class_name in PRE_PASS and render_pass in self._passes:
+        if class_name in PRE_PASS and render_pass in self._passes.get(class_name, []):
             return
 
         if class_name not in self._passes:
@@ -364,14 +376,14 @@ class RenderPasses(_NoNewAttrMixin):
 
         self._update_passes()
 
-    def _release_graphics_resources(self, render_pass):
+    def _release_graphics_resources(self, render_pass: _vtk.vtkRenderPass) -> None:
         """Free the GPU resources a pass holds before it is dropped."""
         renderer = self._renderer
         ren_win = None if renderer is None else renderer.GetRenderWindow()
         if ren_win is not None:
             render_pass.ReleaseGraphicsResources(ren_win)
 
-    def _remove_pass(self, render_pass):
+    def _remove_pass(self, render_pass: _DelegatingPass) -> None:
         """Remove a pass.
 
         Remove a pass and reassemble the pass ordering.

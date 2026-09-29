@@ -339,6 +339,14 @@ def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
     raise TypeError(msg)
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def get_array(mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable, name: str, *, preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = ..., err: Literal[True]) -> pyvista_ndarray: ...
+@overload
+def get_array(mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable, name: str, *, preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = ..., err: bool = ...) -> pyvista_ndarray | None: ...
+# ruff: enable[E501]
+# fmt: on
 def get_array(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,

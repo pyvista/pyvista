@@ -1352,6 +1352,15 @@ def Line(
     pyvista.PolyData
         Line mesh.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     Create a line between ``(0, 0, 0)`` and ``(0, 0, 1)``.
@@ -1382,6 +1391,15 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     -------
     pyvista.PolyData
         Line mesh.
+
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
 
     Examples
     --------
@@ -2043,6 +2061,15 @@ def CircularArc(
     pyvista.PolyData
         Circular arc mesh.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     Create a quarter arc centered at the origin in the xy plane.
@@ -2127,6 +2154,15 @@ def CircularArcFromNormal(
     -------
     pyvista.PolyData
         Circular arc mesh.
+
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
 
     Examples
     --------

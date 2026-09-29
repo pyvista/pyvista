@@ -109,31 +109,25 @@ knee = examples.download_knee()
 
 # %%
 # And here we inspect the DICOM image with a few different opacity mappings:
-pl = pv.Plotter(shape=(2, 2), border=False)
+opacities = [None, 'linear', 'sigmoid', 'geom_r']
 
-pl.add_mesh(knee, cmap='bone', scalar_bar_args={'title': 'No Opacity'})
-pl.view_xy()
-
-pl.subplot(0, 1)
-pl.add_mesh(
-    knee, cmap='bone', opacity='linear', scalar_bar_args={'title': 'Linear Opacity'}
+pv.plot_compare(
+    [knee] * 4,
+    labels=[
+        'No Opacity',
+        'Linear Opacity',
+        'Sigmoidal Opacity',
+        'Reversed Log Scale Opacity',
+    ],
+    show_axes=False,
+    cmap='bone',
+    opacity=opacities,
+    scalar_bar_args=[
+        {'title': str(opacity), 'vertical': True, 'position_x': 0.1, 'fmt': '%.0f'}
+        for opacity in opacities
+    ],
+    cpos='xy',
 )
-pl.view_xy()
-
-pl.subplot(1, 0)
-pl.add_mesh(
-    knee, cmap='bone', opacity='sigmoid', scalar_bar_args={'title': 'Sigmoidal Opacity'}
-)
-pl.view_xy()
-
-pl.subplot(1, 1)
-pl.add_mesh(
-    knee, cmap='bone', opacity='geom_r', scalar_bar_args={'title': 'Log Scale Opacity'}
-)
-pl.view_xy()
-
-
-pl.show()
 
 # %%
 # Opacity by Array
