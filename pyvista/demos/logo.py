@@ -26,10 +26,10 @@ from typing import overload
 import numpy as np
 
 import pyvista as pv
-from pyvista import _vtk
 from pyvista import examples
-from pyvista.core.filters import _get_output
-from pyvista.core.filters import _update_alg
+from pyvista._version import _is_deprecation_due
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions
@@ -75,6 +75,9 @@ def atomize(
 def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     """Create 3D text from a given string.
 
+    .. deprecated:: 0.50
+        Use :func:`pyvista.Text3D` instead.
+
     Parameters
     ----------
     string : str
@@ -89,19 +92,15 @@ def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
         The 3D text in the form of a PyVista PolyData mesh.
 
     """
-    vec_text = _vtk.vtkVectorText()
-    vec_text.SetText(string)
-
-    extrude = _vtk.vtkLinearExtrusionFilter()
-    extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion()
-    extrude.SetVector(0, 0, 1)
-    extrude.SetScaleFactor(depth)
-
-    tri_filter = _vtk.vtkTriangleFilter()
-    tri_filter.SetInputConnection(extrude.GetOutputPort())
-    _update_alg(tri_filter)
-    return _get_output(tri_filter)
+    msg = '`pyvista.demos.logo.text_3d` is deprecated. Use `pyvista.Text3D` instead.'
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
+    return pv.Text3D(string, depth=depth, center=None)
 
 
 def _voxelize(mesh: pv.PolyData, density: float) -> pv.UnstructuredGrid:
@@ -161,7 +160,7 @@ def logo_letters(
     space_factor = 0.9
     width = 0
     for letter in LOGO_TITLE:
-        mesh_letter = text_3d(letter, depth=depth)
+        mesh_letter = pv.Text3D(letter, depth=depth, center=None)
         this_letter_width = mesh_letter.points[:, 0].max()
         mesh_letter.translate([width * space_factor, 0, 0.0], inplace=True)
         width += this_letter_width
@@ -187,7 +186,7 @@ def logo_voxel(density: float = 0.03) -> pv.UnstructuredGrid:
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return _voxelize(text_3d(LOGO_TITLE, depth=0.3), density=density)
+    return _voxelize(pv.Text3D(LOGO_TITLE, depth=0.3, center=None), density=density)
 
 
 def logo_basic() -> pv.PolyData:
@@ -340,9 +339,7 @@ def plot_logo(
     pl.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
-        text = text_3d('You can move me!', depth=0.1)
-        text.points *= 0.1
-        text.translate([4.0, -0.3, 0], inplace=True)
+        text = pv.Text3D('You can move me!', depth=0.01, width=1.35, center=(4.69, -0.25, 0.005))
         pl.add_mesh(text, color='black')
 
     # finalize plot and show it
