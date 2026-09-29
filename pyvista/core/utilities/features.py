@@ -37,7 +37,7 @@ def create_grid(dataset: DataSet, dimensions: VectorLikeInt | None = (101, 101, 
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple[int, int, int], default: (101, 101, 101)
+    dimensions : VectorLikeInt, default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 
@@ -164,7 +164,9 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
 
 
 def cartesian_to_spherical(
-    x: NDArray[np.floating], y: NDArray[np.floating], z: NDArray[np.floating]
+    x: NDArray[np.integer | np.floating],
+    y: NDArray[np.integer | np.floating],
+    z: NDArray[np.integer | np.floating],
 ) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Convert 3D Cartesian coordinates to spherical coordinates.
 

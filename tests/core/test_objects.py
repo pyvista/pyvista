@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -289,3 +290,11 @@ def test_table_unused_kwargs_deprecated():
     """Unused keyword arguments warn instead of being silently swallowed."""
     with pytest.warns(pv.core.errors.PyVistaDeprecationWarning, match='unused keyword'):
         pv.Table(np.zeros((3, 2)), bogus=1)
+
+
+def test_table_update_from_mapping():
+    arrays = {'a': np.arange(3.0), 'b': [1, 2, 3]}
+    table = pv.Table()
+    table.update(MappingProxyType(arrays))
+    assert table.keys() == ['a', 'b']
+    assert np.array_equal(table['b'], [1, 2, 3])

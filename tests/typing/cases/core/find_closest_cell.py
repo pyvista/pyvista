@@ -8,8 +8,8 @@ from type_assert import assert_types
 
 import pyvista as pv
 
-_Cell = int | NDArray[np.signedinteger]
-_CellAndPoint = tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]
+_Cell = int | NDArray[np.int_]
+_CellAndPoint = tuple[int | NDArray[np.int_], NDArray[np.float64]]
 
 
 def a_flag() -> bool:

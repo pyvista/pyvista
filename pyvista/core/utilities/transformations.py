@@ -13,10 +13,20 @@ import pyvista_validation as _validation
 from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
+    from collections.abc import Sequence
 
+    from numpy.typing import NDArray
+    from scipy.spatial.transform import Rotation
+
+    from pyvista import _vtk
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _MatrixSequence
+    from pyvista.core._typing_core import _RealT
+    from pyvista.core._typing_core import _ScalarT
 
     _FiveArrays: TypeAlias = tuple[
         NDArray[np.floating],
@@ -24,6 +34,13 @@ if TYPE_CHECKING:
         NDArray[np.floating],
         NDArray[np.floating],
         NDArray[np.floating],
+    ]
+    _FiveFloat64Arrays: TypeAlias = tuple[
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
     ]
 
 # The default tolerances of `numpy.isclose`
@@ -71,7 +88,7 @@ def axis_angle_rotation(
 
     Parameters
     ----------
-    axis : sequence[float]
+    axis : VectorLikeFloat
         The direction vector of the rotation axis. It need not be a
         unit vector, but it must not be a zero vector.
 
@@ -81,7 +98,7 @@ def axis_angle_rotation(
         rotation axis. Passed either in degrees or radians depending on
         the value of ``deg``.
 
-    point : sequence[float], optional
+    point : VectorLikeFloat, optional
         The origin of the rotation (a reference point through which the
         rotation axis passes). By default the rotation axis contains the
         origin.
@@ -200,11 +217,11 @@ def reflection(
 
     Parameters
     ----------
-    normal : sequence[float]
+    normal : VectorLikeFloat
         The normal vector of the reflection plane. It need not be a unit
         vector, but it must not be a zero vector.
 
-    point : sequence[float], optional
+    point : VectorLikeFloat, optional
         The origin of the reflection (a reference point through which
         the reflection plane passes). By default the reflection plane
         contains the origin.
@@ -278,16 +295,16 @@ def reflection(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[np.floating], *, inplace: Literal[False] = False) -> NDArray[np.floating]: ...
+def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[_RealT], *, inplace: Literal[False] = False) -> NDArray[np.floating]: ...
 @overload
-def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[np.floating], *, inplace: Literal[True]) -> None: ...
+def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[_FloatingT], *, inplace: Literal[True]) -> None: ...
 @overload
-def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[np.floating], *, inplace: bool = ...) -> NDArray[np.floating] | None: ...
+def apply_transformation_to_points(transformation: NDArray[np.floating], points: NDArray[_FloatingT], *, inplace: bool = ...) -> NDArray[np.floating] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def apply_transformation_to_points(
     transformation: NDArray[np.floating],
-    points: NDArray[np.floating],
+    points: NDArray[np.floating | np.integer],
     *,
     inplace: Literal[True, False] = False,
 ) -> NDArray[np.floating] | None:
@@ -306,8 +323,8 @@ def apply_transformation_to_points(
 
     Returns
     -------
-    numpy.ndarray
-        Transformed points.
+    numpy.ndarray | None
+        Transformed points, or ``None`` when ``inplace=True``.
 
     Examples
     --------
@@ -361,6 +378,25 @@ def apply_transformation_to_points(
         return points_2
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def decomposition(transformation: pyvista_ndarray, *, homogeneous: bool = ...) -> _FiveArrays: ...
+@overload
+def decomposition(transformation: NDArray[np.float64], *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
+@overload
+def decomposition(transformation: NDArray[_IntegerT], *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
+@overload
+def decomposition(transformation: Sequence[Sequence[float]] | _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4 | _vtk.vtkTransform, *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
+@overload
+def decomposition(transformation: NDArray[_ScalarT], *, homogeneous: bool = ...) -> _FiveArrays: ...
+@overload
+def decomposition(transformation: _MatrixSequence, *, homogeneous: bool = ...) -> _FiveArrays: ...
+# `Rotation` is untyped, so it is last to keep it from matching arrays
+@overload
+def decomposition(transformation: Rotation, *, homogeneous: bool = ...) -> _FiveFloat64Arrays: ...
+# ruff: enable[E501]
+# fmt: on
 def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -> _FiveArrays:
     """Decompose a transformation into its components.
 
@@ -516,12 +552,18 @@ def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -
 
 
 def _decomposition_as_homogeneous(  # noqa: PLR0917
-    T: NDArray[np.floating],  # noqa: N803
-    R: NDArray[np.floating],  # noqa: N803
-    N: NDArray[np.floating],  # noqa: N803
-    S: NDArray[np.floating],  # noqa: N803
-    K: NDArray[np.floating],  # noqa: N803
-) -> _FiveArrays:
+    T: NDArray[_FloatingT],  # noqa: N803
+    R: NDArray[_FloatingT],  # noqa: N803
+    N: NDArray[_FloatingT],  # noqa: N803
+    S: NDArray[_FloatingT],  # noqa: N803
+    K: NDArray[_FloatingT],  # noqa: N803
+) -> tuple[
+    NDArray[_FloatingT],
+    NDArray[_FloatingT],
+    NDArray[_FloatingT],
+    NDArray[_FloatingT],
+    NDArray[_FloatingT],
+]:
     """Return TRNSK decomposition as homogeneous matrices."""
     dtype_out = T.dtype  # Assume all inputs have the same dtype
     I3 = np.eye(3, dtype=dtype_out)

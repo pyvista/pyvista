@@ -1609,12 +1609,10 @@ def from_trimesh(
     else:
         _validation.check_instance(mesh, trimesh.Trimesh, name='mesh')
 
-    # Handle case with no faces
-    faces: NDArray[np.signedinteger] = mesh.faces
-    if faces.size == 0:
-        faces = faces.reshape((0, 3))
-    # Trimesh doesn't pad faces
-    polydata = pv.PolyData.from_regular_faces(mesh.vertices, faces=faces, deep=False)
+    # Trimesh doesn't pad faces; reshaping gives an empty face array its (0, 3) shape
+    polydata = pv.PolyData.from_regular_faces(
+        mesh.vertices, faces=mesh.faces.reshape((-1, 3)), deep=False
+    )
 
     pass_point_data, pass_cell_data, pass_field_data = _validate_pass_data(pass_data)
 

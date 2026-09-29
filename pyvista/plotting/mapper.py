@@ -36,12 +36,12 @@ from .utilities.algorithms import ActiveScalarsAlgorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from numpy.typing import NDArray
 
     from pyvista import DataSet
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _AnyArrayLike
+    from pyvista.core._typing_core import _Real
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
@@ -956,7 +956,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_scalars(
         self,
-        scalars: NDArray[Any] | Sequence[Any],
+        scalars: _AnyArrayLike,
         scalars_name: str,
         *,
         n_colors: int = 256,
@@ -972,7 +972,7 @@ class _BaseDataSetMapper(_BaseMapper):
         below_color: ColorLike | None = None,
         cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
-        opacity: NDArray[np.floating] | None = None,
+        opacity: NDArray[_Real] | None = None,
         categories: bool | int = False,
         clim: float | VectorLikeFloat | None = None,
     ) -> None:
@@ -1076,7 +1076,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 ``True`` gives every unique value its own color instead of
                 spreading the colormap evenly over the scalar range.
 
-        clim : sequence[float] | float, optional
+        clim : VectorLikeFloat | float, optional
             Color bar range for scalars.  Defaults to minimum and
             maximum of scalars array.  Example: ``(-1, 2)``. A single value
             ``c`` is the range ``(-c, c)``.

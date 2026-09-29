@@ -229,7 +229,7 @@ def scale_point(
     camera : Camera
         The camera who's matrix to use.
 
-    point : sequence[float]
+    point : VectorLikeFloat
         Scale point coordinates.
 
     invert : bool, default: False
@@ -1977,11 +1977,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         mesh : pyvista.DataSet | pyvista.MultiBlock, optional
             Input mesh to draw bounds axes around.
 
-        bounds : sequence[float], optional
+        bounds : VectorLikeFloat, optional
             Bounds to override mesh bounds in the form ``[xmin, xmax,
             ymin, ymax, zmin, zmax]``.
 
-        axes_ranges : sequence[float], optional
+        axes_ranges : VectorLikeFloat, optional
             When set, these values override the values that are shown on the
             axes. This can be useful when plotting scaled datasets or if you wish
             to manually display different values. These values must be in the
@@ -2781,7 +2781,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        point : sequence[float]
+        point : VectorLikeFloat
             Cartesian point to focus on in the form of ``[x, y, z]``.
 
         render : bool, default: True
@@ -2817,7 +2817,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        point : sequence
+        point : VectorLikeFloat
             Cartesian point to focus on in the form of ``[x, y, z]``.
 
         reset : bool, default: False
@@ -2855,7 +2855,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        vector : sequence[float]
+        vector : VectorLikeFloat
             New camera ``viewup`` vector.
 
         reset : bool, default: True
@@ -3197,7 +3197,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         render : bool, default: True
             Trigger a render after resetting the camera.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3253,7 +3253,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3291,17 +3291,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        vector : sequence[float]
+        vector : VectorLikeFloat
             Direction to point the camera in.
 
-        viewup : sequence[float], optional
+        viewup : VectorLikeFloat, optional
             Sequence describing the view up of the camera.
 
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3331,7 +3331,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3368,7 +3368,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3405,7 +3405,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3442,7 +3442,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3479,7 +3479,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -3516,7 +3516,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If the render window is being shown, trigger a render
             after setting the camera position.
 
-        bounds : iterable(int), optional
+        bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
@@ -4526,10 +4526,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Starting point for ruler.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Ending point for ruler.
 
         flip_range : bool, default: False

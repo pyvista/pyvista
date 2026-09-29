@@ -14,5 +14,5 @@ def an_image() -> pv.ImageData:
     return pv.ImageData(dimensions=(3, 3, 3))
 
 
-assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NDArray[np.signedinteger])
-assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NDArray[np.signedinteger])
+assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NDArray[np.int_])
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NDArray[np.int_])

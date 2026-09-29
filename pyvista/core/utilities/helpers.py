@@ -26,7 +26,6 @@ from .fileio import is_trimesh_mesh
 if TYPE_CHECKING:
     import meshio
     from numpy.typing import NDArray
-    from pyvista_validation.typing import Scalar as _Scalar
     import trimesh
 
     from pyvista import DataObject
@@ -45,6 +44,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import WrappableType
+    from pyvista.core._typing_core import _NumericScalar
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core._typing_core import _VolumeArray
 
 _NORMALS = {
@@ -380,10 +381,10 @@ def generate_plane(normal: VectorLikeFloat, origin: VectorLikeFloat) -> _vtk.vtk
 
     Parameters
     ----------
-    normal : sequence[float]
+    normal : VectorLikeFloat
         Three item sequence representing the normal of the plane.
 
-    origin : sequence[float]
+    origin : VectorLikeFloat
         Three item sequence representing the origin of the plane.
 
     Returns
@@ -445,21 +446,23 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
 # fmt: off
 # ruff: disable[E501]
 @overload
-def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.floating]: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
+@overload
+def axis_rotation(points: NDArray[np.integer], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
 @overload
 def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
 @overload
-def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.floating] | None: ...
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.float64] | None: ...
 # ruff: enable[E501]
 # fmt: on
 def axis_rotation(
-    points: NDArray[np.floating],
+    points: NDArray[np.floating | np.integer],
     angle: float,
     *,
     inplace: bool = False,
     deg: bool = True,
     axis: str = 'z',
-) -> NDArray[np.floating] | None:
+) -> NDArray[np.float64] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -483,8 +486,8 @@ def axis_rotation(
 
     Returns
     -------
-    numpy.ndarray
-        Rotated points.
+    numpy.ndarray | None
+        Rotated points as ``float64``, or ``None`` when ``inplace=True``.
 
     Examples
     --------
@@ -509,7 +512,14 @@ def axis_rotation(
         raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
-    return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
+    if inplace:
+        transformations.apply_transformation_to_points(
+            rot_mat, cast('NDArray[np.floating]', points), inplace=True
+        )
+        return None
+    return cast(
+        'NDArray[np.float64]', transformations.apply_transformation_to_points(rot_mat, points)
+    )
 
 
 def is_inside_bounds(
@@ -525,7 +535,7 @@ def is_inside_bounds(
     point : float | VectorLikeFloat
         Three item Cartesian point (that is, ``[x, y, z]``).
 
-    bounds : sequence[float]
+    bounds : VectorLikeFloat
         Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     Returns
@@ -546,8 +556,8 @@ def is_inside_bounds(
 
 
 def _is_inside_bounds(
-    point: deque[float | np.floating | np.integer | np.bool_],
-    bounds: deque[float | np.floating | np.integer | np.bool_],
+    point: deque[float | _NumericScalar],
+    bounds: deque[float | _NumericScalar],
 ) -> bool:
     """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:
