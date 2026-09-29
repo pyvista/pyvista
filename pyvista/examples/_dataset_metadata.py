@@ -205,18 +205,13 @@ class ExampleMetadata:
     def attribution_required(self) -> bool:
         """Return whether any license named requires the work to be credited.
 
-        Undetermined terms count as requiring it.
-
         Returns
         -------
         bool
             ``True`` when credit is required.
 
         """
-        return not self.licenses or any(
-            lic.attribution_required or lic.spdx_id == _UNDETERMINED_LICENSE
-            for lic in self.licenses
-        )
+        return not self.licenses or any(lic.attribution_required for lic in self.licenses)
 
     @property
     def share_alike(self) -> bool:
@@ -347,7 +342,7 @@ def _license_terms(expression: str) -> list[str]:
 
 
 def _license_text_url(file: str | None) -> str | None:
-    """Resolve a `[license.*]` `file` value against the published repository."""
+    """Resolve a `[license.*]` `file` value against the published repository, not a local cache."""
     if not file:
         return None
     from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE  # noqa: PLC0415

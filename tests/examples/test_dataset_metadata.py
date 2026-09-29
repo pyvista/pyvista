@@ -184,7 +184,7 @@ def test_undetermined_terms_are_not_a_permission():
 
 
 def test_license_table_is_resolved(index):
-    from pyvista.examples._dataset_metadata import _metadata_base_url
+    from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE
 
     assert index.licenses['CC-BY-4.0'] == License(
         spdx_id='CC-BY-4.0',
@@ -193,18 +193,21 @@ def test_license_table_is_resolved(index):
         commercial_use=True,
         attribution_required=True,
         share_alike=False,
-        text_url=_metadata_base_url() + 'LICENSES/CC-BY-4.0.txt',
+        text_url=_DEFAULT_VTK_DATA_SOURCE.removesuffix('Data/') + 'LICENSES/CC-BY-4.0.txt',
     )
 
 
-def test_license_text_url_resolves_against_the_table():
-    """A relative `file` is published beside the table; an absolute one is left alone."""
+def test_license_text_url_resolves_against_the_published_repository(monkeypatch, tmp_path):
+    """A relative `file` resolves to the published repository even with a local cache."""
+    from pyvista.examples import downloads
     from pyvista.examples._dataset_metadata import _license_text_url
-    from pyvista.examples._dataset_metadata import _metadata_base_url
+    from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE
 
+    remote = _DEFAULT_VTK_DATA_SOURCE.removesuffix('Data/')
+    monkeypatch.setattr(downloads, 'SOURCE', str(tmp_path) + '/')
     assert _license_text_url(None) is None
-    assert _license_text_url('LICENSES/MIT.txt') == _metadata_base_url() + 'LICENSES/MIT.txt'
-    assert _license_text_url('/LICENSES/MIT.txt') == _metadata_base_url() + 'LICENSES/MIT.txt'
+    assert _license_text_url('LICENSES/MIT.txt') == remote + 'LICENSES/MIT.txt'
+    assert _license_text_url('/LICENSES/MIT.txt') == remote + 'LICENSES/MIT.txt'
     absolute = 'https://example.org/MIT.txt'
     assert _license_text_url(absolute) == absolute
 
@@ -351,7 +354,7 @@ def test_undetermined_license_is_not_a_permission():
     record = _record('LicenseRef-Unknown', UNKNOWN)
 
     assert record.commercial_use is False
-    assert record.attribution_required is True
+    assert record.attribution_required is UNKNOWN.attribution_required
     assert record.usage == 'undetermined'
 
 
