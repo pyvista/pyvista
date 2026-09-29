@@ -6285,10 +6285,6 @@ def download_openfoam_tubes(
     Data generated from public SimScale examples at `SimScale Project Library -
     Turbo <https://www.simscale.com/projects/ayarnoz/turbo/>`_.
 
-    Licensing for this dataset is granted to freely and without restriction
-    reproduce, distribute, publish according to the `SimScale Terms and
-    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
-
     Parameters
     ----------
     load : bool, default: True
@@ -6419,10 +6415,6 @@ def download_pump_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     Data generated from public SimScale examples at `SimScale Project Library -
     Turbo <https://www.simscale.com/projects/STR/bracket/>`_.
 
-    Licensing for this dataset is granted freely and without restriction to
-    reproduce, distribute, and publish according to the `SimScale Terms and
-    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
-
     Parameters
     ----------
     load : bool, default: True
@@ -6494,10 +6486,6 @@ def download_electronics_cooling(
     Data generated from the public SimScale tutorial `Thermal management CHT
     analysis of an electronics box
     <https://www.simscale.com/docs/tutorials/thermal-management-cht-analysis-electronics-box/>`_.
-
-    Licensing for this dataset is granted to freely and without restriction
-    reproduce, distribute, publish according to the `SimScale Terms and
-    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
 
     Parameters
     ----------
@@ -8240,10 +8228,6 @@ def download_aero_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     Data generated from the public SimScale project `Aircraft engine bearing
     bracket analysis
     <https://www.simscale.com/projects/simscale/aircraft_engine_bearing_bracket_analysis/>`_.
-
-    Licensing for this dataset is granted to freely and without restriction
-    reproduce, distribute, publish according to the `SimScale Terms and
-    Conditions <https://www.simscale.com/terms-and-conditions/>`_.
 
     This project demonstrates the static stress analysis of three aircraft
     engine bearing bracket models considering both linear and nonlinear
