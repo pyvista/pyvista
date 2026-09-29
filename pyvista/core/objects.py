@@ -30,13 +30,14 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
+    from numpy.typing import NDArray
     import pandas
     import pyarrow
 
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _NumericArray
 
 
 class Table(DataObject, _vtk.vtkTable):
@@ -94,7 +95,7 @@ class Table(DataObject, _vtk.vtkTable):
                 raise TypeError(msg)
 
     @staticmethod
-    def _prepare_arrays(arrays: MatrixLike[float] | VectorLike[float]) -> NumpyArray[float]:
+    def _prepare_arrays(arrays: MatrixLikeFloat | VectorLikeFloat) -> _NumericArray:
         arrays = np.asarray(arrays)
         if arrays.ndim == 1:
             return np.reshape(arrays, (1, -1))
@@ -104,7 +105,7 @@ class Table(DataObject, _vtk.vtkTable):
             msg = 'Only 1D or 2D arrays are supported by Tables.'
             raise ValueError(msg)
 
-    def _from_arrays(self, arrays: MatrixLike[float] | VectorLike[float]) -> None:
+    def _from_arrays(self, arrays: MatrixLikeFloat | VectorLikeFloat) -> None:
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
@@ -239,21 +240,18 @@ class Table(DataObject, _vtk.vtkTable):
     def update(
         self,
         data: (
-            DataSetAttributes
-            | dict[str, NumpyArray[float]]
-            | MatrixLike[float]
-            | VectorLike[float]
+            DataSetAttributes | dict[str, NDArray[np.floating]] | MatrixLikeFloat | VectorLikeFloat
         ),
     ) -> None:
         """Set the table data using a dict-like update.
 
         Parameters
         ----------
-        data : DataSetAttributes | dict | MatrixLike[float] | VectorLike[float]
+        data : DataSetAttributes | dict | MatrixLikeFloat | VectorLikeFloat
             Other dataset attributes, mapping, or array data to update from.
 
         """
-        arrays: DataSetAttributes | dict[str, NumpyArray[float]]
+        arrays: DataSetAttributes | dict[str, NDArray[np.floating]]
         if isinstance(data, (DataSetAttributes, dict)):
             arrays = data
         else:
@@ -301,7 +299,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name: str, scalars: VectorLike[float]) -> None:
+    def __setitem__(self, name: str, scalars: VectorLikeFloat) -> None:
         """Add/set an array in the ``row_arrays``."""
         self.row_arrays[name] = scalars
 

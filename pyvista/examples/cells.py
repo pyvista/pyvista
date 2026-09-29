@@ -28,7 +28,7 @@ from pyvista._warn_external import warn_external
 if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.plotting._typing import CameraPositionOptions
 
 
@@ -2726,7 +2726,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     cell_types: int | Sequence[int],
     generator: _GeneratorOptions = 'examples',
     *,
-    block_dimensions: VectorLike[int] | None = None,
+    block_dimensions: VectorLikeInt | None = None,
     shrink_factor: float | None = None,
     fill_mode: _FillModeOptions = 'exact',
     unsupported_action: _UnsupportedActionOptions = 'error',
@@ -2763,7 +2763,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
              whereas ``'source'`` may generate multiple cells of the same type in order to fill a
              unit block (for example, two triangles to fill a square, two wedges to fill a cube).
 
-    block_dimensions : VectorLike[int], optional
+    block_dimensions : VectorLikeInt, optional
         Output dimensions of blocks to generate. By default, all blocks are stacked sequentially
         along the x-axis. The dimensions should be compatible with the number of input cell types.
         Use ``fill_mode`` to handle cases where the dimensions are `not` compatible.
@@ -2991,7 +2991,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
             ctypes.append(ctype)
 
     if block_dimensions is None:
-        dimension: int | VectorLike[int] = (len(ctypes), 1, 1)
+        dimension: int | VectorLikeInt = (len(ctypes), 1, 1)
     else:
         requested_size = np.prod(block_dimensions)
         actual_size = len(ctypes)

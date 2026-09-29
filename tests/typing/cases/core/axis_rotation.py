@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
 
-def some_points() -> NumpyArray[float]:
+def some_points() -> NDArray[np.floating]:
     """Return a fresh array of points, since `inplace=True` mutates it."""
     return np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
 
@@ -19,12 +19,12 @@ def a_flag() -> bool:
     return True
 
 
-assert_types(pv.axis_rotation(some_points(), 90.0), NumpyArray[float])
-assert_types(pv.axis_rotation(some_points(), 90.0, inplace=False), NumpyArray[float])
-assert_types(pv.axis_rotation(some_points(), 90.0, axis='x', deg=True), NumpyArray[float])
-assert_types(pv.axis_rotation(some_points(), np.pi / 2, axis='y', deg=False), NumpyArray[float])
+assert_types(pv.axis_rotation(some_points(), 90.0), NDArray[np.floating])
+assert_types(pv.axis_rotation(some_points(), 90.0, inplace=False), NDArray[np.floating])
+assert_types(pv.axis_rotation(some_points(), 90.0, axis='x', deg=True), NDArray[np.floating])
+assert_types(pv.axis_rotation(some_points(), np.pi / 2, axis='y', deg=False), NDArray[np.floating])
 
 assert_types(pv.axis_rotation(some_points(), 90.0, inplace=True), None)
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(pv.axis_rotation(some_points(), 90.0, inplace=a_flag()), NumpyArray[float] | None)
+assert_types(pv.axis_rotation(some_points(), 90.0, inplace=a_flag()), NDArray[np.floating] | None)

@@ -20,11 +20,11 @@ classifiers = [
 dependencies = [
   'cyclopts>=4.0.0',
   'matplotlib>=3.0.1',
-  'numpy>=1.21.0',
+  'numpy>=1.22.0',
   'pillow',
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
-  'pyvista-validation==0.2.2', # Exact pin: the validation API is still unstable
+  'pyvista-validation==0.5.4', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
@@ -73,7 +73,6 @@ integration = []
 typing = [
   'meshio<5.4.0',
   'mypy<2.4.0',
-  'npt-promote==0.2',
   'numpy>=2.0.0',
   'sphinx<9.2.0',
   'trimesh<5.1.0',
@@ -361,7 +360,7 @@ native_parser = true
 no_implicit_reexport = true
 packages = ['pyvista']
 platform = 'linux'
-plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
+plugins = ['pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true
@@ -584,6 +583,7 @@ banned-from = [
 pyvista = "pv"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
+"numpy.typing.ArrayLike".msg = "Use `pyvista.typing.ArrayLikeFloat`, `ArrayLikeInt` or `ArrayLikeBool` instead, with a scalar type added where scalars are accepted"
 "vtk".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules, and avoid pulling in the entire VTK package"
 "vtkmodules".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules"
 
@@ -635,8 +635,8 @@ pyvista = "pv"
 'hooks/*' = ['INP001']
 'pyvista/_vtk.py' = ['PLC0414', 'PLC0415']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
-'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
+'pyvista/core/_typing_core/_deprecated.py' = ['PYI047', 'UP007']
 'pyvista/core/dataobject.py' = ['PLC0415']
 'pyvista/core/filters/data_object.py' = ['PYI019']
 'pyvista/core/filters/data_set.py' = ['PYI019']

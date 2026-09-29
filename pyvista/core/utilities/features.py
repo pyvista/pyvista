@@ -16,18 +16,18 @@ from pyvista import _vtk
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import StructuredGrid
-    from pyvista.core._typing_core import ArrayLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import ArrayLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
 
 
-def create_grid(
-    dataset: DataSet, dimensions: VectorLike[int] | None = (101, 101, 101)
-) -> ImageData:
+def create_grid(dataset: DataSet, dimensions: VectorLikeInt | None = (101, 101, 101)) -> ImageData:
     """Create a uniform grid surrounding the given dataset.
 
     The output grid will have the specified dimensions and is commonly used
@@ -80,17 +80,17 @@ def create_grid(
 
 
 def grid_from_sph_coords(
-    theta: VectorLike[float], phi: VectorLike[float], r: VectorLike[float]
+    theta: VectorLikeFloat, phi: VectorLikeFloat, r: VectorLikeFloat
 ) -> StructuredGrid:
     """Create a structured grid from arrays of spherical coordinates.
 
     Parameters
     ----------
-    theta : VectorLike[float]
+    theta : VectorLikeFloat
         Azimuthal angle in degrees ``[0, 360]``.
-    phi : VectorLike[float]
+    phi : VectorLikeFloat
         Polar (zenith) angle in degrees ``[0, 180]``.
-    r : VectorLike[float]
+    r : VectorLikeFloat
         Distance (radius) from the point of origin.
 
     Returns
@@ -119,30 +119,30 @@ def grid_from_sph_coords(
 
 def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
     *,
-    theta: VectorLike[float],
-    phi: VectorLike[float],
-    r: VectorLike[float],
-    u: ArrayLike[float],
-    v: ArrayLike[float],
-    w: ArrayLike[float],
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    theta: VectorLikeFloat,
+    phi: VectorLikeFloat,
+    r: VectorLikeFloat,
+    u: ArrayLikeFloat,
+    v: ArrayLikeFloat,
+    w: ArrayLikeFloat,
+) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
 
     Parameters
     ----------
-    theta : VectorLike[float]
+    theta : VectorLikeFloat
         Azimuthal angle in degrees ``[0, 360]`` of shape ``(M,)``.
-    phi : VectorLike[float]
+    phi : VectorLikeFloat
         Polar (zenith) angle in degrees ``[0, 180]`` of shape ``(N,)``.
-    r : VectorLike[float]
+    r : VectorLikeFloat
         Distance (radius) from the point of origin of shape ``(P,)``.
-    u : ArrayLike[float]
+    u : ArrayLikeFloat
         X-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
-    v : ArrayLike[float]
+    v : ArrayLikeFloat
         Y-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
-    w : ArrayLike[float]
+    w : ArrayLikeFloat
         Z-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
 
     Returns
@@ -164,8 +164,8 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
 
 
 def cartesian_to_spherical(
-    x: NumpyArray[float], y: NumpyArray[float], z: NumpyArray[float]
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    x: NDArray[np.floating], y: NDArray[np.floating], z: NDArray[np.floating]
+) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Convert 3D Cartesian coordinates to spherical coordinates.
 
     Parameters
@@ -204,20 +204,20 @@ def cartesian_to_spherical(
 
 
 def spherical_to_cartesian(
-    r: ArrayLike[float], phi: ArrayLike[float], theta: ArrayLike[float]
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    r: ArrayLikeFloat, phi: ArrayLikeFloat, theta: ArrayLikeFloat
+) -> tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
     """Convert Spherical coordinates to 3D Cartesian coordinates.
 
     Parameters
     ----------
-    r : ArrayLike[float]
+    r : ArrayLikeFloat
         Radial distance.
 
-    phi : ArrayLike[float]
+    phi : ArrayLikeFloat
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    theta : ArrayLike[float]
+    theta : ArrayLikeFloat
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 
@@ -228,9 +228,9 @@ def spherical_to_cartesian(
 
     """
     s = np.sin(phi)
-    x = r * s * np.cos(theta)
-    y = r * s * np.sin(theta)
-    z = r * np.cos(phi)
+    x = s * r * np.cos(theta)
+    y = s * r * np.sin(theta)
+    z = np.cos(phi) * r
     return x, y, z
 
 

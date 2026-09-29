@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     import cycler
 
     from pyvista.core._typing_core import RotationLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
@@ -186,7 +186,7 @@ def make_legend_face(face: str | pv.PolyData | None) -> PolyData:
         return norm_poly
 
     if face is None or face == 'none':
-        legendface = pv.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
+        legendface = pv.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ['-', 'line']:
         legendface = pv.Rectangle().scale((1, 0.2, 1))
     elif face in ['^', 'triangle']:
@@ -220,7 +220,7 @@ def make_legend_face(face: str | pv.PolyData | None) -> PolyData:
 
 
 def scale_point(
-    camera: Camera, point: VectorLike[float], *, invert: bool = False
+    camera: Camera, point: VectorLikeFloat, *, invert: bool = False
 ) -> tuple[float, float, float]:
     """Scale a point using the camera's transform matrix.
 
@@ -273,9 +273,9 @@ class CameraPosition(_NoNewAttrMixin):
 
     def __init__(
         self,
-        position: VectorLike[float],
-        focal_point: VectorLike[float],
-        viewup: VectorLike[float],
+        position: VectorLikeFloat,
+        focal_point: VectorLikeFloat,
+        viewup: VectorLikeFloat,
     ) -> None:
         """Initialize a new camera position descriptor."""
         self.position = position
@@ -370,7 +370,7 @@ class CameraPosition(_NoNewAttrMixin):
         return self._position
 
     @position.setter
-    def position(self, value: VectorLike[float]) -> None:
+    def position(self, value: VectorLikeFloat) -> None:
         self._position = _validate_vector(value, name='position')
 
     @property
@@ -379,7 +379,7 @@ class CameraPosition(_NoNewAttrMixin):
         return self._focal_point
 
     @focal_point.setter
-    def focal_point(self, value: VectorLike[float]) -> None:
+    def focal_point(self, value: VectorLikeFloat) -> None:
         self._focal_point = _validate_vector(value, name='focal_point')
 
     @property
@@ -388,7 +388,7 @@ class CameraPosition(_NoNewAttrMixin):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, value: VectorLike[float]) -> None:
+    def viewup(self, value: VectorLikeFloat) -> None:
         self._viewup = _validate_viewup(value)
 
 
@@ -743,7 +743,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             actor_type for actor_type in ignore_actors if isinstance(actor_type, type)
         ]
 
-        def _update_bounds(bounds: VectorLike[float]) -> None:
+        def _update_bounds(bounds: VectorLikeFloat) -> None:
             def update_axis(ax: int) -> None:
                 the_bounds[ax * 2] = min(bounds[ax * 2], the_bounds[ax * 2])
                 the_bounds[ax * 2 + 1] = max(bounds[ax * 2 + 1], the_bounds[ax * 2 + 1])
@@ -1936,8 +1936,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         /,
         *,
         mesh: DataSet | MultiBlock[Any] | None = None,
-        bounds: VectorLike[float] | None = None,
-        axes_ranges: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
+        axes_ranges: VectorLikeFloat | None = None,
         show_xaxis: bool = True,
         show_yaxis: bool = True,
         show_zaxis: bool = True,
@@ -2776,7 +2776,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
-    def set_focus(self, point: VectorLike[float], *, render: bool = True) -> None:
+    def set_focus(self, point: VectorLikeFloat, *, render: bool = True) -> None:
         """Set focus to a point.
 
         Parameters
@@ -2811,7 +2811,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._plotter.render()
 
     def set_position(
-        self, point: VectorLike[float], *, reset: bool = False, render: bool = True
+        self, point: VectorLikeFloat, *, reset: bool = False, render: bool = True
     ) -> None:
         """Set camera position to a point.
 
@@ -2849,7 +2849,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
 
     def set_viewup(
-        self, vector: VectorLike[float], *, reset: bool = True, render: bool = True
+        self, vector: VectorLikeFloat, *, reset: bool = True, render: bool = True
     ) -> None:
         """Set camera ``viewup`` vector.
 
@@ -3135,7 +3135,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.reset_camera(render=render)
         self.Modified()
 
-    def get_default_cam_pos(self, *, negative: bool = False) -> list[VectorLike[float]]:
+    def get_default_cam_pos(self, *, negative: bool = False) -> list[VectorLikeFloat]:
         """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
@@ -3186,9 +3186,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 self.cube_axes_actor._disable_3d_text()
             self.Modified()
 
-    def reset_camera(
-        self, *, render: bool = True, bounds: VectorLike[float] | None = None
-    ) -> None:
+    def reset_camera(self, *, render: bool = True, bounds: VectorLikeFloat | None = None) -> None:
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -3240,7 +3238,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """Reset the camera to a default isometric view.
 
@@ -3283,11 +3281,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     def view_vector(
         self,
-        vector: VectorLike[float],
-        viewup: VectorLike[float] | None = None,
+        vector: VectorLikeFloat,
+        viewup: VectorLikeFloat | None = None,
         *,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """Point the camera in the direction of the given vector.
 
@@ -3320,7 +3318,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """View the XY plane.
 
@@ -3357,7 +3355,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """View the YX plane.
 
@@ -3394,7 +3392,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """View the XZ plane.
 
@@ -3431,7 +3429,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """View the ZX plane.
 
@@ -3468,7 +3466,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """View the YZ plane.
 
@@ -3505,7 +3503,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         *,
         negative: bool = False,
         render: bool = True,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
     ) -> None:
         """View the ZY plane.
 
@@ -4490,8 +4488,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     def add_ruler(
         self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         *,
         flip_range: bool = False,
         flip_side: bool = False,
@@ -4878,7 +4876,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return legend_scale, None
 
 
-def _fixup_bounds(bounds: VectorLike[float]) -> BoundsTuple:
+def _fixup_bounds(bounds: VectorLikeFloat) -> BoundsTuple:
     the_bounds = np.asarray(bounds)
     if np.any(the_bounds[::2] > the_bounds[1::2]):
         the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)

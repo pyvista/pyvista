@@ -21,15 +21,15 @@ from .helpers import wrap
 
 if TYPE_CHECKING:
     from pyvista import PolyData
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
 
 _ParametrizeByOptions = Literal['length', 'index']
 _BoundaryConstraintOptions = Literal['finite_difference', 'clamped', 'second', 'scaled_second']
 
 
 def Spline(
-    points: VectorLike[float] | MatrixLike[float],
+    points: VectorLikeFloat | MatrixLikeFloat,
     n_points: int | None = None,
     *,
     closed: bool = False,
@@ -196,11 +196,11 @@ def Spline(
 
 
 def KochanekSpline(
-    points: VectorLike[float] | MatrixLike[float],
+    points: VectorLikeFloat | MatrixLikeFloat,
     *,
-    tension: VectorLike[float] | None = None,
-    bias: VectorLike[float] | None = None,
-    continuity: VectorLike[float] | None = None,
+    tension: VectorLikeFloat | None = None,
+    bias: VectorLikeFloat | None = None,
+    continuity: VectorLikeFloat | None = None,
     n_points: int | None = None,
 ) -> PolyData:
     """Create a Kochanek spline from points.

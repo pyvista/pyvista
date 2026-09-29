@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
 
 def a_transform() -> pv.Transform:
@@ -25,12 +25,12 @@ def a_polydata_multiblock() -> pv.MultiBlock[pv.PolyData]:
     return pv.MultiBlock([pv.Sphere()])
 
 
-assert_types(a_transform().apply(np.zeros((4, 3))), NumpyArray[float])
-assert_types(a_transform().apply([(0.0, 0.0, 0.0)]), NumpyArray[float])
-assert_types(a_transform().apply((0.0, 0.0, 0.0)), NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), 'points'), NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), 'vectors'), NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), None), NumpyArray[float])
+assert_types(a_transform().apply(np.zeros((4, 3))), NDArray[np.floating])
+assert_types(a_transform().apply([(0.0, 0.0, 0.0)]), NDArray[np.floating])
+assert_types(a_transform().apply((0.0, 0.0, 0.0)), NDArray[np.floating])
+assert_types(a_transform().apply(np.zeros((4, 3)), 'points'), NDArray[np.floating])
+assert_types(a_transform().apply(np.zeros((4, 3)), 'vectors'), NDArray[np.floating])
+assert_types(a_transform().apply(np.zeros((4, 3)), None), NDArray[np.floating])
 
 # Datasets keep their own type
 assert_types(a_transform().apply(pv.Sphere()), pv.PolyData)
