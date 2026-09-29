@@ -42,15 +42,18 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
+    from numpy.typing import NDArray
+
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import LineStyle
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeBool
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core._dataset_types import _PolyDataType
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.plotter import _ShowReturnType
@@ -69,7 +72,9 @@ _CappingOptions = Literal[
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
 
-    def edge_mask(self: PolyData, angle: float, *, progress_bar: bool = False) -> NumpyArray[bool]:  # type: ignore[misc]
+    def edge_mask(  # type: ignore[misc]
+        self: PolyData, angle: float, *, progress_bar: bool = False
+    ) -> NDArray[np.bool_]:
         """Return a mask of the points of a surface mesh with a surface angle greater than angle.
 
         Parameters
@@ -111,7 +116,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NumpyArray[float]', pv.point_array(edges, 'point_ind'))
+        orig_id = cast('NDArray[np.floating]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -762,7 +767,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
-    ) -> NumpyArray[float]:
+    ) -> NDArray[np.floating]:
         """Return the point-wise curvature of a mesh.
 
         Parameters
@@ -1535,7 +1540,7 @@ class PolyDataFilters(DataSetFilters):
         self: PolyData,
         style: LineStyle | None = None,
         *,
-        pattern: VectorLike[float] | None = None,
+        pattern: VectorLikeFloat | None = None,
         scale: float | None = None,
         join: bool = True,
         inplace: bool = False,
@@ -1567,7 +1572,7 @@ class PolyDataFilters(DataSetFilters):
             Every named style repeats over sixteen intervals. Defaults to ``'--'``.
             Cannot be set together with ``pattern``.
 
-        pattern : VectorLike[float], optional
+        pattern : VectorLikeFloat, optional
             Lengths of alternating drawn and undrawn intervals, starting with a
             drawn one and repeating. ``[4, 6, 2, 4]`` draws four intervals, skips
             six, draws two and skips four. Cannot be set together with ``style``.
@@ -2187,7 +2192,9 @@ class PolyDataFilters(DataSetFilters):
         """
         # track original point indices
         if split_vertices:
-            self.point_data['pyvistaOriginalPointIds'] = np.arange(self.n_points, dtype=pv.ID_TYPE)
+            self.point_data['pyvistaOriginalPointIds'] = np.arange(
+                self.n_points, dtype=np.dtype(pv.ID_TYPE)
+            )
 
         normal = _vtk.vtkPolyDataNormals()
         normal.SetComputeCellNormals(cell_normals)
@@ -2231,9 +2238,9 @@ class PolyDataFilters(DataSetFilters):
 
     def clip_closed_surface(  # type: ignore[misc]
         self: PolyData,
-        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        normal: VectorLikeFloat | _NormalsLiteral | None = None,
         *,
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         tolerance: float = 1e-06,
         inplace: bool = False,
         progress_bar: bool = False,
@@ -2262,13 +2269,13 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        normal : VectorLike[float] | str, optional
+        normal : VectorLikeFloat | str, optional
             Length-3 vector for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
             The ``'x'`` direction is used by default.
 
-        origin : VectorLike[float], optional
+        origin : VectorLikeFloat, optional
             The center ``(x, y, z)`` coordinate of the plane on which the clip
             occurs. The default is the center of the dataset.
 
@@ -2673,13 +2680,13 @@ class PolyDataFilters(DataSetFilters):
 
     def ray_trace(  # type: ignore[misc]
         self: PolyData,
-        origin: VectorLike[float],
-        end_point: VectorLike[float],
+        origin: VectorLikeFloat,
+        end_point: VectorLikeFloat,
         *,
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -2769,12 +2776,14 @@ class PolyDataFilters(DataSetFilters):
 
     def multi_ray_trace(  # type:ignore[misc]
         self: PolyData,
-        origins: MatrixLike[float],
-        directions: MatrixLike[float],
+        origins: MatrixLikeFloat,
+        directions: MatrixLikeFloat,
         *,
         first_point: bool = False,
         retry: bool = False,
-    ) -> tuple[NumpyArray[float], NumpyArray[int], NumpyArray[int]]:  # pragma: no cover
+    ) -> tuple[
+        NDArray[np.floating], NDArray[np.signedinteger], NDArray[np.signedinteger]
+    ]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -3071,17 +3080,17 @@ class PolyDataFilters(DataSetFilters):
 
     def remove_points(  # type: ignore[misc, override]
         self: PolyData,
-        remove: VectorLike[bool] | VectorLike[int] | None = None,
+        remove: VectorLikeBool | VectorLikeInt | None = None,
         mode: Literal['any', 'all'] = 'any',
         *,
         keep_scalars: bool | None = None,
         inplace: bool = False,
-        ind: int | VectorLike[int] | VectorLike[bool] | None = None,
+        ind: int | VectorLikeInt | VectorLikeBool | None = None,
         invert: bool | None = None,
         pass_point_ids: bool | None = None,
         pass_cell_ids: bool | None = None,
         progress_bar: bool | None = None,
-    ) -> PolyData | tuple[PolyData, NumpyArray[int]]:
+    ) -> PolyData | tuple[PolyData, NDArray[np.signedinteger]]:
         """Rebuild a mesh by removing points.
 
         .. deprecated:: 0.49
@@ -3116,7 +3125,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, default: False
             Updates mesh in-place.
 
-        ind : int | VectorLike[int] | VectorLike[bool], optional
+        ind : int | VectorLikeInt | VectorLikeBool, optional
             Point indices to remove, the same as ``remove``. Passing this returns only
             the mesh. See :meth:`pyvista.DataSetFilters.remove_points`.
 
@@ -3190,7 +3199,7 @@ class PolyDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
         keep_scalars = True if keep_scalars is None else keep_scalars
-        remove_array: NumpyArray[Any] = np.asarray(remove)
+        remove_array: NDArray[Any] = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
         if not issubclass(remove_array.dtype.type, (np.bool_, np.integer)):
@@ -3219,7 +3228,8 @@ class PolyDataFilters(DataSetFilters):
 
         nfaces = fmask.sum()
         faces = cast(
-            'NumpyArray[int]', np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False)
+            'NDArray[np.signedinteger]',
+            np.reshape(uni[1], (nfaces, 3)).astype(pv.ID_TYPE, copy=False),
         )
 
         newmesh = pv.PolyData.from_regular_faces(new_points, faces, deep=True)
@@ -3608,8 +3618,8 @@ class PolyDataFilters(DataSetFilters):
     def project_points_to_plane(  # type: ignore[misc]
         self: PolyData,
         *,
-        origin: VectorLike[float] | None = None,
-        normal: VectorLike[float] | _NormalsLiteral | None = None,
+        origin: VectorLikeFloat | None = None,
+        normal: VectorLikeFloat | _NormalsLiteral | None = None,
         inplace: bool = False,
         plane: PolyData | None = None,
     ) -> PolyData:
@@ -3620,12 +3630,12 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : VectorLike[float], optional
+        origin : VectorLikeFloat, optional
             Plane origin.  Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
-        normal : VectorLike[float] | str, optional
+        normal : VectorLikeFloat | str, optional
             Length-3 vector for the plane's normal. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
@@ -3697,7 +3707,7 @@ class PolyDataFilters(DataSetFilters):
         scalars: str | None = None,
         angle: float = 0.0,
         factor: float = 2.0,
-        normal: VectorLike[float] | None = None,
+        normal: VectorLikeFloat | None = None,
         tcoords: bool | str = False,
         preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
@@ -3806,7 +3816,7 @@ class PolyDataFilters(DataSetFilters):
 
     def extrude(  # type: ignore[misc]
         self: PolyData,
-        vector: VectorLike[float],
+        vector: VectorLikeFloat,
         *,
         capping: bool | None = None,
         inplace: bool = False,
@@ -3909,7 +3919,7 @@ class PolyDataFilters(DataSetFilters):
         dradius: float = 0.0,
         angle: float = 360.0,
         capping: bool | None = None,
-        rotation_axis: VectorLike[float] = (0.0, 0.0, 1.0),
+        rotation_axis: VectorLikeFloat = (0.0, 0.0, 1.0),
         progress_bar: bool = False,
     ) -> PolyData:
         """Sweep polygonal data creating "skirt" from free edges/lines, and lines from vertices.
@@ -4058,7 +4068,7 @@ class PolyDataFilters(DataSetFilters):
 
     def extrude_trim(  # type: ignore[misc]
         self: PolyData,
-        direction: VectorLike[float],
+        direction: VectorLikeFloat,
         trim_surface: PolyData,
         *,
         extrusion: _ExtrusionOptions = 'boundary_edges',
@@ -4406,7 +4416,7 @@ class PolyDataFilters(DataSetFilters):
         self: PolyData,
         n_contours: int,
         *,
-        rng: VectorLike[float] | None = None,
+        rng: VectorLikeFloat | None = None,
         scalars: str | None = None,
         component: int = 0,
         clip_tolerance: float = 1e-6,
@@ -4769,7 +4779,7 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def ruled_surface(  # type: ignore[misc]
-        self: PolyData, *, resolution: VectorLike[int] | None = None, progress_bar: bool = False
+        self: PolyData, *, resolution: VectorLikeInt | None = None, progress_bar: bool = False
     ) -> PolyData:
         """Create a ruled surface from a polyline.
 
@@ -4794,7 +4804,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        resolution : VectorLike[int], default: (1, 1)
+        resolution : VectorLikeInt, default: (1, 1)
             Set the number of points in the output polyline.
 
         progress_bar : bool, default: False
@@ -4901,7 +4911,7 @@ class PolyDataFilters(DataSetFilters):
 
 
 def _resolve_dash_pattern(
-    style: LineStyle | None, pattern: VectorLike[float] | None
+    style: LineStyle | None, pattern: VectorLikeFloat | None
 ) -> tuple[list[tuple[float, float]] | None, float]:
     """Return the drawn intervals and the repeat length of a named style or a pattern.
 
@@ -4945,7 +4955,7 @@ def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
 
 
 def _locate(
-    ids: NumpyArray[int], cumulative: NumpyArray[float], value: float
+    ids: NDArray[np.signedinteger], cumulative: NDArray[np.floating], value: float
 ) -> tuple[int, int, float]:
     """Return the point ids bracketing a distance along a polyline and the blend weight."""
     # clamp so the pair stays inside the polyline at either end of it
@@ -4976,7 +4986,13 @@ def _drawn_intervals(
 
 def _build_dashes(
     source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
-) -> tuple[NumpyArray[int], NumpyArray[int], NumpyArray[float], NumpyArray[int], NumpyArray[int]]:
+) -> tuple[
+    NDArray[np.signedinteger],
+    NDArray[np.signedinteger],
+    NDArray[np.floating],
+    NDArray[np.signedinteger],
+    NDArray[np.signedinteger],
+]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points
     cycle = period * scale
@@ -5068,12 +5084,12 @@ def _copy_active_names(source: DataSetAttributes, output: DataSetAttributes) -> 
 
 
 def _interpolate_rows(
-    array: NumpyArray[Any],
+    array: NDArray[Any],
     *,
-    index_a: NumpyArray[int],
-    index_b: NumpyArray[int],
-    weight: NumpyArray[float],
-) -> NumpyArray[Any]:
+    index_a: NDArray[np.signedinteger],
+    index_b: NDArray[np.signedinteger],
+    weight: NDArray[np.floating],
+) -> NDArray[Any]:
     """Blend array rows between two index sets, snapping to the nearest for non-float data."""
     if not np.issubdtype(array.dtype, np.floating):
         # ids and labels cannot be averaged, so take whichever end is nearer

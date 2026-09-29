@@ -32,8 +32,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
 
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from .interactor_style_registry import InteractorStyleHandler
     from .plotter import BasePlotter
@@ -1473,7 +1474,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         # PyVista one, but types the getter as the base class.
         return cast('Renderer', self.interactor.FindPokedRenderer(x, y))
 
-    def get_event_subplot_loc(self) -> NumpyArray[int] | np.intp:
+    def get_event_subplot_loc(self) -> NDArray[np.signedinteger] | np.intp:
         """Get the subplot location of the last event.
 
         Returns
@@ -1673,7 +1674,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         # Set default picker to vtkWorldPointPicker
         self.picker = 'world'
 
-    def fly_to(self, renderer: _vtk.vtkRenderer, point: VectorLike[float]) -> None:
+    def fly_to(self, renderer: _vtk.vtkRenderer, point: VectorLikeFloat) -> None:
         """Fly the interactor to the given point in a renderer.
 
         Parameters

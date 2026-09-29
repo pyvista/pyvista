@@ -18,9 +18,10 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.dataset import DataSet
 
     from ._typing import ColorLike
@@ -39,8 +40,8 @@ _VIEW_VECTORS: dict[_ViewOptions, tuple[tuple[int, int, int], tuple[int, int, in
 
 
 def plot_arrows(
-    cent: VectorLike[float] | MatrixLike[float],
-    direction: VectorLike[float] | MatrixLike[float],
+    cent: VectorLikeFloat | MatrixLikeFloat,
+    direction: VectorLikeFloat | MatrixLikeFloat,
     **kwargs: Any,
 ) -> Any:
     """Plot arrows as vectors.
@@ -219,7 +220,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
 
 def view_vectors(
     view: _ViewOptions, *, negative: bool = False
-) -> tuple[NumpyArray[int], NumpyArray[int]]:
+) -> tuple[NDArray[np.signedinteger], NDArray[np.signedinteger]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

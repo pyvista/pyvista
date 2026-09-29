@@ -23,7 +23,7 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
 
@@ -242,7 +242,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         self,
         text: str | None = None,
         *,
-        position: VectorLike[float] | None = None,
+        position: VectorLikeFloat | None = None,
         prop: TextProperty | None = None,
         name: str | None = None,
     ) -> None:
@@ -302,7 +302,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         return self.GetPosition()
 
     @position.setter
-    def position(self, position: VectorLike[float]) -> None:
+    def position(self, position: VectorLikeFloat) -> None:
         self.SetPosition(float(position[0]), float(position[1]))
 
 
@@ -327,10 +327,10 @@ class Label(_Prop3DMixin, Text):  # type: ignore[misc]
     text : str, optional
         Text string to be displayed.
 
-    position : VectorLike[float]
+    position : VectorLikeFloat
         Position of the text in XYZ coordinates.
 
-    relative_position : VectorLike[float]
+    relative_position : VectorLikeFloat
         Position of the text in XYZ coordinates relative to its :attr:`~pyvista.Prop3D.position`.
 
     size : int
@@ -430,8 +430,8 @@ class Label(_Prop3DMixin, Text):  # type: ignore[misc]
     def __init__(
         self,
         text: str | None = None,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
+        position: VectorLikeFloat = (0.0, 0.0, 0.0),
+        relative_position: VectorLikeFloat = (0.0, 0.0, 0.0),
         *,
         size: int = 50,
         prop: TextProperty | None = None,
@@ -457,7 +457,7 @@ class Label(_Prop3DMixin, Text):  # type: ignore[misc]
         return self.GetPositionCoordinate().GetValue()
 
     @_label_position.setter
-    def _label_position(self, position: VectorLike[float]) -> None:
+    def _label_position(self, position: VectorLikeFloat) -> None:
         valid_position = _validation.validate_array3(position, dtype_out=float, to_tuple=True)
         self.GetPositionCoordinate().SetValue(valid_position)
 
@@ -479,10 +479,11 @@ class Label(_Prop3DMixin, Text):  # type: ignore[misc]
     @property
     def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label relative to its :attr:`~pyvista.Prop3D.position`."""
-        return tuple(self._relative_position.tolist())
+        x, y, z = self._relative_position.tolist()
+        return x, y, z
 
     @relative_position.setter
-    def relative_position(self, position: VectorLike[float]) -> None:
+    def relative_position(self, position: VectorLikeFloat) -> None:
         self._relative_position = _validation.validate_array3(position, dtype_out=float)
         self._post_set_update()
 

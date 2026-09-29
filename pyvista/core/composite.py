@@ -56,11 +56,12 @@ from .utilities.writer import XMLMultiBlockDataWriter
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from numpy.typing import NDArray
+
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
-    from ._typing_core import NumpyArray
     from ._typing_core._dataset_types import _DataSetType
     from .filters.data_object import _NestedMeshValidationFields
     from .utilities.writer import BaseWriter
@@ -1249,7 +1250,7 @@ class MultiBlock(
         return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         valid_center = _validation.validate_array3(center, name='center')
         self.translate(valid_center - self.center, inplace=True)
 
@@ -1630,7 +1631,7 @@ class MultiBlock(
         >>> nested = pv.MultiBlock([blocks])
 
         >>> nested.get_block(0)
-        MultiBlock ...
+        MultiBlock[ImageData | PolyData] ...
         >>> nested.get_block((0, 1))
         ImageData ...
 
@@ -2159,7 +2160,8 @@ class MultiBlock(
     def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = f'{type(self).__name__} ({hex(id(self))})\n'
+        header = _inferred_type(type(self).__name__, self, 4)[0]
+        fmt = f'{header} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
         row = f'  {{:{max_len}s}}' + '{}\n'
@@ -2294,7 +2296,7 @@ class MultiBlock(
         *,
         preference: PointLiteral | CellLiteral = 'cell',
         allow_missing: bool = False,
-    ) -> tuple[FieldAssociation, NumpyArray[float]]:
+    ) -> tuple[FieldAssociation, NDArray[np.floating]]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -2328,7 +2330,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: list[tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, NDArray[np.floating], _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
@@ -2602,6 +2604,37 @@ class MultiBlock(
         return {type(block) for block in self.recursive_iterator()}
 
     @property
+    def inferred_type(self) -> str:  # numpydoc ignore=RT01
+        """Return the generic type of this composite inferred from its blocks.
+
+        Nested blocks of the same class at the same depth are described together, so
+        every :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
+        A composite without blocks is a bare ``MultiBlock``.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        block_types
+        nested_block_types
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+        >>> multi.inferred_type
+        'MultiBlock[PolyData]'
+
+        Nested and empty blocks are included.
+
+        >>> nested = pv.MultiBlock([multi, pv.ImageData(), None])
+        >>> nested.inferred_type
+        'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
+
+        """
+        return _inferred_type(type(self).__name__, self, float('inf'))[0]
+
+    @property
     def is_homogeneous(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` if all nested blocks have the same type.
 
@@ -2824,3 +2857,39 @@ class MultiBlock(
                 block.clear_all_cell_data()
             elif block is not None:
                 block.clear_cell_data()
+
+
+def _inferred_type(
+    name: str, blocks: Iterable[_TypeMultiBlockLeaf], budget: float
+) -> tuple[str, int]:
+    """Return the type of composite ``name`` holding ``blocks``, and the type names shown.
+
+    At most ``budget`` type names are shown, and ``...`` marks the rest.
+    """
+    leaves: set[str] = set()
+    nested: dict[str, list[_TypeMultiBlockLeaf]] = {}
+    for block in blocks:
+        if isinstance(block, MultiBlock):
+            nested.setdefault(type(block).__name__, []).extend(block)
+        else:
+            leaves.add('None' if block is None else type(block).__name__)
+    if not leaves and not nested:
+        return name, 1
+    members = sorted([*(leaves - {'None'}), *nested]) + sorted(leaves & {'None'})
+    shown: list[str] = []
+    used = 1
+    for member in members:
+        if member in nested:
+            # a nested composite needs room for its own name and at least one member
+            if budget - used < (2 if nested[member] else 1):
+                break
+            text, count = _inferred_type(member, nested[member], budget - used)
+        elif budget - used < 1:
+            break
+        else:
+            text, count = member, 1
+        shown.append(text)
+        used += count
+    if len(shown) < len(members):
+        shown.append('...')
+    return f'{name}[{" | ".join(shown)}]', used

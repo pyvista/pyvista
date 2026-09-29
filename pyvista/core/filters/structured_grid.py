@@ -13,7 +13,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeInt
 
 
 @abstract_class
@@ -22,8 +22,8 @@ class StructuredGridFilters(DataSetFilters):
 
     def extract_subset(
         self,
-        voi: VectorLike[int],
-        rate: VectorLike[int] = (1, 1, 1),
+        voi: VectorLikeInt,
+        rate: VectorLikeInt = (1, 1, 1),
         *,
         boundary: bool = False,
     ) -> pv.StructuredGrid:

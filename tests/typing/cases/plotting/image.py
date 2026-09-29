@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 
 
 def a_plotter() -> pv.Plotter:
@@ -29,4 +29,4 @@ SKIP_RUNTIME = (
 )
 
 
-assert_types(a_plotter().image, NumpyArray[np.uint8])
+assert_types(a_plotter().image, NDArray[np.uint8])

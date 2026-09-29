@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from collections.abc import Iterator
 
+    from numpy.typing import NDArray
     import pandas
     import pyarrow
     from typing_extensions import Self
@@ -67,10 +68,9 @@ if TYPE_CHECKING:
     from pyvista import CellType
     from pyvista import PointSet
 
-    from ._typing_core import MatrixLike
-    from ._typing_core import NumberType
-    from ._typing_core import NumpyArray
-    from ._typing_core import VectorLike
+    from ._typing_core import MatrixLikeFloat
+    from ._typing_core import VectorLikeFloat
+    from ._typing_core import VectorLikeInt
     from ._typing_core import _ArrayLikeOrScalar
 
     _Dimensionality = Literal[0, 1, 2, 3]
@@ -336,7 +336,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self: Self) -> NumpyArray[float] | None:
+    def active_tensors(self: Self) -> NDArray[np.floating] | None:
         """Return the active tensors array.
 
         Returns
@@ -515,12 +515,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pyvista_ndarray(vtkpts.GetData(), dataset=self)
 
     @points.setter
-    def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
+    def points(self: Self, points: MatrixLikeFloat | VectorLikeFloat | _vtk.vtkPoints) -> None:
         """Set a reference to the points as a NumPy object.
 
         Parameters
         ----------
-        points : MatrixLike[float] | :vtk:`vtkPoints`
+        points : MatrixLikeFloat | VectorLikeFloat | :vtk:`vtkPoints`
             Points as a array object.
 
         """
@@ -610,7 +610,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
-    ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
+    ) -> tuple[FieldAssociation, NDArray[np.floating] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -902,7 +902,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def get_data_range(
         self: Self,
-        arr_var: str | NumpyArray[float] | None = None,
+        arr_var: str | NDArray[np.floating] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
@@ -929,7 +929,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             if arr_var is None:
                 return (np.nan, np.nan)
 
-        arr: NumpyArray[Any]
+        arr: NDArray[Any]
         if isinstance(arr_var, str):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
@@ -1348,7 +1348,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return self.GetCenter()
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         valid_center = _validation.validate_array3(center, name='center')
         self.translate(valid_center - self.center, inplace=True)
 
@@ -1569,7 +1569,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def __setitem__(
         self: Self,
         name: str,
-        scalars: _ArrayLikeOrScalar[NumberType],
+        scalars: _ArrayLikeOrScalar | NDArray[Any],
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the ``point_data``, or ``cell_data`` accordingly.
 
@@ -2010,16 +2010,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pset
 
     # fmt: off
-    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
-    # ruff: enable[E501]
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLikeInt: ...
     # fmt: on
-    def find_closest_point(
-        self: Self, point: Iterable[float], n: int = 1
-    ) -> int | VectorLike[int]:
+    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLikeInt:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2091,19 +2087,23 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
+    def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[False] = False) -> int | NDArray[np.signedinteger]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[True]) -> tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: bool = ...) -> int | NDArray[np.signedinteger] | tuple[int | NDArray[np.signedinteger], NDArray[np.float64]]: ...
     # ruff: enable[E501]
     # fmt: on
     def find_closest_cell(
         self: Self,
-        point: VectorLike[float] | MatrixLike[float],
+        point: VectorLikeFloat | MatrixLikeFloat,
         *,
         return_closest_point: bool = False,
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
+    ) -> (
+        int
+        | NDArray[np.signedinteger]
+        | tuple[int | NDArray[np.signedinteger], NDArray[np.floating]]
+    ):
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
@@ -2113,7 +2113,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : VectorLike[float] | MatrixLike[float]
+        point : VectorLikeFloat | MatrixLikeFloat
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2226,7 +2226,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))  # type: ignore[call-overload]
             closest_points.append(closest_point)
 
-        out_cells: int | NumpyArray[int] = (
+        out_cells: int | NDArray[np.signedinteger] = (
             closest_cells[0] if singular else np.array(closest_cells)
         )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
@@ -2237,8 +2237,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def find_containing_cell(
         self: Self,
-        point: VectorLike[float] | MatrixLike[float],
-    ) -> int | NumpyArray[int]:
+        point: VectorLikeFloat | MatrixLikeFloat,
+    ) -> int | NDArray[np.signedinteger]:
         """Find index of a cell that contains the given point.
 
         .. warning::
@@ -2248,7 +2248,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : VectorLike[float] | MatrixLike[float],
+        point : VectorLikeFloat | MatrixLikeFloat,
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2297,18 +2297,18 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         (1000,)
 
         """
-        point, singular = _coerce_pointslike_arg(point, copy=False)
+        points, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = self._static_cell_locator
-        containing_cells = [locator.FindCell(node) for node in point]
+        containing_cells = [locator.FindCell(node) for node in points]
         return containing_cells[0] if singular else np.array(containing_cells)
 
     def find_cells_along_line(
         self: Self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         tolerance: float | None = None,
-    ) -> NumpyArray[int]:
+    ) -> NDArray[np.intp]:
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2320,10 +2320,10 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : VectorLike
+        pointa : VectorLikeFloat
             Length 3 coordinate of the start of the line.
 
-        pointb : VectorLike
+        pointb : VectorLikeFloat
             Length 3 coordinate of the end of the line.
 
         tolerance : float, optional
@@ -2370,7 +2370,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
         if tolerance is None:
-            tolerance = np.finfo(np.float32).eps
+            tolerance = float(np.finfo(np.float32).eps)
 
         id_list = _vtk.vtkIdList()
         self._static_cell_locator.FindCellsAlongLine(
@@ -2383,10 +2383,10 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def find_cells_intersecting_line(
         self: Self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         tolerance: float | None = None,
-    ) -> NumpyArray[int]:
+    ) -> NDArray[np.signedinteger]:
         """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2438,12 +2438,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     def intersect_with_line(
         self: Self,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         *,
         tolerance: float | None = None,
         deduplicate_points: bool = False,
-    ) -> tuple[NumpyArray[float], NumpyArray[int]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
         """Locate points and cell ids that intersect a line.
 
         .. versionadded:: 0.49
@@ -2560,7 +2560,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
         if tolerance is None:
-            tolerance = np.finfo(np.float32).eps
+            tolerance = float(np.finfo(np.float32).eps)
 
         # Init output
         id_list = _vtk.vtkIdList()
@@ -2586,7 +2586,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             intersection_cells = intersection_cells[idx][::-1]
         return intersection_points, intersection_cells
 
-    def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
+    def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NDArray[np.intp]:
         """Find the index of cells in this mesh within bounds.
 
         .. warning::
@@ -3209,8 +3209,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def point_is_inside_cell(
         self: Self,
         ind: int,
-        point: VectorLike[float] | MatrixLike[float],
-    ) -> bool | NumpyArray[np.bool_]:
+        point: VectorLikeFloat | MatrixLikeFloat,
+    ) -> bool | NDArray[np.bool_]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
@@ -3220,7 +3220,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : VectorLike[float] | MatrixLike[float]
+        point : VectorLikeFloat | MatrixLikeFloat
             Point or points to query if are inside a cell.
 
         Returns
@@ -3305,7 +3305,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     @active_texture_coordinates.setter
     def active_texture_coordinates(
         self: Self,
-        texture_coordinates: NumpyArray[float],
+        texture_coordinates: NDArray[np.floating],
     ) -> None:
         """Set the active texture coordinates on the points.
 

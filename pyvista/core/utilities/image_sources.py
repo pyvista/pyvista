@@ -15,7 +15,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyvista import ImageData
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
 
 
 class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource):
@@ -50,9 +51,9 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
 
     def __init__(
         self,
-        whole_extent: VectorLike[int] | None = None,
-        center: VectorLike[float] | None = None,
-        radius: VectorLike[float] | None = None,
+        whole_extent: VectorLikeInt | None = None,
+        center: VectorLikeFloat | None = None,
+        radius: VectorLikeFloat | None = None,
     ) -> None:
         super().__init__()
         if whole_extent is not None:
@@ -75,7 +76,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
         return self.GetWholeExtent()
 
     @whole_extent.setter
-    def whole_extent(self, whole_extent: VectorLike[int]) -> None:
+    def whole_extent(self, whole_extent: VectorLikeInt) -> None:
         """Set extent of the whole output image.
 
         Parameters
@@ -99,7 +100,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
         return self.GetCenter()
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         """Set the center of the ellipsoid.
 
         Parameters
@@ -123,7 +124,7 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
         return self.GetRadius()
 
     @radius.setter
-    def radius(self, radius: VectorLike[float]) -> None:
+    def radius(self, radius: VectorLikeFloat) -> None:
         """Set the radius of the ellipsoid.
 
         Parameters
@@ -175,7 +176,7 @@ class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageM
     """
 
     def __init__(
-        self, whole_extent: VectorLike[int] | None = None, maxiter: int | None = None
+        self, whole_extent: VectorLikeInt | None = None, maxiter: int | None = None
     ) -> None:
         super().__init__()
         if whole_extent is not None:
@@ -196,7 +197,7 @@ class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageM
         return self.GetWholeExtent()
 
     @whole_extent.setter
-    def whole_extent(self, whole_extent: VectorLike[int]) -> None:
+    def whole_extent(self, whole_extent: VectorLikeInt) -> None:
         """Set extent of the whole output image.
 
         Parameters
@@ -282,7 +283,7 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
     def __init__(
         self,
         *,
-        whole_extent: VectorLike[int] | None = (0, 255, 0, 255, 0, 0),
+        whole_extent: VectorLikeInt | None = (0, 255, 0, 255, 0, 0),
         minimum: float | None = 0.0,
         maximum: float | None = 1.0,
         seed: int | None = None,
@@ -298,7 +299,7 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
             self.seed(seed)
 
     @property
-    def whole_extent(self) -> VectorLike[int]:
+    def whole_extent(self) -> VectorLikeInt:
         """Get extent of the whole output image.
 
         Returns
@@ -313,7 +314,7 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
         )
 
     @whole_extent.setter
-    def whole_extent(self, whole_extent: VectorLike[int]) -> None:
+    def whole_extent(self, whole_extent: VectorLikeInt) -> None:
         """Set extent of the whole output image.
 
         Parameters
@@ -438,8 +439,8 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
     def __init__(
         self,
         *,
-        whole_extent: VectorLike[int] | None = None,
-        direction: VectorLike[float] | None = None,
+        whole_extent: VectorLikeInt | None = None,
+        direction: VectorLikeFloat | None = None,
         period: float | None = None,
         phase: float | None = None,
         amplitude: float | None = None,
@@ -457,7 +458,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
             self.amplitude = amplitude
 
     @property
-    def whole_extent(self) -> VectorLike[int]:
+    def whole_extent(self) -> VectorLikeInt:
         """Get extent of the whole output image.
 
         Returns
@@ -472,7 +473,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
         )
 
     @whole_extent.setter
-    def whole_extent(self, whole_extent: VectorLike[int]) -> None:
+    def whole_extent(self, whole_extent: VectorLikeInt) -> None:
         """Set extent of the whole output image.
 
         Parameters
@@ -503,7 +504,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
         return self.GetDirection()
 
     @direction.setter
-    def direction(self, direction: VectorLike[float]) -> None:
+    def direction(self, direction: VectorLikeFloat) -> None:
         """Set the direction of the sinusoid.
 
         Parameters
@@ -637,8 +638,8 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
     def __init__(
         self,
         *,
-        center: VectorLike[float] | None = None,
-        whole_extent: VectorLike[int] | None = None,
+        center: VectorLikeFloat | None = None,
+        whole_extent: VectorLikeInt | None = None,
         maximum: float | None = None,
         std: float | None = None,
     ) -> None:
@@ -665,7 +666,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
         return self.GetCenter()
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:
+    def center(self, center: VectorLikeFloat) -> None:
         """Set the center of the Gaussian.
 
         Parameters
@@ -677,7 +678,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
         self.SetCenter(center)  # type: ignore[arg-type]
 
     @property
-    def whole_extent(self) -> VectorLike[int]:
+    def whole_extent(self) -> VectorLikeInt:
         """Get extent of the whole output image.
 
         Returns
@@ -692,7 +693,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
         )
 
     @whole_extent.setter
-    def whole_extent(self, whole_extent: VectorLike[int]) -> None:
+    def whole_extent(self, whole_extent: VectorLikeInt) -> None:
         """Set extent of the whole output image.
 
         Parameters
@@ -804,8 +805,8 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
     def __init__(
         self,
         origin: Sequence[int] | None = None,
-        extent: VectorLike[int] | None = None,
-        spacing: VectorLike[float] | None = None,
+        extent: VectorLikeInt | None = None,
+        spacing: VectorLikeFloat | None = None,
     ) -> None:
         super().__init__()
         if origin is not None:
@@ -852,7 +853,7 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
         return self.GetDataExtent()
 
     @extent.setter
-    def extent(self, extent: VectorLike[int]) -> None:
+    def extent(self, extent: VectorLikeInt) -> None:
         """Set extent of the whole output image.
 
         Parameters
@@ -876,7 +877,7 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
         return self.GetDataSpacing()
 
     @spacing.setter
-    def spacing(self, spacing: VectorLike[float]) -> None:
+    def spacing(self, spacing: VectorLikeFloat) -> None:
         """Set the spacing of the grid.
 
         Parameters
