@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from ._typing import ColormapOptions
     from ._typing import OpacityOptions
     from ._typing import ScalarBarArgs
+    from ._typing import _InterpolationKind
 
 _RampOptions = Literal['linear', 's-curve', 'sqrt']
 RAMP_MAP: dict[int, _RampOptions] = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
@@ -223,7 +224,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     _nan_color_set = False
     _cmap: mpl.colors.Colormap | None = None
     _values_manual = False
-    _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
+    _opacity_parm: tuple[Any, bool, _InterpolationKind] = (None, False, 'quadratic')
 
     def __init__(
         self,
@@ -858,7 +859,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         opacity: float | VectorLikeFloat | OpacityOptions,
         *,
         interpolate: bool = True,
-        kind: str = 'quadratic',
+        kind: _InterpolationKind = 'quadratic',
     ) -> None:
         """Assign custom opacity to this lookup table.
 

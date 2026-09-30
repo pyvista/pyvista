@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
+    from ._typing import _InterpolationKind
 
 
 class FONTS(Enum):
@@ -712,7 +713,7 @@ def opacity_transfer_function(
     n_colors: int,
     *,
     interpolate: bool = True,
-    kind: str = 'linear',
+    kind: _InterpolationKind = 'linear',
 ) -> NDArray[np.uint8]:
     """Get the opacity transfer function for a mapping.
 
@@ -814,7 +815,7 @@ def opacity_transfer_function(
                     raise ValueError(msg)
                 from scipy.interpolate import interp1d  # noqa: PLC0415
 
-                f = interp1d(xo, values, kind=kind)  # type: ignore[arg-type]
+                f = interp1d(xo, values, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0

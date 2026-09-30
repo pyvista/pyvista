@@ -29,6 +29,7 @@ from pyvista.core.utilities.transformations import reflection
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
     from scipy.spatial.transform import Rotation
+    from typing_extensions import TypeIs
 
     from pyvista import DataSet
     from pyvista import MultiBlock
@@ -45,6 +46,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import _ScalarT
     from pyvista.core._typing_core import _VectorSequence
     from pyvista.core.utilities.transformations import _FiveFloat64Arrays
+
+
+def _is_nested_sequence(
+    obj: MatrixLikeFloat | Sequence[TransformLike],
+) -> TypeIs[Sequence[Sequence[float]] | _MatrixSequence]:
+    """Return whether every item of ``obj`` is itself a sequence, as in a matrix of rows."""
+    return all(isinstance(item, Sequence) for item in obj)
 
 
 class Transform(
@@ -277,12 +285,12 @@ class Transform(
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                if all(isinstance(item, Sequence) for item in trans):
+                if _is_nested_sequence(trans):
                     # Init from a nested sequence array
-                    self.compose(trans)  # type: ignore[arg-type]
+                    self.compose(trans)
                 else:
                     # Init from sequence of transformations
-                    [self.compose(t) for t in trans]  # type: ignore[arg-type]
+                    [self.compose(t) for t in trans]
             else:
                 self.compose(trans)
 
