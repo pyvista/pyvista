@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
-from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import overload
@@ -76,7 +75,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core._typing_core import _FloatingT
     from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core._typing_core import _Real
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral
@@ -95,9 +96,6 @@ _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
 _CONNECTIVITY_SCALARS = '__pyvista_connectivity_scalars'
 
 
-_FloatingT = TypeVar('_FloatingT', bound=np.floating)
-
-
 def _points_inside_surface(image: ImageData, surface: PolyData) -> NDArray[np.bool_]:
     """Return which points of the image a closed surface encloses, from a stencil."""
     mask = surface.voxelize_binary_mask(reference_volume=image)
@@ -106,7 +104,7 @@ def _points_inside_surface(image: ImageData, surface: PolyData) -> NDArray[np.bo
 
 def _signed_distance_near_surface(
     dataset: ImageData, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
-) -> NDArray[np.floating] | None:
+) -> NDArray[np.float64] | None:
     """Build a signed distance field that is exact on the cells the surface cuts.
 
     Every point is classified inside (-1) or outside (1) the surface, and the points of
@@ -121,7 +119,7 @@ def _signed_distance_near_surface(
     is_exact = np.zeros(dataset.n_points, dtype=bool)
     points = dataset.points
 
-    def exact_distance(point_ids: NDArray[np.signedinteger]) -> NDArray[np.floating]:
+    def exact_distance(point_ids: NDArray[np.signedinteger]) -> NDArray[np.float64]:
         values = _vtk.vtkDoubleArray()
         function.FunctionValue(pv.convert_array(points[point_ids]), values)
         return pv.convert_array(values)
@@ -193,11 +191,11 @@ def _points_of_cells_cut_by_sign(
 class _ExtractValuesInputs(NamedTuple):
     """Validated inputs shared by ``extract_values`` and ``select_values``."""
 
-    values: NDArray[np.floating] | None
-    ranges: NDArray[np.floating] | None
+    values: NDArray[_Real] | None
+    ranges: NDArray[_Real] | None
     value_names: list[str] | None
     range_names: list[str] | None
-    array: NDArray[np.floating]
+    array: NDArray[Any]
     array_name: str
     association: FieldAssociation
     component_logic: Callable[[NDArray[np.bool_]], NDArray[np.bool_]] | None
@@ -345,7 +343,7 @@ class DataSetFilters(DataObjectFilters):
         cell_centers: bool = False,
         merge_points: bool = False,
         return_matrix: bool = False,
-    ) -> _DataSetType | tuple[_DataSetType, NDArray[np.floating]]:
+    ) -> _DataSetType | tuple[_DataSetType, NDArray[np.float64]]:
         """Align a dataset to the x-y-z axes.
 
         This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
@@ -1035,7 +1033,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        value : float | sequence[float], optional
+        value : float | VectorLikeFloat, optional
             Single value or ``(min, max)`` to be used for the data threshold. If
             a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
@@ -1730,7 +1728,7 @@ class DataSetFilters(DataObjectFilters):
     def contour(  # type: ignore[misc]
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
-        scalars: str | NDArray[np.floating] | None = None,
+        scalars: str | VectorLikeFloat | None = None,
         *,
         compute_normals: bool = False,
         compute_gradients: bool = False,
@@ -1752,7 +1750,7 @@ class DataSetFilters(DataObjectFilters):
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str | array_like[float], optional
+        scalars : str | VectorLikeFloat, optional
             Name or array of scalars to threshold on. If this is an array, the
             output of this filter will save them as ``"Contour Data"``.
             Defaults to currently active scalars.
@@ -1766,7 +1764,7 @@ class DataSetFilters(DataObjectFilters):
         compute_scalars : bool, default: True
             Preserves the scalar values that are being contoured.
 
-        rng : sequence[float], optional
+        rng : VectorLikeFloat, optional
             If an integer number of isosurfaces is specified, this is
             the range over which to generate contours. Default is the
             scalars array's full data range.
@@ -1929,15 +1927,15 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        origin : sequence[float], optional
+        origin : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             bottom left corner of the plane.
 
-        point_u : sequence[float], optional
+        point_u : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             bottom right corner of the plane.
 
-        point_v : sequence[float], optional
+        point_v : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             top left corner of the plane.
 
@@ -2016,7 +2014,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[float], optional
+        center : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             center of the sphere. If ``None``, this will be automatically
             calculated.
@@ -2124,7 +2122,7 @@ class DataSetFilters(DataObjectFilters):
                 from ``(1, 0, 0)`` to the direction of the ``orient`` vector at
                 each point.
 
-        indices : sequence[float], optional
+        indices : VectorLikeInt, optional
             Specifies the index of each glyph in the table for lookup in case
             ``geom`` is a sequence. If given, must be the same length as
             ``geom``. If missing, a default value of ``range(len(geom))`` is
@@ -2143,11 +2141,11 @@ class DataSetFilters(DataObjectFilters):
         clamping : bool, default: False
             Turn on/off clamping of "scalar" values to range.
 
-        rng : sequence[float], optional
+        rng : VectorLikeFloat, optional
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
-        color_mode : str, optional, default: ``'scale'``
+        color_mode : str, default: ``'scale'``
             If ``'scale'`` , color the glyphs by scale.
             If ``'scalar'`` , color the glyphs by scalar.
             If ``'vector'`` , color the glyphs by vector.
@@ -2356,11 +2354,11 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     @overload
-    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501
     @overload
-    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501
     @overload
-    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501
     # fmt: on
     def connectivity(  # type: ignore[misc]
         self: _DataSetType,
@@ -2372,7 +2370,7 @@ class DataSetFilters(DataObjectFilters):
             'point_seed',
             'closest',
         ] = 'all',
-        variable_input: (float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None) = None,
+        variable_input: float | VectorLikeFloat | None = None,
         *,
         scalar_range: VectorLikeFloat | None = None,
         scalars: str | None = None,
@@ -2433,7 +2431,7 @@ class DataSetFilters(DataObjectFilters):
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
-        variable_input : float | VectorLikeFloat | VectorLikeBool, optional
+        variable_input : float | VectorLikeFloat, optional
             The convenience parameter used for specifying any required input
             values for some values of ``extraction_mode``. Setting
             ``variable_input`` is equivalent to setting:
@@ -2445,7 +2443,7 @@ class DataSetFilters(DataObjectFilters):
 
             It has no effect if the mode is ``'all'`` or ``'largest'``.
 
-        scalar_range : sequence[float], optional
+        scalar_range : VectorLikeFloat, optional
             Scalar range in the form ``[min, max]``. If set, the connectivity is
             restricted to cells with at least one point with scalar values in
             the specified range. The ``'largest'``, ``'cell_seed'`` and
@@ -2498,7 +2496,7 @@ class DataSetFilters(DataObjectFilters):
             Cell ids to use as seeds. A boolean mask sized to the number of cells is
             also supported. Only used if ``extraction_mode`` is ``cell_seed``.
 
-        closest_point : sequence[float], optional
+        closest_point : VectorLikeFloat, optional
             Point coordinates in ``(x, y, z)``. Only used if
             ``extraction_mode`` is ``closest``.
 
@@ -2643,9 +2641,7 @@ class DataSetFilters(DataObjectFilters):
         closest_point_: NDArray[np.floating] = np.zeros(3, dtype=float)
         if extraction_mode in required_input:
             input_name, given_input = required_input[extraction_mode]
-            input_value: float | VectorLikeFloat | VectorLikeInt | VectorLikeBool | None = (
-                given_input
-            )
+            input_value: float | VectorLikeFloat | None = given_input
             if input_value is None:
                 if variable_input is None:
                     msg = (
@@ -2988,7 +2984,7 @@ class DataSetFilters(DataObjectFilters):
             A scaling factor to increase the scaling effect. Alias
             ``scale_factor`` also accepted - if present, overrides ``factor``.
 
-        normal : sequence, optional
+        normal : VectorLikeFloat, optional
             User specified normal. If given, data normals will be
             ignored and the given normal will be used to project the
             warp.
@@ -3728,7 +3724,7 @@ class DataSetFilters(DataObjectFilters):
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        source_center : sequence[float], optional
+        source_center : VectorLikeFloat, optional
             Length 3 tuple of floats defining the center of the source
             particles. Defaults to the center of the dataset.
 
@@ -3739,7 +3735,7 @@ class DataSetFilters(DataObjectFilters):
         n_points : int, default: 100
             Number of particles present in source sphere or line.
 
-        start_position : sequence[float], optional
+        start_position : VectorLikeFloat, optional
             A single point.  This will override the sphere point source.
 
         return_source : bool, default: False
@@ -4056,7 +4052,7 @@ class DataSetFilters(DataObjectFilters):
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        start_position : sequence[float], optional
+        start_position : VectorLikeFloat, optional
             The seed point for generating evenly spaced streamlines.
             If not supplied, a random position in the dataset is chosen.
 
@@ -4272,10 +4268,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4348,10 +4344,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4407,7 +4403,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Get variable of interest
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        values: NDArray[np.floating] = sampled.get_array(scalars_)
+        values: NDArray[Any] = sampled.get_array(scalars_)
         distance = sampled['Distance']
         if component is not None:
             try:
@@ -4460,7 +4456,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        points : array_like[float]
+        points : MatrixLikeFloat
             List of points defining multiple lines.
 
         tolerance : float, optional
@@ -4522,13 +4518,13 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4608,7 +4604,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4616,11 +4612,11 @@ class DataSetFilters(DataObjectFilters):
             number of cells in the input mesh. Must be a positive
             integer.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
-        polar : sequence[float], optional
+        polar : VectorLikeFloat, optional
             Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
@@ -4703,13 +4699,13 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4833,7 +4829,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[int]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4841,11 +4837,11 @@ class DataSetFilters(DataObjectFilters):
             number of cells in the input mesh. Must be a positive
             integer.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
-        polar : sequence[float], optional
+        polar : VectorLikeFloat, optional
             Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
@@ -5435,7 +5431,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        values : float | ArrayLikeFloat | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5447,7 +5443,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : array_like | dict, optional
+        ranges : VectorLikeFloat | MatrixLikeFloat | dict, optional
             Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -5644,7 +5640,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        values : float | ArrayLikeFloat | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5656,7 +5652,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : ArrayLikeFloat | dict, optional
+        ranges : VectorLikeFloat | MatrixLikeFloat | dict, optional
             Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -6273,7 +6269,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         progress_bar: bool = False,
-    ) -> NDArray[np.integer]:
+    ) -> NDArray[np.signedinteger]:
         """Return the surface indices of a grid.
 
         .. versionchanged:: 0.47
@@ -7159,13 +7155,13 @@ class DataSetFilters(DataObjectFilters):
     @overload  # as_composite=True, return_meta=False
     def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]] | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]] | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def oriented_bounding_box(  # type: ignore[misc]
@@ -7180,9 +7176,9 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool = True,
     ) -> (
         MultiBlock[PolyData]
-        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]
         | PolyData
-        | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]
+        | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]
     ):
         """Return an oriented bounding box (OBB) for this dataset.
 
@@ -7357,13 +7353,13 @@ class DataSetFilters(DataObjectFilters):
     @overload  # as_composite=True, return_meta=False
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]] | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]] | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def bounding_box(  # type: ignore[misc]
@@ -7376,9 +7372,9 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool = True,
     ) -> (
         MultiBlock[PolyData]
-        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]
         | PolyData
-        | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]
+        | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]
     ):
         """Return a bounding box for this dataset.
 
@@ -7531,8 +7527,8 @@ class DataSetFilters(DataObjectFilters):
     def _bounding_box(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        matrix: NDArray[np.floating] | None,
-        inverse_matrix: NDArray[np.floating] | None,
+        matrix: NDArray[np.float64] | None,
+        inverse_matrix: NDArray[np.float64] | None,
         box_style: Literal['frame', 'outline', 'face'],
         oriented: bool,
         frame_width: float,
@@ -7540,9 +7536,9 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool,
     ) -> (
         MultiBlock[PolyData]
-        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.floating]]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]
         | PolyData
-        | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]
+        | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]
     ):
         def _multiblock_to_polydata(multiblock: MultiBlock[PolyData]) -> PolyData:
             return multiblock.combine(merge_points=False).extract_surface(
@@ -7572,9 +7568,9 @@ class DataSetFilters(DataObjectFilters):
                 axes = np.eye(3)
                 point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
             else:
-                matrix = cast('NDArray[np.floating]', matrix)
-                inverse_matrix = cast('NDArray[np.floating]', inverse_matrix)
-                axes = matrix[:3, :3]  # type: ignore[assignment]
+                matrix = cast('NDArray[np.float64]', matrix)
+                inverse_matrix = cast('NDArray[np.float64]', inverse_matrix)
+                axes = matrix[:3, :3]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box

@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core._typing_core import _Real
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
@@ -128,9 +129,9 @@ def _translate_and_orient(
     ----------
     surf : pyvista.core.pointset.PolyData
         Mesh to be translated and oriented.
-    center : tuple, optional, default: (0.0, 0.0, 0.0)
+    center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center point to which the mesh should be translated.
-    direction : tuple, optional, default: (1.0, 0.0, 0.0)
+    direction : VectorLikeFloat, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
 
     """
@@ -248,7 +249,7 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
 
@@ -274,7 +275,7 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
 
         Parameters
         ----------
-        direction : sequence[float]
+        direction : VectorLikeFloat
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cone.
 
@@ -510,7 +511,7 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
 
@@ -537,7 +538,7 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
 
         Parameters
         ----------
-        direction : sequence[float]
+        direction : VectorLikeFloat
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
 
@@ -685,7 +686,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
 
     Parameters
     ----------
-    points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
+    points : MatrixLikeFloat, default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
 
     """
@@ -698,7 +699,7 @@ class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
         self.points = points
 
     @property
-    def points(self: MultipleLinesSource) -> NDArray[np.floating]:
+    def points(self: MultipleLinesSource) -> NDArray[_Real]:
         """Return the points defining a broken line.
 
         Returns
@@ -1137,7 +1138,7 @@ class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``.
 
         """
@@ -1348,7 +1349,7 @@ class DiscSource(_AlgorithmSource, _vtk.vtkDiskSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``.
 
         """
@@ -1511,7 +1512,7 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         """
@@ -1535,7 +1536,7 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
 
         Parameters
         ----------
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         """
@@ -1704,7 +1705,7 @@ class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``.
 
         """
@@ -2047,7 +2048,7 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``.
 
         """
@@ -2095,7 +2096,7 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
 
         Parameters
         ----------
-        normal : sequence[float]
+        normal : VectorLikeFloat
             Normal in ``[x, y, z]``.
 
         """
@@ -2382,7 +2383,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center in ``[x, y, z]``.
 
         """
@@ -2406,7 +2407,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Parameters
         ----------
-        origin : sequence[float]
+        origin : VectorLikeFloat
             Origin in ``[x, y, z]``.
 
         """
@@ -2430,7 +2431,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Parameters
         ----------
-        point_a : sequence[float]
+        point_a : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         """
@@ -2454,7 +2455,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Parameters
         ----------
-        point_b : sequence[float]
+        point_b : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         """
@@ -2870,7 +2871,7 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Center of the superquadric in ``[x, y, z]``.
 
         """
@@ -2894,7 +2895,7 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
 
         Parameters
         ----------
-        scale : sequence[float]
+        scale : VectorLikeFloat
            Scale factors of the superquadric in ``[x, y, z]``.
 
         """
@@ -3102,8 +3103,8 @@ class _AxesPartTemplate(NamedTuple):
     """Normalized part geometry with the sign of each point and cell along the part's axis."""
 
     mesh: PolyData
-    point_sign: NDArray[np.floating]
-    cell_sign: NDArray[np.floating]
+    point_sign: NDArray[np.float64]
+    cell_sign: NDArray[np.float64]
 
 
 def _make_template(mesh: PolyData) -> _AxesPartTemplate:

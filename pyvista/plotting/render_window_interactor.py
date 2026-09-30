@@ -1474,7 +1474,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         # PyVista one, but types the getter as the base class.
         return cast('Renderer', self.interactor.FindPokedRenderer(x, y))
 
-    def get_event_subplot_loc(self) -> NDArray[np.signedinteger] | np.intp:
+    def get_event_subplot_loc(self) -> NDArray[np.intp] | np.intp:
         """Get the subplot location of the last event.
 
         Returns
@@ -1682,7 +1682,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         renderer : :vtk:`vtkRenderer`
             The renderer in which the action will take place.
 
-        point : list or tuple
+        point : VectorLikeFloat
             The point to fly to.
 
         """

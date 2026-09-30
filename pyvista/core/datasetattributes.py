@@ -7,6 +7,7 @@ import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
+from typing import overload
 
 import numpy as np
 
@@ -34,7 +35,6 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLikeFloat
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import _AnyArrayLike
 
@@ -228,7 +228,13 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
 
-    def get(self: Self, key: str, value: Any | None = None) -> pyvista_ndarray | None:
+    # fmt: off
+    @overload
+    def get(self: Self, key: str, value: None = None) -> pyvista_ndarray | None: ...
+    @overload
+    def get(self: Self, key: str, value: _T) -> pyvista_ndarray | _T: ...
+    # fmt: on
+    def get(self: Self, key: str, value: _T | None = None) -> pyvista_ndarray | _T | None:
         """Return the value of the item with the specified key.
 
         Parameters
@@ -379,7 +385,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         return None
 
     @property
-    def active_vectors(self: Self) -> NDArray[np.floating] | None:
+    def active_vectors(self: Self) -> pyvista_ndarray | None:
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
@@ -390,7 +396,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        Optional[np.ndarray]
+        Optional[pyvista_ndarray]
             Active vectors as a ``pyvista_ndarray``.
 
         Examples
@@ -530,7 +536,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return narray.squeeze()
         return narray
 
-    def set_array(self: Self, data: ArrayLikeFloat, name: str, *, deep_copy: bool = False) -> None:
+    def set_array(self: Self, data: _AnyArrayLike, name: str, *, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -549,7 +555,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        data : ArrayLikeFloat
+        data : numpy.ndarray | sequence
             Array of data.
 
         name : str
@@ -601,7 +607,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def set_scalars(
         self: Self,
-        scalars: ArrayLikeFloat,
+        scalars: _AnyArrayLike,
         name: str = 'scalars',
         *,
         deep_copy: bool = False,
@@ -618,7 +624,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Parameters
         ----------
-        scalars : ArrayLikeFloat
+        scalars : numpy.ndarray | sequence
             Array of data.
 
         name : str, default: 'scalars'

@@ -6,6 +6,7 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 from typing import NoReturn
 
@@ -27,7 +28,6 @@ from .utilities.arrays import row_array
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from collections.abc import Mapping
     from typing import Any
 
     from numpy.typing import NDArray
@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _AnyArrayLike
     from pyvista.core._typing_core import _NumericArray
 
 
@@ -110,12 +111,14 @@ class Table(DataObject, _vtk.vtkTable):
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
 
-    def _from_dict(self, array_dict: Mapping[str, Any]) -> None:
-        for array in array_dict.values():
+    def _from_dict(self, array_dict: Mapping[str, object]) -> None:
+        arrays: dict[str, NDArray[Any]] = {}
+        for name, array in array_dict.items():
             if not (isinstance(array, np.ndarray) and array.ndim < 3):
                 msg = 'Dictionary must contain only NumPy arrays with maximum of 2D.'
                 raise ValueError(msg)
-        for name, array in array_dict.items():
+            arrays[name] = array
+        for name, array in arrays.items():
             self.row_arrays[name] = array
 
     def _from_pandas(self, data_frame: pandas.DataFrame) -> None:
@@ -239,20 +242,19 @@ class Table(DataObject, _vtk.vtkTable):
 
     def update(
         self,
-        data: (
-            DataSetAttributes | dict[str, NDArray[np.floating]] | MatrixLikeFloat | VectorLikeFloat
-        ),
+        data: DataSetAttributes | Mapping[str, _AnyArrayLike] | MatrixLikeFloat | VectorLikeFloat,
     ) -> None:
         """Set the table data using a dict-like update.
 
         Parameters
         ----------
-        data : DataSetAttributes | dict | MatrixLikeFloat | VectorLikeFloat
-            Other dataset attributes, mapping, or array data to update from.
+        data : DataSetAttributes | Mapping | MatrixLikeFloat | VectorLikeFloat
+            Other dataset attributes, a mapping of names to arrays, or array data to
+            update from.
 
         """
-        arrays: DataSetAttributes | dict[str, NDArray[np.floating]]
-        if isinstance(data, (DataSetAttributes, dict)):
+        arrays: DataSetAttributes | Mapping[str, _AnyArrayLike]
+        if isinstance(data, (DataSetAttributes, Mapping)):
             arrays = data
         else:
             # Allow table updates using array data
@@ -299,7 +301,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name: str, scalars: VectorLikeFloat) -> None:
+    def __setitem__(self, name: str, scalars: _AnyArrayLike) -> None:
         """Add/set an array in the ``row_arrays``."""
         self.row_arrays[name] = scalars
 

@@ -21,6 +21,16 @@ def some_points() -> NDArray[np.floating]:
     return np.zeros((4, 3))
 
 
+def int64_points() -> NDArray[np.int64]:
+    """Return integer points, which only the copying path accepts."""
+    return np.zeros((4, 3), dtype=np.int64)
+
+
+def integer_points() -> NDArray[np.integer]:
+    """Return points whose integer width is unknown."""
+    return np.zeros((4, 3), dtype=np.int64)
+
+
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True
@@ -29,6 +39,15 @@ def a_flag() -> bool:
 assert_types(apply_transformation_to_points(a_transformation(), some_points()), NDArray[np.floating])
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False), NDArray[np.floating])
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=True), None)
+assert_types(apply_transformation_to_points(a_transformation(), int64_points()), NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), int64_points(), inplace=False), NDArray[np.floating])
+assert_types(apply_transformation_to_points(a_transformation(), integer_points()), NDArray[np.floating])
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), NDArray[np.floating] | None)
+
+
+# Never called; the ignore is reported as unused if integer points ever type check in place
+def int64_points_in_place() -> None:  # pragma: no cover
+    """Pass integer points with ``inplace=True``, which would truncate the result."""
+    apply_transformation_to_points(a_transformation(), int64_points(), inplace=True)  # type: ignore[type-var]

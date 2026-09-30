@@ -466,7 +466,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        loc : sequence[int]
+        loc : VectorLikeInt
             Location of the renderer on the plotting grid, for example
             ``loc=(1, 1)``.
 
@@ -491,7 +491,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        loc : int | sequence[int]
+        loc : int | VectorLikeInt
             Index of the renderer to add the actor to. For example, ``loc=2``
             or ``loc=(1, 1)``.
 
@@ -539,7 +539,7 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._active_index
 
-    def index_to_loc(self, index: int) -> NDArray[np.signedinteger] | np.intp:
+    def index_to_loc(self, index: int | np.integer) -> NDArray[np.intp] | np.intp:
         """Convert a 1D index location to the 2D location on the plotting grid.
 
         Parameters
@@ -549,7 +549,7 @@ class Renderers(_NoNewAttrMixin):
 
         Returns
         -------
-        output : numpy.ndarray | numpy.int64
+        output : numpy.ndarray | numpy.intp
             2D location on the plotting grid.
 
         """

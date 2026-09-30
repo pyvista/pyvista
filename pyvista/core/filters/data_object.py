@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core._typing_core import _GenericT
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core._typing_core import _OutputDataObject
     from pyvista.core._typing_core import _OutputDataSet
@@ -88,9 +89,7 @@ if TYPE_CHECKING:
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
-    _RectilinearComponents = tuple[
-        NDArray[np.floating], NDArray[np.floating], NDArray[np.signedinteger]
-    ]
+    _RectilinearComponents = tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.intp]]
 
 
 def _rectilinear_transform_components(
@@ -2320,10 +2319,10 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        normal : array_like[float]
+        normal : VectorLikeFloat
             Normal direction for reflection.
 
-        point : array_like[float]
+        point : VectorLikeFloat
             Point which, along with ``normal``, defines the reflection
             plane. If not specified, this is the origin.
 
@@ -3085,7 +3084,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : VectorLikeFloat, optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
@@ -3657,7 +3656,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        bounds : sequence[float], optional
+        bounds : VectorLikeFloat, optional
             Length 6 sequence of floats: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             Length 3 sequence of floats: distances from the min coordinate
             of the input mesh. Single float value: uniform distance from the
@@ -4124,7 +4123,7 @@ class DataObjectFilters:
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
             The ``'x'`` direction is used by default.
 
-        origin : sequence[float], optional
+        origin : VectorLikeFloat, optional
             The center ``(x, y, z)`` coordinate of the plane on which
             the slice occurs. The default is the center of the dataset.
 
@@ -4407,12 +4406,12 @@ class DataObjectFilters:
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
 
-        bounds : sequence[float], optional
+        bounds : VectorLikeFloat, optional
             A 6-length sequence overriding the bounds of the mesh.
             The bounds along the specified axis define the extent
             where slices are taken.
 
-        center : sequence[float], optional
+        center : VectorLikeFloat, optional
             A 3-length sequence specifying the position of the line
             along which slices are taken. Defaults to the center of
             the mesh.
@@ -5073,15 +5072,15 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        low_point : sequence[float], optional
+        low_point : VectorLikeFloat, optional
             The low point of the projection line in 3D space. Default is bottom
             center of the dataset. Otherwise pass a length 3 sequence.
 
-        high_point : sequence[float], optional
+        high_point : VectorLikeFloat, optional
             The high point of the projection line in 3D space. Default is top
             center of the dataset. Otherwise pass a length 3 sequence.
 
-        scalar_range : str | sequence[float], optional
+        scalar_range : str | VectorLikeFloat, optional
             The scalar range to project to the low and high points on the line
             that will be mapped to the dataset. If None given, the values will
             be computed from the elevation (Z component) range between the
@@ -6673,7 +6672,7 @@ def _slice_image_along_axis(
     faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
     output = pv.PolyData.from_regular_faces(points, faces)
 
-    def slab(array: NDArray[Any], k: int) -> NDArray[Any]:
+    def slab(array: NDArray[_GenericT], k: int) -> NDArray[_GenericT]:
         # The plane of values at index k along the axis, ordered like the points
         grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
         index: list[Any] = [slice(None)] * 3
@@ -6971,7 +6970,7 @@ def _validate_spacing(spacing: float | VectorLikeFloat) -> NDArray[np.float64]:
 def _round_dimensions(
     dimensions: NDArray[np.floating],
     rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None,
-) -> NDArray[np.signedinteger]:
+) -> NDArray[np.int64]:
     """Round fractional dimensions to integers, with ``numpy.round`` by default."""
     rounding_func = np.round if rounding_func is None else rounding_func
     return _validation.validate_array3(
@@ -7022,7 +7021,7 @@ def _count_points(dimensions: VectorLikeInt, point_offset: int) -> int:
 
 def _dimensions_within(
     size: NDArray[np.floating], max_n_points: int, point_offset: int
-) -> NDArray[np.signedinteger]:
+) -> NDArray[np.int_]:
     """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
     spacing = _spacing_for_n_points(
         size, max_n_points, name='max n points', point_offset=point_offset

@@ -15,12 +15,21 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from numpy.typing import NDArray
 
     from pyvista import PolyData
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _Integer
+    from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _MatrixSequence
     from pyvista.core._typing_core import _NumericArray
+    from pyvista.core._typing_core import _Real
+    from pyvista.core._typing_core import _ScalarT
 
 
 def vtk_points(
@@ -34,7 +43,7 @@ def vtk_points(
 
     Parameters
     ----------
-    points : numpy.ndarray or sequence
+    points : VectorLikeFloat | MatrixLikeFloat
         Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 
@@ -122,7 +131,7 @@ def line_segments_from_points(points: VectorLikeFloat | MatrixLikeFloat) -> Poly
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLikeFloat | MatrixLikeFloat
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
@@ -165,7 +174,7 @@ def lines_from_points(
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLikeFloat | MatrixLikeFloat
         Points representing the vertices of the connected
         segments. For example, two line segments would be represented
         as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
@@ -251,7 +260,7 @@ def fit_plane_to_points(
 
     Parameters
     ----------
-    points : array_like[float]
+    points : MatrixLikeFloat
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool, default: False
@@ -555,7 +564,7 @@ def fit_line_to_points(
     return line_mesh
 
 
-def make_tri_mesh(points: NDArray[np.floating], faces: NDArray[np.signedinteger]) -> PolyData:
+def make_tri_mesh(points: NDArray[_Real], faces: NDArray[_Integer]) -> PolyData:
     """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
 
     Construct a mesh from an Nx3 array of points and an Mx3 array of
@@ -630,10 +639,10 @@ def vector_poly_data(
 
     Parameters
     ----------
-    orig : array_like[float]
+    orig : VectorLikeFloat | MatrixLikeFloat
         Array of vector origins.
 
-    vec : array_like[float]
+    vec : VectorLikeFloat | MatrixLikeFloat
         Array of vectors.
 
     Returns
@@ -714,14 +723,27 @@ def vector_poly_data(
 
 # fmt: off
 # ruff: disable[E501]
+# `pyvista_ndarray` has no dtype parameter, so it is typed as floating before the dtype TypeVars
 @overload
-def principal_axes(points: MatrixLikeFloat) -> NDArray[np.floating]: ...
+def principal_axes(points: pyvista_ndarray, *, return_std: Literal[False] = False) -> NDArray[np.floating]: ...
 @overload
-def principal_axes(points: MatrixLikeFloat, *, return_std: Literal[True] = True) -> tuple[NDArray[np.floating], NDArray[np.floating]]: ...
+def principal_axes(points: pyvista_ndarray, *, return_std: Literal[True]) -> tuple[NDArray[np.floating], NDArray[np.floating]]: ...
 @overload
-def principal_axes(points: MatrixLikeFloat, *, return_std: Literal[False] = False) -> NDArray[np.floating]: ...
+def principal_axes(points: NDArray[_FloatingT], *, return_std: Literal[False] = False) -> NDArray[_FloatingT]: ...
 @overload
-def principal_axes(points: MatrixLikeFloat, *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
+def principal_axes(points: NDArray[_FloatingT], *, return_std: Literal[True]) -> tuple[NDArray[_FloatingT], NDArray[_FloatingT]]: ...
+@overload
+def principal_axes(points: NDArray[_IntegerT], *, return_std: Literal[False] = False) -> NDArray[np.float64]: ...
+@overload
+def principal_axes(points: NDArray[_IntegerT], *, return_std: Literal[True]) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+@overload
+def principal_axes(points: NDArray[_ScalarT], *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
+@overload
+def principal_axes(points: Sequence[Sequence[float]], *, return_std: Literal[False] = False) -> NDArray[np.float64]: ...
+@overload
+def principal_axes(points: Sequence[Sequence[float]], *, return_std: Literal[True]) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+@overload
+def principal_axes(points: Sequence[Sequence[float]] | _MatrixSequence, *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
 # ruff: enable[E501]
 # fmt: on
 def principal_axes(

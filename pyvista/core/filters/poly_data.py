@@ -116,7 +116,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast('NDArray[np.floating]', pv.point_array(edges, 'point_ind'))
+        orig_id = cast('NDArray[np.signedinteger]', pv.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -767,7 +767,7 @@ class PolyDataFilters(DataSetFilters):
         curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
-    ) -> NDArray[np.floating]:
+    ) -> NDArray[np.float64]:
         """Return the point-wise curvature of a mesh.
 
         Parameters
@@ -2686,7 +2686,7 @@ class PolyDataFilters(DataSetFilters):
         first_point: bool = False,
         plot: bool = False,
         off_screen: bool | None = None,
-    ) -> tuple[NDArray[np.floating], NDArray[np.signedinteger]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.int_]]:
         """Perform a single ray trace calculation.
 
         This requires a mesh and a line segment defined by an origin
@@ -2700,10 +2700,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origin : sequence[float]
+        origin : VectorLikeFloat
             Start of the line segment.
 
-        end_point : sequence[float]
+        end_point : VectorLikeFloat
             End of the line segment.
 
         first_point : bool, default: False
@@ -2781,9 +2781,7 @@ class PolyDataFilters(DataSetFilters):
         *,
         first_point: bool = False,
         retry: bool = False,
-    ) -> tuple[
-        NDArray[np.floating], NDArray[np.signedinteger], NDArray[np.signedinteger]
-    ]:  # pragma: no cover
+    ) -> tuple[NDArray[np.float64], NDArray[np.intp], NDArray[np.intp]]:  # pragma: no cover
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces, an array of
@@ -2799,10 +2797,10 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        origins : array_like[float]
+        origins : MatrixLikeFloat
             Starting point for each trace.
 
-        directions : array_like[float]
+        directions : MatrixLikeFloat
             Direction vector for each trace.
 
         first_point : bool, default: False
@@ -2925,11 +2923,11 @@ class PolyDataFilters(DataSetFilters):
                     loc_lst.extend(locs)
 
             # sort result arrays by ray index
-            index_ray = np.array(ray_lst)
+            index_ray = np.array(ray_lst, dtype=np.intp)
             sorting_inds = index_ray.argsort()
             index_ray = index_ray[sorting_inds]
-            index_tri = np.array(tri_lst)[sorting_inds]
-            locations = np.array(loc_lst)[sorting_inds]
+            index_tri = np.array(tri_lst, dtype=np.intp)[sorting_inds]
+            locations = np.array(loc_lst, dtype=float)[sorting_inds]
 
         return locations, index_ray, index_tri
 
@@ -3108,7 +3106,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        remove : sequence[bool | int], optional
+        remove : VectorLikeBool | VectorLikeInt, optional
             If remove is a ``bool`` array, points that are ``True`` will
             be removed.  Otherwise, it is treated as a list of
             indices. Only valid for all-triangle meshes.
@@ -3199,7 +3197,7 @@ class PolyDataFilters(DataSetFilters):
             PyVistaDeprecationWarning,
         )
         keep_scalars = True if keep_scalars is None else keep_scalars
-        remove_array: NDArray[Any] = np.asarray(remove)
+        remove_array = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
         if not issubclass(remove_array.dtype.type, (np.bool_, np.integer)):
@@ -3737,7 +3735,7 @@ class PolyDataFilters(DataSetFilters):
             Set the maximum ribbon width in terms of a multiple of the
             minimum width. The default is 2.0.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             Normal to use as default.
 
         tcoords : bool, str, optional
@@ -3847,7 +3845,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        vector : numpy.ndarray or sequence
+        vector : VectorLikeFloat
             Direction and length to extrude the mesh in.
 
         capping : bool, optional
@@ -3984,7 +3982,7 @@ class PolyDataFilters(DataSetFilters):
                a value for this keyword argument to prevent future changes
                in behavior and warnings.
 
-        rotation_axis : numpy.ndarray or sequence, optional
+        rotation_axis : VectorLikeFloat, optional
             The direction vector of the axis around which the rotation is done.
 
         progress_bar : bool, default: False
@@ -4086,7 +4084,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        direction : numpy.ndarray or sequence
+        direction : VectorLikeFloat
             Direction vector to extrude.
 
         trim_surface : pyvista.PolyData
@@ -4439,7 +4437,7 @@ class PolyDataFilters(DataSetFilters):
         n_contours : int
             Number of contours.
 
-        rng : Sequence, optional
+        rng : VectorLikeFloat, optional
             Range of the scalars. Optional and defaults to the minimum and
             maximum of the active scalars of ``scalars``.
 
@@ -4987,11 +4985,11 @@ def _drawn_intervals(
 def _build_dashes(
     source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
 ) -> tuple[
-    NDArray[np.signedinteger],
-    NDArray[np.signedinteger],
-    NDArray[np.floating],
-    NDArray[np.signedinteger],
-    NDArray[np.signedinteger],
+    NDArray[np.int64],
+    NDArray[np.int64],
+    NDArray[np.float64],
+    NDArray[np.int64],
+    NDArray[np.int64],
 ]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points
