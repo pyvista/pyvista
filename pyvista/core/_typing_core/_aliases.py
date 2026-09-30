@@ -26,9 +26,9 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
 
-if TYPE_CHECKING or os.environ.get(
-    '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
-):  # pragma: no cover
+if TYPE_CHECKING:
+    from scipy.spatial.transform import Rotation
+elif os.environ.get('_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):  # pragma: no cover
     try:
         from scipy.spatial.transform import Rotation
     except ImportError:

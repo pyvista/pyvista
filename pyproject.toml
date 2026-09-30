@@ -74,6 +74,7 @@ typing = [
   'meshio<5.4.0',
   'mypy<2.4.0',
   'numpy>=2.0.0',
+  'scipy-stubs<1.17.0',
   'sphinx<9.2.0',
   'trimesh<5.1.0',
   'types-docutils<0.22.0',
