@@ -17,6 +17,7 @@ See :ref:`slice_example` for the slicing filters on an axis-aligned volume, and
 
 """
 
+import matplotlib as mpl
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
@@ -288,12 +289,35 @@ def max_faces(image):
 
 
 # %%
+# Project the scapula's mask the same way, and blend orange into the bone
+# colormap wherever the bone falls inside a slab.
+
+
+def highlighted(image, mask):
+    """Return the projected faces of ``image`` colored, with ``mask`` in orange."""
+    faces = max_faces(image)
+    mask_faces = max_faces(mask)
+    colormap = mpl.colormaps['bone']
+    orange = np.array(pv.Color('orange').float_rgb)
+    for name in faces.keys():
+        gray = colormap((faces[name].active_scalars + 200) / 1100)[:, :3]
+        weight = 0.5 * (mask_faces[name].active_scalars > 0)[:, np.newaxis]
+        blended = (1 - weight) * gray + weight * orange
+        faces[name]['rgb'] = (blended * 255).astype(np.uint8)
+    return faces
+
+
+# %%
 # Do it for a block of the scan cropped around the bone in the scanner's own
 # axes, and for the bone-aligned block from above.
 
 scan_block = ct.crop(mask=overlay, padding=10)
+scan_bone = overlay.crop(extent=scan_block.extent)
 projections = pv.MultiBlock(
-    {'scan axes': max_faces(scan_block), 'bone axes': max_faces(block)}
+    {
+        'scan axes': highlighted(scan_block, scan_bone),
+        'bone axes': highlighted(block, bone),
+    }
 )
 
 # %%
@@ -301,13 +325,7 @@ projections = pv.MultiBlock(
 # one face shows the blade flat and the others show it edge-on.
 
 pv.plot_compare(
-    projections,
-    cmap='bone',
-    clim=[-200, 900],
-    show_scalar_bar=False,
-    lighting=False,
-    cpos='iso',
-    show_axes=False,
+    projections, scalars='rgb', rgb=True, lighting=False, cpos='iso', show_axes=False
 )
 
 # %%
