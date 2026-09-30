@@ -228,15 +228,24 @@ def test_usage_badges_cover_every_usage_value():
         ('a `code` span', 'a ``code`` span'),
         ('already ``literal``', 'already ``literal``'),
         ('a_b and *star*', r'a\_b and \*star\*'),
-        ('see https://example.org/a_b', 'see ``https://example.org/a_b``'),
-        # A trailing underscore in a URL is a reStructuredText reference otherwise.
+        (
+            'see https://example.org/a_b',
+            'see `https://example.org/a_b <https://example.org/a_b>`__',
+        ),
+        # A trailing underscore in a bare URL would be a reStructuredText reference.
         (
             'see https://web.archive.org/web/2024id_/https://x.org/y',
-            'see ``https://web.archive.org/web/2024id_/https://x.org/y``',
+            'see `https://web.archive.org/web/2024id_/https://x.org/y <https://web.archive.org/web/2024id_/https://x.org/y>`__',
         ),
-        ('(https://example.org/x), next', '(``https://example.org/x``), next'),
-        ('ends https://example.org/x.', 'ends ``https://example.org/x``.'),
-        ('wiki https://e.org/Foo_(bar) here', 'wiki ``https://e.org/Foo_(bar)`` here'),
+        (
+            '(https://example.org/x), next',
+            '(`https://example.org/x <https://example.org/x>`__), next',
+        ),
+        ('ends https://example.org/x.', 'ends `https://example.org/x <https://example.org/x>`__.'),
+        (
+            'wiki https://e.org/Foo_(bar) here',
+            'wiki `https://e.org/Foo_(bar) <https://e.org/Foo_(bar)>`__ here',
+        ),
     ],
 )
 def test_rst_from_prose(prose, expected):

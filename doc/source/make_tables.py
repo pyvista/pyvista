@@ -2017,14 +2017,14 @@ _RST_SPECIAL_RE = re.compile(r'([*_|])')
 
 
 def _wrap_url(match: re.Match[str]) -> str:
-    """Wrap one bare URL as a literal, leaving trailing sentence punctuation outside it."""
+    """Wrap one bare URL as a hyperlink, leaving trailing sentence punctuation outside it."""
     url = match.group(0)
     trail = ''
     while url and url[-1] in '.,;:!?\'"':
         url, trail = url[:-1], url[-1] + trail
     while url.endswith(')') and url.count('(') < url.count(')'):
         url, trail = url[:-1], ')' + trail
-    return f'``{url}``{trail}'
+    return f'`{url} <{url}>`__{trail}'
 
 
 def _rst_from_prose(text: str) -> str:
@@ -2032,9 +2032,8 @@ def _rst_from_prose(text: str) -> str:
 
     The text is written in another repository, so anything reStructuredText
     would read as markup is escaped. Single backticks mean inline code there,
-    which is a double backtick here, bare URLs become literals so that a
-    trailing underscore cannot be parsed as a reference, and an indented
-    paragraph is emitted unescaped as a literal block.
+    which is a double backtick here, bare URLs become hyperlinks, and an
+    indented paragraph is emitted unescaped as a literal block.
     """
 
     def literal(match: re.Match[str]) -> str:
@@ -2044,8 +2043,8 @@ def _rst_from_prose(text: str) -> str:
     def escape(chunk: str) -> str:
         chunk = _BARE_URL_RE.sub(_wrap_url, chunk)
         return ''.join(
-            part if part.startswith('``') else _RST_SPECIAL_RE.sub(r'\\\1', part)
-            for part in re.split(r'(``[^`]+``)', chunk)
+            part if part.startswith(('``', '`')) else _RST_SPECIAL_RE.sub(r'\\\1', part)
+            for part in re.split(r'(``[^`]+``|`[^`]+`__)', chunk)
         )
 
     def inline(paragraph: str) -> str:
