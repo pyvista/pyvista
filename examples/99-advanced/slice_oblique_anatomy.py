@@ -17,7 +17,6 @@ See :ref:`slice_example` for the slicing filters on an axis-aligned volume, and
 
 """
 
-import matplotlib as mpl
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
@@ -297,7 +296,7 @@ def highlighted(image, mask):
     """Return the projected faces of ``image`` colored, with ``mask`` in orange."""
     faces = max_faces(image)
     mask_faces = max_faces(mask)
-    colormap = mpl.colormaps['bone']
+    colormap = pv.get_cmap_safe('bone')
     orange = np.array(pv.Color('orange').float_rgb)
     for name in faces.keys():
         gray = colormap((faces[name].active_scalars + 200) / 1100)[:, :3]
