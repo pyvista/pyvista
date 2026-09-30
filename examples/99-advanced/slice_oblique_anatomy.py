@@ -265,4 +265,50 @@ pl.camera.tight(view='xz', padding=0.05)
 pl.show()
 
 # %%
+# Project Slabs Onto the Faces
+# ++++++++++++++++++++++++++++
+#
+# A slice shows one plane; a maximum-intensity slab shows the brightest value
+# through the whole block. :meth:`~pyvista.ImageDataFilters.slab_projection`
+# collapses an image along an axis onto its middle slice. Project along each
+# axis and move each projection to the block's far face, so the three together
+# look like the block itself with projections in place of its outer values.
+
+
+def max_faces(image):
+    """Return the maximum-intensity projections moved to the image's far faces."""
+    faces = pv.MultiBlock()
+    bounds = np.reshape(image.bounds, (3, 2))
+    for index, axis in enumerate('xyz'):
+        slab = image.slab_projection(axis=axis, mode='max')
+        offset = [0.0, 0.0, 0.0]
+        offset[index] = bounds[index, 1] - slab.center[index]
+        faces[f'{axis}max'] = slab.translate(offset)
+    return faces
+
+
+# %%
+# Do it for a block of the scan cropped around the bone in the scanner's own
+# axes, and for the bone-aligned block from above.
+
+scan_block = ct.crop(mask=overlay, padding=10)
+projections = pv.MultiBlock(
+    {'scan axes': max_faces(scan_block), 'bone axes': max_faces(block)}
+)
+
+# %%
+# In the scan axes the blade is foreshortened on every face. In the bone axes
+# one face shows the blade flat and the others show it edge-on.
+
+pv.plot_compare(
+    projections,
+    cmap='bone',
+    clim=[-200, 900],
+    show_scalar_bar=False,
+    lighting=False,
+    cpos='iso',
+    show_axes=False,
+)
+
+# %%
 # .. tags:: filter
