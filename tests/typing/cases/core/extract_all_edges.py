@@ -18,11 +18,6 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'pointset().extract_all_edges()': 'a `PointSet` has no cells, so the call raises',
-}
-
-
 # Edges come back as a surface, whatever went in
 assert_types(poly().extract_all_edges(), pv.PolyData)
 assert_types(image().extract_all_edges(), pv.PolyData)
@@ -40,4 +35,4 @@ assert_types(multiblock_image().extract_all_edges(), pv.MultiBlock[pv.PolyData])
 assert_types(multiblock_optional_poly().extract_all_edges(), pv.MultiBlock[pv.PolyData | None])
 
 
-assert_types(pointset().extract_all_edges(), Never)  # pragma: no cover
+assert_types(pointset().extract_all_edges(), Never)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 from type_assert import assert_types
+from type_assert import skip_runtime
 
 import pyvista as pv
 
@@ -17,20 +18,7 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-SKIP_RUNTIME = (
-    dict.fromkeys(
-        [
-            'a_plotter().get_image_depth()',
-            'a_plotter().get_image_depth(fill_value=None)',
-            'a_plotter().image_depth',
-        ],
-        'the VTK 9.3 wheel renders only through a display',
-    )
-    if pv.vtk_version_info < (9, 4)
-    else {}
-)
-
-
-assert_types(a_plotter().get_image_depth(), NDArray[np.float32])
-assert_types(a_plotter().get_image_depth(fill_value=None), NDArray[np.float32])
-assert_types(a_plotter().image_depth, NDArray[np.float32])
+with skip_runtime(pv.vtk_version_info < (9, 4), reason='the VTK 9.3 wheel renders only through a display'):
+    assert_types(a_plotter().get_image_depth(), NDArray[np.float32])
+    assert_types(a_plotter().get_image_depth(fill_value=None), NDArray[np.float32])
+    assert_types(a_plotter().image_depth, NDArray[np.float32])

@@ -10,10 +10,6 @@ from typing_extensions import Never
 import pyvista as pv
 from tests.typing.meshes import pointset
 
-SKIP_RUNTIME = {
-    'pointset().point_is_inside_cell(0, (0.5, 0.5, 0.5))': ('a `PointSet` has no cells, so the call raises'),
-}
-
 
 def a_grid() -> pv.ImageData:
     """Return a small grid to query."""
@@ -23,4 +19,4 @@ def a_grid() -> pv.ImageData:
 assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)), bool | NDArray[np.bool_])
 assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]), bool | NDArray[np.bool_])
 
-assert_types(pointset().point_is_inside_cell(0, (0.5, 0.5, 0.5)), Never)  # pragma: no cover
+assert_types(pointset().point_is_inside_cell(0, (0.5, 0.5, 0.5)), Never)

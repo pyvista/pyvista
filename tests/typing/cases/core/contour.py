@@ -21,10 +21,6 @@ from tests.typing.meshes import with_arrays
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-SKIP_RUNTIME = {
-    "with_arrays(pointset()).contour(scalars='s')": 'contouring a `PointSet` is not supported, so the call raises',
-}
-
 
 assert_types(with_arrays(poly()).contour(scalars='s'), pv.PolyData)
 assert_types(with_arrays(image()).contour(scalars='s'), pv.PolyData)
@@ -47,4 +43,4 @@ def int64_scalars() -> NDArray[np.int64]:
 assert_types(image().contour(scalars=float_list_scalars()), pv.PolyData)
 assert_types(image().contour(scalars=int64_scalars()), pv.PolyData)
 
-assert_types(with_arrays(pointset()).contour(scalars='s'), Never)  # pragma: no cover
+assert_types(with_arrays(pointset()).contour(scalars='s'), Never)

@@ -15,10 +15,6 @@ from tests.typing.meshes import multiblock_optional_poly
 from tests.typing.meshes import multiblock_pointset
 from tests.typing.meshes import multiblock_poly
 
-SKIP_RUNTIME = {
-    'multiblock_pointset().slice_implicit(a_plane())': 'a `PointSet` has no cells, so the call raises',
-}
-
 
 def a_plane() -> _vtk.vtkPlane:
     """Return a plane through the origin."""
@@ -37,4 +33,4 @@ assert_types(multiblock_image().slice_implicit(a_plane()), pv.MultiBlock[pv.Poly
 assert_types(multiblock_optional_poly().slice_implicit(a_plane()), pv.MultiBlock[pv.PolyData | None])
 
 # A composite of point clouds cannot be reduced to a surface
-assert_types(multiblock_pointset().slice_implicit(a_plane()), Never)  # pragma: no cover
+assert_types(multiblock_pointset().slice_implicit(a_plane()), Never)
