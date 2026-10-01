@@ -422,7 +422,7 @@ jobs:
           ls flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
 
       - name: Upload pyvista coverage to CodeCov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_package
           flags: package
@@ -430,7 +430,7 @@ jobs:
           use_oidc: true
 
       - name: Upload test coverage to CodeCov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_tests
           flags: tests
@@ -439,7 +439,7 @@ jobs:
 
       - name: Upload pyvista coverage from VTK dev to CodeCov
         if: needs.VTK-dev.result == 'success'
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_package_vtk_dev
           flags: package-vtk-dev
@@ -448,7 +448,7 @@ jobs:
 
       - name: Upload test coverage from VTK dev to CodeCov
         if: needs.VTK-dev.result == 'success'
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_tests_vtk_dev
           flags: tests-vtk-dev
