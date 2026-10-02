@@ -144,7 +144,7 @@ docs = [
   'imageio==2.37.4',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.6.3',
+  'jupyterlab==4.6.4',
   'lxml==6.1.2',
   'matplotlib>=3.11; python_version >= "3.11"',
   'meshio==5.3.5',
