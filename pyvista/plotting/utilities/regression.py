@@ -106,6 +106,9 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
+    if max(imfilter.GetScale()) > 1:
+        # The tiled capture leaves its last tile in the front buffer.
+        imfilter.GetInput().Render()
     image = cast('ImageData | None', pv.wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))

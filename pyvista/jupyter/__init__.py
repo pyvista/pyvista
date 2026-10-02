@@ -262,7 +262,7 @@ def _validate_jupyter_backend(
     raise ValueError(msg)
 
 
-def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwargs):
+def set_jupyter_backend(backend: JupyterBackendOptions | str | None, name=None, **kwargs):
     """Set the plotting backend for a jupyter notebook.
 
     Parameters

@@ -3430,10 +3430,11 @@ class ImageDataFilters(DataSetFilters):
             operation_mask=dimensionality, operator=dims_operator, operation_size=1
         )
 
-        # Prepare the new image
+        # Prepare the new image. The half-voxel shift is in index space and must be
+        # rotated by the direction matrix before being applied to the origin.
         new_image.origin = origin_operator(
             self.origin,
-            (np.array(self.spacing) / 2) * dims_mask,
+            self.direction_matrix @ ((np.array(self.spacing) / 2) * dims_mask),
         )
         extent_min = self.extent[::2]
         new_image.extent = (
@@ -5242,8 +5243,9 @@ class ImageDataFilters(DataSetFilters):
 
         mode : str, default: 'strict'
             Concatenation mode to use. This determines how images are placed in the output. All
-            modes operate along the specified ``axis`` except for ``'preserve-extents'``.
-            Specify one of:
+            modes operate along the specified ``axis`` except for ``'preserve-extents'``, which
+            is also the only mode that uses the images' :attr:`~pyvista.ImageData.offset`; all
+            other modes ignore it and take the output's offset from the input. Specify one of:
 
             - ``'strict'``: all images must have identical dimensions except along the specified
               ``axis``.
@@ -5655,8 +5657,8 @@ class ImageDataFilters(DataSetFilters):
                                 pad_size=pad_size, pad_value=background_value
                             )
 
-            if mode.startswith(('resample', 'crop')):
-                # These modes should not be affected by offset, so we zero it
+            if mode != 'preserve-extents':
+                # Only 'preserve-extents' honors the inputs' offsets, so we zero them
                 img_copy.offset = (0, 0, 0)
 
             # Replace input with modified copy
