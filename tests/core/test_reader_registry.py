@@ -195,6 +195,32 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
+def test_failed_plugin_falls_back_to_the_optional_companion():
+    """A broken plugin claiming an extension an optional companion package
+    also serves must not block the companion."""
+
+    def _companion(_path, **__):
+        """Handler the optional companion package would supply."""
+        return pv.Sphere()
+
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+    broken = MagicMock()
+    broken.name = '.pv'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with (
+        patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]),
+        patch(
+            'pyvista.core.utilities.reader_registry._resolve_optional_reader',
+            side_effect=lambda ext: _reg_mod._custom_ext_readers.__setitem__(ext, _companion),
+        ),
+        pytest.warns(UserWarning, match='Failed to load'),
+    ):
+        assert _reg_mod._get_ext_handler('.pv') is _companion
+
+
 def test_read_with_custom_extension(tmp_path):
     test_file = tmp_path / 'data.myext'
     test_file.touch()
