@@ -3287,12 +3287,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         render: bool = True,
         bounds: VectorLikeFloat | None = None,
     ) -> None:
-        """Point the camera in the direction of the given vector.
+        """View the scene from the direction of the given vector.
+
+        The camera is placed along ``vector`` from the center of the scene
+        and looks back toward it, so it looks in the direction opposite to
+        ``vector``.
 
         Parameters
         ----------
         vector : VectorLikeFloat
-            Direction to point the camera in.
+            Vector pointing from the focal point to the camera position.
 
         viewup : VectorLikeFloat, optional
             Sequence describing the view up of the camera.
@@ -3304,6 +3308,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        Examples
+        --------
+        View a sphere from the positive x-axis. The camera looks in the
+        negative x direction.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.view_vector([1, 0, 0])
+        >>> pl.camera.direction
+        (-1.0, 0.0, 0.0)
 
         """
         focal_pt = self.center
