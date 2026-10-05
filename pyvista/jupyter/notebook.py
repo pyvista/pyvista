@@ -72,7 +72,7 @@ def handle_plotter(
             warn_external(
                 'Using static image for notebook display.\n'
                 'Install trame for interactive backends:'
-                ' pip install trame-pyvista'
+                ' pip install pyvista[jupyter]'
             )
 
     _check_server_proxy(backend, kwargs)
@@ -107,7 +107,7 @@ def handle_plotter(
             'Falling back to a static output.\n'
             'Available backends: "static", "none"\n'
             'Install trame for interactive backends:'
-            ' pip install trame-pyvista'
+            ' pip install pyvista[jupyter]'
         )
 
     return show_static_image(plotter, screenshot)

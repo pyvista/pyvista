@@ -250,7 +250,7 @@ def _validate_jupyter_backend(
     if _is_jupyter_backend(backend):
         if backend in _TRAME_BACKENDS:
             if _get_custom_backend_handler(backend) is None:  # pragma: no cover
-                msg = 'Please install trame dependencies: pip install trame-pyvista'
+                msg = 'Please install trame dependencies: pip install pyvista[jupyter]'
                 raise ImportError(msg)
         return backend
 

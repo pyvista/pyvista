@@ -313,7 +313,7 @@ def test_handle_plotter_auto_static_warns_install():
             'pyvista.jupyter.notebook.show_static_image',
             return_value='static_img',
         ),
-        pytest.warns(UserWarning, match=r'pip install trame-pyvista'),
+        pytest.warns(UserWarning, match=r'pip install pyvista\[jupyter\]'),
     ):
         result = handle_plotter(plotter, backend=None)
 
