@@ -14,6 +14,8 @@ from typing import Any
 from typing import cast
 
 from pyvista._warn_external import warn_external
+from pyvista.jupyter import _TRAME_BACKENDS
+from pyvista.jupyter import _TRAME_SERVER_BACKENDS
 from pyvista.jupyter import _custom_backends
 from pyvista.jupyter import _ensure_entry_points
 from pyvista.jupyter import _get_custom_backend_handler
@@ -84,7 +86,7 @@ def handle_plotter(
         )
 
     # Trame backend names with no registered handler—fall back with a hint
-    if backend in ('server', 'client', 'trame', 'html'):
+    if backend in _TRAME_BACKENDS:
         _ensure_entry_points()
         if _custom_backends:
             fallback_name, fallback_handler = next(iter(_custom_backends.items()))
@@ -113,16 +115,22 @@ def handle_plotter(
 
 def _check_server_proxy(backend: str, kwargs: dict[str, Any]) -> None:
     """Warn when a trame iframe is routed through an unavailable ``jupyter-server-proxy``."""
-    if (kwargs.get('mode') or backend) not in ('client', 'server', 'trame', 'trame-pyvista'):
+    mode = kwargs.get('mode') or backend
+    if mode not in _TRAME_SERVER_BACKENDS:
         return
+
     import pyvista as pv  # noqa: PLC0415
 
-    def option(name: str) -> bool:
-        value = kwargs.get(name)
-        return getattr(pv.global_theme.trame, name) if value is None else value
-
-    if option('jupyter_extension_enabled') or not option('server_proxy_enabled'):
+    trame_theme = pv.global_theme.trame
+    extension_enabled = kwargs.get('jupyter_extension_enabled')
+    if extension_enabled is None:
+        extension_enabled = trame_theme.jupyter_extension_enabled
+    proxy_enabled = kwargs.get('server_proxy_enabled')
+    if proxy_enabled is None:
+        proxy_enabled = trame_theme.server_proxy_enabled
+    if extension_enabled or not proxy_enabled:
         return
+
     # The kernel and Jupyter Server can live in different environments, so warn, not raise.
     if importlib.util.find_spec('jupyter_server_proxy') is None:
         warn_external(

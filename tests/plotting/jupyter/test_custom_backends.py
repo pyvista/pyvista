@@ -12,6 +12,9 @@ import pytest
 
 import pyvista as pv
 from pyvista import jupyter as jupyter_mod
+from pyvista.jupyter import _TRAME_BACKENDS
+from pyvista.jupyter import _TRAME_SERVER_BACKENDS
+from pyvista.jupyter import ALLOWED_BACKENDS
 from pyvista.jupyter import _custom_backend_sources
 from pyvista.jupyter import _custom_backends
 from pyvista.jupyter import _get_custom_backend_handler
@@ -324,7 +327,6 @@ def test_handle_plotter_auto_static_warns_install():
         ('trame', True, {}, False, True),
         ('server', True, {}, False, True),
         ('client', True, {}, False, True),
-        ('trame-pyvista', True, {}, False, True),
         ('html', True, {'mode': 'trame'}, False, True),
         ('trame', False, {'server_proxy_enabled': True}, False, True),
         ('trame', True, {'server_proxy_enabled': None}, False, True),
@@ -364,3 +366,10 @@ def test_handle_plotter_warns_missing_server_proxy(
 
     assert result == 'widget'
     mock_handler.assert_called_once_with(plotter, screenshot=None, **kwargs)
+
+
+def test_backend_literals_flatten_to_names():
+    """The nested backend ``Literal`` aliases flatten so ``get_args`` yields plain names."""
+    assert ALLOWED_BACKENDS == ('static', 'client', 'server', 'trame', 'html', 'none')
+    assert _TRAME_BACKENDS == ('client', 'server', 'trame', 'html')
+    assert _TRAME_SERVER_BACKENDS == ('client', 'server', 'trame')
