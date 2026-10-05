@@ -3321,6 +3321,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl.camera.direction
         (-1.0, 0.0, 0.0)
 
+        View a built-in mesh from the ``(1, 1, 1)`` direction. The camera is
+        placed along this vector and looks back toward the center of the mesh,
+        so the positive x, y and z axes all point toward the viewer.
+
+        >>> from pyvista import examples
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_vector([1, 1, 1])
+        >>> pl.show_axes()
+        >>> pl.show()
+
         """
         focal_pt = self.center
         if viewup is None:
