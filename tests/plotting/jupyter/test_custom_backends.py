@@ -315,3 +315,52 @@ def test_handle_plotter_auto_static_warns_install():
         result = handle_plotter(plotter, backend=None)
 
     assert result == 'static_img'
+
+
+@skip_no_ipython
+@pytest.mark.parametrize(
+    ('backend', 'theme_enabled', 'kwargs', 'installed', 'warns'),
+    [
+        ('trame', True, {}, False, True),
+        ('server', True, {}, False, True),
+        ('client', True, {}, False, True),
+        ('trame-pyvista', True, {}, False, True),
+        ('html', True, {'mode': 'trame'}, False, True),
+        ('trame', False, {'server_proxy_enabled': True}, False, True),
+        ('trame', True, {'server_proxy_enabled': None}, False, True),
+        ('trame', True, {'server_proxy_enabled': False}, False, False),
+        ('trame', True, {'jupyter_extension_enabled': True}, False, False),
+        ('trame', True, {'mode': 'html'}, False, False),
+        ('trame', False, {}, False, False),
+        ('trame', True, {}, True, False),
+        ('html', True, {}, False, False),
+    ],
+)
+def test_handle_plotter_warns_missing_server_proxy(
+    monkeypatch, backend, theme_enabled, kwargs, installed, warns
+):
+    """Warn when the trame iframe is routed through an unavailable jupyter-server-proxy."""
+    find_spec = importlib.util.find_spec
+
+    def fake_find_spec(name, *args, **kw):
+        if name == 'jupyter_server_proxy':
+            return MagicMock() if installed else None
+        return find_spec(name, *args, **kw)
+
+    monkeypatch.setattr(importlib.util, 'find_spec', fake_find_spec)
+    monkeypatch.setattr(pv.global_theme.trame, '_server_proxy_enabled', theme_enabled)
+    mock_handler = MagicMock(return_value='widget')
+    plotter = MagicMock()
+
+    with _without_custom_backends():
+        register_jupyter_backend(backend, mock_handler, override=True)
+        if warns:
+            with pytest.warns(UserWarning, match='pip install jupyter-server-proxy'):
+                result = handle_plotter(plotter, backend=backend, **kwargs)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter('error')
+                result = handle_plotter(plotter, backend=backend, **kwargs)
+
+    assert result == 'widget'
+    mock_handler.assert_called_once_with(plotter, screenshot=None, **kwargs)

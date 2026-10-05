@@ -8,6 +8,7 @@ them via the ``pyvista.jupyter_backends`` entry-point group.
 
 from __future__ import annotations
 
+import importlib.util
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -72,6 +73,8 @@ def handle_plotter(
                 ' pip install trame-pyvista'
             )
 
+    _check_server_proxy(backend, kwargs)
+
     # Custom backends (registered or from entry points—including trame-pyvista)
     custom_handler = _get_custom_backend_handler(backend)
     if custom_handler is not None:
@@ -106,6 +109,28 @@ def handle_plotter(
         )
 
     return show_static_image(plotter, screenshot)
+
+
+def _check_server_proxy(backend: str, kwargs: dict[str, Any]) -> None:
+    """Warn when a trame iframe is routed through an unavailable ``jupyter-server-proxy``."""
+    if (kwargs.get('mode') or backend) not in ('client', 'server', 'trame', 'trame-pyvista'):
+        return
+    import pyvista as pv  # noqa: PLC0415
+
+    def option(name: str) -> bool:
+        value = kwargs.get(name)
+        return getattr(pv.global_theme.trame, name) if value is None else value
+
+    if option('jupyter_extension_enabled') or not option('server_proxy_enabled'):
+        return
+    # The kernel and Jupyter Server can live in different environments, so warn, not raise.
+    if importlib.util.find_spec('jupyter_server_proxy') is None:
+        warn_external(
+            f'The "{backend}" notebook backend serves the plot through '
+            'jupyter-server-proxy, which is not importable from the kernel environment. '
+            'If the plot shows a 404 page, install it where Jupyter Server runs:\n'
+            '    pip install jupyter-server-proxy'
+        )
 
 
 def show_static_image(
