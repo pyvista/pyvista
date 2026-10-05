@@ -1869,7 +1869,11 @@ def Text3D(
     normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
         ``depth`` of the text and points away from the front surface
-        of the text.
+        of the text. A normal alone does not uniquely specify the text's
+        orientation, since the text can also rotate about that normal.
+        Use :class:`pyvista.Transform` with
+        :meth:`pyvista.DataObjectFilters.transform` to control the full
+        orientation, as shown in the examples.
 
         .. versionadded:: 0.43
 
@@ -1877,6 +1881,11 @@ def Text3D(
     -------
     pyvista.PolyData
         3D text mesh.
+
+    See Also
+    --------
+    pyvista.Text3DSource
+        Generate text with a reusable source.
 
     Examples
     --------
@@ -1917,6 +1926,20 @@ def Text3D(
     ...     'PyVista', height=10, width=10, depth=0, center=(5, 5, 0)
     ... )
     >>> text_mesh.plot(cpos='xy', show_bounds=True)
+
+    Control the full orientation with an explicit transform. Create planar
+    text with the default normal: it lies in the xy plane, reads along +x,
+    and extends upward along +y. Rotate it 30 degrees about z, then 90 degrees
+    about x, and finally translate it. The default post-multiplication mode
+    applies these operations in the order shown.
+
+    >>> text_mesh = pv.Text3D('PyVista', depth=0)
+    >>> transform = pv.Transform().rotate_z(30).rotate_x(90).translate((1, 2, 3))
+    >>> oriented_text = text_mesh.transform(transform, inplace=False)
+
+    The transformed normal points along -y. Changing the first rotation
+    changes the text's rotation about that normal without changing the
+    normal itself. The original ``text_mesh`` is unchanged.
 
     """
     return Text3DSource(

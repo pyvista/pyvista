@@ -780,12 +780,19 @@ class Text3DSource(_NoNewAttrMixin):
     normal : Sequence[float], default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
         :attr:`depth` of the text and points away from the front surface
-        of the text.
+        of the text. A normal alone does not uniquely specify the text's
+        rotation about that direction. See :func:`pyvista.Text3D` for an
+        example using an explicit transform to control the full orientation.
 
     process_empty_string : bool, default: True
         If ``True``, when :attr:`string` is empty the :attr:`output` is a
         single point located at :attr:`center` instead of an empty mesh.
         See :attr:`process_empty_string` for details.
+
+    See Also
+    --------
+    pyvista.Text3D
+        Create a text mesh, with examples of explicit orientation.
 
     """
 
@@ -880,6 +887,10 @@ class Text3DSource(_NoNewAttrMixin):
 
         The normal direction is parallel to the :attr:`depth` of the text, and
         points away from the front surface of the text.
+
+        A normal alone does not uniquely specify the text's rotation about
+        that direction. See :func:`pyvista.Text3D` for an example using an
+        explicit transform to control the full orientation.
         """
         return self._normal
 
