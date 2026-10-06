@@ -4551,6 +4551,7 @@ CLASS_READERS = {
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
+    '.xyz': MultiBlockPlot3DReader,
     '.series': SeriesReader,
     '.wrl': VRMLReader,
     '.xdmf': XdmfReader,
