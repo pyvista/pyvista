@@ -265,4 +265,67 @@ pl.camera.tight(view='xz', padding=0.05)
 pl.show()
 
 # %%
+# Project Slabs Onto the Faces
+# ++++++++++++++++++++++++++++
+#
+# A slice shows one plane; a maximum-intensity slab shows the brightest value
+# through the whole block. :meth:`~pyvista.ImageDataFilters.slab_projection`
+# collapses an image along an axis onto its middle slice. Project along each
+# axis and move each projection to the block's far face, so the three together
+# look like the block itself with projections in place of its outer values.
+
+
+def max_faces(image):
+    """Return the maximum-intensity projections moved to the image's far faces."""
+    faces = pv.MultiBlock()
+    bounds = np.reshape(image.bounds, (3, 2))
+    for index, axis in enumerate('xyz'):
+        slab = image.slab_projection(axis=axis, mode='max')
+        offset = [0.0, 0.0, 0.0]
+        offset[index] = bounds[index, 1] - slab.center[index]
+        faces[f'{axis}max'] = slab.translate(offset)
+    return faces
+
+
+# %%
+# Project the scapula's mask the same way, and blend orange into the bone
+# colormap wherever the bone falls inside a slab.
+
+
+def highlighted(image, mask):
+    """Return the projected faces of ``image`` colored, with ``mask`` in orange."""
+    faces = max_faces(image)
+    mask_faces = max_faces(mask)
+    colormap = pv.get_cmap_safe('bone')
+    orange = np.array(pv.Color('orange').float_rgb)
+    for name in faces.keys():
+        gray = colormap((faces[name].active_scalars + 200) / 1100)[:, :3]
+        weight = 0.5 * (mask_faces[name].active_scalars > 0)[:, np.newaxis]
+        blended = (1 - weight) * gray + weight * orange
+        faces[name]['rgb'] = (blended * 255).astype(np.uint8)
+    return faces
+
+
+# %%
+# Do it for a block of the scan cropped around the bone in the scanner's own
+# axes, and for the bone-aligned block from above.
+
+scan_block = ct.crop(mask=overlay, padding=10)
+scan_bone = overlay.crop(extent=scan_block.extent)
+projections = pv.MultiBlock(
+    {
+        'scan axes': highlighted(scan_block, scan_bone),
+        'bone axes': highlighted(block, bone),
+    }
+)
+
+# %%
+# In the scan axes the blade is foreshortened on every face. In the bone axes
+# one face shows the blade flat and the others show it edge-on.
+
+pv.plot_compare(
+    projections, scalars='rgb', rgb=True, lighting=False, cpos='iso', show_axes=False
+)
+
+# %%
 # .. tags:: filter
