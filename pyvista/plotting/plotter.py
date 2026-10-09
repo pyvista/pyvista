@@ -5796,7 +5796,7 @@ class BasePlotter(_BoundsSizeMixin):
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(title, **kwargs)
 
-    def _clear_ren_win(self) -> None:
+    def _clear_render_window(self) -> None:
         """Clear the render window."""
         if self._render_window is not None:
             self._render_window.Finalize()
@@ -5856,7 +5856,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.mapper = None
         self.text = None
 
-        self._clear_ren_win()
+        self._clear_render_window()
         if self.iren is not None:
             self.iren.close()
             self.iren = None
@@ -9065,7 +9065,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # called from a key event callback). Nothing left to do.
             pass  # type: ignore[unreachable]  # pragma: no cover
         elif jupyter_disp is None and not _is_current:
-            self._clear_ren_win()  # The render window is deleted
+            self._clear_render_window()  # The render window is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:  # pragma: no cover
                 warn_external(
