@@ -212,3 +212,18 @@ def test_module_prefixes_match_the_active_backend():
 
     assert _vtk.vtkPolyData.__module__.startswith(_VTK_MODULE_PREFIXES)
     assert len(_VTK_MODULE_PREFIXES) == len(set(_VTK_MODULE_PREFIXES))
+
+
+def test_codecov_probe():
+    """Reaches the probe on every VTK build, covering one of its branches per run."""
+    from pyvista.core._vtk_utilities import _codecov_probe
+
+    assert _codecov_probe() in {'released', 'vtk-dev'}
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 7, 100), reason='Codecov probe for the VTK-dev flags')
+def test_codecov_probe_vtk_dev():
+    """Runs on the VTK-dev wheel only, so the ``tests-vtk-dev`` flag alone covers its body."""
+    from pyvista.core._vtk_utilities import _codecov_probe
+
+    assert _codecov_probe() == 'vtk-dev'

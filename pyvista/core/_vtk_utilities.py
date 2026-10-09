@@ -166,6 +166,14 @@ _SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 # alive itself -- see `CellArray._set_data`.
 _SETDATA_TAKES_OWNERSHIP = vtk_version_info >= (9, 6)
 
+
+def _codecov_probe() -> str:
+    """Report which VTK build runs this line; a throwaway probe for the Codecov statuses."""
+    if vtk_version_info > (9, 7, 99):
+        return 'vtk-dev'
+    return 'released'
+
+
 # From VTK 9.4, `vtkMatrix3x3/4x4.GetData` return their elements as a tuple, not a pointer.
 _MATRIX_GET_DATA_RETURNS_ELEMENTS = vtk_version_info >= (9, 4)
 
