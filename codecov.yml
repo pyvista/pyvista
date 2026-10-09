@@ -70,14 +70,12 @@ flag_management:
     - name: tests
       paths:
         - tests/
-    # Flagged apart from the two above so the statuses compare a fixed set of jobs.
-    # VTK-dev runs only on demand, so `carryforward` keeps the lines it alone covers from
-    # reading as uncovered; no status is attached, so a stale carry-forward cannot gate.
+    # Flagged apart from the two above so the default project status compares a fixed
+    # set of jobs. Not carried forward: a stale upload from an older tree lands its hits
+    # on the wrong lines and inflates the baseline the `tests` statuses compare against.
     - name: package-vtk-dev
-      carryforward: true
       paths:
         - pyvista/
     - name: tests-vtk-dev
-      carryforward: true
       paths:
         - tests/
