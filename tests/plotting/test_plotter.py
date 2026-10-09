@@ -73,6 +73,26 @@ def test_has_render_window_fail():
         pl._make_render_window_current()
 
 
+def test_ren_win_deprecated():
+    pl = pv.Plotter()
+    render_window = pl.render_window
+    match = '`ren_win` is deprecated. Use `render_window` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        assert pl.ren_win is render_window
+
+    new_render_window = _vtk.vtkRenderWindow()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        pl.ren_win = new_render_window
+    assert pl.render_window is new_render_window
+
+    pl.render_window = render_window
+    pl.close()
+    assert pl.render_window is None
+
+    assert pv.version_info < (0, 56), 'Convert `ren_win` to raise `DeprecationError`.'
+    assert pv.version_info < (0, 57), 'Remove `ren_win`.'
+
+
 def test_image_with_overridden_check_has_ren_win(sphere):
     """A subclass may override the check, so its return value must not be used."""
 
@@ -1356,7 +1376,7 @@ def _invoke_supports_open_gl():
 
 def _invoke_plotter_offscreen():
     pl = pv.Plotter(off_screen=True)
-    ren_win = pl.ren_win
+    ren_win = pl.render_window
     pl.close()
     return ren_win
 
