@@ -33,7 +33,6 @@ import weakref
 import numpy as np
 import pyvista_validation as _validation
 import scooby
-from typing_extensions import deprecated
 
 import pyvista as pv
 from pyvista import _vtk
@@ -546,7 +545,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
-        self._ren_win: _vtk.vtkRenderWindow | None = None
+        self._render_window: _vtk.vtkRenderWindow | None = None
         # 3D location of the last click registered by ``left_button_down``
         self.pickpoint: NDArray[np.float64] | None = None
 
@@ -717,14 +716,13 @@ class BasePlotter(_BoundsSizeMixin):
         Subclass must set ``render_window`` on initialization.
 
         """
-        return self._ren_win
+        return self._render_window
 
     @render_window.setter
     def render_window(self, render_window: _vtk.vtkRenderWindow | None) -> None:
-        self._ren_win = render_window
+        self._render_window = render_window
 
     @property
-    @deprecated('Use `render_window` instead.', category=None)
     def ren_win(self) -> _vtk.vtkRenderWindow | None:  # numpydoc ignore=RT01
         """Access the :vtk:`vtkRenderWindow` attached to this plotter.
 
@@ -740,7 +738,6 @@ class BasePlotter(_BoundsSizeMixin):
         return self.render_window
 
     @ren_win.setter
-    @deprecated('Use `render_window` instead.', category=None)
     def ren_win(self, render_window: _vtk.vtkRenderWindow | None) -> None:
         warn_external(
             '`ren_win` is deprecated. Use `render_window` instead.',
@@ -5801,8 +5798,8 @@ class BasePlotter(_BoundsSizeMixin):
 
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
-        if self._ren_win is not None:
-            self._ren_win.Finalize()
+        if self._render_window is not None:
+            self._render_window.Finalize()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None
@@ -5813,7 +5810,7 @@ class BasePlotter(_BoundsSizeMixin):
                 # is removed from NSApp.windows() but the window server
                 # still draws it as a frozen "zombie" window.
                 self.iren.interactor.ProcessEvents()
-            self._ren_win = None
+            self._render_window = None
 
     def close(self) -> None:
         """Close the render window."""
@@ -8662,7 +8659,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.off_screen = off_screen
 
         # initialize render window
-        self._ren_win = _vtk.vtkRenderWindow()
+        self._render_window = _vtk.vtkRenderWindow()
         self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
         self.render_window.SetBorders(True)  # type: ignore[union-attr]
         if line_smoothing:
