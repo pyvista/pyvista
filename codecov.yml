@@ -9,7 +9,7 @@ comment: false
 coverage:
   status:
     project:
-      # VTK-dev runs only on labelled PRs, so its flags stay out of the default total.
+      # VTK-dev runs only on demand, so its flags stay out of the default total.
       default:
         flags:
           - package
@@ -70,9 +70,10 @@ flag_management:
     - name: tests
       paths:
         - tests/
-    # Flagged apart from the two above so the default project status compares a fixed
-    # set of jobs. Not carried forward: a stale upload from an older tree lands its hits
-    # on the wrong lines and inflates the baseline the `tests` statuses compare against.
+    # Flagged apart from the two above so the flag-scoped statuses compare a fixed set of
+    # jobs. Not carried forward: a stale upload from an older tree lands its hits on the
+    # wrong lines, on the base the `tests` statuses compare against and on the head the
+    # unfiltered patch status reads.
     - name: package-vtk-dev
       paths:
         - pyvista/
