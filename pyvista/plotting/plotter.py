@@ -5771,6 +5771,7 @@ class BasePlotter(_BoundsSizeMixin):
         # Not using `render_window` property here to enforce clean up
         if self.ren_win is not None:
             self.ren_win.Finalize()
+            self.ren_win.RemoveAllObservers()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None
