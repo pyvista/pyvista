@@ -110,6 +110,7 @@ if TYPE_CHECKING:
     from pyvista import trame as trame
     from pyvista import typing as typing
     from pyvista import utilities as utilities
+    from pyvista import wasm as wasm
     from pyvista.plotting import *
 
 
@@ -207,6 +208,7 @@ def __getattr__(name: str) -> Any:
         'ext',
         'trame',
         'utilities',
+        'wasm',
     }
     if name in allow:
         return _cache_attr_and_return(importlib.import_module(f'pyvista.{name}'))
