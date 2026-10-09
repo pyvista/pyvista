@@ -1395,7 +1395,7 @@ def _invoke_supports_open_gl():
     return fake_render_window
 
 
-def _invoke_plotter_offscreen():
+def _invoke_plotter_offscreen():  # pragma: no cover -- macOS only
     pl = pv.Plotter(off_screen=True)
     ren_win = pl.render_window
     pl.close()
