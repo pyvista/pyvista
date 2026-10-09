@@ -157,7 +157,7 @@ docs = [
   'pydata-sphinx-theme==0.20.0; python_version >= "3.11"',
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-frd-reader==0.3.0',
+  'pyvista-frd-reader==0.3.1',
   'pyvista-miniply==0.5.2',
   'pyvista-stl==0.5.3',
   'pyvista-zstd==0.4.2',
