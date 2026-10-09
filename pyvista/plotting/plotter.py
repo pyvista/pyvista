@@ -5800,6 +5800,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Clear the render window."""
         if self._render_window is not None:
             self._render_window.Finalize()
+            self._render_window.RemoveAllObservers()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None

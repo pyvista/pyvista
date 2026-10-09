@@ -8,6 +8,7 @@ All other tests requiring rendering should to in
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 import os
 from pathlib import Path
 import re
@@ -16,6 +17,7 @@ import threading
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import weakref
 
 import numpy as np
 import pytest
@@ -553,6 +555,25 @@ def test_add_background_image_raises():
     )
     with pytest.raises(RuntimeError, match=match):
         pl.add_background_image(pv.examples.mapfile)
+
+
+@pytest.mark.parametrize('event', [_vtk.vtkCommand.StartEvent, _vtk.vtkCommand.RenderEvent])
+def test_close_releases_render_window_observers(event):
+    """Closing releases callbacks even while the caller retains the native window."""
+    pl = pv.Plotter()
+    window = pl.render_window
+    assert window is not None
+
+    def observe(*_args):
+        """Observe the retained window without owning the plotter."""
+
+    reference = weakref.ref(observe)
+    window.AddObserver(event, observe)
+    del observe
+    assert reference() is not None
+    pl.close()
+    gc.collect()
+    assert reference() is None
 
 
 def test_show_after_closed_raises():
