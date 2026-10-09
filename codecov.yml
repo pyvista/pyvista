@@ -9,7 +9,11 @@ comment: false
 coverage:
   status:
     project:
+      # VTK-dev runs only on labelled PRs, so its flags stay out of the default total.
       default:
+        flags:
+          - package
+          - tests
         target: auto
         threshold: 0.5%
         if_not_found: failure
@@ -40,6 +44,9 @@ coverage:
         if_no_uploads: error
     patch:
       default:
+        flags:
+          - package
+          - tests
         target: auto
         threshold: 0.5%
         if_not_found: failure
