@@ -37,6 +37,7 @@ coverage:
       tests:
         flags:
           - tests
+          - tests-vtk-dev
         target: auto
         threshold: 0%
         if_not_found: success
@@ -44,9 +45,6 @@ coverage:
         if_no_uploads: error
     patch:
       default:
-        flags:
-          - package
-          - tests
         target: auto
         threshold: 0.5%
         if_not_found: failure
@@ -55,6 +53,7 @@ coverage:
       tests:
         flags:
           - tests
+          - tests-vtk-dev
         target: 100%
         threshold: 0%
         if_not_found: success
