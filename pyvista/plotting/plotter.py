@@ -545,7 +545,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
-        self.ren_win: _vtk.vtkRenderWindow | None = None
+        self._render_window: _vtk.vtkRenderWindow | None = None
         # 3D location of the last click registered by ``left_button_down``
         self.pickpoint: NDArray[np.float64] | None = None
 
@@ -703,6 +703,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         If the plotter is closed, this will return ``None``.
 
+        .. versionchanged:: 0.50
+           Can be set.
+
         Returns
         -------
         output : :vtk:`vtkRenderWindow` | None
@@ -710,10 +713,37 @@ class BasePlotter(_BoundsSizeMixin):
 
         Notes
         -----
-        Subclass must set ``ren_win`` on initialization.
+        Subclass must set ``render_window`` on initialization.
 
         """
-        return self.ren_win
+        return self._render_window
+
+    @render_window.setter
+    def render_window(self, render_window: _vtk.vtkRenderWindow | None) -> None:
+        self._render_window = render_window
+
+    @property
+    def ren_win(self) -> _vtk.vtkRenderWindow | None:  # numpydoc ignore=RT01
+        """Access the :vtk:`vtkRenderWindow` attached to this plotter.
+
+        .. deprecated:: 0.50
+           Use :attr:`render_window` instead.
+
+        """
+        # deprecated 0.50.0, convert to error in 0.56.0, remove 0.57.0
+        warn_external(
+            '`ren_win` is deprecated. Use `render_window` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.render_window
+
+    @ren_win.setter
+    def ren_win(self, render_window: _vtk.vtkRenderWindow | None) -> None:
+        warn_external(
+            '`ren_win` is deprecated. Use `render_window` instead.',
+            PyVistaDeprecationWarning,
+        )
+        self.render_window = render_window
 
     @property
     def theme(self) -> Theme:  # numpydoc ignore=RT01
@@ -5766,12 +5796,11 @@ class BasePlotter(_BoundsSizeMixin):
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(title, **kwargs)
 
-    def _clear_ren_win(self) -> None:
+    def _clear_render_window(self) -> None:
         """Clear the render window."""
-        # Not using `render_window` property here to enforce clean up
-        if self.ren_win is not None:
-            self.ren_win.Finalize()
-            self.ren_win.RemoveAllObservers()
+        if self._render_window is not None:
+            self._render_window.Finalize()
+            self._render_window.RemoveAllObservers()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None
@@ -5782,7 +5811,7 @@ class BasePlotter(_BoundsSizeMixin):
                 # is removed from NSApp.windows() but the window server
                 # still draws it as a frozen "zombie" window.
                 self.iren.interactor.ProcessEvents()
-            self.ren_win = None
+            self._render_window = None
 
     def close(self) -> None:
         """Close the render window."""
@@ -5827,7 +5856,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.mapper = None
         self.text = None
 
-        self._clear_ren_win()
+        self._clear_render_window()
         if self.iren is not None:
             self.iren.close()
             self.iren = None
@@ -8631,7 +8660,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.off_screen = off_screen
 
         # initialize render window
-        self.ren_win = _vtk.vtkRenderWindow()
+        self._render_window = _vtk.vtkRenderWindow()
         self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
         self.render_window.SetBorders(True)  # type: ignore[union-attr]
         if line_smoothing:
@@ -9036,7 +9065,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # called from a key event callback). Nothing left to do.
             pass  # type: ignore[unreachable]  # pragma: no cover
         elif jupyter_disp is None and not _is_current:
-            self._clear_ren_win()  # The ren_win is deleted
+            self._clear_render_window()  # The render window is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:  # pragma: no cover
                 warn_external(
