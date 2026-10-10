@@ -1128,6 +1128,43 @@ def test_clear_all_cell_data(multiblock_all):
             assert block.cell_data.keys() == []
 
 
+@pytest.mark.parametrize(
+    ('method', 'point_cleared', 'cell_cleared'),
+    [
+        ('clear_all_data', True, True),
+        ('clear_all_point_data', True, False),
+        ('clear_all_cell_data', False, True),
+    ],
+)
+def test_clear_all_data_nested_none_and_empty(method, point_cleared, cell_cleared):
+    sphere, cube = pv.Sphere(), pv.Cube()
+    for mesh in (sphere, cube):
+        mesh.clear_data()
+        mesh.point_data['p'] = range(mesh.n_points)
+        mesh.cell_data['c'] = range(mesh.n_cells)
+    multi = pv.MultiBlock([None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])])
+    multi.insert(0, sphere)
+    getattr(multi, method)()
+    for mesh in (sphere, cube):
+        assert (mesh.point_data.keys() == []) is point_cleared
+        assert (mesh.cell_data.keys() == []) is cell_cleared
+    assert multi[1] is None
+    assert len(multi[2]) == 0
+
+
+def test_convert_to_single_component_nested_none_and_empty():
+    cube = pv.Cube()
+    cube.clear_data()
+    cube.point_data['vec'] = np.ones((cube.n_points, 3))
+    multi = pv.MultiBlock([None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])])
+    name = multi._convert_to_single_component('point_data', 'vec', None)
+    assert name == 'vec-normed'
+    assert cube.point_data.active_scalars_name == 'vec-normed'
+    assert np.allclose(cube.point_data['vec-normed'], np.sqrt(3))
+    name = multi._convert_to_single_component('point_data', 'vec', 1)
+    assert cube.point_data.active_scalars_name == name == 'vec-1'
+
+
 @pytest.mark.parametrize('container', [pv.MultiBlock, pv.PartitionedDataSet])
 def test_multiblock_partitioned_zip(container):
     # Test `__iter__` and `__next__` inheritance
