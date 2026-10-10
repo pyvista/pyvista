@@ -959,6 +959,19 @@ such that:
 
             pytest --cov pyvista --cov tests
 
+        .. note::
+
+            Pass packages to ``--cov``, never a dotted module such as ``pyvista.ext.plot_directive``.
+            coverage resolves a dotted name by importing its parent packages, which imports numpy and
+            VTK, then drops them from ``sys.modules``; any test that spawns ``sys.executable`` then
+            fails in the child with ``ImportError: cannot load module more than once per process``.
+            Narrow the report instead:
+
+            .. code-block:: bash
+
+                pytest tests/ext --cov pyvista
+                coverage report --include 'pyvista/ext/*'
+
     .. tab-item:: tox
         :sync: tox
 
