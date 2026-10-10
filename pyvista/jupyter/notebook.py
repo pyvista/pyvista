@@ -8,6 +8,7 @@ them via the ``pyvista.jupyter_backends`` entry-point group.
 
 from __future__ import annotations
 
+import functools
 import importlib.util
 from typing import TYPE_CHECKING
 from typing import Any
@@ -75,11 +76,10 @@ def handle_plotter(
                 ' pip install pyvista[jupyter]'
             )
 
-    _check_server_proxy(backend, kwargs)
-
     # Custom backends (registered or from entry points—including trame-pyvista)
     custom_handler = _get_custom_backend_handler(backend)
     if custom_handler is not None:
+        _check_server_proxy(backend, kwargs)
         return cast(
             'EmbeddableWidget | IFrame | Widget | Image',
             custom_handler(plotter, screenshot=screenshot, **kwargs),
@@ -128,17 +128,26 @@ def _check_server_proxy(backend: str, kwargs: dict[str, Any]) -> None:
     proxy_enabled = kwargs.get('server_proxy_enabled')
     if proxy_enabled is None:
         proxy_enabled = trame_theme.server_proxy_enabled
-    if extension_enabled or not proxy_enabled:
+    proxy_prefix = kwargs.get('server_proxy_prefix')
+    if proxy_prefix is None:
+        proxy_prefix = trame_theme.server_proxy_prefix
+    if extension_enabled or not proxy_enabled or str(proxy_prefix).startswith('http'):
         return
 
     # The kernel and Jupyter Server can live in different environments, so warn, not raise.
     if importlib.util.find_spec('jupyter_server_proxy') is None:
-        warn_external(
-            f'The "{backend}" notebook backend serves the plot through '
-            'jupyter-server-proxy, which is not importable from the kernel environment. '
-            'If the plot shows a 404 page, install it where Jupyter Server runs:\n'
-            '    pip install jupyter-server-proxy'
-        )
+        _warn_missing_server_proxy()
+
+
+@functools.cache
+def _warn_missing_server_proxy() -> None:
+    """Warn once per process that ``jupyter-server-proxy`` is not importable."""
+    warn_external(
+        'Trame notebook plots are served through jupyter-server-proxy, which is not '
+        'importable from the kernel environment. If plots show a 404 page, install it '
+        'where Jupyter Server runs:\n'
+        '    pip install jupyter-server-proxy'
+    )
 
 
 def show_static_image(
