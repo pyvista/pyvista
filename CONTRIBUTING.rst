@@ -959,15 +959,7 @@ such that:
 
             pytest --cov
 
-        ``--cov`` measures both ``pyvista`` and ``tests``. Narrow the report, not the measurement:
-
-        .. code-block:: bash
-
-            pytest tests/ext --cov
-            coverage report --include 'pyvista/ext/*'
-
-        A dotted module such as ``--cov pyvista.ext.plot_directive`` is rejected, because measuring
-        it makes every subprocess the tests spawn fail to import numpy.
+        ``--cov`` measures both ``pyvista`` and ``tests``.
 
     .. tab-item:: tox
         :sync: tox
