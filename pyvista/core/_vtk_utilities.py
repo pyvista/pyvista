@@ -12,6 +12,7 @@ from typing import NamedTuple
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
+from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
@@ -231,8 +232,6 @@ class DisableVtkSnakeCase:
         if sys.meta_path is not None:  # Avoid dynamic imports when Python is shutting down
             msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
             if _VTK_SNAKE_CASE_STATE == 'error':
-                from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
                 raise PyVistaAttributeError(msg)
             else:
                 warn_external(msg, RuntimeWarning)

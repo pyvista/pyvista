@@ -26,6 +26,7 @@ from typing_extensions import Self
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core._aliases import LineStyle
+from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
@@ -589,8 +590,6 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                     if key in base.__dict__:
                         return
 
-                from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
                 msg = (
                     f'Attribute {key!r} does not exist and cannot be added to class '
                     f'{cls.__name__!r}\nUse `pyvista.set_new_attribute` '
@@ -652,8 +651,6 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     """
     if hasattr(obj, name):
-        from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
         msg = (
             f'Attribute {name!r} already exists. '
             '`set_new_attribute` can only be used for setting NEW attributes.'

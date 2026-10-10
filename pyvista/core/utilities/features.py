@@ -13,6 +13,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
@@ -487,9 +488,6 @@ def sample_function(
     >>> surf.plot()
 
     """
-    # internal import to avoid circular dependency
-    from pyvista.core.filters import _update_alg  # noqa: PLC0415
-
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
     samp.SetSampleDimensions(dim)  # type: ignore[call-overload]

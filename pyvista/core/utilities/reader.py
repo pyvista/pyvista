@@ -29,6 +29,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core.filters import _update_alg
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -448,8 +449,6 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
             :class:`~pyvista.UnstructuredGrid`.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
-
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0), validate=validate)
         if data is None:  # pragma: no cover
@@ -3355,8 +3354,6 @@ class GaussianCubeReader(BaseReader['DataSet']):
             PyVista dataset read from the file.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
-
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = (
             wrap(self.reader.GetGridOutput(), validate=validate)
