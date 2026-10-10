@@ -437,8 +437,10 @@ jobs:
           fail_ci_if_error: true
           use_oidc: true
 
+      # Only from a pull request: a dispatch on main would leave the dev flags on a main
+      # commit, and unlabelled PRs based on it would read lower on the `tests` statuses.
       - name: Upload pyvista coverage from VTK dev to CodeCov
-        if: needs.VTK-dev.result == 'success'
+        if: needs.VTK-dev.result == 'success' && github.event_name == 'pull_request'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_package_vtk_dev
@@ -447,7 +449,7 @@ jobs:
           use_oidc: true
 
       - name: Upload test coverage from VTK dev to CodeCov
-        if: needs.VTK-dev.result == 'success'
+        if: needs.VTK-dev.result == 'success' && github.event_name == 'pull_request'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_tests_vtk_dev
