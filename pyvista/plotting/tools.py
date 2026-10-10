@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
+    from ._typing import _InterpolationKind
 
 
 class FONTS(Enum):
@@ -712,7 +713,7 @@ def opacity_transfer_function(
     n_colors: int,
     *,
     interpolate: bool = True,
-    kind: str = 'linear',
+    kind: _InterpolationKind = 'linear',
 ) -> NDArray[np.uint8]:
     """Get the opacity transfer function for a mapping.
 

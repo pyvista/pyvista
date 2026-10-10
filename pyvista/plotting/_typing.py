@@ -98,6 +98,10 @@ OpacityOptions = Literal[
     'sigmoid_20_r',
     'foreground',
 ]
+# Interpolation kinds of `scipy.interpolate.interp1d` that opacity mappings document
+_InterpolationKind = Literal[
+    'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous', 'next'
+]
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 # `Property` also takes bools and disables culling by name
 PropertyCullingOptions = CullingOptions | Literal['none'] | bool

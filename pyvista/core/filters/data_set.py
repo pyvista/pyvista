@@ -7558,7 +7558,7 @@ class DataSetFilters(DataObjectFilters):
         for face in box:
             if box_style == 'outline':
                 face.copy_from(pv.lines_from_points(face.points))
-            if oriented:
+            if inverse_matrix is not None:
                 face.transform(inverse_matrix, inplace=True)
 
         # Get output

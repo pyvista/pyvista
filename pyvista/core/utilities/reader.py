@@ -2154,6 +2154,12 @@ class _PVDReader(BaseVTKReader):
 class PVDReader(BaseReader['MultiBlock'], TimeReader):
     """PVD Reader for .pvd files.
 
+    Reading a time point returns a :class:`pyvista.MultiBlock`, even when
+    it contains only one dataset. This differs from ParaView, which returns
+    the dataset directly for PVD files with one dataset per time point.
+    Index the returned blocks to access an individual dataset. Selecting
+    the first block does not combine multiple blocks.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2168,7 +2174,12 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
     >>> reader.set_active_time_point(5)
     >>> reader.active_time_value
     5.0
-    >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
+    >>> blocks = reader.read()
+    >>> blocks.n_blocks
+    1
+    >>> mesh = blocks[0]
+    >>> isinstance(mesh, pv.StructuredGrid)
+    True
     >>> mesh.plot(scalars='z')
 
     """

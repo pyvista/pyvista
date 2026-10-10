@@ -13,10 +13,6 @@ from tests.typing.meshes import multiblock_optional_poly
 from tests.typing.meshes import multiblock_pointset
 from tests.typing.meshes import multiblock_poly
 
-SKIP_RUNTIME = {
-    'multiblock_pointset().slice_along_line(a_line())': 'a `PointSet` has no cells, so the call raises',
-}
-
 
 def a_line() -> pv.PolyData:
     """Return a polyline crossing the test meshes."""
@@ -35,4 +31,4 @@ assert_types(multiblock_image().slice_along_line(a_line()), pv.MultiBlock[pv.Pol
 assert_types(multiblock_optional_poly().slice_along_line(a_line()), pv.MultiBlock[pv.PolyData | None])
 
 # A composite of point clouds cannot be reduced to a surface
-assert_types(multiblock_pointset().slice_along_line(a_line()), Never)  # pragma: no cover
+assert_types(multiblock_pointset().slice_along_line(a_line()), Never)

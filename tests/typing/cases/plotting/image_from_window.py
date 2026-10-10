@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 from type_assert import assert_types
+from type_assert import skip_runtime
 
 import pyvista as pv
 from pyvista import _vtk
@@ -20,31 +21,16 @@ def a_window() -> _vtk.vtkRenderWindow:
     return pl.render_window
 
 
-SKIP_RUNTIME = (
-    dict.fromkeys(
-        [
-            'image_from_window(a_window())',
-            'image_from_window(a_window(), as_vtk=False)',
-            'image_from_window(a_window(), ignore_alpha=True, scale=2)',
-            'image_from_window(a_window(), as_vtk=True)',
-            'image_from_window(a_window(), as_vtk=a_flag())',
-        ],
-        'the VTK 9.3 wheel renders only through a display, and the core phase has none',
-    )
-    if pv.vtk_version_info < (9, 4)
-    else {}
-)
-
-
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True
 
 
-assert_types(image_from_window(a_window()), NDArray[np.uint8])
-assert_types(image_from_window(a_window(), as_vtk=False), NDArray[np.uint8])
-assert_types(image_from_window(a_window(), ignore_alpha=True, scale=2), NDArray[np.uint8])
-assert_types(image_from_window(a_window(), as_vtk=True), pv.ImageData)
+with skip_runtime(pv.vtk_version_info < (9, 4), reason='the VTK 9.3 wheel renders only through a display, and the core phase has none'):
+    assert_types(image_from_window(a_window()), NDArray[np.uint8])
+    assert_types(image_from_window(a_window(), as_vtk=False), NDArray[np.uint8])
+    assert_types(image_from_window(a_window(), ignore_alpha=True, scale=2), NDArray[np.uint8])
+    assert_types(image_from_window(a_window(), as_vtk=True), pv.ImageData)
 
-# The catch-all, reached only by a flag widened to `bool`
-assert_types(image_from_window(a_window(), as_vtk=a_flag()), NDArray[np.uint8] | pv.ImageData)
+    # The catch-all, reached only by a flag widened to `bool`
+    assert_types(image_from_window(a_window(), as_vtk=a_flag()), NDArray[np.uint8] | pv.ImageData)
