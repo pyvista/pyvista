@@ -266,7 +266,7 @@ def test_render_figures_skips_scene_export_when_static(tmp_path, monkeypatch, fo
     (image,) = images
     assert image.filename.endswith('.png' if force_static else '.vtksz')
     assert len(list(tmp_path.glob('*.vtksz'))) == len(exports) == (0 if force_static else 1)
-    assert pv.plotting.plotter._GALLERY_FORCE_STATIC is False
+    assert pv._GALLERY_FORCE_STATIC is False
 
 
 class _FakeSphinxApp:

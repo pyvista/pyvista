@@ -631,9 +631,7 @@ def render_figures(
     if code_setup:
         _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
 
-    from pyvista.plotting import plotter as plotter_module  # noqa: PLC0415
-
-    plotter_module._GALLERY_FORCE_STATIC = force_static
+    pv._GALLERY_FORCE_STATIC = force_static
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
@@ -706,7 +704,7 @@ def render_figures(
                 state=state,
             )
     finally:
-        plotter_module._GALLERY_FORCE_STATIC = False
+        pv._GALLERY_FORCE_STATIC = False
         if code_cleanup:
             _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 

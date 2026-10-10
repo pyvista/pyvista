@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 import shutil
 from typing import TYPE_CHECKING
@@ -24,6 +25,25 @@ BUILDING_GALLERY_ERROR_MSG = (
     'images within sphinx_gallery or when building documentation using the '
     'pyvista-plot directive.'
 )
+
+
+def _gallery_force_static() -> bool:
+    """Return whether the plot being shown will be rendered as a static image.
+
+    Skipping the interactive scene export for such plots saves most of their cost.
+    Sphinx-gallery examples mark static plots with ``PYVISTA_GALLERY_FORCE_STATIC`` or
+    ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT`` in their globals, so look for these in
+    the calling frames.
+    """
+    if pv._GALLERY_FORCE_STATIC or pv._GALLERY_STATIC_SCRAPER:
+        return True
+    frame = inspect.currentframe()
+    while frame is not None:
+        for name in (_FORCE_STATIC, _FORCE_STATIC_IN_DOCUMENT):
+            if name in frame.f_globals:
+                return bool(frame.f_globals[name])
+        frame = frame.f_back
+    return False
 
 
 def _get_sg_image_scraper() -> Scraper:
@@ -159,7 +179,7 @@ class Scraper:
 
     def __init__(self) -> None:
         """Tell ``show()`` to skip the interactive scene export."""
-        pv.plotting.plotter._GALLERY_STATIC_SCRAPER = True
+        pv._GALLERY_STATIC_SCRAPER = True
 
     def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
@@ -211,7 +231,7 @@ class DynamicScraper:  # pragma: no cover
 
     def __init__(self) -> None:
         """Tell ``show()`` not to skip the interactive scene export."""
-        pv.plotting.plotter._GALLERY_STATIC_SCRAPER = False
+        pv._GALLERY_STATIC_SCRAPER = False
 
     def __repr__(self) -> str:
         """Return a stable representation of the class instance."""

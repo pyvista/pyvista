@@ -11,7 +11,6 @@ import contextlib
 import copy
 import ctypes
 import functools
-import inspect
 from io import BytesIO
 from io import StringIO
 import itertools
@@ -115,8 +114,7 @@ from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
 from .utilities.regression import image_from_window
 from .utilities.regression import run_image_filter
-from .utilities.sphinx_gallery import _FORCE_STATIC
-from .utilities.sphinx_gallery import _FORCE_STATIC_IN_DOCUMENT
+from .utilities.sphinx_gallery import _gallery_force_static
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetComponent
@@ -9265,27 +9263,3 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
 _ALL_PLOTTERS: dict[str, BasePlotter] = {}
-
-# Set by the ``pyvista-plot`` directive while it runs code it renders static.
-_GALLERY_FORCE_STATIC = False
-# Set while the sphinx-gallery scraper last created is the static ``Scraper``.
-_GALLERY_STATIC_SCRAPER = False
-
-
-def _gallery_force_static() -> bool:
-    """Return whether the plot being shown will be rendered as a static image.
-
-    Skipping the interactive scene export for such plots saves most of their cost.
-    Sphinx-gallery examples mark static plots with ``PYVISTA_GALLERY_FORCE_STATIC`` or
-    ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT`` in their globals, so look for these in
-    the calling frames.
-    """
-    if _GALLERY_FORCE_STATIC or _GALLERY_STATIC_SCRAPER:
-        return True
-    frame = inspect.currentframe()
-    while frame is not None:
-        for name in (_FORCE_STATIC, _FORCE_STATIC_IN_DOCUMENT):
-            if name in frame.f_globals:
-                return bool(frame.f_globals[name])
-        frame = frame.f_back
-    return False
