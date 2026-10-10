@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import functools
 import importlib
 import os
+import re
 import subprocess
 import sys
 from types import SimpleNamespace
@@ -482,7 +484,9 @@ def test_render_process_relays_warnings_and_records(monkeypatch, tmp_path):
     results, warnings, records = process.run(job, want_records=True)
     process.close()
     assert results == expected_results
-    assert warnings == expected_warnings
+    # the render process may import pyvista from another path than this process
+    strip_paths = functools.partial(re.sub, r'File ".*?"', 'File "..."')
+    assert list(map(strip_paths, warnings)) == list(map(strip_paths, expected_warnings))
     assert any('kaboom' in warning for warning in warnings)
     assert records == expected_records
     assert any('Sphere' in str(record) for record in records)
