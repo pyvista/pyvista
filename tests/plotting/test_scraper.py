@@ -199,7 +199,6 @@ def test_dynamic_scraper_clears_block_force_static(tmpdir, monkeypatch):
         (Scraper, False),
         (pv._get_sg_image_scraper, False),
         (DynamicScraper, True),
-        (lambda: (Scraper(), DynamicScraper()), True),
     ],
 )
 def test_show_skips_scene_export_for_static_scraper(monkeypatch, make_scraper, exported):

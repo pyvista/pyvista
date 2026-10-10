@@ -704,7 +704,7 @@ def render_figures(
                 state=state,
             )
     finally:
-        pv._GALLERY_FORCE_STATIC = False
+        pv._GALLERY_FORCE_STATIC = None
         if code_cleanup:
             _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 

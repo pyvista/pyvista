@@ -17,6 +17,7 @@ from pyvista.ext import plot_directive
 from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
 from pyvista.plotting.plotter import BasePlotter
+from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 
 @pytest.fixture(autouse=True)
@@ -253,20 +254,24 @@ def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):
         _render(">>> raise RuntimeError('kaboom')\n", tmp_path)
 
 
-@pytest.mark.skip_plotting
 @pytest.mark.parametrize('force_static', [True, False])
-def test_render_figures_skips_scene_export_when_static(tmp_path, monkeypatch, force_static):
+@pytest.mark.parametrize('static_scraper', [True, False])
+def test_render_figures_skips_scene_export_when_static(
+    tmp_path, monkeypatch, force_static, static_scraper
+):
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     exports = []
     fake = SimpleNamespace(export_vtksz=lambda filename: exports.append(filename) or b'scene')
     monkeypatch.setattr(BasePlotter, '_trame_component', lambda self: fake)  # noqa: ARG005
+    if static_scraper:
+        Scraper()
     ((_, images),) = _render(
         '>>> import pyvista as pv\n>>> pv.Sphere().plot()\n', tmp_path, force_static=force_static
     )
     (image,) = images
     assert image.filename.endswith('.png' if force_static else '.vtksz')
     assert len(list(tmp_path.glob('*.vtksz'))) == len(exports) == (0 if force_static else 1)
-    assert pv._GALLERY_FORCE_STATIC is False
+    assert pv._GALLERY_FORCE_STATIC is None
 
 
 class _FakeSphinxApp:

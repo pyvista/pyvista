@@ -35,14 +35,19 @@ def _gallery_force_static() -> bool:
     ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT`` in their globals, so look for these in
     the calling frames.
     """
-    if pv._GALLERY_FORCE_STATIC or pv._GALLERY_STATIC_SCRAPER:
+    if pv._GALLERY_FORCE_STATIC is not None:
+        return pv._GALLERY_FORCE_STATIC
+    if pv._GALLERY_STATIC_SCRAPER:
         return True
     frame = inspect.currentframe()
-    while frame is not None:
-        for name in (_FORCE_STATIC, _FORCE_STATIC_IN_DOCUMENT):
-            if name in frame.f_globals:
-                return bool(frame.f_globals[name])
-        frame = frame.f_back
+    try:
+        while frame is not None:
+            for name in (_FORCE_STATIC, _FORCE_STATIC_IN_DOCUMENT):
+                if name in frame.f_globals:
+                    return bool(frame.f_globals[name])
+            frame = frame.f_back
+    finally:
+        del frame
     return False
 
 
