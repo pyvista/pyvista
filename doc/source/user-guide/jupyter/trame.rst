@@ -96,7 +96,7 @@ Jupyter Server Proxy
 `Jupyter Server Proxy <https://jupyter-server-proxy.readthedocs.io/en/latest/>`_
 lets you access the Trame server hosting the views of the PyVista plotters
 alongside your notebook, and provide authenticated web access to them directly
-through Jupyter. The ``jupyter`` extra installs it.
+through Jupyter. ``pyvista[jupyter]`` installs it.
 
 To configure PyVista and Trame to work with ``jupyter-server-proxy`` in a remote
 environment, you will need to set some options on the global PyVista theme:
