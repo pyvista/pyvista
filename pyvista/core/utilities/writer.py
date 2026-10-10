@@ -469,7 +469,7 @@ class STLWriter(BaseWriter, _DataFormatMixin):
 
 
 class SimplePointsWriter(BaseWriter, _DataFormatMixin):
-    """SimplePointsWriter for simple point-set ``.xyz`` files.
+    """SimplePointsWriter for simple point-set ``.txt`` files.
 
     Wraps :vtk:`vtkSimplePointsWriter`.
 

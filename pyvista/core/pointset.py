@@ -72,6 +72,7 @@ from .utilities.writer import UnstructuredGridWriter
 from .utilities.writer import XMLPolyDataWriter
 from .utilities.writer import XMLStructuredGridWriter
 from .utilities.writer import XMLUnstructuredGridWriter
+from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
 
 if TYPE_CHECKING:
     from typing import Any
@@ -120,6 +121,8 @@ class _PointSetBase(DataSet):
     """
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
+        '.txt': SimplePointsWriter,
+        # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
         '.xyz': SimplePointsWriter,
     }
 
@@ -438,6 +441,45 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
     def reconstruct_surface(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and reconstruct the surface."""
         return self.cast_to_polydata(deep=False).reconstruct_surface(*args, **kwargs)
+
+    def save(
+        self,
+        filename: Path | str,
+        *,
+        binary: bool = True,
+        texture: NDArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
+    ) -> None:  # numpydoc ignore=PR01
+        """Save this point set to file.
+
+        See :meth:`pyvista.DataObject.save` for the parameters.
+
+        .. deprecated:: 0.50
+            Saving to ``.xyz`` is deprecated. Use ``.txt`` for the same
+            plain list of points.
+
+        """
+        file_ext = get_ext(Path(filename).expanduser())
+        if file_ext == '.xyz' and _get_writer_ext_handler(file_ext) is None:
+            warn_external(
+                'Saving a PointSet to `.xyz` is deprecated, since `.xyz` is the PLOT3D '
+                'grid extension. Use `.txt` for the same plain list of points.',
+                PyVistaDeprecationWarning,
+            )
+            if _is_deprecation_due((0, 53)):  # pragma: no cover
+                msg = 'Convert this deprecation warning into an error.'
+                raise RuntimeError(msg)
+            if pv.version_info >= (0, 54):  # pragma: no cover
+                msg = "Remove '.xyz' from the PointSet writers."
+                raise RuntimeError(msg)
+        super().save(
+            filename,
+            binary=binary,
+            texture=texture,
+            compression=compression,
+            **writer_kwargs,
+        )
 
     @property
     def area(self) -> float:  # numpydoc ignore=RT01

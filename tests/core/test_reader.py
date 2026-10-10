@@ -229,6 +229,16 @@ def test_get_reader_fail(tmp_path):
 
 
 @pytest.mark.expect_vtk_output(
+    'Auto detection check failed',
+    reason='the reader probes an empty file',
+)
+def test_get_reader_xyz_is_plot3d(tmp_path):
+    path = tmp_path / 'grid.xyz'
+    path.touch()
+    assert isinstance(pv.get_reader(path), pv.MultiBlockPlot3DReader)
+
+
+@pytest.mark.expect_vtk_output(
     'Unable to open',
     'Algorithm vtkPExodusIIReader',
     reason='the readers probe a file that exists but holds nothing they can read',
