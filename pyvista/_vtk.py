@@ -14,6 +14,8 @@ import importlib.util
 import os
 from typing import TYPE_CHECKING
 
+from pyvista.core.errors import VTKVersionError
+
 
 def _resolve_vtk_root() -> str:
     """Return the root package PyVista resolves VTK imports against.
@@ -976,8 +978,6 @@ def _import_vtkPythonItem() -> type[Any]:  # noqa: N802
 
             def __init__(self) -> None:  # pragma: no cover
                 """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
                 msg = 'Chart backgrounds require the vtkPythonContext2D module'
                 raise VTKVersionError(msg)
 

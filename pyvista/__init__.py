@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import os
 import sys
 from types import ModuleType
@@ -9,9 +11,13 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 
+import pyvista_validation
+
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
+from pyvista._version import _is_deprecation_due
 from pyvista._version import version_info as version_info
+from pyvista._warn_external import warn_external
 from pyvista.core import *
 from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
 from pyvista.core._typing_core._dataset_types import (
@@ -26,6 +32,7 @@ from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core._vtk_utilities import vtk_backend as vtk_backend
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.accessor_registry import AccessorRegistration as AccessorRegistration
 from pyvista.core.utilities.accessor_registry import DataSetAccessor as DataSetAccessor
 from pyvista.core.utilities.accessor_registry import (
@@ -54,6 +61,9 @@ from pyvista.report import Report as Report
 from pyvista.report import check_math_text_support as check_math_text_support
 from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotlib_vtk_compatibility
 from pyvista.report import get_gpu_info as get_gpu_info
+from pyvista.typing import _DEPRECATED_ALIASES
+from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
+from pyvista.typing import _get_deprecated_alias
 
 if TYPE_CHECKING:
     import numpy as np
@@ -123,11 +133,6 @@ _env_theme_applied: bool = False
 # Lazily import/access the plotting module
 def _get_deprecated_validation() -> ModuleType:
     """Forward ``pyvista._validation`` to the ``pyvista_validation`` package with a warning."""
-    import pyvista_validation  # noqa: PLC0415
-
-    from pyvista._warn_external import warn_external  # noqa: PLC0415
-    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
-
     msg = (
         '`pyvista._validation` has moved to the `pyvista_validation` package; '
         'use `from pyvista_validation import ...` instead.'
@@ -144,10 +149,6 @@ def _get_deprecated_validation() -> ModuleType:
 
 def _warn_deprecated_pickle_format() -> None:
     """Warn that the pickle format selector is deprecated."""
-    from pyvista._version import _is_deprecation_due  # noqa: PLC0415
-    from pyvista._warn_external import warn_external  # noqa: PLC0415
-    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
-
     msg = (
         '`pyvista.PICKLE_FORMAT` is deprecated. The `vtk` format is the only supported '
         'pickle format and is always used.'
@@ -173,8 +174,6 @@ def __getattr__(name: str) -> Any:
         If the attribute is not found.
 
     """
-    import importlib  # noqa: PLC0415
-    import inspect  # noqa: PLC0415
 
     def _cache_attr_and_return(obj: Any) -> Any:
         # Cache the attr on this module to avoid calls to __getattr__ on next access
@@ -193,9 +192,6 @@ def __getattr__(name: str) -> Any:
         # Not cached either, so the deprecation warning is re-issued on each access
         _warn_deprecated_pickle_format()
         return _PICKLE_FORMAT
-    from pyvista.typing import _DEPRECATED_ALIASES  # noqa: PLC0415
-    from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
-    from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
 
     if name in _MOVED_TO_TYPING_NAMESPACE[__name__] or name in _DEPRECATED_ALIASES:
         # Not cached either, so the deprecation warning is re-issued on each access
