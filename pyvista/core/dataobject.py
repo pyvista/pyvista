@@ -422,8 +422,8 @@ class DataObject(
             fmt += '</table>\n'
             fmt += '\n'
             if display:
-                from IPython.display import HTML
-                from IPython.display import display as _display
+                from IPython.display import HTML  # noqa: PLC0415
+                from IPython.display import display as _display  # noqa: PLC0415
 
                 _display(HTML(fmt))
                 return ''

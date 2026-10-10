@@ -642,7 +642,6 @@ pyvista = "pv"
 'pyvista/core/_typing_core/_array_types.py' = ['PYI018', 'PYI047']
 'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
 'pyvista/core/_typing_core/_deprecated.py' = ['PYI047', 'UP007']
-'pyvista/core/dataobject.py' = ['PLC0415']
 'pyvista/core/filters/data_object.py' = ['PYI019']
 'pyvista/core/filters/data_set.py' = ['PYI019']
 'pyvista/core/filters/image_data.py' = ['PYI019']
