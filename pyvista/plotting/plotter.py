@@ -114,6 +114,7 @@ from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
 from .utilities.regression import image_from_window
 from .utilities.regression import run_image_filter
+from .utilities.sphinx_gallery import _gallery_force_static
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetComponent
@@ -8981,8 +8982,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if pv.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True, render=False)
-            with contextlib.suppress(ImportError):
-                self.last_vtksz = self._trame_component().export_vtksz(filename=None)
+            if not _gallery_force_static():
+                with contextlib.suppress(ImportError):
+                    self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:  # pragma: no cover

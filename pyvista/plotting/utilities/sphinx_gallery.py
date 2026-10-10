@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 import shutil
 from typing import TYPE_CHECKING
@@ -15,11 +16,39 @@ if TYPE_CHECKING:
 
     from pyvista.plotting.plotter import BasePlotter
 
+# Names of the example globals that mark sphinx-gallery plots as static
+_FORCE_STATIC = 'PYVISTA_GALLERY_FORCE_STATIC'
+_FORCE_STATIC_IN_DOCUMENT = 'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT'
+
 BUILDING_GALLERY_ERROR_MSG = (
     'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
     'images within sphinx_gallery or when building documentation using the '
     'pyvista-plot directive.'
 )
+
+
+def _gallery_force_static() -> bool:
+    """Return whether the plot being shown will be rendered as a static image.
+
+    Skipping the interactive scene export for such plots saves most of their cost.
+    Sphinx-gallery examples mark static plots with ``PYVISTA_GALLERY_FORCE_STATIC`` or
+    ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT`` in their globals, so look for these in
+    the calling frames.
+    """
+    if pv._GALLERY_FORCE_STATIC is not None:
+        return pv._GALLERY_FORCE_STATIC
+    if pv._GALLERY_STATIC_SCRAPER:
+        return True
+    frame = inspect.currentframe()
+    try:
+        while frame is not None:
+            for name in (_FORCE_STATIC, _FORCE_STATIC_IN_DOCUMENT):
+                if name in frame.f_globals:
+                    return bool(frame.f_globals[name])
+            frame = frame.f_back
+    finally:
+        del frame
+    return False
 
 
 def _get_sg_image_scraper() -> Scraper:
@@ -153,6 +182,10 @@ class Scraper:
 
     """
 
+    def __init__(self) -> None:
+        """Tell ``show()`` to skip the interactive scene export."""
+        pv._GALLERY_STATIC_SCRAPER = True
+
     def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
@@ -201,6 +234,10 @@ class DynamicScraper:  # pragma: no cover
 
     """
 
+    def __init__(self) -> None:
+        """Tell ``show()`` not to skip the interactive scene export."""
+        pv._GALLERY_STATIC_SCRAPER = False
+
     def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
@@ -221,13 +258,13 @@ class DynamicScraper:  # pragma: no cover
 
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
-            'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT',
+            _FORCE_STATIC_IN_DOCUMENT,
             False,
         )
         # override with block specific value if it exists
-        if 'PYVISTA_GALLERY_FORCE_STATIC = True' in block[1].split('\n'):
+        if f'{_FORCE_STATIC} = True' in block[1].split('\n'):
             force_static = True
-        elif 'PYVISTA_GALLERY_FORCE_STATIC = False' in block[1].split('\n'):
+        elif f'{_FORCE_STATIC} = False' in block[1].split('\n'):
             force_static = False
 
         if force_static is None:
@@ -235,6 +272,8 @@ class DynamicScraper:  # pragma: no cover
             force_static = False
 
         dynamic = not force_static
+        # The block marker applies to this block only, as it does in the check above
+        block_vars['example_globals'].pop(_FORCE_STATIC, None)
 
         image_path_iterator = block_vars['image_path_iterator']
         image_names = generate_images(image_path_iterator, dynamic=dynamic)

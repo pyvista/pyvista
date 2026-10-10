@@ -74,6 +74,10 @@ OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
+# Set by the pyvista-plot directive while it runs code, overriding the gallery scraper
+_GALLERY_FORCE_STATIC: bool | None = None
+# Set while the sphinx-gallery scraper last created is the static Scraper
+_GALLERY_STATIC_SCRAPER = False
 
 # Set where figures are saved
 FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
