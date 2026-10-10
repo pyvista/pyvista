@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import subprocess
+import sys
 from typing import TYPE_CHECKING
 
 from docutils import nodes
@@ -11,6 +14,7 @@ from sphinx.util import logging
 from sphinx.util.nodes import set_source_info
 
 from pyvista.examples.downloads import download_file
+from pyvista.ext._plot_subprocess import in_forked_worker
 
 if TYPE_CHECKING:
     from typing import Any
@@ -18,6 +22,21 @@ if TYPE_CHECKING:
     from sphinx.application import Sphinx
 
 logger = logging.getLogger(__name__)
+
+
+def _download(name: str) -> str | list[str]:
+    """Download ``name``, in a subprocess when this is a forked Sphinx worker."""
+    if not in_forked_worker():
+        return download_file(name)
+    code = (
+        'import json, sys\n'
+        'from pyvista.examples.downloads import download_file\n'
+        'print(json.dumps(download_file(sys.argv[1])))'
+    )
+    result = subprocess.run(
+        [sys.executable, '-c', code, name], check=True, capture_output=True, text=True
+    )
+    return json.loads(result.stdout.splitlines()[-1])
 
 
 class EmbedPyFileDirective(Directive):
@@ -31,7 +50,7 @@ class EmbedPyFileDirective(Directive):
         """Download the file and return it as a Python code block."""
         name = self.arguments[0]
         try:
-            downloaded = download_file(name)
+            downloaded = _download(name)
             if not isinstance(downloaded, str):
                 msg = f'{name} downloads to more than one file'
                 raise TypeError(msg)

@@ -197,6 +197,9 @@ import jinja2  # Sphinx dependency.
 from sphinx.util import logging as sphinx_logging
 
 import pyvista as pv
+from pyvista.ext._plot_subprocess import get_render_process
+from pyvista.ext._plot_subprocess import in_forked_worker
+from pyvista.ext._plot_subprocess import store_records
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
@@ -584,6 +587,91 @@ def _run_code(
     return ns
 
 
+def _execute_pieces(
+    *,
+    code_pieces: list[str],
+    is_doctest: bool,
+    code_setup: str | None,
+    code_cleanup: str | None,
+    code_path: str,
+    output_dir: str,
+    output_base: str,
+    context: bool,
+    function_name: str | None,
+    force_static: bool,
+) -> tuple[list[tuple[str, list[str]]], list[str], dict[str, Any], str]:
+    """Run the pieces; return ``(results, messages, namespace, source)``, results as basenames."""
+    results: list[tuple[str, list[str]]] = []
+    messages: list[str] = []
+    ns = plot_context if context else {}
+    clean_pieces = []
+
+    if code_setup:
+        _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
+
+    try:
+        for i, code_piece in enumerate(code_pieces):
+            # generate the plot
+            clean_piece = doctest.script_from_examples(code_piece) if is_doctest else code_piece
+            clean_pieces.append(clean_piece)
+            filtered = _executable_piece(code_piece, is_doctest=is_doctest)
+            try:
+                _run_code(
+                    code=clean_piece if filtered is None else filtered,
+                    code_path=code_path,
+                    ns=ns,
+                    function_name=function_name,
+                )
+            except PlotError as error:
+                if filtered is None:
+                    raise
+                # the piece keeps the names it bound; the error already names the file
+                messages.append(
+                    f'[pyvista-plot] statements alongside a "# doctest: +SKIP" failed.\n{error}'
+                )
+
+            images = []
+
+            if (
+                _show_or_plot_in_string(code_piece)
+                or '.open_gif' in code_piece
+                or 'plot=True' in code_piece
+            ):
+                figures = pv.plotting.plotter._ALL_PLOTTERS
+
+                for j, (_, plotter) in enumerate(figures.items()):
+                    if plotter._gif_filename is not None:
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
+                        images.append(image_file.basename)
+                        shutil.move(plotter._gif_filename, image_file.filename)
+                        continue
+                    if not plotter._show_called:
+                        continue
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
+                    try:
+                        plotter.screenshot(image_file.filename)
+                    except RuntimeError:  # pragma no cover
+                        # ignore closed, unrendered plotters
+                        continue
+                    if force_static or (plotter.last_vtksz is None):
+                        images.append(image_file.basename)
+                        continue
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
+                    with Path(image_file.filename).open('wb') as f:
+                        f.write(plotter.last_vtksz)
+
+                    images.append(image_file.basename)
+
+            pv.close_all()  # close and clear all plotters
+
+            results.append((code_piece, images))
+    finally:
+        if code_cleanup:
+            _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
+
+    return results, messages, ns, '\n'.join(clean_pieces)
+
+
 def render_figures(
     *,
     code: str,
@@ -608,6 +696,8 @@ def render_figures(
     to hyperlink -- skipped when the source isn't shown, since there would be nothing on the
     page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
+
+    A forked Sphinx worker runs the code in a separate render process instead.
     """
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ``pyvista-plot::``
@@ -619,94 +709,45 @@ def render_figures(
         # Try to determine if all images already exist
         is_doctest, code_pieces = _split_code_at_show(code)
 
-    # Otherwise, we didn't find the files, so build them
-    results = []
-    ns = plot_context if context else {}
-    clean_pieces = []
+    job = {
+        'code_pieces': code_pieces,
+        'is_doctest': is_doctest,
+        'code_setup': config.pyvista_plot_setup,
+        'code_cleanup': config.pyvista_plot_cleanup,
+        'code_path': str(code_path),
+        'output_dir': str(output_dir),
+        'output_base': output_base,
+        'context': bool(context),
+        'function_name': function_name,
+        'force_static': bool(force_static),
+    }
+    want_records = env is not None and config.pyvista_plot_autocodelink and include_source
 
-    # Check for setup and teardown code for plots
-    code_setup = config.pyvista_plot_setup
-    code_cleanup = config.pyvista_plot_cleanup
-
-    if code_setup:
-        _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
-
-    try:
-        for i, code_piece in enumerate(code_pieces):
-            # generate the plot
-            clean_piece = doctest.script_from_examples(code_piece) if is_doctest else code_piece
-            clean_pieces.append(clean_piece)
-            filtered = _executable_piece(code_piece, is_doctest=is_doctest)
-            try:
-                _run_code(
-                    code=clean_piece if filtered is None else filtered,
-                    code_path=code_path,
-                    ns=ns,
-                    function_name=function_name,
-                )
-            except PlotError as error:
-                if filtered is None:
-                    raise
-                # the piece keeps the names it bound; the error already names the file
-                _logger.warning(
-                    '[pyvista-plot] statements alongside a "# doctest: +SKIP" failed.\n%s',
-                    error,
-                )
-
-            images = []
-
-            if (
-                _show_or_plot_in_string(code_piece)
-                or '.open_gif' in code_piece
-                or 'plot=True' in code_piece
-            ):
-                figures = pv.plotting.plotter._ALL_PLOTTERS
-
-                for j, (_, plotter) in enumerate(figures.items()):
-                    if plotter._gif_filename is not None:
-                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
-                        images.append(image_file)
-                        shutil.move(plotter._gif_filename, image_file.filename)
-                        continue
-                    if not plotter._show_called:
-                        continue
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
-                    try:
-                        plotter.screenshot(image_file.filename)
-                    except RuntimeError:  # pragma no cover
-                        # ignore closed, unrendered plotters
-                        continue
-                    if force_static or (plotter.last_vtksz is None):
-                        images.append(image_file)
-                        continue
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
-                    with Path(image_file.filename).open('wb') as f:
-                        f.write(plotter.last_vtksz)
-
-                    images.append(image_file)
-
-            pv.close_all()  # close and clear all plotters
-
-            results.append((code_piece, images))
-
-        if (
-            env is not None
-            and clean_pieces
-            and config.pyvista_plot_autocodelink
-            and include_source
-        ):
+    if in_forked_worker():
+        try:
+            results, messages, records = get_render_process().run(job, want_records=want_records)
+        except RuntimeError as error:
+            raise PlotError(str(error)) from None
+        if records and env is not None:
+            store_records(env, records, state)
+    else:
+        results, messages, ns, source = _execute_pieces(**job)
+        if env is not None and want_records and source:
             record_namespace(
                 env=env,
                 docname=env.docname,
-                source='\n'.join(clean_pieces),
+                source=source,
                 namespace=ns,
                 state=state,
             )
-    finally:
-        if code_cleanup:
-            _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 
-    return results
+    for message in messages:
+        _logger.warning(message)
+
+    return [
+        (code_piece, [ImageFile(output_dir, basename) for basename in basenames])
+        for code_piece, basenames in results
+    ]
 
 
 def _contains_doctest(text: str) -> bool:
