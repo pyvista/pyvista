@@ -16,6 +16,7 @@ from pyvista.ext import _embed_py_file
 from pyvista.ext import plot_directive
 from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
+from pyvista.plotting.plotter import BasePlotter
 
 
 @pytest.fixture(autouse=True)
@@ -204,7 +205,7 @@ def test_executable_piece_none_for_non_doctest():
     assert plot_directive._executable_piece("x = 'doctest: +SKIP'", is_doctest=False) is None
 
 
-def _render(code, tmp_path):
+def _render(code, tmp_path, *, force_static=True):
     """Call render_figures with the minimal config the code path needs."""
     config = SimpleNamespace(
         pyvista_plot_setup=None, pyvista_plot_cleanup=None, pyvista_plot_autocodelink=False
@@ -217,7 +218,7 @@ def _render(code, tmp_path):
         context=False,
         function_name=None,
         config=config,
-        force_static=True,
+        force_static=force_static,
     )
 
 
@@ -250,6 +251,22 @@ def test_render_figures_warns_when_the_filtered_remainder_raises(tmp_path, caplo
 def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):
     with pytest.raises(plot_directive.PlotError, match='kaboom'):
         _render(">>> raise RuntimeError('kaboom')\n", tmp_path)
+
+
+@pytest.mark.skip_plotting
+@pytest.mark.parametrize('force_static', [True, False])
+def test_render_figures_skips_scene_export_when_static(tmp_path, monkeypatch, force_static):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    exports = []
+    fake = SimpleNamespace(export_vtksz=lambda filename: exports.append(filename) or b'scene')
+    monkeypatch.setattr(BasePlotter, '_trame_component', lambda self: fake)  # noqa: ARG005
+    ((_, images),) = _render(
+        '>>> import pyvista as pv\n>>> pv.Sphere().plot()\n', tmp_path, force_static=force_static
+    )
+    (image,) = images
+    assert image.filename.endswith('.png' if force_static else '.vtksz')
+    assert len(list(tmp_path.glob('*.vtksz'))) == len(exports) == (0 if force_static else 1)
+    assert pv.plotting.plotter._GALLERY_FORCE_STATIC is False
 
 
 class _FakeSphinxApp:

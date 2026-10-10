@@ -153,6 +153,10 @@ class Scraper:
 
     """
 
+    def __init__(self) -> None:
+        """Tell ``show()`` to skip the interactive scene export."""
+        pv.plotting.plotter._GALLERY_STATIC_SCRAPER = True
+
     def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
@@ -201,6 +205,10 @@ class DynamicScraper:  # pragma: no cover
 
     """
 
+    def __init__(self) -> None:
+        """Tell ``show()`` not to skip the interactive scene export."""
+        pv.plotting.plotter._GALLERY_STATIC_SCRAPER = False
+
     def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
@@ -235,6 +243,8 @@ class DynamicScraper:  # pragma: no cover
             force_static = False
 
         dynamic = not force_static
+        # The block marker applies to this block only, as it does in the check above
+        block_vars['example_globals'].pop('PYVISTA_GALLERY_FORCE_STATIC', None)
 
         image_path_iterator = block_vars['image_path_iterator']
         image_names = generate_images(image_path_iterator, dynamic=dynamic)

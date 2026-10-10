@@ -631,6 +631,7 @@ def render_figures(
     if code_setup:
         _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
 
+    pv.plotting.plotter._GALLERY_FORCE_STATIC = force_static
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
@@ -703,6 +704,7 @@ def render_figures(
                 state=state,
             )
     finally:
+        pv.plotting.plotter._GALLERY_FORCE_STATIC = False
         if code_cleanup:
             _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 

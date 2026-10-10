@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from matplotlib.pyplot import imread
 import pytest
 
 import pyvista as pv
+from pyvista.plotting.plotter import BasePlotter
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
@@ -151,3 +153,101 @@ def test_scraper_raise(tmpdir):
 
 def test_namespace_contract():
     assert hasattr(pv, '_get_sg_image_scraper')
+
+
+@pytest.mark.parametrize(
+    ('example_globals', 'exported'),
+    [
+        ({}, True),
+        ({'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT': True}, False),
+        ({'PYVISTA_GALLERY_FORCE_STATIC': True}, False),
+        (
+            {
+                'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT': True,
+                'PYVISTA_GALLERY_FORCE_STATIC': False,
+            },
+            True,
+        ),
+    ],
+)
+def test_show_skips_scene_export_for_static_example(monkeypatch, example_globals, exported):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    fake = SimpleNamespace(export_vtksz=lambda filename: b'scene')  # noqa: ARG005
+    monkeypatch.setattr(BasePlotter, '_trame_component', lambda self: fake)  # noqa: ARG005
+    pv.close_all()
+    exec('pv.Sphere().plot(off_screen=True)', {'pv': pv, **example_globals})  # noqa: S102
+    (pl,) = pv.plotting.plotter._ALL_PLOTTERS.values()
+    assert pl.last_image is not None
+    assert pl.last_vtksz == (b'scene' if exported else None)
+    del pl
+    pv.close_all()
+
+
+def test_dynamic_scraper_clears_block_force_static(tmpdir, monkeypatch):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    pv.close_all()
+    example_globals = {'PYVISTA_GALLERY_FORCE_STATIC': True}
+    block_vars = dict(image_path_iterator=iter([]), example_globals=example_globals)
+    gallery_conf = {'src_dir': str(tmpdir), 'builder_name': 'html'}
+    DynamicScraper()(('code', 'PYVISTA_GALLERY_FORCE_STATIC = True', 0), block_vars, gallery_conf)
+    assert 'PYVISTA_GALLERY_FORCE_STATIC' not in example_globals
+
+
+@pytest.mark.parametrize(
+    ('make_scraper', 'exported'),
+    [
+        (Scraper, False),
+        (pv._get_sg_image_scraper, False),
+        (DynamicScraper, True),
+        (lambda: (Scraper(), DynamicScraper()), True),
+    ],
+)
+def test_show_skips_scene_export_for_static_scraper(monkeypatch, make_scraper, exported):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    fake = SimpleNamespace(export_vtksz=lambda filename: b'scene')  # noqa: ARG005
+    monkeypatch.setattr(BasePlotter, '_trame_component', lambda self: fake)  # noqa: ARG005
+    pv.close_all()
+    make_scraper()
+    pv.Sphere().plot(off_screen=True)
+    (pl,) = pv.plotting.plotter._ALL_PLOTTERS.values()
+    assert pl.last_vtksz == (b'scene' if exported else None)
+    del pl
+    pv.close_all()
+
+
+@pytest.mark.parametrize(
+    ('make_scraper', 'code', 'n_vtksz'),
+    [
+        (Scraper, 'pv.Sphere().plot()', 0),
+        (pv._get_sg_image_scraper, 'pv.Sphere().plot()', 0),
+        (DynamicScraper, 'PYVISTA_GALLERY_FORCE_STATIC = True\npv.Sphere().plot()', 0),
+        (
+            DynamicScraper,
+            'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True\npv.Sphere().plot()',
+            0,
+        ),
+        (DynamicScraper, 'pv.Sphere().plot()', 1),
+    ],
+)
+def test_scraper_writes_no_vtksz_for_static_plot(
+    tmp_path, monkeypatch, make_scraper, code, n_vtksz
+):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    exports = []
+    fake = SimpleNamespace(export_vtksz=lambda filename: exports.append(filename) or b'scene')
+    monkeypatch.setattr(BasePlotter, '_trame_component', lambda self: fake)  # noqa: ARG005
+    pv.close_all()
+    scraper = make_scraper()
+    example_globals = {'pv': pv}
+    exec(code, example_globals)  # noqa: S102
+
+    images = tmp_path / 'images'
+    images.mkdir()
+    block_vars = dict(
+        image_path_iterator=iter([str(images / 'sg_img.png')]),
+        example_globals=example_globals,
+    )
+    scraper(('code', code, 0), block_vars, {'src_dir': str(tmp_path), 'builder_name': 'html'})
+
+    assert len(list(images.glob('*.vtksz'))) == len(exports) == n_vtksz
+    assert len(list(images.glob('*.png'))) == 1

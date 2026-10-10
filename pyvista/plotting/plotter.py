@@ -8981,8 +8981,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if pv.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True, render=False)
-            with contextlib.suppress(ImportError):
-                self.last_vtksz = self._trame_component().export_vtksz(filename=None)
+            if not _gallery_force_static():
+                with contextlib.suppress(ImportError):
+                    self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:  # pragma: no cover
@@ -9261,3 +9262,27 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
 _ALL_PLOTTERS: dict[str, BasePlotter] = {}
+
+# Set by the ``pyvista-plot`` directive while it runs code it renders static.
+_GALLERY_FORCE_STATIC = False
+# Set while the sphinx-gallery scraper last created is the static ``Scraper``.
+_GALLERY_STATIC_SCRAPER = False
+
+
+def _gallery_force_static() -> bool:
+    """Return whether the plot being shown will be rendered as a static image.
+
+    Skipping the interactive scene export for such plots saves most of their cost.
+    Sphinx-gallery examples mark static plots with ``PYVISTA_GALLERY_FORCE_STATIC`` or
+    ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT`` in their globals, so look for these in
+    the calling frames.
+    """
+    if _GALLERY_FORCE_STATIC or _GALLERY_STATIC_SCRAPER:
+        return True
+    frame = sys._getframe(1)
+    while frame is not None:
+        for name in ('PYVISTA_GALLERY_FORCE_STATIC', 'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT'):
+            if name in frame.f_globals:
+                return bool(frame.f_globals[name])
+        frame = frame.f_back
+    return False

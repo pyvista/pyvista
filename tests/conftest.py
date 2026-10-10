@@ -242,6 +242,8 @@ def reset_global_state():
 
     pv._PICKLE_FORMAT = 'vtk'
     pv.global_config.points_dtype = None
+    # constructing a sphinx-gallery Scraper sets this for the rest of the process
+    pv.plotting.plotter._GALLERY_STATIC_SCRAPER = False
 
 
 @pytest.fixture
