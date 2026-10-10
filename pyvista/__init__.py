@@ -17,7 +17,7 @@ from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
 from pyvista._version import _is_deprecation_due
 from pyvista._version import version_info as version_info
-from pyvista._warn_external import warn_external
+from pyvista._warn_external import warn_external as _warn_external
 from pyvista.core import *
 from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
 from pyvista.core._typing_core._dataset_types import (
@@ -137,7 +137,7 @@ def _get_deprecated_validation() -> ModuleType:
         '`pyvista._validation` has moved to the `pyvista_validation` package; '
         'use `from pyvista_validation import ...` instead.'
     )
-    warn_external(msg, PyVistaDeprecationWarning)
+    _warn_external(msg, PyVistaDeprecationWarning)
     if version_info >= (0, 51):  # pragma: no cover
         msg = 'Convert this deprecation warning into an error.'
         raise RuntimeError(msg)
@@ -153,7 +153,7 @@ def _warn_deprecated_pickle_format() -> None:
         '`pyvista.PICKLE_FORMAT` is deprecated. The `vtk` format is the only supported '
         'pickle format and is always used.'
     )
-    warn_external(msg, PyVistaDeprecationWarning)
+    _warn_external(msg, PyVistaDeprecationWarning)
     if _is_deprecation_due((0, 53)):  # pragma: no cover
         msg = 'Convert this deprecation warning into an error.'
         raise RuntimeError(msg)
