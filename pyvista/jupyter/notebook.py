@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.jupyter import _TRAME_BACKENDS
 from pyvista.jupyter import _TRAME_SERVER_BACKENDS
@@ -118,8 +119,6 @@ def _check_server_proxy(backend: str, kwargs: dict[str, Any]) -> None:
     mode = kwargs.get('mode') or backend
     if mode not in _TRAME_SERVER_BACKENDS:
         return
-
-    import pyvista as pv  # noqa: PLC0415
 
     trame_theme = pv.global_theme.trame
     extension_enabled = kwargs.get('jupyter_extension_enabled')
