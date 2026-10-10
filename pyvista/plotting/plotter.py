@@ -115,6 +115,8 @@ from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
 from .utilities.regression import image_from_window
 from .utilities.regression import run_image_filter
+from .utilities.sphinx_gallery import _FORCE_STATIC
+from .utilities.sphinx_gallery import _FORCE_STATIC_IN_DOCUMENT
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetComponent
@@ -9282,7 +9284,7 @@ def _gallery_force_static() -> bool:
         return True
     frame = inspect.currentframe()
     while frame is not None:
-        for name in ('PYVISTA_GALLERY_FORCE_STATIC', 'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT'):
+        for name in (_FORCE_STATIC, _FORCE_STATIC_IN_DOCUMENT):
             if name in frame.f_globals:
                 return bool(frame.f_globals[name])
         frame = frame.f_back

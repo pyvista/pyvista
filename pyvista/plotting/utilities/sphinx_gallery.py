@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 
     from pyvista.plotting.plotter import BasePlotter
 
+# Names of the example globals that mark sphinx-gallery plots as static
+_FORCE_STATIC = 'PYVISTA_GALLERY_FORCE_STATIC'
+_FORCE_STATIC_IN_DOCUMENT = 'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT'
+
 BUILDING_GALLERY_ERROR_MSG = (
     'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
     'images within sphinx_gallery or when building documentation using the '
@@ -229,13 +233,13 @@ class DynamicScraper:  # pragma: no cover
 
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
-            'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT',
+            _FORCE_STATIC_IN_DOCUMENT,
             False,
         )
         # override with block specific value if it exists
-        if 'PYVISTA_GALLERY_FORCE_STATIC = True' in block[1].split('\n'):
+        if f'{_FORCE_STATIC} = True' in block[1].split('\n'):
             force_static = True
-        elif 'PYVISTA_GALLERY_FORCE_STATIC = False' in block[1].split('\n'):
+        elif f'{_FORCE_STATIC} = False' in block[1].split('\n'):
             force_static = False
 
         if force_static is None:
@@ -244,7 +248,7 @@ class DynamicScraper:  # pragma: no cover
 
         dynamic = not force_static
         # The block marker applies to this block only, as it does in the check above
-        block_vars['example_globals'].pop('PYVISTA_GALLERY_FORCE_STATIC', None)
+        block_vars['example_globals'].pop(_FORCE_STATIC, None)
 
         image_path_iterator = block_vars['image_path_iterator']
         image_names = generate_images(image_path_iterator, dynamic=dynamic)
