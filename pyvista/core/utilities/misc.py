@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from enum import Enum
 import functools
 import importlib
+import inspect
 import sys
 import threading
 import traceback
@@ -79,7 +80,9 @@ def assert_empty_kwargs(**kwargs) -> bool:
     n = len(kwargs)
     if n == 0:
         return True
-    caller = sys._getframe(1).f_code.co_name
+    frame = inspect.currentframe()
+    caller = frame.f_back.f_code.co_name if frame and frame.f_back else 'function'
+    del frame
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
     grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'

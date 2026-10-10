@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import inspect
 from pathlib import Path
-import sys
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
@@ -230,7 +229,11 @@ def _deprecate_positional_args(
                 def call_site() -> str:
                     # Get location where the function is called
                     # Optimization: ``inspect.stack()`` reads source lines for every frame
-                    frame = sys._getframe(stack_level)
+                    frame = inspect.currentframe()
+                    for _ in range(stack_level):
+                        frame = frame.f_back if frame else None
+                    if frame is None:
+                        return '<unknown>'
                     file = Path(frame.f_code.co_filename).as_posix()
                     return f'{file}:{frame.f_lineno}'
 
