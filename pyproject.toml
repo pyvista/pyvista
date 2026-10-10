@@ -56,14 +56,14 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista[jupyter]']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.25.1',
-  'filelock<3.33.0', # not a core dep; serializes parallel example downloads
+  'cyclopts<4.25.4',
+  'filelock<4.1.0', # not a core dep; serializes parallel example downloads
   'matplotlib<3.11.2',
   'numpy<2.5.4',
   'pillow<12.4.0',
   'pooch<1.10.0',
   'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
-  'scooby>=0.11.2,<0.12.0',
+  'scooby>=0.11.2,<0.13.0',
   'typing-extensions<4.17.0',
 ]
 
@@ -72,12 +72,12 @@ integration = []
 
 typing = [
   'meshio<5.4.0',
-  'mypy<2.4.0',
+  'mypy<2.5.0',
   'numpy>=2.0.0',
   'scipy-stubs<1.17.0',
   'sphinx<9.2.0',
-  'trimesh<5.1.0',
-  'types-docutils<0.22.0',
+  'trimesh<5.2.0',
+  'types-docutils<0.24.0',
   { include-group = 'pinned' },
 ]
 
@@ -86,18 +86,18 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.3.0',
   'embreex<4.4.1',
-  'fsspec<2026.8.0',
-  'hypothesis<6.165.11',
+  'fsspec<2026.10.0',
+  'hypothesis<6.168.4',
   'imageio-ffmpeg<0.7.0',
-  'imageio<2.38.0',
+  'imageio<2.39.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'libcst<1.9.1',
   'meshio<5.4.0',
   'nest-asyncio2<1.8.0',
-  'numpydoc<1.11.0',
+  'numpydoc<1.12.0',
   'pandas<=2.4.0',
-  'polars<=1.44',
+  'polars<=1.44.2',
   'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
   'pytest-codspeed<5.1.0',
@@ -107,7 +107,7 @@ test = [
   'pytest-timeout<2.5.0',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
-  'pyvista-frd-reader>=0.2.1,<0.3.0',
+  'pyvista-frd-reader>=0.2.1,<0.4.0',
   'pyvista-miniply>=0.5.2,<0.6.0',
   'pyvista-stl>=0.5.3,<0.6.0',
   'pyvista-zstd>=0.3.1,<0.5.0',
@@ -124,13 +124,13 @@ test = [
   'sympy<1.15.0',
   'tqdm<4.71.0',
   'trame-pyvista<0.2.0',
-  'trimesh<5.1.0',
+  'trimesh<5.2.0',
   'type-assert==0.5.0',
   'typing-extensions<4.17.0',
   { include-group = 'typing' },
 ]
 
-test-playwright = ['playwright<1.63.0', { include-group = 'test' }]
+test-playwright = ['playwright<1.64.0', { include-group = 'test' }]
 
 docs = [
   'cmcrameri==1.10',
@@ -139,28 +139,28 @@ docs = [
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
   'erbsland-sphinx-ansi==1.2.4',
-  'fsspec==2026.7.0',
+  'fsspec==2026.9.0',
   'imageio-ffmpeg==0.6.0',
-  'imageio==2.37.4',
-  'joblib==1.5.3',
+  'imageio==2.38.0',
+  'joblib==1.6.0',
   'jupyter-sphinx==0.5.3',
   'jupyterlab==4.6.4',
-  'lxml==6.1.2',
+  'lxml==6.1.3',
   'matplotlib>=3.11; python_version >= "3.11"',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==2.3.1',
-  'nest-asyncio2==1.7.2',
-  'numpydoc==1.10.0',
+  'mypy==2.4.0',
+  'nest-asyncio2==1.7.3',
+  'numpydoc==1.11.0',
   'pandas==2.3.3',
   'pyarrow==25.0.1',
   'pydata-sphinx-theme==0.20.0; python_version >= "3.11"',
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-frd-reader==0.2.1',
+  'pyvista-frd-reader==0.3.1',
   'pyvista-miniply==0.5.2',
   'pyvista-stl==0.5.3',
-  'pyvista-zstd==0.4.0',
+  'pyvista-zstd==0.4.2',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2025.8.25; python_version >= "3.11"',
@@ -184,7 +184,7 @@ docs = [
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
   'trame-pyvista==0.1.7',
-  'trimesh==5.0.0',
+  'trimesh==5.1.0',
   { include-group = 'pinned' },
 ]
 
