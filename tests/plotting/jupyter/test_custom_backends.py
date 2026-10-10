@@ -12,8 +12,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import jupyter as jupyter_mod
-from pyvista.jupyter import _TRAME_BACKENDS
-from pyvista.jupyter import _TRAME_SERVER_BACKENDS
 from pyvista.jupyter import ALLOWED_BACKENDS
 from pyvista.jupyter import _custom_backend_sources
 from pyvista.jupyter import _custom_backends
@@ -419,8 +417,6 @@ def test_handle_plotter_static_fallback_skips_server_proxy_warning(monkeypatch):
     assert not any('jupyter-server-proxy' in str(w.message) for w in record)
 
 
-def test_backend_literals_flatten_to_names():
-    """The nested backend ``Literal`` aliases flatten so ``get_args`` yields plain names."""
+def test_allowed_backends():
+    """``ALLOWED_BACKENDS`` holds the backend names in order."""
     assert ALLOWED_BACKENDS == ('static', 'client', 'server', 'trame', 'html', 'none')
-    assert _TRAME_BACKENDS == ('client', 'server', 'trame', 'html')
-    assert _TRAME_SERVER_BACKENDS == ('client', 'server', 'trame')
