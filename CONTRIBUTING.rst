@@ -957,7 +957,9 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista --cov tests
+            pytest --cov
+
+        ``--cov`` measures both ``pyvista`` and ``tests``.
 
     .. tab-item:: tox
         :sync: tox
@@ -980,7 +982,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista --cov tests
+            make coverage # pytest -v --cov
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.

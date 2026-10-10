@@ -124,6 +124,16 @@ PILLOW_VERSION_INFO = VersionInfo(
     micro=int(PIL.__version__.split('.')[2]),
 )
 
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Reject a dotted module as a ``--cov`` target."""
+    sources = getattr(config.option, 'cov_source', None) or []
+    dotted = [s for s in sources if s is not True and '.' in s]
+    if dotted:
+        msg = f'--cov takes a package or directory, not {dotted[0]!r}. Use plain --cov.'
+        raise pytest.UsageError(msg)
+
+
 faulthandler.enable()
 
 
