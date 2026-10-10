@@ -8644,7 +8644,7 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[ImageData | MultiBlock[ImageData]]: ...
+def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[MultiBlock[ImageData] | ImageData]: ...
 @overload
 def download_whole_body_ct_male(*, load: Literal[False], high_resolution: bool = False) -> str: ...
 # ruff: enable[E501]
@@ -8653,7 +8653,7 @@ def download_whole_body_ct_male(
     *,
     load: bool = True,
     high_resolution: bool = False,
-) -> MultiBlock[ImageData | MultiBlock[ImageData]] | str:
+) -> MultiBlock[MultiBlock[ImageData] | ImageData] | str:
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -8987,7 +8987,7 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[ImageData | MultiBlock[ImageData]]: ...
+def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[MultiBlock[ImageData] | ImageData]: ...
 @overload
 def download_whole_body_ct_female(*, load: Literal[False], high_resolution: bool = False) -> str: ...
 # ruff: enable[E501]
@@ -8996,7 +8996,7 @@ def download_whole_body_ct_female(
     *,
     load: bool = True,
     high_resolution: bool = False,
-) -> MultiBlock[ImageData | MultiBlock[ImageData]] | str:
+) -> MultiBlock[MultiBlock[ImageData] | ImageData] | str:
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
