@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
-from pyvista.typing import _get_deprecated_alias
-
 # isort: off
 # Must come first: registers the VTK rendering factories (and LaTeX support) via
 # the active backend before any rendering class below is imported.
@@ -16,6 +13,8 @@ from typing import Any
 
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
+from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
+from pyvista.typing import _get_deprecated_alias
 
 # Bound so the submodule is also reachable as ``pyvista._typing``
 from . import _typing as _typing
