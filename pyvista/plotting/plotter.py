@@ -11,6 +11,7 @@ import contextlib
 import copy
 import ctypes
 import functools
+import inspect
 from io import BytesIO
 from io import StringIO
 import itertools
@@ -9279,7 +9280,7 @@ def _gallery_force_static() -> bool:
     """
     if _GALLERY_FORCE_STATIC or _GALLERY_STATIC_SCRAPER:
         return True
-    frame = sys._getframe(1)
+    frame = inspect.currentframe()
     while frame is not None:
         for name in ('PYVISTA_GALLERY_FORCE_STATIC', 'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT'):
             if name in frame.f_globals:
