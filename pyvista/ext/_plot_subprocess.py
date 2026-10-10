@@ -1,4 +1,4 @@
-"""Render ``pyvista-plot`` snippets in a separate process for forked Sphinx workers on macOS.
+"""Render ``pyvista-plot`` snippets in a separate process during parallel Sphinx builds.
 
 Sphinx runs parallel builds with forked worker processes. On macOS a forked process that
 never calls ``exec`` cannot use Cocoa, Metal or libdispatch, and VTK needs all three to
@@ -7,8 +7,10 @@ long-lived interpreter with :mod:`subprocess` and sends it every snippet it has 
 a JSON line on stdin. The render process executes the snippet, writes the images, and replies
 with the image names, the warnings to log and the sphinx-autocodelink records.
 
-The render process is only used when :func:`renders_in_subprocess` is true. Every other
-platform and every serial build renders in the Sphinx process itself.
+Every parallel build uses the render process, on every platform, so the worker that pickles
+the build environment back to the main process never runs example code itself: a VTK crash
+in a snippet ends the render process, not the Sphinx worker. Serial builds render in the
+Sphinx process itself.
 """
 
 from __future__ import annotations
@@ -35,8 +37,8 @@ if TYPE_CHECKING:
 
 
 def renders_in_subprocess() -> bool:
-    """Return whether this is a forked Sphinx worker on macOS, which cannot render itself."""
-    return sys.platform == 'darwin' and multiprocessing.parent_process() is not None
+    """Return whether this is a forked Sphinx worker, which renders in a separate process."""
+    return multiprocessing.parent_process() is not None
 
 
 def _class_name(cls: type) -> str:
@@ -56,7 +58,7 @@ class RenderProcess:
     def __init__(self) -> None:
         """Start the interpreter and send it this process's path, theme and warning filters."""
         self._proc = subprocess.Popen(
-            [sys.executable, '-c', 'from pyvista.ext._plot_subprocess_macos import main; main()'],
+            [sys.executable, '-c', 'from pyvista.ext._plot_subprocess import main; main()'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             text=True,

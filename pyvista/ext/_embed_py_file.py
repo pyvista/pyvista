@@ -25,9 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 def _download(name: str) -> str | list[str]:
-    """Download ``name``, in a subprocess when this is a forked Sphinx worker on macOS."""
-    forked_macos_worker = sys.platform == 'darwin' and multiprocessing.parent_process() is not None
-    if not forked_macos_worker:
+    """Download ``name``, in a subprocess when this is a forked Sphinx worker."""
+    if multiprocessing.parent_process() is None:
         return download_file(name)
     code = (
         'import json, sys\n'

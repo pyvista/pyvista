@@ -197,9 +197,9 @@ import jinja2  # Sphinx dependency.
 from sphinx.util import logging as sphinx_logging
 
 import pyvista as pv
-from pyvista.ext._plot_subprocess_macos import get_render_process
-from pyvista.ext._plot_subprocess_macos import renders_in_subprocess
-from pyvista.ext._plot_subprocess_macos import store_records
+from pyvista.ext._plot_subprocess import get_render_process
+from pyvista.ext._plot_subprocess import renders_in_subprocess
+from pyvista.ext._plot_subprocess import store_records
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
@@ -697,7 +697,7 @@ def render_figures(
     page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
 
-    A forked Sphinx worker on macOS runs the code in a separate render process instead.
+    A forked Sphinx worker runs the code in a separate render process instead.
     """
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ``pyvista-plot::``
