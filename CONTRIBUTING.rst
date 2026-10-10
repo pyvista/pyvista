@@ -957,20 +957,17 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista --cov tests
+            pytest --cov
 
-        .. note::
+        ``--cov`` measures both ``pyvista`` and ``tests``. Narrow the report, not the measurement:
 
-            Pass packages to ``--cov``, never a dotted module such as ``pyvista.ext.plot_directive``.
-            coverage resolves a dotted name by importing its parent packages, which imports numpy and
-            VTK, then drops them from ``sys.modules``; any test that spawns ``sys.executable`` then
-            fails in the child with ``ImportError: cannot load module more than once per process``.
-            Narrow the report instead:
+        .. code-block:: bash
 
-            .. code-block:: bash
+            pytest tests/ext --cov
+            coverage report --include 'pyvista/ext/*'
 
-                pytest tests/ext --cov pyvista
-                coverage report --include 'pyvista/ext/*'
+        A dotted module such as ``--cov pyvista.ext.plot_directive`` is rejected, because measuring
+        it makes every subprocess the tests spawn fail to import numpy.
 
     .. tab-item:: tox
         :sync: tox
@@ -993,7 +990,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista --cov tests
+            make coverage # pytest -v --cov
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.

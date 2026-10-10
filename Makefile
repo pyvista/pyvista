@@ -17,8 +17,7 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
-# Both `pyvista` and `tests` are measured, matching the `-cov` tox environments.
-COV_FLAGS = --cov pyvista --cov tests
+COV_FLAGS = --cov
 
 coverage:
 	@echo "Running coverage"
