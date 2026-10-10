@@ -455,6 +455,11 @@ def test_render_process_reports_its_exit(render_process, tmp_path):
         process.run(_job('>>> 1\n', tmp_path), want_records=False)
 
 
+def test_render_process_reports_an_exit_during_a_job(render_process, tmp_path):
+    with pytest.raises(RuntimeError, match='exited with code 3'):
+        render_process.run(_job('>>> __import__("os")._exit(3)\n', tmp_path), want_records=False)
+
+
 def test_get_render_process_replaces_an_exited_process(monkeypatch):
     monkeypatch.setattr(_plot_subprocess, '_render_process', None)
     monkeypatch.setattr(_plot_subprocess.atexit, 'register', lambda _close: None)
@@ -527,17 +532,32 @@ def test_in_forked_worker(monkeypatch):
     assert _plot_subprocess.in_forked_worker()
 
 
-def test_store_records_uses_the_docstring_category(monkeypatch):
+@pytest.mark.parametrize('inside_autodoc', [True, False])
+def test_store_records_uses_the_docstring_category_inside_autodoc(monkeypatch, inside_autodoc):
     import sphinx_autocodelink
 
     stored = MagicMock()
     monkeypatch.setattr(sphinx_autocodelink, '_store_records', stored)
     monkeypatch.setattr(sphinx_autocodelink, 'is_inside_autodoc_desc', lambda _state: True)
     env = SimpleNamespace(docname='doc')
-    _plot_subprocess.store_records(env, [], state=object())
-    stored.assert_called_once_with(
-        env, 'doc', [], category=sphinx_autocodelink.DEFAULT_DOCSTRING_EXAMPLE_CATEGORY
-    )
+    _plot_subprocess.store_records(env, [], state=object() if inside_autodoc else None)
+    category = sphinx_autocodelink.DEFAULT_DOCSTRING_EXAMPLE_CATEGORY if inside_autodoc else ''
+    stored.assert_called_once_with(env, 'doc', [], category=category)
+
+
+def test_execute_pieces_runs_setup_and_cleanup(tmp_path):
+    job = _job('>>> seen = marker\n', tmp_path)
+    job['code_setup'] = 'marker = 1'
+    job['code_cleanup'] = 'del marker'
+    _results, _messages, ns, _source = plot_directive._execute_pieces(**job)
+    assert ns['seen'] == 1
+    assert 'marker' not in ns
+
+
+def test_render_figures_keeps_a_nested_plot_directive_whole(tmp_path):
+    code = '>>> x = 1\n>>> pl.show()\n\n.. pyvista-plot::\n\n   >>> y = 2\n'
+    results = _render(code, tmp_path)
+    assert [piece for piece, _images in results] == [code]
 
 
 def test_render_figures_uses_the_render_process(monkeypatch, tmp_path, caplog):
