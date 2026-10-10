@@ -180,22 +180,15 @@ from __future__ import annotations
 
 import doctest
 import hashlib
-import importlib
-import json
-import multiprocessing
 import os
 from pathlib import Path
 import re
 import shutil
-import subprocess
-import sys
 import textwrap
 import traceback
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import cast
-import warnings
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
@@ -204,6 +197,9 @@ import jinja2  # Sphinx dependency.
 from sphinx.util import logging as sphinx_logging
 
 import pyvista as pv
+from pyvista.ext._plot_subprocess_macos import get_render_process
+from pyvista.ext._plot_subprocess_macos import renders_in_subprocess
+from pyvista.ext._plot_subprocess_macos import store_records
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
@@ -221,7 +217,6 @@ _COMMENT_OR_STRING_RE = re.compile(r"""('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|[ \
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import IO
 
     from docutils import nodes
     from docutils.parsers.rst.states import NestedStateMachine
@@ -677,166 +672,6 @@ def _execute_pieces(
     return results, messages, ns, '\n'.join(clean_pieces)
 
 
-def _class_name(cls: type) -> str:
-    """Return ``module:qualname`` for ``cls``."""
-    return f'{cls.__module__}:{cls.__qualname__}'
-
-
-def _class_from_name(name: str) -> type:
-    """Return the class ``module:qualname`` names."""
-    module, _, qualname = name.partition(':')
-    return getattr(importlib.import_module(module), qualname)
-
-
-def _renders_in_helper() -> bool:
-    """Return whether this is a forked Sphinx worker on macOS, which cannot render itself."""
-    override = os.environ.get('PYVISTA_PLOT_DIRECTIVE_HELPER')
-    if override is not None:
-        return override == '1'
-    return sys.platform == 'darwin' and multiprocessing.parent_process() is not None
-
-
-class _Helper:
-    """A spawned interpreter that renders the snippets of one Sphinx worker."""
-
-    def __init__(self) -> None:
-        """Spawn the helper and send it this process's path, theme and warning filters."""
-        self._proc = subprocess.Popen(
-            [
-                sys.executable,
-                '-c',
-                'from pyvista.ext.plot_directive import _helper_main; _helper_main()',
-            ],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            text=True,
-            env={**os.environ, 'PYTHONPATH': os.pathsep.join(p for p in sys.path if p)},
-        )
-        self._stdin = cast('IO[str]', self._proc.stdin)
-        self._stdout = cast('IO[str]', self._proc.stdout)
-        self._send(
-            {
-                'sys_path': sys.path,
-                'warning_filters': [
-                    [
-                        action,
-                        getattr(message, 'pattern', message),
-                        [_class_name(c) for c in category]
-                        if isinstance(category, tuple)
-                        else _class_name(category),
-                        getattr(module, 'pattern', module),
-                        lineno,
-                    ]
-                    for action, message, category, module, lineno in warnings.filters
-                ],
-                'theme': pv.global_theme.name,
-                'plot_directive_theme': pv.PLOT_DIRECTIVE_THEME,
-                'building_gallery': pv.BUILDING_GALLERY,
-                'figure_path': pv.FIGURE_PATH,
-            }
-        )
-        self._recv()
-
-    def _send(self, message: dict[str, Any]) -> None:
-        """Write one JSON message to the helper."""
-        self._stdin.write(json.dumps(message) + '\n')
-        self._stdin.flush()
-
-    def _recv(self) -> dict[str, Any]:
-        """Read one JSON message from the helper."""
-        line = self._stdout.readline()
-        if not line:
-            msg = f'The pyvista-plot helper process exited with code {self._proc.wait()}'
-            raise PlotError(msg)
-        return json.loads(line)
-
-    def run(
-        self, job: dict[str, Any], *, want_records: bool
-    ) -> tuple[list[tuple[str, list[str]]], list[str], list[dict[str, Any]] | None]:
-        """Run ``job``, the keyword arguments of :func:`_execute_pieces`, in the helper."""
-        self._send({'job': job, 'want_records': want_records})
-        reply = self._recv()
-        if 'error' in reply:
-            raise PlotError(reply['error'])
-        return reply['results'], reply['warnings'], reply['records']
-
-
-_helper: _Helper | None = None
-
-
-def _get_helper() -> _Helper:
-    """Return this process's helper, spawning it on first use."""
-    global _helper  # noqa: PLW0603
-    if _helper is None:
-        _helper = _Helper()
-    return _helper
-
-
-def _helper_main() -> None:  # pragma: no cover
-    """Serve :func:`_execute_pieces` jobs over stdin/stdout, one JSON message per line."""
-    # keep the original stdout for the protocol and send fd 1 to stderr
-    protocol = os.fdopen(os.dup(sys.stdout.fileno()), 'w')
-    sys.stdout.flush()
-    os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
-
-    def reply(message: dict[str, Any]) -> None:
-        """Write one JSON message to the worker."""
-        protocol.write(json.dumps(message) + '\n')
-        protocol.flush()
-
-    init = json.loads(sys.stdin.readline())
-    sys.path[:] = init['sys_path']
-    warnings.resetwarnings()
-    for action, message, category, module, lineno in init['warning_filters']:
-        warnings.filterwarnings(
-            action,
-            message=message or '',
-            category=tuple(_class_from_name(c) for c in category)  # type: ignore[arg-type]
-            if isinstance(category, list)
-            else _class_from_name(category),
-            module=module or '',
-            lineno=lineno,
-            append=True,
-        )
-    pv.OFF_SCREEN = True
-    pv.BUILDING_GALLERY = init['building_gallery']
-    pv.FIGURE_PATH = init['figure_path']
-    pv.PLOT_DIRECTIVE_THEME = init['plot_directive_theme']
-    if init['theme'] is not None:
-        pv.set_plot_theme(init['theme'])
-    reply({'ready': True})
-    for line in sys.stdin:
-        message = json.loads(line)
-        try:
-            results, messages, ns, source = _execute_pieces(**message['job'])
-            records = None
-            if message['want_records'] and source:
-                from sphinx_autocodelink import _records_for  # noqa: PLC0415
-                from sphinx_autocodelink import _to_jsonable  # noqa: PLC0415
-
-                records = [_to_jsonable(record) for record in _records_for(source, ns)]
-            reply({'results': results, 'warnings': messages, 'records': records})
-        except PlotError as error:
-            reply({'error': str(error)})
-        except Exception:  # noqa: BLE001
-            reply({'error': traceback.format_exc()})
-
-
-def _store_helper_records(
-    env: BuildEnvironment, records: list[dict[str, Any]], state: RSTState | None
-) -> None:
-    """Store the records a helper computed, as :func:`record_namespace` would have."""
-    from sphinx_autocodelink import DEFAULT_DOCSTRING_EXAMPLE_CATEGORY  # noqa: PLC0415
-    from sphinx_autocodelink import _from_jsonable  # noqa: PLC0415
-    from sphinx_autocodelink import _store_records  # noqa: PLC0415
-    from sphinx_autocodelink import is_inside_autodoc_desc  # noqa: PLC0415
-
-    category = ''
-    if state is not None and is_inside_autodoc_desc(state):
-        category = DEFAULT_DOCSTRING_EXAMPLE_CATEGORY
-    _store_records(env, env.docname, [_from_jsonable(e) for e in records], category=category)
-
-
 def render_figures(
     *,
     code: str,
@@ -862,7 +697,7 @@ def render_figures(
     page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
 
-    A forked Sphinx worker on macOS runs the code in a spawned helper process instead.
+    A forked Sphinx worker on macOS runs the code in a separate render process instead.
     """
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ``pyvista-plot::``
@@ -888,10 +723,13 @@ def render_figures(
     }
     want_records = env is not None and config.pyvista_plot_autocodelink and include_source
 
-    if _renders_in_helper():
-        results, messages, records = _get_helper().run(job, want_records=want_records)
+    if renders_in_subprocess():
+        try:
+            results, messages, records = get_render_process().run(job, want_records=want_records)
+        except RuntimeError as error:
+            raise PlotError(str(error)) from None
         if records and env is not None:
-            _store_helper_records(env, records, state)
+            store_records(env, records, state)
     else:
         results, messages, ns, source = _execute_pieces(**job)
         if env is not None and want_records and source:
