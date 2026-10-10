@@ -710,6 +710,12 @@ def test_assert_empty_kwargs():
         assert_empty_kwargs(**kwargs)
 
 
+def test_assert_empty_kwargs_no_frame(mocker: MockerFixture):
+    mocker.patch('inspect.currentframe', return_value=None)
+    with pytest.raises(TypeError, match='for `function`'):
+        assert_empty_kwargs(foo=6)
+
+
 def test_convert_id_list():
     ids = np.array([4, 5, 8])
     id_list = _vtk.vtkIdList()
@@ -3404,6 +3410,15 @@ def test_deprecate_positional_args_call_site_and_extra_args():
     # Too many positional arguments still warn, then raise from the function itself
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match), pytest.raises(TypeError):
         foo(True, True, True)
+
+
+def test_deprecate_positional_args_call_site_no_frame(mocker: MockerFixture):
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    mocker.patch('inspect.currentframe', return_value=None)
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=r'\n<unknown>: Arguments'):
+        foo(True, True)
 
 
 def test_deprecate_positional_args_post_deprecation():
