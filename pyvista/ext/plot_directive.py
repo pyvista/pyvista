@@ -198,7 +198,7 @@ from sphinx.util import logging as sphinx_logging
 
 import pyvista as pv
 from pyvista.ext._plot_subprocess import get_render_process
-from pyvista.ext._plot_subprocess import renders_in_subprocess
+from pyvista.ext._plot_subprocess import in_forked_worker
 from pyvista.ext._plot_subprocess import store_records
 
 try:
@@ -723,7 +723,7 @@ def render_figures(
     }
     want_records = env is not None and config.pyvista_plot_autocodelink and include_source
 
-    if renders_in_subprocess():
+    if in_forked_worker():
         try:
             results, messages, records = get_render_process().run(job, want_records=want_records)
         except RuntimeError as error:

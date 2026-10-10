@@ -446,21 +446,81 @@ def test_render_process_reports_a_failing_job(render_process, tmp_path):
 def test_render_process_reports_its_exit(render_process, tmp_path):
     process = render_process
     process._proc.kill()
+    process._proc.wait()
+    with pytest.raises(RuntimeError, match='exited with code'):
+        process.run(_job('>>> 1\n', tmp_path), want_records=False)
     with pytest.raises(RuntimeError, match='exited with code'):
         process.run(_job('>>> 1\n', tmp_path), want_records=False)
 
 
+def test_get_render_process_replaces_an_exited_process(monkeypatch):
+    monkeypatch.setattr(_plot_subprocess, '_render_process', None)
+    monkeypatch.setattr(_plot_subprocess.atexit, 'register', lambda _close: None)
+    first = _plot_subprocess.get_render_process()
+    first._proc.kill()
+    first.close()
+    second = _plot_subprocess.get_render_process()
+    assert second is not first
+    second.close()
+
+
+def test_render_process_relays_warnings_and_records(monkeypatch, tmp_path):
+    from sphinx_autocodelink import _records_for
+    from sphinx_autocodelink import _to_jsonable
+
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    code = (
+        '>>> import pyvista as pv\n'
+        '>>> mesh = pv.Sphere()\n'
+        ">>> raise RuntimeError('kaboom')\n"
+        '>>> boom()  # doctest: +SKIP\n'
+    )
+    job = _job(code, tmp_path)
+    expected_results, expected_warnings, ns, source = plot_directive._execute_pieces(**job)
+    expected_records = [_to_jsonable(record) for record in _records_for(source, ns)]
+    process = _plot_subprocess.RenderProcess()
+    results, warnings, records = process.run(job, want_records=True)
+    process.close()
+    assert results == expected_results
+    assert warnings == expected_warnings
+    assert any('kaboom' in warning for warning in warnings)
+    assert records == expected_records
+    assert any('Sphere' in str(record) for record in records)
+
+
+def test_render_process_applies_the_theme_and_error_file(monkeypatch, tmp_path):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    pv.set_plot_theme('document')
+    pv.global_theme.font.size = 37
+    pv.set_error_output_file(tmp_path / 'errors.txt')
+    code = (
+        '>>> import pyvista as pv\n'
+        '>>> from pathlib import Path\n'
+        f'>>> _ = Path({str(tmp_path / "theme.txt")!r}).write_text(\n'
+        "...     f'{pv.global_theme.name} {pv.global_theme.font.size}'\n"
+        '... )\n'
+        '>>> from pyvista import _vtk\n'
+        '>>> _vtk.vtkOutputWindow.GetInstance().DisplayErrorText("relayed error")\n'
+    )
+    process = _plot_subprocess.RenderProcess()
+    process.run(_job(code, tmp_path), want_records=False)
+    process.close()
+    assert (tmp_path / 'theme.txt').read_text() == 'document 37'
+    assert 'relayed error' in (tmp_path / 'errors.txt').read_text()
+
+
 def test_get_render_process_starts_one_process(monkeypatch):
     monkeypatch.setattr(_plot_subprocess, '_render_process', None)
-    monkeypatch.setattr(_plot_subprocess, 'RenderProcess', MagicMock)
+    alive = SimpleNamespace(_proc=SimpleNamespace(poll=lambda: None), close=lambda: None)
+    monkeypatch.setattr(_plot_subprocess, 'RenderProcess', lambda: alive)
     monkeypatch.setattr(_plot_subprocess.atexit, 'register', lambda _close: None)
     assert _plot_subprocess.get_render_process() is _plot_subprocess.get_render_process()
 
 
-def test_renders_in_subprocess_in_a_forked_worker(monkeypatch):
-    assert not _plot_subprocess.renders_in_subprocess()
+def test_in_forked_worker(monkeypatch):
+    assert not _plot_subprocess.in_forked_worker()
     monkeypatch.setattr(_plot_subprocess.multiprocessing, 'parent_process', object)
-    assert _plot_subprocess.renders_in_subprocess()
+    assert _plot_subprocess.in_forked_worker()
 
 
 def test_store_records_uses_the_docstring_category(monkeypatch):
@@ -477,7 +537,7 @@ def test_store_records_uses_the_docstring_category(monkeypatch):
 
 
 def test_render_figures_uses_the_render_process(monkeypatch, tmp_path, caplog):
-    monkeypatch.setattr(plot_directive, 'renders_in_subprocess', lambda: True)
+    monkeypatch.setattr(plot_directive, 'in_forked_worker', lambda: True)
     process = SimpleNamespace(run=lambda _job, **_kwargs: ([('code', ['a.png'])], ['w'], None))
     monkeypatch.setattr(plot_directive, 'get_render_process', lambda: process)
     results = _render('>>> 1\n', tmp_path)
@@ -488,7 +548,7 @@ def test_render_figures_uses_the_render_process(monkeypatch, tmp_path, caplog):
 
 
 def test_render_figures_stores_render_process_records(monkeypatch, tmp_path):
-    monkeypatch.setattr(plot_directive, 'renders_in_subprocess', lambda: True)
+    monkeypatch.setattr(plot_directive, 'in_forked_worker', lambda: True)
     process = SimpleNamespace(run=lambda _job, **_kwargs: ([], [], [{'a': 1}]))
     monkeypatch.setattr(plot_directive, 'get_render_process', lambda: process)
     stored = MagicMock()
@@ -512,7 +572,7 @@ def test_render_figures_stores_render_process_records(monkeypatch, tmp_path):
 
 
 def test_render_figures_raises_plot_error_from_the_render_process(monkeypatch, tmp_path):
-    monkeypatch.setattr(plot_directive, 'renders_in_subprocess', lambda: True)
+    monkeypatch.setattr(plot_directive, 'in_forked_worker', lambda: True)
 
     def run(_job, **_kwargs):
         msg = 'kaboom'
@@ -524,7 +584,7 @@ def test_render_figures_raises_plot_error_from_the_render_process(monkeypatch, t
 
 
 def test_embed_py_file_downloads_in_a_subprocess_in_a_forked_worker(monkeypatch):
-    monkeypatch.setattr(_embed_py_file.multiprocessing, 'parent_process', object)
+    monkeypatch.setattr(_embed_py_file, 'in_forked_worker', lambda: True)
     run = MagicMock(return_value=SimpleNamespace(stdout='noise\n["one.py"]\n'))
     monkeypatch.setattr(_embed_py_file.subprocess, 'run', run)
     assert _embed_py_file._download('name') == ['one.py']

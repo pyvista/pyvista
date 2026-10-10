@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import multiprocessing
 from pathlib import Path
 import subprocess
 import sys
@@ -15,6 +14,7 @@ from sphinx.util import logging
 from sphinx.util.nodes import set_source_info
 
 from pyvista.examples.downloads import download_file
+from pyvista.ext._plot_subprocess import in_forked_worker
 
 if TYPE_CHECKING:
     from typing import Any
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def _download(name: str) -> str | list[str]:
     """Download ``name``, in a subprocess when this is a forked Sphinx worker."""
-    if multiprocessing.parent_process() is None:
+    if not in_forked_worker():
         return download_file(name)
     code = (
         'import json, sys\n'
