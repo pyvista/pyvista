@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import multiprocessing
 from pathlib import Path
+import subprocess
+import sys
 from typing import TYPE_CHECKING
 
 from docutils import nodes
@@ -20,6 +24,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _download(name: str) -> str | list[str]:
+    """Download ``name``, in a subprocess when this is a forked Sphinx worker on macOS."""
+    forked_macos_worker = sys.platform == 'darwin' and multiprocessing.parent_process() is not None
+    if not forked_macos_worker:
+        return download_file(name)
+    code = (
+        'import json, sys\n'
+        'from pyvista.examples.downloads import download_file\n'
+        'print(json.dumps(download_file(sys.argv[1])))'
+    )
+    result = subprocess.run(
+        [sys.executable, '-c', code, name], check=True, capture_output=True, text=True
+    )
+    return json.loads(result.stdout.splitlines()[-1])
+
+
 class EmbedPyFileDirective(Directive):
     """Embed a Python file from PyVista's example data source as a code block."""
 
@@ -31,7 +51,7 @@ class EmbedPyFileDirective(Directive):
         """Download the file and return it as a Python code block."""
         name = self.arguments[0]
         try:
-            downloaded = download_file(name)
+            downloaded = _download(name)
             if not isinstance(downloaded, str):
                 msg = f'{name} downloads to more than one file'
                 raise TypeError(msg)
