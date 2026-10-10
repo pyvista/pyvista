@@ -15,6 +15,7 @@ Sphinx process itself.
 
 from __future__ import annotations
 
+import atexit
 import importlib
 import json
 import multiprocessing
@@ -102,6 +103,12 @@ class RenderProcess:
             raise RuntimeError(msg)
         return json.loads(line)
 
+    def close(self) -> None:
+        """End the render process and release its pipes."""
+        self._stdin.close()
+        self._proc.wait()
+        self._stdout.close()
+
     def run(
         self, job: dict[str, Any], *, want_records: bool
     ) -> tuple[list[tuple[str, list[str]]], list[str], list[dict[str, Any]] | None]:
@@ -121,6 +128,7 @@ def get_render_process() -> RenderProcess:
     global _render_process  # noqa: PLW0603
     if _render_process is None:
         _render_process = RenderProcess()
+        atexit.register(_render_process.close)
     return _render_process
 
 
