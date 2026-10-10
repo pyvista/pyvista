@@ -16,6 +16,9 @@ from typing import final
 from typing import get_args
 from typing import overload
 
+import pyvista_validation as _validation
+
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.core import _vtk_utilities
 
@@ -116,8 +119,6 @@ class _StateManager(AbstractContextManager[None], ABC, Generic[_T]):
 
     @final
     def _validate_state(self, state: _T) -> _T:
-        import pyvista_validation as _validation  # noqa: PLC0415
-
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
 
@@ -403,14 +404,10 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):  # numpydo
 
     @property
     def _state(self) -> _AllowNewAttributesOptions:
-        from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-
-        return _ALLOW_NEW_ATTRIBUTES_MODE
+        return pv._ALLOW_NEW_ATTRIBUTES_MODE
 
     @_state.setter
     def _state(self, state: _AllowNewAttributesOptions) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         pv._ALLOW_NEW_ATTRIBUTES_MODE = state
 
 

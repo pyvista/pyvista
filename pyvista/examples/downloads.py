@@ -54,6 +54,7 @@ except ImportError:  # pragma: no cover
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
@@ -109,8 +110,6 @@ def _get_data_varname() -> str | None:
     if _DATA_VARNAME in os.environ:
         return _DATA_VARNAME
     if _VTK_DATA_VARNAME in os.environ:
-        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
-
         msg = (
             f"The '{_VTK_DATA_VARNAME}' environment variable is deprecated; "
             f"use '{_DATA_VARNAME}' instead."
@@ -8840,9 +8839,7 @@ class _WholeBodyCTUtilities:
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)  # type:ignore[union-attr]
-            from colors import colors  # noqa: PLC0415
-
-            return dict(sorted(colors.items()))
+            return dict(sorted(module.colors.items()))
         else:
             msg = 'Unable to load colors.'
             raise RuntimeError(msg)
