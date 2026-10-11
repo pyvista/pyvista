@@ -5,7 +5,8 @@ Call this from pyvista's root directory with
     python tests/check_doctest_names.py
 
 The examples of each docstring are concatenated and analysed with ``symtable``.
-Any name referenced without ever being bound is reported.
+Any name referenced without ever being bound is reported. Nothing is executed,
+so a ``# doctest: +SKIP`` example is analysed like any other.
 
 A name bound anywhere in the docstring counts, so rebinding forms that read the
 name they bind are not reported: augmented assignment, a use of an ``except ...
@@ -20,7 +21,6 @@ import argparse
 import ast
 import builtins
 import doctest
-import re
 import symtable
 import sys
 import textwrap
@@ -217,7 +217,7 @@ def undefined_names(source):
     return sorted(undefined | _used_before_bound(tree))
 
 
-def check_doctests(modules=None, respect_skips=True, verbose=True):
+def check_doctests(modules=None, verbose=True):
     """Check whether doctests define every name they use.
 
     Parameters
@@ -226,10 +226,6 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         (module name -> module) mapping of submodules defined in a
         package as returned by ``discover_modules()``. If omitted,
         ``discover_modules()`` will be called for ``pyvista``.
-
-    respect_skips : bool, optional
-        Whether to ignore doctest examples that contain a DOCTEST:+SKIP
-        directive.
 
     verbose : bool, optional
         Whether to print passes/failures as the checking progresses.
@@ -242,8 +238,6 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         doctests that use names they never define.
 
     """
-    skip_pattern = re.compile(r'doctest: *\+SKIP')
-
     if modules is None:
         modules = discover_modules()
 
@@ -262,12 +256,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         if not dt.examples:
             continue
 
-        sources = [
-            example.source
-            for example in dt.examples
-            if example.source.strip()
-            and not (respect_skips and skip_pattern.search(example.source))
-        ]
+        sources = [example.source for example in dt.examples if example.source.strip()]
         if not sources:
             continue
         source = ''.join(sources)
@@ -319,15 +308,9 @@ if __name__ == '__main__':
         action='store_true',
         help='print passes and failures as checks progress',
     )
-    parser.add_argument(
-        '--no-respect-skips',
-        action='store_false',
-        dest='respect_skips',
-        help='ignore doctest SKIP directives',
-    )
     args = parser.parse_args()
 
-    failures = check_doctests(verbose=args.verbose, respect_skips=args.respect_skips)
+    failures = check_doctests(verbose=args.verbose)
 
     if failures:
         # raise a red flag for CI

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from types import ModuleType
+
 import pytest
 
+from tests.check_doctest_names import check_doctests
 from tests.check_doctest_names import undefined_names
 
 
@@ -90,3 +93,24 @@ def test_syntax_error_propagates():
     """Unparsable source raises so the caller can report it."""
     with pytest.raises(SyntaxError):
         undefined_names('def (:\n')
+
+
+def _module(docstring):
+    """Return a module whose docstring holds the examples to check."""
+    module = ModuleType('fake_module')
+    module.__doc__ = docstring
+    return {module.__name__: module}
+
+
+def test_skipped_examples_are_checked():
+    """A ``+SKIP`` example is analysed, and its source is reported."""
+    failures = check_doctests(_module('>>> missing.plot()  # doctest:+SKIP\n'), verbose=False)
+    exc, source = failures['fake_module']
+    assert str(exc) == "name 'missing' is not defined"
+    assert source == 'missing.plot()  # doctest:+SKIP\n'
+
+
+def test_skipped_examples_bind_names():
+    """A name bound by a ``+SKIP`` example is available to the examples after it."""
+    docstring = '>>> import pyvista as pv  # doctest:+SKIP\n>>> pv.Sphere()\n'
+    assert check_doctests(_module(docstring), verbose=False) == {}

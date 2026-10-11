@@ -2272,6 +2272,7 @@ class Theme(_ConfigBase):
         --------
         Just show static images.
 
+        >>> import pyvista as pv
         >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
         Disable all plotting within JupyterLab and display using a
