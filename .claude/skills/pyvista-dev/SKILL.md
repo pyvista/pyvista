@@ -28,8 +28,10 @@ Read them, then come back here.
 ## The workflow
 
 Build here, wrap with **pyvista-vtk**, test with **pyvista-testing**, critique with
-**pyvista-review**, ship with **pyvista-pr**. `AGENTS.md` at the repository root routes to
-all five and carries the rules that apply before any of them.
+**pyvista-review**, ship with **pyvista-pr**. Two more cover narrower jobs:
+**pyvista-doc-images** repairs the documentation image cache, and **pyvista-docs-style**
+owns the Vale setup behind `make docstyle`. `AGENTS.md` at the repository root routes to
+all seven and carries the rules that apply before any of them.
 
 Run the critique stage in a **subagent** and fix what it finds before opening anything.
 
@@ -178,7 +180,8 @@ what to write. This is what gets sent back:
 
 `Quick Development Commands` lists the `make` targets, each mirroring a CI job. Run
 `make lint`, `make docstyle`, `make doctest`, and the test module you touched, and treat a
-change as unfinished until they pass.
+change as unfinished until they pass. A `make docstyle` alert is read with
+**pyvista-docs-style**.
 
 `make doctest` is the one that gets skipped for looking unrelated: it runs every docstring
 example in the package rather than the ones in the diff, so anything that changes
