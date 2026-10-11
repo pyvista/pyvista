@@ -10,7 +10,8 @@ off for most of the documentation.
 ``PyVista.Repetition`` has no exceptions list, so its ``tokens`` pattern is the
 only thing standing between a real doubled word and silence.
 
-``rules_invalid.rst`` covers the other rules ``doc/.vale.ini`` raises to ``error``.
+``rules_invalid.rst`` covers the other rules ``doc/.vale.ini`` raises to ``error``,
+and every such rule needs a case there.
 
 Run with ``make docstyle``, or directly::
 
@@ -35,6 +36,7 @@ HEADINGS_CHECK = 'Google.Headings'
 REPETITION_FIXTURE = HERE / 'repetition_invalid.rst'
 REPETITION_CHECK = 'PyVista.Repetition'
 RULES_FIXTURE = HERE / 'rules_invalid.rst'
+RULES_SECTION = '[*.{md,rst}]'
 
 
 def headings_in(path: Path) -> list[str]:
@@ -57,6 +59,9 @@ def alerts_for(path: Path, check: str | None = None) -> list[dict]:
         text=True,
         check=False,
     )
+    if out.returncode == 2:
+        msg = f'vale failed on {path.name}:\n{out.stderr or out.stdout}'
+        raise RuntimeError(msg)
     return [
         alert
         for alerts in json.loads(out.stdout or '{}').values()
@@ -79,6 +84,24 @@ def expectations_in(path: Path) -> dict[int, tuple[str, str]]:
     return expected
 
 
+def error_rules(config: Path) -> set[str]:
+    """Return the rules ``config`` raises to ``error`` for ``.md`` and ``.rst`` files."""
+    rules = set()
+    in_section = False
+    for line in config.read_text().splitlines():
+        if line.startswith('['):
+            in_section = line.strip() == RULES_SECTION
+        elif in_section and (match := re.fullmatch(r'([\w.]+) = error', line.strip())):
+            rules.add(match[1])
+    return rules
+
+
+def no_cases(fixture: Path) -> int:
+    """Report a fixture with no cases in it, which would otherwise pass vacuously."""
+    print(f'No expected failures found in {fixture.relative_to(ROOT)}')
+    return 1
+
+
 def bullets_in(path: Path) -> dict[int, str]:
     """Return the ``- `` bullet lines in ``path``, keyed by line number."""
     return {
@@ -92,6 +115,8 @@ def check_headings() -> int:
     """Report any heading the rule no longer catches."""
     flagged = {alert['Match'] for alert in alerts_for(HEADINGS_FIXTURE, HEADINGS_CHECK)}
     expected = headings_in(HEADINGS_FIXTURE)[1:]  # the file's own title has to pass
+    if not expected:
+        return no_cases(HEADINGS_FIXTURE)
     missed = [heading for heading in expected if heading not in flagged]
     if missed:
         print(f'{HEADINGS_CHECK} no longer flags these headings:')
@@ -108,6 +133,8 @@ def check_repetition() -> int:
     """Report any doubled word the rule no longer catches."""
     flagged = {alert['Line'] for alert in alerts_for(REPETITION_FIXTURE, REPETITION_CHECK)}
     expected = bullets_in(REPETITION_FIXTURE)
+    if not expected:
+        return no_cases(REPETITION_FIXTURE)
     missed = [text for number, text in expected.items() if number not in flagged]
     if missed:
         print(f'{REPETITION_CHECK} no longer flags these:')
@@ -124,6 +151,17 @@ def check_rules() -> int:
     """Report any case in the rules fixture its rule no longer catches."""
     flagged = {(alert['Line'], alert['Check']) for alert in alerts_for(RULES_FIXTURE)}
     expected = expectations_in(RULES_FIXTURE)
+    if not expected:
+        return no_cases(RULES_FIXTURE)
+    uncovered = sorted(
+        error_rules(CONFIG) - {HEADINGS_CHECK} - {check for check, _ in expected.values()}
+    )
+    if uncovered:
+        print(f'These rules are errors in {CONFIG.name} but have no case:')
+        for rule in uncovered:
+            print(f'  {rule}')
+        print(f'\nAdd one to {RULES_FIXTURE.relative_to(ROOT)}')
+        return 1
     missed = [
         f'{check}: {text}'
         for number, (check, text) in expected.items()
