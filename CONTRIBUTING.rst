@@ -978,7 +978,7 @@ such that:
 
             .. code-block:: bash
 
-                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.10-numpy_latest-vtk_9.3.1-cov
                 tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
     .. tab-item:: make
@@ -990,8 +990,9 @@ such that:
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
-This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
-which has a 90% target, that is, it ensures that 90% of the code modified in the PR is tested.
+This is further enforced in the CI by `codecov <https://app.codecov.io/gh/pyvista/pyvista>`_,
+whose checks fail when coverage, overall or on the lines the PR changes, falls more than 0.5%
+below the base commit, and when a line the PR adds under ``tests/`` never runs. ``codecov.yml`` holds the targets.
 It should be mentioned that branch coverage is measured on the CI, meaning for examples that both
 values of an ``if`` clause must be tested to ensure full coverage. For more details on branch
 coverage, please refer to the `coverage documentation <https://coverage.readthedocs.io/en/latest/branch.html>`_.
