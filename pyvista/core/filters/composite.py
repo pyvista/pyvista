@@ -288,8 +288,9 @@ class CompositeFilters(DataObjectFilters):
             :func:`pyvista.merge`, which merges points by default.
 
             .. versionchanged:: 0.50
-                Nested blocks are welded in a single pass, the same as the
-                equivalent flat :class:`~pyvista.MultiBlock`.
+                Points of nested blocks are merged in a single pass, so a nonzero
+                ``tolerance`` gives the same result as for the equivalent flat
+                :class:`~pyvista.MultiBlock`.
 
         tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
@@ -427,8 +428,8 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    def _compute_normals(
-        self,
+    def _compute_normals(  # type: ignore[misc]
+        self: MultiBlock[Any],
         *,
         cell_normals: bool = True,
         point_normals: bool = True,
@@ -442,7 +443,7 @@ class CompositeFilters(DataObjectFilters):
         progress_bar: bool = False,
     ) -> MultiBlock:
         """Compute point and/or cell normals for a multi-block dataset."""
-        if not self.is_all_polydata:  # type: ignore[attr-defined]
+        if not self.is_all_polydata:
             msg = (
                 'This multiblock contains non-PolyData datasets. Convert all the '
                 'datasets to PolyData with `as_polydata`'
@@ -451,7 +452,7 @@ class CompositeFilters(DataObjectFilters):
 
         # track original point indices
         if split_vertices and track_vertices:
-            for block in self.recursive_iterator(skip_none=True):  # type: ignore[attr-defined]
+            for block in self.recursive_iterator(skip_none=True):
                 ids = np.arange(block.n_points, dtype=pv.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 

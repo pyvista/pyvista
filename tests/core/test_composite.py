@@ -630,10 +630,12 @@ def test_combine_filter_without_datasets():
 @pytest.mark.parametrize('merge_points', [True, False])
 def test_combine_filter_empty_nested(merge_points):
     mesh = pv.Sphere()
-    multi = pv.MultiBlock([pv.MultiBlock([mesh]), pv.MultiBlock(), pv.MultiBlock([None])])
+    mesh.field_data['f'] = [1]
+    multi = pv.MultiBlock([pv.MultiBlock(), mesh, pv.MultiBlock([None])])
     combined = multi.combine(merge_points=merge_points)
     assert combined.n_cells == mesh.n_cells
     assert combined.n_points == mesh.n_points
+    assert combined.field_data.keys() == ['f']
 
 
 @pytest.mark.parametrize('seed', range(5))
@@ -642,6 +644,7 @@ def test_combine_filter_merge_points_nested_matches_flat(seed):
     a, b, c = (pv.PolyData(rng.random((10, 3))) for _ in range(3))
     nested = pv.MultiBlock([pv.MultiBlock([a, b]), c]).combine(merge_points=True, tolerance=0.3)
     flat = pv.MultiBlock([a, b, c]).combine(merge_points=True, tolerance=0.3)
+    assert flat.n_points < 30
     assert nested.n_points == flat.n_points
     assert np.array_equal(nested.points, flat.points)
 
@@ -1187,19 +1190,25 @@ def test_clear_all_data_nested_none_and_empty(method, point_cleared, cell_cleare
     [
         ('_convert_to_real_scalars', (), np.ones(3), 'vec-real', np.ones(3)),
         ('_convert_to_uint8_rgb_scalars', (), np.ones(3), 'vec-uint8', np.full(3, 255)),
+        ('_convert_to_uint8_rgb_scalars', (), np.full(3, 255), 'vec-uint8', np.full(3, 255)),
+        ('_convert_to_uint8_rgb_scalars', (), np.ones(3, dtype=bool), 'vec-uint8', np.ones(3)),
         ('_convert_to_single_component', (None,), np.ones(3), 'vec-normed', np.sqrt(3)),
         ('_convert_to_single_component', (1,), np.arange(3.0), 'vec-1', 1.0),
     ],
 )
 def test_convert_scalars_nested_none_and_empty(method, args, values, expected_name, expected):
-    cube = pv.Cube()
+    cube, sphere = pv.Cube(), pv.Sphere()
     cube.clear_data()
+    sphere.clear_data()
     cube.point_data['vec'] = np.tile(values, (cube.n_points, 1))
-    multi = pv.MultiBlock([None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])])
+    multi = pv.MultiBlock(
+        [None, pv.MultiBlock(), pv.MultiBlock([None, sphere, pv.MultiBlock([cube])])]
+    )
     name = getattr(multi, method)('point_data', 'vec', *args)
     assert name == expected_name
     assert cube.point_data.active_scalars_name == expected_name
     assert np.allclose(cube.point_data[expected_name], expected)
+    assert sphere.point_data.keys() == []
 
 
 @pytest.mark.parametrize('container', [pv.MultiBlock, pv.PartitionedDataSet])
