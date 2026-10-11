@@ -144,10 +144,11 @@ The resulting contribution is the responsibility of the contributor, and we valu
 concise accurate documentation, and avoiding unneeded code churn.
 
 If an AI tool wrote any part of a pull request -- code, tests, documentation, or the
-description itself -- say so in the description. Write that sentence yourself: it states
-that you reviewed the change and can explain it, which no tool can attest to on your
-behalf. One clause naming the tool and what it did is enough, in the form merged
-descriptions already use, for example ``Changes drafted by Claude Opus 5 but fully understood by me``.
+description itself -- say so in the description. A coding agent may draft that sentence,
+but it is your statement that you reviewed the change and can explain it, so confirm or
+reword it before the pull request goes up; no tool can attest to that on your behalf. One
+clause naming the tool and what it did is enough, in the form merged descriptions already
+use, for example ``Changes drafted by Claude Opus 5 but fully understood by me``.
 
 That responsibility covers what the contribution costs us to review and to test.
 If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
