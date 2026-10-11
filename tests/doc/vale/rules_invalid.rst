@@ -1,8 +1,8 @@
 Every Case Here Must Fail
 =========================
 
-This file is a negative fixture for the error-level rules that have no positive
-fixture of their own. It lives outside the paths Vale scans -- see ``PATHS`` in
+This file is a negative fixture for the rules ``doc/.vale.ini`` raises to
+``error``. It lives outside the paths Vale scans -- see ``PATHS`` in
 ``doc/run_vale.py`` -- for the same reason as ``headings_invalid.rst``.
 ``check_expected_failures.py``, beside it, runs Vale over this file and fails
 if the line after each ``expect`` comment is not flagged by the rule it names.

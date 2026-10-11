@@ -10,7 +10,7 @@ off for most of the documentation.
 ``PyVista.Repetition`` has no exceptions list, so its ``tokens`` pattern is the
 only thing standing between a real doubled word and silence.
 
-``rules_invalid.rst`` covers the other error-level rules.
+``rules_invalid.rst`` covers the rules ``doc/.vale.ini`` raises to ``error``.
 
 Run with ``make docstyle``, or directly::
 
@@ -71,7 +71,10 @@ def expectations_in(path: Path) -> dict[int, tuple[str, str]]:
     expected = {}
     for index, line in enumerate(lines):
         if match := re.fullmatch(r'\.\. expect: (\S+)', line.strip()):
-            target = next(i for i in range(index + 1, len(lines)) if lines[i].strip())
+            target = next((i for i in range(index + 1, len(lines)) if lines[i].strip()), None)
+            if target is None:
+                msg = f'{path.name}:{index + 1}: expect comment has no case after it'
+                raise ValueError(msg)
             expected[target + 1] = (match[1], lines[target].strip())
     return expected
 
