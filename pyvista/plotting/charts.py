@@ -2118,6 +2118,26 @@ class _MultiCompPlot(_Plot):
         self.SetLabels(self._labels)  # type: ignore[attr-defined]
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
+    def _set_colors_and_labels(
+        self,
+        n_components: int,
+        colors: ColorLike | Sequence[ColorLike] | None,
+        labels: str | Sequence[str] | None,
+    ) -> None:
+        """Set one color and one label per component; a single component defaults to blue."""
+        if n_components > 1:
+            if colors is None or (isinstance(colors, str) and colors in COLOR_SCHEMES):
+                self.colors = colors  # None uses the default scheme
+            else:
+                self.colors = _validate_color_sequence(colors, n_components)
+            self.labels = labels
+        else:
+            self.color = 'b' if colors is None else _validate_color_sequence(colors, 1)[0]
+            if labels is not None and not isinstance(labels, str):
+                msg = 'A single-component plot takes a single label.'
+                raise ValueError(msg)
+            self.label = labels
+
     @property
     @doc_subs
     def color_scheme(self) -> str:  # numpydoc ignore=RT01
@@ -3017,15 +3037,7 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
 
         if len(ys) > 1:
             self.SetColorSeries(self._color_series)
-            if color is None or (isinstance(color, str) and color in COLOR_SCHEMES):
-                self.colors = color
-            else:
-                self.colors = _validate_color_sequence(color, len(ys))
-            self.labels = label
-        else:
-            # Use blue bars by default in single component mode
-            self.color = 'b' if color is None else cast('ColorLike', color)
-            self.label = cast('str | None', label)
+        self._set_colors_and_labels(len(ys), color, label)
         self.orientation = orientation
 
     @property
@@ -3235,15 +3247,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
 
         if len(stacks) > 1:
             self.SetColorSeries(self._color_series)
-            if colors is None or (isinstance(colors, str) and colors in COLOR_SCHEMES):
-                self.colors = colors
-            else:
-                self.colors = _validate_color_sequence(colors, len(stacks))
-            self.labels = labels
-        else:
-            # A single-component plot takes one color and one label
-            self.color = 'b' if colors is None else cast('ColorLike', colors)
-            self.label = cast('str | None', labels)
+        self._set_colors_and_labels(len(stacks), colors, labels)
         self.pen.style = None  # Hide lines by default
 
     @property

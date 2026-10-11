@@ -724,9 +724,9 @@ def test_barplot(chart_2d, bar_plot):
         charts.BarPlot(chart_2d, x, y, color=c[:2], orientation=ori, label=l)
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='sequence of 1 ColorLike colors'):
         charts.BarPlot(chart_2d, x, y[0], color=c, orientation=ori, label=l[0])
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='takes a single label'):
         charts.BarPlot(chart_2d, x, y[0], color=c[0], orientation=ori, label=l)
 
     # Test remaining properties
@@ -775,9 +775,9 @@ def test_stackplot(chart_2d, stack_plot):
         charts.StackPlot(chart_2d, x, ys, colors=c[:2], labels=l)
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='sequence of 1 ColorLike colors'):
         charts.StackPlot(chart_2d, x, ys[0], colors=c, labels=l[0])
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='takes a single label'):
         charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l)
 
     # Test remaining properties
