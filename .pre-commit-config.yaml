@@ -129,7 +129,6 @@ repos:
         entry: '#\s*(?:noqa|ruff)'
         files: ^examples/
         types: [python]
-      # Checks double spaces between sentences in place of Google.Spacing; see the module docstring.
       - id: sentence-spacing
         name: "One space between sentences in docstrings, gallery text and .rst"
         language: python
