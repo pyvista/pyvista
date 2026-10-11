@@ -732,23 +732,28 @@ Here's an example of adding error test codes that raise deprecation warning mess
 
 .. code-block:: python
 
-    with pytest.warns(PyVistaDeprecationWarning):
-        addition(a, b)
-        if pv._version.version_info[:2] > (0, 40):
-            raise RuntimeError("Convert error this function")
-        if pv._version.version_info[:2] > (0, 41):
-            raise RuntimeError("Remove this function")
+    from pyvista._version import _is_deprecation_due
 
-In the above code example, the old test code raises an error in v0.40 and v0.41.
-This will prevent us from forgetting to remove deprecations on version upgrades.
+
+    def test_addition_deprecated():
+        with pytest.warns(PyVistaDeprecationWarning):
+            addition(a, b)
+        if _is_deprecation_due((0, 40)):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if _is_deprecation_due((0, 41)):  # pragma: no cover
+            msg = 'Remove this deprecated function.'
+            raise RuntimeError(msg)
+
+In the above code example, the test starts failing once v0.40 is being released,
+and again for v0.41. This will prevent us from forgetting to remove deprecations
+on version upgrades.
 
 .. note::
 
-    When releasing a new version, we need to update the version number to the next
-    development version. For example, if we are releasing version 0.37.0, the next
-    development version should be 0.38.0.dev0 which is greater than 0.37.0. This is
-    why we need to check if the version is greater than 0.40.0 and 0.41.0 in the
-    test code.
+    ``_is_deprecation_due((0, 40))`` is true from the first v0.40 release
+    candidate onward, and false for ``0.40.0.dev0``, the version ``main``
+    carries while v0.40 is in development.
 
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
@@ -2174,9 +2179,8 @@ should not wait until a minor release. The steps for a patch release
    Then create a tag from the release branch with the applicable version
    number (see above for the correct steps).
 
-#. If deemed necessary, create a release notes page. Also, open the PR
-   from conda and follow the directions in step 10 in the minor release
-   section.
+#. If deemed necessary, create a release notes page. Also, merge the
+   conda-forge feedstock pull request as in the minor release steps.
 
 Dependency Version Policy
 -------------------------
