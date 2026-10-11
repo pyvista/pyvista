@@ -543,16 +543,17 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         Set interactor style with a customized vtk interactor.
 
-        >>> from pyvista.plotting.render_window_interactor import (
-        ...     InteractorStyleTrackballCamera,
+        >>> from vtkmodules.vtkInteractionStyle import (
+        ...     vtkInteractorStyleTrackballCamera,
         ... )
-        >>> class MyCustomInteractorStyle(InteractorStyleTrackballCamera):
+
+        >>> class MyCustomInteractorStyle(vtkInteractorStyleTrackballCamera):
         ...     # Implement custom functionality
         ...     def __repr__(self):
         ...         return 'A custom interactor style.'
 
         >>> pl = pv.Plotter()
-        >>> pl.iren.style = MyCustomInteractorStyle(pl.iren)
+        >>> pl.iren.style = MyCustomInteractorStyle()
         >>> pl.iren.style
         A custom interactor style.
 

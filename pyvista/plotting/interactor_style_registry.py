@@ -121,15 +121,17 @@ def register_interactor_style(
 
     Examples
     --------
-    Register an interactor style class directly and use it from a theme.
+    Register a :vtk:`vtkInteractorStyle` subclass directly and use
+    it from a theme.
 
     >>> import pyvista as pv
-    >>> from pyvista.plotting.render_window_interactor import (
-    ...     InteractorStyleTrackballCamera,
+    >>> from vtkmodules.vtkInteractionStyle import (
+    ...     vtkInteractorStyleFlight,
     ... )
-    >>> class MyStyle(InteractorStyleTrackballCamera): ...
-    >>> pv.register_interactor_style('my_style', MyStyle)  # doctest: +SKIP
-    >>> pv.global_theme.interactor_style = 'my_style'  # doctest: +SKIP
+    >>> pv.register_interactor_style(
+    ...     'flight_style', vtkInteractorStyleFlight
+    ... )  # doctest: +SKIP
+    >>> pv.global_theme.interactor_style = 'flight_style'  # doctest: +SKIP
 
     A callable that takes the interactor as an argument can also be
     registered.
