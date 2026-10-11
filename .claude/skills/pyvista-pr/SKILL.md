@@ -118,19 +118,20 @@ than only in a commit trailer, because the description is what a reviewer reads 
 Four labels each start a job a pull request does not otherwise get. They cost real runner
 time, so ask for one because the change touches what it covers, not by default:
 
-| Label                 | Starts                                      | Ask for it when                                                                         |
-| --------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `vtk-dev-testing`     | the suite against VTK development wheels    | anything version-dependent: wrapping, object lifetimes, a VTK behavior that has changed |
-| `vtk-master-testing`  | a VTK build from master, then the suite     | the change depends on unreleased VTK, or the dev wheels are not recent enough           |
-| `integration-testing` | mne, trame, pyvistaqt, geovista, playwright | public API behavior, object lifetimes, plotting defaults -- what downstream sits on     |
-| `docker`              | the Docker image build                      | packaging, or a dependency the image installs                                           |
+| Label                 | Starts                                                             | Ask for it when                                                                         |
+| --------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `vtk-dev-testing`     | the suite against VTK development wheels                           | anything version-dependent: wrapping, object lifetimes, a VTK behavior that has changed |
+| `vtk-master-testing`  | a VTK build from master, then the suite                            | the change depends on unreleased VTK, or the dev wheels are not recent enough           |
+| `integration-testing` | mne, trame, pyvistaqt, geovista, playwright, cvista, numpy-nightly | public API behavior, object lifetimes, plotting defaults -- what downstream sits on     |
+| `docker`              | the Docker image build                                             | packaging, or a dependency the image installs                                           |
 
 A fifth label, `blacksmith`, starts nothing extra: it moves the documentation cache,
 build and test jobs onto the paid Blacksmith runners the merge queue uses, which finish
 sooner. Ask for it when the documentation build is what the pull request is waiting on.
 
-A label only takes effect on the next run, so it goes on before the final push, or the
-branch gets pushed again afterwards; `CONTRIBUTING.rst` says the same for the VTK labels.
+`docker` starts its build as soon as it is applied. The other three take effect only on
+the next run, so they go on before the final push, or the branch gets pushed again
+afterwards; `CONTRIBUTING.rst` says the same for the VTK labels.
 You cannot apply labels yourself, so name the ones the change warrants when you hand the
 pull request over.
 
