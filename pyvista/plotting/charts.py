@@ -43,11 +43,11 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from matplotlib.backend_bases import DrawEvent
+    from numpy.typing import NDArray
 
     from pyvista.core._typing_core import LineStyle
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import Chart
     from ._typing import ColorLike
@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from .renderer import Renderer
 
 _TextureLike: TypeAlias = Union[
-    str, _vtk.vtkTexture, _vtk.vtkImageData, 'NumpyArray[Any]', 'Sequence[pv.ImageData]'
+    str, _vtk.vtkTexture, _vtk.vtkImageData, 'NDArray[Any]', 'Sequence[pv.ImageData]'
 ]
 _MarkerStyleOptions: TypeAlias = Literal['', 'x', '+', 's', 'o', 'd']
 _AxisBehaviorOptions: TypeAlias = Literal['auto', 'fixed']
@@ -512,7 +512,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self,
         *,
         label: str = '',
-        range: VectorLike[float] | None = None,  # noqa: A002
+        range: VectorLikeFloat | None = None,  # noqa: A002
         grid: bool = True,
     ) -> None:
         """Initialize a new Axis instance."""
@@ -676,7 +676,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return r
 
     @range.setter  # noqa: A003
-    def range(self, val: VectorLike[float] | None) -> None:
+    def range(self, val: VectorLikeFloat | None) -> None:
         if val is None:
             self.behavior = 'auto'
         else:
@@ -941,7 +941,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return tuple(positions.GetValue(i) for i in range(positions.GetNumberOfValues()))
 
     @tick_locations.setter
-    def tick_locations(self, val: VectorLike[float] | None) -> None:
+    def tick_locations(self, val: VectorLikeFloat | None) -> None:
         self._tick_locs.Reset()
         if val is not None:
             for loc in val:
@@ -1279,7 +1279,7 @@ class _Chart(DocSubs):
     _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(
-        self, size: VectorLike[float] | None = (1, 1), loc: VectorLike[float] | None = (0, 0)
+        self, size: VectorLikeFloat | None = (1, 1), loc: VectorLikeFloat | None = (0, 0)
     ) -> None:
         super().__init__()
         self._background = _ChartBackground(self)
@@ -1342,7 +1342,7 @@ class _Chart(DocSubs):
         return tuple(self.GetSize())  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, val: VectorLike[float]) -> None:
+    def _geometry(self, val: VectorLikeFloat) -> None:
         """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
 
@@ -1362,14 +1362,14 @@ class _Chart(DocSubs):
     def _interactive(self, val: bool) -> None:
         self.SetInteractive(val)  # type: ignore[attr-defined]
 
-    def _is_within(self, pos: VectorLike[float]) -> bool:
+    def _is_within(self, pos: VectorLikeFloat) -> bool:
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
         return bool(l <= pos[0] <= l + w and b <= pos[1] <= b + h)
 
     @property
     @doc_subs
-    def size(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def size(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -1392,7 +1392,7 @@ class _Chart(DocSubs):
         return self._size
 
     @size.setter
-    def size(self, val: VectorLike[float]) -> None:
+    def size(self, val: VectorLikeFloat) -> None:
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             msg = f'Invalid size {val}.'
             raise ValueError(msg)
@@ -1400,7 +1400,7 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
-    def loc(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def loc(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -1423,7 +1423,7 @@ class _Chart(DocSubs):
         return self._loc
 
     @loc.setter
-    def loc(self, val: VectorLike[float]) -> None:
+    def loc(self, val: VectorLikeFloat) -> None:
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             msg = f'Invalid loc {val}.'
             raise ValueError(msg)
@@ -2368,8 +2368,8 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
     def __init__(
         self,
         chart: Chart2D,
-        x: VectorLike[float],
-        y: VectorLike[float],
+        x: VectorLikeFloat,
+        y: VectorLikeFloat,
         *,
         color: ColorLike | None = 'b',
         width: float = 1.0,
@@ -2428,7 +2428,7 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
         """
         return self._table['y']
 
-    def update(self, x: VectorLike[float], y: VectorLike[float]) -> None:
+    def update(self, x: VectorLikeFloat, y: VectorLikeFloat) -> None:
         """Update this plot's points, through which a line is drawn.
 
         Parameters
@@ -2542,8 +2542,8 @@ class ScatterPlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoi
     def __init__(
         self,
         chart: Chart2D,
-        x: VectorLike[float],
-        y: VectorLike[float],
+        x: VectorLikeFloat,
+        y: VectorLikeFloat,
         *,
         color: ColorLike | None = 'b',
         size: float = 10,
@@ -2602,7 +2602,7 @@ class ScatterPlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoi
         """
         return self._table['y']
 
-    def update(self, x: VectorLike[float], y: VectorLike[float]) -> None:
+    def update(self, x: VectorLikeFloat, y: VectorLikeFloat) -> None:
         """Update this plot's points.
 
         Parameters
@@ -2774,9 +2774,9 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
     def __init__(  # noqa: PLR0917
         self,
         chart: Chart2D,
-        x: VectorLike[float],
-        y1: VectorLike[float],
-        y2: VectorLike[float] | None = None,
+        x: VectorLikeFloat,
+        y1: VectorLikeFloat,
+        y2: VectorLikeFloat | None = None,
         *,
         color: ColorLike | None = 'b',
         label: str | None = '',
@@ -2863,9 +2863,9 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
 
     def update(
         self,
-        x: VectorLike[float],
-        y1: VectorLike[float],
-        y2: VectorLike[float] | None = None,
+        x: VectorLikeFloat,
+        y1: VectorLikeFloat,
+        y2: VectorLikeFloat | None = None,
     ) -> None:
         """Update this plot's points, outlining the area to draw.
 
@@ -2994,8 +2994,8 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
     def __init__(
         self,
         chart: Chart2D,
-        x: VectorLike[float],
-        y: VectorLike[float] | MatrixLike[float],
+        x: VectorLikeFloat,
+        y: VectorLikeFloat | MatrixLikeFloat,
         *,
         color: ColorLike | Sequence[ColorLike] | None = None,
         orientation: _OrientationOptions = 'V',
@@ -3064,7 +3064,7 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         """
         return tuple(self._table[f'y{i}'] for i in range(self._table.n_arrays - 1))
 
-    def update(self, x: VectorLike[float], y: VectorLike[float] | MatrixLike[float]) -> None:
+    def update(self, x: VectorLikeFloat, y: VectorLikeFloat | MatrixLikeFloat) -> None:
         """Update the positions and/or size of the bars in this plot.
 
         Parameters
@@ -3210,8 +3210,8 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
     def __init__(
         self,
         chart: Chart2D,
-        x: VectorLike[float],
-        ys: VectorLike[float] | MatrixLike[float],
+        x: VectorLikeFloat,
+        ys: VectorLikeFloat | MatrixLikeFloat,
         *,
         colors: ColorLike | Sequence[ColorLike] | None = None,
         labels: str | Sequence[str] | None = None,
@@ -3278,7 +3278,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         """
         return tuple(self._table[f'y{i}'] for i in range(self._table.n_arrays - 1))
 
-    def update(self, x: VectorLike[float], ys: VectorLike[float] | MatrixLike[float]) -> None:
+    def update(self, x: VectorLikeFloat, ys: VectorLikeFloat | MatrixLikeFloat) -> None:
         """Update the locations and/or size of the stacks (areas) in this plot.
 
         Parameters
@@ -3413,8 +3413,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     def __init__(
         self,
         *,
-        size: VectorLike[float] | None = (1, 1),
-        loc: VectorLike[float] | None = (0, 0),
+        size: VectorLikeFloat | None = (1, 1),
+        loc: VectorLikeFloat | None = (0, 0),
         x_label: str = 'x',
         y_label: str = 'y',
         grid: bool = True,
@@ -3549,8 +3549,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
     def plot(
         self,
-        x: VectorLike[float],
-        y: VectorLike[float] | str | None = None,
+        x: VectorLikeFloat,
+        y: VectorLikeFloat | str | None = None,
         fmt: str = '-',
     ) -> tuple[ScatterPlot2D | None, LinePlot2D | None]:
         """Matplotlib like plot method.
@@ -3605,8 +3605,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
            >>> chart.show()
 
         """
-        x_values: VectorLike[float]
-        y_values: VectorLike[float]
+        x_values: VectorLikeFloat
+        y_values: VectorLikeFloat
         if y is None:
             x_values, y_values = range(len(x)), x
         elif isinstance(y, str):
@@ -3624,8 +3624,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
     def scatter(
         self,
-        x: VectorLike[float],
-        y: VectorLike[float],
+        x: VectorLikeFloat,
+        y: VectorLikeFloat,
         *,
         color: ColorLike | None = 'b',
         size: float = 10,
@@ -3679,8 +3679,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
     def line(
         self,
-        x: VectorLike[float],
-        y: VectorLike[float],
+        x: VectorLikeFloat,
+        y: VectorLikeFloat,
         *,
         color: ColorLike | None = 'b',
         width: float = 1.0,
@@ -3734,9 +3734,9 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
     def area(
         self,
-        x: VectorLike[float],
-        y1: VectorLike[float],
-        y2: VectorLike[float] | None = None,
+        x: VectorLikeFloat,
+        y1: VectorLikeFloat,
+        y2: VectorLikeFloat | None = None,
         *,
         color: ColorLike | None = 'b',
         label: str | None = '',
@@ -3784,8 +3784,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
     def bar(
         self,
-        x: VectorLike[float],
-        y: VectorLike[float] | MatrixLike[float],
+        x: VectorLikeFloat,
+        y: VectorLikeFloat | MatrixLikeFloat,
         *,
         color: ColorLike | Sequence[ColorLike] | None = None,
         orientation: _OrientationOptions = 'V',
@@ -3838,8 +3838,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
     def stack(
         self,
-        x: VectorLike[float],
-        ys: VectorLike[float] | MatrixLike[float],
+        x: VectorLikeFloat,
+        ys: VectorLikeFloat | MatrixLikeFloat,
         *,
         colors: ColorLike | Sequence[ColorLike] | None = None,
         labels: str | Sequence[str] | None = None,
@@ -4115,7 +4115,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         return self.x_axis.range
 
     @x_range.setter
-    def x_range(self, val: VectorLike[float] | None) -> None:
+    def x_range(self, val: VectorLikeFloat | None) -> None:
         self.x_axis.range = val
 
     @property
@@ -4140,7 +4140,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         return self.y_axis.range
 
     @y_range.setter
-    def y_range(self, val: VectorLike[float] | None) -> None:
+    def y_range(self, val: VectorLikeFloat | None) -> None:
         self.y_axis.range = val
 
     @property
@@ -4262,7 +4262,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
     def __init__(
         self,
         chart: ChartBox,
-        data: Sequence[VectorLike[float]],
+        data: Sequence[VectorLikeFloat],
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
@@ -4323,7 +4323,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         stats_table = pv.Table(self._quartiles.GetOutput())
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
-    def update(self, data: Sequence[VectorLike[float]]) -> None:
+    def update(self, data: Sequence[VectorLikeFloat]) -> None:
         """Update the plot's underlying datasets.
 
         Parameters
@@ -4413,12 +4413,12 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
 
     def __init__(
         self,
-        data: Sequence[VectorLike[float]],
+        data: Sequence[VectorLikeFloat],
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
-        size: VectorLike[float] | None = None,
-        loc: VectorLike[float] | None = None,
+        size: VectorLikeFloat | None = None,
+        loc: VectorLikeFloat | None = None,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4440,7 +4440,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, value: VectorLike[float]) -> None:
+    def _geometry(self, value: VectorLikeFloat) -> None:
         _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
@@ -4471,7 +4471,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return self._plot
 
     @property
-    def size(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def size(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -4494,11 +4494,11 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
-    def size(self, val: VectorLike[float]) -> None:
+    def size(self, val: VectorLikeFloat) -> None:
         _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
-    def loc(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def loc(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -4521,7 +4521,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
-    def loc(self, val: VectorLike[float]) -> None:
+    def loc(self, val: VectorLikeFloat) -> None:
         _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
@@ -4580,7 +4580,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
     def __init__(
         self,
         chart: ChartPie,
-        data: VectorLike[float],
+        data: VectorLikeFloat,
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
@@ -4617,7 +4617,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         """
         return self._table[0]
 
-    def update(self, data: VectorLike[float]) -> None:
+    def update(self, data: VectorLikeFloat) -> None:
         """Update the size of the pie segments.
 
         Parameters
@@ -4702,12 +4702,12 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
 
     def __init__(
         self,
-        data: VectorLike[float],
+        data: VectorLikeFloat,
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
-        size: VectorLike[float] | None = None,
-        loc: VectorLike[float] | None = None,
+        size: VectorLikeFloat | None = None,
+        loc: VectorLikeFloat | None = None,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4728,7 +4728,7 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, value: VectorLike[float]) -> None:
+    def _geometry(self, value: VectorLikeFloat) -> None:
         _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
@@ -4755,7 +4755,7 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return self._plot
 
     @property
-    def size(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def size(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -4778,11 +4778,11 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
-    def size(self, val: VectorLike[float]) -> None:
+    def size(self, val: VectorLikeFloat) -> None:
         _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
-    def loc(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def loc(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -4805,7 +4805,7 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
-    def loc(self, val: VectorLike[float]) -> None:
+    def loc(self, val: VectorLikeFloat) -> None:
         _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
@@ -4875,8 +4875,8 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         self,
         figure: mpl.figure.Figure | None = None,
         *,
-        size: VectorLike[float] | None = (1, 1),
-        loc: VectorLike[float] | None = (0, 0),
+        size: VectorLikeFloat | None = (1, 1),
+        loc: VectorLikeFloat | None = (0, 0),
         redraw_on_render: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
@@ -5018,7 +5018,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         return (*self.position, t_w, t_h)
 
     @_geometry.setter
-    def _geometry(self, _: VectorLike[float]) -> None:
+    def _geometry(self, _: VectorLikeFloat) -> None:
         msg = f'Cannot set the geometry of {type(self).__name__}'
         raise AttributeError(msg)
 
@@ -5028,7 +5028,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         return self.GetPosition()
 
     @position.setter
-    def position(self, val: VectorLike[float]) -> None:
+    def position(self, val: VectorLikeFloat) -> None:
         if len(val) != 2:
             msg = f'Invalid position {val}, must be length 2.'
             raise ValueError(msg)
@@ -5261,7 +5261,7 @@ class Charts(_NoNewAttrMixin):
             if chart._background is not None:
                 self._scene.RemoveItem(chart._background)
 
-    def get_charts_by_pos(self, pos: VectorLike[float]) -> list[Chart]:
+    def get_charts_by_pos(self, pos: VectorLikeFloat) -> list[Chart]:
         """Retrieve visible charts indicated by the given mouse position.
 
         Parameters
