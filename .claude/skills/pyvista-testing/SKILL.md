@@ -90,14 +90,23 @@ RUN=$(gh run list -R pyvista/pyvista --workflow testing-and-deployment.yml \
   --branch "$(git branch --show-current)" -L 1 --json databaseId --jq '.[0].databaseId')
 gh run download "$RUN" -R pyvista/pyvista --pattern 'failed_test_images-*' --dir /tmp/pv-failed
 ls /tmp/pv-failed          # pick a Linux leg; macOS and Windows renders differ
-find /tmp/pv-failed/failed_test_images-Linux-* -path '*/errors/from_test/*.png' \
-  -exec cp {} tests/plotting/image_cache/ \;
+for f in /tmp/pv-failed/failed_test_images-Linux-*/errors/from_test/*.png; do
+  name=$(basename "$f" .png)
+  if [ -d "tests/plotting/image_cache/$name" ]; then
+    echo "multi-baseline, place by hand: $name"
+  else
+    cp "$f" tests/plotting/image_cache/
+  fi
+done
 git diff --stat tests/plotting/image_cache/
 ```
 
-Look at every image the copy touched before committing. Documentation baselines work the
-same way with `doc-failed-test-images`, `docs.yml`, and `tests/doc/doc_image_cache/`,
-where the files are `.jpg`. Copying from a non-Linux leg breaks Linux CI on the next run.
+A test whose baselines live in a sub-directory (see below) must not get a flat
+`<test>.png` beside it: the plugin refuses an image name that matches a sub-directory and
+aborts the whole session. Put the new render inside that directory by hand. Look at every
+image the copy touched before committing. Documentation baselines work the same way with
+`doc-failed-test-images`, `docs.yml`, and `tests/doc/doc_image_cache/`, where the files
+are `.jpg`. Copying from a non-Linux leg breaks Linux CI on the next run.
 
 ## What the scene has to show
 
