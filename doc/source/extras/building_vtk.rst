@@ -97,10 +97,10 @@ modifying the above ``cmake`` command with:
 
    # build using EGL
    git clone https://github.com/Kitware/VTK
-   mkdir VTK/build
-   cd VTK/build \
+   cd VTK
    git checkout v9.6.0
-   cd /VTK/build
+   mkdir build
+   cd build
    cmake -GNinja \
      -DCMAKE_BUILD_TYPE=Release \
      -DVTK_BUILD_TESTING=OFF \
@@ -121,8 +121,8 @@ modifying the above ``cmake`` command with:
    ninja
 
    # build the python wheel
-   python3 -m pip install wheel \
-   python3 setup.py bdist_wheel \
+   python3 -m pip install wheel
+   python3 setup.py bdist_wheel
    pip install dist/vtk-*.whl
 
 This disables any plotting using the X server, so be prepared to use
@@ -196,17 +196,8 @@ To do this, create a ``build_wheels.sh`` with the following contents in the
 
     # build based on python version from args
     PYTHON_VERSION="$1"
-    case $PYTHON_VERSION in
-    3.9)
-      PYBIN="/opt/python/cp39-cp39/bin/python"
-      ;;
-    3.10)
-      PYBIN="/opt/python/cp310-cp310/bin/python"
-      ;;
-    3.11)
-      PYBIN="/opt/python/cp311-cp311/bin/python"
-      ;;
-    esac
+    PYTAG="cp${PYTHON_VERSION/./}"
+    PYBIN="/opt/python/${PYTAG}-${PYTAG}/bin/python"
 
     yum install -y ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
 
@@ -245,7 +236,7 @@ This script can then be called with:
 .. code-block:: bash
 
     export PYTHON_VERSION=3.10
-    docker run --cpus 4.5 -e \
+    docker run --cpus 4.5 \
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 \
            /io/build_wheels.sh $PYTHON_VERSION
 
@@ -272,9 +263,9 @@ the ``quay.io/pypa/manylinux2014_aarch64`` image. Run the following:
 
 .. code-block:: bash
 
-    PYTHON_VERSION=3.9
+    PYTHON_VERSION=3.12
     rm -rf build
-    docker run -e \
+    docker run \
            --rm -v `pwd`:/io quay.io/pypa/manylinux2014_aarch64 \
            /io/build_wheels.sh $PYTHON_VERSION
 
@@ -289,17 +280,8 @@ Where ``build_wheels.sh`` is:
 
     # build based on python version from args
     PYTHON_VERSION="$1"
-    case $PYTHON_VERSION in
-    3.9)
-      PYBIN="/opt/python/cp39-cp39/bin/python"
-      ;;
-    3.10)
-      PYBIN="/opt/python/cp310-cp310/bin/python"
-      ;;
-    3.11)
-      PYBIN="/opt/python/cp311-cp311/bin/python"
-      ;;
-    esac
+    PYTAG="cp${PYTHON_VERSION/./}"
+    PYBIN="/opt/python/${PYTAG}-${PYTAG}/bin/python"
 
     /bin/bash
     yum install epel-release
