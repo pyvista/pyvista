@@ -44,9 +44,9 @@ change over, since a label other than `docker` applied after the last push does 
 until the next one.
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
-means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk`
-anywhere, no `vtkmodules` import in anything a user reads or copies (examples,
-docstrings, documentation), and no VTK CamelCase call
+means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk` and no
+`vtkmodules` import anywhere (a gallery example may carry a rare one-off, as
+`examples/01-filter/reslice.py` does), and no VTK CamelCase call
 (`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) where a property or filter
 exists. Inside the package, `from pyvista import _vtk` and then `_vtk.vtkY`.
 

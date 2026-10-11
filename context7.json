@@ -30,7 +30,7 @@
   "rules": [
     "PyVista is the foundational 3D layer for Python, analogous to pandas/xarray. Extend it via the public extension API; do not subclass, monkey-patch, or vendor algorithms.",
     "Prefer PyVista over raw VTK. It is the doctested, NumPy-native API that holds steady across VTK releases. If a PyVista equivalent is missing, file an issue rather than dropping to raw VTK.",
-    "Import as `import pyvista as pv`. Never `import vtk` (it pulls the entire graphics stack and breaks lazy loading). If a VTK class is genuinely needed, use a targeted `from vtkmodules.xxx import vtkY` import.",
+    "Import as `import pyvista as pv`. Never `import vtk` (it pulls the entire graphics stack and breaks lazy loading). If a VTK class is genuinely needed, use `from pyvista import _vtk`, then `_vtk.vtkY`; never `vtkmodules`.",
     "Use wrappers (`pv.PolyData`, `pv.ImageData`, `pv.UnstructuredGrid`, `pv.MultiBlock`, `pv.Actor`) over raw `vtk.*`. Array attrs are `pv.pyvista_ndarray`, zero-copy views onto VTK buffers; `mesh.points` and `mesh['scalars']` write in place.",
     "Do not call VTK CamelCase API (`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) from user code; methods shift between VTK releases. PyVista absorbs the churn (see `pyvista/core/dataset.py`). Use Pythonic equivalents like `mesh.bounds`.",
     "Use PyVista filter methods (`mesh.clip()`, `mesh.threshold()`, `mesh.slice()`, `mesh.warp_by_scalar()`) over hand-rolled `vtk.vtkXxx().SetInputData(...).Update()` pipelines. They validate inputs, support `progress_bar=`, and are image-regression tested.",
