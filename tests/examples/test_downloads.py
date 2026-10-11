@@ -45,12 +45,12 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
 def test_delete_downloads(tmpdir, monkeypatch: pytest.MonkeyPatch):
     # change the path so we don't delete the examples cache
     monkeypatch.setattr(downloads, 'USER_DATA_PATH', str(tmpdir.mkdir('tmpdir')))
-    assert Path(examples.downloads.USER_DATA_PATH).is_dir()
-    tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
+    assert Path(downloads.USER_DATA_PATH).is_dir()
+    tmp_file = str(Path(downloads.USER_DATA_PATH) / 'tmp.txt')
     with Path(tmp_file).open('w') as fid:
         fid.write('test')
     examples.delete_downloads()
-    assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+    assert Path(downloads.USER_DATA_PATH).is_dir()
     assert not Path(tmp_file).is_file()
 
 
@@ -59,7 +59,7 @@ def test_delete_downloads_does_not_exist(tmpdir, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(downloads, 'USER_DATA_PATH', str(tmpdir.join('doesnotexist')))
 
     # delete_downloads for a missing directory should not fail.
-    assert not Path(examples.downloads.USER_DATA_PATH).is_dir()
+    assert not Path(downloads.USER_DATA_PATH).is_dir()
     examples.delete_downloads()
 
 
