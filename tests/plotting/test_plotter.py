@@ -8,6 +8,7 @@ All other tests requiring rendering should to in
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 import os
 from pathlib import Path
 import re
@@ -16,6 +17,7 @@ import threading
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import weakref
 
 import numpy as np
 import pytest
@@ -423,7 +425,7 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), _vtk.vtkAlgorithm()
+    m.return_value = pv.PolyData(), _vtk.vtkSphereSource()
 
     pl = pv.Plotter()
     match = re.escape(
@@ -533,6 +535,25 @@ def test_add_background_image_raises():
     )
     with pytest.raises(RuntimeError, match=match):
         pl.add_background_image(pv.examples.mapfile)
+
+
+@pytest.mark.parametrize('event', [_vtk.vtkCommand.StartEvent, _vtk.vtkCommand.RenderEvent])
+def test_close_releases_render_window_observers(event):
+    """Closing releases callbacks even while the caller retains the native window."""
+    pl = pv.Plotter()
+    window = pl.render_window
+    assert window is not None
+
+    def observe(*_args):
+        """Observe the retained window without owning the plotter."""
+
+    reference = weakref.ref(observe)
+    window.AddObserver(event, observe)
+    del observe
+    assert reference() is not None
+    pl.close()
+    gc.collect()
+    assert reference() is None
 
 
 def test_show_after_closed_raises():
@@ -773,6 +794,14 @@ def test_add_points_invalid_style(sphere):
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Should be either "points"'):
         pl.add_points(sphere, style='wireframe')
+
+
+@pytest.mark.parametrize('points', [[[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]], (1.0, 2.0, 3.0)])
+def test_add_points_sequence(points):
+    """Plot points given as a plain sequence."""
+    pl = pv.Plotter()
+    actor = pl.add_points(points)
+    assert np.array_equal(actor.mapper.dataset.points, np.atleast_2d(points))
 
 
 @pytest.mark.parametrize(('connected', 'n_lines'), [(False, 2), (True, 3)])

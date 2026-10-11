@@ -13,19 +13,12 @@ from sphinx.util.osutil import relative_uri
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from sphinx.application import Sphinx
     from sphinx.environment import BuildEnvironment
 
 logger = logging.getLogger(__name__)
-
-
-def is_path_relative_to(path, other):
-    """Path.is_relative_to was introduced in Python 3.9 [1].
-
-    Provide a replacement that works for all supported versions
-
-    [1] https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to.
-    """
-    return path.is_relative_to(other)
 
 
 def _offline_viewer_paths(env: BuildEnvironment, dest_file: Path) -> tuple[str | None, str | None]:
@@ -50,16 +43,19 @@ class OfflineViewerDirective(Directive):
     final_argument_whitespace = True
     has_content = True
 
-    def run(self):  # pragma: no cover
+    def run(self) -> list[nodes.Node]:  # pragma: no cover
         source_dir = Path(self.state.document.settings.env.app.srcdir)
         output_dir = Path(self.state.document.settings.env.app.outdir)
         # _build directory
         build_dir = Path(self.state.document.settings.env.app.outdir).parent
 
         # this is the path passed to 'offlineviewer:: <path>` directive
-        source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])
-        source_file = Path(source_file).absolute().resolve()
-        if not Path(source_file).is_file():
+        current_source = self.state.document.current_source
+        if current_source is None:
+            logger.warning('Cannot resolve the source file of the offline viewer directive.')
+            return []
+        source_file = (Path(current_source).parent / self.arguments[0]).absolute().resolve()
+        if not source_file.is_file():
             logger.warning(f'Source file {source_file} does not exist.')
             return []
 
@@ -78,10 +74,10 @@ class OfflineViewerDirective(Directive):
         # dest_partial_path: plot_directive/getting-started
         # dest_path: ${HOME}/pyvista/pyvista/doc/_build/html/_images/plot_directive/getting-started/index-2_00_00.vtksz  # noqa: E501
 
-        if is_path_relative_to(source_file, build_dir):
-            dest_partial_path = Path(source_file.parent).relative_to(build_dir)
-        elif is_path_relative_to(source_file, source_dir):
-            dest_partial_path = Path(source_file.parent).relative_to(source_dir)
+        if source_file.is_relative_to(build_dir):
+            dest_partial_path = source_file.parent.relative_to(build_dir)
+        elif source_file.is_relative_to(source_dir):
+            dest_partial_path = source_file.parent.relative_to(source_dir)
         else:
             logger.warning(
                 f'Source file {source_file} is not a subpath of either the build directory of the '
@@ -112,7 +108,7 @@ class OfflineViewerDirective(Directive):
         return [raw_node]
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict[str, Any]:
     app.add_directive('offlineviewer', OfflineViewerDirective)
 
     return {

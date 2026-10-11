@@ -20,24 +20,24 @@ _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
 
 P = ParamSpec('P')
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
 # fmt: off
 # ruff: disable[E501]
 @overload
-def _deprecate_positional_args(func: Callable[P, T], *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[P, T]: ...
+def _deprecate_positional_args(func: Callable[P, _T], *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[P, _T]: ...
 @overload
-def _deprecate_positional_args(*, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[[Callable[P, T]], Callable[P, T]]: ...
+def _deprecate_positional_args(*, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[[Callable[P, _T]], Callable[P, _T]]: ...
 # ruff: enable[E501]
 # fmt: on
 def _deprecate_positional_args(
-    func: Callable[..., T] | None = None,
+    func: Callable[..., _T] | None = None,
     *,
     version: tuple[int, int] = (0, 50),
     allowed: list[str] | None = None,
     n_allowed: int | None = None,
-) -> Callable[..., T] | Callable[[Callable[P, T]], Callable[P, T]]:
+) -> Callable[..., _T] | Callable[[Callable[P, _T]], Callable[P, _T]]:
     """Use a decorator to deprecate positional arguments.
 
     Parameters
@@ -57,7 +57,7 @@ def _deprecate_positional_args(
 
     """
 
-    def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
+    def _inner_deprecate_positional_args(f: Callable[P, _T]) -> Callable[P, _T]:
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
@@ -194,7 +194,7 @@ def _deprecate_positional_args(
                 break
 
         @functools.wraps(f)
-        def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
+        def inner_f(*args: P.args, **kwargs: P.kwargs) -> _T:
             # Optimization: nothing to check when every positional argument is an allowed one
             if len(args) <= n_free_positional:
                 return f(*args, **kwargs)

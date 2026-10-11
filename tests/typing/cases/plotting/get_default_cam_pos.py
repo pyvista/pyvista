@@ -5,7 +5,7 @@ from __future__ import annotations
 from type_assert import assert_types
 
 import pyvista as pv
-from pyvista.core._typing_core import VectorLike
+from pyvista.core._typing_core import VectorLikeFloat
 
 
 def a_plotter() -> pv.Plotter:
@@ -15,5 +15,5 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-assert_types(a_plotter().get_default_cam_pos(), list[VectorLike[float]])
-assert_types(a_plotter().get_default_cam_pos(negative=True), list[VectorLike[float]])
+assert_types(a_plotter().get_default_cam_pos(), list[VectorLikeFloat])
+assert_types(a_plotter().get_default_cam_pos(negative=True), list[VectorLikeFloat])

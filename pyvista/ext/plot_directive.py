@@ -131,6 +131,11 @@ The plot directive has the following configuration options:
     ``pyvista_plot_skip_optional`` : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
+    ``pyvista_plot_force_static`` : bool, default: False
+        Whether to use static images instead of interactive scenes for all plots.
+
+        .. versionadded:: 0.50
+
     ``pyvista_plot_autocodelink`` : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
         targets. Requires the `sphinx-autocodelink
@@ -182,6 +187,7 @@ import shutil
 import textwrap
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import ClassVar
 
 from docutils.parsers.rst import Directive
@@ -209,7 +215,11 @@ _COMMENT_OR_STRING_RE = re.compile(r"""('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|[ \
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from docutils import nodes
+    from docutils.parsers.rst.states import NestedStateMachine
     from docutils.parsers.rst.states import RSTState
+    from docutils.parsers.rst.states import RSTStateMachine
+    from docutils.statemachine import StringList
     from sphinx.application import Sphinx
     from sphinx.config import Config
     from sphinx.environment import BuildEnvironment
@@ -223,7 +233,7 @@ _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
 # -----------------------------------------------------------------------------
 
 
-def _option_boolean(arg) -> bool:
+def _option_boolean(arg: str | None) -> bool:
     if not arg or not arg.strip():
         # no argument given, assume used as a flag
         return True
@@ -236,13 +246,16 @@ def _option_boolean(arg) -> bool:
         raise ValueError(msg)
 
 
-def _option_context(arg):
+def _option_context(arg: str | None) -> None:
     if arg is not None:  # pragma: no cover
         msg = 'No arguments allowed for ``:context:``'
         raise ValueError(msg)
 
 
-def _option_format(arg):
+def _option_format(arg: str | None) -> str:
+    if arg is None:  # pragma: no cover
+        msg = "``:format:`` takes 'python' or 'doctest'"
+        raise ValueError(msg)
     return directives.choice(arg, ('python', 'doctest'))
 
 
@@ -253,7 +266,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec: ClassVar[dict[str, Callable]] = {
+    option_spec: ClassVar[dict[str, Callable[..., Any]]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,
@@ -270,7 +283,7 @@ class PlotDirective(Directive):
         'optional': directives.flag,
     }
 
-    def run(self):
+    def run(self) -> list[nodes.system_message]:
         """Run the plot directive."""
         try:
             return run(
@@ -285,7 +298,7 @@ class PlotDirective(Directive):
             raise self.error(str(e))
 
 
-def setup(app: Sphinx):
+def setup(app: Sphinx) -> dict[str, Any]:
     """Set up the plot directive.
 
     Sphinx calls this when it loads the extension, which is where the two globals
@@ -299,9 +312,6 @@ def setup(app: Sphinx):
     pv.BUILDING_GALLERY = True
     pv.OFF_SCREEN = True
 
-    setup.app = app
-    setup.config = app.config
-    setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
     if record_namespace is not None:
         app.setup_extension('sphinx_autocodelink')
@@ -359,14 +369,15 @@ def setup(app: Sphinx):
     app.connect('config-inited', check_counter_for_parallel_build)
 
     app.add_config_value('pyvista_plot_use_counter', False, 'env')
-    app.add_config_value('pyvista_plot_include_source', True, False)
-    app.add_config_value('pyvista_plot_basedir', None, True)
-    app.add_config_value('pyvista_plot_html_show_formats', True, True)
-    app.add_config_value('pyvista_plot_template', None, True)
-    app.add_config_value('pyvista_plot_setup', None, True)
-    app.add_config_value('pyvista_plot_cleanup', None, True)
+    app.add_config_value('pyvista_plot_include_source', True, '')
+    app.add_config_value('pyvista_plot_basedir', None, 'env')
+    app.add_config_value('pyvista_plot_html_show_formats', True, 'env')
+    app.add_config_value('pyvista_plot_template', None, 'env')
+    app.add_config_value('pyvista_plot_setup', None, 'env')
+    app.add_config_value('pyvista_plot_cleanup', None, 'env')
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_force_static', default=False, rebuild='env')
     app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
     return {
         'parallel_read_safe': True,
@@ -378,29 +389,16 @@ def setup(app: Sphinx):
 # -----------------------------------------------------------------------------
 # Doctest handling
 # -----------------------------------------------------------------------------
-def _contains_doctest(text):
-    try:
-        # check if it's valid Python as-is
-        compile(text, '<string>', 'exec')
-    except SyntaxError:
-        pass
-    else:
-        return False
-    r = re.compile(r'^\s*>>>', re.MULTILINE)
-    m = r.search(text)
-    return bool(m)
-
-
-def _contains_pyvista_plot(text) -> bool:
+def _contains_pyvista_plot(text: str) -> bool:
     return '.. pyvista-plot::' in text
 
 
-def _strip_comments(code):
+def _strip_comments(code: str) -> str:
     """Remove comments from a line of python code, leaving string literals alone."""
     return _COMMENT_OR_STRING_RE.sub(lambda match: match.group(1) or '', code)
 
 
-def _split_code_at_show(text):
+def _split_code_at_show(text: str) -> tuple[bool, list[str]]:
     """Split code at plt.show() or plt.plot().
 
     Includes logic to deal with edge cases like:
@@ -439,7 +437,7 @@ def _split_code_at_show(text):
     return is_doctest, parts
 
 
-def _show_or_plot_in_string(string):
+def _show_or_plot_in_string(string: str) -> bool:
     # string contains `.show(`, `.plot(`, or `plot_xyz(` where `xyz` is one
     # or more lower-case letters or underscore, e.g. `plot_cell(`, `plot_datasets(`
     pattern = r'(?:\.plot\(|\.show\(|(?:[ \t\n.]plot_[a-z_]+?)\()'
@@ -506,25 +504,25 @@ Exception occurred rendering plot.
 
 # the context of the plot for all directives specified with the
 # :context: option
-plot_context = {}
+plot_context: dict[str, Any] = {}
 
 
 class ImageFile:
     """Simple representation of an image file path."""
 
-    def __init__(self, dirname, basename):
+    def __init__(self, dirname: str, basename: str) -> None:
         """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
         self.extension = Path(basename).suffix[1:]
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         """Return the filename of this image."""
         return str(Path(self.dirname) / self.basename)
 
     @property
-    def stem(self):
+    def stem(self) -> str:
         """Return the ``basename`` without the suffix."""
         return Path(self.basename).stem
 
@@ -536,7 +534,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _executable_piece(code_piece, *, is_doctest):
+def _executable_piece(code_piece: str, *, is_doctest: bool) -> str | None:
     """Return ``code_piece``'s script without its ``# doctest: +SKIP`` statements.
 
     A skipped statement is not runnable; executing the rest keeps the namespace --
@@ -552,7 +550,13 @@ def _executable_piece(code_piece, *, is_doctest):
     )
 
 
-def _run_code(*, code, code_path, ns=None, function_name=None):
+def _run_code(
+    *,
+    code: str,
+    code_path: str,
+    ns: dict[str, Any],
+    function_name: str | None = None,
+) -> dict[str, Any]:
     """Run a docstring example.
 
     Run the example if it does not contain a ``pyvista-plot::`` directive.
@@ -582,18 +586,18 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
 
 def render_figures(
     *,
-    code,
-    code_path,
-    output_dir,
-    output_base,
-    context,
-    function_name,
-    config,
-    force_static,
+    code: str,
+    code_path: str,
+    output_dir: str,
+    output_base: str,
+    context: bool,
+    function_name: str | None,
+    config: Config,
+    force_static: bool,
     env: BuildEnvironment | None = None,
     include_source: bool = True,
     state: RSTState | None = None,
-):
+) -> list[tuple[str, list[ImageFile]]]:
     """Run a pyplot script and save the images in *``output_dir``*.
 
     Save the images under *``output_dir``* with file names derived from
@@ -712,7 +716,7 @@ def _contains_doctest(text: str) -> bool:
     return bool(m)
 
 
-def hash_plot_code(code: str, options: dict) -> str:
+def hash_plot_code(code: str, options: dict[str, Any]) -> str:
     """Generate a hash of the plot code."""
     # convert to plain script if doctest code
     script = doctest.script_from_examples(code) if _contains_doctest(code) else code
@@ -733,13 +737,22 @@ def hash_plot_code(code: str, options: dict) -> str:
     return hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()[:16]
 
 
-def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
+def run(  # noqa: PLR0917
+    arguments: list[str],
+    content: StringList,
+    options: dict[str, Any],
+    state_machine: RSTStateMachine | NestedStateMachine,
+    state: RSTState,
+    lineno: int,
+) -> list[nodes.system_message]:
     """Run the plot directive."""
     document = state_machine.document
-    config = document.settings.env.config
+    env = document.settings.env
+    app = env.app
+    config = env.config
     nofigs = 'nofigs' in options
     optional = 'optional' in options
-    force_static = 'force_static' in options
+    force_static = config.pyvista_plot_force_static or 'force_static' in options
     use_counter = config.pyvista_plot_use_counter
 
     default_fmt = 'png'
@@ -757,10 +770,10 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
 
     if len(arguments):
         if not config.pyvista_plot_basedir:
-            source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
+            source_file_name = str(Path(app.builder.srcdir) / directives.uri(arguments[0]))
         else:
             source_file_name = str(
-                Path(setup.confdir) / config.pyvista_plot_basedir / directives.uri(arguments[0]),
+                Path(app.confdir) / config.pyvista_plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -813,11 +826,11 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
+    source_rel_name = os.path.relpath(source_file_name, app.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
+    build_dir = str(Path(app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -825,11 +838,11 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     Path(build_dir).mkdir(parents=True, exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = str((Path(setup.app.builder.outdir) / source_rel_dir).resolve())
+    dest_dir = str((Path(app.builder.outdir) / source_rel_dir).resolve())
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = Path(os.path.relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
+    dest_dir_link = Path(os.path.relpath(app.confdir, rst_dir), source_rel_dir).as_posix()
     try:
         build_dir_link = os.path.relpath(build_dir, rst_dir)
     except ValueError:  # pragma: no cover
@@ -840,6 +853,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
 
     # make figures
     errors = []
+    results: list[tuple[str, list[ImageFile]]]
     if skip:
         results = [(code, [])]
     else:

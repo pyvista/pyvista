@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import functools
 import os
+from pathlib import Path
+import re
 import sys
 
 from pyvista import _vtk
@@ -11,6 +13,8 @@ from pyvista.plotting.tools import _prepare_offscreen_macos_render_window
 
 # Qt GUI modules that would expose a live QGuiApplication, newest binding first
 _QT_GUI_MODULES = ('PySide6.QtGui', 'PyQt6.QtGui', 'PySide2.QtGui', 'PyQt5.QtGui')
+
+_PROC_MAPS = Path('/proc/self/maps')
 
 
 def _qt_platform_name() -> str | None:
@@ -38,6 +42,46 @@ def _qt_platform_name() -> str | None:
     return None
 
 
+def _gl_platform_from_maps(maps: str) -> str | None:
+    """Return the GL platform implied by the libraries listed in a memory map.
+
+    Parameters
+    ----------
+    maps : str
+        The contents of ``/proc/<pid>/maps``.
+
+    Returns
+    -------
+    str | None
+        ``'egl'`` or ``'glx'`` when exactly one of ``libEGL`` and ``libGLX`` is
+        mapped, otherwise ``None``.
+
+    """
+    # not libGL: EGL programs may link it for the GL entry points
+    has_egl = re.search(r'/libEGL[^/\s]*\.so', maps) is not None
+    has_glx = re.search(r'/libGLX[^/\s]*\.so', maps) is not None
+    if has_egl == has_glx:
+        return None
+    return 'egl' if has_egl else 'glx'
+
+
+def _loaded_gl_platform() -> str | None:
+    """Return the GL platform implied by the libraries mapped into this process.
+
+    Returns
+    -------
+    str | None
+        ``'egl'`` or ``'glx'``, or ``None`` when the libraries do not settle
+        it or the platform has no ``/proc/self/maps``.
+
+    """
+    try:
+        maps = _PROC_MAPS.read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return None
+    return _gl_platform_from_maps(maps)
+
+
 def _process_uses_egl() -> bool:
     """Return whether this process draws through EGL rather than GLX.
 
@@ -49,8 +93,11 @@ def _process_uses_egl() -> bool:
     ``EGL_BAD_ACCESS`` (pyvista/pyvistaqt#445 follow-up).
 
     A running Qt application is authoritative, since it is the thing that did
-    or did not connect to the compositor. Without one, the session variable is
-    all there is to go on.
+    or did not connect to the compositor. Failing that, the GL libraries mapped
+    into the process answer for any other host that has created a window, such
+    as a GTK application; importing VTK maps neither. Without either, VTK's
+    factory picks the window, and it prefers GLX (through XWayland) when
+    ``DISPLAY`` is set, so only a Wayland session without ``DISPLAY`` means EGL.
 
     Returns
     -------
@@ -61,7 +108,10 @@ def _process_uses_egl() -> bool:
     platform_name = _qt_platform_name()
     if platform_name is not None:
         return platform_name.startswith('wayland')
-    return bool(os.environ.get('WAYLAND_DISPLAY'))
+    loaded = _loaded_gl_platform()
+    if loaded is not None:
+        return loaded == 'egl'
+    return bool(os.environ.get('WAYLAND_DISPLAY')) and not os.environ.get('DISPLAY')
 
 
 def _offscreen_probe_render_window() -> _vtk.vtkRenderWindow:
@@ -72,9 +122,10 @@ def _offscreen_probe_render_window() -> _vtk.vtkRenderWindow:
     platform (pyvista/pyvistaqt#445). Making a GLX context current in such a
     process aborts it with ``X Error ... BadAccess (X_GLXMakeCurrent)``, so
     the default (GLX-based) ``vtkXOpenGLRenderWindow`` cannot be used for the
-    probe. The converse mix is harmless: an EGL render window works in a
-    process that already uses GLX. So prefer EGL whenever a Wayland session is
-    detected, and keep the factory default everywhere else.
+    probe. The converse mix is less severe but still broken: an EGL render
+    window in a process that already uses GLX logs ``EGL_BAD_ACCESS`` on every
+    render. So use EGL when ``_process_uses_egl`` says this process draws
+    through EGL, and keep the factory default everywhere else.
 
     An explicit ``VTK_DEFAULT_OPENGL_WINDOW`` override always wins: the
     factory honors it, and the user's choice also determines the backend the
@@ -152,12 +203,12 @@ def uses_egl() -> bool:
         # constructing (and destroying) the default GLX-based window aborts a
         # process that already uses EGL, e.g. a Qt application running on the
         # native ``wayland`` platform (pyvista/pyvistaqt#445). Answer without
-        # instantiation instead: honor an explicit backend override, otherwise
-        # infer from the build -- headless EGL/OSMesa wheels are compiled
-        # without X support.
+        # instantiation instead: honor an explicit backend override, then a
+        # mapped libEGL, otherwise infer from the build -- headless EGL/OSMesa
+        # wheels are compiled without X support.
         backend = os.environ.get('VTK_DEFAULT_OPENGL_WINDOW')
         if backend:
             return 'EGL' in backend or 'OSOpenGL' in backend
-        return not _vtk.has_attr('vtkXOpenGLRenderWindow')
+        return _loaded_gl_platform() == 'egl' or not _vtk.has_attr('vtkXOpenGLRenderWindow')
     ren_win_str = str(type(_vtk.vtkRenderWindow()))
     return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str

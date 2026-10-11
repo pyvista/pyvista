@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
     from .renderer import Renderer
@@ -144,8 +144,8 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     def __init__(
         self,
         *,
-        position: VectorLike[float] | None = None,
-        focal_point: VectorLike[float] | None = None,
+        position: VectorLikeFloat | None = None,
+        focal_point: VectorLikeFloat | None = None,
         color: ColorLike | None = None,
         light_type: _LightTypeOptions | int = 'scene light',
         intensity: float | None = None,
@@ -154,7 +154,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         show_actor: bool = False,
         exponent: float | None = None,
         shadow_attenuation: float | None = None,
-        attenuation_values: VectorLike[float] | None = None,
+        attenuation_values: VectorLikeFloat | None = None,
     ) -> None:
         """Initialize the light."""
         super().__init__()
@@ -409,7 +409,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetPosition()
 
     @position.setter
-    def position(self, pos: VectorLike[float]) -> None:
+    def position(self, pos: VectorLikeFloat) -> None:
         self.SetPosition(_validation.validate_array3(pos, dtype_out=float, to_tuple=True))
 
     @property
@@ -463,7 +463,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, pos: VectorLike[float]) -> None:
+    def focal_point(self, pos: VectorLikeFloat) -> None:
         self.SetFocalPoint(_validation.validate_array3(pos, dtype_out=float, to_tuple=True))
 
     @property
@@ -745,7 +745,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetAttenuationValues()
 
     @attenuation_values.setter
-    def attenuation_values(self, values: VectorLike[float]) -> None:
+    def attenuation_values(self, values: VectorLikeFloat) -> None:
         self.SetAttenuationValues(
             _validation.validate_array3(values, dtype_out=float, to_tuple=True)
         )

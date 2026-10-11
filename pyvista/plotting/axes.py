@@ -12,7 +12,7 @@ from .actor import Actor
 from .axes_actor import AxesActor
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
 
 class Axes(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAxes):
@@ -83,7 +83,7 @@ class Axes(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAxes):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value: VectorLike[float]) -> None:
+    def origin(self, value: VectorLikeFloat) -> None:
         self.SetOrigin(value)  # type: ignore[arg-type]
 
     def show_actor(self) -> None:

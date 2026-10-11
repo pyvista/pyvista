@@ -1052,6 +1052,10 @@ def test_texture_map_to_sphere():
     assert 'Texture Coordinates' in dataset.array_names
 
 
+@pytest.mark.expect_vtk_output(
+    'Turning indexing off: no data to index with',
+    reason='there is no array to index the glyph geometry with, so VTK turns indexing off',
+)
 def test_glyph(datasets, sphere):
     for dataset in datasets:
         dataset['vectors'] = np.ones_like(dataset.points)
@@ -2172,6 +2176,10 @@ def test_streamlines_errors(uniform_vec):
         uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
 
+@pytest.mark.expect_vtk_output(
+    'The update extent specified in the information',
+    reason='the seed source requests an extent the input producer does not provide',
+)
 def test_streamlines_from_source(uniform_vec):
     vertices = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]])
     source = pv.PolyData(vertices)
@@ -2260,6 +2268,10 @@ def test_streamlines_evenly_spaced_2d_errors():
         mesh.rotate_x(45).streamlines_evenly_spaced_2D()
 
 
+@pytest.mark.expect_vtk_output(
+    'Algorithm vtkEvenlySpacedStreamlines2D',
+    reason='the filter supports xy-plane input only and fails on this one',
+)
 @pytest.mark.xfail
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
@@ -3855,6 +3867,10 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
+@pytest.mark.expect_vtk_output(
+    'Could not locate key vtkExodusIIReader::GLOBAL_TEMPORAL_VARIABLE',
+    reason='the downloaded file carries an Exodus key the reader cannot resolve',
+)
 def test_compute_boundary_mesh_quality():
     mesh = examples.download_can_crushed_vtu()
     qual = mesh.compute_boundary_mesh_quality()
@@ -3863,11 +3879,22 @@ def test_compute_boundary_mesh_quality():
     assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
 
 
-def test_compute_boundary_mesh_quality_surface(sphere):
-    # A surface has no 3D cells, so there are no boundary faces to measure
-    qual = sphere.compute_boundary_mesh_quality()
-    assert isinstance(qual, pv.PolyData)
-    assert qual.n_cells == 0
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PolyData(),
+        pv.Line(),
+        pv.ImageData(dimensions=(4, 4, 1)),
+        pv.RectilinearGrid(np.arange(4.0), np.arange(4.0), np.array([0.0])),
+        pv.StructuredGrid(*np.meshgrid(np.arange(4.0), np.arange(4.0), [0.0], indexing='ij')),
+    ],
+    ids=['surface', 'empty', 'line', 'image_2d', 'rectilinear_2d', 'structured_2d'],
+)
+def test_compute_boundary_mesh_quality_without_3d_cells_raises(mesh):
+    match = r'Boundary faces are only defined for 3D cells, but the input has none'
+    with pytest.raises(ValueError, match=match):
+        mesh.compute_boundary_mesh_quality()
 
 
 def test_compute_derivatives(random_hills):
@@ -4675,14 +4702,14 @@ def test_integrate_data_pointset(pointset):
 
 
 @pytest.mark.parametrize('name', ['streamlines', 'streamlines_from_source'])
-def test_streamlines_pointset(pointset, name):
+def test_streamlines_pointset_raises(pointset, name):
     pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
     kwargs = {
         'streamlines': dict(n_points=2),
         'streamlines_from_source': dict(source=pv.PolyData(pointset.points[:1])),
     }[name]
-    output = getattr(pointset, name)(vectors='vectors', **kwargs)
-    assert isinstance(output, pv.PolyData)
+    with pytest.raises(pv.PointSetCellOperationError, match='PointSets contain no cells'):
+        getattr(pointset, name)(vectors='vectors', **kwargs)
 
 
 def test_integrate_data():
@@ -4725,6 +4752,22 @@ def test_align_xyz():
 
     aligned = mesh.align_xyz(centered=False)
     assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_rectilinear():
+    grid = pv.RectilinearGrid([0, 1], [0, 2], [0, 0.5])
+    aligned = grid.align_xyz(centered=False)
+    assert isinstance(aligned, pv.RectilinearGrid)
+    expected = np.array([-1, 1, -0.5, 0.5, -0.25, 0.25]) + np.repeat(grid.center, 2)
+    assert np.allclose(aligned.bounds, expected)
+
+    grid = examples.load_rectilinear()
+    aligned = grid.align_xyz(centered=False)
+    assert sorted(aligned.dimensions) == sorted(grid.dimensions)
+    assert np.allclose(sorted(aligned['Random Data']), sorted(grid['Random Data']))
+
+    box = grid.oriented_bounding_box()
+    assert np.allclose(box.bounds, grid.bounds)
 
 
 def test_align_xyz_merge_points():
@@ -6069,3 +6112,23 @@ def test_filters_keep_the_input_subclass():
     image = pv.ImageData(dimensions=(3, 3, 3))
     image['scalars'] = np.zeros(image.n_points)
     assert type(image.warp_by_scalar('scalars')) is pv.StructuredGrid
+
+
+@pytest.mark.parametrize('n_channels', [3, 4])
+@pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba'])
+def test_color_labels_int_colormap_matches_color(color_type, n_channels):
+    values = np.array([0.0, 0.5, 1.5, 2.5, 127.5, 128.5, 254.5, 255.0]) / 255
+    cmap_colors = np.column_stack([values, values[::-1], np.roll(values, 3), values])
+    cmap_colors = cmap_colors[:, :n_channels]
+    labels = pv.ImageData(dimensions=(len(values), 1, 1))
+    labels['labels'] = np.arange(len(values))
+    colored = labels.color_labels(ListedColormap(cmap_colors), color_type=color_type)
+    expected = [getattr(pv.Color(c), color_type) for c in cmap_colors.tolist()]
+    assert np.array_equal(colored['labels' + color_type.removeprefix('int')], expected)
+
+
+def test_color_labels_int_colormap_named_colors():
+    labels = pv.ImageData(dimensions=(2, 1, 1))
+    labels['labels'] = [0, 1]
+    colored = labels.color_labels(ListedColormap(['red', 'blue']))
+    assert np.array_equal(colored['labels_rgb'], [[255, 0, 0], [0, 0, 255]])

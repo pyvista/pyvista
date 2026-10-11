@@ -14,11 +14,6 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'pointset().extract_cells([0])': 'a `PointSet` has no cells, so the call raises',
-}
-
-
 assert_types(poly().extract_cells([0]), pv.UnstructuredGrid)
 assert_types(image().extract_cells([0]), pv.UnstructuredGrid)
 assert_types(rectilinear().extract_cells([0]), pv.UnstructuredGrid)
@@ -26,4 +21,4 @@ assert_types(structured().extract_cells([0]), pv.UnstructuredGrid)
 assert_types(unstructured().extract_cells([0]), pv.UnstructuredGrid)
 assert_types(explicit_structured().extract_cells([0]), pv.UnstructuredGrid)
 
-assert_types(pointset().extract_cells([0]), Never)  # pragma: no cover
+assert_types(pointset().extract_cells([0]), Never)

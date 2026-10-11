@@ -22,7 +22,7 @@ from .opts import RepresentationType
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
     from ._typing import PropertyCullingOptions
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 _HAS_NATIVE_POINT_SHAPES = hasattr(getattr(_vtk.vtkProperty, 'Point2DShapeType', None), 'Star')
 
 
-def _checker(name: str, rng: VectorLike[float]) -> Callable[[float], None]:
+def _checker(name: str, rng: VectorLikeFloat) -> Callable[[float], None]:
     """Return a range check for one named value, excluding an infinite upper bound."""
     return functools.partial(
         _validation.check_range, rng=rng, strict_upper=bool(np.isinf(rng[1])), name=name

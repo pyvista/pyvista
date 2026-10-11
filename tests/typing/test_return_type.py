@@ -148,8 +148,11 @@ def test_center_tuple(class_with_center):
     assert is_all_floats(center)
 
     # Test type annotations
+    expected = 'tuple[float, float, float]'
+    if class_with_center is pv.Text3DSource:
+        expected += ' | None'
     return_type = get_property_return_type(class_with_center.center)
-    assert return_type == 'tuple[float, float, float]'
+    assert return_type == expected
 
 
 def test_bounds_tuple_repr_scientific_notation():

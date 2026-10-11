@@ -21,7 +21,9 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from pyvista.core._typing_core import NumpyArray
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import FieldLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -47,7 +49,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     Parameters
     ----------
-    uinput : str, :vtk:`vtkImageData`, :vtk:`vtkTexture`, sequence[ImageData], optional
+    uinput : str | numpy.ndarray | :vtk:`vtkImageData` | :vtk:`vtkTexture` | sequence, optional
         Filename, :vtk:`vtkImageData`, :vtk:`vtkTexture`, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
@@ -139,7 +141,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         uinput: str
         | _vtk.vtkTexture
         | _vtk.vtkImageData
-        | NumpyArray[Any]
+        | NDArray[_Scalar]
         | Sequence[pv.ImageData]
         | None = None,
         **kwargs: Any,
@@ -269,7 +271,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         self.SetInputDataObject(image)
         self.Update()
 
-    def _from_array(self, image: NumpyArray[Any]) -> None:
+    def _from_array(self, image: NDArray[_Scalar]) -> None:
         """Create a texture from a np.ndarray."""
         if image.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
@@ -398,7 +400,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             raise ValueError(msg)
         return image
 
-    def to_array(self) -> NumpyArray[float]:
+    def to_array(self) -> NDArray[_Scalar]:
         """Return the texture as an array.
 
         Notes
@@ -866,7 +868,7 @@ def image_to_texture(image: pv.ImageData | _vtk.vtkImageData) -> Texture:
     return Texture(image)
 
 
-def numpy_to_texture(image: NumpyArray[Any]) -> Texture:
+def numpy_to_texture(image: NDArray[_Scalar]) -> Texture:
     """Convert a NumPy image array to a :class:`pyvista.Texture`.
 
     Parameters

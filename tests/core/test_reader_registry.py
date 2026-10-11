@@ -258,6 +258,20 @@ def test_read_forwards_kwargs_to_registered_class_in_a_sequence(tmp_path):
     assert denser[1].n_points > default[1].n_points
 
 
+def test_read_sequence_keeps_a_partitioned_dataset(tmp_path):
+    """A partitioned dataset cannot be a block, so it is converted rather than dropped."""
+    partitioned = tmp_path / 'part.vtpd'
+    poly = tmp_path / 'poly.vtp'
+    pv.PartitionedDataSet([pv.Sphere()]).save(partitioned)
+    pv.Cube().save(poly)
+
+    blocks = pv.read([partitioned, poly])
+
+    assert blocks[0] is not None
+    assert blocks[0].n_blocks == 1
+    assert isinstance(blocks[1], pv.PolyData)
+
+
 def test_progress_bar_and_validate_are_not_forwarded_to_a_handler(tmp_path):
     """A handler owns the whole read, so reader-object arguments stay behind."""
     test_file = tmp_path / 'data.myext'

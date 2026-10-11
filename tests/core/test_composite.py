@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Generator
 import itertools
 from pathlib import Path
@@ -82,6 +83,57 @@ def test_multi_block_init_list(rectilinear, airplane):
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_sequence(rectilinear, airplane):
+    data = deque([rectilinear, airplane])
+    multi = MultiBlock(data)
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_partitioned(sphere, airplane):
+    # A `PartitionedDataSet` is a sequence, so its partitions become the blocks
+    multi = MultiBlock(pv.PartitionedDataSet([sphere, airplane]))
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), PolyData)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+@pytest.mark.parametrize(
+    'add_block',
+    [
+        lambda multi, block: multi.append(block),
+        lambda multi, block: multi.__setitem__(0, block),
+        lambda multi, block: multi.insert(0, block),
+    ],
+    ids=['append', 'setitem', 'insert'],
+)
+def test_multi_block_rejects_a_block_vtk_refuses(sphere, add_block):
+    # VTK only logs when it refuses a block, leaving the slot silently empty
+    multi = MultiBlock([sphere])
+    match = re.escape(
+        'A PartitionedDataSet cannot be a block of a MultiBlock. '
+        'Call cast_to_multiblock() on it first.'
+    )
+    with pytest.raises(TypeError, match=match):
+        add_block(multi, pv.PartitionedDataSet([sphere]))
+
+    # A multi-piece dataset is one VTK does hold, so it reaches `wrap` and fails there
+    with pytest.raises(TypeError, match='is not currently supported by pyvista'):
+        add_block(multi, _vtk.vtkMultiPieceDataSet())
+
+
+def test_multi_block_init_rejects_a_block_vtk_refuses(sphere):
+    with pytest.raises(TypeError, match='cannot be a block of a MultiBlock'):
+        MultiBlock([pv.PartitionedDataSet([sphere])])
+
+
+def test_multi_block_init_str_is_a_filename(tmp_path, sphere):
+    # A `str` is a sequence, but names a file rather than giving one block per character
+    MultiBlock([sphere]).save(path := tmp_path / 'blocks.vtm')
+    assert MultiBlock(str(path)).n_blocks == 1
 
 
 def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
@@ -380,7 +432,7 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
     assert multi._repr_html_() is not None
     pattern = (
-        r'MultiBlock \(0x[0-9a-fA-F]+\)'
+        r'MultiBlock\[.+\] \(0x[0-9a-fA-F]+\)'
         r'\s+N Blocks:\s{3}\d+'
         r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
@@ -1575,6 +1627,96 @@ def test_block_types(multiblock_all_with_nested_and_none):
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)
     assert multi.block_types == types
+
+
+@pytest.mark.parametrize(
+    ('blocks', 'expected'),
+    [
+        ([], 'MultiBlock'),
+        ([pv.PolyData(), pv.PolyData()], 'MultiBlock[PolyData]'),
+        ([pv.PolyData(), None, pv.ImageData()], 'MultiBlock[ImageData | PolyData | None]'),
+        ([pv.MultiBlock()], 'MultiBlock[MultiBlock]'),
+        (
+            [pv.MultiBlock([pv.MultiBlock([pv.PolyData()])])],
+            'MultiBlock[MultiBlock[MultiBlock[PolyData]]]',
+        ),
+        (
+            [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
+            'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
+        ),
+    ],
+)
+def test_inferred_type(blocks, expected):
+    assert pv.MultiBlock(blocks).inferred_type == expected
+
+
+class _SubBlock(pv.MultiBlock):
+    """MultiBlock subclass for naming tests."""
+
+
+def test_inferred_type_subclass():
+    sub = _SubBlock([pv.PolyData()])
+    assert sub.inferred_type == '_SubBlock[PolyData]'
+    multi = pv.MultiBlock([sub, pv.MultiBlock([pv.ImageData()])])
+    assert multi.inferred_type == 'MultiBlock[MultiBlock[ImageData] | _SubBlock[PolyData]]'
+
+
+def _nest(block, depth):
+    """Wrap ``block`` in ``depth`` levels of MultiBlock."""
+    for _ in range(depth):
+        block = pv.MultiBlock([block])
+    return block
+
+
+_WIDE = [
+    pv.PolyData(),
+    pv.UnstructuredGrid(),
+    pv.ImageData(),
+    pv.PointSet(),
+    pv.StructuredGrid(),
+    pv.RectilinearGrid(),
+    pv.ExplicitStructuredGrid(),
+]
+
+
+@pytest.mark.parametrize(
+    ('multi', 'header'),
+    [
+        (pv.MultiBlock([pv.PolyData()]), 'MultiBlock[PolyData]'),
+        (_nest(pv.PolyData(), 3), 'MultiBlock[MultiBlock[MultiBlock[PolyData]]]'),
+        (
+            pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.UnstructuredGrid()]),
+            'MultiBlock[MultiBlock[PolyData] | UnstructuredGrid]',
+        ),
+        (_nest(pv.PolyData(), 4), 'MultiBlock[MultiBlock[MultiBlock[...]]]'),
+        (
+            _nest(pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.StructuredGrid()]), 2),
+            'MultiBlock[MultiBlock[MultiBlock[...]]]',
+        ),
+        (
+            pv.MultiBlock(_WIDE),
+            'MultiBlock[ExplicitStructuredGrid | ImageData | PointSet | ...]',
+        ),
+        (
+            pv.MultiBlock(
+                [
+                    pv.ExplicitStructuredGrid(),
+                    pv.ImageData(),
+                    pv.MultiBlock([pv.PolyData()]),
+                    pv.PointSet(),
+                ]
+            ),
+            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
+        ),
+    ],
+)
+def test_inferred_type_in_repr(multi, header):
+    assert repr(multi).startswith(f'{header} (0x')
+
+
+def test_inferred_type_not_capped():
+    assert pv.MultiBlock(_WIDE).inferred_type.count('|') == len(_WIDE) - 1
+    assert _nest(pv.PolyData(), 6).inferred_type.count('MultiBlock') == 6
 
 
 def test_is_homogeneous_is_heterogeneous(multiblock_all_with_nested_and_none):

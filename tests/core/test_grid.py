@@ -1974,6 +1974,24 @@ def test_explicit_structured_grid_cell_coords():
     assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
 
 
+def test_explicit_structured_grid_cell_id_rejects_floats():
+    grid = examples.load_explicit_structured()
+    with pytest.raises(TypeError, match='Cell coordinates must be integers, got dtype float64'):
+        grid.cell_id((3.0, 4.0, 0.0))
+
+
+def test_explicit_structured_grid_cell_coords_rejects_floats():
+    grid = examples.load_explicit_structured()
+    with pytest.raises(TypeError, match='Cell IDs must be integers, got dtype float64'):
+        grid.cell_coords((19.0, 31.0))
+
+
+def test_explicit_structured_grid_cell_lookups_accept_bools():
+    grid = examples.load_explicit_structured()
+    assert grid.cell_id(np.array([True, False, True])) == grid.cell_id((1, 0, 1))
+    assert np.array_equal(grid.cell_coords(np.array([True, False])), grid.cell_coords((1, 0)))
+
+
 def test_explicit_structured_grid_neighbors():
     grid = examples.load_explicit_structured()
 

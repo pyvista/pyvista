@@ -692,6 +692,24 @@ def test_set_active_tensors(hexbeam):
     active_component_consistency_check(hexbeam, 'tensors', 'point')
 
 
+@pytest.mark.parametrize('association', [pv.FieldAssociation.POINT, pv.FieldAssociation.CELL])
+@pytest.mark.parametrize(
+    ('setter', 'info', 'n_components'),
+    [
+        ('set_active_scalars', 'active_scalars_info', 1),
+        ('set_active_vectors', 'active_vectors_info', 3),
+        ('set_active_tensors', 'active_tensors_info', 9),
+    ],
+)
+def test_set_active_array_preference_field_association(
+    hexbeam, association, setter, info, n_components
+):
+    hexbeam.point_data['arr'] = np.ones((hexbeam.n_points, n_components))
+    hexbeam.cell_data['arr'] = np.ones((hexbeam.n_cells, n_components))
+    getattr(hexbeam, setter)('arr', preference=association)
+    assert getattr(hexbeam, info).association == association
+
+
 def test_set_texture_coordinates(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.active_texture_coordinates = [1, 2, 3]
@@ -706,6 +724,10 @@ def test_set_texture_coordinates(hexbeam):
         hexbeam.active_texture_coordinates = np.empty((hexbeam.n_points, 1))
 
 
+@pytest.mark.expect_vtk_output(
+    'Can not set attribute Vectors. Incorrect number of components.',
+    reason='VTK reports the component mismatch through this error, which becomes a ValueError',
+)
 def test_set_active_vectors_fail(hexbeam):
     with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.set_active_vectors('not a vector')
@@ -725,6 +747,10 @@ def test_set_active_vectors_fail(hexbeam):
     active_component_consistency_check(hexbeam, 'vectors', 'point')
 
 
+@pytest.mark.expect_vtk_output(
+    'Can not set attribute Tensors. Incorrect number of components.',
+    reason='VTK reports the component mismatch through this error, which becomes a ValueError',
+)
 def test_set_active_tensors_fail(hexbeam):
     with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.set_active_tensors('not a tensor')
