@@ -7,7 +7,10 @@ from pathlib import Path
 import re
 import sys
 
-PATTERN = re.compile(r'[^\s.#][.?!] {2,}[A-Z]')
+# Same token as doc/styles/Google/Spacing.yml.
+PATTERN = re.compile(r'[^\s.][.?!] {2,}[A-Z]')
+ENUMERATOR = re.compile(r'^[\s#]*(?:\d+|[A-Za-z]|#)\.(?= )')
+DOCTEST = re.compile(r'^\s*(?:>>>|\.\.\.)(?: |$)')
 GALLERY_CELL = re.compile(r'^# ?(?:%%|#{20,})')
 
 
@@ -59,7 +62,7 @@ def main(argv: list[str]) -> int:
     exit_code = 0
     for filename in argv:
         for number, line in prose_lines(Path(filename)):
-            if PATTERN.search(line):
+            if not DOCTEST.match(line) and PATTERN.search(ENUMERATOR.sub('', line)):
                 print(f'{filename}:{number}: {line.strip()}')  # noqa: T201
                 exit_code = 1
     return exit_code
