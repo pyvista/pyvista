@@ -317,7 +317,7 @@ def create_mixed_cells(
     ----------
     mixed_cell_dict : dict
         A dictionary that maps VTK-Enum-types (for example, :attr:`~pyvista.CellType.TRIANGLE`) to
-        np.ndarrays of type int.  The ``np.ndarrays`` describe the cell
+        np.ndarrays of type int. The ``np.ndarrays`` describe the cell
         connectivity. For cell types with a data-defined number of points, the value
         may instead be a sequence of 1D integer arrays (one per cell).
     nr_points : int, optional

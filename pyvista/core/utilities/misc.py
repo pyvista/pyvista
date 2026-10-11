@@ -139,7 +139,7 @@ def _resolve_line_style(style: LineStyle, *, name: str = 'style') -> int:
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Decorate a class, overriding ``__new__``.
 
-    Preventing a class from being instantiated similar to abc.ABCMeta
+    Preventing a class from being instantiated similar to ``abc.ABCMeta``
     but does not require an abstract method.
 
     Parameters

@@ -33,7 +33,7 @@ sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(300
 # Warp by Scalar
 # ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
-# value of the Perlin noise.  This is necessary to the terrain its shape.
+# value of the Perlin noise. This is necessary to the terrain its shape.
 
 mesh = sampled.warp_by_scalar('scalars')
 mesh = mesh.extract_surface(algorithm=None)

@@ -641,7 +641,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     Parameters
     ----------
     uinput : str | :vtk:`vtkImageData` | ImageData, optional
-        Filename or dataset to initialize the uniform grid from.  If
+        Filename or dataset to initialize the uniform grid from. If
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional

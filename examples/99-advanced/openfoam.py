@@ -12,7 +12,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# This example uses data from a lid-driven cavity flow.  It is recommended to
+# This example uses data from a lid-driven cavity flow. It is recommended to
 # use :class:`pyvista.POpenFOAMReader` for reading OpenFOAM files for more
 # control over reading data.
 #
@@ -25,7 +25,7 @@ reader = pv.POpenFOAMReader(filename)
 
 # %%
 # OpenFOAM datasets include multiple sub-datasets including the internal mesh
-# and patches, typically boundaries.  This can be inspected before reading the data.
+# and patches, typically boundaries. This can be inspected before reading the data.
 
 print(f'All patch names: {reader.patch_array_names}')
 print(f'All patch status: {reader.all_patch_arrays_status}')
@@ -44,7 +44,7 @@ internal_mesh = mesh['internalMesh']  # or internal_mesh = mesh[0]
 print(internal_mesh)
 
 # %%
-# Additional Patch meshes are nested inside another MultiBlock mesh.  The name
+# Additional Patch meshes are nested inside another MultiBlock mesh. The name
 # of the sub-level MultiBlock mesh depends on the vtk version.
 
 boundaries = mesh['boundary']
@@ -54,7 +54,7 @@ print(boundaries['movingWall'])
 
 # %%
 # The default in OpenFOAMReader is to translate the existing cell data to point
-# data.  Therefore, the cell data arrays are duplicated in point data.
+# data. Therefore, the cell data arrays are duplicated in point data.
 
 print('Cell Data:')
 print(internal_mesh.cell_data)
@@ -83,10 +83,10 @@ boundaries = mesh['boundary']
 
 # %%
 # This OpenFOAM simulation is in 3D with
-# only 1 cell in the z-direction.  First, the solution is sliced in the center
+# only 1 cell in the z-direction. First, the solution is sliced in the center
 # of the z-direction.
 # :func:`pyvista.DataSetFilters.streamlines_evenly_spaced_2D` requires the data
-# to lie in the z=0 plane.  So, after the domain sliced, it is translated to
+# to lie in the z=0 plane. So, after the domain sliced, it is translated to
 # ``z=0``.
 
 
@@ -113,7 +113,7 @@ streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
 )
 
 # %%
-# Plot streamlines colored by velocity magnitude.  Additionally, the moving
+# Plot streamlines colored by velocity magnitude. Additionally, the moving
 # and fixed wall boundaries are plotted.
 
 pl = pv.Plotter()

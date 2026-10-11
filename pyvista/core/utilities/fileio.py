@@ -309,7 +309,7 @@ def read(
         command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
 
     Automatically determines the correct reader to use then wraps the
-    corresponding mesh as a pyvista object.  Attempts native ``vtk``
+    corresponding mesh as a pyvista object. Attempts native ``vtk``
     readers first then tries to use ``meshio``.
 
     Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
@@ -1474,12 +1474,12 @@ def save_meshio(
         Any PyVista mesh/spatial data type.
 
     file_format : str, optional
-        File type for meshio to save.  For example ``'.bdf'``.  This
+        File type for meshio to save. For example ``'.bdf'``.  This
         is normally inferred from the extension but this can be
         overridden.
 
     **kwargs : dict, optional
-        Additional keyword arguments.  See
+        Additional keyword arguments. See
         ``meshio.Mesh.write`` for more details.
 
     Examples

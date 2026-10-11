@@ -362,7 +362,7 @@ def process_opacity(
         When ``mesh.n_points == mesh.n_cells``, this parameter
         sets how the scalars will be mapped to the mesh. If
         ``'point'``, causes the scalars will be associated with
-        the mesh points.  Can be either ``'point'`` or
+        the mesh points. Can be either ``'point'`` or
         ``'cell'``.
 
     n_colors : int

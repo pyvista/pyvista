@@ -1002,7 +1002,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files.
 
-    By default, pyvista enables all patch arrays.  This is a deviation
+    By default, pyvista enables all patch arrays. This is a deviation
     from the vtk default.
 
     Wraps :vtk:`vtkOpenFOAMReader`.
@@ -1766,7 +1766,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     Examples
     --------
-    Load a CGNS file.  All arrays are loaded by default.
+    Load a CGNS file. All arrays are loaded by default.
 
     >>> import pyvista as pv
     >>> from pyvista import examples

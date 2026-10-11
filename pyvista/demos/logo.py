@@ -140,7 +140,7 @@ def logo_letters(
     ----------
     merge : bool, optional
         If ``True``, merge the meshes of the individual letters into a single
-        mesh.  If ``False``, return a dictionary where the keys are the letters
+        mesh. If ``False``, return a dictionary where the keys are the letters
         and the values are the respective meshes.
     depth : float, optional
         The depth of the extrusion for each letter in the mesh.

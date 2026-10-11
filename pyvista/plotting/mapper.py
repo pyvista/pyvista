@@ -325,7 +325,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
         """Return or set the interpolation of scalars before mapping.
 
-        Enabling makes for a smoother scalars display.  When ``False``,
+        Enabling makes for a smoother scalars display. When ``False``,
         OpenGL will interpolate the mapped colors which can result in
         showing colors that are not present in the color map.
 
@@ -707,7 +707,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
         When an :class:`ActiveScalarsAlgorithm` is managing the active
         scalars, the dataset's own ``active_scalars`` may point to a
-        different array.  This property always returns the correct array.
+        different array. This property always returns the correct array.
         """
         if self.dataset is None:
             return None
@@ -999,13 +999,13 @@ class _BaseDataSetMapper(_BaseMapper):
         rgb : bool, default: False
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
-            accepted alias for this.  Opacity (the A) is optional.  If
+            accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgba"`` is passed, the default
             becomes ``True``.  This can be overridden by setting this
             parameter to ``False``.
 
         component : int, optional
-            Set component of vector valued scalars to plot.  Must be
+            Set component of vector valued scalars to plot. Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
@@ -1043,14 +1043,14 @@ class _BaseDataSetMapper(_BaseMapper):
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only applicable
+            ``scalars``.  See available Matplotlib colormaps. Only applicable
             for when displaying ``scalars``.
             ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one.  For example, to create a three color
+            colormap with a custom one. For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this
@@ -1077,8 +1077,8 @@ class _BaseDataSetMapper(_BaseMapper):
                 spreading the colormap evenly over the scalar range.
 
         clim : VectorLikeFloat | float, optional
-            Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``(-1, 2)``. A single value
+            Color bar range for scalars. Defaults to minimum and
+            maximum of scalars array. Example: ``(-1, 2)``. A single value
             ``c`` is the range ``(-c, c)``.
 
         """

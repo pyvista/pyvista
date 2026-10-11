@@ -6924,7 +6924,7 @@ def download_dicom_stack(
         National Cancer Institute Clinical Proteomic Tumor Analysis Consortium
         (CPTAC). (2018).  Radiology Data from the Clinical Proteomic Tumor
         Analysis Consortium Sarcomas [CPTAC-SAR] collection [Data set]. The
-        Cancer Imaging Archive.  DOI: 10.7937/TCIA.2019.9bt23r95
+        Cancer Imaging Archive. DOI: 10.7937/TCIA.2019.9bt23r95
 
     * **Acknowledgement**
 

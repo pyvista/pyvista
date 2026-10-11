@@ -350,7 +350,7 @@ def register_reader(
     -------
     callable or None
         When used as a decorator (``handler`` omitted), returns the
-        decorated function or class.  Otherwise returns ``None``.
+        decorated function or class. Otherwise returns ``None``.
 
     Raises
     ------

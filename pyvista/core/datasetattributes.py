@@ -116,7 +116,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     Parameters
     ----------
     vtkobject : :vtk:`vtkFieldData`
-        The vtk object to wrap as a :class:~pyvista.DataSetAttribute`,
+        The vtk object to wrap as a :class:`~pyvista.DataSetAttributes`,
         usually an instance of :vtk:`vtkCellData`, :vtk:`vtkPointData`, or
         :vtk:`vtkFieldData`.
 
@@ -243,7 +243,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Name of the array item you want to return the value from.
 
         value : Any, optional
-            A value to return if the key does not exist.  Default
+            A value to return if the key does not exist. Default
             is ``None``.
 
         Returns
@@ -462,7 +462,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Parameters
         ----------
         key : str | int
-            The name or index of the array to return.  Arrays are
+            The name or index of the array to return. Arrays are
             ordered within VTK DataSetAttributes, and this feature is
             mirrored here.
 
@@ -479,7 +479,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Notes
         -----
         This is provided since arrays are ordered within VTK and can
-        be indexed via an int.  When getting an array, you can just
+        be indexed via an int. When getting an array, you can just
         use the key of the array with the ``[]`` operator with the
         name of the array.
 
@@ -539,7 +539,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def set_array(self: Self, data: _AnyArrayLike, name: str, *, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
-        Use this method when adding arrays to the DataSet.  If
+        Use this method when adding arrays to the DataSet. If
         needed, these arrays can later be assigned to become the
         active scalars, vectors, normals, or texture coordinates with:
 
@@ -559,7 +559,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Array of data.
 
         name : str
-            Name to assign to the data.  If this name already exists,
+            Name to assign to the data. If this name already exists,
             it will be overwritten.
 
         deep_copy : bool, optional
@@ -568,7 +568,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Notes
         -----
         You can simply use the ``[]`` operator to add an array to the
-        dataset.  Note that this will automatically become the active
+        dataset. Note that this will automatically become the active
         scalars.
 
         Examples
@@ -615,7 +615,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
-        direction.  This can include data with multiple components
+        direction. This can include data with multiple components
         (such as RGBA values) or just one component (such as
         temperature data).
 
@@ -675,7 +675,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Vectors are a quantity that has magnitude and direction, such
         as normal vectors or a velocity field.
 
-        The vectors data must contain three components per cell or point.  Use
+        The vectors data must contain three components per cell or point. Use
         :func:`DataSetAttributes.set_scalars` when adding non-directional data.
 
         Parameters
@@ -687,7 +687,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Name of the vectors.
 
         deep_copy : bool, default: False
-            When ``True`` makes a full copy of the array.  When ``False``, the
+            When ``True`` makes a full copy of the array. When ``False``, the
             data references the original array without copying it.
 
         Notes
@@ -1511,7 +1511,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                          [0., 0., 1.],
                          [0., 0., 1.]], dtype=float32)
 
-        Assign normals to the cell arrays.  An array will be added
+        Assign normals to the cell arrays. An array will be added
         named ``"Normals"``.
 
         >>> mesh.cell_data.active_normals = [[0.0, 0.0, 1.0]]

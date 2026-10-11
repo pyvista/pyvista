@@ -264,7 +264,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
     Parameters
     ----------
     var_inp : :vtk:`vtkPointSet`, MatrixLikeFloat, optional
-        Flexible input type.  Can be a :vtk:`vtkPointSet`, in which case
+        Flexible input type. Can be a :vtk:`vtkPointSet`, in which case
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
@@ -273,12 +273,12 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
 
     deep : bool, default: False
         Whether to copy the input ``points``, or to create a PointSet from them
-        without copying them.  Setting ``deep=True`` ensures that the original
+        without copying them. Setting ``deep=True`` ensures that the original
         arrays can be modified outside the mesh without affecting the
         mesh.
 
     force_float : bool, default: True
-        Casts the datatype to ``float32`` if points datatype is non-float.  Set
+        Casts the datatype to ``float32`` if points datatype is non-float. Set
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
@@ -345,7 +345,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         ----------
         deep : bool, deep: True
             Whether to copy the pointset points, or to create a PolyData
-            without copying them.  Setting ``deep=True`` ensures that the
+            without copying them. Setting ``deep=True`` ensures that the
             original arrays can be modified outside the PolyData without
             affecting the PolyData.
 
@@ -644,7 +644,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     Parameters
     ----------
     var_inp : :vtk:`vtkPolyData`, str, sequence, optional
-        Flexible input type.  Can be a :vtk:`vtkPolyData`, in which case
+        Flexible input type. Can be a :vtk:`vtkPolyData`, in which case
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
@@ -653,7 +653,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         or ``'C:/Users/user/my_mesh.ply'``.
 
         Otherwise, this must be a points array or list containing one
-        or more points.  Each point must have 3 dimensions.  If
+        or more points. Each point must have 3 dimensions. If
         ``faces``, ``lines``, ``strips``, and ``verts`` are all
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
@@ -663,7 +663,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         array or an explicit cell array object.
 
         In the padded array format, faces must contain padding
-        indicating the number of points in the face.  For example, the
+        indicating the number of points in the face. For example, the
         two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
         represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
         lets you have an arbitrary number of points per face.
@@ -672,7 +672,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         Connectivity of :attr:`lines`. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
-        a line segment.  For example, the two line segments ``[0, 1]``
+        a line segment. For example, the two line segments ``[0, 1]``
         and ``[1, 2, 3, 4]`` will be represented as
         ``[2, 0, 1, 4, 1, 2, 3, 4]``.
 
@@ -692,7 +692,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
-        without copying them.  Setting ``deep=True`` ensures that the
+        without copying them. Setting ``deep=True`` ensures that the
         original arrays can be modified outside the mesh without
         affecting the mesh. Default is ``False``.
 
@@ -703,15 +703,15 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     force_float : bool, optional
         Casts the datatype to ``float32`` if points datatype is
-        non-float.  Default ``True``. Set this to ``False`` to allow
+        non-float. Default ``True``. Set this to ``False`` to allow
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
     verts : CellArrayLike, optional
-        The :attr:`verts` connectivity.  Like ``faces``, ``lines``, and
+        The :attr:`verts` connectivity. Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
-        the padding indicates the number of vertices in each cell.  For
+        the padding indicates the number of vertices in each cell. For
         example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
         each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
         polyvertex cells each with two points.
@@ -997,7 +997,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         >>> pdata.verts
         array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4]...)
 
-        Set vertex cells.  Note how the mesh plots both the surface
+        Set vertex cells. Note how the mesh plots both the surface
         mesh and the additional vertices in a single plot.
 
         >>> mesh = pv.Plane(i_resolution=3, j_resolution=3)
@@ -2291,7 +2291,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         Parameters
         ----------
         filename : str, Path
-            Filename of mesh to be written.  File type is inferred from
+            Filename of mesh to be written. File type is inferred from
             the extension of the filename unless overridden with
             ``ftype``.  Can be one of many of the supported  the following
             types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
@@ -2302,13 +2302,13 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
         texture : str, numpy.ndarray, optional
             Write a single texture array to file when using a PLY
-            file.  Texture array must be a 3 or 4 component array with
+            file. Texture array must be a 3 or 4 component array with
             the datatype ``np.uint8``.  Array may be a cell array or a
             point array, and may also be a string if the array already
             exists in the PolyData.
 
             If a string is provided, the texture array will be saved
-            to disk as that name.  If an array is provided, the
+            to disk as that name. If an array is provided, the
             texture array will be saved as ``'RGBA'`` if the array
             contains an alpha channel (that is, 4 component array), or
             as ``'RGB'`` if the array is just a 3 component array.
@@ -2358,7 +2358,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         >>> sphere = pv.Sphere()
         >>> sphere.save('my_mesh.ply')  # doctest:+SKIP
 
-        Save a mesh as a PLY with a texture array.  Here we also
+        Save a mesh as a PLY with a texture array. Here we also
         create a simple RGB array representing the texture.
 
         >>> import numpy as np
@@ -2370,7 +2370,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         >>> sphere.point_data['my_texture'] = texture
         >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
 
-        Alternatively, provide just the texture array.  This will be
+        Alternatively, provide just the texture array. This will be
         written to the file as ``'RGB'`` since it does not contain an
         alpha channel.
 
@@ -2634,12 +2634,12 @@ class PointGrid(_PointSetBase):
             - ``'minimum'``
 
         **kwargs : dict, optional
-            Optional keyword arguments.  See :func:`pyvista.plot`.
+            Optional keyword arguments. See :func:`pyvista.plot`.
 
         Returns
         -------
         list
-            Camera position, focal point, and view up.  Returned when
+            Camera position, focal point, and view up. Returned when
             ``return_cpos`` is ``True``.
 
         """
@@ -2838,24 +2838,24 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Parameters
         ----------
         cells : sequence[int]
-            Array of cells.  Each cell contains the number of points in the
+            Array of cells. Each cell contains the number of points in the
             cell and the node numbers of the cell.
 
         cell_type : VectorLikeInt
-            Cell types of each cell.  Each cell type numbers can be found from
-            vtk documentation.  More efficient if using ``np.uint8``. See
+            Cell types of each cell. Each cell type numbers can be found from
+            vtk documentation. More efficient if using ``np.uint8``. See
             example below.
 
         points : MatrixLikeFloat
             NumPy array containing point locations.
 
         deep : bool, default: True
-            When ``True``, makes a copy of the points array.  Default
+            When ``True``, makes a copy of the points array. Default
             ``False``.  Cells and cell types are always copied.
 
         force_float : bool, default: True
             Casts the datatype to ``float32`` if points datatype is
-            non-float.  Set this to ``False`` to allow non-float types,
+            non-float. Set this to ``False`` to allow non-float types,
             though this may lead to truncation of intermediate floats when
             transforming datasets.
 
@@ -2921,7 +2921,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Check if size of offsets and ``celltypes`` match the number of cells.
 
         Checks if the number of offsets and ``celltypes`` correspond to
-        the number of cells.  Called after initialization of the self
+        the number of cells. Called after initialization of the self
         from arrays.
         """
         if self.n_cells != self.celltypes.size:
@@ -2971,7 +2971,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Examples
         --------
         Return the indices of the first two cells from the example hex
-        beam.  Note how the cells have "padding" indicating the number
+        beam. Note how the cells have "padding" indicating the number
         of points per cell.
 
         >>> import pyvista as pv
@@ -3395,7 +3395,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
-        type in an ordered fashion.  For a cell type whose cells all have
+        type in an ordered fashion. For a cell type whose cells all have
         the same number of points the value is a single ``[N, D]`` array;
         for a cell type with a data-defined number of points whose cells
         differ in size (for example, :attr:`~pyvista.CellType.POLYGON`) the value
@@ -3423,12 +3423,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Examples
         --------
-        Return the cells dictionary of the sample hex beam.  Note how
+        Return the cells dictionary of the sample hex beam. Note how
         there is only one key/value pair as the hex beam example is
         composed of only all hexahedral cells, which is
         ``CellType.HEXAHEDRON``, which evaluates to 12.
 
-        Also note how there is no padding for the cell array.  This
+        Also note how there is no padding for the cell array. This
         approach may be more helpful than the ``cells`` property when
         extracting cells.
 
@@ -4043,7 +4043,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         force_float : bool, optional
             Casts the datatype to ``float32`` if points datatype is
-            non-float.  Default ``True``. Set this to ``False`` to allow
+            non-float. Default ``True``. Set this to ``False`` to allow
             non-float types, though this may lead to truncation of
             intermediate floats when transforming datasets.
 
@@ -4189,7 +4189,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Parameters
         ----------
         ind : VectorLikeInt | VectorLikeBool
-            List or array of cell indices to be hidden.  The array can
+            List or array of cell indices to be hidden. The array can
             also be a boolean array of the same size as the number of
             cells.
 
@@ -4493,7 +4493,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             topological dimensions of the grid.
 
         cells : VectorLikeInt | dict[int, MatrixLikeInt]
-            Array of cells.  Each cell contains the number of points in the
+            Array of cells. Each cell contains the number of points in the
             cell and the node numbers of the cell.
 
         points : MatrixLikeFloat
@@ -4790,7 +4790,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         -------
         ExplicitStructuredGrid
             A deep copy of this grid if ``inplace=False`` with the
-            hidden cells shown.  Otherwise, this dataset with the
+            hidden cells shown. Otherwise, this dataset with the
             shown cells.
 
         Examples
@@ -5139,7 +5139,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
-        their topological neighbors.  The result is stored in the
+        their topological neighbors. The result is stored in the
         array of integers ``'ConnectivityFlags'``. Each value in this
         array must be interpreted as a binary number, where the digits
         shows the faces connectivity of a cell with its topological

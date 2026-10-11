@@ -50,17 +50,17 @@ The ``pyvista-plot`` directive supports the following options:
 
     encoding : str
         If this source file is in a non-UTF8 or non-ASCII encoding, the
-        encoding must be specified using the ``:encoding:`` option.  The
+        encoding must be specified using the ``:encoding:`` option. The
         encoding will not be inferred using the ``-*- coding -*-`` metacomment.
 
     context : None
         If provided, the code will be run in the context of all previous plot
-        directives for which the ``:context:`` option was specified.  This only
+        directives for which the ``:context:`` option was specified. This only
         applies to inline code plot directives, not those run from files.
 
     ``nofigs`` : None
         When setting this flag, the code block will be run but no figures will be
-        inserted.  This is usually useful with the ``:context:`` option.
+        inserted. This is usually useful with the ``:context:`` option.
 
     caption : str
         If specified, the option's argument will be used as a caption for the
@@ -110,7 +110,7 @@ The plot directive has the following configuration options:
 
     ``pyvista_plot_basedir`` : str
         Base directory, to which ``plot::`` file names are relative
-        to.  If ``None`` or unset, file names are relative to the
+        to. If ``None`` or unset, file names are relative to the
         directory where the file containing the directive is.
 
     ``pyvista_plot_html_show_formats`` : bool, default: True

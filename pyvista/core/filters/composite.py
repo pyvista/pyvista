@@ -86,7 +86,7 @@ class CompositeFilters(DataObjectFilters):
         Raises
         ------
         Exception
-            The error a block raises is re-raised as is, with the index, name and
+            The error a block raises is re-raised as is, with the index, name, and
             type of that block added to its message.
 
             .. versionchanged:: 0.50

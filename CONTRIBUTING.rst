@@ -62,7 +62,7 @@ comes with the repository code checked out on a branch of your choice
 and all pyvista dependencies including test dependencies pre-installed.
 In addition, it uses the
 `desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
-to provide live interaction windows.  Follow directions
+to provide live interaction windows. Follow directions
 `Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
 to use the live interaction.
 
@@ -790,8 +790,8 @@ fork that still has an old ``doc`` branch is rejected with ``directory file conf
 Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
 either use another prefix or delete the stale branch.
 
-Points dtype
-^^^^^^^^^^^^
+Points Data Type
+^^^^^^^^^^^^^^^^
 
 The ``points`` dtype of a filter's output is decided globally, by
 ``pyvista.global_config.points_dtype``, and enforced in ``_update_alg`` and
@@ -809,7 +809,7 @@ own for precision.
 - Sources have no input to preserve, so they subclass ``_Source``, which requests the
   precision in ``Update`` and casts in ``_update_and_wrap_output``. Return
   ``self._update_and_wrap_output()`` from a source's ``output`` property rather than
-  wrapping ``GetOutput()``, which is uncast.
+  wrapping ``GetOutput()``, which skips the cast.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The
@@ -1097,7 +1097,7 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 Testing Against the ``cvista`` Backend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the
-default and is tested on every PR; cvista is tested at **integration cadence**—nightly, and on PRs carrying the
+default and is tested on every pull request; cvista is tested at **integration cadence**—nightly, and on pull requests carrying the
 ``integration-testing`` label:
 
 .. code-block:: shell
@@ -2037,9 +2037,9 @@ branch.
 
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-For PRs of branches coming from the main pyvista repository, the documentation
+For pull requests of branches coming from the main pyvista repository, the documentation
 is automatically deployed using `Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
-However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
+However, new contributors that submit pull requests from a fork can download a light-weight documentation CI artifact
 that contains a non-interactive subset of the documentation build. It typically weights
 500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
 ``Build Documentation`` CI job.
@@ -2054,7 +2054,7 @@ Based Development <https://trunkbaseddevelopment.com/>`_ approach.
 The main features of our branching model are:
 
 -  The ``main`` branch is the main development branch. All features,
-   patches, and other branches should be merged here. While all PRs
+   patches, and other branches should be merged here. While all pull requests
    should pass all applicable CI checks, this branch may be functionally
    unstable as changes might have introduced unintended side-effects or
    bugs that were not caught through unit testing.

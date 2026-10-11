@@ -745,7 +745,7 @@ class _ColorbarConfig(_ConfigBase):
 
         The padding is the space between the title and the tick labels, as a
         multiple of the size the labels are drawn at, or of the size they ask
-        for on a box that sizes the text itself.  A title turned alongside the
+        for on a box that sizes the text itself. A title turned alongside the
         bar is padded off the bar by a multiple of its own size.
 
         Examples
@@ -1114,7 +1114,7 @@ class _Font(_ConfigBase):
 
         A scalar bar draws its title at this size; a box drawn around a
         horizontal bar that is too narrow for it, or given too small a height,
-        shrinks it to fit.  Where this and :attr:`label_size` are both ``None``,
+        shrinks it to fit. Where this and :attr:`label_size` are both ``None``,
         every size is fitted to the bar the text is drawn on.
 
         Examples
@@ -1136,9 +1136,9 @@ class _Font(_ConfigBase):
     def label_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        The largest size a scalar bar draws its labels at.  They are drawn
+        The largest size a scalar bar draws its labels at. They are drawn
         smaller where the bar leaves them too little room to stay clear of
-        each other.  Where this and :attr:`title_size` are both ``None``, every
+        each other. Where this and :attr:`title_size` are both ``None``, every
         size is fitted to the bar the text is drawn on.
 
         Examples
@@ -2236,11 +2236,11 @@ class Theme(_ConfigBase):
     ) -> str | None:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
-        Jupyter backend to use when plotting.  Must be one of the
+        Jupyter backend to use when plotting. Must be one of the
         following:
 
         * ``'static'`` : Display a single static image within the
-          Jupyterlab environment.  Still requires that a virtual
+          Jupyterlab environment. Still requires that a virtual
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
@@ -2264,7 +2264,7 @@ class Theme(_ConfigBase):
         * ``'html'``: The ``'client'`` backend, but able to be embedded.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
-          instead display using dedicated VTK render windows.  This
+          instead display using dedicated VTK render windows. This
           will generate nothing on headless servers even with a
           virtual framebuffer.
 
@@ -2498,7 +2498,7 @@ class Theme(_ConfigBase):
         Only applicable when displaying ``scalars``.
 
         You can also specify a list of colors to override an existing
-        colormap with a custom one.  For example, to create a three
+        colormap with a custom one. For example, to create a three
         color colormap you might specify ``['green', 'red', 'blue']``
 
         Examples
@@ -2523,7 +2523,7 @@ class Theme(_ConfigBase):
         Used for meshes without ``scalars``.
 
         When setting, the value must be either a string, rgb list,
-        or hex color string.  For example:
+        or hex color string. For example:
 
         * ``color='white'``
         * ``color='w'``
@@ -3458,7 +3458,7 @@ class Theme(_ConfigBase):
         Parameters
         ----------
         filename : str
-            Path to save the theme to.  Should end in ``'.json'``.
+            Path to save the theme to. Should end in ``'.json'``.
 
         Examples
         --------
@@ -3799,7 +3799,7 @@ class _DocumentBuildTheme(DocumentTheme):
 class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
 
-    Necessary for image regression.  Xvfb doesn't support
+    Necessary for image regression. Xvfb doesn't support
     multi-sampling, it's disabled for consistency between desktops and
     remote testing.
 
