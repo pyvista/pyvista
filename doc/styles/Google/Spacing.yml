@@ -4,6 +4,5 @@ link: "https://developers.google.com/style/sentence-spacing"
 level: error
 nonword: true
 tokens:
-  # Upstream matches only `[a-z]` before the period, missing "(this).  Then".
-  - '[^\s.][.?!] {2,}[A-Z]'
+  # hooks/sentence_spacing.py checks for double spaces between sentences instead.
   - "[a-z][.?!][A-Z]"

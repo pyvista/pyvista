@@ -25,15 +25,7 @@ Pick from 1-10 points.
 
 .. expect: Google.Spacing
 
-Plot the mesh.  Then close it.
-
-.. expect: Google.Spacing
-
 Plot the mesh.Then close it.
-
-.. expect: Google.Spacing
-
-Plot the mesh (once).  Then close it.
 
 .. expect: Google.HeadingPunctuation
 

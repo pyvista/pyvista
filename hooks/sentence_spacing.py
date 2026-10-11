@@ -1,4 +1,9 @@
-"""Flag two or more spaces between sentences in ``.rst`` files, docstrings and gallery text."""
+"""Flag double spaces between sentences, in place of Vale's ``Google.Spacing`` check.
+
+Vale masks inline code and roles and skips some paragraphs outright, so it misses many of
+these. This checks ``.rst`` files, docstrings and gallery text directly, and runs before CI.
+``Google.Spacing`` keeps only its missing-space check.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,7 @@ from pathlib import Path
 import re
 import sys
 
-# Same token as doc/styles/Google/Spacing.yml.
+# Google.Spacing's upstream double-space token, with any character before the period.
 PATTERN = re.compile(r'[^\s.][.?!] {2,}[A-Z]')
 ENUMERATOR = re.compile(r'^[\s#]*(?:\d+|[A-Za-z]|#)\.(?= )')
 DOCTEST = re.compile(r'^\s*(?:>>>|\.\.\.)(?: |$)')
