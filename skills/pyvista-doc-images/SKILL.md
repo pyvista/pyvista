@@ -15,12 +15,16 @@ different filename, and the repair is a `git mv`. Replacing those files instead 
 CI goes green either way — but it rewrites binaries that never changed, which buries the
 one or two images a reviewer actually needs to look at.
 
-## Two filename families
+## Filename families
 
-| Pattern                                         | Source                         | What moves it                                                         |
-| ----------------------------------------------- | ------------------------------ | --------------------------------------------------------------------- |
-| `sphx_glr_<example>_NNN.jpg`                    | gallery example in `examples/` | a **sequential index**; adding a plot shifts every later image up one |
-| `pyvista-<Class>[-<member>]-<16 hex>_NN_NN.jpg` | rendering docstring example    | a **content hash** of the example source                              |
+| Pattern                                         | Source                          | What moves it                                                         |
+| ----------------------------------------------- | ------------------------------- | --------------------------------------------------------------------- |
+| `sphx_glr_<example>_NNN.jpg`                    | gallery example in `examples/`  | a **sequential index**; adding a plot shifts every later image up one |
+| `pyvista-<Class>[-<member>]-<16 hex>_NN_NN.jpg` | rendering docstring example     | a **content hash** of the example source                              |
+| `<page>-<16 hex>_NN_NN.jpg`                     | plot directive in a `.rst` page | a **content hash** of the directive's code                            |
+
+Every other name is fixed: those images come from `doc/source/make_tables.py` and
+`doc/source/make_external_gallery.py` and never move.
 
 Each has a `_vtksz` twin for the interactive scene, and gallery examples add one
 `_thumb.jpg` chosen by `sphinx_gallery_thumbnail_number`.
@@ -34,9 +38,10 @@ common reason this job fails, and it is always a pure rename.
 ## Slots that hold several baselines
 
 About forty slots are a **directory** rather than a `.jpg`: `sphx_glr_cell_centers_002/`
-holds `0.jpg` and `1.jpg`, `sphx_glr_load_vrml_001_vtksz/` holds `blank.jpg` and
-`rendered.jpg`. pytest-pyvista scores the render against every file in the directory and
-grades on the closest one, so the slot passes when any single variant matches.
+holds `0.jpg` and `1.jpg`, `sphx_glr_load_vrml_001/` holds `blank.jpg` and
+`rendered.jpg`. pytest-pyvista compares the render with the files in sorted order and stops
+at the first one within the error threshold, so the slot passes when any single variant
+matches; a match other than the first is reported as a warning.
 
 The variants are different pictures, not drifted copies — siblings sit hundreds or
 thousands apart, because each covers an environment or an outcome the example can

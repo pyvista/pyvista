@@ -45,7 +45,7 @@ def slots(cache: Path, pattern: str) -> dict[str, list[Path]]:
 
 
 def best_match(variants: list[Path], generated: Path) -> tuple[float, Path | None]:
-    """Return the closest baseline for one generated image, as pytest-pyvista grades it."""
+    """Return the closest baseline for one generated image."""
     best: tuple[float, Path | None] = (float('inf'), None)
     gen_digest = digest(generated)
     for path in variants:
