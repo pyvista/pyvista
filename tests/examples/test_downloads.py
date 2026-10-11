@@ -42,34 +42,25 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
         pytest.fail(msg)
 
 
-def test_delete_downloads(tmpdir):
+def test_delete_downloads(tmpdir, monkeypatch: pytest.MonkeyPatch):
     # change the path so we don't delete the examples cache
-    old_path = examples.downloads.USER_DATA_PATH
-    try:
-        examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir('tmpdir'))
-        assert Path(examples.downloads.USER_DATA_PATH).is_dir()
-        tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
-        with Path(tmp_file).open('w') as fid:
-            fid.write('test')
-        examples.delete_downloads()
-        assert Path(examples.downloads.USER_DATA_PATH).is_dir()
-        assert not Path(tmp_file).is_file()
-    finally:
-        examples.downloads.USER_DATA_PATH = old_path
+    monkeypatch.setattr(downloads, 'USER_DATA_PATH', str(tmpdir.mkdir('tmpdir')))
+    assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+    tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
+    with Path(tmp_file).open('w') as fid:
+        fid.write('test')
+    examples.delete_downloads()
+    assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+    assert not Path(tmp_file).is_file()
 
 
-def test_delete_downloads_does_not_exist(tmpdir):
+def test_delete_downloads_does_not_exist(tmpdir, monkeypatch: pytest.MonkeyPatch):
     # change the path so we don't delete the examples cache
-    old_path = examples.downloads.USER_DATA_PATH
-    new_path = str(tmpdir.join('doesnotexist'))
+    monkeypatch.setattr(downloads, 'USER_DATA_PATH', str(tmpdir.join('doesnotexist')))
 
-    try:
-        # delete_downloads for a missing directory should not fail.
-        examples.downloads.USER_DATA_PATH = new_path
-        assert not Path(examples.downloads.USER_DATA_PATH).is_dir()
-        examples.delete_downloads()
-    finally:
-        examples.downloads.USER_DATA_PATH = old_path
+    # delete_downloads for a missing directory should not fail.
+    assert not Path(examples.downloads.USER_DATA_PATH).is_dir()
+    examples.delete_downloads()
 
 
 def test_file_from_files(tmpdir):
@@ -109,29 +100,20 @@ def test_file_copier(tmpdir):
         examples.downloads._file_copier('not a file', output_file, None)
 
 
-def test_local_file_cache(tmp_path: Path):
+def test_local_file_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
     basename = Path(examples.planefile).name
     dirname = str(Path(examples.planefile).parent)
-    downloads.FETCHER.registry[basename] = None
-    old_path = downloads.FETCHER.path
+    monkeypatch.setattr(downloads.FETCHER, 'base_url', dirname + '/')
+    monkeypatch.setattr(downloads.FETCHER, 'path', tmp_path)
+    monkeypatch.setattr(downloads, '_FILE_CACHE', True)
+    monkeypatch.setitem(downloads.FETCHER.registry, basename, None)
 
-    try:
-        downloads.FETCHER.base_url = dirname + '/'
-        downloads.FETCHER.registry[basename] = None
-        downloads._FILE_CACHE = True
-        downloads.FETCHER.path = tmp_path
-        filename = downloads._download_and_read(basename, load=False)
-        assert Path(filename).is_file()
+    filename = downloads._download_and_read(basename, load=False)
+    assert Path(filename).is_file()
 
-        dataset = downloads._download_and_read(basename, load=True)
-        assert isinstance(dataset, pv.DataSet)
-
-    finally:
-        downloads.FETCHER.base_url = 'https://github.com/pyvista/data/raw/master/Data/'
-        downloads._FILE_CACHE = False
-        downloads.FETCHER.registry.pop(basename, None)
-        downloads.FETCHER.path = old_path
+    dataset = downloads._download_and_read(basename, load=True)
+    assert isinstance(dataset, pv.DataSet)
 
 
 def test_download_file_creates_destination_directory(tmp_path, monkeypatch):
