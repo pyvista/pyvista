@@ -390,8 +390,8 @@ class WidgetComponent(_NoNewAttrMixin):
             orthogonal to the Cartesian axes.
 
         widget_color : ColorLike, optional
-            Color of the widget.  Either a string, RGB sequence, or
-            hex color string.  For example:
+            Color of the widget. Either a string, RGB sequence, or
+            hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -805,7 +805,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
-            axis.  Options are ``(0, 'x')``, ``(1, 'y')``, or ``(2,
+            axis. Options are ``(0, 'x')``, ``(1, 'y')``, or ``(2,
             'z')``.
 
         tubing : bool, optional
@@ -984,7 +984,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         assign_to_axis : str or int, optional
             Assign the normal of the plane to be parallel with a given
-            axis.  Options are ``(0, 'x')``, ``(1, 'y')``, or ``(2,
+            axis. Options are ``(0, 'x')``, ``(1, 'y')``, or ``(2,
             'z')``.
 
         tubing : bool, optional
@@ -1119,7 +1119,7 @@ class WidgetComponent(_NoNewAttrMixin):
             triangles otherwise, the output will be the intersection polygons.
 
         widget_color : ColorLike, optional
-            Either a string, RGB sequence, or hex color string.  Defaults
+            Either a string, RGB sequence, or hex color string. Defaults
             to ``'white'``.
 
         assign_to_axis : str or int, optional
@@ -1263,8 +1263,8 @@ class WidgetComponent(_NoNewAttrMixin):
             triangles otherwise, the output will be the intersection polygons.
 
         widget_color : ColorLike, optional
-            Color of the widget.  Either a string, RGB sequence, or
-            hex color string.  For example:
+            Color of the widget. Either a string, RGB sequence, or
+            hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -1483,7 +1483,7 @@ class WidgetComponent(_NoNewAttrMixin):
             display port.
 
         color : ColorLike, optional
-            Either a string, RGB list, or hex color string.  Defaults
+            Either a string, RGB list, or hex color string. Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.plotting.themes._Font.color>`.
 
@@ -1607,7 +1607,7 @@ class WidgetComponent(_NoNewAttrMixin):
             on the display port.
 
         color : ColorLike, optional
-            Either a string, RGB list, or hex color string.  Defaults
+            Either a string, RGB list, or hex color string. Defaults
             to :attr:`pyvista.global_theme.font.color
             <pyvista.plotting.themes._Font.color>`.
 
@@ -1637,7 +1637,7 @@ class WidgetComponent(_NoNewAttrMixin):
             Opacity of title. Defaults to 1.0.
 
         title_color : ColorLike, optional
-            Either a string, RGB sequence, or hex color string.  Defaults
+            Either a string, RGB sequence, or hex color string. Defaults
             to the value given in ``color``.
 
         fmt : str, optional
@@ -1806,8 +1806,8 @@ class WidgetComponent(_NoNewAttrMixin):
             would have been excluded from the output are included.
 
         widget_color : ColorLike, optional
-            Color of the widget.  Either a string, RGB sequence, or
-            hex color string.  For example:
+            Color of the widget. Either a string, RGB sequence, or
+            hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -1817,8 +1817,8 @@ class WidgetComponent(_NoNewAttrMixin):
         preference : str, default: 'cell'
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'cell'``, causes the
-            scalars to be associated with the mesh cells.  Can be
+            mapped to the mesh. Default ``'cell'``, causes the
+            scalars to be associated with the mesh cells. Can be
             either ``'point'`` or ``'cell'``.
 
         title : str, optional
@@ -1841,7 +1841,7 @@ class WidgetComponent(_NoNewAttrMixin):
         all_scalars : bool, default: False
             If using scalars from point data, all
             points in a cell must satisfy the threshold when this
-            value is ``True``.  When ``False``, any point of the cell
+            value is ``True``. When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
@@ -1970,13 +1970,13 @@ class WidgetComponent(_NoNewAttrMixin):
             The string name of the scalars on the mesh to contour and display.
 
         compute_normals : bool, optional
-            Enable or disable the computation of normals.  If the
+            Enable or disable the computation of normals. If the
             output data will be processed by filters that modify
             topology or geometry, it may be wise to disable computing
             normals.
 
         compute_gradients : bool, optional
-            Enable or disable the computation of gradients.  If the
+            Enable or disable the computation of gradients. If the
             output data will be processed by filters that modify
             topology or geometry, it may be wise to disable computing
             gradients.
@@ -1987,8 +1987,8 @@ class WidgetComponent(_NoNewAttrMixin):
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'point'``, causes the
-            scalars will be associated with the mesh points.  Can be
+            mapped to the mesh. Default ``'point'``, causes the
+            scalars will be associated with the mesh points. Can be
             either ``'point'`` or ``'cell'``.
 
         title : str, optional
@@ -2003,8 +2003,8 @@ class WidgetComponent(_NoNewAttrMixin):
             on the display port.
 
         widget_color : ColorLike, optional
-            Color of the widget.  Either a string, RGB sequence, or
-            hex color string.  For example:
+            Color of the widget. Either a string, RGB sequence, or
+            hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -2149,7 +2149,7 @@ class WidgetComponent(_NoNewAttrMixin):
             If ``True``, the poly plane used for slicing will also be shown.
 
         ribbon_color : ColorLike, optional
-            Color of the ribbon.  Either a string, RGB sequence, or
+            Color of the ribbon. Either a string, RGB sequence, or
             hex color string.
 
         ribbon_opacity : float, optional
@@ -2292,8 +2292,8 @@ class WidgetComponent(_NoNewAttrMixin):
             The number of points to generate on the spline.
 
         widget_color : ColorLike, optional
-            Color of the widget.  Either a string, RGB sequence, or
-            hex color string.  For example:
+            Color of the widget. Either a string, RGB sequence, or
+            hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -2304,7 +2304,7 @@ class WidgetComponent(_NoNewAttrMixin):
             If ``True``, the poly plane used for slicing will also be shown.
 
         ribbon_color : ColorLike, optional
-            Color of the ribbon.  Either a string, RGB sequence, or
+            Color of the ribbon. Either a string, RGB sequence, or
             hex color string.
 
         ribbon_opacity : float, optional
@@ -2489,7 +2489,7 @@ class WidgetComponent(_NoNewAttrMixin):
             The function to call back when the widget is modified. It takes a
             single argument: the center of the sphere as an XYZ coordinate (a
             3-length sequence), unless ``pass_widget=True``, in which case the
-            callback must accept the widget object as the second parameter.  If
+            callback must accept the widget object as the second parameter. If
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
@@ -2509,8 +2509,8 @@ class WidgetComponent(_NoNewAttrMixin):
             Set the number of points in the latitude direction.
 
         color : ColorLike, optional
-            The color of the sphere's surface.  If multiple centers
-            are passed, then this must be a list of colors.  Each
+            The color of the sphere's surface. If multiple centers
+            are passed, then this must be a list of colors. Each
             color is either a string, rgb list, or hex color string.
             For example:
 

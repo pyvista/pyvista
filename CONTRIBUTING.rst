@@ -62,7 +62,7 @@ comes with the repository code checked out on a branch of your choice
 and all pyvista dependencies including test dependencies pre-installed.
 In addition, it uses the
 `desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
-to provide live interaction windows.  Follow directions
+to provide live interaction windows. Follow directions
 `Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
 to use the live interaction.
 
@@ -2209,7 +2209,7 @@ Any PyVista self-hosted runner must:
 - Be as compatible as possible with a GitHub hosted runner.
 - Use labels to denote the OS of a runner that are the same as GitHub's labels
   appended with ``self-hosted`` to ensure that there isn't overlap with GitHub
-  labels.  For example, ``macos-15-self-hosted``. Additional labels may be
+  labels. For example, ``macos-15-self-hosted``. Additional labels may be
   specified (e.g. ``GPU``), but there must always be an OS label. Do not use a
   label that overlaps with GitHub's labels.
 - Be secure against intrusion and follow best cybersecurity practices (for example, no

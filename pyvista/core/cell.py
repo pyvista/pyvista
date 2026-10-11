@@ -628,7 +628,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         Parameters
         ----------
         deep : bool, optional
-            When ``True`` makes a full copy of the cell.  When ``False``,
+            When ``True`` makes a full copy of the cell. When ``False``,
             performs a shallow copy where the new cell still references the
             original cell.
 

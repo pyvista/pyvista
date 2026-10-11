@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shlex
 import subprocess
 import sys
@@ -209,3 +210,124 @@ def test_private_class_docstrings_reads_non_ascii(
         request,
     )
     assert code == 0, out
+
+
+def _run_sentence_spacing_hook(
+    relpath: str,
+    source: str,
+    tmp_path: Path,
+    pre_commit_config: dict,
+    request: pytest.FixtureRequest,
+) -> tuple[int, str]:
+    """Write ``source`` to ``relpath`` and return the hook's exit code and output."""
+    file = tmp_path / relpath
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_text(textwrap.dedent(source), encoding='utf-8')
+
+    local = next(v for v in pre_commit_config['repos'] if v['repo'] == 'local')
+    hook = next(v for v in local['hooks'] if v['id'] == 'sentence-spacing')
+
+    ret = subprocess.run(
+        [sys.executable, *shlex.split(hook['entry'])[1:], relpath],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=tmp_path,
+        env={**os.environ, 'PYTHONPATH': str(request.config.rootpath)},
+    )
+    return ret.returncode, ret.stdout
+
+
+@pytest.mark.parametrize(
+    ('relpath', 'source'),
+    [
+        pytest.param('doc/page.rst', 'Plot the mesh.  Then close it.\n', id='rst'),
+        pytest.param('doc/page.rst', 'See ``pad``.  Then close it.\n', id='rst-after-code'),
+        pytest.param(
+            'pyvista/mod.py',
+            '''\
+            def f():
+                """Plot the mesh.  Then close it."""
+            ''',
+            id='function-docstring',
+        ),
+        pytest.param(
+            'examples/ex.py',
+            '''\
+            """Plot the mesh.  Then close it."""
+            ''',
+            id='example-module-docstring',
+        ),
+        pytest.param(
+            'examples/ex.py',
+            '''\
+            """Example."""
+
+            # %%
+            # Plot the mesh.  Then close it.
+            ''',
+            id='gallery-text',
+        ),
+    ],
+)
+def test_sentence_spacing_flags(
+    relpath: str,
+    source: str,
+    tmp_path: Path,
+    pre_commit_config: dict,
+    request: pytest.FixtureRequest,
+):
+    code, out = _run_sentence_spacing_hook(relpath, source, tmp_path, pre_commit_config, request)
+    assert code == 1
+    assert out.startswith(f'{relpath}:')
+    assert '.  Then close it.' in out
+
+
+@pytest.mark.parametrize(
+    ('relpath', 'source'),
+    [
+        pytest.param('doc/page.rst', '#.  First item\n#.  Second item\n', id='auto-enumerator'),
+        pytest.param('doc/page.rst', '1.  First item\na.  Lettered item\n', id='enumerator'),
+        pytest.param('doc/page.rst', 'Plot the mesh. Then close it.\n', id='one-space'),
+        pytest.param(
+            'pyvista/mod.py',
+            '''\
+            def f():
+                """Run it.
+
+                >>> print('A.  B')
+                """
+                x = """A.  B"""
+                # A comment.  Not prose.
+                msg = 'An error.  Not prose.'
+            ''',
+            id='code-and-doctest',
+        ),
+        pytest.param(
+            'examples/ex.py',
+            '''\
+            """Example."""
+
+            # %%
+            # Gallery text.
+
+            # A code comment.  Not prose.
+
+
+            def f():
+                """Shown as code in the gallery.  Not prose."""
+            ''',
+            id='example-code-cell',
+        ),
+    ],
+)
+def test_sentence_spacing_passes(
+    relpath: str,
+    source: str,
+    tmp_path: Path,
+    pre_commit_config: dict,
+    request: pytest.FixtureRequest,
+):
+    code, out = _run_sentence_spacing_hook(relpath, source, tmp_path, pre_commit_config, request)
+    assert code == 0, out
+    assert out == ''
