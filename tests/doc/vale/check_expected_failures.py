@@ -80,6 +80,9 @@ def expectations_in(path: Path) -> dict[int, tuple[str, str]]:
             if target is None:
                 msg = f'{path.name}:{index + 1}: expect comment has no case after it'
                 raise ValueError(msg)
+            if lines[target].strip().startswith('.. expect:'):
+                msg = f'{path.name}:{index + 1}: expect comment is followed by another'
+                raise ValueError(msg)
             expected[target + 1] = (match[1], lines[target].strip())
     return expected
 
@@ -91,7 +94,7 @@ def error_rules(config: Path) -> set[str]:
     for line in config.read_text().splitlines():
         if line.startswith('['):
             in_section = line.strip() == RULES_SECTION
-        elif in_section and (match := re.fullmatch(r'([\w.]+) = error', line.strip())):
+        elif in_section and (match := re.fullmatch(r'([\w.]+)\s*=\s*error', line.strip())):
             rules.add(match[1])
     return rules
 
@@ -148,34 +151,41 @@ def check_repetition() -> int:
 
 
 def check_rules() -> int:
-    """Report any case in the rules fixture its rule no longer catches."""
-    flagged = {(alert['Line'], alert['Check']) for alert in alerts_for(RULES_FIXTURE)}
+    """Report any case in the rules fixture its rule no longer reports as an error."""
+    flagged = {
+        (alert['Line'], alert['Check'])
+        for alert in alerts_for(RULES_FIXTURE)
+        if alert['Severity'] == 'error'
+    }
     expected = expectations_in(RULES_FIXTURE)
     if not expected:
         return no_cases(RULES_FIXTURE)
-    uncovered = sorted(
-        error_rules(CONFIG) - {HEADINGS_CHECK} - {check for check, _ in expected.values()}
-    )
+    rules = error_rules(CONFIG)
+    if HEADINGS_CHECK not in rules:
+        print(f'Found no {HEADINGS_CHECK} = error under {RULES_SECTION} in {CONFIG.name}')
+        return 1
+    status = 0
+    uncovered = sorted(rules - {HEADINGS_CHECK} - {check for check, _ in expected.values()})
     if uncovered:
         print(f'These rules are errors in {CONFIG.name} but have no case:')
         for rule in uncovered:
             print(f'  {rule}')
         print(f'\nAdd one to {RULES_FIXTURE.relative_to(ROOT)}')
-        return 1
+        status = 1
     missed = [
         f'{check}: {text}'
         for number, (check, text) in expected.items()
         if (number, check) not in flagged
     ]
     if missed:
-        print('These rules no longer flag their case:')
+        print('These rules no longer flag their case as an error:')
         for case in missed:
             print(f'  {case}')
         print(f'\nSee {RULES_FIXTURE.relative_to(ROOT)}')
-        return 1
-
-    print(f'Error-level rules: all {len(expected)} expected failures still caught')
-    return 0
+        status = 1
+    if status == 0:
+        print(f'Error-level rules: all {len(expected)} expected failures still caught')
+    return status
 
 
 def main() -> int:
