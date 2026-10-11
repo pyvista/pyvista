@@ -2713,7 +2713,7 @@ class PolyDataFilters(DataSetFilters):
             Whether to plot the ray trace results.
 
         off_screen : bool, optional
-            Plots off screen when ``plot=True``.  Used for unit testing.
+            Plots off screen when ``plot=True``. Used for unit testing.
 
         Returns
         -------
@@ -4306,7 +4306,7 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Mesh containing collisions in the ``field_data``
-            attribute named ``"ContactCells"``.  Array only exists
+            attribute named ``"ContactCells"``. Array only exists
             when there are collisions.
 
         int

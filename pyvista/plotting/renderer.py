@@ -4295,7 +4295,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (for example, ``'w'`` or ``'white'``
-            for a white color).  If None, legend background is
+            for a white color). If None, legend background is
             disabled.
 
         border : bool, default: False
@@ -4303,7 +4303,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Default False.
 
         size : sequence[float], default: (0.2, 0.2)
-            Two float sequence, each float between 0 and 1.  For example
+            Two float sequence, each float between 0 and 1. For example
             ``(0.1, 0.1)`` would make the legend 10% the size of the
             entire figure window.
 
@@ -4340,7 +4340,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             * Custom: :class:`pyvista.PolyData`
 
             Passing ``"none"`` removes the legend face. A custom face can be
-            created using :class:`pyvista.PolyData`.  This will be rendered
+            created using :class:`pyvista.PolyData`. This will be rendered
             from the XY plane.
 
         font_family : str, optional

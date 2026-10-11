@@ -223,7 +223,7 @@ class DataObject(
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY
             file. Texture array must be a 3 or 4 component array with
-            the datatype ``np.uint8``.  Array may be a cell array or a
+            the datatype ``np.uint8``. Array may be a cell array or a
             point array, and may also be a string if the array already
             exists in the PolyData.
 
@@ -245,7 +245,7 @@ class DataObject(
 
         **writer_kwargs : dict, optional
             Additional keyword arguments forwarded verbatim to a custom
-            writer registered via :func:`pyvista.register_writer`.  Use
+            writer registered via :func:`pyvista.register_writer`. Use
             these to expose format-specific options such as compression
             level or thread count. When the target extension dispatches
             to a built-in VTK writer, passing any extra keyword arguments

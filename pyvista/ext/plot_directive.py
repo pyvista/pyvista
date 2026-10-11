@@ -73,9 +73,9 @@ The ``pyvista-plot`` directive supports the following options:
 
     skip : ``bool``, default: True
         Whether to skip execution of this directive. If no argument is provided
-        that is, ``:skip:``, then it defaults to ``:skip: true``.  Default
+        that is, ``:skip:``, then it defaults to ``:skip: true``. Default
         behaviour is controlled by the ``pyvista_plot_skip`` boolean variable in
-        :file:`conf.py`.  Note that, if specified, this option overrides the
+        :file:`conf.py`. Note that, if specified, this option overrides the
         ``pyvista_plot_skip`` configuration.
 
     optional : None
@@ -84,7 +84,7 @@ The ``pyvista-plot`` directive supports the following options:
         boolean variable in :file:`conf.py`.
 
 Additionally, this directive supports all the options of the ``image``
-directive, except for ``target`` (since plot will add its own target).  These
+directive, except for ``target`` (since plot will add its own target). These
 include ``alt``, ``height``, ``width``, ``scale``, ``align``.
 
 

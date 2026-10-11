@@ -17,7 +17,7 @@ import pyvista as pv
 # Generate Perlin Noise Over a 3D StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
-# the "caves".  For example, lowering the frequency will make the
+# the "caves". For example, lowering the frequency will make the
 # caves larger and more expansive, while a higher frequency in any
 # direction will make the caves appear more "vein-like" and less open.
 #

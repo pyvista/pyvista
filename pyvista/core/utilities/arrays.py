@@ -899,7 +899,7 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     If an active vector already exists, no changes are made.
 
     If an active vectors does not exist, it checks for possibly cell
-    or point arrays with shape ``(n, 3)``.  If only one exists, then
+    or point arrays with shape ``(n, 3)``. If only one exists, then
     it is set as the active vectors. Otherwise, an error is raised.
 
     .. versionchanged:: 0.45

@@ -1013,7 +1013,7 @@ class _Font(_ConfigBase):
 
     Examples
     --------
-    Set the default font family to ``'arial'``.  Must be either
+    Set the default font family to ``'arial'``. Must be either
     ``'arial'``, ``'courier'``, or ``'times'``.
 
     >>> import pyvista as pv
@@ -2454,7 +2454,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set the default font family to ``'arial'``.  Must be either
+        Set the default font family to ``'arial'``. Must be either
         ``'arial'``, ``'courier'``, or ``'times'``.
 
         >>> import pyvista as pv

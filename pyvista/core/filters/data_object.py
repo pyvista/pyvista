@@ -2079,7 +2079,7 @@ class DataObjectFilters:
             When using ``transform_all_input_vectors=True``, there is
             no distinction in VTK between vectors and arrays with
             three components. This may be an issue if you have scalar
-            data with three components (for example, RGB data).  This will be
+            data with three components (for example, RGB data). This will be
             improperly transformed as if it was vector data rather
             than scalar data. One possible (albeit ugly) workaround
             is to store the three components as separate scalar
@@ -5733,7 +5733,7 @@ class DataObjectFilters:
         """Resample array data from a passed mesh onto this mesh.
 
         For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
-        the points of ``mesh1``.  This function interpolates within an
+        the points of ``mesh1``. This function interpolates within an
         enclosing cell. This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
         weighting for nearby points. If there is cell topology, ``sample`` is

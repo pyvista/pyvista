@@ -2185,7 +2185,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         For the closest cell, find the point inside the cell that is
         closest to the supplied point. The rectangle is a unit square
         with 1 cell and 4 nodal points at the corners in the plane with
-        ``z`` normal and ``z=0``.  The closest point inside the cell is
+        ``z`` normal and ``z=0``. The closest point inside the cell is
         not usually at a nodal point.
 
         >>> unit_square = pv.Rectangle()

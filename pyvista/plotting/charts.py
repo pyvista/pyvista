@@ -1723,7 +1723,7 @@ class _Chart(DocSubs):
             when plotting off screen.
 
         off_screen : bool, optional
-            Plots off screen when ``True``.  Helpful for saving screenshots
+            Plots off screen when ``True``. Helpful for saving screenshots
             without a window popping up. Defaults to active theme setting.
 
         full_screen : bool, optional

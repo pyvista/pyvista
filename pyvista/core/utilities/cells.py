@@ -295,7 +295,7 @@ def create_mixed_cells(
     mapping of ``vtk_type`` -> ``np.ndarray`` (int), where the given ``ndarray``
     for each cell-type has to be an array of dimensions [N, D] or
     [N*D], where N is the number of cells and D is the size of the
-    cells for the given type (for example, 3 for triangles).  Multiple
+    cells for the given type (for example, 3 for triangles). Multiple
     ``vtk_type`` keys with associated arrays can be present in one
     dictionary.
 

@@ -195,7 +195,7 @@ def _data_array_section(
         Section title (for example, ``'Point Data'``).
     arrays : list[tuple[str, int, str, str, str]]
         Each tuple is ``(name, n_components, dtype_str, shape_str,
-        range_str)``.  When ``shape_str`` is non-empty it is shown
+        range_str)``. When ``shape_str`` is non-empty it is shown
         instead of the default ``'scalar'`` / ``'N comp'`` label.
         ``range_str`` is displayed as the data range (for example
         ``'[-0.5, 0.5]'``).

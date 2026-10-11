@@ -423,7 +423,7 @@ class BasePlotter(_BoundsSizeMixin):
     shape : sequence[int] | str, optional
         Two item sequence of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one renderer.
+        with ``shape=(2, 2)``. By default there is only one renderer.
         Can also accept a string descriptor as shape. For example:
 
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
@@ -3249,12 +3249,12 @@ class BasePlotter(_BoundsSizeMixin):
         smooth_shading : bool, default: :attr:`pyvista.plotting.themes.Theme.smooth_shading`
             Enable smooth shading when ``True`` using the Phong shading
             algorithm. When ``False``, uses flat shading. Automatically
-            enabled when ``pbr=True``.  See :ref:`shading_example`.
+            enabled when ``pbr=True``. See :ref:`shading_example`.
 
         split_sharp_edges : bool, default: False
             Split sharp edges exceeding 30 degrees when plotting with smooth
             shading. Control the angle with the optional keyword argument
-            ``feature_angle``.  By default this is ``False`` unless overridden
+            ``feature_angle``. By default this is ``False`` unless overridden
             by the global or plotter theme. Note that enabling this will
             create a copy of the input mesh within the plotter. See
             :ref:`shading_example`.
@@ -3307,7 +3307,7 @@ class BasePlotter(_BoundsSizeMixin):
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgb"`` or ``"_rgba"`` is passed,
-            the default becomes ``True``.  This can be overridden by setting
+            the default becomes ``True``. This can be overridden by setting
             this parameter to ``False``.
 
         below_color : ColorLike, optional
@@ -3342,7 +3342,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         pbr : bool, default: False
             Enable physics based rendering (PBR) if the mesh is
-            ``PolyData``.  Use the ``color`` argument to set the base
+            ``PolyData``. Use the ``color`` argument to set the base
             color.
 
         metallic : float, default: 0.0
@@ -3822,7 +3822,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         interpolate_before_map : bool, optional
             Enabling makes for a smoother scalars display. Default is
-            ``True``.  When ``False``, OpenGL will interpolate the
+            ``True``. When ``False``, OpenGL will interpolate the
             mapped colors which can result is showing colors that are
             not present in the color map.
 
@@ -3911,13 +3911,13 @@ class BasePlotter(_BoundsSizeMixin):
         smooth_shading : bool, optional
             Enable smooth shading when ``True`` using the Phong
             shading algorithm. When ``False``, use flat shading.
-            Automatically enabled when ``pbr=True``.  See
+            Automatically enabled when ``pbr=True``. See
             :ref:`shading_example`.
 
         split_sharp_edges : bool, optional
             Split sharp edges exceeding 30 degrees when plotting with smooth
             shading. Control the angle with the optional keyword argument
-            ``feature_angle``.  By default this is ``False`` unless overridden
+            ``feature_angle``. By default this is ``False`` unless overridden
             by the global or plotter theme.  Note that enabling this will
             create a copy of the input mesh within the plotter. See
             :ref:`shading_example`.
@@ -3965,7 +3965,7 @@ class BasePlotter(_BoundsSizeMixin):
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgba"`` is passed, the default
-            becomes ``True``.  This can be overridden by setting this
+            becomes ``True``. This can be overridden by setting this
             parameter to ``False``.
 
         categories : bool | int, optional
@@ -3981,7 +3981,7 @@ class BasePlotter(_BoundsSizeMixin):
         silhouette : dict, bool, optional
             If set to ``True``, plot a silhouette highlight for the
             mesh. This feature is only available for a triangulated
-            ``PolyData``.  As a ``dict``, it contains the properties
+            ``PolyData``. As a ``dict``, it contains the properties
             of the silhouette to display:
 
                 * ``color``: ``ColorLike``, color of the silhouette
@@ -4027,7 +4027,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
-            ``PolyData``.  Use the ``color`` argument to set the base
+            ``PolyData``. Use the ``color`` argument to set the base
             color.
 
         metallic : float, optional
@@ -4181,7 +4181,7 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
-        Note how this varies from ``preference=='point'``.  This is
+        Note how this varies from ``preference=='point'``. This is
         because each point is now being individually colored, versus
         in ``preference=='point'``, each cell face is individually
         colored.
@@ -5009,7 +5009,7 @@ class BasePlotter(_BoundsSizeMixin):
         mapper : str, optional
             Volume mapper to use given by name. Options include:
             ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, ``'smart'``,
-            and ``'ugrid'``.  If ``None`` the ``"volume_mapper"`` in the
+            and ``'ugrid'``. If ``None`` the ``"volume_mapper"`` in the
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``ImageData`` types can be used.
 
@@ -6144,7 +6144,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         quality : int, default: 5
             Quality 10 is the top possible quality for any codec. The
-            range is ``0 - 10``.  Higher quality leads to a larger file.
+            range is ``0 - 10``. Higher quality leads to a larger file.
 
         **kwargs : dict, optional
             See the documentation for :func:`imageio.get_writer()
@@ -6574,7 +6574,7 @@ class BasePlotter(_BoundsSizeMixin):
             rendering window, it will be replaced by the new actor.
 
         shape_color : ColorLike, default: "grey"
-            Color of shape (if visible).  Either a string, rgb
+            Color of shape (if visible). Either a string, rgb
             sequence, or hex color string.
 
         shape : str, default: "rounded_rect"
@@ -8435,7 +8435,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when ``True``.  Useful for automated
+        Renders off screen when ``True``. Useful for automated
         screenshots.
 
     notebook : bool, optional
@@ -8446,7 +8446,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     shape : sequence[int], optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one render
+        with ``shape=(2, 2)``. By default there is only one render
         window.  Can also accept a string descriptor as shape. E.g.:
 
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
@@ -8776,7 +8776,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         auto_close : bool, optional
             Exits plotting session when user closes the window when
-            interactive is ``True``.  Defaults to
+            interactive is ``True``. Defaults to
             :attr:`pyvista.global_theme.auto_close <pyvista.plotting.themes.Theme.auto_close>`.
 
         interactive_update : bool, default: False
@@ -8785,7 +8785,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         full_screen : bool, optional
             Opens window in full screen. When enabled, ignores
-            ``window_size``.  Defaults to
+            ``window_size``. Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.plotting.themes.Theme.full_screen>`.
 
         screenshot : str | Path | io.BytesIO | bool, default: False

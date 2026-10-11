@@ -630,7 +630,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Plot three planes lit by three spotlights with exponents of 1,
-        2, and 5.  The one with the lowest exponent has the broadest
+        2, and 5. The one with the lowest exponent has the broadest
         beam.
 
         >>> import pyvista as pv
@@ -666,7 +666,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
 
         Regarding the angular distribution of the light, the cone
         angle merely truncates the beam, the shape of which is defined
-        by the :py:attr:`exponent`.  If the cone angle is at least 90
+        by the :py:attr:`exponent`. If the cone angle is at least 90
         degrees then there is no angular dependence.
 
         If the light's cone angle is increased to 90 degrees or above,
@@ -1082,7 +1082,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         arbitrary relative position to the camera. Camera lights are
         defined in a coordinate space where the camera is located at
         (0, 0, 1), looking towards (0, 0, 0) at a distance of 1, with
-        up being (0, 1, 0).  Camera lights use the transformation
+        up being (0, 1, 0). Camera lights use the transformation
         matrix to establish this space. Calling this method will
         reset the light's transformation matrix.
 

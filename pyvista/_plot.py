@@ -149,7 +149,7 @@ def plot(  # noqa: ANN202
 
 
     off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving
+        Plots off screen when ``True``. Helpful for saving
         screenshots without a window popping up. Defaults to the
         global setting ``pyvista.OFF_SCREEN``.
 

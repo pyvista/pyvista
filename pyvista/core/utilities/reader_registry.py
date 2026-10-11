@@ -335,7 +335,7 @@ def register_reader(
     handler : callable or type[pyvista.BaseReader], optional
         A :class:`~pyvista.BaseReader` subclass, or a callable with
         signature ``handler(path: str, **kwargs)`` that returns a
-        :class:`pyvista.DataSet`.  When omitted the function acts as a
+        :class:`pyvista.DataSet`. When omitted the function acts as a
         decorator and returns the decorated object unchanged.
 
     override : bool, default: False

@@ -629,7 +629,7 @@ def ParametricEllipsoid(
 
     ParametricEllipsoid generates an ellipsoid. If all the radii are
     the same, we have a sphere. An oblate spheroid occurs if RadiusX
-    = RadiusY > RadiusZ.  Here the Z-axis forms the symmetry axis. To
+    = RadiusY > RadiusZ. Here the Z-axis forms the symmetry axis. To
     a first approximation, this is the shape of the earth. A prolate
     spheroid occurs if RadiusX = RadiusY < RadiusZ.
 

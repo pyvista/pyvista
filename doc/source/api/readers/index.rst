@@ -208,7 +208,7 @@ extension PyVista ships a reader for, and does so silently:
    ".vtp" = "my_package:MyPolyDataReader"
 
 This is the entry-point equivalent of ``override=True`` on
-:func:`pyvista.register_reader`.  Both groups accept both forms, a
+:func:`pyvista.register_reader`. Both groups accept both forms, a
 callable or a :class:`pyvista.BaseReader` subclass.
 
 A callable override is the one case where :func:`pyvista.read` does not
@@ -274,7 +274,7 @@ for zero-config discovery at install time.
 **Handler signature**
 
 A writer handler is a callable ``handler(dataset, path, **kwargs)``
-that writes ``dataset`` to ``path``.  Any extra keyword arguments passed
+that writes ``dataset`` to ``path``. Any extra keyword arguments passed
 to :meth:`pyvista.DataObject.save` beyond its documented parameters
 are forwarded verbatim to the handler as ``**kwargs``. Use them to
 expose format-specific options such as compression level, thread
@@ -298,7 +298,7 @@ discovered automatically when installed:
 When :meth:`~pyvista.DataObject.save` is called, custom writers
 registered via :func:`pyvista.register_writer` are dispatched *before*
 built-in VTK writers for the same extension, mirroring the dispatch
-order used by :func:`pyvista.read`.  By default, registering a
+order used by :func:`pyvista.read`. By default, registering a
 handler for an extension that collides with a built-in PyVista writer
 raises :class:`ValueError`; pass ``override=True`` to replace the
 built-in writer.
@@ -333,7 +333,7 @@ Supported dataset types include :class:`~pyvista.ImageData`,
 :class:`~pyvista.PolyData`, :class:`~pyvista.StructuredGrid`,
 :class:`~pyvista.RectilinearGrid`, :class:`~pyvista.UnstructuredGrid`,
 :class:`~pyvista.MultiBlock`, and
-:class:`~pyvista.ExplicitStructuredGrid`.  The format uses ``zstd``
+:class:`~pyvista.ExplicitStructuredGrid`. The format uses ``zstd``
 compression with multi-threaded encode/decode and is a good choice
 over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.

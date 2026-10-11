@@ -16,7 +16,7 @@ from pyvista import examples
 # use :class:`pyvista.POpenFOAMReader` for reading OpenFOAM files for more
 # control over reading data.
 #
-# This example will only run correctly in versions of vtk>=9.1.0.  The names
+# This example will only run correctly in versions of vtk>=9.1.0. The names
 # of the patch arrays and resulting keys in the read mesh will be different
 # in prior versions.
 

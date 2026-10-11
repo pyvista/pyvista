@@ -221,7 +221,7 @@ pl.show()
 
 # %%
 # Next form the quadrilaterals. This process is the same except
-# by connecting points across two levels of ``phi``.  For point ``1``
+# by connecting points across two levels of ``phi``. For point ``1``
 # and point ``2``, these are connected to point ``9`` and point ``10``. Note
 # for quadrilaterals it must be defined in a consistent direction.
 # Again, the last points in the theta direction connect back to the

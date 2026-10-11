@@ -665,7 +665,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         In the padded array format, faces must contain padding
         indicating the number of points in the face. For example, the
         two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
-        represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
+        represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``. This
         lets you have an arbitrary number of points per face.
 
     lines : CellArrayLike, optional
@@ -2293,7 +2293,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         filename : str, Path
             Filename of mesh to be written. File type is inferred from
             the extension of the filename unless overridden with
-            ``ftype``.  Can be one of many of the supported  the following
+            ``ftype``. Can be one of many of the supported  the following
             types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
             ``'.obj'``, ``'.iv'``).
 
@@ -2303,7 +2303,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         texture : str, numpy.ndarray, optional
             Write a single texture array to file when using a PLY
             file. Texture array must be a 3 or 4 component array with
-            the datatype ``np.uint8``.  Array may be a cell array or a
+            the datatype ``np.uint8``. Array may be a cell array or a
             point array, and may also be a string if the array already
             exists in the PolyData.
 
@@ -2333,7 +2333,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
         **writer_kwargs : dict, optional
             Additional keyword arguments forwarded verbatim to a custom
-            writer registered via :func:`pyvista.register_writer`.  When
+            writer registered via :func:`pyvista.register_writer`. When
             the target extension dispatches to a built-in VTK writer or
             to the pickle path, passing any extra keyword arguments
             raises :class:`TypeError`.
@@ -2678,7 +2678,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     deep : bool, default: False
         Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
-        Default is ``False``.  Keyword only.
+        Default is ``False``. Keyword only.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
@@ -2851,7 +2851,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         deep : bool, default: True
             When ``True``, makes a copy of the points array. Default
-            ``False``.  Cells and cell types are always copied.
+            ``False``. Cells and cell types are always copied.
 
         force_float : bool, default: True
             Casts the datatype to ``float32`` if points datatype is
@@ -3910,7 +3910,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     deep : bool, default: False
         Whether to deep copy a StructuredGrid object.
-        Default is ``False``.  Keyword only.
+        Default is ``False``. Keyword only.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
@@ -4697,7 +4697,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         **writer_kwargs : dict, optional
             Additional keyword arguments forwarded verbatim to a custom
-            writer registered via :func:`pyvista.register_writer`.  When
+            writer registered via :func:`pyvista.register_writer`. When
             the target extension dispatches to a built-in VTK writer or
             to the pickle path, passing any extra keyword arguments
             raises :class:`TypeError`.

@@ -315,7 +315,7 @@ def read(
     Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
     temporary file automatically.  Install ``fsspec`` for full protocol
     support (``pip install pyvista[io]``); ``pooch`` is used as a
-    fallback for HTTP(S).  Third-party reader plugins registered via
+    fallback for HTTP(S). Third-party reader plugins registered via
     :func:`pyvista.register_reader` are also checked.
 
     See :func:`pyvista.get_reader` for list of vtk formats supported.
@@ -1474,7 +1474,7 @@ def save_meshio(
         Any PyVista mesh/spatial data type.
 
     file_format : str, optional
-        File type for meshio to save. For example ``'.bdf'``.  This
+        File type for meshio to save. For example ``'.bdf'``. This
         is normally inferred from the extension but this can be
         overridden.
 

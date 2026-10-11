@@ -868,7 +868,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         opacity : float | VectorLikeFloat | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-            ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
+            ``'sigmoid_3-10'``. Append an ``'_r'`` to any of those names to
             reverse that mapping. This can also be a custom array or list of
             values that will be interpolated across the ``n_color`` range for
             user defined mappings. Values must be between 0 and 1.

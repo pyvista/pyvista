@@ -760,7 +760,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         output : pyvista.DataSet | tuple[pyvista.DataSet, pyvista.DataSet]
-            Clipped dataset if ``both=False``.  If ``both=True`` then
+            Clipped dataset if ``both=False``. If ``both=True`` then
             returns a tuple of both clipped datasets. A :class:`~pyvista.PolyData`
             gives a ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``;
             every other dataset gives an :class:`~pyvista.UnstructuredGrid`.
@@ -1064,7 +1064,7 @@ class DataSetFilters(DataObjectFilters):
         all_scalars : bool, default: False
             If using scalars from point data, all
             points in a cell must satisfy the threshold when this
-            value is ``True``.  When ``False``, any point of the cell
+            value is ``True``. When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 

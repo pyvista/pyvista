@@ -98,7 +98,7 @@ pv.global_theme
 
 # %%
 # By default, edges are not shown on meshes unless explicitly
-# specified when plotting a mesh via ``show_edges=True``.  You can
+# specified when plotting a mesh via ``show_edges=True``. You can
 # change this default behavior globally by changing the default
 # parameter.
 

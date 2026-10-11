@@ -1001,7 +1001,7 @@ class _BaseDataSetMapper(_BaseMapper):
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgba"`` is passed, the default
-            becomes ``True``.  This can be overridden by setting this
+            becomes ``True``. This can be overridden by setting this
             parameter to ``False``.
 
         component : int, optional
@@ -1043,7 +1043,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps. Only applicable
+            ``scalars``. See available Matplotlib colormaps. Only applicable
             for when displaying ``scalars``.
             ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be

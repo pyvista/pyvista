@@ -428,7 +428,7 @@ def _constrained_box(
     the end labels stay inside. The box is sized so that share holds the title and the
     labels at the sizes they asked for, or one size larger where two sizes measure the
     same height, with the ramp as thick as the bar's own size makes it and the title
-    padded off the labels by ``pad``.  Text wider than the box is shrunk to fit it. A
+    padded off the labels by ``pad``. Text wider than the box is shrunk to fit it. A
     box that keeps its height spends what it has to spare on that padding and on the
     ramp instead, and shrinks its text when it has too little. Returns the height in
     pixels, with the bar ratio, the title ratio and the text pad that lay the box out
@@ -1212,7 +1212,7 @@ class ScalarBars(_NoNewAttrMixin):
             padded off the bar by a multiple of its own size. Defaults to
             ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
-            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  Has no
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`. Has no
             effect when the font size is constrained, or on a box given a size
             of its own.
 
@@ -1227,7 +1227,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         color : ColorLike, optional
             Either a string, rgb list, or hex color string. Default
-            set by :attr:`pyvista.plotting.themes.Theme.font`.  Can be
+            set by :attr:`pyvista.plotting.themes.Theme.font`. Can be
             in one of the following formats:
 
             * ``color='white'``
@@ -1285,7 +1285,7 @@ class ScalarBars(_NoNewAttrMixin):
             Defaults to ``None``, which spaces them as tightly as their titles
             and tick labels allow, and is taken from
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
-            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  A value
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`. A value
             small enough to overlap is used as given. Has no effect when the
             font size is constrained.
 
@@ -1348,7 +1348,7 @@ class ScalarBars(_NoNewAttrMixin):
             Whether the font size of title and labels is unconstrained.
             When it is constrained, the size of the scalar bar will constrain the font size.
             When it is not, the size of the font will always be respected.
-            Using custom labels will force this to be ``True``.  A box drawn
+            Using custom labels will force this to be ``True``. A box drawn
             around a horizontal bar sizes the text itself unless this is ``True``.
 
             .. versionadded:: 0.44.0

@@ -1843,7 +1843,7 @@ class WidgetComponent(_NoNewAttrMixin):
         all_scalars : bool, default: False
             If using scalars from point data, all
             points in a cell must satisfy the threshold when this
-            value is ``True``.  When ``False``, any point of the cell
+            value is ``True``. When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 

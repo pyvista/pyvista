@@ -544,7 +544,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
 
     interpolate_before_map : bool, optional
         Enabling makes for a smoother scalars display. Default is
-        ``True``.  When ``False``, OpenGL will interpolate the
+        ``True``. When ``False``, OpenGL will interpolate the
         mapped colors which can result is showing colors that are
         not present in the color map.
 
@@ -787,7 +787,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps. Only applicable
+            ``scalars``. See available Matplotlib colormaps. Only applicable
             for when displaying ``scalars``.
             ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be

@@ -99,7 +99,7 @@ class MultiBlock(
 
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
-       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
+       from :class:`collections.abc.MutableSequence`. Multiple nonconforming
        behaviors were removed or modified.
 
     .. versionadded:: 0.50
@@ -1472,7 +1472,7 @@ class MultiBlock(
         ------
         TypeError
             If ``dataset`` is a composite which cannot be a block, such as a
-            :class:`~pyvista.PartitionedDataSet`.  Convert it with
+            :class:`~pyvista.PartitionedDataSet`. Convert it with
             :meth:`~pyvista.DataObject.cast_to_multiblock` first.
 
         Examples

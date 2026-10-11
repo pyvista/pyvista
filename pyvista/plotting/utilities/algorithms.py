@@ -219,7 +219,7 @@ class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgori
     Parameters
     ----------
     generator : callable
-        ``generator() -> dataset``.  Called each time the pipeline requests
+        ``generator() -> dataset``. Called each time the pipeline requests
         data.
 
     output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
@@ -289,7 +289,7 @@ class CallbackFilterAlgorithm(PreserveTypeAlgorithmBase):
     Parameters
     ----------
     callback : callable
-        ``callback(dataset) -> dataset``.  Called on each
+        ``callback(dataset) -> dataset``. Called on each
         :meth:`RequestData` invocation with the wrapped input.
 
     output_type : str | type[pyvista.DataSet] | None, default: ``None``

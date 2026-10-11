@@ -283,7 +283,7 @@ def _remap_scalars_through_topology_change(  # noqa: PLR0917
         Pre-pipeline scalars array.
 
     original_scalar_name : str | None
-        If set, the array is resolved by name on ``mesh``.  When
+        If set, the array is resolved by name on ``mesh``. When
         ``None`` (raw NumPy + upstream ``vtkAlgorithm`` input), the
         ``vtkOriginalPointIds`` tracker is used to remap point-length
         scalars.
