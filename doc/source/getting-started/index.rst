@@ -111,6 +111,8 @@ through a range of examples and tutorials.
    ...     (-0.01684, 0.110154, -0.0015369),
    ...     (-0.15446, 0.939031, -0.3071841),
    ... ]
+   >>> from pyvista import examples
+   >>> examples.download_bunny().save('bunny.stl')
 
 
 .. grid:: 2
@@ -123,12 +125,14 @@ through a range of examples and tutorials.
       Learn more about why we created PyVista as an interface to the
       Visualization Toolkit (VTK).
 
-      .. code-block:: python
+      .. pyvista-plot::
+         :nofigs:
+         :context:
 
-          import pyvista as pv
+         import pyvista as pv
 
-          mesh = pv.read('bunny.stl')
-          mesh.plot()
+         mesh = pv.read('bunny.stl')
+         mesh.plot()
 
       .. pyvista-plot::
          :include-source: False
