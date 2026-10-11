@@ -712,10 +712,12 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.orientation == ori
     assert plot.label == l[0]
 
+    # Test multi comp constructor with a single color for every component
+    for color in (c[0], 'r'):
+        plot = charts.BarPlot(chart_2d, x, y, color=color, orientation=ori, label=l)
+        assert plot.colors == [pv.Color(color)] * len(y)
+
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(TypeError):
-        charts.BarPlot(chart_2d, x, y, color=c[0], orientation=ori, label=l)
-    # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
         charts.BarPlot(chart_2d, x, y[0], color=c, orientation=ori, label=l[0])
     with pytest.raises(ValueError):  # noqa: PT011
@@ -755,10 +757,12 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.color == c[0]
     assert plot.label == l[0]
 
+    # Test multi comp constructor with a single color for every component
+    for color in (c[0], 'r'):
+        plot = charts.StackPlot(chart_2d, x, ys, colors=color, labels=l)
+        assert plot.colors == [pv.Color(color)] * len(ys)
+
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(TypeError):
-        charts.StackPlot(chart_2d, x, ys, colors=c[0], labels=l)
-    # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
         charts.StackPlot(chart_2d, x, ys[0], colors=c, labels=l[0])
     with pytest.raises(ValueError):  # noqa: PT011

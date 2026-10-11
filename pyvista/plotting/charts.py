@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 
     from matplotlib.backend_bases import DrawEvent
     from numpy.typing import NDArray
+    from typing_extensions import TypeIs
 
     from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLikeFloat
@@ -2083,6 +2084,17 @@ class _Plot(DocSubs):
         self.visible = not self.visible
 
 
+def _is_single_color(color: object) -> TypeIs[ColorLike]:
+    """Return whether ``color`` is one color rather than a color scheme name or several colors."""
+    if color is None:
+        return False
+    try:
+        Color(color)  # type: ignore[arg-type]  # Color validates its input at runtime
+    except ValueError:
+        return False
+    return True
+
+
 class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
@@ -2932,9 +2944,9 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
     y : array_like
         Size of the bars to draw. Multiple bars can be stacked by passing a sequence of sequences.
 
-    color : ColorLike, default: "b"
-        Color of the bars drawn in this plot. Any color parsable by :class:`pyvista.Color` is
-        allowed.
+    color : ColorLike | sequence[ColorLike], optional
+        Color of the bars drawn in this plot, or one color per stacked component. Any color
+        parsable by :class:`pyvista.Color` is allowed. A single component defaults to ``"b"``.
 
     orientation : str, default: "V"
         Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation
@@ -3013,8 +3025,8 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
 
         if len(ys) > 1:
             self.SetColorSeries(self._color_series)
-            # A multi-component plot takes one color and one label per component
-            self.colors = cast('Sequence[ColorLike] | None', color)  # None uses the scheme
+            # A single color applies to every component and None uses the scheme
+            self.colors = [color] * len(ys) if _is_single_color(color) else color
             self.labels = label
         else:
             # Use blue bars by default in single component mode
@@ -3156,8 +3168,9 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         (area), which are stacked on top of each other.
 
     colors : ColorLike | sequence[ColorLike], optional
-        Color of the stacks (areas) drawn in this plot. Any color
-        parsable by :class:`pyvista.Color` is allowed.
+        Color of the stacks (areas) drawn in this plot, or one color
+        per stack. Any color parsable by :class:`pyvista.Color` is
+        allowed.
 
     labels : sequence[str], default: []
         Label for each stack (area) drawn in this plot, as shown in
@@ -3228,7 +3241,8 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
 
         if len(stacks) > 1:
             self.SetColorSeries(self._color_series)
-            self.colors = cast('Sequence[ColorLike] | None', colors)
+            # A single color applies to every component and None uses the scheme
+            self.colors = [colors] * len(stacks) if _is_single_color(colors) else colors
             self.labels = labels
         else:
             # A single-component plot takes one color and one label
@@ -3804,9 +3818,11 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             Size of the bars to draw. Multiple bars can be stacked by
             passing a sequence of sequences.
 
-        color : ColorLike, default: "b"
-            Color of the bars drawn in this plot. Any color parsable
-            by :class:`pyvista.Color` is allowed.
+        color : ColorLike | sequence[ColorLike], optional
+            Color of the bars drawn in this plot, or one color per
+            stacked component. Any color parsable by
+            :class:`pyvista.Color` is allowed. A single component
+            defaults to ``"b"``.
 
         orientation : str, default: "V"
             Orientation of the bars drawn in this plot. Either ``"H"``
@@ -3857,8 +3873,9 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             (area), which are stacked on top of each other.
 
         colors : ColorLike | sequence[ColorLike], optional
-            Color of the stacks (areas) drawn in this plot. Any color
-            parsable by :class:`pyvista.Color` is allowed.
+            Color of the stacks (areas) drawn in this plot, or one
+            color per stack. Any color parsable by
+            :class:`pyvista.Color` is allowed.
 
         labels : sequence[str], default: []
             Label for each stack (area) drawn in this plot, as shown
