@@ -48,7 +48,9 @@ means the PyVista name was missed, so check `dir(obj)` first. No bare `import vt
 `vtkmodules` import anywhere (a gallery example may carry a rare one-off, as
 `examples/01-filter/reslice.py` does), and no VTK CamelCase call
 (`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) where a property or filter
-exists. Inside the package, `from pyvista import _vtk` and then `_vtk.vtkY`.
+exists. Inside the package and its tests, `from pyvista import _vtk` and then
+`_vtk.vtkY`. `_vtk` is private, so anything a user reads or copies (examples,
+docstrings, documentation) imports neither it nor `vtkmodules`.
 
 **Filters return a new dataset.** `inplace=False` is the default, so `mesh.clip('y')`
 leaves `mesh` untouched. Capture the return value.

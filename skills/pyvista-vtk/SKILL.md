@@ -25,10 +25,11 @@ concluding a wrapper is missing; if it genuinely is, add the property or filter 
 let the consumer land after it.
 
 `import vtk` and `import vtkmodules` are both banned by ruff (`banned-api` in
-`pyproject.toml`), which points you at `pyvista._vtk` instead. The sanctioned form,
-in the package, tests and docstrings alike, is `from pyvista import _vtk`, then
-`_vtk.vtkThreshold()`. Examples escape the lint because `examples/ruff.toml` defines its
-own `banned-api` table, which replaces the parent's rather than merging with it; a rare
+`pyproject.toml`), which points you at `pyvista._vtk` instead. The sanctioned form in
+the package and its tests is `from pyvista import _vtk`, then `_vtk.vtkThreshold()`.
+`_vtk` is private: docstring examples and gallery examples use public PyVista names
+only. Examples escape the lint because `examples/ruff.toml` defines its own `banned-api`
+table, which replaces the parent's rather than merging with it; a rare `vtkmodules`
 one-off there is tolerated (`examples/01-filter/reslice.py`), not a pattern to copy.
 
 The wrapper classes also gate the VTK surface at runtime: `_NoNewAttrMixin`
