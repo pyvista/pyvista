@@ -1142,8 +1142,9 @@ def test_clear_all_data_nested_none_and_empty(method, point_cleared, cell_cleare
         mesh.clear_data()
         mesh.point_data['p'] = range(mesh.n_points)
         mesh.cell_data['c'] = range(mesh.n_cells)
-    multi = pv.MultiBlock([None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])])
-    multi.insert(0, sphere)
+    multi = pv.MultiBlock(
+        [sphere, None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])]
+    )
     getattr(multi, method)()
     for mesh in (sphere, cube):
         assert (mesh.point_data.keys() == []) is point_cleared
@@ -1152,17 +1153,24 @@ def test_clear_all_data_nested_none_and_empty(method, point_cleared, cell_cleare
     assert len(multi[2]) == 0
 
 
-def test_convert_to_single_component_nested_none_and_empty():
+@pytest.mark.parametrize(
+    ('method', 'args', 'values', 'expected_name', 'expected'),
+    [
+        ('_convert_to_real_scalars', (), np.ones(3), 'vec-real', np.ones(3)),
+        ('_convert_to_uint8_rgb_scalars', (), np.ones(3), 'vec-uint8', np.full(3, 255)),
+        ('_convert_to_single_component', (None,), np.ones(3), 'vec-normed', np.sqrt(3)),
+        ('_convert_to_single_component', (1,), np.arange(3.0), 'vec-1', 1.0),
+    ],
+)
+def test_convert_scalars_nested_none_and_empty(method, args, values, expected_name, expected):
     cube = pv.Cube()
     cube.clear_data()
-    cube.point_data['vec'] = np.ones((cube.n_points, 3))
+    cube.point_data['vec'] = np.tile(values, (cube.n_points, 1))
     multi = pv.MultiBlock([None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])])
-    name = multi._convert_to_single_component('point_data', 'vec', None)
-    assert name == 'vec-normed'
-    assert cube.point_data.active_scalars_name == 'vec-normed'
-    assert np.allclose(cube.point_data['vec-normed'], np.sqrt(3))
-    name = multi._convert_to_single_component('point_data', 'vec', 1)
-    assert cube.point_data.active_scalars_name == name == 'vec-1'
+    name = getattr(multi, method)('point_data', 'vec', *args)
+    assert name == expected_name
+    assert cube.point_data.active_scalars_name == expected_name
+    assert np.allclose(cube.point_data[expected_name], expected)
 
 
 @pytest.mark.parametrize('container', [pv.MultiBlock, pv.PartitionedDataSet])
