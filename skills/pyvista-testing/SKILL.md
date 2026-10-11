@@ -41,7 +41,8 @@ Multiple `show()` calls in one test produce numbered baselines. `test_foo` write
 
 `failed_image_dir`, `generated_image_dir`, `image_cache_dir`, `max_image_size`, and their
 `doc_` counterparts are already set in `pyproject.toml` under `[tool.pytest.ini_options]`,
-so `make test-plotting` dumps the failures without any extra flag.
+so `make test-plotting` dumps the failures and every generated image without any extra
+flag.
 
 Inside a dump, `from_cache/` is the committed baseline and `from_test/` is what the run
 rendered. `errors/` exceeded the failure threshold, `warnings/` exceeded only the warning
@@ -53,13 +54,12 @@ tox run -e image-report -- _failed_test_images _image_report
 
 ## Accepting or adding a baseline
 
-| Flag                    | Use                                                                      |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `--add_missing_images`  | A new test with no baseline yet. Writes only what is missing             |
-| `--reset_only_failed`   | A render legitimately changed. Overwrites only the baselines that failed |
-| `--ignore_image_cache`  | Skip comparison locally while iterating. CI still compares               |
-| `--generated_image_dir` | Dump every generated image, not only the failures                        |
-| `--reset_image_cache`   | Regenerates **every** baseline the run collected. Maintainer-only        |
+| Flag                   | Use                                                                      |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `--add_missing_images` | A new test with no baseline yet. Writes only what is missing             |
+| `--reset_only_failed`  | A render legitimately changed. Overwrites only the baselines that failed |
+| `--ignore_image_cache` | Skip comparison locally while iterating. CI still compares               |
+| `--reset_image_cache`  | Regenerates **every** baseline the run collected. Maintainer-only        |
 
 Scope every one of these to the node id you mean. Anything passed through `ARGS` replaces
 the environment's whole-suite defaults, so the node id below is the entire run:
@@ -170,7 +170,7 @@ round trips, or a raise path. Those belong in `tests/core/`.
 
 The documentation build has its own cache, its own flags (`--doc_mode`,
 `--doc_images_dir`), and its own tox environment, `docs-test-images`. Editing a docstring
-example that renders changes a documentation baseline, so a `Build Documentation` failure
+example that renders changes a documentation baseline, so a `Test Documentation` failure
 after a docstring edit is usually this and not a broken build. Repairing that cache is its
 own job -- most of those failures are renames rather than changed pictures -- and
 **pyvista-doc-images** covers it.
