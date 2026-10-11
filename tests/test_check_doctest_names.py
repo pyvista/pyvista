@@ -138,3 +138,15 @@ def test_submodules_imported_during_the_search_are_discovered():
         'fake.parent',
         'fake.parent.child',
     ]
+
+
+def test_a_package_sharing_the_name_prefix_is_not_followed():
+    """Only the entry point itself and the modules under it are gathered."""
+    entry = ModuleType('fake')
+    child = ModuleType('fake.child')
+    sibling = ModuleType('fake_other')
+    entry.child = child
+    entry.other = sibling
+    child.entry = entry
+
+    assert sorted(discover_modules(entry)) == ['fake', 'fake.child']

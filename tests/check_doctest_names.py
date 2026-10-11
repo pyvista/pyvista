@@ -46,6 +46,7 @@ MODULE_DUNDERS = frozenset(
 def _undiscovered_submodules(entry, found):
     """Return the submodules of an entry point and of ``found`` that ``found`` lacks."""
     entry_name = entry.__name__
+    prefix = entry_name + '.'
     new_modules = {}
     for ent in (entry, *found.values()):
         for attr_short_name in dir(ent):
@@ -55,7 +56,10 @@ def _undiscovered_submodules(entry, found):
 
             module_name = attr.__name__
 
-            if module_name.startswith(entry_name) and module_name not in found:
+            if module_name != entry_name and not module_name.startswith(prefix):
+                continue
+
+            if module_name not in found:
                 new_modules[module_name] = attr
     return new_modules
 
