@@ -11,6 +11,7 @@ from __future__ import annotations
 import functools
 import importlib.util
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import cast
 
 import pyvista as pv
