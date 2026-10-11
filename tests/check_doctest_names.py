@@ -56,9 +56,9 @@ def _imported_submodules(entry):
 def discover_modules(entry=pv):
     """Discover the modules imported under an entry point.
 
-    The search alternates between reading the attributes of what it has
-    found, which imports whatever a module exposes lazily, and collecting
-    what that left in ``sys.modules``, until nothing new arrives. Reading
+    The search alternates between reading the attributes each module lists,
+    which imports whatever those names resolve to lazily, and collecting what
+    that left in ``sys.modules``, until nothing new arrives. Reading
     ``sys.modules`` also reaches a submodule whose package has rebound its
     name to another object. Only modules are gathered, because within a
     module ``doctest``'s discovery can work recursively.
@@ -83,7 +83,7 @@ def discover_modules(entry=pv):
     while True:
         for module in list(found_modules.values()):
             for attr_short_name in dir(module):
-                getattr(module, attr_short_name, None)
+                getattr(module, attr_short_name)
 
         grown = _imported_submodules(entry)
         if grown.keys() == found_modules.keys():

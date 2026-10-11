@@ -138,7 +138,7 @@ def test_modules_imported_during_the_search_are_discovered(monkeypatch):
     assert sorted(discover_modules(entry)) == ['fake', 'fake.lazy']
 
 
-def test_a_submodule_shadowed_by_a_same_named_object_is_discovered(monkeypatch):
+def test_a_submodule_not_exposed_as_a_module_attribute_is_discovered(monkeypatch):
     """A submodule whose package rebound its name to something else is gathered."""
     entry = _module(monkeypatch, 'fake')
     _module(monkeypatch, 'fake.thing')
