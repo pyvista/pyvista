@@ -1627,7 +1627,6 @@ Documentation can be build either directly (that is, using Python commands) or w
 
                     cd doc
                     python -msphinx -M html source _build
-                    python -msphinx -M html . _build
 
     .. tab-item:: tox
         :sync: tox
@@ -1643,7 +1642,7 @@ Documentation can be build either directly (that is, using Python commands) or w
 
             .. code-block:: bash
 
-                tox run -e docs-build -- mini18n-html # for translated languages
+                tox run -e docs-build -- dirhtml
 
     .. tab-item:: make
         :sync: make
@@ -1742,9 +1741,9 @@ When executed, the test will first pre-process the build images. The images are:
 
 #. Resized to a maximum of 400x400 pixels.
 
-#. Saved to a flat directory as JPEG images in ``./_doc_debug_images``.
+#. Saved to a flat directory as JPEG images in ``./_doc_generated_test_images``.
 
-Next, the pre-processed images in ``./_doc_debug_images`` are compared to the
+Next, the pre-processed images in ``./_doc_generated_test_images`` are compared to the
 cached images in the ``Doc Image Cache`` using :func:`pyvista.compare_images`.
 
 The tests can fail in three ways. To make it easy to review images for failed tests,
@@ -1752,16 +1751,16 @@ copies of the images are made as follows:
 
 #. If the comparison between the two images fails:
 
-    - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
+    - The cache image is copied to ``./_doc_failed_test_images/errors/from_cache``
+    - The build image is copied to ``./_doc_failed_test_images/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
-    - The cache image is copied to  ``./_doc_debug_images_failed/errors/from_cache``
+    - The cache image is copied to ``./_doc_failed_test_images/errors/from_cache``
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
+    - The build image is copied to ``./_doc_failed_test_images/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
@@ -1774,15 +1773,12 @@ Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
 If a test is flaky, for example the build sometimes generates different images
-for the same plot, the multiple versions of the image may be saved to the
-flaky test directory ``./tests/doc/flaky_tests``. A folder with the same
-name as the test image should be created, and all versions of the image
-should be stored in this directory. The test will first compare the
-build image to the cached image in ``Doc Image Cache`` as normal. If that
-comparison fails, the build image is then compared to all images in the
-flaky test directory. The test is successful if one of the comparisons
-is successful, but a warning will still be issued. If a warning is
-emitted by a flaky test, images are saved to the ``flaky`` sub-directory
+for the same plot, replace its cached image with a directory of the same name
+in the ``Doc Image Cache`` and store every accepted version of the image in it.
+The build image is compared to the first version in sorted order and, if that
+comparison fails, to each of the others in turn. The test passes on the first
+version within the error threshold, with a warning when that is not the first
+one, and its images are then saved to the ``errors_as_warnings`` sub-directory
 instead of ``warnings``.
 
 .. note::
