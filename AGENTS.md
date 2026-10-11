@@ -44,13 +44,14 @@ change over, since a label other than `docker` applied after the last push does 
 until the next one.
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
-means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk` and no
-`vtkmodules` import anywhere (a gallery example may carry a rare one-off, as
-`examples/01-filter/reslice.py` does), and no VTK CamelCase call
-(`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) where a property or filter
-exists. Inside the package and its tests, `from pyvista import _vtk` and then
-`_vtk.vtkY`. `_vtk` is private, so anything a user reads or copies (examples,
-docstrings, documentation) imports neither it nor `vtkmodules`.
+means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk`
+anywhere, and no VTK CamelCase call (`mesh.GetBounds()`, `alg.SetInputData(...)`,
+`obj.Modified()`) where a property or filter exists. Source code -- the package and its
+tests -- imports VTK as `from pyvista import _vtk`, then `_vtk.vtkY`, never from
+`vtkmodules`. `_vtk` is private, so user-facing docs (examples, docstrings,
+documentation) never import it; where their point is customizing VTK directly, as in the
+`RenderWindowInteractor.style` docstring or `examples/01-filter/reslice.py`, they use a
+targeted `vtkmodules` import, and those stay rare.
 
 **Filters return a new dataset.** `inplace=False` is the default, so `mesh.clip('y')`
 leaves `mesh` untouched. Capture the return value.

@@ -27,10 +27,11 @@ let the consumer land after it.
 `import vtk` and `import vtkmodules` are both banned by ruff (`banned-api` in
 `pyproject.toml`), which points you at `pyvista._vtk` instead. The sanctioned form in
 the package and its tests is `from pyvista import _vtk`, then `_vtk.vtkThreshold()`.
-`_vtk` is private: docstring examples and gallery examples use public PyVista names
-only. Examples escape the lint because `examples/ruff.toml` defines its own `banned-api`
-table, which replaces the parent's rather than merging with it; a rare `vtkmodules`
-one-off there is tolerated (`examples/01-filter/reslice.py`), not a pattern to copy.
+`_vtk` is private, so docstring and gallery examples never import it. An example whose
+point is customizing VTK directly, such as the `RenderWindowInteractor.style` docstring
+or `examples/01-filter/reslice.py`, uses a targeted `vtkmodules` import instead; keep
+those rare. Gallery examples pass the lint because `examples/ruff.toml` defines its own
+`banned-api` table, which replaces the parent's rather than merging with it.
 
 The wrapper classes also gate the VTK surface at runtime: `_NoNewAttrMixin`
 (`pyvista/core/utilities/misc.py`) refuses unknown attributes, and `DisableVtkSnakeCase`
