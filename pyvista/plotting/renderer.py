@@ -24,6 +24,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _load_css
 from pyvista.core.formatting_html import _metadata_html
@@ -4053,8 +4054,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
                 msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
                 raise VTKVersionError(msg)
             rotation_matrix = _validation.validate_rotation(
@@ -4692,8 +4691,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetLabelFactor(label_size_factor)
         if snap_labels:
             if vtk_version_info < (9, 4):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
                 msg = '`snap_labels` requires VTK >= 9.4. Try installing VTK v9.4.0 or newer.'
                 raise VTKVersionError(msg)
             ruler.SnapLabelsToGridOn()
