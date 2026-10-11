@@ -52,7 +52,7 @@ io = [
   'pyvista-zstd>=0.3.1',
 ]
 io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
-jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
+jupyter = ['trame-pyvista[jupyter]']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
