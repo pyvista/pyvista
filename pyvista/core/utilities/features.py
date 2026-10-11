@@ -265,9 +265,13 @@ def merge(
     Parameters
     ----------
     datasets : sequence[:class:`pyvista.DataSet`] | :class:`pyvista.MultiBlock`
-        Sequence of datasets. Can be of any :class:`pyvista.DataSet`. A
-        :class:`pyvista.MultiBlock` is accepted, and raises ``TypeError`` if any
-        of its blocks is not a dataset.
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`. The datasets
+        of a :class:`pyvista.MultiBlock` are merged in order, including those of
+        nested blocks, and ``None`` blocks are skipped.
+
+        .. versionchanged:: 0.50
+            Nested and ``None`` blocks of a :class:`pyvista.MultiBlock` no longer
+            raise ``TypeError``.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``. The default differs from
@@ -308,6 +312,8 @@ def merge(
         msg = f'Expected a sequence, got {type(datasets).__name__}'  # type: ignore[unreachable]
         raise TypeError(msg)
 
+    if isinstance(datasets, pv.MultiBlock):
+        datasets = list(datasets.recursive_iterator(skip_none=True))
     if len(datasets) < 1:
         msg = 'Expected at least one dataset.'
         raise ValueError(msg)

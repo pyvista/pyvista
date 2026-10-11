@@ -1102,6 +1102,19 @@ def test_reflection():
         transformations.reflection([0, 0, 0])
 
 
+@pytest.mark.parametrize('merge_points', [True, False])
+def test_merge_multiblock_nested_none_and_empty(sphere, cube, merge_points):
+    multi = pv.MultiBlock([None, pv.MultiBlock([sphere, None]), pv.MultiBlock(), cube])
+    merged = pv.merge(multi, merge_points=merge_points)
+    expected = pv.merge([sphere, cube], merge_points=merge_points)
+    assert isinstance(merged, pv.PolyData)
+    assert merged.n_points == expected.n_points
+    assert np.array_equal(merged.points, expected.points)
+
+    with pytest.raises(ValueError, match='Expected at least one'):
+        pv.merge(pv.MultiBlock([None, pv.MultiBlock()]))
+
+
 def test_merge(sphere, cube, datasets):
     with pytest.raises(TypeError, match='Expected a sequence'):
         pv.merge(None)
