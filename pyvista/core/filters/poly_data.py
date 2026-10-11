@@ -217,7 +217,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Demonstrate a boolean union with two spheres.  Note how the
+        Demonstrate a boolean union with two spheres. Note how the
         final mesh includes both spheres.
 
         >>> import pyvista as pv
@@ -295,7 +295,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Demonstrate a boolean intersection with two spheres.  Note how
+        Demonstrate a boolean intersection with two spheres. Note how
         the final mesh only includes the intersection of the two.
 
         >>> import pyvista as pv
@@ -376,7 +376,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Demonstrate a boolean difference with two spheres.  Note how
+        Demonstrate a boolean difference with two spheres. Note how
         the final mesh only includes ``sphere_a``.
 
         >>> import pyvista as pv
@@ -4450,7 +4450,7 @@ class PolyDataFilters(DataSetFilters):
             component.
 
         clip_tolerance : float, default: 1e-6
-            Set/Get the clip tolerance.  Warning: setting this too large will
+            Set/Get the clip tolerance. Warning: setting this too large will
             certainly cause numerical issues. Change from the default value at
             your own risk. The actual internal clip tolerance is computed by
             multiplying ``clip_tolerance`` by the scalar range.

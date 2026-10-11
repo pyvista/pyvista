@@ -3918,7 +3918,7 @@ class BasePlotter(_BoundsSizeMixin):
             Split sharp edges exceeding 30 degrees when plotting with smooth
             shading. Control the angle with the optional keyword argument
             ``feature_angle``. By default this is ``False`` unless overridden
-            by the global or plotter theme.  Note that enabling this will
+            by the global or plotter theme. Note that enabling this will
             create a copy of the input mesh within the plotter. See
             :ref:`shading_example`.
 
@@ -4148,7 +4148,7 @@ class BasePlotter(_BoundsSizeMixin):
         >>> _ = pl.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
         >>> pl.show()
 
-        Plot using RGB on a single cell.  Note that since the number of
+        Plot using RGB on a single cell. Note that since the number of
         points and the number of cells are identical, we have to pass
         ``preference='cell'``.
 
@@ -8447,7 +8447,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``. By default there is only one render
-        window.  Can also accept a string descriptor as shape. E.g.:
+        window. Can also accept a string descriptor as shape. E.g.:
 
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.

@@ -2490,7 +2490,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The face at which to place the plane. Options are
             (``'-z'``, ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and
             ``'+z'``). Where the ``-/+`` sign indicates on which side of
-            the axis the plane will lie.  For example, ``'-z'`` would
+            the axis the plane will lie. For example, ``'-z'`` would
             generate a floor on the XY-plane and the bottom of the
             scene (minimum z).
 

@@ -313,7 +313,7 @@ def read(
     readers first then tries to use ``meshio``.
 
     Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
-    temporary file automatically.  Install ``fsspec`` for full protocol
+    temporary file automatically. Install ``fsspec`` for full protocol
     support (``pip install pyvista[io]``); ``pooch`` is used as a
     fallback for HTTP(S). Third-party reader plugins registered via
     :func:`pyvista.register_reader` are also checked.

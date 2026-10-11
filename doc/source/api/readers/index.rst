@@ -245,7 +245,7 @@ built-in format reads differently than expected.
 When :func:`pyvista.read` is given a remote URI (``https://``,
 ``s3://``, etc.) and a custom reader is registered for the file
 extension, the URI is passed directly to the reader along with any
-keyword arguments.  If the reader raises
+keyword arguments. If the reader raises
 :class:`~pyvista.LocalFileRequiredError`, PyVista downloads the file to
 a temporary local path and retries. For built-in formats with no custom
 reader, and for a callable override handed reader arguments, the

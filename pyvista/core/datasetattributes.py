@@ -109,7 +109,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     :func:`DataSetAttributes.set_scalars`.
 
     .. versionchanged:: 0.32.0
-        The ``[]`` operator no longer allows integers.  Use
+        The ``[]`` operator no longer allows integers. Use
         :func:`DataSetAttributes.get_array` to retrieve an array
         using an index.
 
@@ -350,7 +350,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Return the active scalars.
 
         .. versionchanged:: 0.32.0
-            Can no longer be used to set the active scalars.  Either use
+            Can no longer be used to set the active scalars. Either use
             :func:`DataSetAttributes.set_scalars` or if the array
             already exists, assign to
             :attr:`pyvista.DataSetAttributes.active_scalars_name`.
@@ -389,7 +389,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
-            Can no longer be used to set the active vectors.  Either use
+            Can no longer be used to set the active vectors. Either use
             :func:`DataSetAttributes.set_vectors` or if the array
             already exists, assign to
             :attr:`pyvista.DataSetAttributes.active_vectors_name`.

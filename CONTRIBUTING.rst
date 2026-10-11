@@ -2207,7 +2207,7 @@ Any PyVista self-hosted runner must:
 - Be as compatible as possible with a GitHub hosted runner.
 - Use labels to denote the OS of a runner that are the same as GitHub's labels
   appended with ``self-hosted`` to ensure that there isn't overlap with GitHub
-  labels.  For example, ``macos-15-self-hosted``. Additional labels may be
+  labels. For example, ``macos-15-self-hosted``. Additional labels may be
   specified (e.g. ``GPU``), but there must always be an OS label. Do not use a
   label that overlaps with GitHub's labels.
 - Be secure against intrusion and follow best cybersecurity practices (for example, no
