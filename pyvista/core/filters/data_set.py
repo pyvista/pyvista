@@ -1070,9 +1070,9 @@ class DataSetFilters(DataObjectFilters):
 
         component_mode : {'component', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multi-component scalars.  'component' (default)
-            uses only the ``component``.  'all' requires all
-            components to meet criteria.  'any' is when
+            multi-component scalars. 'component' (default)
+            uses only the ``component``. 'all' requires all
+            components to meet criteria. 'any' is when
             any component satisfies the criteria.
 
         component : int, default: 0
@@ -3706,10 +3706,10 @@ class DataSetFilters(DataObjectFilters):
 
         The default behavior uses a sphere as the source - set its
         location and radius via the ``source_center`` and
-        ``source_radius`` keyword arguments.  ``n_points`` defines the
+        ``source_radius`` keyword arguments. ``n_points`` defines the
         number of starting points on the sphere surface.
         Alternatively, a line source can be used by specifying
-        ``pointa`` and ``pointb``.  ``n_points`` again defines the
+        ``pointa`` and ``pointb``. ``n_points`` again defines the
         number of points on the line.
 
         You can retrieve the source by specifying

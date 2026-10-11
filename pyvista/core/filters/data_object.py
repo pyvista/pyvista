@@ -3545,7 +3545,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Clip a cube along the +X direction.  ``triangulate`` is used as
+        Clip a cube along the +X direction. ``triangulate`` is used as
         the cube is initially composed of quadrilateral faces and
         subdivide only works on triangles.
 

@@ -252,7 +252,7 @@ def _fitted_label_font(
     draws the label at the size it asks for and leaves the ramp its full length, so the
     labels run into each other once the bar is shorter than the text needs. A label is
     free to run past the edge of the viewport, and the size asked for is kept where the
-    labels clear each other at no size.  ``seat`` places the title for a size under
+    labels clear each other at no size. ``seat`` places the title for a size under
     consideration, where the room left for the labels depends on where it sits.
     """
     # A bar can turn its tick labels off, an indexed lookup draws annotations in their

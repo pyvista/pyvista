@@ -123,7 +123,7 @@ pl.show()
 #
 # The :func:`pyvista.DataSet.find_closest_cell` filter returns the spatial
 # points inside the cells of the top surface that are closest to the vertex
-# points of the bottom surface.  ``closest_points`` is returned when using
+# points of the bottom surface. ``closest_points`` is returned when using
 # ``return_closest_point=True``.
 
 closest_cells, closest_points = h1.find_closest_cell(h0.points, return_closest_point=True)

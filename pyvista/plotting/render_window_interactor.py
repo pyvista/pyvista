@@ -975,7 +975,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
-        ctrl + left button for spinning.  (With fewer mouse buttons,
+        ctrl + left button for spinning. (With fewer mouse buttons,
         ctrl + shift + left button is for zooming, and shift + left
         button is for panning.)
 
@@ -1007,7 +1007,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
-        ctrl + left button for spinning.  (With fewer mouse buttons,
+        ctrl + left button for spinning. (With fewer mouse buttons,
         ctrl + shift + left button is for zooming, and shift + left
         button is for panning.)
 

@@ -2437,7 +2437,7 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         point_merging : bool, optional
-            Enables point merging.  ``True`` by default.
+            Enables point merging. ``True`` by default.
 
         tolerance : float, optional
             Set merging tolerance. When enabled merging is set to
@@ -3933,7 +3933,7 @@ class PolyDataFilters(DataSetFilters):
         triangle strip) is capped with the generating geometry via the
         ``capping`` parameter. Also, you can control the angle of
         rotation, and whether translation along the axis is
-        performed along with the rotation.  (Translation is useful for
+        performed along with the rotation. (Translation is useful for
         creating "springs".) You also can adjust the radius of the
         generating geometry with the ``dradius`` parameter.
 

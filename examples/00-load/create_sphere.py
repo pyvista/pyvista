@@ -53,7 +53,7 @@ mesh.get_cell(0).type
 # The points are generated as a regular grid in spherical coordinates using
 # :func:`pyvista.spherical_to_cartesian`.
 # Here, we use the convention that ``theta`` is the
-# azimuthal angle, similar to longitude on the globe.  ``phi`` is the
+# azimuthal angle, similar to longitude on the globe. ``phi`` is the
 # polar angle, similar to latitude on the globe.
 
 radius = 0.5

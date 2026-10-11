@@ -3006,7 +3006,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Returns
         -------
         bool
-            ``True`` when actor removed.  ``False`` when actor has not
+            ``True`` when actor removed. ``False`` when actor has not
             been removed.
 
         Examples
