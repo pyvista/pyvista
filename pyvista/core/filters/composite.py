@@ -276,13 +276,21 @@ class CompositeFilters(DataObjectFilters):
         _update_alg(gf)
         return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
-    def combine(self, *, merge_points: bool = False, tolerance: float = 0.0) -> UnstructuredGrid:
+    def combine(  # type: ignore[misc]
+        self: MultiBlock[Any], *, merge_points: bool = False, tolerance: float = 0.0
+    ) -> UnstructuredGrid:
         """Combine all blocks into a single unstructured grid.
 
         Parameters
         ----------
         merge_points : bool, default: False
-            Merge coincidental points.
+            Merge coincident points. The default differs from
+            :func:`pyvista.merge`, which merges points by default.
+
+            .. versionchanged:: 0.50
+                Points of nested blocks are merged in a single pass, so a nonzero
+                ``tolerance`` gives the same result as for the equivalent flat
+                :class:`~pyvista.MultiBlock`.
 
         tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
@@ -317,19 +325,8 @@ class CompositeFilters(DataObjectFilters):
         """
         alg = _vtk.vtkAppendFilter()
         n_inputs = 0
-        for block in self:  # type: ignore[attr-defined]
-            if block is None:
-                continue
-            single_block = (
-                CompositeFilters.combine(
-                    block,  # type: ignore[arg-type]
-                    merge_points=merge_points,
-                    tolerance=tolerance,
-                )
-                if isinstance(block, _vtk.vtkMultiBlockDataSet)
-                else block
-            )
-            alg.AddInputData(single_block)
+        for block in self.recursive_iterator(skip_none=True):
+            alg.AddInputData(block)
             n_inputs += 1
         if n_inputs == 0:
             # Nothing to append, so give back an empty grid
@@ -431,8 +428,8 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    def _compute_normals(
-        self,
+    def _compute_normals(  # type: ignore[misc]
+        self: MultiBlock[Any],
         *,
         cell_normals: bool = True,
         point_normals: bool = True,
@@ -446,7 +443,7 @@ class CompositeFilters(DataObjectFilters):
         progress_bar: bool = False,
     ) -> MultiBlock:
         """Compute point and/or cell normals for a multi-block dataset."""
-        if not self.is_all_polydata:  # type: ignore[attr-defined]
+        if not self.is_all_polydata:
             msg = (
                 'This multiblock contains non-PolyData datasets. Convert all the '
                 'datasets to PolyData with `as_polydata`'
@@ -455,7 +452,7 @@ class CompositeFilters(DataObjectFilters):
 
         # track original point indices
         if split_vertices and track_vertices:
-            for block in self:  # type: ignore[attr-defined]
+            for block in self.recursive_iterator(skip_none=True):
                 ids = np.arange(block.n_points, dtype=pv.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 

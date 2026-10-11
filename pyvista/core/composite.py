@@ -2750,35 +2750,29 @@ class MultiBlock(
 
     def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Extract the real component of the active scalars of this dataset."""
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block._convert_to_real_scalars(data_attr, scalars_name)
-            elif block is not None:
-                scalars = getattr(block, data_attr).get(scalars_name, None)
-                if scalars is not None:
-                    scalars = np.array(scalars.astype(float))
-                    dattr = getattr(block, data_attr)
-                    dattr[f'{scalars_name}-real'] = scalars
-                    dattr.active_scalars_name = f'{scalars_name}-real'
+        for block in self.recursive_iterator(skip_none=True):
+            scalars = getattr(block, data_attr).get(scalars_name, None)
+            if scalars is not None:
+                scalars = np.array(scalars.astype(float))
+                dattr = getattr(block, data_attr)
+                dattr[f'{scalars_name}-real'] = scalars
+                dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
     def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Convert rgb float or int scalars to uint8."""
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
-            elif block is not None:
-                scalars = getattr(block, data_attr).get(scalars_name, None)
-                if scalars is not None:
-                    if np.issubdtype(scalars.dtype, np.floating):
-                        _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
-                        scalars = np.array(scalars, dtype=np.uint8) * 255
-                    elif np.issubdtype(scalars.dtype, np.integer):
-                        _validation.check_range(scalars, [0, 255], name='rgb int scalars')
-                        scalars = np.array(scalars, dtype=np.uint8)
-                    dattr = getattr(block, data_attr)
-                    dattr[f'{scalars_name}-uint8'] = scalars
-                    dattr.active_scalars_name = f'{scalars_name}-uint8'
+        for block in self.recursive_iterator(skip_none=True):
+            scalars = getattr(block, data_attr).get(scalars_name, None)
+            if scalars is not None:
+                if np.issubdtype(scalars.dtype, np.floating):
+                    _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
+                    scalars = np.array(scalars, dtype=np.uint8) * 255
+                elif np.issubdtype(scalars.dtype, np.integer):
+                    _validation.check_range(scalars, [0, 255], name='rgb int scalars')
+                    scalars = np.array(scalars, dtype=np.uint8)
+                dattr = getattr(block, data_attr)
+                dattr[f'{scalars_name}-uint8'] = scalars
+                dattr.active_scalars_name = f'{scalars_name}-uint8'
         return f'{scalars_name}-uint8'
 
     def _convert_to_single_component(
@@ -2789,27 +2783,21 @@ class MultiBlock(
     ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:
-            for block in self:
-                if isinstance(block, MultiBlock):
-                    block._convert_to_single_component(data_attr, scalars_name, component)
-                elif block is not None:
-                    scalars = getattr(block, data_attr).get(scalars_name, None)
-                    if scalars is not None:
-                        scalars = np.linalg.norm(scalars, axis=1)
-                        dattr = getattr(block, data_attr)
-                        dattr[f'{scalars_name}-normed'] = scalars
-                        dattr.active_scalars_name = f'{scalars_name}-normed'
-            return f'{scalars_name}-normed'
-
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block._convert_to_single_component(data_attr, scalars_name, component)
-            elif block is not None:
+            for block in self.recursive_iterator(skip_none=True):
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
+                    scalars = np.linalg.norm(scalars, axis=1)
                     dattr = getattr(block, data_attr)
-                    dattr[f'{scalars_name}-{component}'] = scalars[:, component]
-                    dattr.active_scalars_name = f'{scalars_name}-{component}'
+                    dattr[f'{scalars_name}-normed'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-normed'
+            return f'{scalars_name}-normed'
+
+        for block in self.recursive_iterator(skip_none=True):
+            scalars = getattr(block, data_attr).get(scalars_name, None)
+            if scalars is not None:
+                dattr = getattr(block, data_attr)
+                dattr[f'{scalars_name}-{component}'] = scalars[:, component]
+                dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
     def _get_consistent_active_scalars(
@@ -2834,27 +2822,18 @@ class MultiBlock(
 
     def clear_all_data(self) -> None:
         """Clear all data from all blocks."""
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block.clear_all_data()
-            elif block is not None:
-                block.clear_data()
+        for block in self.recursive_iterator(skip_none=True):
+            block.clear_data()
 
     def clear_all_point_data(self) -> None:
         """Clear all point data from all blocks."""
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block.clear_all_point_data()
-            elif block is not None:
-                block.clear_point_data()
+        for block in self.recursive_iterator(skip_none=True):
+            block.clear_point_data()
 
     def clear_all_cell_data(self) -> None:
         """Clear all cell data from all blocks."""
-        for block in self:
-            if isinstance(block, MultiBlock):
-                block.clear_all_cell_data()
-            elif block is not None:
-                block.clear_cell_data()
+        for block in self.recursive_iterator(skip_none=True):
+            block.clear_cell_data()
 
 
 def _inferred_type(
