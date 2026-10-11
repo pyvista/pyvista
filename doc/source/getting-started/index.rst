@@ -99,26 +99,6 @@ through a range of examples and tutorials.
       Probably the best way for you to get used to PyVista is to visit our
       dedicated `tutorial <https://tutorial.pyvista.org/tutorial.html>`_.
 
-..
-   This code is used in the plot in the card.
-
-.. pyvista-plot::
-   :include-source: False
-   :context:
-
-   >>> bunny_cpos = [
-   ...     (0.14826, 0.275729, 0.4215911),
-   ...     (-0.01684, 0.110154, -0.0015369),
-   ...     (-0.15446, 0.939031, -0.3071841),
-   ... ]
-   >>> import os, tempfile
-   >>> _cwd = os.getcwd()
-   >>> _tmpdir = tempfile.TemporaryDirectory()
-   >>> os.chdir(_tmpdir.name)
-   >>> from pyvista import examples
-   >>> examples.download_bunny().save('bunny.stl')
-
-
 .. grid:: 2
 
    .. grid-item-card:: Why PyVista?
@@ -130,32 +110,13 @@ through a range of examples and tutorials.
       Visualization Toolkit (VTK).
 
       .. pyvista-plot::
-         :nofigs:
-         :context:
 
          import pyvista as pv
-
-         mesh = pv.read('bunny.stl')
-         mesh.plot()
-
-      .. pyvista-plot::
-         :include-source: False
-         :context:
-
          from pyvista import examples
-         mesh = examples.download_bunny()
-         mesh.plot(cpos=bunny_cpos)
 
-      ..
-         Return to the build directory and remove bunny.stl.
-
-      .. pyvista-plot::
-         :include-source: False
-         :nofigs:
-         :context:
-
-         os.chdir(_cwd)
-         _tmpdir.cleanup()
+         filename = examples.download_bunny(load=False)
+         mesh = pv.read(filename)
+         mesh.plot(cpos='xy')
 
 
    .. grid-item-card:: Authors & Citation
