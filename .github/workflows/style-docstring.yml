@@ -135,7 +135,6 @@ jobs:
           reporter: github-pr-check
           filter_mode: nofilter
           version: ${{ env.VALE_VERSION }}
-          # Without it, the action reports every alert as `info`, below `fail_level`.
           fail_on_error: true
           # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
           fail_level: warning
