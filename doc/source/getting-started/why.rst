@@ -46,6 +46,10 @@ requires a few lines of code.
    ...     (-0.01684, 0.110154, -0.0015369),
    ...     (-0.15446, 0.939031, -0.3071841),
    ... ]
+   >>> import os, tempfile
+   >>> _cwd = os.getcwd()
+   >>> _tmpdir = tempfile.TemporaryDirectory()
+   >>> os.chdir(_tmpdir.name)
    >>> from pyvista import examples
    >>> examples.download_bunny().save('bunny.stl')
 
@@ -75,6 +79,17 @@ requires a few lines of code.
 |    iren.Start()                                    |                                     |
 |    del iren, renWin                                |                                     |
 +----------------------------------------------------+-------------------------------------+
+
+..
+   Return to the build directory and remove bunny.stl.
+
+.. pyvista-plot::
+   :include-source: False
+   :nofigs:
+   :context:
+
+   os.chdir(_cwd)
+   _tmpdir.cleanup()
 
 
 The PyVista data model and API allows you to rapidly load meshes and

@@ -111,6 +111,10 @@ through a range of examples and tutorials.
    ...     (-0.01684, 0.110154, -0.0015369),
    ...     (-0.15446, 0.939031, -0.3071841),
    ... ]
+   >>> import os, tempfile
+   >>> _cwd = os.getcwd()
+   >>> _tmpdir = tempfile.TemporaryDirectory()
+   >>> os.chdir(_tmpdir.name)
    >>> from pyvista import examples
    >>> examples.download_bunny().save('bunny.stl')
 
@@ -141,6 +145,17 @@ through a range of examples and tutorials.
          from pyvista import examples
          mesh = examples.download_bunny()
          mesh.plot(cpos=bunny_cpos)
+
+      ..
+         Return to the build directory and remove bunny.stl.
+
+      .. pyvista-plot::
+         :include-source: False
+         :nofigs:
+         :context:
+
+         os.chdir(_cwd)
+         _tmpdir.cleanup()
 
 
    .. grid-item-card:: Authors & Citation
