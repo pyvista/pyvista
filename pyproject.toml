@@ -284,6 +284,7 @@ report.omit = [
 run.branch = true
 run.parallel = true
 run.patch = ["subprocess"]
+run.source = ['pyvista', 'tests']
 
 [tool.pytest.ini_options]
 addopts = ['--durations=25', '--strict-config', '--strict-markers', '-ra']
