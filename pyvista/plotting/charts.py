@@ -46,6 +46,8 @@ if TYPE_CHECKING:
     from matplotlib.backend_bases import DrawEvent
     from numpy.typing import NDArray
 
+    from pyvista import ImageData
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
@@ -54,9 +56,10 @@ if TYPE_CHECKING:
     from ._typing import ColorLike
     from .plotter import _ShowReturnType
     from .renderer import Renderer
+    from .texture import Texture
 
 _TextureLike: TypeAlias = Union[
-    str, _vtk.vtkTexture, _vtk.vtkImageData, 'NDArray[Any]', 'Sequence[pv.ImageData]'
+    str, _vtk.vtkTexture, _vtk.vtkImageData, 'NDArray[Any]', 'Sequence[ImageData]'
 ]
 _MarkerStyleOptions: TypeAlias = Literal['', 'x', '+', 's', 'o', 'd']
 _AxisBehaviorOptions: TypeAlias = Literal['auto', 'fixed']
@@ -380,7 +383,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self.SetColor(*self._color.int_rgba)
 
     @property
-    def texture(self) -> pv.Texture | None:  # numpydoc ignore=RT01
+    def texture(self) -> Texture | None:  # numpydoc ignore=RT01
         """Return or set the brush's texture.
 
         Examples
@@ -1567,7 +1570,7 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
-    def background_texture(self) -> pv.Texture | None:  # numpydoc ignore=RT01
+    def background_texture(self) -> Texture | None:  # numpydoc ignore=RT01
         """Return or set the chart's background texture.
 
         Examples
@@ -2388,7 +2391,7 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
         self.label = label
 
     @property
-    def x(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def x(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the points through which a line is drawn.
 
         Examples
@@ -2409,7 +2412,7 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
         return self._table['x']
 
     @property
-    def y(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def y(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points through which a line is drawn.
 
         Examples
@@ -2562,7 +2565,7 @@ class ScatterPlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoi
         self.label = label
 
     @property
-    def x(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def x(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the X coordinates of this plot's points.
 
         Examples
@@ -2583,7 +2586,7 @@ class ScatterPlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoi
         return self._table['x']
 
     @property
-    def y(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def y(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of this plot's points.
 
         Examples
@@ -2800,7 +2803,7 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
         self.label = label
 
     @property
-    def x(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def x(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the points outlining the drawn area.
 
         Examples
@@ -2821,7 +2824,7 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
         return self._table['x']
 
     @property
-    def y1(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def y1(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points on the first outline of the drawn area.
 
         Examples
@@ -2842,7 +2845,7 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
         return self._table['y1']
 
     @property
-    def y2(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def y2(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the Y coordinates of the points on the second outline of the drawn area.
 
         Examples
@@ -3026,7 +3029,7 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         self.orientation = orientation
 
     @property
-    def x(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def x(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the positions of the drawn bars.
 
         Examples
@@ -3047,7 +3050,7 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         return self._table['x']
 
     @property
-    def y(self) -> tuple[pv.pyvista_ndarray, ...]:  # numpydoc ignore=RT01
+    def y(self) -> tuple[pyvista_ndarray, ...]:  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn bars.
 
         Examples
@@ -3244,7 +3247,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         self.pen.style = None  # Hide lines by default
 
     @property
-    def x(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def x(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the X coordinates of the drawn stacks.
 
         Examples
@@ -3265,7 +3268,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         return self._table['x']
 
     @property
-    def ys(self) -> tuple[pv.pyvista_ndarray, ...]:  # numpydoc ignore=RT01
+    def ys(self) -> tuple[pyvista_ndarray, ...]:  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn stacks.
 
         Examples
@@ -4292,7 +4295,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         self.labels = labels
 
     @property
-    def data(self) -> tuple[pv.pyvista_ndarray, ...]:  # numpydoc ignore=RT01
+    def data(self) -> tuple[pyvista_ndarray, ...]:  # numpydoc ignore=RT01
         """Retrieve the datasets of which the boxplots are drawn.
 
         Examples
@@ -4312,7 +4315,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         return tuple(self._table[f'data_{i}'] for i in range(self._table.n_arrays))
 
     @property
-    def stats(self) -> tuple[pv.pyvista_ndarray, ...]:  # numpydoc ignore=RT01
+    def stats(self) -> tuple[pyvista_ndarray, ...]:  # numpydoc ignore=RT01
         """Retrieve the statistics of the datasets of which the boxplots are drawn.
 
         The statistics are the quartiles and extremum values.
@@ -4609,7 +4612,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         self.colors = colors
 
     @property
-    def data(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def data(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Retrieve the sizes of the drawn segments.
 
         Examples
