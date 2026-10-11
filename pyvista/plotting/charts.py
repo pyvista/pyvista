@@ -35,6 +35,7 @@ from .colors import SCHEME_NAMES
 from .colors import Color
 from .colors import _formatted_color_synonyms
 from .colors import _formatted_hex_colors
+from .colors import _validate_color_sequence
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -44,7 +45,6 @@ if TYPE_CHECKING:
 
     from matplotlib.backend_bases import DrawEvent
     from numpy.typing import NDArray
-    from typing_extensions import TypeIs
 
     from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLikeFloat
@@ -2084,17 +2084,6 @@ class _Plot(DocSubs):
         self.visible = not self.visible
 
 
-def _is_single_color(color: object) -> TypeIs[ColorLike]:
-    """Return whether ``color`` is one color rather than a color scheme name or several colors."""
-    if color is None:
-        return False
-    try:
-        Color(color)  # type: ignore[arg-type]  # Color validates its input at runtime
-    except ValueError:
-        return False
-    return True
-
-
 class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
@@ -3025,8 +3014,10 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
 
         if len(ys) > 1:
             self.SetColorSeries(self._color_series)
-            # A single color applies to every component and None uses the scheme
-            self.colors = [color] * len(ys) if _is_single_color(color) else color
+            if color is None or (isinstance(color, str) and color in COLOR_SCHEMES):
+                self.colors = color
+            else:
+                self.colors = _validate_color_sequence(color, len(ys))
             self.labels = label
         else:
             # Use blue bars by default in single component mode
@@ -3241,8 +3232,10 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
 
         if len(stacks) > 1:
             self.SetColorSeries(self._color_series)
-            # A single color applies to every component and None uses the scheme
-            self.colors = [colors] * len(stacks) if _is_single_color(colors) else colors
+            if colors is None or (isinstance(colors, str) and colors in COLOR_SCHEMES):
+                self.colors = colors
+            else:
+                self.colors = _validate_color_sequence(colors, len(stacks))
             self.labels = labels
         else:
             # A single-component plot takes one color and one label

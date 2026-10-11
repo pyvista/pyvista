@@ -717,6 +717,12 @@ def test_barplot(chart_2d, bar_plot):
         plot = charts.BarPlot(chart_2d, x, y, color=color, orientation=ori, label=l)
         assert plot.colors == [pv.Color(color)] * len(y)
 
+    # Test multi comp constructor with an array of colors and with too few colors
+    plot = charts.BarPlot(chart_2d, x, y, color=np.array(c), orientation=ori, label=l)
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
+    with pytest.raises(ValueError, match='sequence of 3 ColorLike colors'):
+        charts.BarPlot(chart_2d, x, y, color=c[:2], orientation=ori, label=l)
+
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):  # noqa: PT011
         charts.BarPlot(chart_2d, x, y[0], color=c, orientation=ori, label=l[0])
@@ -761,6 +767,12 @@ def test_stackplot(chart_2d, stack_plot):
     for color in (c[0], 'r'):
         plot = charts.StackPlot(chart_2d, x, ys, colors=color, labels=l)
         assert plot.colors == [pv.Color(color)] * len(ys)
+
+    # Test multi comp constructor with an array of colors and with too few colors
+    plot = charts.StackPlot(chart_2d, x, ys, colors=np.array(c), labels=l)
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
+    with pytest.raises(ValueError, match='sequence of 3 ColorLike colors'):
+        charts.StackPlot(chart_2d, x, ys, colors=c[:2], labels=l)
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):  # noqa: PT011
