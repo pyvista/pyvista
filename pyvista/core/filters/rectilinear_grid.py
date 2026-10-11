@@ -56,7 +56,7 @@ class RectilinearGridFilters:
 
         pass_data : bool, default: True
             Set to ``True`` to make the tetrahedra mesh have the cell data from
-            the original :class:`pyvista.RectilinearGrid`. This uses
+            the original :class:`pyvista.RectilinearGrid`.  This uses
             ``pass_cell_ids=True`` internally. If ``True``, ``pass_cell_ids``
             will also be set to ``True``.
 

@@ -96,7 +96,7 @@ pl.show()
 # ============================
 #
 # Here, we ``enable_shadows`` to enhance the effect that the lighting
-# angle has. It has a subtle, but realistic effect. Notice the sharp
+# angle has.  It has a subtle, but realistic effect.  Notice the sharp
 # shadows due to the mountaintop.
 
 pl = pv.Plotter(lighting='none', window_size=(1000, 1000))

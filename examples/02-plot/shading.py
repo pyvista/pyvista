@@ -29,7 +29,7 @@ mesh.plot(smooth_shading=True)
 # %%
 # Note how smooth shading makes edges that should be sharp look odd,
 # it's because the points of these normals are averaged between two
-# faces that have a sharp angle between them. You can avoid this by
+# faces that have a sharp angle between them.  You can avoid this by
 # enabling ``split_sharp_edges``.
 #
 # .. note::

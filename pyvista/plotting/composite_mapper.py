@@ -543,8 +543,8 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         ``scalars``.
 
     interpolate_before_map : bool, optional
-        Enabling makes for a smoother scalars display. Default is
-        ``True``. When ``False``, OpenGL will interpolate the
+        Enabling makes for a smoother scalars display.  Default is
+        ``True``.  When ``False``, OpenGL will interpolate the
         mapped colors which can result is showing colors that are
         not present in the color map.
 
@@ -740,12 +740,12 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         preference : str
             For each block, when ``block.n_points == block.n_cells`` and
             setting scalars, this parameter sets how the scalars will be mapped
-            to the mesh. Default ``'point'``, causes the scalars will be
-            associated with the mesh points. Can be either ``'point'`` or
+            to the mesh.  Default ``'point'``, causes the scalars will be
+            associated with the mesh points.  Can be either ``'point'`` or
             ``'cell'``.
 
         component : int
-            Set component of vector valued scalars to plot. Must be
+            Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
@@ -781,20 +781,20 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             ``below_label`` to ``'below'``.
 
         clim : VectorLikeFloat
-            Color bar range for scalars. Defaults to minimum and
-            maximum of scalars array. Example: ``[-1, 2]``. ``rng``
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``. See available Matplotlib colormaps. Only applicable
+            ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.
             ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one. For example, to create a three color
+            colormap with a custom one.  For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this

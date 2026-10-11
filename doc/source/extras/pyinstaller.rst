@@ -4,13 +4,13 @@ Freezing PyVista With PyInstaller
 =================================
 You can make some fantastic standalone programs with ``pyinstaller``
 and ``pyvista``, and you can even make a graphical user interface
-incorporating ``PyQt5`` or ``pyside2``. Depending on your version of
+incorporating ``PyQt5`` or ``pyside2``.  Depending on your version of
 VTK, this requires some extra steps to setup.
 
 When running VTK v9, you need to add several additional
-``hiddenimports``. For clarity and completeness, create a spec file
+``hiddenimports``.  For clarity and completeness, create a spec file
 (we'll name it ``pyvista.spec``) following the directions given at
-`Using Spec Files <https://pyinstaller.org/en/stable/spec-files.html>`__. Modify the ``Analysis`` and add the following hidden imports:
+`Using Spec Files <https://pyinstaller.org/en/stable/spec-files.html>`__.  Modify the ``Analysis`` and add the following hidden imports:
 
 .. code-block:: python
 

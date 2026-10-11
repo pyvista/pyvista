@@ -13,7 +13,7 @@ sphere.
 .. note::
    Due to the nature of the :vtk:`vtkCollisionDetectionFilter`,
    repeated uses of this method will be slower that using the
-   :vtk:`vtkCollisionDetectionFilter` directly. The first
+   :vtk:`vtkCollisionDetectionFilter` directly.  The first
    update of the filter creates two instances of :vtk:`vtkOBBTree`,
    which can be subsequently updated by modifying the transform or
    matrix of the input meshes.
@@ -21,7 +21,7 @@ sphere.
    This method assumes no transform and is easier to use for
    single collision tests, but it is recommended to use a
    combination of ``pyvista`` and ``vtk`` for rapidly computing
-   repeated collisions. See the `Collision Detection Example
+   repeated collisions.  See the `Collision Detection Example
    <https://examples.vtk.org/site/Python/Visualization/CollisionDetection/>`_
 
 """

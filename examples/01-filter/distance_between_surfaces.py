@@ -10,12 +10,12 @@ For example, you might have two surfaces that represent the boundaries of
 lithological layers in a subsurface geological model and you want to know the
 average thickness of a unit between those boundaries.
 
-A clarification on terminology in this example is important. A mesh point
-exists on the vertex of each cell on the mesh. See :ref:`what_is_a_mesh`.
+A clarification on terminology in this example is important.  A mesh point
+exists on the vertex of each cell on the mesh.  See :ref:`what_is_a_mesh`.
 Each cell in this example encompasses a 2D region of space which contains an
 infinite number of spatial points; these spatial points are not mesh points.
 The distance between two surfaces can mean different things depending on context
-and usage. Each example here explores different aspects of the distance from the
+and usage.  Each example here explores different aspects of the distance from the
 vertex points of the bottom mesh to the top mesh.
 
 First, we will demo a method where we compute the normals on the vertex points
@@ -123,7 +123,7 @@ pl.show()
 #
 # The :func:`pyvista.DataSet.find_closest_cell` filter returns the spatial
 # points inside the cells of the top surface that are closest to the vertex
-# points of the bottom surface. ``closest_points`` is returned when using
+# points of the bottom surface.  ``closest_points`` is returned when using
 # ``return_closest_point=True``.
 
 closest_cells, closest_points = h1.find_closest_cell(h0.points, return_closest_point=True)

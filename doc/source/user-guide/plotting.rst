@@ -64,7 +64,7 @@ It is possible to use the ``Plotter`` class as well.
     pl.show(jupyter_backend='static')
 
 Additionally, you can generate interactive plots by leveraging our
-jupyter plotting backend ``trame``. You can even use it to create
+jupyter plotting backend ``trame``.  You can even use it to create
 interactive documentation online.
 
 .. jupyter-execute::

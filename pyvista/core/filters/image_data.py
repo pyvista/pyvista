@@ -209,7 +209,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: "point"
             When scalars is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
         progress_bar : bool, default: False
@@ -1856,7 +1856,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         threshold : float | VectorLikeFloat
-            Single value or (min, max) to be used for the data threshold. If
+            Single value or (min, max) to be used for the data threshold.  If
             a sequence, then length must be 2. Thresholds for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
@@ -1871,7 +1871,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: "point"
             When scalars is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
         progress_bar : bool, default: False
@@ -2196,7 +2196,7 @@ class ImageDataFilters(DataSetFilters):
 
         A :func:`ImageDataFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates high
-        frequency components. Input and output are complex arrays with
+        frequency components.  Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
 
         The frequencies of the input assume standard order: along each axis
@@ -2269,7 +2269,7 @@ class ImageDataFilters(DataSetFilters):
 
         A :func:`ImageDataFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates low
-        frequency components. Input and output are complex arrays with
+        frequency components.  Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
 
         The frequencies of the input assume standard order: along each axis
@@ -4490,7 +4490,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: 'point'
             When scalars is specified, this is the preferred array type to search
-            for in the dataset. Must be either ``'point'`` or ``'cell'``.
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         inplace : bool, default: False
             If ``True``, resample the image in-place. By default, a new
@@ -5106,7 +5106,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: 'point'
             When scalars is specified, this is the preferred array type to search
-            for in the dataset. Must be either ``'point'`` or ``'cell'``.
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         inplace : bool, default: False
             If ``True``, reslice the image in-place. By default, a new
@@ -5440,7 +5440,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: 'point'
             When ``scalars`` is specified, this is the preferred array type to search
-            for in the dataset. Must be either ``'point'`` or ``'cell'``.
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
             Specify the components to use when ``scalars`` is a multi-component array.

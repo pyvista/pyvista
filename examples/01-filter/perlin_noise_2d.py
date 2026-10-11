@@ -22,7 +22,7 @@ import pyvista as pv
 # Generate Perlin Noise Over a StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
-# the "mountains". For example, lowering the frequency will make the
+# the "mountains".  For example, lowering the frequency will make the
 # terrain seem more like hills rather than mountains.
 freq = [0.689, 0.562, 0.683]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
@@ -33,7 +33,7 @@ sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(300
 # Warp by Scalar
 # ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
-# value of the Perlin noise. This is necessary to the terrain its shape.
+# value of the Perlin noise.  This is necessary to the terrain its shape.
 
 mesh = sampled.warp_by_scalar('scalars')
 mesh = mesh.extract_surface(algorithm=None)

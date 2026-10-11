@@ -693,10 +693,10 @@ class Renderers(_NoNewAttrMixin):
 
         scale : float
             Scale the image larger or smaller relative to the size of
-            the window. The image height is scaled to the height of the
+            the window.  The image height is scaled to the height of the
             render window, or of the subplot when ``as_global=False``.
             Its aspect ratio is preserved, so the image is cropped
-            horizontally where it is too wide to fit. Defaults to 1.
+            horizontally where it is too wide to fit.  Defaults to 1.
 
         as_global : bool
             When multiple render windows are present, setting
@@ -863,8 +863,8 @@ class Renderers(_NoNewAttrMixin):
         Parameters
         ----------
         color : ColorLike, optional
-            Either a string, rgb list, or hex color string. Defaults
-            to current theme parameters. For example:
+            Either a string, rgb list, or hex color string.  Defaults
+            to current theme parameters.  For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -907,7 +907,7 @@ class Renderers(_NoNewAttrMixin):
         >>> pl.close()
 
         Set the background color at the bottom to black and white at
-        the top. Display a cone as well.
+        the top.  Display a cone as well.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()

@@ -1,6 +1,6 @@
 """HTML representation for PyVista objects in Jupyter notebooks.
 
-Uses pure HTML/CSS with checkbox-driven expand/collapse. The only
+Uses pure HTML/CSS with checkbox-driven expand/collapse.  The only
 JavaScript is a minimal ``navigator.clipboard.writeText`` call for
 copy-to-clipboard buttons.
 Works in Jupyter Notebook, JupyterLab, VS Code, Colab, and nbviewer.
@@ -118,7 +118,7 @@ def _copy_btn(text: str) -> str:
     """Return a small copy-to-clipboard button.
 
     Uses a ``data-copy`` attribute to hold the text and reads it via
-    ``this.dataset.copy`` in the ``onclick`` handler. This avoids
+    ``this.dataset.copy`` in the ``onclick`` handler.  This avoids
     XSS risks from inline string interpolation: HTML entities in the
     attribute value are decoded safely by the browser before reaching
     the JavaScript API.
@@ -195,7 +195,7 @@ def _data_array_section(
         Section title (for example, ``'Point Data'``).
     arrays : list[tuple[str, int, str, str, str]]
         Each tuple is ``(name, n_components, dtype_str, shape_str,
-        range_str)``. When ``shape_str`` is non-empty it is shown
+        range_str)``.  When ``shape_str`` is non-empty it is shown
         instead of the default ``'scalar'`` / ``'N comp'`` label.
         ``range_str`` is displayed as the data range (for example
         ``'[-0.5, 0.5]'``).
@@ -360,7 +360,7 @@ def build_repr_html(
         Labels shown as small badges in the header (for example, memory size).
     metadata : Sequence[tuple[str, list[tuple[str, str]], str]]
         Always-visible key-value rows rendered between the header and
-        collapsible sections. Each entry is
+        collapsible sections.  Each entry is
         ``(row_label, [(key, val), ...], copy_text)``.
     sections : Sequence[str]
         List of collapsible-section HTML fragments.

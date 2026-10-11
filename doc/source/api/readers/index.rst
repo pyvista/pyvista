@@ -191,14 +191,14 @@ either a callable or a :class:`pyvista.BaseReader` subclass:
 **Replacing a built-in reader**
 
 An entry point in the ``pyvista.readers`` group may only claim an
-extension PyVista does not already read. Claiming one it does
+extension PyVista does not already read.  Claiming one it does
 (``.vtp``, ``.stl``, ``.ply``) would silently change what every
 :func:`pyvista.read` call in the environment returns, so PyVista
 refuses and raises :class:`ValueError` naming the package, the built-in
 reader, and this section.
 
 To replace a built-in reader on purpose, declare the entry point in the
-``pyvista.readers.override`` group instead. The two groups are
+``pyvista.readers.override`` group instead.  The two groups are
 identical except that the override group is permitted to take an
 extension PyVista ships a reader for, and does so silently:
 
@@ -208,25 +208,25 @@ extension PyVista ships a reader for, and does so silently:
    ".vtp" = "my_package:MyPolyDataReader"
 
 This is the entry-point equivalent of ``override=True`` on
-:func:`pyvista.register_reader`. Both groups accept both forms, a
+:func:`pyvista.register_reader`.  Both groups accept both forms, a
 callable or a :class:`pyvista.BaseReader` subclass.
 
 A callable override is the one case where :func:`pyvista.read` does not
-forward its keyword arguments. For an extension PyVista ships a reader
+forward its keyword arguments.  For an extension PyVista ships a reader
 for, those arguments name attributes of *that* reader, so
 ``progress_bar``, ``validate`` and any keyword argument route the read
 past the override to the built-in rather than being reinterpreted by the
-callable. Register a :class:`pyvista.BaseReader` subclass to expose
+callable.  Register a :class:`pyvista.BaseReader` subclass to expose
 options on an extension PyVista already reads.
 
 Declaring an override for an extension PyVista does *not* currently
-read is allowed and silent. It costs nothing and keeps the package
+read is allowed and silent.  It costs nothing and keeps the package
 working if a later PyVista release adds a reader for that extension.
 
 Because an override changes the meaning of a format the user did not
 choose, it is visible from :func:`pyvista.registered_readers`: the
 record for the extension reports ``override=True`` along with the
-``source`` that claimed it. That is the first call to make when a
+``source`` that claimed it.  That is the first call to make when a
 built-in format reads differently than expected.
 
 .. code-block:: python
@@ -245,9 +245,9 @@ built-in format reads differently than expected.
 When :func:`pyvista.read` is given a remote URI (``https://``,
 ``s3://``, etc.) and a custom reader is registered for the file
 extension, the URI is passed directly to the reader along with any
-keyword arguments. If the reader raises
+keyword arguments.  If the reader raises
 :class:`~pyvista.LocalFileRequiredError`, PyVista downloads the file to
-a temporary local path and retries. For built-in formats with no custom
+a temporary local path and retries.  For built-in formats with no custom
 reader, and for a callable override handed reader arguments, the
 download happens automatically.
 This uses ``fsspec`` when available (install with
@@ -263,7 +263,7 @@ Custom Writers
 
 Third-party packages can register custom writers so that
 :meth:`pyvista.DataObject.save` handles additional file formats
-automatically. Registration mirrors :func:`pyvista.register_reader`
+automatically.  Registration mirrors :func:`pyvista.register_reader`
 and supports programmatic calls, decorators, and Python entry points
 for zero-config discovery at install time.
 
@@ -274,11 +274,11 @@ for zero-config discovery at install time.
 **Handler signature**
 
 A writer handler is a callable ``handler(dataset, path, **kwargs)``
-that writes ``dataset`` to ``path``. Any extra keyword arguments passed
+that writes ``dataset`` to ``path``.  Any extra keyword arguments passed
 to :meth:`pyvista.DataObject.save` beyond its documented parameters
 are forwarded verbatim to the handler as ``**kwargs``. Use them to
 expose format-specific options such as compression level, thread
-count, or chunking. When no custom writer is registered for the
+count, or chunking.  When no custom writer is registered for the
 target extension, passing extra keyword arguments to
 :meth:`~pyvista.DataObject.save` raises :class:`TypeError`; PyVista
 never silently drops writer options.
@@ -298,7 +298,7 @@ discovered automatically when installed:
 When :meth:`~pyvista.DataObject.save` is called, custom writers
 registered via :func:`pyvista.register_writer` are dispatched *before*
 built-in VTK writers for the same extension, mirroring the dispatch
-order used by :func:`pyvista.read`. By default, registering a
+order used by :func:`pyvista.read`.  By default, registering a
 handler for an extension that collides with a built-in PyVista writer
 raises :class:`ValueError`; pass ``override=True`` to replace the
 built-in writer.
@@ -310,7 +310,7 @@ The ``.pv`` Format: PyVista's Native Binary Format
 PyVista has a native ``zstd``-compressed binary format with the
 ``.pv`` extension, implemented by the
 `pyvista-zstd <https://github.com/pyvista/pyvista-zstd>`_ companion
-package. It is a compact, multi-threaded format for fast dataset
+package.  It is a compact, multi-threaded format for fast dataset
 I/O and is included in the ``io`` extra::
 
    pip install pyvista[io]
@@ -333,7 +333,7 @@ Supported dataset types include :class:`~pyvista.ImageData`,
 :class:`~pyvista.PolyData`, :class:`~pyvista.StructuredGrid`,
 :class:`~pyvista.RectilinearGrid`, :class:`~pyvista.UnstructuredGrid`,
 :class:`~pyvista.MultiBlock`, and
-:class:`~pyvista.ExplicitStructuredGrid`. The format uses ``zstd``
+:class:`~pyvista.ExplicitStructuredGrid`.  The format uses ``zstd``
 compression with multi-threaded encode/decode and is a good choice
 over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.
@@ -346,7 +346,7 @@ Optional Formats
 
 A few formats are served by companion packages rather than by PyVista
 itself, so that a heavyweight or narrowly used codec is not carried by
-every install. PyVista still knows the extension: :func:`pyvista.read`
+every install.  PyVista still knows the extension: :func:`pyvista.read`
 and :meth:`pyvista.DataObject.save` dispatch to the companion package
 when it is installed, and raise :class:`ImportError` naming the package
 and the install command when it is not.
@@ -382,11 +382,11 @@ Reading and saving are then transparent::
 Without the package, the extension is still recognized: the
 :class:`ImportError` names the format, the missing package, and both
 the ``pip install pyvista[io]`` command and the command for that one
-package on its own. When the package is present but fails to import,
+package on its own.  When the package is present but fails to import,
 the error reports the import failure instead, with no install command.
 
 These packages provide the reader object themselves, so
-:func:`pyvista.get_reader` does not resolve their extensions. Use the
+:func:`pyvista.get_reader` does not resolve their extensions.  Use the
 package's own reader class when reader-level control such as time-step
 selection is needed::
 
@@ -415,7 +415,7 @@ Faster Readers for Built-in Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Two further companion packages read a format PyVista already supports,
-faster than the VTK reader does. They declare the
+faster than the VTK reader does.  They declare the
 ``pyvista.readers.override`` entry point described above, so installing
 one is all it takes for :func:`pyvista.read` to use it.
 
@@ -441,7 +441,7 @@ formats::
 
 The packages aim to match the stock VTK readers, including point normals,
 texture coordinates, and colors, but their behavior and output are not
-guaranteed to be identical. Neither is required: without them
+guaranteed to be identical.  Neither is required: without them
 :func:`pyvista.read` falls back to :class:`pyvista.PLYReader` and
 :class:`pyvista.STLReader`, which also remain what
 :func:`pyvista.get_reader` hands back.

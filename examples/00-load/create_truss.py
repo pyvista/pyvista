@@ -19,7 +19,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Define the points and elements of the truss. Call them ``nodes``
+# Define the points and elements of the truss.  Call them ``nodes``
 # here as it comes from finite element analysis.
 
 nodes = [

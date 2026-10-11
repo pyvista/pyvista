@@ -157,7 +157,7 @@ pl.camera_position = pv.CameraPosition(
 pl.show()
 
 # %%
-# Left, ``interpolate_before_map`` OFF. Right, ``interpolate_before_map`` ON.
+# Left, ``interpolate_before_map`` OFF.  Right, ``interpolate_before_map`` ON.
 #
 # Now that is much more compelling. On the right, the contours of the scalar
 # field are visible, but on the left, the contours are obscured due to the color

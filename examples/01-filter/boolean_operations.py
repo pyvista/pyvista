@@ -21,14 +21,14 @@ same operation. Just different parts of the objects are kept at the
 end.
 
 The ``-`` operator can be used between any two :class:`pyvista.PolyData`
-meshes in PyVista to cut the first mesh by the second. These meshes
+meshes in PyVista to cut the first mesh by the second.  These meshes
 must be all triangle meshes, which you can check with
 :attr:`pyvista.PolyData.is_all_triangles`.
 
 .. note::
    For merging, the ``+`` operator can be used between any two meshes
    in PyVista which simply calls the ``.merge()`` filter to combine
-   any two meshes. This is different from the operator ``|`` in PyVista
+   any two meshes.  This is different from the operator ``|`` in PyVista
    which simply calls the ``boolean_union`` filter as it simply superimposes
    the two meshes without performing additional calculations on the result.
    The ``&`` operator in PyVista simply calls the ``boolean_intersection``.
@@ -124,7 +124,7 @@ pl.show()
 # to flip the faces.
 #
 # Boolean difference with both cube and sphere faces oriented
-# outward. This is the "normal" behavior.
+# outward.  This is the "normal" behavior.
 
 cube = pv.Cube().triangulate().subdivide(3)
 sphere = pv.Sphere(radius=0.6)

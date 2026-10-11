@@ -44,16 +44,16 @@ def vtk_points(
     Parameters
     ----------
     points : VectorLikeFloat | MatrixLikeFloat
-        Points to convert. Should be 1 or 2 dimensional. Accepts a
+        Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 
     deep : bool, default: True
-        Perform a deep copy of the array. Only applicable if
+        Perform a deep copy of the array.  Only applicable if
         ``points`` is a :class:`numpy.ndarray`.
 
     force_float : bool, default: False
         Casts the datatype to ``float32`` if points datatype is
-        non-float. Set this to ``False`` to allow non-float types,
+        non-float.  Set this to ``False`` to allow non-float types,
         though this may lead to truncation of intermediate floats
         when transforming datasets.
 
@@ -569,7 +569,7 @@ def make_tri_mesh(points: NDArray[_Real], faces: NDArray[_Integer]) -> PolyData:
 
     Construct a mesh from an Nx3 array of points and an Mx3 array of
     triangle indices, resulting in a mesh with N vertices and M
-    triangles. This function does not require the standard VTK
+    triangles.  This function does not require the standard VTK
     "padding" column and simplifies mesh creation.
 
     Parameters
@@ -654,7 +654,7 @@ def vector_poly_data(
 
     Examples
     --------
-    Create basic vector field. This is a point cloud where each point
+    Create basic vector field.  This is a point cloud where each point
     has a vector and magnitude attached to it.
 
     >>> import pyvista as pv

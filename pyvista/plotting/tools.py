@@ -448,7 +448,7 @@ def create_axes_orientation_box(
         ``color_box`` is ``True``.
 
     color_box : bool, default: False
-        Enable or disable the face colors. Otherwise, box is white.
+        Enable or disable the face colors.  Otherwise, box is white.
 
     label_color : ColorLike, optional
         Color of the text edges.

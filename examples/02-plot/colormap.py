@@ -74,7 +74,7 @@ boring_cmap = plt.get_cmap('viridis', 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
 
 # %%
-# You can also pass a list of color strings to the color map. This
+# You can also pass a list of color strings to the color map.  This
 # approach divides up the colormap into 5 equal parts.
 mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 

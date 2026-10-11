@@ -124,7 +124,7 @@ compare_decimation(spiral, decimated)
 # %%
 # To avoid errors of quickly changing features, use the ``maximum_error``
 # parameter. It is in units of fraction of the largest length of the
-# bounding box. Note that it limits the level of reduction achieved.
+# bounding box.  Note that it limits the level of reduction achieved.
 
 decimated = spiral.decimate_polyline(0.8, maximum_error=0.5)
 print(f'Original # of points:  {spiral.n_points}')

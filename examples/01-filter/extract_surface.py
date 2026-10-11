@@ -79,8 +79,8 @@ surf.plot(show_scalar_bar=False)
 # =============================
 # Should your UnstructuredGrid contain quadratic cells, you can
 # generate a smooth surface based on the position of the
-# "mid-edge" nodes. This allows the plotting of cells
-# containing curvature. For additional reference, please see:
+# "mid-edge" nodes.  This allows the plotting of cells
+# containing curvature.  For additional reference, please see:
 # https://www.osti.gov/biblio/919127
 
 surf_subdivided = grid.extract_surface(

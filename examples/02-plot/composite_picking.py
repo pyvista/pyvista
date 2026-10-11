@@ -41,7 +41,7 @@ blocks.plot()
 # %%
 # Enable Block Picking
 # ~~~~~~~~~~~~~~~~~~~~
-# Add ``blocks`` to a :class:`pyvista.Plotter` and enable block picking. For
+# Add ``blocks`` to a :class:`pyvista.Plotter` and enable block picking.  For
 # fun, let's also enable physically based rendering and set the callback to set
 # the block color to red when the block is clicked and unset the color if the
 # color has already been set for the block.

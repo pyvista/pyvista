@@ -735,11 +735,11 @@ class DataSetFilters(DataObjectFilters):
         Parameters
         ----------
         scalars : str, optional
-            Name of scalars to clip on. Defaults to currently active scalars.
+            Name of scalars to clip on.  Defaults to currently active scalars.
 
         invert : bool, default: True
-            Flag on whether to flip/invert the clip. When ``True``,
-            only the mesh below ``value`` will be kept. When
+            Flag on whether to flip/invert the clip.  When ``True``,
+            only the mesh below ``value`` will be kept.  When
             ``False``, only values above ``value`` will be kept.
 
         value : float | VectorLikeFloat, default: 0.0
@@ -760,7 +760,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         output : pyvista.DataSet | tuple[pyvista.DataSet, pyvista.DataSet]
-            Clipped dataset if ``both=False``. If ``both=True`` then
+            Clipped dataset if ``both=False``.  If ``both=True`` then
             returns a tuple of both clipped datasets. A :class:`~pyvista.PolyData`
             gives a ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``;
             every other dataset gives an :class:`~pyvista.UnstructuredGrid`.
@@ -889,7 +889,7 @@ class DataSetFilters(DataObjectFilters):
         ----------
         surface : pyvista.PolyData
             The ``PolyData`` surface mesh to use as a clipping
-            function. If this input mesh is not a :class:`pyvista.PolyData`,
+            function.  If this input mesh is not a :class:`pyvista.PolyData`,
             the external surface will be extracted.
 
         invert : bool, default: True
@@ -902,7 +902,7 @@ class DataSetFilters(DataObjectFilters):
 
         compute_distance : bool, default: False
             Compute the implicit distance from the mesh onto the input
-            dataset. A new array called ``'implicit_distance'`` will
+            dataset.  A new array called ``'implicit_distance'`` will
             be added to the output clipped mesh. For :class:`~pyvista.ImageData`
             with a closed surface and ``value=0``, this also makes the clip
             evaluate the distance at every point instead of classifying points
@@ -1013,7 +1013,7 @@ class DataSetFilters(DataObjectFilters):
         This filter will apply a :vtk:`vtkThreshold` filter to the input
         dataset and return the resulting object. This extracts cells
         where the scalar value in each cell satisfies the threshold
-        criterion. If ``scalars`` is ``None``, the input's active
+        criterion.  If ``scalars`` is ``None``, the input's active
         scalars array is used.
 
         .. warning::
@@ -1055,7 +1055,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: 'cell'
             When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``. Throughout PyVista, the preference
             is typically ``'point'`` but since the threshold filter is a
             cell-wise operation, we prefer cell data for thresholding
@@ -1064,15 +1064,15 @@ class DataSetFilters(DataObjectFilters):
         all_scalars : bool, default: False
             If using scalars from point data, all
             points in a cell must satisfy the threshold when this
-            value is ``True``. When ``False``, any point of the cell
+            value is ``True``.  When ``False``, any point of the cell
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
         component_mode : {'component', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multi-component scalars. 'component' (default)
-            uses only the ``component``. 'all' requires all
-            components to meet criteria. 'any' is when
+            multi-component scalars.  'component' (default)
+            uses only the ``component``.  'all' requires all
+            components to meet criteria.  'any' is when
             any component satisfies the criteria.
 
         component : int, default: 0
@@ -1125,7 +1125,7 @@ class DataSetFilters(DataObjectFilters):
           Z Bounds:   0.000e+00, 9.000e+00
           N Arrays:   1
 
-        Apply the threshold filter to Perlin noise. First generate
+        Apply the threshold filter to Perlin noise.  First generate
         the structured grid.
 
         >>> import pyvista as pv
@@ -1246,7 +1246,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: 'cell'
             When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``. Throughout PyVista, the preference
             is typically ``'point'`` but since the threshold filter is a
             cell-wise operation, we prefer cell data for thresholding
@@ -1505,7 +1505,7 @@ class DataSetFilters(DataObjectFilters):
 
         Examples
         --------
-        Generate and plot the outline of a sphere. This is
+        Generate and plot the outline of a sphere.  This is
         effectively the ``(x, y, z)`` bounds of the mesh.
 
         >>> import pyvista as pv
@@ -1546,7 +1546,7 @@ class DataSetFilters(DataObjectFilters):
 
         Examples
         --------
-        Generate and plot the corners of a sphere. This is
+        Generate and plot the corners of a sphere.  This is
         effectively the ``(x, y, z)`` bounds of the mesh.
 
         >>> import pyvista as pv
@@ -1771,7 +1771,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: "point"
             When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
         method : str, default:  "contour"
@@ -1922,7 +1922,7 @@ class DataSetFilters(DataObjectFilters):
         """Texture map this dataset to a user defined plane.
 
         This is often used to define a plane to texture map an image
-        to this dataset. The plane defines the spatial reference and
+        to this dataset.  The plane defines the spatial reference and
         extent of that image.
 
         Parameters
@@ -2020,10 +2020,10 @@ class DataSetFilters(DataObjectFilters):
             calculated.
 
         prevent_seam : bool, default: True
-            Control how the texture coordinates are generated. If
+            Control how the texture coordinates are generated.  If
             set, the s-coordinate ranges from 0 to 1 and 1 to 0
             corresponding to the theta angle variation between 0 to
-            180 and 180 to 0 degrees. Otherwise, the s-coordinate
+            180 and 180 to 0 degrees.  Otherwise, the s-coordinate
             ranges from 0 to 1 between 0 to 360 degrees.
 
         inplace : bool, default: False
@@ -2041,7 +2041,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.DataSet
-            Dataset containing the texture mapped to a sphere. Return
+            Dataset containing the texture mapped to a sphere.  Return
             type matches input.
 
         """
@@ -2088,7 +2088,7 @@ class DataSetFilters(DataObjectFilters):
         The glyph may be oriented along the input vectors, and it may
         be scaled according to scalar data or vector
         magnitude. Passing a table of glyphs to choose from based on
-        scalars or vector magnitudes is also supported. The arrays
+        scalars or vector magnitudes is also supported.  The arrays
         used for ``orient`` and ``scale`` must be either both point data
         or both cell data.
 
@@ -2849,7 +2849,7 @@ class DataSetFilters(DataObjectFilters):
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
-        isosurface. Works only if residues are not connected (share
+        isosurface.  Works only if residues are not connected (share
         at least one point with) the main component of the image.
 
         Parameters
@@ -2863,7 +2863,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.DataSet
-            Largest connected set in the dataset. Return type matches input.
+            Largest connected set in the dataset.  Return type matches input.
 
         Examples
         --------
@@ -3181,7 +3181,7 @@ class DataSetFilters(DataObjectFilters):
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This filter can be used to generate a 3D tetrahedral mesh from
-        a surface or scattered points. If you want to create a
+        a surface or scattered points.  If you want to create a
         surface from a point cloud, see
         :func:`pyvista.PolyDataFilters.reconstruct_surface`.
 
@@ -3298,7 +3298,7 @@ class DataSetFilters(DataObjectFilters):
         Examples
         --------
         Determine which points on a plane are inside a manifold sphere
-        surface mesh. Extract these points using the
+        surface mesh.  Extract these points using the
         :func:`DataSetFilters.extract_points` filter and then plot them.
 
         >>> import pyvista as pv
@@ -3577,7 +3577,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.DataSet
-            Interpolated dataset. Return type matches input.
+            Interpolated dataset.  Return type matches input.
 
         Raises
         ------
@@ -3706,10 +3706,10 @@ class DataSetFilters(DataObjectFilters):
 
         The default behavior uses a sphere as the source - set its
         location and radius via the ``source_center`` and
-        ``source_radius`` keyword arguments. ``n_points`` defines the
+        ``source_radius`` keyword arguments.  ``n_points`` defines the
         number of starting points on the sphere surface.
         Alternatively, a line source can be used by specifying
-        ``pointa`` and ``pointb``. ``n_points`` again defines the
+        ``pointa`` and ``pointb``.  ``n_points`` again defines the
         number of points on the line.
 
         You can retrieve the source by specifying
@@ -3736,7 +3736,7 @@ class DataSetFilters(DataObjectFilters):
             Number of particles present in source sphere or line.
 
         start_position : VectorLikeFloat, optional
-            A single point. This will override the sphere point source.
+            A single point.  This will override the sphere point source.
 
         return_source : bool, default: False
             Return the source particles as :class:`pyvista.PolyData` as well as the
@@ -3840,7 +3840,7 @@ class DataSetFilters(DataObjectFilters):
         ----------
         source : pyvista.DataSet
             The points of the source provide the starting points of the
-            streamlines. This will override both sphere and line sources.
+            streamlines.  This will override both sphere and line sources.
 
         vectors : str, optional
             The string name of the active vector field to integrate across.
@@ -4044,7 +4044,7 @@ class DataSetFilters(DataObjectFilters):
 
         This filter only supports datasets that lie on the xy plane, that is, ``z=0``.
         Particular care must be used to choose a ``separating_distance``
-        that do not result in too much memory being utilized. The
+        that do not result in too much memory being utilized.  The
         default unit is cell length.
 
         Parameters
@@ -4280,7 +4280,7 @@ class DataSetFilters(DataObjectFilters):
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
-            cell of the input. If not given, tolerance is automatically generated.
+            cell of the input.  If not given, tolerance is automatically generated.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4375,7 +4375,7 @@ class DataSetFilters(DataObjectFilters):
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
-            cell of the input. If not given, tolerance is automatically generated.
+            cell of the input.  If not given, tolerance is automatically generated.
 
         fname : str, optional
             Save the figure this file name when set.
@@ -4461,7 +4461,7 @@ class DataSetFilters(DataObjectFilters):
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is in a
-            cell of the input. If not given, tolerance is automatically generated.
+            cell of the input.  If not given, tolerance is automatically generated.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4534,7 +4534,7 @@ class DataSetFilters(DataObjectFilters):
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
-            in a cell of the input. If not given, tolerance is
+            in a cell of the input.  If not given, tolerance is
             automatically generated.
 
         progress_bar : bool, default: False
@@ -4613,20 +4613,20 @@ class DataSetFilters(DataObjectFilters):
             integer.
 
         normal : VectorLikeFloat, optional
-            The normal vector to the plane of the arc. By default it
+            The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
         polar : VectorLikeFloat, optional
-            Starting point of the arc in polar coordinates. By
+            Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
         angle : float, optional
-            Arc length (in degrees), beginning at the polar vector. The
-            direction is counterclockwise. By default it is 360.
+            Arc length (in degrees), beginning at the polar vector.  The
+            direction is counterclockwise.  By default it is 360.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
-            in a cell of the input. If not given, tolerance is
+            in a cell of the input.  If not given, tolerance is
             automatically generated.
 
         progress_bar : bool, default: False
@@ -4734,7 +4734,7 @@ class DataSetFilters(DataObjectFilters):
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
-            in a cell of the input. If not given, tolerance is
+            in a cell of the input.  If not given, tolerance is
             automatically generated.
 
         fname : str, optional
@@ -4838,16 +4838,16 @@ class DataSetFilters(DataObjectFilters):
             integer.
 
         normal : VectorLikeFloat, optional
-            The normal vector to the plane of the arc. By default it
+            The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
         polar : VectorLikeFloat, optional
-            Starting point of the arc in polar coordinates. By
+            Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
         angle : float, optional
-            Arc length (in degrees), beginning at the polar vector. The
-            direction is counterclockwise. By default it is 360.
+            Arc length (in degrees), beginning at the polar vector.  The
+            direction is counterclockwise.  By default it is 360.
 
         scalars : str, optional
             The string name of the variable in the input dataset to
@@ -4870,7 +4870,7 @@ class DataSetFilters(DataObjectFilters):
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
-            in a cell of the input. If not given, tolerance is
+            in a cell of the input.  If not given, tolerance is
             automatically generated.
 
         fname : str, optional
@@ -5466,7 +5466,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: 'point'
             When ``scalars`` is specified, this is the preferred array type to search
-            for in the dataset. Must be either ``'point'`` or ``'cell'``.
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
             Specify the components to use when ``scalars`` is a multi-component array.
@@ -5675,7 +5675,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: 'point'
             When ``scalars`` is specified, this is the preferred array type to search
-            for in the dataset. Must be either ``'point'`` or ``'cell'``.
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
             Specify the components to use when ``scalars`` is a multi-component array.
@@ -6758,7 +6758,7 @@ class DataSetFilters(DataObjectFilters):
         ----------
         scalars : str, optional
             String name of the scalars array to use when computing the
-            derivative quantities. Defaults to the active scalars in
+            derivative quantities.  Defaults to the active scalars in
             the dataset.
 
         gradient : bool | str, default: True
@@ -6802,7 +6802,7 @@ class DataSetFilters(DataObjectFilters):
         Examples
         --------
         First, plot the random hills dataset with the active elevation
-        scalars. These scalars will be used for the derivative
+        scalars.  These scalars will be used for the derivative
         calculations.
 
         >>> from pyvista import examples
@@ -7073,7 +7073,7 @@ class DataSetFilters(DataObjectFilters):
             to the power of 2 greater than or equal to the chosen value.
 
         generate_global_id : bool, default: False
-            Generate global cell ids if ``None`` are present in the input. If
+            Generate global cell ids if ``None`` are present in the input.  If
             global cell ids are present in the input then this flag is
             ignored.
 
@@ -7798,7 +7798,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: "point"
             When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
         output_scalars : str, None
@@ -7903,7 +7903,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: "point"
             When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
         output_scalars : str, None
@@ -8120,7 +8120,7 @@ class DataSetFilters(DataObjectFilters):
 
         preference : str, default: "cell"
             When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset. Must be either
+            type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
         output_scalars : str, optional

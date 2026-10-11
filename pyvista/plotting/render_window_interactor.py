@@ -645,7 +645,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
         ctrl + left button for spinning the view around the viewing
-        axis of the camera. Alternatively, ctrl + shift + left button
+        axis of the camera.  Alternatively, ctrl + shift + left button
         or mouse wheel zooms, and shift + left button pans.
 
         See Also
@@ -917,7 +917,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
         ctrl + left button for spinning objects around the axis
-        connecting the camera with the their center. Alternatively,
+        connecting the camera with the their center.  Alternatively,
         shift + left button pans.
 
         Examples
@@ -968,14 +968,14 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to Joystick Camera.
 
         It allows the user to move (rotate, pan, etc.) the camera, the
-        point of view for the scene. The position of the mouse
+        point of view for the scene.  The position of the mouse
         relative to the center of the scene determines the speed at
         which the camera moves, so the camera continues to move even
         if the mouse if not moving.
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
-        ctrl + left button for spinning. (With fewer mouse buttons,
+        ctrl + left button for spinning.  (With fewer mouse buttons,
         ctrl + shift + left button is for zooming, and shift + left
         button is for panning.)
 
@@ -1007,7 +1007,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         For a 3-button mouse, the left button is for rotation, the
         right button for zooming, the middle button for panning, and
-        ctrl + left button for spinning. (With fewer mouse buttons,
+        ctrl + left button for spinning.  (With fewer mouse buttons,
         ctrl + shift + left button is for zooming, and shift + left
         button is for panning.)
 
@@ -1031,7 +1031,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Set the interactive style to Rubber Band Zoom.
 
         This interactor style allows the user to draw a rectangle in
-        the render window using the left mouse button. When the mouse
+        the render window using the left mouse button.  When the mouse
         button is released, the current camera zooms by an amount
         determined from the shorter side of the drawn rectangle.
 

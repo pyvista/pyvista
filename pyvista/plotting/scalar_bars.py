@@ -250,9 +250,9 @@ def _fitted_label_font(
 
     VTK centers each tick label on its own tick and, with the font size unconstrained,
     draws the label at the size it asks for and leaves the ramp its full length, so the
-    labels run into each other once the bar is shorter than the text needs. A label is
+    labels run into each other once the bar is shorter than the text needs.  A label is
     free to run past the edge of the viewport, and the size asked for is kept where the
-    labels clear each other at no size. ``seat`` places the title for a size under
+    labels clear each other at no size.  ``seat`` places the title for a size under
     consideration, where the room left for the labels depends on where it sits.
     """
     # A bar can turn its tick labels off, an indexed lookup draws annotations in their
@@ -425,12 +425,12 @@ def _constrained_box(
 
     VTK sizes the text of a horizontal bar to the box it is given, growing each font to
     the largest that fits its share of the box, and pulls the ramp in by half a label so
-    the end labels stay inside. The box is sized so that share holds the title and the
+    the end labels stay inside.  The box is sized so that share holds the title and the
     labels at the sizes they asked for, or one size larger where two sizes measure the
     same height, with the ramp as thick as the bar's own size makes it and the title
-    padded off the labels by ``pad``. Text wider than the box is shrunk to fit it. A
+    padded off the labels by ``pad``.  Text wider than the box is shrunk to fit it.  A
     box that keeps its height spends what it has to spare on that padding and on the
-    ramp instead, and shrinks its text when it has too little. Returns the height in
+    ramp instead, and shrinks its text when it has too little.  Returns the height in
     pixels, with the bar ratio, the title ratio and the text pad that lay the box out
     that way.
     """
@@ -563,7 +563,7 @@ def _fitted_box(
 ) -> tuple[float, float, float, int, int]:
     """Return the box that encloses a scalar bar's text, and the settings that fill it.
 
-    The colour ramp keeps the size it was given; the box grows around it. Returns the
+    The colour ramp keeps the size it was given; the box grows around it.  Returns the
     box width and height as a fraction of the viewport, the bar ratio that holds the
     ramp to its original size, the line offset that seats the title inside the box, and
     the separation that leaves the title its padding.
@@ -965,11 +965,11 @@ class ScalarBars(_NoNewAttrMixin):
         Parameters
         ----------
         title : str, optional
-            Title of the scalar bar to remove. Required if there is
+            Title of the scalar bar to remove.  Required if there is
             more than one scalar bar.
 
         render : bool, default: True
-            Render upon scalar bar removal. Set this to ``False`` to
+            Render upon scalar bar removal.  Set this to ``False`` to
             stop the render window from rendering when a scalar bar
             is removed.
 
@@ -1157,7 +1157,7 @@ class ScalarBars(_NoNewAttrMixin):
         Parameters
         ----------
         title : str, default: ""
-            Title of the scalar bar. Default is rendered as an empty title.
+            Title of the scalar bar.  Default is rendered as an empty title.
 
         mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar. Defaults to the last mapper created
@@ -1200,34 +1200,34 @@ class ScalarBars(_NoNewAttrMixin):
             Bolds title and bar labels.
 
         title_font_size : float, optional
-            Sets the size of the title font. A box drawn around a horizontal
+            Sets the size of the title font.  A box drawn around a horizontal
             bar that is too narrow or too short for the title shrinks it to
-            fit. Defaults to ``None`` and is sized according to
+            fit.  Defaults to ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.font`.
 
         title_pad : float, optional
             Space between the title and the tick labels, as a multiple of the
             size the labels are drawn at, or of the size they ask for on a box
-            that sizes the text itself. A title turned alongside the bar is
-            padded off the bar by a multiple of its own size. Defaults to
+            that sizes the text itself.  A title turned alongside the bar is
+            padded off the bar by a multiple of its own size.  Defaults to
             ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
-            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`. Has no
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  Has no
             effect when the font size is constrained, or on a box given a size
             of its own.
 
             .. versionadded:: 0.50
 
         label_font_size : float, optional
-            The largest size the labels are drawn at. They are drawn smaller
+            The largest size the labels are drawn at.  They are drawn smaller
             where the bar leaves them too little room to stay clear of each
-            other. A box drawn around a horizontal bar sizes its text as the
-            Notes describe. Defaults to ``None`` and is sized according to
+            other.  A box drawn around a horizontal bar sizes its text as the
+            Notes describe.  Defaults to ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.font`.
 
         color : ColorLike, optional
-            Either a string, rgb list, or hex color string. Default
-            set by :attr:`pyvista.plotting.themes.Theme.font`. Can be
+            Either a string, rgb list, or hex color string.  Default
+            set by :attr:`pyvista.plotting.themes.Theme.font`.  Can be
             in one of the following formats:
 
             * ``color='white'``
@@ -1236,14 +1236,14 @@ class ScalarBars(_NoNewAttrMixin):
             * ``color='#FFFFFF'``
 
         font_family : {'courier', 'times', 'arial'}
-            Font family. Default is set by
+            Font family.  Default is set by
             :attr:`pyvista.plotting.themes.Theme.font`.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
 
         width : float, optional
-            The percentage (0 to 1) width of the viewport for the colorbar. Giving
+            The percentage (0 to 1) width of the viewport for the colorbar.  Giving
             a width, or a height, keeps a box drawn by ``fill`` or ``outline``
             exactly that size rather than growing it around the text, though
             only a height holds a horizontal box whose text is not
@@ -1255,7 +1255,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         height : float, optional
             The percentage (0 to 1) height of the viewport for the
-            colorbar. Default set by
+            colorbar.  Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
@@ -1277,7 +1277,7 @@ class ScalarBars(_NoNewAttrMixin):
             depending on the value of ``vertical``.
 
         vertical : bool, optional
-            Use vertical or horizontal scalar bar. Default set by
+            Use vertical or horizontal scalar bar.  Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_orientation`.
 
         stacking_gap : float, optional
@@ -1285,18 +1285,18 @@ class ScalarBars(_NoNewAttrMixin):
             Defaults to ``None``, which spaces them as tightly as their titles
             and tick labels allow, and is taken from
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
-            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`. A value
-            small enough to overlap is used as given. Has no effect when the
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  A value
+            small enough to overlap is used as given.  Has no effect when the
             font size is constrained.
 
             .. versionadded:: 0.50
 
         rotate_title : bool, optional
             Turn the title alongside the bar instead of drawing it across the
-            end, so that stacked bars sit closer together. Defaults to ``None``
+            end, so that stacked bars sit closer together.  Defaults to ``None``
             and is taken from
             :attr:`pyvista.plotting.themes._VerticalColorbarConfig.rotate_title`.
-            Applies to vertical bars only. Requires VTK 9.4.0 or newer, and has
+            Applies to vertical bars only.  Requires VTK 9.4.0 or newer, and has
             no effect when the font size is constrained.
 
             .. versionadded:: 0.50
@@ -1340,15 +1340,15 @@ class ScalarBars(_NoNewAttrMixin):
             Force a render when True.
 
         theme : pyvista.plotting.themes.Theme, optional
-            Plot-specific theme. By default, calling from the
-            ``Plotter``, will use the plotter theme. Setting to
+            Plot-specific theme.  By default, calling from the
+            ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
 
         unconstrained_font_size : bool, default: False
             Whether the font size of title and labels is unconstrained.
             When it is constrained, the size of the scalar bar will constrain the font size.
             When it is not, the size of the font will always be respected.
-            Using custom labels will force this to be ``True``. A box drawn
+            Using custom labels will force this to be ``True``.  A box drawn
             around a horizontal bar sizes the text itself unless this is ``True``.
 
             .. versionadded:: 0.44.0
@@ -1380,11 +1380,11 @@ class ScalarBars(_NoNewAttrMixin):
         Notes
         -----
         Setting ``title_font_size`` or ``label_font_size`` sets the size the
-        text asks for rather than leaving it to the bar. The title is drawn at
-        its size. The label size is the largest the labels are drawn at: they
+        text asks for rather than leaving it to the bar.  The title is drawn at
+        its size.  The label size is the largest the labels are drawn at: they
         are drawn smaller where the bar leaves them too little room to stay
         clear of each other, and a label is free to run past the edge of the
-        viewport. A box drawn around a horizontal bar
+        viewport.  A box drawn around a horizontal bar
         sizes the text itself, so the box is laid out to keep the text at the
         size asked for, or one size larger where two sizes measure the same
         height; a box given too small a height, or too narrow for its text,
@@ -1431,7 +1431,7 @@ class ScalarBars(_NoNewAttrMixin):
         >>> _ = pl.add_scalar_bar('Height', cmap='viridis', clim=(-2, 2))
         >>> pl.show()
 
-        Stack three scalar bars with titles of different lengths. They are
+        Stack three scalar bars with titles of different lengths.  They are
         spaced so that nothing overlaps.
 
         >>> import pyvista as pv

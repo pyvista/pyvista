@@ -47,7 +47,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         The specular power. Between 0.0 and 128.0.
 
     shade : bool, optional
-        Enable or disable volume shading. If shading is turned off, then the
+        Enable or disable volume shading.  If shading is turned off, then the
         mapper for the volume will not perform shading calculations. If shading
         is turned on, the mapper may perform shading calculations - in some
         cases shading does not apply (for example, in a maximum intensity

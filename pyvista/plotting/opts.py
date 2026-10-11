@@ -71,7 +71,7 @@ class InterpolationType(AnnotatedIntEnum):
         Parameters
         ----------
         input_str : str
-            The string representation of the interpolation type. Accepts
+            The string representation of the interpolation type.  Accepts
             aliases such as ``'pbr'`` for ``'Physically based rendering'``.
 
         Returns

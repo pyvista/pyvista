@@ -150,7 +150,7 @@ contours.array_names
 # variance to have high transparency.
 #
 # Also, since the opacity array must be between 0 and 1, we normalize
-# the temperature variance array by the maximum value. That way high
+# the temperature variance array by the maximum value.  That way high
 # variance will be completely transparent.
 
 contours['Temperature_var'] /= contours['Temperature_var'].max()

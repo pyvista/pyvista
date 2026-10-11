@@ -1463,7 +1463,7 @@ class PickingComponent(_NoNewAttrMixin):
     ) -> None:
         """Enable picking of cells with a rectangle selection tool.
 
-        Press ``"r"`` to enable rectangle based selection. Press
+        Press ``"r"`` to enable rectangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
         :attr:`picked_cells <pyvista.Plotter.picked_cells>` as:
 
@@ -1502,7 +1502,7 @@ class PickingComponent(_NoNewAttrMixin):
             is a string, that will be the message shown.
 
         style : str, default: "wireframe"
-            Visualization style of the selection. One of the
+            Visualization style of the selection.  One of the
             following: ``style='surface'``, ``style='wireframe'``, or
             ``style='points'``.
 
@@ -1843,7 +1843,7 @@ class PickingComponent(_NoNewAttrMixin):
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this callable after a pick is made. The
+            When given, calls this callable after a pick is made.  The
             entire picked path is passed as the only parameter to this
             callable.
 
@@ -1870,7 +1870,7 @@ class PickingComponent(_NoNewAttrMixin):
         tolerance : float, default: 0.025
             Specify tolerance for performing pick operation. Tolerance
             is specified as fraction of rendering window
-            size. Rendering window size is measured across diagonal.
+            size.  Rendering window size is measured across diagonal.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -1963,7 +1963,7 @@ class PickingComponent(_NoNewAttrMixin):
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this callable after a pick is made. The
+            When given, calls this callable after a pick is made.  The
             entire picked, geodesic path is passed as the only
             parameter to this callable.
 
@@ -1987,7 +1987,7 @@ class PickingComponent(_NoNewAttrMixin):
         tolerance : float, default: 0.025
             Specify tolerance for performing pick operation. Tolerance
             is specified as fraction of rendering window
-            size. Rendering window size is measured across diagonal.
+            size.  Rendering window size is measured across diagonal.
 
         show_path : bool, default: True
             Show the picked path interactively.
@@ -2117,7 +2117,7 @@ class PickingComponent(_NoNewAttrMixin):
         Parameters
         ----------
         callback : callable, optional
-            When given, calls this callable after a pick is made. The
+            When given, calls this callable after a pick is made.  The
             entire picked path is passed as the only parameter to this
             callable.
 

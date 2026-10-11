@@ -53,7 +53,7 @@ mesh.get_cell(0).type
 # The points are generated as a regular grid in spherical coordinates using
 # :func:`pyvista.spherical_to_cartesian`.
 # Here, we use the convention that ``theta`` is the
-# azimuthal angle, similar to longitude on the globe. ``phi`` is the
+# azimuthal angle, similar to longitude on the globe.  ``phi`` is the
 # polar angle, similar to latitude on the globe.
 
 radius = 0.5
@@ -163,7 +163,7 @@ phi = np.linspace(0, np.pi, nphi)
 # We do not want duplicate points, so remove the duplicate in theta, which
 # results in 8 unique points in theta. Similarly, the poles at ``phi=0`` and
 # ``phi=pi`` will be handled separately to avoid duplicate points, which
-# results in 10 unique points in phi. Remove these from the grid in spherical
+# results in 10 unique points in phi.  Remove these from the grid in spherical
 # coordinates.
 
 theta = theta[:-1]
@@ -173,7 +173,7 @@ nphi -= 2
 
 # %%
 # Use :func:`pyvista.spherical_to_cartesian` to generate Cartesian coordinates for
-# points in the ``(N, 3)`` format required by PyVista. Note that this method results in
+# points in the ``(N, 3)`` format required by PyVista.  Note that this method results in
 # the theta variable changing the fastest.
 
 r_, phi_, theta_ = np.meshgrid([radius], phi, theta, indexing='ij')
@@ -188,16 +188,16 @@ points = np.append(points, [[0.0, 0.0, -radius]], axis=0)
 
 # %%
 # First we will generate the cell-point connectivity similar to the
-# previous examples. At the poles, we will form triangles with the pole
+# previous examples.  At the poles, we will form triangles with the pole
 # and two adjacent points from the closest ring of points at a given ``phi``
-# position. Otherwise, we will form quadrilaterals between two adjacent points
+# position.  Otherwise, we will form quadrilaterals between two adjacent points
 # on consecutive ``phi`` positions.
 #
 # The first triangle in the mesh is point id ``0``, that is, the pole, and
 # the first two points at the first ``phi`` position, id's ``1`` and ``2``.
 # the next triangle contains the pole again and the next set of points,
-# id's ``2`` and ``3`` and so on. The last point in the ring, id ``8`` connects
-# to the first point in the ring, ``1``, to form the last triangle. Exclude it
+# id's ``2`` and ``3`` and so on.  The last point in the ring, id ``8`` connects
+# to the first point in the ring, ``1``, to form the last triangle.  Exclude it
 # from the loop and add separately.
 
 faces = []
@@ -221,7 +221,7 @@ pl.show()
 
 # %%
 # Next form the quadrilaterals. This process is the same except
-# by connecting points across two levels of ``phi``. For point ``1``
+# by connecting points across two levels of ``phi``.  For point ``1``
 # and point ``2``, these are connected to point ``9`` and point ``10``. Note
 # for quadrilaterals it must be defined in a consistent direction.
 # Again, the last points in the theta direction connect back to the
@@ -251,7 +251,7 @@ pl.show()
 
 # %%
 # Next we loop over all adjacent levels of phi to form all the quadrilaterals
-# and add the layer of triangles on the ending pole. Since we already formed
+# and add the layer of triangles on the ending pole.  Since we already formed
 # the first layer of quadrilaterals, let's start over to make cleaner code.
 
 faces = []

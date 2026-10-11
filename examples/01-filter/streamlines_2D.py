@@ -26,10 +26,10 @@ print(fluid_mesh)
 # %%
 # The default behavior of the :func:`streamlines()
 # <pyvista.DataSetFilters.streamlines>` filter is to use a 3D sphere source as
-# the seed points. This often will not generate any seed points on the 2D
-# plane of interest. Instead, a single streamline can be generated using the
+# the seed points.  This often will not generate any seed points on the 2D
+# plane of interest.  Instead, a single streamline can be generated using the
 # ``start_position`` argument. The ``surface_streamlines=True`` argument is
-# also needed if the dataset has nonzero normal velocity component. This is
+# also needed if the dataset has nonzero normal velocity component.  This is
 # not the case in this dataset.
 
 one_streamline = fluid_mesh.streamlines(
@@ -77,7 +77,7 @@ pl.show(cpos=camera_position)
 # <pyvista.DataSetFilters.streamlines_evenly_spaced_2D>`.
 # This filter only works with 2D data that lies on the xy plane. This method
 # can quickly run of memory, so particular attention must be paid to the input
-# parameters. The defaults are in cell length units.
+# parameters.  The defaults are in cell length units.
 
 line_streamlines = fluid_mesh.streamlines_evenly_spaced_2D(
     start_position=(4, 0.1, 0.0),

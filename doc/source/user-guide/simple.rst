@@ -181,7 +181,7 @@ that is bound to each PyVista data object.
 
 You can also create a plotter object to fine tune the scene. First,
 instantiate a plotter such as :class:`pyvista.Plotter` or
-:class:`pyvistaqt.BackgroundPlotter`. The :class:`pyvista.Plotter`
+:class:`pyvistaqt.BackgroundPlotter`.  The :class:`pyvista.Plotter`
 will create a rendering window that will pause the execution of the
 code after calling :func:`show() <pyvista.Plotter.show>`.
 

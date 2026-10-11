@@ -783,10 +783,10 @@ def SolidSphere(
     Parameters
     ----------
     outer_radius : float, default: 0.5
-        Outer radius of sphere. Must be non-negative.
+        Outer radius of sphere.  Must be non-negative.
 
     inner_radius : float, default: 0.0
-        Inner radius of sphere. Must be non-negative
+        Inner radius of sphere.  Must be non-negative
         and smaller than ``outer_radius``.
 
     radius_resolution : int, default: 5
@@ -832,7 +832,7 @@ def SolidSphere(
     tol_angle : float, optional
         Absolute tolerance for endpoint detection
         for ``phi`` and ``theta``. Unit is determined by choice
-        of ``radians`` parameter. Default is 1.0e-8 degrees or
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
         1.0e-8 degrees converted to radians.
 
     Returns
@@ -920,7 +920,7 @@ def SolidSphereGeneric(
 
     This function allows user defined sampling of each spherical
     coordinate, whereas :func:`pyvista.SolidSphere`
-    only allows linear sampling. Angles are by default
+    only allows linear sampling.   Angles are by default
     specified in degrees.
 
     PyVista uses a convention where ``theta`` represents the azimuthal
@@ -939,13 +939,13 @@ def SolidSphereGeneric(
 
     theta : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``theta``
-        points. Must have at least two points. Can have any value as long
+        points. Must have at least two points.  Can have any value as long
         as range is within 360 degrees. Large magnitudes may result in
         problems with endpoint overlap detection.
 
     phi : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``phi``
-        points. Must have at least two points. Must be between
+        points. Must have at least two points.  Must be between
         0 and 180 degrees.
 
     center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
@@ -964,7 +964,7 @@ def SolidSphereGeneric(
     tol_angle : float, optional
         Absolute tolerance for endpoint detection
         for ``phi`` and ``theta``. Unit is determined by choice
-        of ``radians`` parameter. Default is 1.0e-8 degrees or
+        of ``radians`` parameter.  Default is 1.0e-8 degrees or
         1.0e-8 degrees converted to radians.
 
     Returns
@@ -994,7 +994,7 @@ def SolidSphereGeneric(
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
     >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
-    Sampling the polar angle in a nonlinear manner allows for consistent cell volumes. See
+    Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
     `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
 
     >>> phi = np.rad2deg(np.arccos(np.linspace(1, -1, 30)))
@@ -2174,16 +2174,16 @@ def CircularArcFromNormal(
         Resolution of 1 will just create a line.
 
     normal : VectorLikeFloat, optional
-        The normal vector to the plane of the arc. By default it
+        The normal vector to the plane of the arc.  By default it
         points in the positive Z direction.
 
     polar : VectorLikeFloat, optional
-        Starting point of the arc in polar coordinates. By default it
+        Starting point of the arc in polar coordinates.  By default it
         is the unit vector in the positive x direction.
 
     angle : float, optional
-        Arc length (in degrees) beginning at the polar vector. The
-        direction is counterclockwise. By default it is 90.
+        Arc length (in degrees) beginning at the polar vector.  The
+        direction is counterclockwise.  By default it is 90.
 
     Returns
     -------
@@ -2249,7 +2249,7 @@ def Pyramid(points: MatrixLikeFloat | None = None) -> UnstructuredGrid:
     Parameters
     ----------
     points : MatrixLikeFloat, optional
-        Points of the pyramid. Points are ordered such that the first
+        Points of the pyramid.  Points are ordered such that the first
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
 
@@ -2311,7 +2311,7 @@ def Triangle(points: MatrixLikeFloat | None = None) -> PolyData:
     Parameters
     ----------
     points : MatrixLikeFloat, optional
-        Points of the triangle. Defaults to a right isosceles
+        Points of the triangle.  Defaults to a right isosceles
         triangle (see example).
 
     Returns
@@ -2426,7 +2426,7 @@ def Quadrilateral(points: MatrixLikeFloat | None = None) -> PolyData:
     Parameters
     ----------
     points : MatrixLikeFloat, optional
-        Points of the quadrilateral. Defaults to a unit square in xy-plane.
+        Points of the quadrilateral.  Defaults to a unit square in xy-plane.
 
     Returns
     -------
