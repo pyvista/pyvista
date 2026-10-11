@@ -26,7 +26,6 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / 'doc' / '.vale.ini'
 
-# A newer Vale can change which RST it checks as prose, so CI pins this one.
 VALE_VERSION = '3.22.0'
 INSTALL = f"pip install 'vale=={VALE_VERSION}.*' 'docutils<0.22' 'sphinx-gallery<0.22.0'"
 
