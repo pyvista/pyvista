@@ -15,7 +15,7 @@ Read them, then come back here.
   | Coding style, keyword-only arguments    | `Coding Style`                                             |
   | Standard library import rules           | `Import Conventions`                                       |
   | numpydoc rules and the sample docstring | `Docstrings`                                               |
-  | Three-step deprecation policy           | `Deprecating Features or other Backwards-Breaking Changes` |
+  | Three-step deprecation policy           | `Deprecating Features or Other Backwards-Breaking Changes` |
   | Image regression testing                | `Notes Regarding Image Regression Testing`                 |
   | Branch prefixes                         | `Branch Naming Conventions`                                |
   | `make` targets and tox environments     | `Quick Development Commands`                               |
@@ -196,9 +196,10 @@ The target runs two environments: `doctest-modules` executes the examples, and
 failures are name resolution bugs in the docstring rather than runtime errors.
 
 `tests/conftest.py` and the `doctest-modules` tox environment already set off-screen
-rendering, so the `make` targets are safe. Only a bare `pytest --doctest-modules` outside
-tox needs `PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take
-over the display.
+rendering, so the `make` targets are safe. A bare `pytest --doctest-modules` outside tox
+needs both variables that environment sets: `PYVISTA_OFF_SCREEN=true`, or the examples
+open render windows and take over the display, and `PYVISTA_BUILDING_GALLERY=true`, or the
+anti-aliasing warning above fails the run.
 
 **Never push a commit to find out whether something passes.** `AGENTS.md` opens with that
 rule and `CONTRIBUTING.rst` states it as `Continuous Integration Etiquette`. It binds you
