@@ -516,3 +516,9 @@ def test_hexcolors_deprecated():
 def test_validate_color_sequence_raises(n_colors, match):
     with pytest.raises(ValueError, match=match):
         _validate_color_sequence('foo', n_colors=n_colors)
+
+
+@pytest.mark.parametrize('n_colors', [None, 2])
+def test_validate_color_sequence_array(n_colors):
+    colors = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    assert _validate_color_sequence(colors, n_colors=n_colors) == (pv.Color('r'), pv.Color('b'))
