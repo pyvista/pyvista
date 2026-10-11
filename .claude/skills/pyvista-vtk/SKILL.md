@@ -28,7 +28,7 @@ let the consumer land after it.
 `pyproject.toml`), which points you at `pyvista._vtk` instead. Examples are exempt
 because `examples/ruff.toml` defines its own `banned-api` table, which replaces the
 parent's rather than merging with it. Inside the package the sanctioned form is
-`from . import _vtk`, then `_vtk.vtkThreshold()`.
+`from pyvista import _vtk`, then `_vtk.vtkThreshold()`.
 
 The wrapper classes also gate the VTK surface at runtime: `_NoNewAttrMixin`
 (`pyvista/core/utilities/misc.py`) refuses unknown attributes, and `DisableVtkSnakeCase`

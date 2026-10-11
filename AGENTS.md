@@ -45,7 +45,7 @@ means the PyVista name was missed, so check `dir(obj)` first. No bare `import vt
 anywhere, no `vtkmodules` import in anything a user reads or copies (examples,
 docstrings, documentation), and no VTK CamelCase call
 (`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) where a property or filter
-exists. Inside the package, `from . import _vtk` and then `_vtk.vtkY`.
+exists. Inside the package, `from pyvista import _vtk` and then `_vtk.vtkY`.
 
 **Filters return a new dataset.** `inplace=False` is the default, so `mesh.clip('y')`
 leaves `mesh` untouched. Capture the return value.
