@@ -276,7 +276,9 @@ class CompositeFilters(DataObjectFilters):
         _update_alg(gf)
         return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
-    def combine(self, *, merge_points: bool = False, tolerance: float = 0.0) -> UnstructuredGrid:
+    def combine(  # type: ignore[misc]
+        self: MultiBlock[Any], *, merge_points: bool = False, tolerance: float = 0.0
+    ) -> UnstructuredGrid:
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -318,7 +320,7 @@ class CompositeFilters(DataObjectFilters):
         """
         alg = _vtk.vtkAppendFilter()
         n_inputs = 0
-        for block in self.recursive_iterator(skip_none=True):  # type: ignore[attr-defined]
+        for block in self.recursive_iterator(skip_none=True):
             alg.AddInputData(block)
             n_inputs += 1
         if n_inputs == 0:
