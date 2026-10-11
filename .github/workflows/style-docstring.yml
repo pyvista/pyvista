@@ -97,9 +97,6 @@ jobs:
   vale:
     name: Vale
     runs-on: ubuntu-22.04
-    env:
-      VALE_VERSION: 3.22.0
-      VALE_SHA256: 52f5cd0314a1b7384cac6aa102a68193977312f6ba9c9f3ae001b5deec8e3a10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -109,6 +106,15 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: 3.14
+
+      - name: Install Vale
+        run: |
+          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
+          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
+          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
+        env:
+          VALE_VERSION: 3.22.0
+          VALE_SHA256: 52f5cd0314a1b7384cac6aa102a68193977312f6ba9c9f3ae001b5deec8e3a10
 
       - name: Install Vale Dependencies
         run: pip install 'docutils<0.22' 'sphinx-gallery<0.22.0'
@@ -134,7 +140,7 @@ jobs:
           config: doc/.vale.ini
           reporter: github-pr-check
           filter_mode: nofilter
-          version: ${{ env.VALE_VERSION }}
+          version: none
           fail_on_error: true
           # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
           fail_level: warning
@@ -144,11 +150,5 @@ jobs:
       # Scanned files have to pass, so nothing above would notice a rule going
       # slack. This runs Vale over fixtures of text that must be flagged, and
       # fails if any of it stops being.
-      - name: Install Vale
-        run: |
-          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
-          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
-          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
-
       - name: "Check Vale still catches known-bad text"
         run: python3 tests/doc/vale/check_expected_failures.py
