@@ -10,7 +10,7 @@ off for most of the documentation.
 ``PyVista.Repetition`` has no exceptions list, so its ``tokens`` pattern is the
 only thing standing between a real doubled word and silence.
 
-``rules_invalid.rst`` covers the rules ``doc/.vale.ini`` raises to ``error``.
+``rules_invalid.rst`` covers the other rules ``doc/.vale.ini`` raises to ``error``.
 
 Run with ``make docstyle``, or directly::
 
