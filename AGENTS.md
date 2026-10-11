@@ -9,19 +9,21 @@ guides below cover _changing_ it.
 
 Open the one that matches the task.
 
-| Task                                                                      | Guide                                        |
-| ------------------------------------------------------------------------- | -------------------------------------------- |
-| Writing or changing code here                                             | `.claude/skills/pyvista-dev/SKILL.md`        |
-| Wrapping a VTK class, adding or editing a filter                          | `.claude/skills/pyvista-vtk/SKILL.md`        |
-| Any plotting test, baseline image, or image flag                          | `.claude/skills/pyvista-testing/SKILL.md`    |
-| Repairing the documentation image cache after a docs image failure        | `.claude/skills/pyvista-doc-images/SKILL.md` |
-| Reviewing a branch, diff, or pull request                                 | `.claude/skills/pyvista-review/SKILL.md`     |
-| Writing the pull request title and body                                   | `.claude/skills/pyvista-pr/SKILL.md`         |
-| Deprecating or renaming anything public                                   | `.claude/skills/pyvista-vtk/SKILL.md`        |
-| Editing the Vale setup, or a prose pass across docstrings/examples/`.rst` | `.claude/skills/pyvista-docs-style/SKILL.md` |
+| Task                                                                      | Guide                                |
+| ------------------------------------------------------------------------- | ------------------------------------ |
+| Writing or changing code here                                             | `skills/pyvista-dev/SKILL.md`        |
+| Wrapping a VTK class, adding or editing a filter                          | `skills/pyvista-vtk/SKILL.md`        |
+| Any plotting test, baseline image, or image flag                          | `skills/pyvista-testing/SKILL.md`    |
+| Repairing the documentation image cache after a docs image failure        | `skills/pyvista-doc-images/SKILL.md` |
+| Reviewing a branch, diff, or pull request                                 | `skills/pyvista-review/SKILL.md`     |
+| Writing the pull request title and body                                   | `skills/pyvista-pr/SKILL.md`         |
+| Deprecating or renaming anything public                                   | `skills/pyvista-vtk/SKILL.md`        |
+| Editing the Vale setup, or a prose pass across docstrings/examples/`.rst` | `skills/pyvista-docs-style/SKILL.md` |
 
-They live under `.claude/skills/` so Claude Code loads them on demand by name. Nothing in
-them is Claude-specific.
+The guides live in `skills/`. `.claude/skills` and `.agents/skills` are symlinks to it, so
+Claude Code and Codex load them on demand by name. Where a checkout has no symlink
+support, the link is a text file holding the path; read `skills/` directly. Nothing in
+the guides is specific to one agent.
 
 ## Rules that apply before you open any guide
 
@@ -37,7 +39,7 @@ also statically checks the names those examples use.
 Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
 `Continuous Integration Etiquette`. Some jobs run only when a label asks for them
 (`vtk-dev-testing`, `vtk-master-testing`, `integration-testing`, `docker`) -- see
-`.claude/skills/pyvista-pr/SKILL.md` for which to suggest, and say so when you hand the
+`skills/pyvista-pr/SKILL.md` for which to suggest, and say so when you hand the
 change over, since a label other than `docker` applied after the last push does nothing
 until the next one.
 

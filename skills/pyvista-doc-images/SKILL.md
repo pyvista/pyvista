@@ -70,7 +70,7 @@ example — `plan` compares every generated image against every cached one, so i
 patterns matching more than 80 files.
 
 ```bash
-python .claude/skills/pyvista-doc-images/scripts/match_doc_images.py \
+python skills/pyvista-doc-images/scripts/match_doc_images.py \
   plan /tmp/pv-doc-gen --pattern 'sphx_glr_axes_objects_*.jpg'
 ```
 
@@ -108,7 +108,7 @@ Then copy in the `REPLACE` and `NEW` files from `/tmp/pv-doc-gen`. Then re-run t
 confirm nothing is left, and verify every slot against the run:
 
 ```bash
-python .claude/skills/pyvista-doc-images/scripts/match_doc_images.py \
+python skills/pyvista-doc-images/scripts/match_doc_images.py \
   verify /tmp/pv-doc-gen --pattern 'sphx_glr_axes_objects_*.jpg'
 ```
 
