@@ -110,8 +110,9 @@ an AI tool helped write:
 
 > 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-No banner, no badge, no separate heading. Put the disclosure in the description rather
-than only in a commit trailer, because the description is what a reviewer reads first.
+No banner, no badge, no separate heading. The description is where disclosure is
+required; a commit trailer is optional and never stands in for it, because the
+description is what a reviewer reads first.
 
 ## Labels that start extra CI
 
