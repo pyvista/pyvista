@@ -13,6 +13,8 @@ from typing import get_args
 import numpy as np
 import pyvista_validation as _validation
 
+import pyvista as pv
+from pyvista.core.filters.composite import _format_nested_index
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
@@ -116,8 +118,6 @@ class BaseWriter(_FileIOBase):
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
-        import pyvista as pv  # noqa: PLC0415
-
         all_mesh_types = (
             pv.ImageData,
             pv.RectilinearGrid,
@@ -243,8 +243,6 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
     _vtk_class_name = 'vtkDataSetWriter'
 
     def _execute_before_write(self) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         # Warn if data will be lost
         if isinstance(mesh := self.data_object, pv.ImageData) and not np.allclose(
             mesh.direction_matrix, np.eye(3)
@@ -270,8 +268,6 @@ class HDFWriter(BaseWriter):
     _vtk_class_name = 'vtkHDFWriter'
 
     def _execute_before_write(self) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         if not isinstance(mesh := self.data_object, pv.MultiBlock):
             return
         # Check multiblock block types
@@ -298,8 +294,6 @@ class HDFWriter(BaseWriter):
         ]
         for id_, name, block in mesh.recursive_iterator('all'):
             if type(block) not in supported_block_types:
-                from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
-
                 index_fmt = _format_nested_index(id_)
                 msg = (
                     f"Block at index {index_fmt} with name '{name}' has type "

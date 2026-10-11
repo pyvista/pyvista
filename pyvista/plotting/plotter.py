@@ -55,6 +55,7 @@ from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.jupyter.notebook import handle_plotter
 
 from ._plotting import _common_arg_parser
 from ._plotting import _reduce_multicomponent_scalars_on_mesh
@@ -8956,8 +8957,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from pyvista.jupyter.notebook import handle_plotter  # noqa: PLC0415
-
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 

@@ -26,6 +26,7 @@ from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.arrays import USER_DICT_KEY
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -1694,9 +1695,6 @@ def to_trimesh(  # numpydoc ignore=RT01
     except ImportError:  # pragma: no cover
         msg = 'To use this feature install trimesh with:\n\npip install trimesh'
         raise ImportError(msg)
-
-    # Avoid circular import
-    from pyvista.core.utilities.arrays import USER_DICT_KEY  # noqa: PLC0415
 
     _validation.check_instance(mesh, pv.DataSet, name='mesh')
 
