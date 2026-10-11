@@ -54,14 +54,15 @@ access built with `getattr`, so read the diff as well.
 ## The filter pattern
 
 Every filter in `pyvista/core/filters/` has the same shape. Copy a neighbour rather than
-inventing a variant.
+inventing a variant. The sketch below shows that shape; it is condensed, and the real
+`DataSetFilters.threshold` differs.
 
 ```python
 def threshold(
     self,
     value: float | VectorLike[float] | None = None,
-    scalars: str | None = None,
     *,
+    scalars: str | None = None,
     invert: bool = False,
     inplace: bool = False,
     progress_bar: bool = False,
@@ -72,6 +73,9 @@ def threshold(
     ----------
     value : float | VectorLike[float], optional
         Threshold value or ``(min, max)`` range. ``None`` uses the data range.
+
+    scalars : str, optional
+        Name of the array to threshold. Defaults to the active scalars.
 
     invert : bool, default: False
         Invert the threshold.
