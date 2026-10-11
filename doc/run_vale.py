@@ -67,7 +67,10 @@ def main() -> int:
         return 0
 
     if shutil.which('vale') is None:
-        print("vale is not installed: pip install vale 'docutils<0.22' 'sphinx-gallery<0.22.0'")
+        print(
+            'vale is not installed: '
+            "pip install 'vale==3.22.0.*' 'docutils<0.22' 'sphinx-gallery<0.22.0'"
+        )
         return 1
 
     for extract in EXTRACT:
