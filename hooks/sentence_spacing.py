@@ -1,8 +1,8 @@
 """Flag double spaces between sentences, in place of Vale's ``Google.Spacing`` check.
 
 Vale masks inline code and roles and skips some paragraphs outright, so it misses many of
-these. This checks ``.rst`` files, docstrings and gallery text directly, and runs before CI.
-``Google.Spacing`` keeps only its missing-space check.
+these. This checks ``.rst`` files, docstrings and gallery text directly, in pre-commit.
+``Google.Spacing`` checks only for a missing space.
 """
 
 from __future__ import annotations
@@ -12,10 +12,15 @@ from pathlib import Path
 import re
 import sys
 
-# Google.Spacing's upstream double-space token, with any character before the period.
-PATTERN = re.compile(r'[^\s.][.?!] {2,}[A-Z]')
-ENUMERATOR = re.compile(r'^[\s#]*(?:\d+|[A-Za-z]|#)\.(?= )')
+# A sentence end that is not an ellipsis, then two or more spaces, then the next sentence.
+PATTERN = re.compile(r"""[^\s.][.?!]["')]? {2,}[A-Z`('":]""")
+ENUMERATOR = re.compile(r'^\s*(?:\d+|[A-Za-z]|#)\.(?= )')
 DOCTEST = re.compile(r'^\s*(?:>>>|\.\.\.)(?: |$)')
+CODE_DIRECTIVE = re.compile(
+    r'^\.\. (?:code-block|code|sourcecode|parsed-literal|literalinclude|highlight|math'
+    r'|doctest|testcode|testsetup|testcleanup|testoutput|ipython|jupyter-execute'
+    r'|pyvista-plot|plot|command-output)::'
+)
 GALLERY_CELL = re.compile(r'^# ?(?:%%|#{20,})')
 
 
@@ -50,26 +55,71 @@ def _gallery_text_lines(source: str) -> set[int]:
 
 
 def prose_lines(path: Path) -> list[tuple[int, str]]:
-    """Return the prose lines of ``path`` with their line numbers."""
+    """Return the lines of ``path`` that hold prose, as RST text, with their line numbers."""
     source = path.read_text(encoding='utf-8')
     lines = source.splitlines()
+    gallery: set[int] = set()
     if path.suffix == '.rst':
         numbers = set(range(1, len(lines) + 1))
     elif path.parts[0] == 'examples':
-        numbers = _docstring_lines(source, module_only=True) | _gallery_text_lines(source)
+        gallery = _gallery_text_lines(source)
+        numbers = _docstring_lines(source, module_only=True) | gallery
     else:
         numbers = _docstring_lines(source)
-    return [(n, lines[n - 1]) for n in sorted(numbers) if n <= len(lines)]
+    return [
+        (n, re.sub(r'^# ?', '', lines[n - 1]) if n in gallery else lines[n - 1])
+        for n in sorted(numbers)
+        if n <= len(lines)
+    ]
+
+
+def violations(path: Path) -> list[int]:
+    """Return the line numbers of ``path`` with a double space between sentences."""
+    found = []
+    previous = None
+    literal_indent = None  # inside a literal block deeper than this indent
+    item_indent = None  # inside a list item at this indent
+    in_doctest = False
+    paragraph_start = True
+    for number, text in prose_lines(path):
+        if previous is None or number != previous + 1:
+            literal_indent, item_indent, in_doctest, paragraph_start = None, None, False, True
+        previous = number
+        stripped = text.strip()
+        indent = len(text) - len(text.lstrip())
+        if not stripped:
+            in_doctest, paragraph_start = False, True
+            continue
+        if literal_indent is not None:
+            if indent > literal_indent:
+                continue
+            literal_indent = None
+        if in_doctest or DOCTEST.match(text):
+            in_doctest = True
+            continue
+        if item_indent is not None and indent <= item_indent and not ENUMERATOR.match(text):
+            item_indent = None
+        body = text
+        if (match := ENUMERATOR.match(text)) and (paragraph_start or item_indent is not None):
+            body, item_indent = text[match.end() :], indent
+        if PATTERN.search(body):
+            found.append(number)
+        if CODE_DIRECTIVE.match(stripped) or (
+            stripped.endswith('::') and not stripped.startswith('..')
+        ):
+            literal_indent = indent
+        paragraph_start = False
+    return found
 
 
 def main(argv: list[str]) -> int:
     """Check each file in argv, printing every double space between sentences."""
     exit_code = 0
     for filename in argv:
-        for number, line in prose_lines(Path(filename)):
-            if not DOCTEST.match(line) and PATTERN.search(ENUMERATOR.sub('', line)):
-                print(f'{filename}:{number}: {line.strip()}')  # noqa: T201
-                exit_code = 1
+        lines = Path(filename).read_text(encoding='utf-8').splitlines()
+        for number in violations(Path(filename)):
+            print(f'{filename}:{number}: {lines[number - 1].strip()}')  # noqa: T201
+            exit_code = 1
     return exit_code
 
 

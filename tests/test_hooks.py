@@ -239,23 +239,61 @@ def _run_sentence_spacing_hook(
 
 
 @pytest.mark.parametrize(
-    ('relpath', 'source'),
+    ('relpath', 'source', 'line'),
     [
-        pytest.param('doc/page.rst', 'Plot the mesh.  Then close it.\n', id='rst'),
-        pytest.param('doc/page.rst', 'See ``pad``.  Then close it.\n', id='rst-after-code'),
+        pytest.param('doc/page.rst', 'Plot the mesh.  Then close it.\n', 1, id='rst'),
+        pytest.param('doc/page.rst', 'See ``pad``.  Then close it.\n', 1, id='after-code'),
+        pytest.param('doc/page.rst', 'Plot it.  ``show`` opens it.\n', 1, id='before-code'),
+        pytest.param('doc/page.rst', "Use it.  'all' needs all.\n", 1, id='before-quote'),
+        pytest.param('doc/page.rst', 'See (the docs.)  Then go.\n', 1, id='after-paren'),
+        pytest.param('doc/page.rst', 'Plot it.  (Then close it.)\n', 1, id='before-paren'),
+        pytest.param('doc/page.rst', 'Added in\n2024.  Then changed.\n', 2, id='wrapped-number'),
+        pytest.param('doc/page.rst', '.. note::\n\n   Check it.  Then go.\n', 3, id='note-body'),
+        pytest.param(
+            'doc/page.rst',
+            'Example::\n\n    code.  Here\n\nBack in prose.  Then go.\n',
+            5,
+            id='after-literal-block',
+        ),
         pytest.param(
             'pyvista/mod.py',
             '''\
             def f():
-                """Plot the mesh.  Then close it."""
+                """Summary.
+
+                Plot the mesh.  Then close it.
+                """
             ''',
+            4,
             id='function-docstring',
+        ),
+        pytest.param(
+            'pyvista/mod.py',
+            '''\
+            def f():
+                """Summary.
+
+                Example::
+
+                    code"""
+
+
+            class C:
+                def g(self):
+                    """Plot the mesh.  Then close it."""
+            ''',
+            11,
+            id='docstring-after-literal-block',
         ),
         pytest.param(
             'examples/ex.py',
             '''\
-            """Plot the mesh.  Then close it."""
+            """Example.
+
+            Plot the mesh.  Then close it.
+            """
             ''',
+            3,
             id='example-module-docstring',
         ),
         pytest.param(
@@ -266,21 +304,34 @@ def _run_sentence_spacing_hook(
             # %%
             # Plot the mesh.  Then close it.
             ''',
+            4,
             id='gallery-text',
+        ),
+        pytest.param(
+            'examples/ex.py',
+            '''\
+            """Example."""
+
+            ###############################################################################
+            # Plot the mesh.  Then close it.
+            ''',
+            4,
+            id='gallery-separator',
         ),
     ],
 )
 def test_sentence_spacing_flags(
     relpath: str,
     source: str,
+    line: int,
     tmp_path: Path,
     pre_commit_config: dict,
     request: pytest.FixtureRequest,
 ):
     code, out = _run_sentence_spacing_hook(relpath, source, tmp_path, pre_commit_config, request)
     assert code == 1
-    assert out.startswith(f'{relpath}:')
-    assert '.  Then close it.' in out
+    assert len(out.splitlines()) == 1, out
+    assert out.startswith(f'{relpath}:{line}: ')
 
 
 @pytest.mark.parametrize(
@@ -289,13 +340,26 @@ def test_sentence_spacing_flags(
         pytest.param('doc/page.rst', '#.  First item\n#.  Second item\n', id='auto-enumerator'),
         pytest.param('doc/page.rst', '1.  First item\na.  Lettered item\n', id='enumerator'),
         pytest.param('doc/page.rst', 'Plot the mesh. Then close it.\n', id='one-space'),
+        pytest.param('doc/page.rst', 'Wait for it...  Then go.\n', id='ellipsis'),
+        pytest.param('doc/page.rst', 'Example::\n\n    code.  Here\n', id='literal-block'),
+        pytest.param(
+            'doc/page.rst',
+            '.. code-block:: python\n\n    x = 1.  # Then\n',
+            id='code-block',
+        ),
+        pytest.param(
+            'doc/page.rst',
+            '#.  First item,\n    continued.\n#.  Second item.\n',
+            id='enumerator-continued',
+        ),
         pytest.param(
             'pyvista/mod.py',
             '''\
             def f():
                 """Run it.
 
-                >>> print('A.  B')
+                >>> print('Done.  Then go.')
+                Done.  Then go.
                 """
                 x = """A.  B"""
                 # A comment.  Not prose.
