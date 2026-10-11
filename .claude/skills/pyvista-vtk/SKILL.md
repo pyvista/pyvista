@@ -137,15 +137,17 @@ Points that reviewers raise when they are missing:
 Dataset classes combine a PyVista base, a filter mixin, and the VTK class:
 
 ```python
-class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
+class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     """Wrap :vtk:`vtkPolyData`."""
 ```
 
 Module docstring is one line and uses the `:vtk:` role. `@abstract_class` marks a base
-that must not be instantiated. Mixins that use `_NoNewAttrMixin` declare `__slots__ = ()`.
-Map each VTK getter and setter you need onto a snake_case property with validation in the
-setter, document it with numpydoc plus an `Examples` block, register the type with
-`pv.wrap`, and add tests. Do not expose a CamelCase method as public API.
+that must not be instantiated. `_NoNewAttrMixin` freezes an instance once its own
+`__init__` returns, so a public attribute has to be assigned there or exist on the class;
+private names stay settable. Map each VTK getter and setter you need onto a snake_case
+property with validation in the setter, document it with numpydoc plus an `Examples`
+block, register the type with `pv.wrap`, and add tests. Do not expose a CamelCase method
+as public API.
 
 New top-level subpackages with heavy imports go in the lazy `__getattr__` list in
 `pyvista/__init__.py` rather than being imported eagerly.
