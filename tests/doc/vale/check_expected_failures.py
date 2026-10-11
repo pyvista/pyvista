@@ -10,6 +10,11 @@ off for most of the documentation.
 ``PyVista.Repetition`` has no exceptions list, so its ``tokens`` pattern is the
 only thing standing between a real doubled word and silence.
 
+``rules_invalid.rst`` covers the other error-level rules, and every word in
+``reject.txt`` must still be reported as ``Vale.Avoid``. A word in
+``accept.txt`` is exempt from every rule, so re-accepting a rejected word fails
+this check rather than passing quietly.
+
 Run with ``make docstyle``, or directly::
 
     python3 tests/doc/vale/check_expected_failures.py
@@ -24,6 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
@@ -32,6 +38,9 @@ HEADINGS_FIXTURE = HERE / 'headings_invalid.rst'
 HEADINGS_CHECK = 'Google.Headings'
 REPETITION_FIXTURE = HERE / 'repetition_invalid.rst'
 REPETITION_CHECK = 'PyVista.Repetition'
+RULES_FIXTURE = HERE / 'rules_invalid.rst'
+REJECT = ROOT / 'doc' / 'styles' / 'config' / 'vocabularies' / 'pyvista' / 'reject.txt'
+REJECT_CHECK = 'Vale.Avoid'
 
 
 def headings_in(path: Path) -> list[str]:
@@ -46,8 +55,8 @@ def headings_in(path: Path) -> list[str]:
     ]
 
 
-def alerts_for(path: Path, check: str) -> list[dict]:
-    """Return the alerts Vale reports in ``path`` for ``check``."""
+def alerts_for(path: Path, check: str | None = None) -> list[dict]:
+    """Return the alerts Vale reports in ``path``, only for ``check`` if given."""
     out = subprocess.run(
         ['vale', '--config', str(CONFIG), '--output=JSON', str(path)],
         capture_output=True,
@@ -58,8 +67,19 @@ def alerts_for(path: Path, check: str) -> list[dict]:
         alert
         for alerts in json.loads(out.stdout or '{}').values()
         for alert in alerts
-        if alert['Check'] == check
+        if check is None or alert['Check'] == check
     ]
+
+
+def expectations_in(path: Path) -> dict[int, tuple[str, str]]:
+    """Map the line after each ``.. expect: <Check>`` comment to its check and text."""
+    lines = path.read_text().splitlines()
+    expected = {}
+    for index, line in enumerate(lines):
+        if match := re.fullmatch(r'\.\. expect: (\S+)', line.strip()):
+            target = next(i for i in range(index + 1, len(lines)) if lines[i].strip())
+            expected[target + 1] = (match[1], lines[target].strip())
+    return expected
 
 
 def bullets_in(path: Path) -> dict[int, str]:
@@ -103,14 +123,53 @@ def check_repetition() -> int:
     return 0
 
 
+def check_rules() -> int:
+    """Report any case in the rules fixture its rule no longer catches."""
+    flagged = {(alert['Line'], alert['Check']) for alert in alerts_for(RULES_FIXTURE)}
+    expected = expectations_in(RULES_FIXTURE)
+    missed = [
+        f'{check}: {text}'
+        for number, (check, text) in expected.items()
+        if (number, check) not in flagged
+    ]
+    if missed:
+        print('These rules no longer flag their case:')
+        for case in missed:
+            print(f'  {case}')
+        print(f'\nSee {RULES_FIXTURE.relative_to(ROOT)}')
+        return 1
+
+    print(f'Error-level rules: all {len(expected)} expected failures still caught')
+    return 0
+
+
+def check_reject() -> int:
+    """Report any word in ``reject.txt`` that Vale no longer flags."""
+    words = REJECT.read_text().split()
+    with tempfile.TemporaryDirectory() as tmp:
+        sample = Path(tmp) / 'reject.rst'
+        sample.write_text(''.join(f'The {word} case.\n\n' for word in words))
+        flagged = {alert['Match'] for alert in alerts_for(sample, REJECT_CHECK)}
+    missed = [word for word in words if word not in flagged]
+    if missed:
+        print(f'{REJECT_CHECK} no longer flags these rejected words:')
+        for word in missed:
+            print(f'  {word}')
+        print(f'\nCheck accept.txt for them; see {REJECT.relative_to(ROOT)}')
+        return 1
+
+    print(f'{REJECT_CHECK}: all {len(words)} rejected words still caught')
+    return 0
+
+
 def main() -> int:
     """Report any expected failure a rule no longer catches."""
     if shutil.which('vale') is None:
         print('vale is not installed; skipping')
         return 0
 
-    # Both run, so one slack rule does not hide the other's report.
-    return max(check_headings(), check_repetition())
+    # All run, so one slack rule does not hide another's report.
+    return max(check_headings(), check_repetition(), check_rules(), check_reject())
 
 
 if __name__ == '__main__':
