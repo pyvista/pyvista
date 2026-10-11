@@ -24,7 +24,6 @@ import doctest
 import symtable
 import sys
 import textwrap
-from types import ModuleType
 
 import pyvista as pv
 
@@ -43,33 +42,26 @@ MODULE_DUNDERS = frozenset(
 )
 
 
-def _undiscovered_submodules(entry, found):
-    """Return the submodules of an entry point and of ``found`` that ``found`` lacks."""
+def _imported_submodules(entry):
+    """Return the entry point and every module imported under it."""
     entry_name = entry.__name__
     prefix = entry_name + '.'
-    new_modules = {}
-    for ent in (entry, *found.values()):
-        for attr_short_name in dir(ent):
-            attr = getattr(ent, attr_short_name)
-            if not isinstance(attr, ModuleType):
-                continue
-
-            module_name = attr.__name__
-
-            if module_name != entry_name and not module_name.startswith(prefix):
-                continue
-
-            if module_name not in found:
-                new_modules[module_name] = attr
-    return new_modules
+    return {
+        name: module
+        for name, module in sys.modules.items()
+        if name == entry_name or name.startswith(prefix)
+    }
 
 
-def discover_modules(entry=pv, recurse=True):
-    """Discover the submodules present under an entry point.
+def discover_modules(entry=pv):
+    """Discover the modules imported under an entry point.
 
-    If ``recurse=True``, search goes all the way into descendants of the
-    entry point. Only modules are gathered, because within a module
-    ``doctest``'s discovery can work recursively.
+    The search alternates between reading the attributes of what it has
+    found, which imports whatever a module exposes lazily, and collecting
+    what that left in ``sys.modules``, until nothing new arrives. Reading
+    ``sys.modules`` also reaches a submodule whose package has rebound its
+    name to another object. Only modules are gathered, because within a
+    module ``doctest``'s discovery can work recursively.
 
     Should work for ``pyvista`` as entry, but no promises for its more
     general applicability.
@@ -80,27 +72,23 @@ def discover_modules(entry=pv, recurse=True):
         The entry point of the submodule search. Defaults to the main
         ``pyvista`` module.
 
-    recurse : bool, optional
-        Whether to recurse into submodules.
-
     Returns
     -------
     modules : dict of modules
-        A (module name -> module) mapping of submodules under ``entry``.
+        A (module name -> module) mapping of ``entry`` and the modules
+        imported under it.
 
     """
-    found_modules = {}
-    if not recurse:
-        return _undiscovered_submodules(entry, found_modules)
+    found_modules = _imported_submodules(entry)
+    while True:
+        for module in list(found_modules.values()):
+            for attr_short_name in dir(module):
+                getattr(module, attr_short_name, None)
 
-    # Reading an attribute can import a submodule of a module the same pass has
-    # already read, so it takes two quiet passes to be sure none is left.
-    quiet_passes = 0
-    while quiet_passes < 2:
-        new_modules = _undiscovered_submodules(entry, found_modules)
-        quiet_passes = quiet_passes + 1 if not new_modules else 0
-        found_modules.update(new_modules)
-    return found_modules
+        grown = _imported_submodules(entry)
+        if grown.keys() == found_modules.keys():
+            return grown
+        found_modules = grown
 
 
 def _walrus_targets(node):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from types import ModuleType
 
 import pytest
@@ -115,38 +116,41 @@ def test_skipped_examples_bind_names():
     assert _check('>>> import pyvista as pv  # doctest:+SKIP\n>>> pv.Sphere()\n') == {}
 
 
-def test_submodules_imported_during_the_search_are_discovered():
-    """A submodule that only appears once a deeper module is read is still found."""
-    entry = ModuleType('fake')
-    parent = ModuleType('fake.parent')
-    middle = ModuleType('fake.middle')
-    trigger = ModuleType('fake.middle.trigger')
-    entry.parent = parent
-    entry.middle = middle
-    middle.trigger = trigger
+def _module(monkeypatch, name):
+    """Return a module registered under a name, as an import would leave it."""
+    module = ModuleType(name)
+    monkeypatch.setitem(sys.modules, name, module)
+    return module
 
-    def read_trigger(name):
-        parent.child = ModuleType('fake.parent.child')
+
+def test_modules_imported_during_the_search_are_discovered(monkeypatch):
+    """A module that only arrives once the search reads an attribute is gathered."""
+    entry = _module(monkeypatch, 'fake')
+    lazy = ModuleType('fake.lazy')
+
+    def read_attribute(name):
+        monkeypatch.setitem(sys.modules, lazy.__name__, lazy)
         return name
 
-    trigger.__getattr__ = read_trigger
-    trigger.__dir__ = lambda: ['probe']
+    entry.__dir__ = lambda: ['probe']
+    entry.__getattr__ = read_attribute
 
-    assert sorted(discover_modules(entry)) == [
-        'fake.middle',
-        'fake.middle.trigger',
-        'fake.parent',
-        'fake.parent.child',
-    ]
+    assert sorted(discover_modules(entry)) == ['fake', 'fake.lazy']
 
 
-def test_a_package_sharing_the_name_prefix_is_not_followed():
-    """Only the entry point itself and the modules under it are gathered."""
-    entry = ModuleType('fake')
-    child = ModuleType('fake.child')
-    sibling = ModuleType('fake_other')
-    entry.child = child
-    entry.other = sibling
-    child.entry = entry
+def test_a_submodule_shadowed_by_a_same_named_object_is_discovered(monkeypatch):
+    """A submodule whose package rebound its name to something else is gathered."""
+    entry = _module(monkeypatch, 'fake')
+    _module(monkeypatch, 'fake.thing')
+    entry.thing = lambda: None
+
+    assert sorted(discover_modules(entry)) == ['fake', 'fake.thing']
+
+
+def test_a_package_sharing_the_name_prefix_is_not_followed(monkeypatch):
+    """A separate package whose name starts with the entry point's is left out."""
+    entry = _module(monkeypatch, 'fake')
+    _module(monkeypatch, 'fake.child')
+    _module(monkeypatch, 'fake_other')
 
     assert sorted(discover_modules(entry)) == ['fake', 'fake.child']
