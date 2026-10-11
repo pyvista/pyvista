@@ -41,7 +41,6 @@ Discretization
 Docstring
 Docstrings
 Dolfin
-Dtype
 Eigenmodes
 Eldar
 Enneper
