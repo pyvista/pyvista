@@ -4,12 +4,14 @@ The set of paths Vale checks is defined here and nowhere else: `make docstyle`,
 `CONTRIBUTING.rst` and the `Style and Docstring Check` workflow all reach it
 through this file, so adding a path is a one-line change. The workflow reads
 the list with ``--print-files`` rather than repeating it, because it runs Vale
-through `vale-action` to get inline annotations on the pull request.
+through `vale-action` to get inline annotations on the pull request. The Vale
+version CI installs is defined here too, and read with ``--print-vale-version``.
 
 Usage::
 
-    python3 doc/run_vale.py                # extract, lint, check the fixtures
-    python3 doc/run_vale.py --print-files  # the path list, as JSON
+    python3 doc/run_vale.py                       # extract, lint, check the fixtures
+    python3 doc/run_vale.py --print-files         # the path list, as JSON
+    python3 doc/run_vale.py --print-vale-version  # the Vale version CI installs
 """
 
 from __future__ import annotations
@@ -23,6 +25,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / 'doc' / '.vale.ini'
+
+# A newer Vale can change which RST it checks as prose, so CI pins this one.
+VALE_VERSION = '3.22.0'
+INSTALL = f"pip install 'vale=={VALE_VERSION}.*' 'docutils<0.22' 'sphinx-gallery<0.22.0'"
 
 # Gallery examples and docstrings are extracted to .rst first, so Vale sees them
 # with numpydoc structure resolved; see `doc/extract_rst_from_py_for_vale.py`.
@@ -60,18 +66,34 @@ def main() -> int:
         action='store_true',
         help='print the paths Vale checks as a JSON array, then exit',
     )
+    parser.add_argument(
+        '--print-vale-version',
+        action='store_true',
+        help='print the Vale version CI installs, then exit',
+    )
     args = parser.parse_args()
 
     if args.print_files:
         print(json.dumps(PATHS))
         return 0
 
-    if shutil.which('vale') is None:
-        print(
-            'vale is not installed: '
-            "pip install 'vale==3.22.0.*' 'docutils<0.22' 'sphinx-gallery<0.22.0'"
-        )
+    if args.print_vale_version:
+        print(VALE_VERSION)
+        return 0
+
+    vale = shutil.which('vale')
+    if vale is None:
+        print(f'vale is not installed: {INSTALL}')
         return 1
+
+    installed = subprocess.run(
+        [vale, '--version'], capture_output=True, text=True, check=False
+    ).stdout.split()[-1:]
+    if installed != [VALE_VERSION]:
+        found = installed[0] if installed else 'an unknown version'
+        print(
+            f'warning: CI runs Vale {VALE_VERSION}, not {found}, so results may differ: {INSTALL}'
+        )
 
     for extract in EXTRACT:
         code = run([sys.executable, 'doc/extract_rst_from_py_for_vale.py', *extract])

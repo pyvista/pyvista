@@ -109,11 +109,13 @@ jobs:
 
       - name: Install Vale
         run: |
+          VALE_VERSION="$(python3 doc/run_vale.py --print-vale-version)"
           curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
           echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
           sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
         env:
-          VALE_VERSION: 3.22.0
+          # From vale_<version>_checksums.txt on the release page, for VALE_VERSION in
+          # doc/run_vale.py; update both together.
           VALE_SHA256: 52f5cd0314a1b7384cac6aa102a68193977312f6ba9c9f3ae001b5deec8e3a10
 
       - name: Install Vale Dependencies

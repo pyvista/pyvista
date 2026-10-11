@@ -475,7 +475,7 @@ GitHub Actions, and you can run Vale locally with:
 
 .. code-block:: bash
 
-   pip install 'vale==3.22.0.*' 'docutils<0.22' 'sphinx-gallery<0.22.0'
+   pip install "vale==$(python3 doc/run_vale.py --print-vale-version).*" 'docutils<0.22' 'sphinx-gallery<0.22.0'
    python3 doc/run_vale.py
 
 If you are on Linux or macOS, ``make docstyle`` runs the same script.
