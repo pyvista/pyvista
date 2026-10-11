@@ -1451,23 +1451,19 @@ testing. In practice, this ends up being quite a bit of work because:
    desktop images (uses hardware acceleration).
 -  Different OSes render different images.
 
-As each platform and environment renders different slightly images
-relative to Linux (which these images were built from), so running these
-tests across all OSes isn’t optimal. We need to know if
-something fundamental changed with our plotting without actually looking
-at the plots (like the docs at dev.pyvista.com)
-
-Based on these points, image regression testing only occurs on Linux CI,
-and multi-sampling is disabled as that seems to be one of the biggest
-difference between software and hardware based rendering.
+The baselines are built from the Linux CI renders. The comparison also runs
+on the macOS and Windows jobs, where a test whose render legitimately differs
+opts out with ``macos_skip_image_cache`` or ``windows_skip_image_cache``.
+Multi-sampling is disabled, as it is one of the biggest differences between
+software and hardware rendering.
 
 Image cache is stored here as ``./tests/plotting/image_cache``.
 
 Image resolution is kept low at 400x400 as we don’t want to pollute git
 with large images. Small variations between versions and environments
-are to be expected, so error < ``IMAGE_REGRESSION_ERROR`` is allowable
-(and will be logged as a warning) while values over that amount will
-trigger an error.
+are to be expected: an image error above the fixture's ``warning_value``
+(200 by default) is logged as a warning, and one above its ``error_value``
+(500 by default) fails the test.
 
 There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
@@ -1481,21 +1477,21 @@ example:
 
         .. code-block:: bash
 
-            pytest tests/plotting --reset_image_cache
+            pytest tests/plotting --ignore_image_cache
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/plotting --reset_image_cache
+            tox run -e py3.11 -- tests/plotting --ignore_image_cache
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make test ARGS="tests/plotting --reset_image_cache"
+            make test ARGS="tests/plotting --ignore_image_cache"
 
 Running ``--reset_image_cache`` regenerates the baseline of every test the
 run collected, including tests that were failing for reasons unrelated to
