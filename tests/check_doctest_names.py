@@ -43,6 +43,23 @@ MODULE_DUNDERS = frozenset(
 )
 
 
+def _undiscovered_submodules(entry, found):
+    """Return the submodules of an entry point and of ``found`` that ``found`` lacks."""
+    entry_name = entry.__name__
+    new_modules = {}
+    for ent in (entry, *found.values()):
+        for attr_short_name in dir(ent):
+            attr = getattr(ent, attr_short_name)
+            if not isinstance(attr, ModuleType):
+                continue
+
+            module_name = attr.__name__
+
+            if module_name.startswith(entry_name) and module_name not in found:
+                new_modules[module_name] = attr
+    return new_modules
+
+
 def discover_modules(entry=pv, recurse=True):
     """Discover the submodules present under an entry point.
 
@@ -68,33 +85,17 @@ def discover_modules(entry=pv, recurse=True):
         A (module name -> module) mapping of submodules under ``entry``.
 
     """
-    entry_name = entry.__name__
     found_modules = {}
-    next_entries = {entry}
-    while next_entries:
-        next_modules = {}
-        for ent in next_entries:
-            for attr_short_name in dir(ent):
-                attr = getattr(ent, attr_short_name)
-                if not isinstance(attr, ModuleType):
-                    continue
+    if not recurse:
+        return _undiscovered_submodules(entry, found_modules)
 
-                module_name = attr.__name__
-
-                if module_name.startswith(entry_name):
-                    next_modules[module_name] = attr
-
-        if not recurse:
-            return next_modules
-
-        # find as-of-yet-undiscovered submodules
-        next_entries = {
-            module
-            for module_name, module in next_modules.items()
-            if module_name not in found_modules
-        }
-        found_modules.update(next_modules)
-
+    # Reading an attribute can import a submodule of a module the same pass has
+    # already read, so it takes two quiet passes to be sure none is left.
+    quiet_passes = 0
+    while quiet_passes < 2:
+        new_modules = _undiscovered_submodules(entry, found_modules)
+        quiet_passes = quiet_passes + 1 if not new_modules else 0
+        found_modules.update(new_modules)
     return found_modules
 
 

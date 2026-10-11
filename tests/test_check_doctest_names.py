@@ -7,6 +7,7 @@ from types import ModuleType
 import pytest
 
 from tests.check_doctest_names import check_doctests
+from tests.check_doctest_names import discover_modules
 from tests.check_doctest_names import undefined_names
 
 
@@ -112,3 +113,28 @@ def test_skipped_examples_are_checked():
 def test_skipped_examples_bind_names():
     """A name bound by a ``+SKIP`` example is available to the examples after it."""
     assert _check('>>> import pyvista as pv  # doctest:+SKIP\n>>> pv.Sphere()\n') == {}
+
+
+def test_submodules_imported_during_the_search_are_discovered():
+    """A submodule that only appears once a deeper module is read is still found."""
+    entry = ModuleType('fake')
+    parent = ModuleType('fake.parent')
+    middle = ModuleType('fake.middle')
+    trigger = ModuleType('fake.middle.trigger')
+    entry.parent = parent
+    entry.middle = middle
+    middle.trigger = trigger
+
+    def read_trigger(name):
+        parent.child = ModuleType('fake.parent.child')
+        return name
+
+    trigger.__getattr__ = read_trigger
+    trigger.__dir__ = lambda: ['probe']
+
+    assert sorted(discover_modules(entry)) == [
+        'fake.middle',
+        'fake.middle.trigger',
+        'fake.parent',
+        'fake.parent.child',
+    ]
