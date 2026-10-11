@@ -129,6 +129,12 @@ repos:
         entry: '#\s*(?:noqa|ruff)'
         files: ^examples/
         types: [python]
+      # Vale masks inline code and roles, so Google.Spacing cannot see these.
+      - id: no-double-space-after-code
+        name: "One space between sentences after ``code`` or a role"
+        language: pygrep
+        entry: "`[.?!]  +[A-Z]"
+        types_or: [python, rst, markdown]
       - id: no-import-error-skip
         name: "Tests must not be skipped based on ImportError"
         language: pygrep
