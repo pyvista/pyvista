@@ -2039,12 +2039,13 @@ branch.
 
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-For PRs of branches coming from the main pyvista repository, the documentation
-is automatically deployed using `Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
-However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
-that contains a non-interactive subset of the documentation build. It typically weights
-500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
-``Build Documentation`` CI job.
+The documentation built for each PR is deployed as a preview using
+`Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_, and the
+preview link is posted as a commit status on the PR. For a PR from a fork, the
+deploy waits for a maintainer to approve it. The ``Build Documentation`` CI job
+also uploads the build as artifacts: ``docs-build`` holds the full HTML, and
+``docs-build-light``, from the ``Upload non-interactive HTML documentation``
+step, leaves out the interactive scenes and is the smaller download.
 
 Branching Model
 ~~~~~~~~~~~~~~~
