@@ -270,7 +270,8 @@ def merge(
         of its blocks is not a dataset.
 
     merge_points : bool, default: True
-        Merge equivalent points when ``True``.
+        Merge equivalent points when ``True``. The default differs from
+        :meth:`pyvista.MultiBlock.combine`, which does not merge points by default.
 
     main_has_priority : bool, optional
         When this parameter is ``True`` and ``merge_points=True``, the arrays

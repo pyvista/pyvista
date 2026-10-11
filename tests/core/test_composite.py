@@ -627,6 +627,15 @@ def test_combine_filter_without_datasets():
         assert combined.n_cells == 0
 
 
+@pytest.mark.parametrize('merge_points', [True, False])
+def test_combine_filter_empty_nested(merge_points):
+    mesh = pv.Sphere()
+    multi = pv.MultiBlock([pv.MultiBlock([mesh]), pv.MultiBlock(), pv.MultiBlock([None])])
+    combined = multi.combine(merge_points=merge_points)
+    assert combined.n_cells == mesh.n_cells
+    assert combined.n_points == mesh.n_points
+
+
 @pytest.mark.parametrize('nested', [True, False])
 def test_outline_filters_output_type(multiblock_all_with_nested_and_none, nested):
     # `vtkOutlineFilter` handles a composite itself and always gives one mesh,

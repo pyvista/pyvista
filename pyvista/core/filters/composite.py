@@ -282,7 +282,8 @@ class CompositeFilters(DataObjectFilters):
         Parameters
         ----------
         merge_points : bool, default: False
-            Merge coincidental points.
+            Merge coincidental points. The default differs from
+            :func:`pyvista.merge`, which merges points by default.
 
         tolerance : float, default: 0.0
             The absolute tolerance to use to find coincident points when
@@ -317,19 +318,8 @@ class CompositeFilters(DataObjectFilters):
         """
         alg = _vtk.vtkAppendFilter()
         n_inputs = 0
-        for block in self:  # type: ignore[attr-defined]
-            if block is None:
-                continue
-            single_block = (
-                CompositeFilters.combine(
-                    block,  # type: ignore[arg-type]
-                    merge_points=merge_points,
-                    tolerance=tolerance,
-                )
-                if isinstance(block, _vtk.vtkMultiBlockDataSet)
-                else block
-            )
-            alg.AddInputData(single_block)
+        for block in self.recursive_iterator(skip_none=True):  # type: ignore[attr-defined]
+            alg.AddInputData(block)
             n_inputs += 1
         if n_inputs == 0:
             # Nothing to append, so give back an empty grid
