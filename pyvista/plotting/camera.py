@@ -134,7 +134,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     def from_paraview_pvcc(cls, filename: str | Path) -> Camera:
         """Load a ParaView camera file (.pvcc extension).
 
-        Returns a :class:`pyvista.Camera` object for which attributes has been read
+        Returns a :class:`pyvista.Camera` object whose attributes have been read
         from the filename argument.
 
         Parameters

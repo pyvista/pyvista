@@ -92,7 +92,8 @@ def main() -> int:
     if installed != [VALE_VERSION]:
         found = installed[0] if installed else 'an unknown version'
         print(
-            f'warning: CI runs Vale {VALE_VERSION}, not {found}, so results may differ: {INSTALL}'
+            f'warning: CI runs Vale {VALE_VERSION}, not {found}, so results may differ: {INSTALL}',
+            file=sys.stderr,
         )
 
     for extract in EXTRACT:
