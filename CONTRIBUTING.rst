@@ -217,11 +217,13 @@ document the underlying tools directly.
 Continuous Integration Etiquette
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Opening a pull request, and every push to it afterwards, starts the full
-continuous integration suite: unit tests on Linux, macOS, and Windows across
-every supported Python version, a separate VTK version matrix, the
-documentation build, the integration tests, type checking, and the style and
-docstring jobs. Every one of those runs costs runner time. Push when the
+Opening a pull request, and every push to it afterwards, starts the
+continuous integration suite: unit tests on Linux and Windows across every
+supported Python version and on macOS for the oldest and newest, with each
+Linux job on a different VTK release, the documentation build, type checking,
+and the style and docstring jobs. The VTK development and master builds, the
+integration tests, and the Docker build run only when their label is applied.
+Every one of those runs costs runner time. Push when the
 change is ready, and use the local gates rather than CI to find out whether it
 works.
 
@@ -239,8 +241,10 @@ Before you push:
    ``make test-core ARGS="-k threshold"`` or ``make test-plotting``. These
    targets use the same ``tox`` environments and ``pytest`` flags as CI, so a
    green local run means the same run is green in CI.
-#. Run ``make typecheck`` when you change type annotations, and ``make
-   doctest`` when you change a docstring example.
+#. Run ``make docstyle`` and ``make doctest``. ``make doctest`` runs every
+   docstring example in the package, so a change to import-time behavior or to
+   a plotting default can fail it with no docstring in the diff.
+#. Run ``make typecheck`` when you change type annotations.
 
 While you iterate, keep the pull request in draft and amend or squash locally,
 so a single push carries the finished change instead of five pushes carrying a
