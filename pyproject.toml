@@ -669,7 +669,6 @@ pyvista = "pv"
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/actor_properties.py' = ['ANN']
 'pyvista/plotting/camera.py' = ['S314'] # .pvcc is trusted
-'pyvista/plotting/charts.py' = ['ANN']
 'pyvista/plotting/renderer.py' = ['PLC0415']
 'pyvista/plotting/themes.py' = ['ICN001']
 'pyvista/plotting/tools.py' = ['S607'] # pgrep and xset come from PATH
