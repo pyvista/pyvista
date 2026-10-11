@@ -1774,7 +1774,7 @@ class _Chart(DocSubs):
             Opens window in full screen.  When enabled, ignores
             ``window_size``. Defaults to active theme setting.
 
-        screenshot : str | bool, default: False
+        screenshot : str | Path | io.BytesIO | bool, optional
             Saves screenshot to file when enabled.  See:
             :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
 
@@ -2952,8 +2952,8 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         Orientation of the bars drawn in this plot. Either ``"H"`` for an horizontal orientation
         or ``"V"`` for a vertical orientation.
 
-    label : str, default: ""
-        Label of this plot, as shown in the chart's legend.
+    label : str | sequence[str], optional
+        Label of this plot, or one label per stacked component, as shown in the chart's legend.
 
     Examples
     --------
@@ -3829,8 +3829,9 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             for an horizontal orientation or ``"V"`` for a vertical
             orientation.
 
-        label : str, default: ""
-            Label of this plot, as shown in the chart's legend.
+        label : str | sequence[str], optional
+            Label of this plot, or one label per stacked component, as
+            shown in the chart's legend.
 
         Returns
         -------
@@ -4279,7 +4280,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
     def __init__(
         self,
         chart: ChartBox,
-        data: Sequence[VectorLikeFloat],
+        data: MatrixLikeFloat | Sequence[VectorLikeFloat],
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
@@ -4340,7 +4341,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         stats_table = pv.Table(self._quartiles.GetOutput())
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
-    def update(self, data: Sequence[VectorLikeFloat]) -> None:
+    def update(self, data: MatrixLikeFloat | Sequence[VectorLikeFloat]) -> None:
         """Update the plot's underlying datasets.
 
         Parameters
@@ -4430,7 +4431,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
 
     def __init__(
         self,
-        data: Sequence[VectorLikeFloat],
+        data: MatrixLikeFloat | Sequence[VectorLikeFloat],
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
@@ -5202,13 +5203,13 @@ class Charts(_NoNewAttrMixin):
 
         Parameters
         ----------
-        interactive : bool | Chart | int | list[Chart] | list[int]
+        interactive : bool | Chart | int | sequence[Chart] | sequence[int]
             Following parameter values are accepted:
 
             * A boolean to enable (``True``) or disable (``False``) interaction
               with all charts.
             * The chart or its index to enable interaction with. Interaction
-              with multiple charts can be enabled by passing a list of charts
+              with multiple charts can be enabled by passing a sequence of charts
               or indices.
 
         toggle : bool, default: False

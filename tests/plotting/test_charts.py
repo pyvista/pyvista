@@ -1200,6 +1200,12 @@ def test_chart_interaction():
     assert chart_br in ics
     assert chart_bl.GetInteractive()
     assert chart_br.GetInteractive()
+    pl.set_chart_interaction(False)
+    ics = pl.set_chart_interaction((chart_bl, chart_br))
+    assert chart_bl in ics
+    assert chart_br in ics
+    assert chart_bl.GetInteractive()
+    assert chart_br.GetInteractive()
 
     # Check set_chart_interaction toggle
     ics = pl.set_chart_interaction(chart_bl, toggle=True)
