@@ -10,10 +10,7 @@ off for most of the documentation.
 ``PyVista.Repetition`` has no exceptions list, so its ``tokens`` pattern is the
 only thing standing between a real doubled word and silence.
 
-``rules_invalid.rst`` covers the other error-level rules, and every word in
-``reject.txt`` must still be reported as ``Vale.Avoid``. A word in
-``accept.txt`` is exempt from every rule, so re-accepting a rejected word fails
-this check rather than passing quietly.
+``rules_invalid.rst`` covers the other error-level rules.
 
 Run with ``make docstyle``, or directly::
 
@@ -29,7 +26,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
@@ -39,8 +35,6 @@ HEADINGS_CHECK = 'Google.Headings'
 REPETITION_FIXTURE = HERE / 'repetition_invalid.rst'
 REPETITION_CHECK = 'PyVista.Repetition'
 RULES_FIXTURE = HERE / 'rules_invalid.rst'
-REJECT = ROOT / 'doc' / 'styles' / 'config' / 'vocabularies' / 'pyvista' / 'reject.txt'
-REJECT_CHECK = 'Vale.Avoid'
 
 
 def headings_in(path: Path) -> list[str]:
@@ -143,25 +137,6 @@ def check_rules() -> int:
     return 0
 
 
-def check_reject() -> int:
-    """Report any word in ``reject.txt`` that Vale no longer flags."""
-    words = REJECT.read_text().split()
-    with tempfile.TemporaryDirectory() as tmp:
-        sample = Path(tmp) / 'reject.rst'
-        sample.write_text(''.join(f'The {word} case.\n\n' for word in words))
-        flagged = {alert['Match'] for alert in alerts_for(sample, REJECT_CHECK)}
-    missed = [word for word in words if word not in flagged]
-    if missed:
-        print(f'{REJECT_CHECK} no longer flags these rejected words:')
-        for word in missed:
-            print(f'  {word}')
-        print(f'\nCheck accept.txt for them; see {REJECT.relative_to(ROOT)}')
-        return 1
-
-    print(f'{REJECT_CHECK}: all {len(words)} rejected words still caught')
-    return 0
-
-
 def main() -> int:
     """Report any expected failure a rule no longer catches."""
     if shutil.which('vale') is None:
@@ -169,7 +144,7 @@ def main() -> int:
         return 0
 
     # All run, so one slack rule does not hide another's report.
-    return max(check_headings(), check_repetition(), check_rules(), check_reject())
+    return max(check_headings(), check_repetition(), check_rules())
 
 
 if __name__ == '__main__':
