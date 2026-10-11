@@ -480,6 +480,9 @@ GitHub Actions, and you can run Vale locally with:
 
 If you are on Linux or macOS, ``make docstyle`` runs the same script.
 
+Double spaces between sentences are caught by the ``sentence-spacing``
+pre-commit hook rather than by Vale.
+
 ``doc/run_vale.py`` extracts the ``.rst`` files described below, runs Vale over
 every path CI checks, and then confirms that the rules still reject the
 fixtures in ``tests/doc/vale/``. The path list lives in
