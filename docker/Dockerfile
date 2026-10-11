@@ -12,10 +12,11 @@
 #   docker build -f docker/Dockerfile --target slim    -t pyvista:slim    .
 #   docker build -f docker/Dockerfile --target jupyter -t pyvista:jupyter .
 #
-# Override the Python version (must match a supported VTK wheel):
+# Override the Python version of the slim image (must match a supported VTK
+# wheel); the jupyter stage is pinned to its base image's Python:
 #
 #   docker build --build-arg PY_VERSION=3.12 \
-#     -f docker/Dockerfile --target jupyter -t pyvista:jupyter .
+#     -f docker/Dockerfile --target slim -t pyvista:slim .
 
 ARG PY_VERSION=3.13
 

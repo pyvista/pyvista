@@ -38,12 +38,13 @@ docker build -f docker/Dockerfile --target jupyter -t pyvista:jupyter .
 docker build -f docker/Dockerfile --target slim -t pyvista:slim .
 ```
 
-Override the Python version via build arg (must match a supported
-[VTK wheel](https://pypi.org/project/vtk/)):
+Override the Python version of the `slim` image via build arg (must match a
+supported [VTK wheel](https://pypi.org/project/vtk/)). The `jupyter` image
+always uses the Python of its `base-notebook` base, currently 3.13:
 
 ```bash
 docker build --build-arg PY_VERSION=3.12 \
-  -f docker/Dockerfile --target jupyter -t pyvista:jupyter .
+  -f docker/Dockerfile --target slim -t pyvista:slim .
 ```
 
 The `jupyter` target pulls extras (`jupyter`, `colormaps`, `io`) directly
