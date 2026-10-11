@@ -2293,8 +2293,8 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         filename : str, Path
             Filename of mesh to be written. File type is inferred from
             the extension of the filename unless overridden with
-            ``ftype``. Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
+            ``ftype``. Can be one of the following
+            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk'``, ``'.geo'``,
             ``'.obj'``, ``'.iv'``).
 
         binary : bool, default: True
