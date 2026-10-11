@@ -2637,7 +2637,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Returns
         -------
         pyvista.Cell
-            The i-th pyvista.Cell.
+            The i-th :class:`pyvista.Cell`.
 
         Notes
         -----

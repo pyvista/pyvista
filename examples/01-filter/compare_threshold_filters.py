@@ -21,11 +21,12 @@ from pyvista import examples
 # %%
 # Volume Data to Volume Data
 # ++++++++++++++++++++++++++
-# Some filters generate `pyvista.Volume` out of `pyvista.Volume`. We will explore 3:
+# Some filters generate :class:`pyvista.ImageData` out of
+# :class:`pyvista.ImageData`. We will explore 3:
 # :func:`pyvista.DataSetFilters.threshold`
 # :func:`pyvista.ImageDataFilters.image_threshold`
 # :func:`pyvista.ImageDataFilters.select_values`
-# Note how `pyvista.DataSetFilters.threshold` keeps the dynamic
+# Note how :func:`pyvista.DataSetFilters.threshold` keeps the dynamic
 # of the image for the voxels above the value
 # while ``image_threshold`` produces an all-or-nothing result.
 # Note the little specks for the ``select_values``.
@@ -86,8 +87,8 @@ pl.show()
 # %%
 # Volume Data to Unstructured Grid
 # ++++++++++++++++++++++++++++++++
-# Some filters generate a `pyvista.UnstructuredGrid`
-# out of a`pyvista.Volume`.
+# Some filters generate a :class:`pyvista.UnstructuredGrid`
+# out of an :class:`pyvista.ImageData`.
 # We will explore 3:
 # :func:`pyvista.DataSetFilters.threshold`
 # :func:`pyvista.DataSetFilters.extract_values`
@@ -135,8 +136,8 @@ pl.show()
 # %%
 # Unstructured Grid to Unstructured Grid
 # ++++++++++++++++++++++++++++++++++++++
-# Some filters generate a `pyvista.UnstructuredGrid`
-# out of a`pyvista.UnstructuredGrid`.
+# Some filters generate a :class:`pyvista.UnstructuredGrid`
+# out of a :class:`pyvista.UnstructuredGrid`.
 # We will explore 2:
 # :func:`pyvista.DataSetFilters.threshold`
 # :func:`pyvista.DataSetFilters.clip_scalar`

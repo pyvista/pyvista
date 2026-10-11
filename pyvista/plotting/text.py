@@ -1,4 +1,4 @@
-"""Contains the pyvista.Text class."""
+"""Contains the :class:`pyvista.Text` class."""
 
 from __future__ import annotations
 

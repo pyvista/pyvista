@@ -635,7 +635,7 @@ def make_tri_mesh(points: NDArray[_Real], faces: NDArray[_Integer]) -> PolyData:
 def vector_poly_data(
     orig: VectorLikeFloat | MatrixLikeFloat, vec: VectorLikeFloat | MatrixLikeFloat
 ) -> PolyData:
-    """Create a pyvista.PolyData object composed of vectors.
+    """Create a :class:`pyvista.PolyData` object composed of vectors.
 
     Parameters
     ----------
