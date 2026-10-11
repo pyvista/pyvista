@@ -97,6 +97,11 @@ jobs:
   vale:
     name: Vale
     runs-on: ubuntu-22.04
+    env:
+      # Pinned for both Vale steps: a new release can change which RST it checks as prose.
+      VALE_VERSION: 3.22.0
+      # From vale_<version>_checksums.txt on the release page; update both together.
+      VALE_SHA256: 52f5cd0314a1b7384cac6aa102a68193977312f6ba9c9f3ae001b5deec8e3a10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -131,9 +136,7 @@ jobs:
           config: doc/.vale.ini
           reporter: github-pr-check
           filter_mode: nofilter
-          # Pinned: a new Vale release can change which RST it checks as prose.
-          # Keep in step with VALE_VERSION below.
-          version: 3.22.0
+          version: ${{ env.VALE_VERSION }}
           # Without it, the action reports every alert as `info`, below `fail_level`.
           fail_on_error: true
           # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
@@ -149,10 +152,6 @@ jobs:
           curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
           echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
           sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
-        env:
-          VALE_VERSION: 3.22.0
-          # From vale_<version>_checksums.txt on the release page; update both together.
-          VALE_SHA256: 52f5cd0314a1b7384cac6aa102a68193977312f6ba9c9f3ae001b5deec8e3a10
 
       - name: "Check Vale still catches known-bad text"
         run: python3 tests/doc/vale/check_expected_failures.py
