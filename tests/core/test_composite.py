@@ -636,6 +636,16 @@ def test_combine_filter_empty_nested(merge_points):
     assert combined.n_points == mesh.n_points
 
 
+@pytest.mark.parametrize('seed', range(5))
+def test_combine_filter_merge_points_nested_matches_flat(seed):
+    rng = np.random.default_rng(seed)
+    a, b, c = (pv.PolyData(rng.random((10, 3))) for _ in range(3))
+    nested = pv.MultiBlock([pv.MultiBlock([a, b]), c]).combine(merge_points=True, tolerance=0.3)
+    flat = pv.MultiBlock([a, b, c]).combine(merge_points=True, tolerance=0.3)
+    assert nested.n_points == flat.n_points
+    assert np.array_equal(nested.points, flat.points)
+
+
 @pytest.mark.parametrize('nested', [True, False])
 def test_outline_filters_output_type(multiblock_all_with_nested_and_none, nested):
     # `vtkOutlineFilter` handles a composite itself and always gives one mesh,
@@ -1081,6 +1091,16 @@ def test_compute_normals(multiblock_poly):
     multiblock_poly.append(pv.UnstructuredGrid())
     with pytest.raises(RuntimeError, match='This multiblock contains non-PolyData'):
         multiblock_poly._compute_normals()
+
+
+def test_compute_normals_track_vertices_nested():
+    sphere, cube = pv.Sphere(), pv.Cube()
+    multi = pv.MultiBlock([pv.MultiBlock([sphere]), pv.MultiBlock(), cube])
+    output = multi._compute_normals(split_vertices=True, track_vertices=True)
+    for block in output.recursive_iterator():
+        assert 'Normals' in block.point_data
+        assert 'pyvistaOriginalPointIds' in block.point_data
+    assert np.array_equal(sphere['pyvistaOriginalPointIds'], np.arange(sphere.n_points))
 
 
 def test_activate_scalars(multiblock_poly):
