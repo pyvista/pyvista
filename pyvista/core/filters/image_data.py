@@ -34,6 +34,8 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _linear_to_srgb
+from pyvista.core.utilities.misc import _srgb_to_linear
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -6558,9 +6560,7 @@ def _srgb_to_linear_colors(colors: NDArray[Any], *, name: str) -> NDArray[np.flo
         raise TypeError(msg)
     max_value = 255 if colors.dtype == np.uint8 else 1
     linear = np.array(colors, dtype=colors.dtype if colors.dtype.kind == 'f' else float)
-    rgb = np.clip(linear[:, :3] / max_value, 0, 1)
-    rgb = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
-    linear[:, :3] = rgb * max_value
+    linear[:, :3] = _srgb_to_linear(np.clip(linear[:, :3] / max_value, 0, 1)) * max_value
     return linear
 
 
@@ -6568,10 +6568,8 @@ def _linear_to_srgb_colors(
     linear: NDArray[np.floating], *, max_value: float
 ) -> NDArray[np.floating]:
     """Encode the RGB channels of linear colors to sRGB values in the same range."""
-    rgb = np.clip(linear[:, :3] / max_value, 0, 1)
-    rgb = np.where(rgb <= 0.0031308, rgb * 12.92, 1.055 * rgb ** (1 / 2.4) - 0.055)
     colors = linear.copy()
-    colors[:, :3] = rgb * max_value
+    colors[:, :3] = _linear_to_srgb(np.clip(linear[:, :3] / max_value, 0, 1)) * max_value
     return colors
 
 
