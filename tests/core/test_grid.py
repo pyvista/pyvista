@@ -1916,7 +1916,7 @@ def test_explicit_structured_grid_empty_extent():
     assert grid.offset == (0, 0, 0)
 
 
-@pytest.mark.needs_vtk_version(9, 4, reason='empty extent has a phantom cell')
+@pytest.mark.needs_vtk_version(9, 4, reason='empty extent has a phantom cell and segfaults')
 def test_explicit_structured_grid_empty_n_cells():
     assert pv.ExplicitStructuredGrid().n_cells == 0
 
@@ -1974,7 +1974,10 @@ def test_dimensions_raises(name, dims, match):
 def test_extent_mixed_zero_dimensions_raises(extent_grid, extent):
     old_extent = extent_grid.extent
     new_dims = (extent[1] - extent[0] + 1, extent[3] - extent[2] + 1, extent[5] - extent[4] + 1)
-    match = re.escape(f'Dimensions {new_dims} must be all zero (empty) or all positive.')
+    match = re.escape(
+        f'Extent {extent} has dimensions {new_dims}, which must be all zero (empty) or all '
+        'positive.'
+    )
     with pytest.raises(ValueError, match=match):
         extent_grid.extent = extent
     assert extent_grid.extent == old_extent
@@ -1999,7 +2002,10 @@ def test_dimensions_all_zero_empties_grid(make_grid):
 
 def test_extent_negative_dimensions_raises(extent_grid):
     extent = extent_grid.extent
-    match = 'Dimensions values must all be greater than or equal to 0'
+    match = re.escape(
+        'Extent (5, 0, 0, 1, 0, 1) has negative dimensions (-4, 2, 2). Each maximum must be at '
+        'least its minimum minus 1.'
+    )
     with pytest.raises(ValueError, match=match):
         extent_grid.extent = (5, 0, 0, 1, 0, 1)
     assert extent_grid.extent == extent

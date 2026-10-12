@@ -80,6 +80,10 @@ class _StructuredDataMixin:
         dims_ = _validation.validate_array3(
             dims, must_be_integer=True, must_be_nonnegative=True, dtype_out=int, name='Dimensions'
         )
+        if 0 in dims_ and any(dims_):
+            dims_tuple = tuple(int(d) for d in dims_)
+            msg = f'Dimensions {dims_tuple} must be all zero (empty) or all positive.'
+            raise ValueError(msg)
         self.extent = _extent_from(self.offset, dims_)
 
     @property
@@ -145,9 +149,17 @@ class _StructuredDataMixin:
             new_extent_[3] - new_extent_[2] + 1,
             new_extent_[5] - new_extent_[4] + 1,
         )
-        _validation.check_nonnegative(new_dims, name='Dimensions')
+        if min(new_dims) < 0:
+            msg = (
+                f'Extent {tuple(new_extent_)} has negative dimensions {new_dims}. Each maximum '
+                'must be at least its minimum minus 1.'
+            )
+            raise ValueError(msg)
         if 0 in new_dims and any(new_dims):
-            msg = f'Dimensions {new_dims} must be all zero (empty) or all positive.'
+            msg = (
+                f'Extent {tuple(new_extent_)} has dimensions {new_dims}, which must be all zero '
+                '(empty) or all positive.'
+            )
             raise ValueError(msg)
         if new_dims != self.dimensions:
             self._check_dimensions(new_dims)
