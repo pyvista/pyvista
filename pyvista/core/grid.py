@@ -617,9 +617,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         .. versionadded:: 0.45
 
     offset : int | VectorLikeInt, default: (0, 0, 0)
-        The offset defines the minimum :attr:`extent` of the image. Offset values
-        can be positive or negative. In physical space, the offset is relative
-        to the image's :attr:`origin`.
+        The offset defines the minimum
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent` of the image.
+        Offset values can be positive or negative. In physical space, the offset is
+        relative to the image's :attr:`origin`.
 
         .. versionadded:: 0.45
 
