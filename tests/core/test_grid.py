@@ -912,6 +912,41 @@ def test_slice_structured(struct_grid):
         struct_grid[:, :]
 
 
+@pytest.mark.parametrize('offset', [(0, 0, 0), (10, -3, 2)])
+def test_slice_structured_keeps_offset(offset):
+    grid = pv.ImageData(dimensions=(5, 4, 3)).cast_to_structured_grid()
+    expected = grid[1:3, :, 0]
+    grid.offset = offset
+    sliced = grid[1:3, :, 0]
+    assert sliced.dimensions == expected.dimensions == (2, 4, 1)
+    assert np.array_equal(sliced.points, expected.points)
+    # Slicing a slice indexes from its own first point
+    assert np.array_equal(sliced[1:2, :, :].points, grid[2:3, :, 0].points)
+
+
+@pytest.mark.parametrize(
+    'cast',
+    [
+        lambda grid: grid.cast_to_structured_grid(),
+        lambda grid: grid.cast_to_rectilinear_grid(),
+        lambda grid: grid.cast_to_rectilinear_grid().cast_to_structured_grid(),
+        lambda grid: grid.cast_to_structured_grid().cast_to_explicit_structured_grid(),
+    ],
+    ids=[
+        'ImageData-StructuredGrid',
+        'ImageData-RectilinearGrid',
+        'RectilinearGrid-StructuredGrid',
+        'StructuredGrid-ExplicitStructuredGrid',
+    ],
+)
+def test_cast_keeps_offset(cast):
+    image = pv.ImageData(dimensions=(3, 4, 2), offset=(1, -2, 3))
+    cast_grid = cast(image)
+    assert cast_grid.offset == image.offset
+    assert cast_grid.dimensions == image.dimensions
+    assert np.allclose(cast_grid.points, image.points)
+
+
 def test_invalid_init_structured():
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 2)

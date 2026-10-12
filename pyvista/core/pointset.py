@@ -4135,6 +4135,8 @@ class StructuredGrid(
             return super().__getitem__(key)
 
         # convert slice to VOI specification - only "basic indexing" is supported
+        # The VOI is in extent space, so shift the indices by the offset
+        offset = self.offset
         voi: list[int] = []
         rate = []
         if len(key) != 3:
@@ -4151,7 +4153,7 @@ class StructuredGrid(
                 start = k.start if k.start is not None else 0
                 stop = k.stop - 1 if k.stop is not None else self.dimensions[i]
                 step = k.step if k.step is not None else 1
-            voi.extend((start, stop))
+            voi.extend((start + offset[i], stop + offset[i]))
             rate.append(step)
 
         return self.extract_subset(voi, rate, boundary=False)
@@ -4279,6 +4281,7 @@ class StructuredGrid(
             grid.cell_data['BLOCK_K'] = k
 
         explicit_grid = grid.cast_to_explicit_structured_grid()
+        explicit_grid.offset = self.offset
 
         if not s1.issubset(self.cell_data):
             for key in s1:
