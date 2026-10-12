@@ -908,9 +908,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
             direction = self.direction_matrix
             if not np.array_equal(direction, np.eye(3)):
-                points = (
-                    pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
-                )
+                # Apply the direction about the origin, as VTK does, even if it is not a rotation
+                origin = np.array(self.origin)
+                with np.errstate(invalid='ignore', over='ignore'):
+                    points = (points - origin) @ direction.T + origin
 
         return self._convert_points_precision(points)
 
