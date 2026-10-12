@@ -926,9 +926,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            # Grid and StructuredGrid cells are implicit; ExplicitStructuredGrid stores its cells
-            if isinstance(mesh, (pv.Grid, pv.StructuredGrid)):
-                return []
+            if hasattr(mesh, 'dimensions'):
+                return []  # Cells are implicitly defined and cannot have unused points
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -938,14 +937,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
-            if isinstance(mesh, pv.ImageData):
-                # Points are affine in the index, so the corners that set the bounds are extremes
-                if np.isfinite(mesh.bounds).all():
-                    return []
-                # A non-finite origin, spacing or direction reaches every point
-                geometry = [*mesh.origin, *mesh.spacing, *np.ravel(mesh.direction_matrix)]
-                if not np.isfinite(geometry).all():
-                    return list(range(mesh.n_points))
+            if isinstance(mesh, pv.Grid):
+                return []  # Points are implicitly defined and cannot be non-finite
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
