@@ -34,7 +34,7 @@ class StructuredGridFilters(DataSetFilters):
         the same index space as the extent, so they include the offset. You
         can also specify a sampling rate to subsample the data, which divides
         the extent of each sampled axis by its rate, as for
-        :meth:`pyvista.ImageData.extract_subset`.
+        :meth:`pyvista.ImageDataFilters.extract_subset`.
 
         Typical applications of this filter are to extract a slice
         from a volume for image processing, subsampling large volumes
