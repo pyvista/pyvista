@@ -3752,6 +3752,17 @@ def test_validate_mesh_explicit_structured_grid_unused_points():
     assert grid.validate_mesh().unused_points == [grid.n_points - 1]
 
 
+@pytest.mark.parametrize(
+    ('attr', 'value'), [('origin', (np.nan, 0.0, 0.0)), ('spacing', (np.inf, 1.0, 1.0))]
+)
+def test_validate_mesh_image_data_non_finite_points(attr, value):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    setattr(image, attr, value)
+    expected = np.flatnonzero(~np.isfinite(image.points).all(axis=1)).tolist()
+    assert expected
+    assert image.validate_mesh().non_finite_points == expected
+
+
 def test_validate_mesh_rectilinear_grid_non_finite_points():
     grid = pv.RectilinearGrid([0.0, np.nan, 2.0], [0.0, 1.0], [0.0, 1.0])
     expected = np.flatnonzero(~np.isfinite(grid.points).all(axis=1)).tolist()
