@@ -6588,7 +6588,7 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     :attr:`~pyvista.DataSet.distinct_cell_types` builds every cell, so a cell referencing a
     point id which does not exist makes VTK read out of bounds.
     """
-    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid)):
+    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid, pv.ExplicitStructuredGrid)):
         # Connectivity is implicit and cannot reference an invalid point id
         return mesh.distinct_cell_types
     grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
@@ -6615,6 +6615,8 @@ def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
             ]
         elif isinstance(mesh, pv.UnstructuredGrid):
             arrays = [mesh.cell_connectivity]
+        elif isinstance(mesh, pv.ExplicitStructuredGrid):
+            arrays = [_vtk.vtk_to_numpy(mesh.GetCells().GetConnectivityArray())]
         else:
             # Connectivity is implicit and cannot reference an invalid point id
             continue

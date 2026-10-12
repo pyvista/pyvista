@@ -35,7 +35,9 @@ from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _convex_hull_scipy
+from pyvista.core.filters.data_object import _distinct_cell_types
 from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.filters.data_object import _has_invalid_point_references
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from pyvista.core.utilities.helpers import _NORMALS
@@ -4560,6 +4562,14 @@ def degenerate_structured_grid_quad():
 def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_grid_quad):
     report = degenerate_structured_grid_quad.validate_mesh()
     assert report.invalid_fields == ('coincident_points',)
+
+
+def test_validate_mesh_invalid_point_references_explicit_structured_grid():
+    grid = examples.load_explicit_structured()
+    grid.SetPoints(pv.vtk_points(grid.points[:-5]))
+    assert _has_invalid_point_references(grid)
+    assert _distinct_cell_types(grid) == {pv.CellType.HEXAHEDRON}
+    assert grid.validate_mesh().invalid_fields == ('invalid_point_references',)
 
 
 def test_validate_mesh_invalid_point_references():
