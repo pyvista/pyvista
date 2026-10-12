@@ -4542,71 +4542,35 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         self.set_active_time_value(self.time_values[time_point])
 
 
-# Readers :func:`pyvista.get_reader` and :func:`pyvista.read` dispatch to by file extension
-_CLASS_READERS = _extension_mapping(
-    AVSucdReader,
-    BinaryMarchingCubesReader,
-    BMPReader,
-    BYUReader,
-    CGNSReader,
-    DEMReader,
-    DICOMReader,
-    EnSightReader,
-    ExodusIIReader,
-    FacetReader,
-    FLUENTCFFReader,
-    FluentReader,
-    GambitReader,
-    GaussianCubeReader,
-    GESignaReader,
-    GIFReader,
-    GLTFReader,
-    GRDECLReader,
-    HDFReader,
-    HDRReader,
-    JPEGReader,
-    MetaImageReader,
-    MFIXReader,
-    MINCImageReader,
-    Nek5000Reader,
-    NIFTIReader,
-    NRRDReader,
-    OBJReader,
-    ParticleReader,
-    PDBReader,
-    Plot3DMetaReader,
-    PLYReader,
-    PNGReader,
-    PNMReader,
-    POpenFOAMReader,
-    ProStarReader,
-    PTSReader,
-    PVDReader,
-    SegYReader,
-    SeriesReader,
-    SLCReader,
-    STLReader,
-    TecplotReader,
-    ThreeDSReader,
-    TIFFReader,
-    VRMLReader,
-    VTKDataSetReader,
-    VTKPDataSetReader,
-    XdmfReader,
-    XMLImageDataReader,
-    XMLMultiBlockDataReader,
-    XMLPartitionedDataSetReader,
-    XMLPImageDataReader,
-    XMLPolyDataReader,
-    XMLPRectilinearGridReader,
-    XMLPUnstructuredGridReader,
-    XMLRectilinearGridReader,
-    XMLStructuredGridReader,
-    XMLUnstructuredGridReader,
-)
+def _registered_readers() -> list[type[BaseReader[Any]]]:
+    """Return this module's public readers, minus any whose subclass reads the same format."""
+    readers = [
+        obj
+        for name, obj in globals().items()
+        if isinstance(obj, type)
+        and issubclass(obj, BaseReader)
+        and obj.__module__ == __name__
+        and not name.startswith('_')
+        and hasattr(obj, '_format')
+    ]
+    return [
+        cls
+        for cls in readers
+        if not any(
+            other is not cls and issubclass(other, cls) and other._format is cls._format
+            for other in readers
+        )
+    ]
+
+
+# Readers :func:`pyvista.get_reader` and :func:`pyvista.read` dispatch to by file extension.
+# Each extension maps to exactly one reader; a subclass reading its parent's format replaces it.
+_CLASS_READERS = _extension_mapping(*_registered_readers())
 # Matched against the filename only, so dots in parent directories cannot affect selection
 _CLASS_READER_PATTERNS = [
-    (display, pattern, PExodusIIReader) for display, pattern in PExodusIIReader._format.patterns
+    (display, pattern, cls)
+    for cls in _registered_readers()
+    for display, pattern in cls._format.patterns
 ]
 
 

@@ -38,6 +38,11 @@ def test_reader_output_type_defined():
     assert actual == expected, 'Return type must be defined for every reader'
 
 
+def test_registered_reader_prefers_subclass_with_same_format():
+    assert _CLASS_READERS['.foam'] is pv.POpenFOAMReader
+    assert pv.OpenFOAMReader not in _CLASS_READERS.values()
+
+
 def test_class_readers_deprecated():
     with pytest.warns(pv.PyVistaDeprecationWarning, match='`CLASS_READERS` is deprecated'):
         class_readers = pv.core.utilities.reader.CLASS_READERS
