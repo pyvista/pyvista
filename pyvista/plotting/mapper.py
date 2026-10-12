@@ -528,7 +528,8 @@ class _BaseDataSetMapper(_BaseMapper):
     still derived from the mapped array (``True``) or has been pinned by
     the caller (``False``). It starts ``True``. Setting ``scalar_range``
     directly, or calling :meth:`set_scalars` with an explicit ``clim``,
-    flips it to ``False`` via ``_set_scalar_range``. While ``True``,
+    flips it to ``False`` via ``_set_scalar_range``. :meth:`as_rgba` pins it
+    too, since the RGBA array it activates holds colors, not data. While ``True``,
     the range auto-refreshes from the mapped array in
     ``_maybe_set_default_scalar_range``, which is called from
     :meth:`set_active_scalars` and the ``dataset`` setter. Once
