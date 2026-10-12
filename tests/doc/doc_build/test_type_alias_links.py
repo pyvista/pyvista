@@ -60,11 +60,14 @@ def test_type_alias_drops_inherited_docstring():
     assert 'Type aliases are created through the type statement' not in html
 
 
-def type_alias_value(page: str, alias: str) -> str:
-    """Return the text of the value block of a type alias."""
-    start = page.index(f'id="pyvista.typing.{alias}"')
-    block = page[start : page.index('</pre>', start)]
-    return html.unescape(re.sub(r'<[^>]+>', '', block.split('<pre>', 1)[1])).strip()
+def type_alias_value(page: str, alias: str) -> str | None:
+    """Return the text of the value block of a type alias, or ``None`` without one."""
+    start = page.index(f'<dd id="pyvista.typing.{alias}"')
+    entry = page[start : page.index('</dd>', start)]
+    if 'type-alias-value' not in entry:
+        return None
+    block = entry[entry.index('<pre>') + len('<pre>') : entry.index('</pre>')]
+    return html.unescape(re.sub(r'<[^>]+>', '', block)).strip()
 
 
 @pytest.mark.parametrize(
@@ -73,15 +76,14 @@ def type_alias_value(page: str, alias: str) -> str:
         ('CellsLike', 'MatrixLikeInt | VectorLikeInt'),
         ('TransformLike', 'RotationLike | vtkMatrix4x4 | vtkTransform'),
         ('LineStyle', "Literal['', '-', '--', ':', '-.', '-..']"),
+        # documented with ``:no-value:``
+        ('NamedColors', None),
+        ('NamedColormaps', None),
     ],
 )
 def test_type_alias_value_replaces_signature(alias, value):
     """Confirm a type alias shows its value in place of its signature, keeping its anchor."""
     page = (Path(BUILD_HTML_DIR) / 'api' / 'core' / 'typing.html').read_text()
-    assert (
-        f'class="type-alias-value highlight-python notranslate" id="pyvista.typing.{alias}"'
-        in page
-    )
     assert f'<dt class="sig sig-object py" id="pyvista.typing.{alias}"' not in page
     assert 'alias of' not in page
     assert type_alias_value(page, alias) == value

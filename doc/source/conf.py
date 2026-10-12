@@ -198,6 +198,8 @@ _DOCUMENTED_TYPES = [
     'MatrixLikeFloat',
     'MatrixLikeInt',
     'MeshValidationFields',
+    'NamedColormaps',
+    'NamedColors',
     'PlottableType',
     'RotationLike',
     'TransformLike',
@@ -1212,11 +1214,15 @@ def show_type_alias_value(  # noqa: PLR0917
     what: str,
     name: str,
     obj: object,
-    options: dict,  # noqa: ARG001
+    options: object,
     lines: list[str],
 ) -> None:
     """Show the value of a type alias as a code block, ``ruff format`` style."""
-    if what != 'data' or get_origin(obj) not in (Literal, Union, UnionType):
+    if (
+        what != 'data'
+        or getattr(options, 'no_value', False)
+        or get_origin(obj) not in (Literal, Union, UnionType)
+    ):
         return
     # Name the other documented aliases it contains, largest first
     documented = {getattr(pv.typing, alias): alias for alias in _DOCUMENTED_TYPES}
@@ -1239,16 +1245,16 @@ def show_type_alias_value(  # noqa: PLR0917
 
 
 def drop_type_alias_signature(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
-    """Drop the signature and alias line of a type alias shown by its value block."""
-    for block in list(doctree.findall(nodes.literal_block)):
-        if 'type-alias-value' not in block['classes']:
+    """Drop the signature and alias line of each ``pyvista.typing`` alias, keeping its anchor."""
+    for desc in list(doctree.findall(addnodes.desc)):
+        signatures = [n for n in desc.children if isinstance(n, addnodes.desc_signature)]
+        if desc.get('objtype') != 'data' or not signatures:
             continue
-        content = block.parent
-        if not isinstance(content, addnodes.desc_content):
+        if signatures[0].get('module') != 'pyvista.typing':
             continue
-        desc = content.parent
-        for signature in [n for n in desc.children if isinstance(n, addnodes.desc_signature)]:
-            block['ids'].extend(signature['ids'])
+        content = next(n for n in desc.children if isinstance(n, addnodes.desc_content))
+        for signature in signatures:
+            content['ids'].extend(signature['ids'])
             desc.remove(signature)
         for paragraph in [n for n in content.children if isinstance(n, nodes.paragraph)]:
             if paragraph.astext().startswith('alias of '):

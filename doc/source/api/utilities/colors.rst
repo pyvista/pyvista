@@ -15,6 +15,12 @@ Colors
    :data:`~pyvista.typing.ColorLike`
       Type alias for any value accepted as a color.
 
+   :data:`~pyvista.typing.NamedColors`
+      Type alias for the names of the :ref:`named_colors`.
+
+   :data:`~pyvista.typing.NamedColormaps`
+      Type alias for the names of the :ref:`named_colormaps`.
+
    :ref:`colormap_example`
       Choose a colormap when plotting scalars.
 

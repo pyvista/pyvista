@@ -32,7 +32,9 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions as CameraPositionOptions
     from pyvista.plotting._typing import Chart as Chart
     from pyvista.plotting._typing import ColorLike as ColorLike
+    from pyvista.plotting._typing import NamedColormaps as NamedColormaps
     from pyvista.plotting._typing import PlottableType as PlottableType
+    from pyvista.plotting.colors import NamedColors as NamedColors
 
 __all__ = [
     'ArrayLikeBool',
@@ -50,6 +52,8 @@ __all__ = [
     'MatrixLikeFloat',
     'MatrixLikeInt',
     'MeshValidationFields',
+    'NamedColormaps',
+    'NamedColors',
     'PlottableType',
     'RotationLike',
     'TransformLike',
@@ -66,6 +70,8 @@ _LAZY_ALIASES = {
     'ColorLike': 'pyvista.plotting._typing',
     'JupyterBackendOptions': 'pyvista.jupyter',
     'MeshValidationFields': 'pyvista.core.filters.data_object',
+    'NamedColormaps': 'pyvista.plotting._typing',
+    'NamedColors': 'pyvista.plotting.colors',
     'PlottableType': 'pyvista.plotting._typing',
 }
 

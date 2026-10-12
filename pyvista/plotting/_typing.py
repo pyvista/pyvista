@@ -20,6 +20,10 @@ from pyvista.core._typing_core import MatrixLikeFloat
 from pyvista.core._typing_core import VectorLikeFloat
 from pyvista.core._typing_core import _MeshLike
 
+from .colors import _CMCRAMERI_CMAPS_LITERAL
+from .colors import _CMOCEAN_CMAPS_LITERAL
+from .colors import _COLORCET_CMAPS_LITERAL
+from .colors import _MATPLOTLIB_CMAPS_LITERAL
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
@@ -29,22 +33,18 @@ if TYPE_CHECKING:
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
     from .charts import ChartPie as ChartPie
-    from .colors import _ALL_COLORS_LITERAL
-    from .colors import _CMCRAMERI_CMAPS_LITERAL
-    from .colors import _CMOCEAN_CMAPS_LITERAL
-    from .colors import _COLORCET_CMAPS_LITERAL
-    from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
+    from .colors import NamedColors as NamedColors
 
 PlottableType: TypeAlias = _MeshLike | str | Path
 
 
-NamedColormaps = Union[
-    '_MATPLOTLIB_CMAPS_LITERAL',
-    '_CMOCEAN_CMAPS_LITERAL',
-    '_COLORCET_CMAPS_LITERAL',
-    '_CMCRAMERI_CMAPS_LITERAL',
-]
+NamedColormaps = (
+    _MATPLOTLIB_CMAPS_LITERAL
+    | _CMOCEAN_CMAPS_LITERAL
+    | _COLORCET_CMAPS_LITERAL
+    | _CMCRAMERI_CMAPS_LITERAL
+)
 
 ColormapOptions = NamedColormaps | list[str] | mpl.colors.Colormap
 
@@ -61,7 +61,7 @@ ColorLike = Union[
     str,
     'Color',
     _vtk.vtkColor3ub,
-    '_ALL_COLORS_LITERAL',
+    'NamedColors',
 ]
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']

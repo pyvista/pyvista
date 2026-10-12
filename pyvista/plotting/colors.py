@@ -375,7 +375,7 @@ _formatted_color_synonyms = {
 }
 
 
-_ALL_COLORS_LITERAL = Literal[
+NamedColors = Literal[
     # CSS colors
     'alice_blue',
     'antique_white',
@@ -594,6 +594,7 @@ _ALL_COLORS_LITERAL = Literal[
     'yellow_ochre',
     'zinc_white',
 ]
+_ALL_COLORS_LITERAL = NamedColors
 
 matplotlib_default_colors = list(_TABLEAU_COLORS.values())
 
