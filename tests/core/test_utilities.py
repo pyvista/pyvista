@@ -1298,6 +1298,12 @@ def test_linkcode_resolve():
     )
     assert 'celltype.py' in link
 
+    # test class property (e.g. BaseReader.extensions, evaluated by a plain getattr)
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.BaseReader.extensions'}
+    )
+    assert 'fileio.py' in link
+
     # test wrapped function
     link = linkcode_resolve(
         'py',

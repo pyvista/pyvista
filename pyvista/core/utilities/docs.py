@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import pyvista as pv
+from pyvista.core.utilities.misc import _classproperty
 
 if TYPE_CHECKING:
     from docutils.nodes import document
@@ -70,6 +71,11 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         metaclass_prop = getattr(type(obj), part, None) if inspect.isclass(obj) else None
         if isinstance(metaclass_prop, property):
             obj = metaclass_prop
+            continue
+        # A class property is evaluated by a plain getattr too.
+        static = inspect.getattr_static(obj, part, None) if inspect.isclass(obj) else None
+        if isinstance(static, _classproperty):
+            obj = static
             continue
         try:
             obj = getattr(obj, part)
