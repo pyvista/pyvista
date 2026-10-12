@@ -894,11 +894,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             nz -= 1
             # get the points and convert to spacings
             dx, dy, dz = self.spacing
-            # Now make the cell arrays
-            ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
-            x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
-            y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
-            z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
+            # Now make the cell arrays; a non-finite or huge geometry gives non-finite points
+            with np.errstate(invalid='ignore', over='ignore'):
+                ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
+                x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
+                y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
+                z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
             xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
             points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
