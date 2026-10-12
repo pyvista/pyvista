@@ -168,6 +168,12 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         str
             Name of the file format.
 
+        Raises
+        ------
+        AttributeError
+            If the class does not declare a file format, as for a custom reader
+            registered with :func:`pyvista.register_reader`.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -206,11 +212,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 _FileIOT = TypeVar('_FileIOT', bound=type[_FileIOBase])
 
 
-def _extension_mapping(*classes: _FileIOT) -> dict[str, _FileIOT]:
+def _map_extensions(*classes: _FileIOT) -> dict[str, _FileIOT]:
     """Map each extension of each class's file format to that class."""
     mapping: dict[str, _FileIOT] = {}
     for cls in classes:
-        for ext in cls._format.extensions:
+        for ext in cls._get_format().extensions:
             if ext in mapping:
                 msg = f'{ext} is claimed by both {mapping[ext].__name__} and {cls.__name__}.'
                 raise ValueError(msg)

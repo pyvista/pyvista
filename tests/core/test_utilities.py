@@ -75,7 +75,7 @@ from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
-from pyvista.core.utilities.fileio import _extension_mapping
+from pyvista.core.utilities.fileio import _map_extensions
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -3695,7 +3695,8 @@ def test_fileio_extensions_match_format(cls):
         pytest.xfail('Needs vtk 9.4')
     if cls is pv.OpenFOAMReader:
         # The format is registered to its parallel subclass
-        cls = pv.POpenFOAMReader
+        assert cls.extensions == ()
+        return
     assert set(cls.extensions) == set(cls._format.extensions)
     assert cls.extension_patterns == tuple(pattern for _, pattern in cls._format.patterns)
 
@@ -3714,15 +3715,14 @@ def test_file_formats_unique_and_used():
     assert {cls._format for cls in [*READER_CLASSES, *WRITER_CLASSES]} == set(FILE_FORMATS)
 
 
-def test_extension_mapping_rejects_shared_extension():
+def test_map_extensions_rejects_shared_extension():
     match = r'\.vtk is claimed by both DataSetWriter and PolyDataWriter'
     with pytest.raises(ValueError, match=match):
-        _extension_mapping(pv.DataSetWriter, pv.PolyDataWriter)
+        _map_extensions(pv.DataSetWriter, pv.PolyDataWriter)
 
 
 def test_format_name_undeclared():
-    class _Reader(pv.BaseReader):
-        _vtk_class_name = 'vtkXMLUnstructuredGridReader'
+    class _Reader(pv.BaseReader): ...
 
     with pytest.raises(AttributeError, match='_Reader does not declare a file format'):
         _ = _Reader.format_name

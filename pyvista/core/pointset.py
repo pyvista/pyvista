@@ -53,7 +53,7 @@ from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import _CompressionOptions
-from .utilities.fileio import _extension_mapping
+from .utilities.fileio import _map_extensions
 from .utilities.fileio import get_ext
 from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
@@ -120,7 +120,7 @@ class _PointSetBase(DataSet):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(SimplePointsWriter)
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(SimplePointsWriter)
 
     def center_of_mass(self, *, scalars_weight: bool = False) -> NDArray[np.float64]:
         """Return the coordinates for the center of mass of the mesh.
@@ -830,7 +830,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
         HoudiniPolyDataWriter,
         IVWriter,
         OBJWriter,
@@ -840,7 +840,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         XMLPolyDataWriter,
     )
     if vtk_version_info >= (9, 4):
-        _WRITERS.update(_extension_mapping(HDFWriter))
+        _WRITERS.update(_map_extensions(HDFWriter))
 
     def __init__(
         self,
@@ -2725,11 +2725,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
         EnSightWriter, UnstructuredGridWriter, XMLUnstructuredGridWriter
     )
     if vtk_version_info >= (9, 4):
-        _WRITERS.update(_extension_mapping(HDFWriter))
+        _WRITERS.update(_map_extensions(HDFWriter))
 
     def __init__(
         self,
@@ -3960,7 +3960,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """
 
     _WRITERS: ClassVar[dict[str, type[StructuredGridWriter | XMLStructuredGridWriter]]] = (
-        _extension_mapping(StructuredGridWriter, XMLStructuredGridWriter)  # type: ignore[assignment]
+        _map_extensions(StructuredGridWriter, XMLStructuredGridWriter)  # type: ignore[assignment]
     )
 
     def __init__(
@@ -4378,7 +4378,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
         UnstructuredGridWriter, XMLUnstructuredGridWriter
     )
 

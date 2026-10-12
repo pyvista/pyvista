@@ -34,9 +34,9 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
 
 from . import _file_formats as _formats
-from .fileio import _extension_mapping
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
+from .fileio import _map_extensions
 from .fileio import _process_filename
 from .fileio import _read_grdecl
 from .helpers import wrap
@@ -4130,8 +4130,8 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 class PExodusIIReader(ExodusIIReader):
     """Reader for the Exodus II (partitioned) format (``.e.N.p``, ``.n.N.p``).
 
-    Reads parallel Exodus II and Nemesis files, where ``N`` is the number of
-    partitions and ``p`` is the partition index. Passing any single
+    Reads parallel Exodus II and Nemesis files split into ``N`` partitions, with
+    partition index ``p``. Passing any single
     file from a series to this reader automatically reads every file in the
     series and loads the complete dataset. Wraps :vtk:`vtkPExodusIIReader`.
 
@@ -4545,15 +4545,11 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
 
 
 def _registered_readers() -> list[type[BaseReader[Any]]]:
-    """Return this module's public readers, minus any whose subclass reads the same format."""
+    """Return this module's readers with a format, minus those a same-format subclass replaces."""
     readers = [
         obj
-        for name, obj in globals().items()
-        if isinstance(obj, type)
-        and issubclass(obj, BaseReader)
-        and obj.__module__ == __name__
-        and not name.startswith('_')
-        and hasattr(obj, '_format')
+        for obj in globals().values()
+        if isinstance(obj, type) and issubclass(obj, BaseReader) and hasattr(obj, '_format')
     ]
     return [
         cls
@@ -4565,9 +4561,8 @@ def _registered_readers() -> list[type[BaseReader[Any]]]:
     ]
 
 
-# Readers :func:`pyvista.get_reader` and :func:`pyvista.read` dispatch to by file extension.
-# Each extension maps to exactly one reader; a subclass reading its parent's format replaces it.
-_CLASS_READERS = _extension_mapping(*_registered_readers())
+# Extension -> reader dispatch for get_reader and read; each extension maps to exactly one reader
+_CLASS_READERS = _map_extensions(*_registered_readers())
 # Matched against the filename only, so dots in parent directories cannot affect selection
 _CLASS_READER_PATTERNS = [
     (display, pattern, cls)
@@ -4581,8 +4576,8 @@ def __getattr__(name: str) -> Any:
     if name == 'CLASS_READERS':
         # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
         msg = (
-            '`CLASS_READERS` is deprecated. Use `pyvista.get_reader` to find the reader for a '
-            'file, and `format_name` or `extensions` on a reader class for its file format.'
+            '`CLASS_READERS` is deprecated. Use `pyvista.get_reader` to get the reader for a '
+            'file, or `extensions` and `format_name` on a reader class to look up its file format.'
         )
         warn_external(msg, PyVistaDeprecationWarning)
         if _is_deprecation_due((0, 53)):  # pragma: no cover

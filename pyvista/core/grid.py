@@ -15,7 +15,7 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core.utilities.fileio import _extension_mapping
+from pyvista.core.utilities.fileio import _map_extensions
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -267,7 +267,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
         RectilinearGridWriter, XMLRectilinearGridWriter
     )
 
@@ -722,7 +722,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
         BMPWriter,
         DataSetWriter,
         JPEGWriter,

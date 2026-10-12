@@ -26,12 +26,12 @@ DICOM = _FileFormat('DICOM', ('.dcm', '.img'))
 ECLIPSE_GRDECL = _FileFormat('Eclipse GRDECL', ('.grdecl',))
 ENSIGHT = _FileFormat('EnSight', ('.case',))
 EXODUS = _FileFormat('Exodus II', ('.e', '.ex2', '.exii', '.exo'))
-# ``.e.N.P`` and ``.n.N.P``, for ``N`` partitions and partition index ``P``
+# ``.e.N.p`` and ``.n.N.p``, for ``N`` partitions and partition index ``p``
 EXODUS_PARTITIONED = _FileFormat(
     'Exodus II (partitioned)',
     patterns=(
-        ('.e.N.p', re.compile(r'\.(?:e)\.\d+\.\d+$', re.IGNORECASE)),
-        ('.n.N.p', re.compile(r'\.(?:n)\.\d+\.\d+$', re.IGNORECASE)),
+        ('.e.N.p', re.compile(r'\.e\.\d+\.\d+$', re.IGNORECASE)),
+        ('.n.N.p', re.compile(r'\.n\.\d+\.\d+$', re.IGNORECASE)),
     ),
 )
 FACET = _FileFormat('Facet Polygonal Data', ('.facet',))
