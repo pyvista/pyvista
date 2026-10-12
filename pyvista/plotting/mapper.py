@@ -778,6 +778,7 @@ class _BaseDataSetMapper(_BaseMapper):
             if scalars is None:
                 # Nothing is mapped, so there is no RGBA array to build
                 return
+            scalar_range = self.scalar_range
             self.dataset.point_data.pop('__rgba__', None)
             self._configure_scalars_mode(
                 scalars=self.lookup_table(scalars),
@@ -785,6 +786,8 @@ class _BaseDataSetMapper(_BaseMapper):
                 preference=self.scalar_map_mode,
                 direct_scalars_color_mode=True,
             )
+            # The RGBA array holds colors, so keep the range of the mapped data
+            self._set_scalar_range(scalar_range, use_default=False)
 
     def set_active_scalars(
         self,

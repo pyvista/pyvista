@@ -569,6 +569,42 @@ def test_as_rgba_uses_mapped_scalars(sphere):
     assert mapper.color_mode == 'direct'
 
 
+def test_as_rgba_keeps_scalar_range(sphere):
+    """Converting to RGBA keeps the range of the mapped data, not of the colors."""
+    sphere['data'] = sphere.points[:, 2] * 0.01
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.set_scalars(sphere['data'], 'data')
+    expected = sphere.get_data_range('data')
+    assert mapper.scalar_range == pytest.approx(expected)
+
+    mapper.as_rgba()
+
+    assert mapper.color_mode == 'direct'
+    assert mapper.scalar_range == pytest.approx(expected)
+    assert mapper.lookup_table.scalar_range == pytest.approx(expected)
+
+
+@pytest.mark.parametrize('scalars', [None, 'radius'])
+@pytest.mark.parametrize('render_points_as_spheres', [False, True])
+@pytest.mark.parametrize('emissive', [False, True])
+def test_points_gaussian_scalar_range(scalars, render_points_as_spheres, emissive):
+    """The scalar bar of a points_gaussian actor spans its data, as for other styles."""
+    rng = np.random.default_rng(seed=0)
+    points = pv.PolyData(rng.random((100, 3)))
+    points['radius'] = rng.random(100) * 0.02
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        points,
+        scalars=scalars,
+        style='points_gaussian',
+        render_points_as_spheres=render_points_as_spheres,
+        emissive=emissive,
+    )
+    expected = points.get_data_range('radius')
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == pytest.approx(expected)
+
+
 def test_as_rgba_without_mapped_scalars(sphere):
     """A mapper with nothing mapped has no RGBA array to build."""
     mapper = DataSetMapper(dataset=sphere)
