@@ -1840,7 +1840,7 @@ def test_extent_cannot_change_fixed_dimensions(fixed_dims_grid):
     extent = fixed_dims_grid.extent
     dims = fixed_dims_grid.dimensions
     match = re.escape(
-        f'Cannot change the dimensions of {type(fixed_dims_grid).__name__} from {dims} '
+        f'Cannot change the dimensions of `{type(fixed_dims_grid).__name__}` from {dims} '
         f'to (2, 2, 2). Set the offset to shift the extent instead.'
     )
     with pytest.raises(ValueError, match=match):
@@ -1850,9 +1850,10 @@ def test_extent_cannot_change_fixed_dimensions(fixed_dims_grid):
 
 def test_fixed_dimensions_cannot_be_set(fixed_dims_grid):
     dims = fixed_dims_grid.dimensions
+    name = type(fixed_dims_grid).__name__
+    article = 'an' if name == 'ExplicitStructuredGrid' else 'a'
     match = re.escape(
-        f'The dimensions of a `{type(fixed_dims_grid).__name__}` are implicitly defined and '
-        'thus cannot be set.'
+        f'The dimensions of {article} `{name}` are implicitly defined and thus cannot be set.'
     )
     with pytest.raises(AttributeError, match=match):
         fixed_dims_grid.dimensions = dims
@@ -1863,7 +1864,10 @@ def test_structured_grid_dimensions_must_match_points(attr):
     grid = _EXTENT_GRIDS['StructuredGrid']()
     grid.offset = (1, 2, 3)
     value = (2, 2, 2) if attr == 'dimensions' else (1, 2, 2, 3, 3, 4)
-    match = re.escape('Dimensions (2, 2, 2) do not match the 60 points of the StructuredGrid.')
+    match = re.escape(
+        'Dimensions (2, 2, 2) do not match the 60 points of the `StructuredGrid`. '
+        'Set the points before the dimensions.'
+    )
     with pytest.raises(ValueError, match=match):
         setattr(grid, attr, value)
     assert grid.extent == (1, 3, 2, 5, 3, 7)
@@ -1893,10 +1897,12 @@ def test_explicit_structured_grid_offset_keeps_cells():
 
 def test_explicit_structured_grid_offset_keeps_links():
     grid = examples.load_explicit_structured()
-    point_cells = [grid.point_cell_ids(i) for i in range(grid.n_points)]
+    grid.BuildLinks()
+    links = grid.GetLinks()
+    size = links.GetActualMemorySize()
     grid.offset = (2, -1, 5)
-    assert [grid.point_cell_ids(i) for i in range(grid.n_points)] == point_cells
-    grid.compute_connectivity()
+    assert grid.GetLinks() is links
+    assert links.GetActualMemorySize() == size
 
 
 def test_image_data_dimensions_keep_offset():
@@ -1914,11 +1920,23 @@ def test_rectilinear_grid_coordinates_keep_offset():
     assert grid.dimensions == (6, 4, 5)
 
 
-@pytest.mark.parametrize('dims', [(1, 2), (-1, 2, 2), (1.5, 2, 2)])
-def test_dimensions_raises(dims):
-    grid = pv.ImageData()
-    with pytest.raises(ValueError):  # noqa: PT011
+@pytest.mark.parametrize(
+    ('dims', 'match'),
+    [((1, 2), 'shape'), ((-1, 2, 2), 'greater than or equal to 0'), ((1.5, 2, 2), 'integer-like')],
+)
+@pytest.mark.parametrize('name', ['ImageData', 'StructuredGrid'])
+def test_dimensions_raises(name, dims, match):
+    grid = _EXTENT_GRIDS[name]()
+    with pytest.raises(ValueError, match=match):
         grid.dimensions = dims
+
+
+def test_extent_negative_dimensions_raises(extent_grid):
+    extent = extent_grid.extent
+    match = re.escape('Extent (5, 0, 0, 1, 0, 1) has negative dimensions (-4, 2, 2).')
+    with pytest.raises(ValueError, match=match):
+        extent_grid.extent = (5, 0, 0, 1, 0, 1)
+    assert extent_grid.extent == extent
 
 
 def test_unstructured_grid_cast_to_explicit_structured_grid():

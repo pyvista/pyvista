@@ -11,6 +11,11 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeInt
 
 
+def _extent_from(offset: VectorLikeInt, dims: VectorLikeInt) -> list[int]:
+    """Return the extent starting at ``offset`` with dimensions ``dims``."""
+    return [int(n) for o, d in zip(offset, dims, strict=True) for n in (o, o + d - 1)]
+
+
 class _StructuredDataMixin:
     """Add ``dimensions``, ``extent`` and ``offset`` properties to structured datasets.
 
@@ -34,14 +39,15 @@ class _StructuredDataMixin:
         The dimensions of a :class:`~pyvista.RectilinearGrid` and an
         :class:`~pyvista.ExplicitStructuredGrid` are defined by their coordinates and
         cells and cannot be set. The dimensions of a :class:`~pyvista.StructuredGrid`
-        must match its number of points.
+        must match its number of points, so set its points first.
 
         .. versionchanged:: 0.50
-            Setting the dimensions keeps the :attr:`offset`.
+            Setting the dimensions keeps the :attr:`offset`, and the dimensions of a
+            :class:`~pyvista.StructuredGrid` must match its number of points.
 
         Returns
         -------
-        tuple[int]
+        tuple[int, int, int]
             Dimensions of the grid.
 
         Examples
@@ -66,23 +72,17 @@ class _StructuredDataMixin:
     @dimensions.setter
     def dimensions(self, dims: VectorLikeInt) -> None:
         if self._fixed_dimensions:
+            name = type(self).__name__
+            article = 'an' if name[0] in 'AEIOU' else 'a'
             msg = (
-                f'The dimensions of a `{type(self).__name__}` are implicitly defined and '
-                'thus cannot be set.'
+                f'The dimensions of {article} `{name}` are implicitly defined and thus '
+                'cannot be set.'
             )
             raise AttributeError(msg)
         dims_ = _validation.validate_array3(
             dims, must_be_integer=True, must_be_nonnegative=True, dtype_out=int
         )
-        offset = self.offset
-        self.extent = (
-            offset[0],
-            offset[0] + dims_[0] - 1,
-            offset[1],
-            offset[1] + dims_[1] - 1,
-            offset[2],
-            offset[2] + dims_[2] - 1,
-        )
+        self.extent = _extent_from(self.offset, dims_)
 
     @property
     def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
@@ -109,7 +109,7 @@ class _StructuredDataMixin:
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the image's :attr:`offset`,
+        For an ``ImageData``, this also modifies the :attr:`offset`,
         :attr:`dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
         we use default spacing of 1 here, the bounds match the extent exactly.
 
@@ -139,11 +139,16 @@ class _StructuredDataMixin:
             to_list=True,
             dtype_out=int,
         )
+        if new_extent_ == list(self.extent):
+            return
         new_dims = (
             new_extent_[1] - new_extent_[0] + 1,
             new_extent_[3] - new_extent_[2] + 1,
             new_extent_[5] - new_extent_[4] + 1,
         )
+        if min(new_dims) < 0:
+            msg = f'Extent {tuple(new_extent_)} has negative dimensions {new_dims}.'
+            raise ValueError(msg)
         if new_dims != self.dimensions:
             self._check_dimensions(new_dims)
         self._set_extent(new_extent_)
@@ -152,7 +157,7 @@ class _StructuredDataMixin:
         """Raise if the dimensions cannot change to ``dims``."""
         if self._fixed_dimensions:
             msg = (
-                f'Cannot change the dimensions of {type(self).__name__} from '
+                f'Cannot change the dimensions of `{type(self).__name__}` from '
                 f'{self.dimensions} to {dims}. Set the offset to shift the extent instead.'
             )
             raise ValueError(msg)
@@ -171,8 +176,8 @@ class _StructuredDataMixin:
         :attr:`dimensions`.
 
         For an :class:`~pyvista.ImageData`, the offset is relative to the
-        :attr:`~pyvista.ImageData.origin` in physical space. For other grids, it
-        changes only how the points are indexed.
+        :attr:`~pyvista.ImageData.origin` in physical space. For other grids, the points
+        do not move.
 
         .. versionadded:: 0.45
 
@@ -235,12 +240,4 @@ class _StructuredDataMixin:
         offset_ = _validation.validate_array3(
             offset, broadcast=True, must_be_integer=True, dtype_out=int
         )
-        dims = self.dimensions
-        self.extent = (
-            offset_[0],
-            offset_[0] + dims[0] - 1,
-            offset_[1],
-            offset_[1] + dims[1] - 1,
-            offset_[2],
-            offset_[2] + dims[2] - 1,
-        )
+        self.extent = _extent_from(offset_, self.dimensions)

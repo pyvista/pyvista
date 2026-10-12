@@ -4076,7 +4076,7 @@ class StructuredGrid(
         if n_points and np.prod(dims) != n_points:
             msg = (
                 f'Dimensions {dims} do not match the {n_points} points of the '
-                f'{type(self).__name__}.'
+                f'`{type(self).__name__}`. Set the points before the dimensions.'
             )
             raise ValueError(msg)
 

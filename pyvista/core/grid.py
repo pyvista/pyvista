@@ -27,6 +27,7 @@ from pyvista.core.utilities.writer import TIFFWriter
 from pyvista.core.utilities.writer import XMLImageDataWriter
 from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
+from ._structured_data import _extent_from
 from ._structured_data import _StructuredDataMixin
 from .dataset import DataSet
 from .filters import ImageDataFilters
@@ -308,9 +309,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     def _update_dimensions(self: Self) -> None:
         """Update the dimensions to the coordinates, keeping the offset."""
-        offset = self.offset
-        dims = (len(self.x), len(self.y), len(self.z))
-        self._set_extent([n for o, d in zip(offset, dims, strict=True) for n in (o, o + d - 1)])
+        self._set_extent(_extent_from(self.offset, (len(self.x), len(self.y), len(self.z))))
 
     def _from_arrays(
         self: Self,
