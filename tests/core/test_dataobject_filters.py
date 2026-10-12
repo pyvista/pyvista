@@ -3775,6 +3775,21 @@ def test_validate_mesh_image_data_non_finite_points(attr, value):
     assert image.validate_mesh().non_finite_points == expected
 
 
+@pytest.mark.parametrize('value', [np.inf, np.nan, 1e308])
+@pytest.mark.parametrize(
+    'make_mesh',
+    [pv.Sphere, lambda: pv.ImageData(dimensions=(3, 3, 3)).cast_to_unstructured_grid()],
+    ids=['PolyData', 'UnstructuredGrid'],
+)
+def test_validate_mesh_unmeasurable_cells_have_no_size(make_mesh, value):
+    mesh = make_mesh()
+    points = mesh.points.astype(float)
+    points[0] = (value, 0.0, 0.0)
+    mesh.points = points
+    report = mesh.validate_mesh(['negative_size', 'zero_size'])
+    assert report.is_valid
+
+
 def test_validate_mesh_rectilinear_grid_non_finite_points():
     grid = pv.RectilinearGrid([0.0, np.nan, 2.0], [0.0, 1.0], [0.0, 1.0])
     expected = np.flatnonzero(~np.isfinite(grid.points).all(axis=1)).tolist()
@@ -4572,8 +4587,9 @@ def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_g
     assert report.invalid_fields == ('coincident_points',)
 
 
-def test_validate_mesh_coincident_points_rectilinear_grid():
-    grid = pv.RectilinearGrid([0.0, 0.0, 1.0], [0.0, 1.0, 2.0], [0.0, 1.0])
+@pytest.mark.parametrize('z', [[0.0, 1.0], [0.0]], ids=['3D', 'flat'])
+def test_validate_mesh_coincident_points_rectilinear_grid(z):
+    grid = pv.RectilinearGrid([0.0, 0.0, 1.0], [0.0, 1.0, 2.0], z)
     expected = grid.cast_to_structured_grid().cell_validator().field_data['coincident_points']
     assert expected.tolist() == [0, 2]
     assert grid.cell_validator().field_data['coincident_points'].tolist() == expected.tolist()

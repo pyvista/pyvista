@@ -2008,6 +2008,12 @@ class DataObjectFilters:
                     + size_data['Area']
                     + size_data['Volume']
                 )
+                # Areas and volumes are clamped to +/-1e30, and a NaN one, from non-finite or
+                # overflowing points, is reported as -1e30, so that size is unknown
+                unknown = (size_data['Area'] == -_VERDICT_DBL_MAX) | (
+                    size_data['Volume'] == -_VERDICT_DBL_MAX
+                )
+                size = np.where(unknown, np.nan, size)
 
                 # compute_cell_sizes may measure hidden cells of these types as empty cells, so
                 # their size says nothing about their geometry. ImageData is measured from its
@@ -6733,6 +6739,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
+_VERDICT_DBL_MAX = 1.0e30
 
 
 def _slice_image_along_axis(
