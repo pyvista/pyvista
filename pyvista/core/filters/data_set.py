@@ -1587,7 +1587,7 @@ class DataSetFilters(DataObjectFilters):
         dimensions : VectorLikeInt, default: (50, 50, 50)
             Sampling dimensions of the structured point set. Higher values produce better results
             but are much slower. This is the
-            :attr:`~pyvista.core.grid._StructuredDataMixin.dimensions` of the returned
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` of the returned
             :class:`~pyvista.ImageData`.
 
         progress_bar : bool, default: False

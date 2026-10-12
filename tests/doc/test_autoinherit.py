@@ -21,12 +21,12 @@ from sphinx.util.inspect import safe_getattr
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core._structured_data import _StructuredDataMixin
 import pyvista.core.filters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.grid import Grid
-from pyvista.core.grid import _StructuredDataMixin
 from pyvista.core.pointset import _PointSetBase
 from pyvista.ext import _autoinherit as autoinherit
 from tests.conftest import PYVISTA_ROOT_DIR

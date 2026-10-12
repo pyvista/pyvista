@@ -76,4 +76,4 @@ documented once, here, and linked from every class that inherits it.
    :toctree: _autosummary
 
    Grid
-   core.grid._StructuredDataMixin
+   core._structured_data._StructuredDataMixin

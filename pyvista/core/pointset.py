@@ -28,6 +28,7 @@ from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 
+from ._structured_data import _StructuredDataMixin
 from .cell import CellArray
 from .cell import _get_connectivity
 from .cell import _get_connectivity_array
@@ -47,7 +48,6 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
-from .grid import _StructuredDataMixin
 from .utilities.arrays import convert_array
 from .utilities.cells import _get_regular_cells_from_dict
 from .utilities.cells import create_mixed_cells
@@ -3894,9 +3894,9 @@ class StructuredGrid(
         :class:`StructuredGrid`. If passed a :vtk:`vtkStructuredGrid`, it will
         be wrapped as a deep copy.
 
-        If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty,
-        this array will define the points of this :class:`StructuredGrid`.
-        Set the dimensions with :attr:`~pyvista.core.grid._StructuredDataMixin.dimensions`.
+        If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty, this array will
+        define the points of this :class:`StructuredGrid`. Set the dimensions with
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`.
 
         Otherwise, this parameter will be loaded as the ``x`` points, and ``y``
         and ``z`` points must be set. The shape of this array defines the shape
