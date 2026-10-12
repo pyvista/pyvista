@@ -4802,7 +4802,7 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
     def _set_extent(self, extent: list[int]) -> None:
         """Set the extent, keeping the cells and links that ``SetExtent`` resets."""
         cells, links = self.GetCells(), self.GetLinks()
-        self.SetLinks(None)  # type: ignore[arg-type]
+        self.SetLinks(None)  # type: ignore[arg-type]  # SetExtent resets the links in place
         self.SetExtent(extent)
         self.SetCells(cells)
         self.SetLinks(links)

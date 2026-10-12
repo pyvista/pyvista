@@ -1971,8 +1971,9 @@ def test_dimensions_mixed_zero_raises(name):
         grid.dimensions = (0, 3, 3)
 
 
-@pytest.mark.parametrize('grid', [pv.ImageData(dimensions=(3, 4, 5)), pv.StructuredGrid()])
-def test_dimensions_all_zero_empties_grid(grid):
+@pytest.mark.parametrize('make_grid', [_EXTENT_GRIDS['ImageData'], pv.StructuredGrid])
+def test_dimensions_all_zero_empties_grid(make_grid):
+    grid = make_grid()
     grid.offset = (1, 2, 3)
     grid.dimensions = (0, 0, 0)
     assert grid.dimensions == (0, 0, 0)

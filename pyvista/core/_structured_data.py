@@ -58,7 +58,7 @@ class _StructuredDataMixin:
         (2, 3, 4)
         >>> grid.plot(show_edges=True)
 
-        Set the dimensions to ``(3, 4, 5)``
+        Set the dimensions to ``(3, 4, 5)``.
 
         >>> grid.dimensions = (3, 4, 5)
         >>> grid.plot(show_edges=True)
@@ -136,6 +136,7 @@ class _StructuredDataMixin:
             must_have_length=6,
             to_list=True,
             dtype_out=int,
+            name='Extent',
         )
         if new_extent_ == list(self.extent):
             return
@@ -237,6 +238,6 @@ class _StructuredDataMixin:
     @offset.setter
     def offset(self, offset: int | VectorLikeInt) -> None:
         offset_ = _validation.validate_array3(
-            offset, broadcast=True, must_be_integer=True, dtype_out=int
+            offset, broadcast=True, must_be_integer=True, dtype_out=int, name='Offset'
         )
         self.extent = _extent_from(offset_, self.dimensions)
