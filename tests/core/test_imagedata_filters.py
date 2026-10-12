@@ -1831,6 +1831,82 @@ def test_resample_cell_data_sample_rate_raises():
         image.resample(0.1)
 
 
+@pytest.mark.parametrize('dtype', ['uint8', 'int64', 'float32'])
+@pytest.mark.parametrize('interpolation', ['linear', 'cubic', 'lanczos', 'bspline'])
+@pytest.mark.parametrize('n_points', [6, 40])
+def test_resample_premultiply_alpha(dtype, interpolation, n_points):
+    # An opaque color next to transparent white, as in a transparent screenshot
+    color = np.array([40, 80, 120, 255])
+    rgba = np.where(np.arange(16)[:, None] < 8, color, [255, 255, 255, 0])
+    if dtype == 'float32':
+        rgba = rgba / 255
+        color = color / 255
+    image = pv.ImageData(dimensions=(16, 1, 1))
+    image['rgba'] = rgba.astype(dtype)
+    kwargs = dict(dimensions=(n_points, 1, 1), interpolation=interpolation, anti_aliasing=True)
+
+    straight = image.resample(**kwargs)['rgba']
+    premultiplied = image.resample(premultiply_alpha=True, **kwargs)['rgba']
+    assert premultiplied.dtype == dtype
+    tolerance = 1e-6 if dtype == 'float32' else 1
+    assert np.allclose(premultiplied[:, 3], straight[:, 3], atol=tolerance)
+
+    alpha = premultiplied[:, 3]
+    edge = (alpha > 0) & (alpha < color[3])
+    assert edge.any()
+    # The white under zero alpha bleeds into the edge unless alpha is premultiplied
+    assert np.abs(straight[edge, :3] - color[:3]).max() > 20 * tolerance
+    assert np.allclose(premultiplied[alpha > 0, :3], color[:3], atol=tolerance)
+    assert np.all(premultiplied[alpha == 0, :3] == 0)
+
+
+@pytest.mark.parametrize('interpolation', ['cubic', 'lanczos', 'bspline'])
+def test_resample_premultiply_alpha_clips_to_visible_colors(interpolation):
+    # Ringing between two visible colors stays within their range, whatever is transparent
+    colors = np.array([[10, 200, 30, 255], [90, 20, 250, 128], [255, 255, 255, 0]])
+    image = pv.ImageData(dimensions=(30, 1, 1))
+    image['rgba'] = np.repeat(colors, 10, axis=0).astype(np.uint8)
+
+    resampled = image.resample(dimensions=(70, 1, 1), interpolation=interpolation)
+    unclipped = resampled['rgba']
+    resampled = image.resample(
+        dimensions=(70, 1, 1), interpolation=interpolation, premultiply_alpha=True
+    )
+    rgba = resampled['rgba']
+    visible = rgba[:, 3] > 0
+    assert np.all(rgba[visible, :3] >= colors[:2, :3].min(axis=0))
+    assert np.all(rgba[visible, :3] <= colors[:2, :3].max(axis=0))
+    assert np.all(rgba[~visible, :3] == 0)
+    # Without premultiplying, the transparent white leaks into the visible pixels
+    assert np.any(unclipped[visible, :3] > colors[:2, :3].max(axis=0))
+
+
+def test_resample_premultiply_alpha_cell_data():
+    color = [40, 80, 120]
+    image = pv.ImageData(dimensions=(9, 2, 1))
+    rgba = np.where(np.arange(8)[:, None] < 3, [*color, 255], [255, 255, 255, 0])
+    image.cell_data['rgba'] = rgba.astype(np.uint8)
+
+    resampled = image.resample(0.5, 'linear', premultiply_alpha=True)
+    rgba_out = resampled.cell_data['rgba']
+    alpha = rgba_out[:, 3]
+    assert np.any((alpha > 0) & (alpha < 255))
+    assert np.array_equal(rgba_out[alpha > 0, :3], np.broadcast_to(color, (np.sum(alpha > 0), 3)))
+    assert np.all(rgba_out[alpha == 0, :3] == 0)
+
+
+@pytest.mark.parametrize('n_components', [1, 3])
+def test_resample_premultiply_alpha_raises(n_components):
+    image = pv.ImageData(dimensions=(4, 4, 1))
+    image['rgb'] = np.zeros((image.n_points, n_components)).squeeze()
+    match = (
+        f"`premultiply_alpha` requires RGBA scalars with 4 components, but 'rgb' has "
+        f'{n_components}.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(0.5, premultiply_alpha=True)
+
+
 def test_reslice_physical_alignment():
     # The image is sampled at the physical position of the reference's points
     image = pv.ImageData(dimensions=(10, 10, 10))

@@ -4326,6 +4326,7 @@ class ImageDataFilters(DataSetFilters):
         spacing: float | VectorLikeFloat | None = None,
         rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         anti_aliasing: bool = False,
+        premultiply_alpha: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: PointLiteral | CellLiteral = 'point',
@@ -4472,6 +4473,17 @@ class ImageDataFilters(DataSetFilters):
                 fixed blur was applied to all three axes, including axes which are not
                 down-sampled, which left aliasing at large sampling ratios and blurred
                 more than necessary at small ones.
+
+        premultiply_alpha : bool, default: False
+            Treat the scalars as straight (unassociated) RGBA colors and weight the
+            colors by alpha while resampling. The color channels are multiplied by alpha
+            before interpolating and divided by the interpolated alpha afterwards, so the
+            color of transparent pixels does not bleed into their neighbors. Each color
+            channel is clipped to its range over the input pixels that are not fully
+            transparent, and fully transparent output pixels have a color of ``0``. The
+            scalars must have four components.
+
+            .. versionadded:: 0.50
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -4809,6 +4821,34 @@ class ImageDataFilters(DataSetFilters):
         >>> pl = compare_images_plotter(downsampled, downsampled2)
         >>> pl.show()
 
+        Resample RGBA colors with transparency. Here two opaque red pixels are next to
+        two fully transparent white pixels, like the background of a screenshot taken
+        with a transparent background.
+
+        >>> rgba = pv.ImageData(dimensions=(4, 1, 1))
+        >>> rgba['rgba'] = np.array(
+        ...     [[255, 0, 0, 255]] * 2 + [[255, 255, 255, 0]] * 2, dtype=np.uint8
+        ... )
+
+        By default, the color and alpha channels are interpolated independently, so the
+        white of the transparent pixels bleeds into the half-transparent pixel and turns
+        it pink.
+
+        >>> rgba.resample(dimensions=(3, 1, 1), interpolation='linear')['rgba']
+        pyvista_ndarray([[255,   0,   0, 255],
+                         [255, 128, 128, 128],
+                         [255, 255, 255,   0]], dtype=uint8)
+
+        Enable ``premultiply_alpha`` to weight the colors by their alpha instead. The
+        half-transparent pixel stays red.
+
+        >>> rgba.resample(
+        ...     dimensions=(3, 1, 1), interpolation='linear', premultiply_alpha=True
+        ... )['rgba']
+        pyvista_ndarray([[255,   0,   0, 255],
+                         [255,   0,   0, 128],
+                         [  0,   0,   0,   0]], dtype=uint8)
+
         Load an MRI of a knee and down-sample it.
 
         >>> knee = pv.examples.download_knee().resample(
@@ -4900,6 +4940,15 @@ class ImageDataFilters(DataSetFilters):
         input_dtype = input_image.point_data[name].dtype
         if input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
             input_image.point_data[name] = input_image.point_data[name].astype(float)
+
+        if premultiply_alpha:
+            input_rgba = input_image.point_data[name]
+            input_image.point_data[name] = _premultiply_alpha(input_rgba, name=name)
+            visible_rgb = input_rgba[input_rgba[:, 3] > 0, :3]
+            if visible_rgb.size:
+                rgb_range = (visible_rgb.min(axis=0), visible_rgb.max(axis=0))
+            else:
+                rgb_range = (np.zeros(3), np.zeros(3))
 
         # Compute the output dimensions of the point image
         old_dimensions = np.array(input_image.dimensions)
@@ -4993,9 +5042,17 @@ class ImageDataFilters(DataSetFilters):
         output_image = _get_output(resize_filter)
 
         output_image.rename_array(output_image.active_scalars_name, name)
+        if premultiply_alpha:
+            output_image.point_data[name] = _unpremultiply_alpha(
+                output_image.active_scalars, rgb_range
+            )
         output_array = output_image.active_scalars
         if output_array.dtype != input_dtype:
             output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
+        if premultiply_alpha:
+            # Zero after rounding, since rounding can make a slightly positive alpha zero
+            output_rgba = output_image.point_data[name]
+            output_rgba[output_rgba[:, 3] <= 0, :3] = 0
 
         if reference_image is not None:
             output_image.direction_matrix = reference_image.direction_matrix
@@ -6439,6 +6496,35 @@ def _reslice_image(
         modes[interpolation]()
     _update_alg(alg, progress_bar=progress_bar, message='Reslicing image.')
     return _get_output(alg)
+
+
+def _premultiply_alpha(rgba: NDArray[Any], *, name: str) -> NDArray[np.floating]:
+    """Multiply the color channels of straight RGBA values by their alpha."""
+    if rgba.ndim != 2 or rgba.shape[1] != 4:
+        n_components = 1 if rgba.ndim == 1 else rgba.shape[1]
+        msg = (
+            f'`premultiply_alpha` requires RGBA scalars with 4 components, but '
+            f'{name!r} has {n_components}.'
+        )
+        raise ValueError(msg)
+    dtype = rgba.dtype if rgba.dtype.kind == 'f' else np.dtype(float)
+    premultiplied = np.array(rgba, dtype=dtype)
+    premultiplied[:, :3] *= premultiplied[:, 3:]
+    return premultiplied
+
+
+def _unpremultiply_alpha(
+    premultiplied: NDArray[np.floating], rgb_range: tuple[NDArray[Any], NDArray[Any]]
+) -> NDArray[np.floating]:
+    """Divide RGBA color channels by a positive alpha and clip them to ``rgb_range``."""
+    alpha = premultiplied[:, 3:]
+    rgb = np.divide(
+        premultiplied[:, :3], alpha, out=np.zeros_like(premultiplied[:, :3]), where=alpha > 0
+    )
+    straight = premultiplied.copy()
+    # Bound the overshoot of ringing kernels, which a near-zero alpha amplifies
+    straight[:, :3] = np.clip(rgb, *rgb_range)
+    return straight
 
 
 def _round_to_dtype(array: NDArray[np.floating], dtype: np.dtype[Any]) -> NDArray[Any]:
