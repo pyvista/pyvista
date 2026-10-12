@@ -1831,16 +1831,15 @@ def test_resample_cell_data_sample_rate_raises():
         image.resample(0.1)
 
 
-@pytest.mark.parametrize('dtype', ['uint8', 'int64', 'float32'])
+@pytest.mark.parametrize(
+    ('dtype', 'scale', 'tolerance'), [('uint8', 1, 1), ('int64', 1, 1), ('float32', 255, 1e-6)]
+)
 @pytest.mark.parametrize('interpolation', ['linear', 'cubic', 'lanczos', 'bspline'])
 @pytest.mark.parametrize('n_points', [6, 40])
-def test_resample_premultiply_alpha(dtype, interpolation, n_points):
+def test_resample_premultiply_alpha(dtype, scale, tolerance, interpolation, n_points):
     # An opaque color next to transparent white, as in a transparent screenshot
-    color = np.array([40, 80, 120, 255])
-    rgba = np.where(np.arange(16)[:, None] < 8, color, [255, 255, 255, 0])
-    if dtype == 'float32':
-        rgba = rgba / 255
-        color = color / 255
+    color = np.array([40, 80, 120, 255]) / scale
+    rgba = np.where(np.arange(16)[:, None] < 8, color, np.array([255, 255, 255, 0]) / scale)
     image = pv.ImageData(dimensions=(16, 1, 1))
     image['rgba'] = rgba.astype(dtype)
     kwargs = dict(dimensions=(n_points, 1, 1), interpolation=interpolation, anti_aliasing=True)
@@ -1848,7 +1847,6 @@ def test_resample_premultiply_alpha(dtype, interpolation, n_points):
     straight = image.resample(**kwargs)['rgba']
     premultiplied = image.resample(premultiply_alpha=True, **kwargs)['rgba']
     assert premultiplied.dtype == dtype
-    tolerance = 1e-6 if dtype == 'float32' else 1
     assert np.allclose(premultiplied[:, 3], straight[:, 3], atol=tolerance)
 
     alpha = premultiplied[:, 3]
@@ -1858,6 +1856,21 @@ def test_resample_premultiply_alpha(dtype, interpolation, n_points):
     assert np.abs(straight[edge, :3] - color[:3]).max() > 20 * tolerance
     assert np.allclose(premultiplied[alpha > 0, :3], color[:3], atol=tolerance)
     assert np.all(premultiplied[alpha == 0, :3] == 0)
+
+
+@pytest.mark.parametrize(('dtype', 'scale'), [('uint8', 1), ('float32', 255)])
+def test_resample_premultiply_alpha_weights_colors_by_alpha(dtype, scale):
+    # Two visible colors with different alphas, so the clip cannot produce the result
+    image = pv.ImageData(dimensions=(2, 1, 1))
+    image['rgba'] = (np.array([[255, 0, 0, 255], [0, 0, 255, 51]]) / scale).astype(dtype)
+
+    resampled = image.resample(
+        dimensions=(3, 1, 1), interpolation='linear', extend_border=False, premultiply_alpha=True
+    )
+    # The colors are averaged with weights 255 and 51, and the alphas are averaged
+    expected = np.array([255 * 255, 0, 255 * 51]) / (255 + 51)
+    assert np.allclose(resampled['rgba'][1, :3] * scale, expected, atol=0.5)
+    assert np.isclose(resampled['rgba'][1, 3] * scale, (255 + 51) / 2, atol=0.5)
 
 
 @pytest.mark.parametrize('interpolation', ['cubic', 'lanczos', 'bspline'])
