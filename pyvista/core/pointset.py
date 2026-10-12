@@ -47,7 +47,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
-from .grid import _StructuredMixin
+from .grid import _StructuredDataMixin
 from .utilities.arrays import convert_array
 from .utilities.cells import _get_regular_cells_from_dict
 from .utilities.cells import create_mixed_cells
@@ -3873,7 +3873,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return grid
 
 
-class StructuredGrid(_StructuredMixin, PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
+class StructuredGrid(
+    _StructuredDataMixin, PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid
+):
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -3894,7 +3896,7 @@ class StructuredGrid(_StructuredMixin, PointGrid, StructuredGridFilters, _vtk.vt
 
         If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty,
         this array will define the points of this :class:`StructuredGrid`.
-        Set the dimensions with :attr:`~pyvista.core.grid._StructuredMixin.dimensions`.
+        Set the dimensions with :attr:`~pyvista.core.grid._StructuredDataMixin.dimensions`.
 
         Otherwise, this parameter will be loaded as the ``x`` points, and ``y``
         and ``z`` points must be set. The shape of this array defines the shape
@@ -4072,7 +4074,10 @@ class StructuredGrid(_StructuredMixin, PointGrid, StructuredGridFilters, _vtk.vt
         """Raise if ``dims`` does not match the number of points."""
         n_points = self.n_points
         if n_points and np.prod(dims) != n_points:
-            msg = f'Dimensions {dims} do not match the {n_points} points of the {type(self).__name__}.'
+            msg = (
+                f'Dimensions {dims} do not match the {n_points} points of the '
+                f'{type(self).__name__}.'
+            )
             raise ValueError(msg)
 
     @property
@@ -4298,7 +4303,7 @@ class StructuredGrid(_StructuredMixin, PointGrid, StructuredGridFilters, _vtk.vt
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(_StructuredMixin, PointGrid, _vtk.vtkExplicitStructuredGrid):
+class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitStructuredGrid):
     """Extend the functionality of the :vtk:`vtkExplicitStructuredGrid` class.
 
     Can be initialized by the following:

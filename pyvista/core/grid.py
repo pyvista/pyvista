@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from .filters.data_object import _NestedMeshValidationFields
 
 
-class _StructuredMixin:
+class _StructuredDataMixin:
     """Add ``dimensions``, ``extent`` and ``offset`` properties to structured datasets.
 
     .. note::
@@ -293,7 +293,7 @@ class _StructuredMixin:
 
 
 @abstract_class
-class Grid(_StructuredMixin, DataSet):
+class Grid(_StructuredDataMixin, DataSet):
     """A class full of common methods for non-pointset grids."""
 
     def _convert_points_precision(self, points: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -544,7 +544,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         """Update the dimensions to the coordinates, keeping the offset."""
         offset = self.offset
         dims = (len(self.x), len(self.y), len(self.z))
-        self._set_extent([n for o, d in zip(offset, dims) for n in (o, o + d - 1)])
+        self._set_extent([n for o, d in zip(offset, dims, strict=True) for n in (o, o + d - 1)])
 
     def _from_arrays(
         self: Self,
@@ -834,7 +834,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
-        :attr:`~pyvista.core.grid._StructuredMixin.dimensions` of the uniform grid.
+        :attr:`~pyvista.core.grid._StructuredDataMixin.dimensions` of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
         :attr:`spacing` of the uniform grid in each dimension. Must be positive.

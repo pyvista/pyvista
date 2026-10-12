@@ -681,7 +681,7 @@ def StructuredSphere(
 
     Use the ``i-j-k`` ordering to work with the grid by index. Since ``i`` is the
     radial axis, an array shaped like
-    :attr:`~pyvista.core.grid._StructuredMixin.dimensions` assigns a value per layer.
+    :attr:`~pyvista.core.grid._StructuredDataMixin.dimensions` assigns a value per layer.
 
     >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
     >>> layer = np.zeros(sphere.dimensions)

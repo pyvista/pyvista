@@ -26,7 +26,7 @@ from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.grid import Grid
-from pyvista.core.grid import _StructuredMixin
+from pyvista.core.grid import _StructuredDataMixin
 from pyvista.core.pointset import _PointSetBase
 from pyvista.ext import _autoinherit as autoinherit
 from tests.conftest import PYVISTA_ROOT_DIR
@@ -175,7 +175,7 @@ def test_the_bases_that_collapse_duplicates_are_documented(documented):
     """Guard the doc entries that ``test_no_implementation_is_documented_twice`` needs."""
     assert _PointSetBase in documented
     assert Grid in documented
-    assert _StructuredMixin in documented
+    assert _StructuredDataMixin in documented
 
 
 def test_home_is_none_for_a_member_vtk_implements():
@@ -187,7 +187,7 @@ def test_home_is_none_for_a_member_vtk_implements():
 def test_own_members_excludes_what_a_documented_base_already_documents():
     own = autoinherit.own_members('pyvista', 'ImageData', _members(pv.ImageData))
     assert 'origin' in own  # ImageData defines it
-    assert 'dimensions' not in own  # documented as _StructuredMixin.dimensions
+    assert 'dimensions' not in own  # documented as _StructuredDataMixin.dimensions
     assert 'dimensionality' not in own  # documented as DataSet.dimensionality
     assert 'contour' not in own  # documented as DataSetFilters.contour
     assert 'min_spatial_dimension' not in own  # implemented by VTK
