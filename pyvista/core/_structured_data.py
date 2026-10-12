@@ -37,7 +37,8 @@ class _StructuredDataMixin:
         """Return or set the grid's dimensions.
 
         These are effectively the number of points along each of the
-        three dataset axes. They are all positive, or all zero for an empty grid.
+        three dataset axes. New dimensions must be all positive, or all zero for an empty
+        grid.
         Setting the dimensions keeps the grid's :attr:`offset`.
 
         The dimensions of a :class:`~pyvista.RectilinearGrid` and an
@@ -77,7 +78,7 @@ class _StructuredDataMixin:
             article = 'an' if name[0] in 'AEIOU' else 'a'
             msg = (
                 f'The dimensions of {article} `{name}` are implicitly defined and thus '
-                'cannot be set.'
+                f'cannot be set. {self._fixed_dimensions_hint}'
             )
             raise AttributeError(msg)
         dims_ = _validation.validate_array3(

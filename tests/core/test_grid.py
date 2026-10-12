@@ -1859,15 +1859,18 @@ def test_extent_raises(extent_grid, extent, match):
         extent_grid.extent = extent
 
 
+_FIXED_DIMENSIONS_HINTS = {
+    'RectilinearGrid': (
+        'Set the x, y and z coordinates to resize it, or the offset to shift its extent.'
+    ),
+    'ExplicitStructuredGrid': 'Set the offset to shift the extent instead.',
+}
+
+
 def test_extent_cannot_change_fixed_dimensions(fixed_dims_grid):
     extent = fixed_dims_grid.extent
     dims = fixed_dims_grid.dimensions
-    hint = {
-        'RectilinearGrid': (
-            'Set the x, y and z coordinates to resize it, or the offset to shift its extent.'
-        ),
-        'ExplicitStructuredGrid': 'Set the offset to shift the extent instead.',
-    }[type(fixed_dims_grid).__name__]
+    hint = _FIXED_DIMENSIONS_HINTS[type(fixed_dims_grid).__name__]
     match = re.escape(
         f'Cannot change the dimensions of `{type(fixed_dims_grid).__name__}` from {dims} '
         f'to (2, 2, 2). {hint}'
@@ -1882,7 +1885,8 @@ def test_fixed_dimensions_cannot_be_set(fixed_dims_grid):
     name = type(fixed_dims_grid).__name__
     article = 'an' if name == 'ExplicitStructuredGrid' else 'a'
     match = re.escape(
-        f'The dimensions of {article} `{name}` are implicitly defined and thus cannot be set.'
+        f'The dimensions of {article} `{name}` are implicitly defined and thus cannot be set. '
+        f'{_FIXED_DIMENSIONS_HINTS[name]}'
     )
     with pytest.raises(AttributeError, match=match):
         fixed_dims_grid.dimensions = dims
@@ -2486,15 +2490,6 @@ def test_rect_grid_raises_args(args):
         match=re.escape('Arguments not understood by `RectilinearGrid`.'),
     ):
         pv.RectilinearGrid(*args)
-
-
-def test_rect_grid_dimensions_raises():
-    g = pv.RectilinearGrid()
-    match = re.escape(
-        'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
-    )
-    with pytest.raises(AttributeError, match=match):
-        g.dimensions = 1
 
 
 @pytest.fixture
