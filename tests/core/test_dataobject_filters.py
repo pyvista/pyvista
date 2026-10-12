@@ -4564,6 +4564,22 @@ def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_g
     assert report.invalid_fields == ('coincident_points',)
 
 
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.ImageData(dimensions=(3, 3, 3)).cast_to_structured_grid(),
+        pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.0, 1.0, 2.0]),
+        examples.load_explicit_structured(),
+    ],
+    ids=type,
+)
+def test_validate_mesh_hidden_cells_have_no_size(mesh):
+    ghosts = np.zeros(mesh.n_cells, dtype=np.uint8)
+    ghosts[[0, 1]] = _vtk.vtkDataSetAttributes.HIDDENCELL
+    mesh.cell_data['vtkGhostType'] = ghosts
+    assert mesh.validate_mesh().is_valid
+
+
 def test_validate_mesh_invalid_point_references_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid.SetPoints(pv.vtk_points(grid.points[:-5]))

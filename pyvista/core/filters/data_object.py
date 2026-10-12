@@ -2010,6 +2010,11 @@ class DataObjectFilters:
                     + size_data['Volume']
                 )
 
+                # Hidden cells of structured data have no size, so do not check them
+                if _GHOST_ARRAY in mesh.cell_data:
+                    hidden = mesh.cell_data[_GHOST_ARRAY] & _vtk.vtkDataSetAttributes.HIDDENCELL
+                    size = np.where(hidden, np.nan, size)
+
                 # NEGATIVE_SIZE
                 state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
 
