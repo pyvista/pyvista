@@ -3746,6 +3746,19 @@ def test_validate_mesh_cell_status():
     assert str(report_enum) == str(report_str)
 
 
+def test_validate_mesh_explicit_structured_grid_unused_points():
+    grid = examples.load_explicit_structured()
+    grid.points = np.vstack([grid.points, [[1.0e3, 1.0e3, 1.0e3]]])
+    assert grid.validate_mesh().unused_points == [grid.n_points - 1]
+
+
+def test_validate_mesh_rectilinear_grid_non_finite_points():
+    grid = pv.RectilinearGrid([0.0, np.nan, 2.0], [0.0, 1.0], [0.0, 1.0])
+    expected = np.flatnonzero(~np.isfinite(grid.points).all(axis=1)).tolist()
+    assert expected
+    assert grid.validate_mesh().non_finite_points == expected
+
+
 def test_validate_mesh_message(sphere_with_invalid_arrays):
     assert pv.PolyData().validate_mesh().message is None
     assert sphere_with_invalid_arrays.validate_mesh().message

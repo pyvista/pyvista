@@ -926,7 +926,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            if hasattr(mesh, 'dimensions'):
+            # ExplicitStructuredGrid is left out: its cells are explicit and can skip points
+            if isinstance(mesh, (pv.Grid, pv.StructuredGrid)):
                 return []  # Cells are implicitly defined and cannot have unused points
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
@@ -937,7 +938,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
-            if isinstance(mesh, pv.Grid):
+            # RectilinearGrid is left out: its coordinate arrays can hold non-finite values
+            if isinstance(mesh, pv.ImageData):
                 return []  # Points are implicitly defined and cannot be non-finite
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
