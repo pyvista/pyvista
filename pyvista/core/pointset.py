@@ -54,6 +54,7 @@ from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
+from .utilities.misc import _ExtentMixin
 from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
@@ -3872,7 +3873,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return grid
 
 
-class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
+class StructuredGrid(_ExtentMixin, PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -4322,7 +4323,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
+class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructuredGrid):
     """Extend the functionality of the :vtk:`vtkExplicitStructuredGrid` class.
 
     Can be initialized by the following:
@@ -4386,6 +4387,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
     }
+
+    _extent_sets_dimensions: ClassVar[bool] = False
 
     def __init__(
         self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False
@@ -4842,6 +4845,12 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         """
         return self._dimensions()
+
+    def _set_extent(self, extent: list[int]) -> None:
+        """Set the extent, keeping the cells that ``SetExtent`` resets."""
+        cells = self.GetCells()
+        self.SetExtent(extent)
+        self.SetCells(cells)
 
     @property
     def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01

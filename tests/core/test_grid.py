@@ -1759,6 +1759,114 @@ def test_imagedata_offset():
     assert grid.dimensions == actual_dimensions
 
 
+_EXTENT_GRIDS = {
+    'ImageData': lambda: pv.ImageData(dimensions=(3, 4, 5)),
+    'RectilinearGrid': lambda: pv.ImageData(dimensions=(3, 4, 5)).cast_to_rectilinear_grid(),
+    'StructuredGrid': lambda: pv.ImageData(dimensions=(3, 4, 5)).cast_to_structured_grid(),
+    'ExplicitStructuredGrid': examples.load_explicit_structured,
+}
+
+
+@pytest.fixture(params=_EXTENT_GRIDS.values(), ids=_EXTENT_GRIDS.keys())
+def extent_grid(request):
+    return request.param()
+
+
+@pytest.fixture(
+    params=[_EXTENT_GRIDS['RectilinearGrid'], _EXTENT_GRIDS['ExplicitStructuredGrid']],
+    ids=['RectilinearGrid', 'ExplicitStructuredGrid'],
+)
+def fixed_dims_grid(request):
+    return request.param()
+
+
+def test_offset_round_trip(extent_grid):
+    dims = extent_grid.dimensions
+    extent_grid.offset = (-2, 3, -4)
+    assert extent_grid.offset == (-2, 3, -4)
+    assert isinstance(extent_grid.offset, tuple)
+    assert extent_grid.dimensions == dims
+    assert extent_grid.extent == (-2, dims[0] - 3, 3, dims[1] + 2, -4, dims[2] - 5)
+
+    extent_grid.offset = 1
+    assert extent_grid.offset == (1, 1, 1)
+    assert extent_grid.dimensions == dims
+
+
+def test_extent_round_trip(extent_grid):
+    dims = extent_grid.dimensions
+    extent = (-1, dims[0] - 2, 5, dims[1] + 4, 0, dims[2] - 1)
+    extent_grid.extent = np.array(extent)
+    assert extent_grid.extent == extent
+    assert isinstance(extent_grid.extent, tuple)
+    assert extent_grid.offset == (-1, 5, 0)
+    assert extent_grid.dimensions == dims
+
+
+@pytest.mark.parametrize('deep', [True, False])
+def test_extent_preserved_by_copy(extent_grid, deep):
+    extent_grid.offset = (-1, 2, -3)
+    copied = extent_grid.copy(deep=deep)
+    assert copied.extent == extent_grid.extent
+    assert copied.offset == (-1, 2, -3)
+
+
+@pytest.mark.parametrize('name', ['RectilinearGrid', 'StructuredGrid', 'ExplicitStructuredGrid'])
+def test_offset_keeps_points(name):
+    grid = _EXTENT_GRIDS[name]()
+    points = grid.points.copy()
+    grid.offset = (-1, 2, -3)
+    assert np.array_equal(grid.points, points)
+
+
+@pytest.mark.parametrize('offset', [(1.5, 0, 0), (1, 2), (1, 2, 3, 4)])
+def test_offset_raises(extent_grid, offset):
+    with pytest.raises(ValueError):  # noqa: PT011
+        extent_grid.offset = offset
+
+
+@pytest.mark.parametrize('extent', [(0, 1, 0, 1), (0.5, 1, 0, 1, 0, 1)])
+def test_extent_raises(extent_grid, extent):
+    with pytest.raises(ValueError):  # noqa: PT011
+        extent_grid.extent = extent
+
+
+def test_extent_changes_dimensions():
+    grid = _EXTENT_GRIDS['StructuredGrid']()
+    grid.extent = (1, 2, 1, 2, 1, 2)
+    assert grid.dimensions == (2, 2, 2)
+    assert grid.offset == (1, 1, 1)
+
+
+def test_extent_cannot_change_dimensions(fixed_dims_grid):
+    extent = fixed_dims_grid.extent
+    dims = fixed_dims_grid.dimensions
+    match = re.escape(
+        f'Cannot change the dimensions of {type(fixed_dims_grid).__name__} from {dims} '
+        f'to (2, 2, 2). Set the offset to shift the extent instead.'
+    )
+    with pytest.raises(ValueError, match=match):
+        fixed_dims_grid.extent = (1, 2, 1, 2, 1, 2)
+    assert fixed_dims_grid.extent == extent
+
+
+def test_explicit_structured_grid_offset_keeps_cells():
+    grid = examples.load_explicit_structured()
+    connectivity = grid.cast_to_unstructured_grid().cell_connectivity
+    neighbors = grid.neighbors(10)
+    grid.offset = (2, -1, 5)
+    assert np.array_equal(grid.cast_to_unstructured_grid().cell_connectivity, connectivity)
+    assert grid.neighbors(10) == neighbors
+
+
+@pytest.mark.parametrize('name', ['ImageData', 'StructuredGrid'])
+def test_dimensions_setter_resets_offset(name):
+    grid = _EXTENT_GRIDS[name]()
+    grid.offset = (1, 2, 3)
+    grid.dimensions = (2, 3, 4)
+    assert grid.extent == (0, 1, 0, 2, 0, 3)
+
+
 def test_unstructured_grid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))

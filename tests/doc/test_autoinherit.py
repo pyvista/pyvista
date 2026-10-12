@@ -184,7 +184,7 @@ def test_home_is_none_for_a_member_vtk_implements():
 
 def test_own_members_excludes_what_a_documented_base_already_documents():
     own = autoinherit.own_members('pyvista', 'ImageData', _members(pv.ImageData))
-    assert 'offset' in own  # ImageData defines it
+    assert 'origin' in own  # ImageData defines it
     assert 'dimensions' not in own  # documented as Grid.dimensions
     assert 'dimensionality' not in own  # documented as DataSet.dimensionality
     assert 'contour' not in own  # documented as DataSetFilters.contour

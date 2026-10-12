@@ -36,6 +36,7 @@ from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
+from .utilities.misc import _ExtentMixin
 from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 
@@ -202,7 +203,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
+class RectilinearGrid(_ExtentMixin, Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
@@ -270,6 +271,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         '.vtk': RectilinearGridWriter,
         '.vtr': XMLRectilinearGridWriter,
     }
+
+    _extent_sets_dimensions: ClassVar[bool] = False
 
     def __init__(
         self: Self,
@@ -621,7 +624,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return _get_output(alg)
 
 
-class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
+class ImageData(_ExtentMixin, Grid, ImageDataFilters, _vtk.vtkImageData):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:
@@ -1174,121 +1177,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
         return [ijk[axis] * spacing[axis] * sign[axis] + origin[axis] for axis in range(3)]
-
-    @property
-    def extent(
-        self: Self,
-    ) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
-        """Return or set the extent of the ImageData.
-
-        The extent is simply the first and last indices for each of the three axes.
-        It encodes information about the image's :attr:`offset` and
-        :attr:`~pyvista.Grid.dimensions`.
-
-        Examples
-        --------
-        Create a ``ImageData`` and show its extent.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
-        >>> grid.extent
-        (0, 9, 0, 9, 0, 9)
-
-        >>> grid.extent = (2, 5, 2, 5, 2, 5)
-        >>> grid.extent
-        (2, 5, 2, 5, 2, 5)
-
-        Note how this also modifies the grid's :attr:`offset`,
-        :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
-        we use default spacing of 1 here, the bounds match the extent exactly.
-
-        >>> grid.offset
-        (2, 2, 2)
-
-        >>> grid.dimensions
-        (4, 4, 4)
-
-        >>> grid.bounds
-        BoundsTuple(x_min = 2.0,
-                    x_max = 5.0,
-                    y_min = 2.0,
-                    y_max = 5.0,
-                    z_min = 2.0,
-                    z_max = 5.0)
-
-        """
-        return self.GetExtent()
-
-    @extent.setter
-    def extent(self: Self, new_extent: VectorLikeInt) -> None:
-        new_extent_ = _validation.validate_arrayN(
-            new_extent,
-            must_be_integer=True,
-            must_have_length=6,
-            to_list=True,
-            dtype_out=int,
-        )
-        self.SetExtent(new_extent_)
-
-    @property
-    def offset(self: Self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
-        """Return or set the index offset of the ImageData.
-
-        The offset is simply the first indices for each of the three axes
-        and defines the minimum :attr:`extent` of the image. Offset values
-        can be positive or negative. In physical space, the offset is relative
-        to the image's :attr:`origin`.
-
-        .. versionadded:: 0.45
-
-        Examples
-        --------
-        Create a ``ImageData`` and show that the offset is zeros by default.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
-        >>> grid.offset
-        (0, 0, 0)
-
-        The offset defines the minimum extent.
-
-        >>> grid.extent
-        (0, 9, 0, 9, 0, 9)
-
-        Set the offset to a new value for all axes.
-
-        >>> grid.offset = 2
-        >>> grid.offset
-        (2, 2, 2)
-
-        Show the extent again. Note how all values have increased by the offset value.
-
-        >>> grid.extent
-        (2, 11, 2, 11, 2, 11)
-
-        Set the offset for each axis separately and show the extent again.
-
-        >>> grid.offset = (-1, -2, -3)
-        >>> grid.extent
-        (-1, 8, -2, 7, -3, 6)
-
-        """
-        return self.extent[::2]
-
-    @offset.setter
-    def offset(self: Self, offset: int | VectorLikeInt) -> None:
-        offset_ = _validation.validate_array3(
-            offset, broadcast=True, must_be_integer=True, dtype_out=int
-        )
-        dims = self.dimensions
-        self.extent = (
-            offset_[0],
-            offset_[0] + dims[0] - 1,
-            offset_[1],
-            offset_[1] + dims[1] - 1,
-            offset_[2],
-            offset_[2] + dims[2] - 1,
-        )
 
     @_wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
