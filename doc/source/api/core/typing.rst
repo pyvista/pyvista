@@ -214,13 +214,22 @@ and its color.
 
 pyvista.typing.NamedColormaps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Name of a colormap accepted by :class:`~pyvista.LookupTable`, :meth:`~pyvista.Plotter.add_mesh`
-and :func:`~pyvista.get_cmap_safe`. See :ref:`named_colormaps` for every name and its colormap.
+Name of a colormap accepted as a :data:`ColormapOptions`. See :ref:`named_colormaps` for every
+name and its colormap.
 
 .. currentmodule:: pyvista.typing
 
 .. autodata:: NamedColormaps
    :no-value:
+
+pyvista.typing.ColormapOptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Colormap accepted by :class:`~pyvista.LookupTable` and the ``cmap`` argument of plotting
+methods, such as a :data:`NamedColormaps` name.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: ColormapOptions
 
 pyvista.typing.Chart
 ~~~~~~~~~~~~~~~~~~~~
