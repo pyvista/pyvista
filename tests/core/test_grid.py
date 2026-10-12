@@ -1316,9 +1316,27 @@ def test_image_data_init_kwargs():
     assert np.allclose(image.offset, vector)
 
 
-@pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
+@pytest.mark.parametrize('dims', [None, (0, 0, 0)])
 def test_image_data_empty_init(dims):
     image = pv.ImageData(dimensions=dims)
+    assert image.n_points == 0
+    assert image.n_cells == 0
+    assert image.area == 0
+    assert image.volume == 0
+
+    points = image.points
+    assert np.array_equal(points, np.zeros((0, 3)))
+
+
+@pytest.mark.parametrize('dims', [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+def test_image_data_mixed_zero_dimensions(dims):
+    match = re.escape(f'Dimensions {dims} must be all zero (empty) or all positive.')
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=dims)
+
+    vtk_image = _vtk.vtkImageData()
+    vtk_image.SetDimensions(*dims)
+    image = pv.wrap(vtk_image)
     assert image.n_points == 0
     assert image.n_cells == 0
     assert image.area == 0
@@ -1933,6 +1951,32 @@ def test_dimensions_raises(name, dims, match):
     grid = _EXTENT_GRIDS[name]()
     with pytest.raises(ValueError, match=match):
         grid.dimensions = dims
+
+
+@pytest.mark.parametrize('extent', [(0, -1, 0, 2, 0, 2), (0, 2, 0, -1, 0, -1)])
+def test_extent_mixed_zero_dimensions_raises(extent_grid, extent):
+    old_extent = extent_grid.extent
+    new_dims = (extent[1] - extent[0] + 1, extent[3] - extent[2] + 1, extent[5] - extent[4] + 1)
+    match = re.escape(f'Dimensions {new_dims} must be all zero (empty) or all positive.')
+    with pytest.raises(ValueError, match=match):
+        extent_grid.extent = extent
+    assert extent_grid.extent == old_extent
+
+
+@pytest.mark.parametrize('name', ['ImageData', 'StructuredGrid'])
+def test_dimensions_mixed_zero_raises(name):
+    grid = _EXTENT_GRIDS[name]()
+    match = re.escape('Dimensions (0, 3, 3) must be all zero (empty) or all positive.')
+    with pytest.raises(ValueError, match=match):
+        grid.dimensions = (0, 3, 3)
+
+
+@pytest.mark.parametrize('grid', [pv.ImageData(dimensions=(3, 4, 5)), pv.StructuredGrid()])
+def test_dimensions_all_zero_empties_grid(grid):
+    grid.offset = (1, 2, 3)
+    grid.dimensions = (0, 0, 0)
+    assert grid.dimensions == (0, 0, 0)
+    assert grid.n_points == 0
 
 
 def test_extent_negative_dimensions_raises(extent_grid):

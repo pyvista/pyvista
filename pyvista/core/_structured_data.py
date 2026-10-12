@@ -34,12 +34,14 @@ class _StructuredDataMixin:
         """Return or set the grid's dimensions.
 
         These are effectively the number of points along each of the
-        three dataset axes. Setting the dimensions keeps the grid's :attr:`offset`.
+        three dataset axes. They are all positive, or all zero for an empty grid.
+        Setting the dimensions keeps the grid's :attr:`offset`.
 
         The dimensions of a :class:`~pyvista.RectilinearGrid` and an
         :class:`~pyvista.ExplicitStructuredGrid` are defined by their coordinates and
         cells and cannot be set. The dimensions of a :class:`~pyvista.StructuredGrid`
-        must match its number of points, so set its points first.
+        are checked against its number of points when they are set, so set its points
+        first.
 
         Returns
         -------
@@ -143,6 +145,9 @@ class _StructuredDataMixin:
             new_extent_[5] - new_extent_[4] + 1,
         )
         _validation.check_nonnegative(new_dims, name='Dimensions')
+        if 0 in new_dims and any(new_dims):
+            msg = f'Dimensions {new_dims} must be all zero (empty) or all positive.'
+            raise ValueError(msg)
         if new_dims != self.dimensions:
             self._check_dimensions(new_dims)
         self._set_extent(new_extent_)
