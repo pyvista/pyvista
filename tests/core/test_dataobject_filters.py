@@ -3803,6 +3803,24 @@ def test_validate_mesh_unmeasurable_cells_have_no_size(make_mesh, n_points, valu
     assert report.is_valid
 
 
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system', reason='VTK < 9.4 cannot measure the polyhedron'
+)
+@pytest.mark.parametrize('value', [np.inf, np.nan])
+def test_validate_mesh_polyhedron_non_finite_point(value):
+    # VTK measures a polyhedron it cannot triangulate as zero
+    mesh = examples.cells.Polyhedron()
+    mesh.points[0] = (value, 0.0, 0.0)
+    report = mesh.validate_mesh(['non_finite_points', 'negative_size', 'zero_size'])
+    assert report.invalid_fields == ('non_finite_points',)
+
+
+def test_validate_mesh_rectilinear_grid_overflowing_coordinates():
+    # The coordinates are finite, but their difference overflows
+    grid = pv.RectilinearGrid([-1e308, 1e308], [0.0, 1.0], [0.0, 1.0])
+    assert grid.validate_mesh().is_valid
+
+
 def test_validate_mesh_rectilinear_grid_non_finite_points():
     grid = pv.RectilinearGrid([0.0, np.nan, 2.0], [0.0, 1.0], [0.0, 1.0])
     expected = np.flatnonzero(~np.isfinite(grid.points).all(axis=1)).tolist()
@@ -4649,11 +4667,12 @@ def test_validate_mesh_coincident_points_image_data(kwargs, hidden):
     [_vtk.vtkDataSetAttributes.HIDDENCELL, _vtk.vtkDataSetAttributes.REFINEDCELL],
     ids=['hidden', 'refined'],
 )
-def test_validate_mesh_hidden_cells_have_no_size(cast, flag):
-    # Cell 1 is degenerate along x
+def test_validate_mesh_hidden_structured_cells_keep_their_size(cast, flag):
+    # Cell 1 is degenerate along x, and hidden
     grid = pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])
-    mesh = _hide_cells(cast(grid), [0], flag)
+    mesh = _hide_cells(cast(grid), [1], flag)
     assert mesh.validate_mesh().zero_size == [1]
+    assert mesh.cell_data['vtkGhostType'][1] == flag
 
 
 @pytest.mark.parametrize(
@@ -4662,11 +4681,11 @@ def test_validate_mesh_hidden_cells_have_no_size(cast, flag):
     ids=['RectilinearGrid', 'StructuredGrid'],
 )
 @pytest.mark.parametrize('z', [[0.0, 1.0], [0.0]], ids=['3D', 'flat'])
-def test_validate_mesh_hidden_points_have_no_size(cast, z):
-    # Cell 1 is degenerate along x, and hiding point 3 hides cell 2
+def test_validate_mesh_hidden_points_keep_cell_sizes(cast, z):
+    # Cell 1 is degenerate along x, and hiding point 2 hides cells 1 and 2
     mesh = cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], z))
     ghosts = np.zeros(mesh.n_points, dtype=np.uint8)
-    ghosts[3] = _vtk.vtkDataSetAttributes.HIDDENPOINT
+    ghosts[2] = _vtk.vtkDataSetAttributes.HIDDENPOINT
     mesh.point_data['vtkGhostType'] = ghosts
     assert mesh.validate_mesh().zero_size == [1]
 
@@ -4687,15 +4706,15 @@ def test_validate_mesh_hidden_cells_keep_their_size(to_ugrid):
 @pytest.mark.parametrize(
     ('dtype', 'n_ghosts', 'invalid_fields'),
     [
-        # VTK reads the first values of a longer array, and past the end of a shorter one
-        (np.uint8, 4, ('cell_data_wrong_length',)),
+        # Longer than the cells, since VTK would read past the end of a shorter array
+        (np.uint8, 4, ('cell_data_wrong_length', 'zero_size')),
         (float, 3, ('zero_size',)),
         (np.int32, 3, ('zero_size',)),
     ],
     ids=['length', 'float', 'int32'],
 )
 def test_validate_mesh_invalid_ghost_array(dtype, n_ghosts, invalid_fields):
-    # Cell 1 is degenerate along x and marked hidden, but VTK only reads a uint8 ghost array
+    # Cell 1 is degenerate along x and marked hidden
     mesh = pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])
     ghosts = np.zeros(n_ghosts, dtype=dtype)
     ghosts[1] = _vtk.vtkDataSetAttributes.HIDDENCELL
@@ -4704,6 +4723,7 @@ def test_validate_mesh_invalid_ghost_array(dtype, n_ghosts, invalid_fields):
     mesh.GetCellData().AddArray(array)
     report = mesh.validate_mesh(['data', 'zero_size'])
     assert report.invalid_fields == invalid_fields
+    assert report.zero_size == [1]
 
 
 def test_validate_mesh_invalid_point_references_explicit_structured_grid():

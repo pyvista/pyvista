@@ -2003,7 +2003,16 @@ class DataObjectFilters:
                     if size_tolerance is not None
                     else np.finfo(mesh.points.dtype).eps
                 )
-                size_data = mesh.compute_cell_sizes(
+                measured = mesh
+                if isinstance(
+                    mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
+                ) and (_GHOST_ARRAY in mesh.cell_data or _GHOST_ARRAY in mesh.point_data):
+                    # VTK measures the cells these types hide as empty cells, so measure the
+                    # geometry of every cell without the ghost arrays
+                    measured = mesh.copy(deep=False)
+                    measured.cell_data.pop(_GHOST_ARRAY, None)
+                    measured.point_data.pop(_GHOST_ARRAY, None)
+                size_data = measured.compute_cell_sizes(
                     vertex_count=True, length=True, area=True, volume=True
                 ).cell_data
                 size = (
@@ -2019,15 +2028,11 @@ class DataObjectFilters:
                 unknown = (size_data['Area'] <= -_VERDICT_DBL_MAX) | (
                     size_data['Volume'] <= -_VERDICT_DBL_MAX
                 )
+                # A cell with a non-finite point cannot be measured either, which some cells,
+                # such as polyhedra, report as zero. Its points are reported as non-finite.
+                if not isinstance(mesh, pv.Grid):
+                    unknown |= _cells_with_non_finite_points(mesh)
                 size = np.where(unknown, np.nan, size)
-
-                # compute_cell_sizes may measure hidden cells of these types as empty cells, so
-                # their size says nothing about their geometry. ImageData is measured from its
-                # spacing.
-                if isinstance(
-                    mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
-                ):
-                    size = np.where(_hidden_structured_cells(mesh), np.nan, size)
 
                 # NEGATIVE_SIZE
                 state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
@@ -6619,44 +6624,16 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _hidden_structured_cells(
-    mesh: pv.RectilinearGrid | pv.StructuredGrid | pv.ExplicitStructuredGrid,
-) -> NDArray[np.bool_]:
-    """Return a mask of the cells VTK hides through the ghost arrays of structured data."""
-
-    def ghost_flags(data: DataSetAttributes, n_values: int, flag: int) -> NDArray[np.bool_]:
-        # VTK only reads ghosts from a uint8 array, and reads the first values of a longer one
-        ghosts = data.get(_GHOST_ARRAY)
-        if (
-            ghosts is None
-            or ghosts.ndim != 1
-            or len(ghosts) < n_values
-            or ghosts.dtype != np.uint8
-        ):
-            return np.zeros(n_values, dtype=bool)
-        return (ghosts[:n_values] & flag) != 0
-
-    # VTK hides refined cells as well as hidden ones
-    hidden_cell = _vtk.vtkDataSetAttributes.HIDDENCELL | _vtk.vtkDataSetAttributes.REFINEDCELL
-    hidden = ghost_flags(mesh.cell_data, mesh.n_cells, hidden_cell)
-    if isinstance(mesh, pv.ExplicitStructuredGrid) or mesh.n_cells == 0:
-        # Its cells are explicit and ignore hidden points
-        return hidden
-    points = ghost_flags(mesh.point_data, mesh.n_points, _vtk.vtkDataSetAttributes.HIDDENPOINT)
-    if not points.any():
-        return hidden
-    # A cell is hidden if any of its corners is. Combine neighbouring points along each axis
-    # with cells, laid out as (nz, ny, nx) so that x varies fastest.
-    nx, ny, nz = mesh.dimensions
-    corners = points.reshape(nz, ny, nx)
-    for axis in range(3):
-        if corners.shape[axis] > 1:
-            lower = [slice(None)] * 3
-            upper = [slice(None)] * 3
-            lower[axis] = slice(None, -1)
-            upper[axis] = slice(1, None)
-            corners = corners[tuple(lower)] | corners[tuple(upper)]
-    return hidden | corners.ravel()
+def _cells_with_non_finite_points(mesh: DataSet) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a mesh that reference a non-finite point."""
+    non_finite = ~np.isfinite(mesh.points).all(axis=1)
+    if not non_finite.any():
+        return np.zeros(mesh.n_cells, dtype=bool)
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    # Count each cell's non-finite points from the cumulative count along its connectivity
+    count = np.concatenate([[0], np.cumsum(non_finite[grid.cell_connectivity])])
+    offsets = grid.cell_offsets
+    return count[offsets[1:]] > count[offsets[:-1]]
 
 
 def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
@@ -6681,7 +6658,7 @@ def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]
         return np.full(grid.n_cells, coincident)
 
     # A cell is an axis-aligned box, and its closest pair of corners are the ends of an edge
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid='ignore', over='ignore'):
         x, y, z = (
             np.abs(np.diff(coords)) <= tolerance if coords.size > 1 else np.zeros(1, dtype=bool)
             for coords in (grid.x, grid.y, grid.z)
