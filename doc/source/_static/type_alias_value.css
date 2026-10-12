@@ -1,0 +1,13 @@
+/* Type alias values on the typing page: highlighted code without the code-block box */
+div.type-alias-value div.highlight,
+div.type-alias-value div.highlight pre {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
+div.type-alias-value .copybtn {
+  display: none;
+}

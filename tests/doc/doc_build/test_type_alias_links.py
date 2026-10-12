@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 import re
 
@@ -57,3 +58,30 @@ def test_type_alias_drops_inherited_docstring():
     assert 'pyvista.typing.ColorLike' in html
     assert 'Represent a union type' not in html
     assert 'Type aliases are created through the type statement' not in html
+
+
+def type_alias_value(page: str, alias: str) -> str:
+    """Return the text of the value block of a type alias."""
+    start = page.index(f'id="pyvista.typing.{alias}"')
+    block = page[start : page.index('</pre>', start)]
+    return html.unescape(re.sub(r'<[^>]+>', '', block.split('<pre>', 1)[1])).strip()
+
+
+@pytest.mark.parametrize(
+    ('alias', 'value'),
+    [
+        ('CellsLike', 'MatrixLikeInt | VectorLikeInt'),
+        ('TransformLike', 'RotationLike | vtkMatrix4x4 | vtkTransform'),
+        ('LineStyle', "Literal['', '-', '--', ':', '-.', '-..']"),
+    ],
+)
+def test_type_alias_value_replaces_signature(alias, value):
+    """Confirm a type alias shows its value in place of its signature, keeping its anchor."""
+    page = (Path(BUILD_HTML_DIR) / 'api' / 'core' / 'typing.html').read_text()
+    assert (
+        f'class="type-alias-value highlight-python notranslate" id="pyvista.typing.{alias}"'
+        in page
+    )
+    assert f'<dt class="sig sig-object py" id="pyvista.typing.{alias}"' not in page
+    assert 'alias of' not in page
+    assert type_alias_value(page, alias) == value
