@@ -2810,12 +2810,25 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
 
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize(
-    'transformation', [pv.Transform().translate(1.0, 0.0, 0.0), pv.Transform().rotate_z(90)]
+    'transformation',
+    [
+        pv.Transform(),
+        pv.Transform().rotate_z(90),
+        pv.Transform().rotate_z(90).rotate_x(90),
+        pv.Transform().reflect((1, 0, 0)),
+        pv.Transform().rotate_y(180),
+    ],
+    ids=['identity', 'one-axis-pair', 'all-three-axes', 'reflect', 'rotate-180'],
 )
-def test_transform_rectilinear_keeps_offset(rectilinear, transformation, inplace):
-    rectilinear.offset = (1, 2, 3)
-    transformed = rectilinear.transform(transformation, inplace=inplace)
-    assert transformed.offset == (1, 2, 3)
+def test_transform_rectilinear_offset_follows_axes(transformation, inplace):
+    """Test the offset moves with the axes, using a grid whose coordinates are its indices."""
+    offset = (-4, 2, 7)
+    x, y, z = (start + np.arange(size) for start, size in zip(offset, (5, 3, 2), strict=True))
+    grid = pv.RectilinearGrid(x, y, z)
+    grid.offset = offset
+    assert grid.extent == grid.bounds
+    transformed = grid.transform(transformation, inplace=inplace)
+    assert transformed.extent == transformed.bounds
 
 
 @pytest.mark.parametrize('inplace', [True, False])

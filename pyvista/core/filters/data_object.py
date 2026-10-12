@@ -213,6 +213,20 @@ def _transform_rectilinear_axes(
     )
 
 
+def _transform_rectilinear_offset(
+    offset: tuple[int, int, int],
+    dimensions: tuple[int, int, int],
+    components: _RectilinearComponents,
+) -> list[int]:
+    """Return a grid's offset, permuted and reflected with its axes."""
+    _, scale, axes = components
+    # A reversed axis mirrors its extent about index zero
+    return [
+        offset[axis] if factor > 0 else -(offset[axis] + dimensions[axis] - 1)
+        for axis, factor in zip(axes, scale, strict=True)
+    ]
+
+
 def _permute_rectilinear_arrays(
     output: RectilinearGrid,
     dimensions: tuple[int, int, int],
@@ -2149,7 +2163,8 @@ class DataObjectFilters:
         .. versionchanged:: 0.50
             Rotations which map each axis onto a coordinate axis are supported for
             :class:`~pyvista.RectilinearGrid`. Its coordinates always ascend, and its
-            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`, points and
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`,
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`, points and
             arrays are ordered to match.
 
         .. versionchanged:: 0.48.0
@@ -2322,8 +2337,9 @@ class DataObjectFilters:
                 dataset = cast('pv.RectilinearGrid', self)
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = dataset.dimensions
+                offset = dataset.offset
                 _transform_rectilinear_axes(output, dataset, components)
-                output.offset = dataset.offset
+                output.offset = _transform_rectilinear_offset(offset, dimensions, components)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 _permute_rectilinear_arrays(output, dimensions, components)

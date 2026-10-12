@@ -948,7 +948,15 @@ def test_cast_keeps_offset(cast):
 
 
 @pytest.mark.parametrize('offset', [(0, 0, 0), (10, -3, 2), (-5, 4, -4)])
-@pytest.mark.parametrize('key', [(slice(1, None, 2), slice(None), 0), (slice(None, None, 3),) * 3])
+@pytest.mark.parametrize(
+    'key',
+    [
+        (slice(1, None, 2), slice(None), 0),
+        (slice(None, None, 3),) * 3,
+        # A start below the extent clamps to its first point
+        (slice(-2, None, 2), slice(None), 0),
+    ],
+)
 def test_slice_structured_with_step_matches_image_data(offset, key):
     image = pv.ImageData(dimensions=(9, 7, 5), offset=offset)
     grid = image.cast_to_structured_grid()
@@ -961,9 +969,18 @@ def test_slice_structured_with_step_matches_image_data(offset, key):
         else:
             voi.extend((lo + (k.start or 0), hi))
             rate.append(k.step or 1)
-    expected = image.extract_subset(voi, rate=rate, rebase_coordinates=False)
+    # ImageData rejects a VOI outside its extent, so clamp it there
+    clamped = [
+        max(v, e) if i % 2 == 0 else v
+        for i, (v, e) in enumerate(zip(voi, image.extent, strict=True))
+    ]
+    expected = image.extract_subset(clamped, rate=rate, rebase_coordinates=False)
     assert sliced.extent == expected.extent
-    points = grid.points.reshape((*grid.dimensions, 3), order='F')[key]
+    assert grid.extract_subset(voi, rate=rate).extent == expected.extent
+    numpy_key = tuple(
+        slice(max(k.start or 0, 0), k.stop, k.step) if isinstance(k, slice) else k for k in key
+    )
+    points = grid.points.reshape((*grid.dimensions, 3), order='F')[numpy_key]
     assert np.allclose(sliced.points, points.reshape((-1, 3), order='F'))
 
 
@@ -971,6 +988,7 @@ def test_structured_grid_concatenate_keeps_offset():
     grid = pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid()
     grid.offset = (1, -2, 3)
     other = grid.translate((2.0, 0.0, 0.0))
+    other.offset = (0, 0, 0)
     joined = grid.concatenate(other, axis=0)
     assert joined.offset == grid.offset
     assert joined.dimensions == (5, 4, 2)
