@@ -1126,7 +1126,7 @@ def drop_type_alias_docstring(  # noqa: PLR0917
 
 
 # Widest line that fits the content column at a 1280 px window without scrolling
-_TYPE_ALIAS_LINE_LENGTH = 72
+_TYPE_ALIAS_LINE_LENGTH = 68
 
 # A cross-reference role, whose displayed text is its title
 _TYPE_REFERENCE = re.compile(r':py:\w+:`([^`<]*?)(?: <[^`]*>)?`')
