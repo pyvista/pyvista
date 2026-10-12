@@ -233,6 +233,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     }
 
     _has_fixed_dimensions: ClassVar[bool] = True
+    _fixed_dimensions_hint: ClassVar[str] = (
+        'Set the x, y and z coordinates to resize it, or the offset to shift its extent.'
+    )
 
     def __init__(
         self: Self,

@@ -1862,9 +1862,15 @@ def test_extent_raises(extent_grid, extent, match):
 def test_extent_cannot_change_fixed_dimensions(fixed_dims_grid):
     extent = fixed_dims_grid.extent
     dims = fixed_dims_grid.dimensions
+    hint = {
+        'RectilinearGrid': (
+            'Set the x, y and z coordinates to resize it, or the offset to shift its extent.'
+        ),
+        'ExplicitStructuredGrid': 'Set the offset to shift the extent instead.',
+    }[type(fixed_dims_grid).__name__]
     match = re.escape(
         f'Cannot change the dimensions of `{type(fixed_dims_grid).__name__}` from {dims} '
-        f'to (2, 2, 2). Set the offset to shift the extent instead.'
+        f'to (2, 2, 2). {hint}'
     )
     with pytest.raises(ValueError, match=match):
         fixed_dims_grid.extent = (1, 2, 1, 2, 1, 2)
@@ -1991,12 +1997,29 @@ def test_dimensions_mixed_zero_raises(name):
         grid.dimensions = (0, 3, 3)
 
 
+def test_offset_shifts_mixed_zero_grid():
+    vtk_image = _vtk.vtkImageData()
+    vtk_image.SetDimensions(1, 0, 0)
+    image = pv.wrap(vtk_image)
+    image.offset = (1, 2, 3)
+    assert image.offset == (1, 2, 3)
+    assert image.dimensions == (1, 0, 0)
+
+    grid = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0])
+    grid.z = np.array([])
+    dims = grid.dimensions
+    grid.offset = (1, 2, 3)
+    assert grid.offset == (1, 2, 3)
+    assert grid.dimensions == dims
+
+
 @pytest.mark.parametrize('make_grid', [_EXTENT_GRIDS['ImageData'], pv.StructuredGrid])
 def test_dimensions_all_zero_empties_grid(make_grid):
     grid = make_grid()
     grid.offset = (1, 2, 3)
     grid.dimensions = (0, 0, 0)
     assert grid.dimensions == (0, 0, 0)
+    assert grid.offset == (1, 2, 3)
     assert grid.n_points == 0
 
 
