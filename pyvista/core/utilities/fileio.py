@@ -160,14 +160,15 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         """Return the human-readable name of the file format.
 
         A reader and a writer for the same format share the same name.
+        A custom reader subclass can set its own with ``format_name = 'My Format'`` in
+        the class body.
 
         .. versionadded:: 0.50
 
         Returns
         -------
         str
-            Name of the file format, or an empty string if the class does not declare
-            one, as for a custom reader registered with :func:`pyvista.register_reader`.
+            Name of the file format, or an empty string if the class does not declare one.
 
         Examples
         --------

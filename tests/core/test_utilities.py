@@ -3809,6 +3809,14 @@ def test_format_name_undeclared():
         _map_extensions(_Reader)
 
 
+def test_format_name_custom_reader():
+    class _Reader(pv.BaseReader):
+        format_name = 'My Format'
+
+    assert _Reader.format_name == 'My Format'
+    assert pv.BaseReader.format_name == ''
+
+
 def test_ply_writer(sphere, tmp_path):
     writer_cls = pv.PLYWriter
     assert writer_cls.extensions == ('.ply',)
