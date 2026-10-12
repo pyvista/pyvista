@@ -4610,10 +4610,8 @@ def _hide_cells(mesh, ids):
         {'dimensions': (3, 3, 2), 'spacing': (1.0, 1e-9, 1.0)},
         # A skewed direction collapses a diagonal of each cell but none of its edges
         {'dimensions': (3, 3, 2), 'direction_matrix': [[1, 1, 0], [0, 1e-9, 0], [0, 0, 1]]},
-        # Points overflow past the second x index, so the cells differ
-        {'dimensions': (5, 3, 2), 'spacing': (1e308, 1e-9, 1.0)},
     ],
-    ids=['uniform', 'thin', 'skewed', 'overflow'],
+    ids=['uniform', 'thin', 'skewed'],
 )
 @pytest.mark.parametrize('hidden', [[], [0]])
 def test_validate_mesh_coincident_points_image_data(kwargs, hidden):
@@ -4622,22 +4620,6 @@ def test_validate_mesh_coincident_points_image_data(kwargs, hidden):
     expected = expected.tolist()
     assert image.cell_validator().field_data['coincident_points'].tolist() == expected
     assert ('coincident_points' in image.validate_mesh().invalid_fields) == bool(expected)
-
-
-@pytest.mark.parametrize(
-    ('x', 'expected'),
-    [
-        # Every pair of points sharing the short y edge has a non-finite x coordinate
-        ([np.nan, np.nan], []),
-        # The short y edge can be placed at the finite x coordinate
-        ([np.nan, 0.0], [0]),
-    ],
-)
-def test_validate_mesh_coincident_points_rectilinear_grid_non_finite(x, expected):
-    grid = pv.RectilinearGrid(x, [0.0, 1e-9], [0.0, 1.0])
-    cast = grid.cast_to_structured_grid().cell_validator().field_data['coincident_points']
-    assert cast.tolist() == expected
-    assert grid.cell_validator().field_data['coincident_points'].tolist() == expected
 
 
 @pytest.mark.parametrize(

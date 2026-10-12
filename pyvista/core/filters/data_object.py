@@ -939,8 +939,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         def get_non_finite_point_ids() -> list[int]:
             if isinstance(mesh, pv.ImageData):
                 # A non-finite origin, spacing or direction reaches every point
-                geometry = [*mesh.origin, *mesh.spacing, *np.ravel(mesh.direction_matrix)]
-                if not np.isfinite(geometry).all():
+                if not np.isfinite(mesh.index_to_physical_matrix).all():
                     return list(range(mesh.n_points))
                 # Points are affine in the index, so the corners that set the bounds are extremes
                 if np.isfinite(mesh.bounds).all():
@@ -2037,11 +2036,8 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            if (
-                isinstance(mesh, pv.Grid)
-                and (coincident := _grid_coincident_cells(mesh, tol)) is not None
-            ):
-                state[coincident] |= CellStatus.COINCIDENT_POINTS
+            if isinstance(mesh, pv.Grid):
+                state[_grid_coincident_cells(mesh, tol)] |= CellStatus.COINCIDENT_POINTS
                 # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
 
@@ -6623,74 +6619,35 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_] | None:
+def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
     """Return a mask of the cells of a grid with two points within ``tolerance``.
 
-    This matches the per-cell point distance check used for other datasets, but uses the grid
-    geometry to avoid building every cell. Return ``None`` for an :class:`~pyvista.ImageData`
-    whose points overflow, which needs that per-cell check.
+    This uses the grid geometry rather than building every cell. Cells with non-finite points,
+    which are reported separately, may differ from the per-cell check of other datasets.
     """
     if grid.n_cells == 0:
         return np.zeros(0, dtype=bool)
-    # Non-finite points compare as not coincident; they are reported as non-finite points
-    with np.errstate(invalid='ignore', over='ignore'):
-        if isinstance(grid, pv.ImageData):
-            # While its points are finite, every cell is a translated copy of the first, so
-            # measuring one cell decides all. Overflowing points break that, since cells past
-            # the overflow collapse to infinity. A non-finite geometry makes every point
-            # non-finite, so no cell is coincident either way.
-            if (
-                not np.isfinite(grid.bounds).all()
-                and np.isfinite(
-                    [*grid.origin, *grid.spacing, *np.ravel(grid.direction_matrix)]
-                ).all()
-            ):
-                return None
-            # The corners of the first cell are index offsets of 0 or 1 along each axis with
-            # more than one point, mapped to physical space. The direction matrix may skew the
-            # cell, so every pair of corners is compared, not only the edges.
-            steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
-            ijk = np.array(list(itertools.product(*steps)), dtype=float)
-            matrix = grid.index_to_physical_matrix
+    if isinstance(grid, pv.ImageData):
+        # Every cell has the shape of the first. Its corners are index offsets of 0 or 1 along
+        # each axis with more than one point. The direction matrix may skew the cell, so every
+        # pair of corners is compared, not only the edges.
+        steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
+        ijk = np.array(list(itertools.product(*steps)), dtype=float)
+        matrix = grid.index_to_physical_matrix
+        with np.errstate(invalid='ignore', over='ignore'):
             points = ijk @ matrix[:3, :3].T + matrix[:3, 3]
             dist = np.linalg.norm(points[:, np.newaxis] - points[np.newaxis], axis=-1)
-            coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
-            return np.full(grid.n_cells, coincident)
+        coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
+        return np.full(grid.n_cells, coincident)
 
-        # A RectilinearGrid cell is an axis-aligned box. Two of its corners differ along one or
-        # more axes, and their distance is at least the edge length along each of those axes,
-        # so the closest pair of corners is always the two ends of one edge. Checking the edge
-        # lengths along each axis is therefore enough.
-        #
-        # An edge along one axis joins two corners that share their other two coordinates. The
-        # per-point check sees a NaN distance when a shared coordinate is not finite, so the
-        # edge only counts when the cell has a finite coordinate on each of the other axes: one
-        # of its two, or the single one on a flat axis.
-        short_edge, finite = [], []
-        for coords in (grid.x, grid.y, grid.z):
-            if coords.size > 1:
-                short_edge.append(np.abs(np.diff(coords)) <= tolerance)
-                finite.append(np.isfinite(coords[:-1]) | np.isfinite(coords[1:]))
-            else:
-                # A flat axis has no edges and one coordinate per cell
-                short_edge.append(np.zeros(1, dtype=bool))
-                finite.append(np.isfinite(coords))
-
-    def per_cell(axis_mask: list[NDArray[np.bool_]]) -> list[NDArray[np.bool_]]:
-        # Shape the x, y and z masks to broadcast to (nz, ny, nx), which ravels to cell ids
-        # with x varying fastest
-        x, y, z = axis_mask
-        return [x, y[:, np.newaxis], z[:, np.newaxis, np.newaxis]]
-
-    (short_x, short_y, short_z), (finite_x, finite_y, finite_z) = (
-        per_cell(short_edge),
-        per_cell(finite),
-    )
-    return (
-        (short_x & finite_y & finite_z)
-        | (short_y & finite_x & finite_z)
-        | (short_z & finite_x & finite_y)
-    ).ravel()
+    # A cell is an axis-aligned box, and its closest pair of corners are the ends of an edge
+    with np.errstate(invalid='ignore'):
+        x, y, z = (
+            np.abs(np.diff(coords)) <= tolerance if coords.size > 1 else np.zeros(1, dtype=bool)
+            for coords in (grid.x, grid.y, grid.z)
+        )
+    # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
+    return (x | y[:, np.newaxis] | z[:, np.newaxis, np.newaxis]).ravel()
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
