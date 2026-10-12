@@ -166,13 +166,8 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         Returns
         -------
         str
-            Name of the file format.
-
-        Raises
-        ------
-        AttributeError
-            If the class does not declare a file format, as for a custom reader
-            registered with :func:`pyvista.register_reader`.
+            Name of the file format, or an empty string if the class does not declare
+            one, as for a custom reader registered with :func:`pyvista.register_reader`.
 
         Examples
         --------
@@ -186,7 +181,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         'VTK Unstructured Grid'
 
         """
-        return cls._get_format().name
+        return cls._format.name if hasattr(cls, '_format') else ''
 
     @_classproperty
     def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805

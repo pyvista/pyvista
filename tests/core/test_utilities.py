@@ -3724,9 +3724,10 @@ def test_map_extensions_rejects_shared_extension():
 def test_format_name_undeclared():
     class _Reader(pv.BaseReader): ...
 
+    assert _Reader.format_name == ''
+    assert pv.core.utilities.fileio._FileIOBase.format_name == ''
     with pytest.raises(AttributeError, match='_Reader does not declare a file format'):
-        _ = _Reader.format_name
-    assert getattr(_Reader, 'format_name', None) is None
+        _map_extensions(_Reader)
 
 
 def test_ply_writer(sphere, tmp_path):
