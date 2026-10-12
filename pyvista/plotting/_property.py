@@ -836,24 +836,27 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
-        Get the default metallic value and visualize it.
+        Get the default metallic value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # required
         >>> prop.metallic
         0.0
-        >>> prop.plot()
 
-        Visualize metallic at ``0.5``.
+        Visualize metallic at ``0.0``, ``0.5``, and ``1.0`` from left to right
+        with physically based rendering.
 
-        >>> prop.metallic = 0.5
-        >>> prop.plot()
-
-        Visualize metallic at ``1.0``.
-
-        >>> prop.metallic = 1.0
-        >>> prop.plot()
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> for i, metallic in enumerate([0.0, 0.5, 1.0]):
+        ...     actor = pl.add_mesh(mesh.translate((0.35 * i, 0, 0)))
+        ...     actor.prop.interpolation = 'pbr'  # required
+        ...     actor.prop.metallic = metallic
+        >>> pl.set_environment_texture(examples.download_sky_box_cube_map())
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
         return self.GetMetallic()
@@ -884,22 +887,21 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.roughness
         0.5
 
-        Visualize default roughness with metallic of ``0.5`` and physically based
-        rendering.
+        Visualize roughness at ``0.0``, ``0.5``, and ``1.0`` from left to right
+        with metallic of ``0.5`` and physically based rendering.
 
-        >>> prop.interpolation = 'pbr'
-        >>> prop.metallic = 0.5
-        >>> prop.plot()
-
-        Visualize roughness at ``0.1``.
-
-        >>> prop.roughness = 0.0
-        >>> prop.plot()
-
-        Visualize roughness at ``1.0``.
-
-        >>> prop.roughness = 1.0
-        >>> prop.plot()
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> for i, roughness in enumerate([0.0, 0.5, 1.0]):
+        ...     actor = pl.add_mesh(mesh.translate((0.35 * i, 0, 0)))
+        ...     actor.prop.interpolation = 'pbr'
+        ...     actor.prop.metallic = 0.5
+        ...     actor.prop.roughness = roughness
+        >>> pl.set_environment_texture(examples.download_sky_box_cube_map())
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
         return self.GetRoughness()
