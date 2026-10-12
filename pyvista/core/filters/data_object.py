@@ -6611,13 +6611,19 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
 
 
 def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
-    """Return a mask of the cells of a grid with two points within ``tolerance``."""
+    """Return a mask of the cells of a grid with two points within ``tolerance``.
+
+    This matches the per-cell point distance check used for other datasets, but uses the grid
+    geometry to avoid building every cell.
+    """
     if grid.n_cells == 0:
         return np.zeros(0, dtype=bool)
     # Non-finite points compare as not coincident; they are reported as non-finite points
     with np.errstate(invalid='ignore', over='ignore'):
         if isinstance(grid, pv.ImageData):
-            # All cells are translated copies of one another, so check the corners of one
+            # Every cell is a translated copy of the first, so measuring one cell decides all.
+            # Its corners are index offsets of 0 or 1 along each axis with more than one point,
+            # mapped to physical space; the direction matrix may skew the cell.
             steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
             ijk = np.array(list(itertools.product(*steps)), dtype=float)
             matrix = grid.index_to_physical_matrix
@@ -6625,24 +6631,41 @@ def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]
             dist = np.linalg.norm(points[:, np.newaxis] - points[np.newaxis], axis=-1)
             coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
             return np.full(grid.n_cells, coincident)
-        # Cells are axis-aligned boxes, so two points are within tolerance only if an edge is.
-        # An edge is a pair of finite points only if every other axis has a finite coordinate.
-        small, finite = [], []
+
+        # A RectilinearGrid cell is an axis-aligned box. Two of its corners differ along one or
+        # more axes, and their distance is at least the edge length along each of those axes,
+        # so the closest pair of corners is always the two ends of one edge. Checking the edge
+        # lengths along each axis is therefore enough.
+        #
+        # The ends of an edge along one axis share their coordinates on the other two axes, and
+        # a cell offers two such coordinates per axis (one for a flat axis). The edge counts only
+        # if it can be placed at finite coordinates, which needs one finite coordinate on each
+        # of the other axes.
+        short_edge, finite = [], []
         for coords in (grid.x, grid.y, grid.z):
             if coords.size > 1:
-                small.append(np.abs(np.diff(coords)) <= tolerance)
+                short_edge.append(np.abs(np.diff(coords)) <= tolerance)
                 finite.append(np.isfinite(coords[:-1]) | np.isfinite(coords[1:]))
             else:
-                small.append(np.zeros(1, dtype=bool))
+                # A flat axis has no edges and one coordinate per cell
+                short_edge.append(np.zeros(1, dtype=bool))
                 finite.append(np.isfinite(coords))
 
     def per_cell(axis_mask: list[NDArray[np.bool_]]) -> list[NDArray[np.bool_]]:
-        # Cell ids are ordered with x varying fastest
+        # Shape the x, y and z masks to broadcast to (nz, ny, nx), which ravels to cell ids
+        # with x varying fastest
         x, y, z = axis_mask
         return [x, y[:, np.newaxis], z[:, np.newaxis, np.newaxis]]
 
-    (s0, s1, s2), (f0, f1, f2) = per_cell(small), per_cell(finite)
-    return ((s0 & f1 & f2) | (s1 & f0 & f2) | (s2 & f0 & f1)).ravel()
+    (short_x, short_y, short_z), (finite_x, finite_y, finite_z) = (
+        per_cell(short_edge),
+        per_cell(finite),
+    )
+    return (
+        (short_x & finite_y & finite_z)
+        | (short_y & finite_x & finite_z)
+        | (short_z & finite_x & finite_y)
+    ).ravel()
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
