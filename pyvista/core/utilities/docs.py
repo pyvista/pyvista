@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import pyvista as pv
-from pyvista.core.utilities.misc import _classproperty
 
 if TYPE_CHECKING:
     from docutils.nodes import document
@@ -66,15 +65,10 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     obj: Any = submod
     for part in fullname.split('.'):
-        # A metaclass property (e.g. CellType.dimension_map) is invoked by a plain
-        # getattr, losing the property itself -- grab it off the metaclass instead.
-        metaclass_prop = getattr(type(obj), part, None) if inspect.isclass(obj) else None
-        if isinstance(metaclass_prop, property):
-            obj = metaclass_prop
-            continue
-        # A class property is evaluated by a plain getattr too.
+        # A plain getattr evaluates a metaclass property (e.g. CellType.dimension_map) or a
+        # class property (e.g. BaseReader.extensions), losing the property itself.
         static = inspect.getattr_static(obj, part, None) if inspect.isclass(obj) else None
-        if isinstance(static, _classproperty):
+        if isinstance(static, property):
             obj = static
             continue
         try:

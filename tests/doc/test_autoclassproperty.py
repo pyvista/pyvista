@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 import pytest
+from sphinx.ext.autosummary import generate
 
 import pyvista as pv
 from pyvista.core.utilities.fileio import _FileIOBase
@@ -34,6 +35,38 @@ def test_attrgetter_respects_override():
         extensions = ('.foo',)
 
     assert autoclassproperty.classproperty_attrgetter(Child, 'extensions') == ('.foo',)
+
+
+@pytest.fixture
+def patched_content(monkeypatch):
+    """Patch a recording stand-in for ``generate_autosummary_content``; return its calls."""
+    calls = []
+    monkeypatch.setattr(
+        generate, 'generate_autosummary_content', lambda *args, **_kwargs: calls.append(args)
+    )
+    autoclassproperty._patch_autosummary_content()
+    return calls
+
+
+@pytest.mark.parametrize(
+    ('name', 'parent', 'expected'),
+    [
+        ('mod._FileIOBase.extensions', _FileIOBase, vars(_FileIOBase)['extensions']),
+        ('mod._FileIOBase.path', _FileIOBase, 'value'),
+        ('mod.extensions', pv, 'value'),
+    ],
+    ids=['classproperty', 'property', 'module-parent'],
+)
+def test_patch_passes_classproperty(patched_content, name, parent, expected):
+    generate.generate_autosummary_content(name, 'value', parent)
+    assert patched_content[-1][1] is expected
+
+
+@pytest.mark.usefixtures('patched_content')
+def test_patch_is_applied_once():
+    patched = generate.generate_autosummary_content
+    autoclassproperty._patch_autosummary_content()
+    assert generate.generate_autosummary_content is patched
 
 
 def test_runtime_value_unchanged():
