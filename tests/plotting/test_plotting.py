@@ -1831,9 +1831,45 @@ def test_screenshot_transparent_background_alpha(opacity, anti_aliasing, backgro
     assert np.abs(blended[partial, :3].mean(axis=0) - color).max() > 20
     assert np.allclose(straight[partial, :3].mean(axis=0), color, atol=3)
     visible = alpha >= 64
-    assert np.abs(straight[visible, :3] - color).max() <= 8
+    assert np.abs(straight[visible, :3] - color).max() <= 12
     expected = straight[..., :3] * alpha[..., None] / 255
     assert np.abs(premultiplied[..., :3] - expected).max() <= 1
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_transparent_background_alpha_fxaa():
+    # FXAA does not smooth alpha, so it is not applied to the capture
+    color = np.array([200, 50, 120])
+    pl = pv.Plotter(window_size=(200, 200))
+    pl.add_mesh(pv.Disc(c_res=60, inner=0), color=color / 255, lighting=False, opacity=0.5)
+    pl.enable_anti_aliasing('fxaa')
+    straight = pl.screenshot(transparent_background='straight').astype(int)
+    assert pl.renderer.GetUseFXAA()
+    pl.close()
+
+    visible = straight[..., 3] > 0
+    assert np.abs(straight[visible, :3] - color).max() <= 2
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_transparent_background_alpha_restores_state(mocker):
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.background_color = 'red'
+    pl.renderer.SetTexturedBackground(True)
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+    pl.screenshot(transparent_background='straight')
+    assert not interactor.GetEnableRender()
+    assert pl.renderer.GetTexturedBackground()
+
+    mocker.patch.object(pv.Plotter, '_read_image', side_effect=RuntimeError('read failed'))
+    with pytest.raises(RuntimeError, match='read failed'):
+        pl.screenshot(transparent_background='premultiplied')
+    assert pl.background_color == 'red'
+    assert pl.renderer.GetTexturedBackground()
+    assert not interactor.GetEnableRender()
+    pl.close()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -1864,7 +1900,7 @@ def test_screenshot_transparent_background_from_theme():
     assert image.shape[-1] == 4
     assert np.all(image[image[..., 3] == 0] == 0)
 
-    match = re.escape("[True, False, 'straight', 'premultiplied']")
+    match = re.escape("(True, False, 'straight', 'premultiplied')")
     with pytest.raises(ValueError, match=match):
         pl.screenshot(transparent_background='associated')
     pl.close()

@@ -1761,8 +1761,7 @@ class _Chart(DocSubs):
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
-              ``transparent_background=True``.
+            * [Window height x Window width x 4] otherwise.
 
         Examples
         --------

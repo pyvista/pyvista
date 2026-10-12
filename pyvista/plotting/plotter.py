@@ -101,6 +101,7 @@ from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .theme_registry import _resolve_theme_like
+from .themes import _TRANSPARENT_BACKGROUND_OPTIONS
 from .themes import Theme
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
@@ -413,7 +414,6 @@ def _projection_terms(renderer: Renderer) -> tuple[tuple[float, float], tuple[fl
     return (x_scale, y_scale), (-matrix.GetElement(0, 2), -matrix.GetElement(1, 2))
 
 
-@abstract_class
 def _unpremultiply_alpha(image: NDArray[np.uint8]) -> NDArray[np.uint8]:
     """Divide the colors of an RGBA image by alpha, undoing a multiplication by alpha."""
     alpha = image[..., 3:].astype(float)
@@ -425,6 +425,7 @@ def _unpremultiply_alpha(image: NDArray[np.uint8]) -> NDArray[np.uint8]:
     return straight
 
 
+@abstract_class
 class BasePlotter(_BoundsSizeMixin):
     """Base plotting class.
 
@@ -2546,13 +2547,13 @@ class BasePlotter(_BoundsSizeMixin):
         interactor = render_window.GetInteractor()
         render_enabled = interactor.GetEnableRender()
         interactor.EnableRenderOn()
-        # FXAA writes no partial alpha at edges, so those renderers keep their background
-        renderers = [renderer for renderer in self.renderers if not renderer.GetUseFXAA()]
-        backgrounds = [
+        renderers = list(self.renderers)
+        states = [
             (
                 renderer.GetBackground(),
                 renderer.GetGradientBackground(),
                 renderer.GetTexturedBackground(),
+                renderer.GetUseFXAA(),
             )
             for renderer in renderers
         ]
@@ -2561,15 +2562,18 @@ class BasePlotter(_BoundsSizeMixin):
                 renderer.SetBackground(0.0, 0.0, 0.0)
                 renderer.SetGradientBackground(False)
                 renderer.SetTexturedBackground(False)
+                # FXAA smooths colors but not alpha, so it would blend the edges with black
+                renderer.SetUseFXAA(False)
             render_window.Render()
             # The back buffer averages multisamples in the same color space that translucent
             # surfaces are blended in, so every partially transparent color is multiplied by alpha
             image = self._read_image(ignore_alpha=False, front_buffer=False)
         finally:
-            for renderer, (color, gradient, textured) in zip(renderers, backgrounds, strict=True):
+            for renderer, (color, gradient, textured, fxaa) in zip(renderers, states, strict=True):
                 renderer.SetBackground(color)
                 renderer.SetGradientBackground(gradient)
                 renderer.SetTexturedBackground(textured)
+                renderer.SetUseFXAA(fxaa)
             render_window.Render()
             interactor.SetEnableRender(render_enabled)
         image[image[..., 3] == 0, :3] = 0
@@ -7208,14 +7212,14 @@ class BasePlotter(_BoundsSizeMixin):
               blended with.
             - ``'straight'`` returns an RGBA image with straight (unassociated) alpha and
               the background color removed, which is what image viewers, web browsers, and
-              :mod:`PIL` expect.
+              ``PIL`` expect.
             - ``'premultiplied'`` returns an RGBA image whose colors are already multiplied
               by alpha (associated alpha) and contain no background color.
 
             ``'straight'`` and ``'premultiplied'`` render the scene once more over a black
             background and then restore the background. Fully transparent pixels are
-            ``(0, 0, 0, 0)``. Edges smoothed by FXAA anti-aliasing are opaque and keep the
-            background color.
+            ``(0, 0, 0, 0)``. FXAA anti-aliasing is not applied, since it does not smooth
+            the alpha channel.
 
             .. versionchanged:: 0.50
                 Added the ``'straight'`` and ``'premultiplied'`` options.
@@ -7276,7 +7280,7 @@ class BasePlotter(_BoundsSizeMixin):
             if transparent_background is None:
                 transparent_background = self._theme.transparent_background
             _validation.check_contains(
-                [True, False, 'straight', 'premultiplied'],
+                _TRANSPARENT_BACKGROUND_OPTIONS,
                 must_contain=transparent_background,
                 name='transparent_background',
             )
@@ -8949,8 +8953,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
-              ``transparent_background=True``.
+            * [Window height x Window width x 4] otherwise.
 
         widget : Widget | EmbeddableWidget | IFrame | Image
             IPython widget when ``return_viewer=True``.

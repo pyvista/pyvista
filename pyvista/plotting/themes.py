@@ -79,6 +79,9 @@ if TYPE_CHECKING:
     from ._typing import TransparentBackgroundOptions
 
 
+_TRANSPARENT_BACKGROUND_OPTIONS = (True, False, 'straight', 'premultiplied')
+
+
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
@@ -3006,7 +3009,7 @@ class Theme(_ConfigBase):
     @transparent_background.setter
     def transparent_background(self, transparent_background: TransparentBackgroundOptions) -> None:
         _validation.check_contains(
-            [True, False, 'straight', 'premultiplied'],
+            _TRANSPARENT_BACKGROUND_OPTIONS,
             must_contain=transparent_background,
             name='transparent_background',
         )
