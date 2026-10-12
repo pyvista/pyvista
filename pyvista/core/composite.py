@@ -46,6 +46,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import parse_field_choice
+from .utilities.fileio import _extension_mapping
 from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
@@ -174,11 +175,9 @@ class MultiBlock(
 
     plot = pv._plot.plot
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = dict.fromkeys(
-        ['.vtm', '.vtmb'], XMLMultiBlockDataWriter
-    )
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(XMLMultiBlockDataWriter)
     if vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = HDFWriter
+        _WRITERS.update(_extension_mapping(HDFWriter))
 
     # fmt: off
     # ruff: disable[E501]

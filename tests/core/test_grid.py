@@ -486,9 +486,9 @@ def test_save(extension, binary, tmpdir, hexbeam):
         return
 
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    if extension == '.vtkhdf' and not binary:
+    if extension in pv.HDFWriter.extensions and not binary:
         with pytest.raises(
-            ValueError, match=r'.vtkhdf files can only be written in binary format'
+            ValueError, match=rf'\{extension} files can only be written in binary format'
         ):
             hexbeam.save(filename, binary=binary)
         return

@@ -17,7 +17,7 @@ from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
-from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _CLASS_READERS
 from pyvista.core.utilities.reader import _PVDReader
 from pyvista.examples.downloads import download_file
 
@@ -33,9 +33,15 @@ def assert_output_type(mesh: pv.DataObject, reader: pv.BaseReader):
 
 
 def test_reader_output_type_defined():
-    expected = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
+    expected = set(_CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
     actual = set(_CLASS_READER_RETURN_TYPE.keys())
     assert actual == expected, 'Return type must be defined for every reader'
+
+
+def test_class_readers_deprecated():
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`CLASS_READERS` is deprecated'):
+        class_readers = pv.core.utilities.reader.CLASS_READERS
+    assert class_readers is _CLASS_READERS
 
 
 def test_reader_output_type_derived_from_generic():

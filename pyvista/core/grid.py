@@ -15,6 +15,7 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.utilities.fileio import _extension_mapping
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -266,10 +267,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
-        '.vtk': RectilinearGridWriter,
-        '.vtr': XMLRectilinearGridWriter,
-    }
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+        RectilinearGridWriter, XMLRectilinearGridWriter
+    )
 
     def __init__(
         self: Self,
@@ -722,19 +722,16 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
-        '.bmp': BMPWriter,
-        '.jpeg': JPEGWriter,
-        '.jpg': JPEGWriter,
-        '.nii': NIFTIImageWriter,
-        '.nii.gz': NIFTIImageWriter,
-        '.png': PNGWriter,
-        '.pnm': PNMWriter,
-        '.tif': TIFFWriter,
-        '.tiff': TIFFWriter,
-        '.vtk': DataSetWriter,
-        '.vti': XMLImageDataWriter,
-    }
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+        BMPWriter,
+        DataSetWriter,
+        JPEGWriter,
+        NIFTIImageWriter,
+        PNGWriter,
+        PNMWriter,
+        TIFFWriter,
+        XMLImageDataWriter,
+    )
 
     def __init__(
         self: Self,

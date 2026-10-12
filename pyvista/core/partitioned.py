@@ -14,6 +14,7 @@ from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .formatting_html import _children_section
 from .formatting_html import build_repr_html
+from .utilities.fileio import _extension_mapping
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 from .utilities.writer import HDFWriter
@@ -62,10 +63,12 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     plot = pv._plot.plot
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {'.vtpd': XMLPartitionedDataSetWriter}
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _extension_mapping(
+        XMLPartitionedDataSetWriter
+    )
 
     if vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = HDFWriter
+        _WRITERS.update(_extension_mapping(HDFWriter))
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the PartitionedDataSet."""

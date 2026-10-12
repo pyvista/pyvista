@@ -494,13 +494,13 @@ def test_multi_block_io(
     # these cases are tested separately
     multi = (
         pv.MultiBlock([pv.PolyData(), pv.UnstructuredGrid()])
-        if extension == '.vtkhdf'
+        if extension in pv.HDFWriter.extensions
         else multiblock_all_with_nested_and_none
     )
 
     # Save it out
-    if extension == '.vtkhdf' and binary is False:
-        match = '.vtkhdf files can only be written in binary format'
+    if extension in pv.HDFWriter.extensions and binary is False:
+        match = rf'\{extension} files can only be written in binary format'
         with pytest.raises(ValueError, match=match):
             multi.save(filename, binary=binary)
         return

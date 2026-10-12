@@ -15,11 +15,11 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista.core.filters.composite import _format_nested_index
+from pyvista.core.utilities import _file_formats as _formats
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.reader import CLASS_READERS
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -132,17 +132,6 @@ class BaseWriter(_FileIOBase):
         )
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
-    @classmethod
-    def _get_format_name(cls) -> str:
-        """Return the declared format name, else the name of the reader for the same extensions."""
-        with contextlib.suppress(AttributeError):
-            return super()._get_format_name()
-        names = {CLASS_READERS[ext].format_name for ext in cls.extensions if ext in CLASS_READERS}
-        if len(names) != 1:
-            msg = f'{cls.__name__} does not declare a file format name.'
-            raise AttributeError(msg)
-        return names.pop()
-
     @property
     def writer(self) -> _vtk.vtkWriter:
         """Return the vtk writer object.
@@ -241,6 +230,7 @@ class BMPWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkBMPWriter'
+    _format = _formats.BMP
 
 
 class DataSetWriter(BaseWriter, _DataFormatMixin):
@@ -253,6 +243,7 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkDataSetWriter'
+    _format = _formats.LEGACY_VTK
 
     def _execute_before_write(self) -> None:
         # Warn if data will be lost
@@ -278,6 +269,7 @@ class HDFWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkHDFWriter'
+    _format = _formats.VTKHDF
 
     def _execute_before_write(self) -> None:
         if not isinstance(mesh := self.data_object, pv.MultiBlock):
@@ -326,7 +318,7 @@ class HoudiniPolyDataWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkHoudiniPolyDataWriter'
-    _format_name = 'Houdini Geometry'
+    _format = _formats.HOUDINI
 
 
 class IVWriter(BaseWriter):
@@ -339,7 +331,7 @@ class IVWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkIVWriter'
-    _format_name = 'Open Inventor'
+    _format = _formats.OPEN_INVENTOR
 
 
 class JPEGWriter(BaseWriter):
@@ -352,6 +344,7 @@ class JPEGWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkJPEGWriter'
+    _format = _formats.JPEG
 
 
 class NIFTIImageWriter(BaseWriter):
@@ -364,6 +357,7 @@ class NIFTIImageWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkNIFTIImageWriter'
+    _format = _formats.NIFTI
 
 
 class OBJWriter(BaseWriter):
@@ -376,6 +370,7 @@ class OBJWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkOBJWriter'
+    _format = _formats.OBJ
 
 
 class PLYWriter(BaseWriter, _DataFormatMixin):
@@ -388,6 +383,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkPLYWriter'
+    _format = _formats.PLY
 
     @property
     def texture(self) -> str | None:  # numpydoc ignore=RT01
@@ -426,6 +422,7 @@ class PNGWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkPNGWriter'
+    _format = _formats.PNG
 
 
 class PNMWriter(BaseWriter):
@@ -438,6 +435,7 @@ class PNMWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkPNMWriter'
+    _format = _formats.PNM
 
 
 class PolyDataWriter(BaseWriter, _DataFormatMixin):
@@ -450,6 +448,7 @@ class PolyDataWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkPolyDataWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
@@ -462,6 +461,7 @@ class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkRectilinearGridWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class STLWriter(BaseWriter, _DataFormatMixin):
@@ -474,6 +474,7 @@ class STLWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkSTLWriter'
+    _format = _formats.STL
 
 
 class SimplePointsWriter(BaseWriter, _DataFormatMixin):
@@ -486,7 +487,7 @@ class SimplePointsWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkSimplePointsWriter'
-    _format_name = 'XYZ Point Cloud'
+    _format = _formats.XYZ_POINTS
 
 
 class StructuredGridWriter(BaseWriter, _DataFormatMixin):
@@ -499,6 +500,7 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkStructuredGridWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class TIFFWriter(BaseWriter):
@@ -511,6 +513,7 @@ class TIFFWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkTIFFWriter'
+    _format = _formats.TIFF
 
 
 class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
@@ -523,6 +526,7 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkUnstructuredGridWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class EnSightWriter(BaseWriter):
@@ -545,6 +549,7 @@ class EnSightWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkEnSightWriter'
+    _format = _formats.ENSIGHT
 
     @property
     def path(self) -> str:  # numpydoc ignore=RT01
@@ -627,6 +632,7 @@ class XMLImageDataWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLImageDataWriter'
+    _format = _formats.VTK_IMAGE_DATA
 
 
 class XMLMultiBlockDataWriter(_XMLWriter):
@@ -639,6 +645,7 @@ class XMLMultiBlockDataWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLMultiBlockDataWriter'
+    _format = _formats.VTK_MULTIBLOCK
 
     def _execute_before_write(self) -> None:
         _warn_multiblock_nested_field_data(self.data_object)
@@ -654,6 +661,7 @@ class XMLPartitionedDataSetWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLPartitionedDataSetWriter'
+    _format = _formats.VTK_PARTITIONED_DATASET
 
 
 class XMLPolyDataWriter(_XMLWriter):
@@ -666,6 +674,7 @@ class XMLPolyDataWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLPolyDataWriter'
+    _format = _formats.VTK_POLYDATA
 
 
 class XMLRectilinearGridWriter(_XMLWriter):
@@ -678,6 +687,7 @@ class XMLRectilinearGridWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLRectilinearGridWriter'
+    _format = _formats.VTK_RECTILINEAR_GRID
 
 
 class XMLStructuredGridWriter(_XMLWriter):
@@ -690,6 +700,7 @@ class XMLStructuredGridWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLStructuredGridWriter'
+    _format = _formats.VTK_STRUCTURED_GRID
 
 
 class XMLUnstructuredGridWriter(_XMLWriter):
@@ -702,3 +713,4 @@ class XMLUnstructuredGridWriter(_XMLWriter):
     """
 
     _vtk_class_name = 'vtkXMLUnstructuredGridWriter'
+    _format = _formats.VTK_UNSTRUCTURED_GRID

@@ -19,6 +19,7 @@ from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
 from .datasetattributes import DataSetAttributes
+from .utilities import _file_formats as _formats
 from .utilities.accessor_registry import _clear_accessor_cache
 from .utilities.accessor_registry import _pending_accessor_names
 from .utilities.accessor_registry import _resolve_pending_accessor
@@ -309,7 +310,10 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+            if (
+                file_ext in (*_formats.VTKHDF.extensions, *_formats.ENSIGHT.extensions)
+                and not binary
+            ):
                 msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 

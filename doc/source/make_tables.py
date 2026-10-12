@@ -51,9 +51,8 @@ from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
-from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
-from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _READER_CLASSES
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
@@ -70,6 +69,7 @@ if TYPE_CHECKING:
     from types import FunctionType
     from types import ModuleType
 
+    from pyvista.core.utilities._file_formats import _FileFormat
     from pyvista.plotting.colors import Color
 
 logger = logging.getLogger(__name__)
@@ -148,10 +148,11 @@ def _resolve_jobs(jobs: str) -> int:
 
 # Map readers to Plotter import methods
 READER_IMPORTERS: dict[type[pv.BaseReader], str] = {}
-for ext, reader in CLASS_READERS.items():
-    method = f'import_{ext.removeprefix(".")}'
-    if hasattr(pv.Plotter, method):
-        READER_IMPORTERS.setdefault(reader, method)
+for reader in _READER_CLASSES:
+    for ext in reader._format.extensions:
+        method = f'import_{ext.removeprefix(".")}'
+        if hasattr(pv.Plotter, method):
+            READER_IMPORTERS.setdefault(reader, method)
 
 
 def _aligned_dedent(txt):
@@ -241,15 +242,6 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
-def _swap_extension_mapping(mapping: dict[str, type[Any]]) -> dict[type[Any], set[str]]:
-    # Convert extension->cls mapping into cls->extension mapping
-    class_extensions: dict[pv.BaseReader, set[str]] = {cls: set() for cls in set(mapping.values())}
-    for ext, cls in mapping.items():
-        class_extensions[cls].add(ext)
-    # Sort by the class name of the reader
-    return _sort_by_class_name(class_extensions)
-
-
 def _sort_by_class_name(mapping: dict[Any, Any]):
     return sorted(
         mapping.items(),
@@ -259,22 +251,13 @@ def _sort_by_class_name(mapping: dict[Any, Any]):
 
 def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
     # Create dict for reader info: extension(s) and output type(s)
-    readers = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
-    reader_info = {reader: (set(), set()) for reader in readers}
-
-    for reader, extensions in _swap_extension_mapping(CLASS_READERS):
-        reader_info[reader][0].update(extensions)
-
-    for display, _, reader in _CLASS_READER_PATTERNS:
-        reader_info[reader][0].add(display)
-
-    # Store output type(s)
-    for reader, types in _CLASS_READER_RETURN_TYPE.items():
-        _, ouput_types = reader_info[reader]
-        if isinstance(types, tuple):
-            ouput_types.update(types)
-        else:
-            ouput_types.add(types)
+    reader_info = {}
+    for reader in _READER_CLASSES:
+        fmt = reader._format
+        extensions = {*fmt.extensions, *(display for display, _ in fmt.patterns)}
+        types = _CLASS_READER_RETURN_TYPE[reader]
+        output_types = set(types) if isinstance(types, tuple) else {types}
+        reader_info[reader] = (extensions, output_types)
 
     # Sort by the class name of the reader
     return _sort_by_class_name(reader_info)
@@ -292,39 +275,23 @@ class FileFormatInfo:
 
 
 def _meshio_info_dict():
-    meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
+    meshio_info: dict[str, dict[_FileFormat, FileFormatInfo]] = {}
     reader_info = _reader_info_dict()
     for class_name in get_args(_mesh_types):
-        meshio_info[class_name]: dict[str, FileFormatInfo] = {}
-
-        # Store reader info first
-        for reader, (extensions, return_type) in reader_info:
-            return_types = [return_type] if isinstance(return_type, str) else return_type
-            if class_name in return_types:
+        formats: dict[_FileFormat, FileFormatInfo] = {}
+        for reader, (extensions, output_types) in reader_info:
+            if class_name in output_types:
                 # This reader may return this class, so include it
-                format_name = reader.format_name
-                info = FileFormatInfo(name=format_name, extensions=extensions, readable=True)
-                meshio_info[class_name][format_name] = info
-
-        # Store writer info next
-        cls = getattr(pv, class_name)
-        writer_extensions = _swap_extension_mapping(cls._WRITERS)
-        for writer, extensions in writer_extensions:
-            # Check if the format was already added from the reader
-            format_name = writer.format_name
-            if format_name in meshio_info[class_name].keys():
-                # Ensure reader and writer have compatible extensions
-                reader_extensions = meshio_info[class_name][format_name].extensions
-                msg = (
-                    f'Writable extensions {extensions} should be a subset of readable extensions'
-                    f' {reader_extensions} for file format {format_name!r}.'
+                formats[reader._format] = FileFormatInfo(
+                    name=reader.format_name, extensions=extensions, readable=True
                 )
-                assert extensions <= reader_extensions, msg
-
-                meshio_info[class_name][format_name].writeable = True
-            else:
-                info = FileFormatInfo(name=format_name, extensions=extensions, writeable=True)
-                meshio_info[class_name][format_name] = info
+        for writer in set(getattr(pv, class_name)._WRITERS.values()):
+            info = formats.setdefault(
+                writer._format,
+                FileFormatInfo(name=writer.format_name, extensions=set(writer._format.extensions)),
+            )
+            info.writeable = True
+        meshio_info[class_name] = formats
 
     return meshio_info
 

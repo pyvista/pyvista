@@ -44,6 +44,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
+from pyvista.core.utilities import _file_formats
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import features
 from pyvista.core.utilities import fileio
@@ -74,6 +75,7 @@ from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
+from pyvista.core.utilities.fileio import _extension_mapping
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -3676,54 +3678,45 @@ def test_fileio_extensions(cls):
     assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
+FILE_FORMATS = [
+    fmt for fmt in vars(_file_formats).values() if isinstance(fmt, _file_formats._FileFormat)
+]
+
+
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
-def test_fileio_format_name(cls):
+def test_fileio_format(cls):
+    assert cls._format in FILE_FORMATS
+    assert cls.format_name == cls._format.name
+
+
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_extensions_match_format(cls):
     if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('Needs vtk 9.4')
-    assert isinstance(cls.format_name, str)
-    assert cls.format_name
+    if cls is pv.OpenFOAMReader:
+        # The format is registered to its parallel subclass
+        cls = pv.POpenFOAMReader
+    assert set(cls.extensions) == set(cls._format.extensions)
+    assert cls.extension_patterns == tuple(pattern for _, pattern in cls._format.patterns)
 
 
-def test_fileio_format_name_unique():
-    declared = [
-        cls.__dict__['_format_name']
-        for cls in [*READER_CLASSES, *WRITER_CLASSES]
-        if '_format_name' in cls.__dict__
-    ]
-    assert len(set(declared)) == len(declared)
+def test_file_formats_unique_and_used():
+    names = [fmt.name for fmt in FILE_FORMATS]
+    assert len(set(names)) == len(names)
+    assert {cls._format for cls in [*READER_CLASSES, *WRITER_CLASSES]} == set(FILE_FORMATS)
 
 
-@pytest.mark.parametrize('writer_cls', _writer_params())
-def test_writer_format_name_declared_without_reader(writer_cls):
-    if '_format_name' in writer_cls.__dict__:
-        assert not set(writer_cls.extensions) & set(pv.core.utilities.reader.CLASS_READERS)
+def test_extension_mapping_rejects_shared_extension():
+    match = r'\.vtk is claimed by both DataSetWriter and PolyDataWriter'
+    with pytest.raises(ValueError, match=match):
+        _extension_mapping(pv.DataSetWriter, pv.PolyDataWriter)
 
 
-def test_writer_format_name_from_reader():
-    mapping = {}
-
-    class _Writer(pv.BaseWriter):
-        @classmethod
-        def _get_extension_mappings(cls):
-            return [mapping]
-
-    match = '_Writer does not declare a file format name'
-    with pytest.raises(AttributeError, match=match):
-        _ = _Writer.format_name
-    mapping['.vtu'] = _Writer
-    assert _Writer.format_name == pv.XMLUnstructuredGridReader.format_name
-    mapping['.vtp'] = _Writer
-    with pytest.raises(AttributeError, match=match):
-        _ = _Writer.format_name
-    _Writer._format_name = 'Custom'
-    assert _Writer.format_name == 'Custom'
-
-
-def test_reader_format_name_undeclared():
+def test_format_name_undeclared():
     class _Reader(pv.BaseReader):
         _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
-    with pytest.raises(AttributeError, match='_Reader does not declare a file format name'):
+    with pytest.raises(AttributeError, match='_Reader does not declare a file format'):
         _ = _Reader.format_name
     assert getattr(_Reader, 'format_name', None) is None
 

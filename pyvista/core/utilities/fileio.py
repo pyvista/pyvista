@@ -52,6 +52,8 @@ if TYPE_CHECKING:
     from pyvista import Texture
     from pyvista import UnstructuredGrid
 
+    from ._file_formats import _FileFormat
+
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 _PICKLE_FILE_EXT = ('.pkl', '.pickle')
@@ -89,7 +91,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     """
 
     _vtk_class_name: str = ''
-    _format_name: ClassVar[str]
+    _format: ClassVar[_FileFormat]
 
     def __repr__(self) -> str:
         """Representation of a FileIO object."""
@@ -145,12 +147,12 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         return tuple(sorted(extensions))
 
     @classmethod
-    def _get_format_name(cls) -> str:
-        """Return the format name declared by this class."""
+    def _get_format(cls) -> _FileFormat:
+        """Return the file format this class reads or writes."""
         try:
-            return cls._format_name
+            return cls._format
         except AttributeError:
-            msg = f'{cls.__name__} does not declare a file format name.'
+            msg = f'{cls.__name__} does not declare a file format.'
             raise AttributeError(msg) from None
 
     @_classproperty
@@ -178,7 +180,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         'VTK Unstructured Grid'
 
         """
-        return cls._get_format_name()
+        return cls._get_format().name
 
     @_classproperty
     def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805
@@ -199,6 +201,21 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
             if typ is cls  # type: ignore[comparison-overlap, redundant-expr]
         }
         return tuple(sorted(patterns, key=lambda pattern: pattern.pattern))
+
+
+_FileIOT = TypeVar('_FileIOT', bound=type[_FileIOBase])
+
+
+def _extension_mapping(*classes: _FileIOT) -> dict[str, _FileIOT]:
+    """Map each extension of each class's file format to that class."""
+    mapping: dict[str, _FileIOT] = {}
+    for cls in classes:
+        for ext in cls._format.extensions:
+            if ext in mapping:
+                msg = f'{ext} is claimed by both {mapping[ext].__name__} and {cls.__name__}.'
+                raise ValueError(msg)
+            mapping[ext] = cls
+    return mapping
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
@@ -501,10 +518,10 @@ def _needs_reader_object(
     override of such an extension therefore steps aside rather than
     reinterpreting any of the three.
     """
-    from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
+    from pyvista.core.utilities.reader import _CLASS_READERS  # noqa: PLC0415
 
     asked = progress_bar or validate is not None or bool(kwargs)
-    return asked and ext in CLASS_READERS
+    return asked and ext in _CLASS_READERS
 
 
 def _read_dispatch(  # noqa: PLR0911
