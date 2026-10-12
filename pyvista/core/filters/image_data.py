@@ -1659,11 +1659,11 @@ class ImageDataFilters(DataSetFilters):
         .. pyvista-plot::
             :force_static:
 
-            Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
-            for context.
+            Load a CT scan :func:`~pyvista.examples.downloads.download_chest()`, take one
+            :meth:`slice <slice_index>` as a 2D grayscale image, and show it for context.
 
             >>> from pyvista import examples
-            >>> im = examples.download_chest()
+            >>> im = examples.download_chest().slice_index(k=0)
             >>> clim = im.get_data_range()
             >>> kwargs = dict(
             ...     cmap='grey',
@@ -1678,7 +1678,7 @@ class ImageDataFilters(DataSetFilters):
 
             Use ``open`` to remove small objects in the lungs.
 
-            >>> opened = im.open(kernel_size=15)
+            >>> opened = im.open(kernel_size=19)
             >>> opened.plot(**kwargs)
 
         """
