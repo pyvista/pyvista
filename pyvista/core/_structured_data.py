@@ -29,6 +29,9 @@ class _StructuredDataMixin:
     #: Whether the dimensions are defined by the dataset's coordinates or cells.
     _has_fixed_dimensions: ClassVar[bool] = False
 
+    #: How to change the extent of a grid with fixed dimensions.
+    _fixed_dimensions_hint: ClassVar[str] = 'Set the offset to shift the extent instead.'
+
     @property
     def dimensions(self) -> tuple[int, int, int]:
         """Return or set the grid's dimensions.
@@ -153,19 +156,20 @@ class _StructuredDataMixin:
             new_extent_[3] - new_extent_[2] + 1,
             new_extent_[5] - new_extent_[4] + 1,
         )
-        if min(new_dims) < 0:
-            msg = (
-                f'Extent {tuple(new_extent_)} has negative dimensions {new_dims}. Each maximum '
-                'must be at least its minimum minus 1.'
-            )
-            raise ValueError(msg)
-        if 0 in new_dims and any(new_dims):
-            msg = (
-                f'Extent {tuple(new_extent_)} has dimensions {new_dims}, which must be all zero '
-                '(empty) or all positive.'
-            )
-            raise ValueError(msg)
+        # A shift keeps the dimensions, so only a new shape is checked
         if new_dims != self.dimensions:
+            if min(new_dims) < 0:
+                msg = (
+                    f'Extent {tuple(new_extent_)} has negative dimensions {new_dims}. Each '
+                    'maximum must be at least its minimum minus 1.'
+                )
+                raise ValueError(msg)
+            if 0 in new_dims and any(new_dims):
+                msg = (
+                    f'Extent {tuple(new_extent_)} has dimensions {new_dims}, which must be all '
+                    'zero (empty) or all positive.'
+                )
+                raise ValueError(msg)
             self._check_dimensions(new_dims)
         self._set_extent(new_extent_)
 
@@ -174,7 +178,7 @@ class _StructuredDataMixin:
         if self._has_fixed_dimensions:
             msg = (
                 f'Cannot change the dimensions of `{type(self).__name__}` from '
-                f'{self.dimensions} to {dims}. Set the offset to shift the extent instead.'
+                f'{self.dimensions} to {dims}. {self._fixed_dimensions_hint}'
             )
             raise ValueError(msg)
 

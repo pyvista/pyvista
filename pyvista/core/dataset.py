@@ -3664,7 +3664,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if self.n_cells == 0:
             return set()
         has_hidden_cells = self._has_hidden_cells
-        # Grid cells are axis-aligned pixels and voxels, other structured cells quads and hexahedra
+        # Checked outside the mixin branch, where mypy cannot narrow to Grid
         is_grid = isinstance(self, pv.Grid)
         if isinstance(self, _StructuredDataMixin) and not has_hidden_cells:
             # Fast path for structured data without hidden/ghost cells
