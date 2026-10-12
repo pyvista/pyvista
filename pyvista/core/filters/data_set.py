@@ -1585,8 +1585,8 @@ class DataSetFilters(DataObjectFilters):
             terms of the distribution. Smaller numbers greatly reduce execution time.
 
         dimensions : VectorLikeInt, default: (50, 50, 50)
-            Sampling dimensions of the structured point set. Higher values produce better
-            results but are much slower. This is the :attr:`~pyvista.Grid.dimensions`
+            Sampling dimensions of the structured point set. Higher values produce better results
+            but are much slower. This is the :attr:`~pyvista.core.grid._StructuredMixin.dimensions`
             of the returned :class:`~pyvista.ImageData`.
 
         progress_bar : bool, default: False

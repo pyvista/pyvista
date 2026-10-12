@@ -76,4 +76,4 @@ documented once, here, and linked from every class that inherits it.
    :toctree: _autosummary
 
    Grid
-   core.utilities.misc._ExtentMixin
+   core.grid._StructuredMixin

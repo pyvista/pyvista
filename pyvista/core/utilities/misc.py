@@ -12,7 +12,6 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import ClassVar
 from typing import Concatenate
 from typing import Literal
 from typing import ParamSpec
@@ -37,7 +36,6 @@ if TYPE_CHECKING:
 
     from pyvista._typing_core import ArrayLikeFloat
     from pyvista._typing_core import VectorLikeFloat
-    from pyvista._typing_core import VectorLikeInt
 
     _T = TypeVar('_T')
 
@@ -786,172 +784,4 @@ class _BoundsSizeMixin:
             bounds.x_max - bounds.x_min,
             bounds.y_max - bounds.y_min,
             bounds.z_max - bounds.z_min,
-        )
-
-
-class _ExtentMixin:
-    """Add ``extent`` and ``offset`` properties to structured datasets.
-
-    .. note::
-        This class is a private internal implementation detail. It is documented
-        solely so that its public members, which are inherited by public classes,
-        are visible in the documentation.
-
-    """
-
-    #: Whether setting the extent may change the dimensions.
-    _extent_sets_dimensions: ClassVar[bool] = False
-
-    @property
-    def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
-        """Return or set the extent of the grid.
-
-        The extent is simply the first and last indices for each of the three axes.
-        It encodes information about the grid's :attr:`offset` and dimensions.
-        Only the extent of an :class:`~pyvista.ImageData` can be resized; other grids
-        can only be shifted.
-
-        .. versionchanged:: 0.50
-            Available on :class:`~pyvista.RectilinearGrid`,
-            :class:`~pyvista.StructuredGrid` and :class:`~pyvista.ExplicitStructuredGrid`.
-
-        Examples
-        --------
-        Create an ``ImageData`` and show its extent.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
-        >>> grid.extent
-        (0, 9, 0, 9, 0, 9)
-
-        >>> grid.extent = (2, 5, 2, 5, 2, 5)
-        >>> grid.extent
-        (2, 5, 2, 5, 2, 5)
-
-        Note how this also modifies the image's :attr:`offset`,
-        :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
-        we use default spacing of 1 here, the bounds match the extent exactly.
-
-        >>> grid.offset
-        (2, 2, 2)
-
-        >>> grid.dimensions
-        (4, 4, 4)
-
-        >>> grid.bounds
-        BoundsTuple(x_min = 2.0,
-                    x_max = 5.0,
-                    y_min = 2.0,
-                    y_max = 5.0,
-                    z_min = 2.0,
-                    z_max = 5.0)
-
-        """
-        return self.GetExtent()  # type: ignore[attr-defined]
-
-    @extent.setter
-    def extent(self, new_extent: VectorLikeInt) -> None:
-        new_extent_ = _validation.validate_arrayN(
-            new_extent,
-            must_be_integer=True,
-            must_have_length=6,
-            to_list=True,
-            dtype_out=int,
-        )
-        if not self._extent_sets_dimensions:
-            new_dims = tuple(new_extent_[i + 1] - new_extent_[i] + 1 for i in (0, 2, 4))
-            dims = self.dimensions  # type: ignore[attr-defined]
-            if new_dims != dims:
-                msg = (
-                    f'Cannot change the dimensions of {type(self).__name__} from {dims} '
-                    f'to {new_dims}. Set the offset to shift the extent instead.'
-                )
-                raise ValueError(msg)
-        self._set_extent(new_extent_)
-
-    def _set_extent(self, extent: list[int]) -> None:
-        """Set the extent of the underlying VTK dataset."""
-        self.SetExtent(extent)  # type: ignore[attr-defined]
-
-    @property
-    def offset(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
-        """Return or set the index offset of the grid.
-
-        The offset is simply the first indices for each of the three axes
-        and defines the minimum :attr:`extent` of the grid. Offset values
-        can be positive or negative. Setting the offset keeps the grid's dimensions.
-
-        For an :class:`~pyvista.ImageData`, the offset is relative to the
-        :attr:`~pyvista.ImageData.origin` in physical space. For other grids, it
-        changes only how the points are indexed.
-
-        .. versionadded:: 0.45
-
-        .. versionchanged:: 0.50
-            Available on :class:`~pyvista.RectilinearGrid`,
-            :class:`~pyvista.StructuredGrid` and :class:`~pyvista.ExplicitStructuredGrid`.
-
-        Examples
-        --------
-        Create an ``ImageData`` and show that the offset is zeros by default.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
-        >>> grid.offset
-        (0, 0, 0)
-
-        The offset defines the minimum extent.
-
-        >>> grid.extent
-        (0, 9, 0, 9, 0, 9)
-
-        Set the offset to a new value for all axes.
-
-        >>> grid.offset = 2
-        >>> grid.offset
-        (2, 2, 2)
-
-        Show the extent again. Note how all values have increased by the offset value.
-
-        >>> grid.extent
-        (2, 11, 2, 11, 2, 11)
-
-        Set the offset for each axis separately and show the extent again.
-
-        >>> grid.offset = (-1, -2, -3)
-        >>> grid.extent
-        (-1, 8, -2, 7, -3, 6)
-
-        Set the offset of a ``StructuredGrid``. Its points, and therefore its bounds,
-        are unchanged.
-
-        >>> grid = pv.ImageData(dimensions=(3, 3, 3)).cast_to_structured_grid()
-        >>> grid.offset = (-1, -2, -3)
-        >>> grid.extent
-        (-1, 1, -2, 0, -3, -1)
-
-        >>> grid.bounds
-        BoundsTuple(x_min = 0.0,
-                    x_max = 2.0,
-                    y_min = 0.0,
-                    y_max = 2.0,
-                    z_min = 0.0,
-                    z_max = 2.0)
-
-        """
-        return self.extent[::2]
-
-    @offset.setter
-    def offset(self, offset: int | VectorLikeInt) -> None:
-        offset_ = _validation.validate_array3(
-            offset, broadcast=True, must_be_integer=True, dtype_out=int
-        )
-        dims = self.dimensions  # type: ignore[attr-defined]
-        self.extent = (
-            offset_[0],
-            offset_[0] + dims[0] - 1,
-            offset_[1],
-            offset_[1] + dims[1] - 1,
-            offset_[2],
-            offset_[2] + dims[2] - 1,
         )

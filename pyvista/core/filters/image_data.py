@@ -314,14 +314,13 @@ class ImageDataFilters(DataSetFilters):
 
             - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
             - Use ``'extent'`` to index values based on the
-              :attr:`~pyvista.core.utilities.misc._ExtentMixin.extent`, that is,
+              :attr:`~pyvista.core.grid._StructuredMixin.extent`, that is,
               ``[offset, offset + dimensions - 1]``.
 
             The main difference between these modes is the inclusion or exclusion of the
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset`. ``dimensions`` is more
-            pythonic and is how the object's data arrays themselves would be indexed, whereas
-            ``'extent'`` respects VTK's definition of ``extent`` and considers the object's
-            geometry.
+            :attr:`~pyvista.core.grid._StructuredMixin.offset`. ``dimensions`` is more pythonic and
+            is how the object's data arrays themselves would be indexed, whereas ``'extent'``
+            respects VTK's definition of ``extent`` and considers the object's geometry.
 
         strict_index : bool, default: False
             Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
@@ -332,8 +331,7 @@ class ImageDataFilters(DataSetFilters):
             Rebase the coordinate reference of the extracted subset:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
-            - the :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset` is reset to
-              ``(0, 0, 0)``
+            - the :attr:`~pyvista.core.grid._StructuredMixin.offset` is reset to ``(0, 0, 0)``
 
             The rebasing effectively applies a positive translation in world (XYZ)
             coordinates and a similar (that is, inverse) negative translation in voxel
@@ -464,8 +462,7 @@ class ImageDataFilters(DataSetFilters):
         voi : VectorLikeInt
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
-            indices. Must be within this mesh's
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.extent`.
+            indices. Must be within this mesh's :attr:`~pyvista.core.grid._StructuredMixin.extent`.
 
         rate : VectorLikeInt, default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
@@ -483,8 +480,7 @@ class ImageDataFilters(DataSetFilters):
             If ``True`` (default), reset the coordinate reference of the extracted subset:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
-            - the :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset` is reset to
-              ``(0, 0, 0)``
+            - the :attr:`~pyvista.core.grid._StructuredMixin.offset` is reset to ``(0, 0, 0)``
 
             The rebasing effectively applies a positive translation in world (XYZ)
             coordinates and a similar (that is, inverse) negative translation in voxel
@@ -583,10 +579,10 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``factor`` to crop a portion of the image symmetrically.
         #. Use ``margin`` to remove points from the image border.
         #. Use ``dimensions`` (and optionally, ``offset``) to explicitly crop to the specified
-           :attr:`~pyvista.Grid.dimensions` and
-           :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset`.
+           :attr:`~pyvista.core.grid._StructuredMixin.dimensions` and
+           :attr:`~pyvista.core.grid._StructuredMixin.offset`.
         #. Use ``extent`` to explicitly crop to a specified
-           :attr:`~pyvista.core.utilities.misc._ExtentMixin.extent`.
+           :attr:`~pyvista.core.grid._StructuredMixin.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
         #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
            values to define the cropping region.
@@ -594,9 +590,9 @@ class ImageDataFilters(DataSetFilters):
         These methods are all independent, for example, it is not possible to specify
         both ``factor`` and ``margin``.
 
-        By default, the cropped output's :attr:`~pyvista.Grid.dimensions` are typically less
-        than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
-        ensure the output dimensions always match the input.
+        By default, the cropped output's :attr:`~pyvista.core.grid._StructuredMixin.dimensions` are
+        typically less than the input's dimensions. Optionally, use ``keep_dimensions`` and
+        ``fill_value`` to ensure the output dimensions always match the input.
 
         .. note::
 
@@ -626,17 +622,17 @@ class ImageDataFilters(DataSetFilters):
 
         offset : VectorLikeInt, optional
             Length-3 vector of integers specifying the
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset` indices where the cropping
-            region originates. If specified, then ``dimensions`` must also be provided.
+            :attr:`~pyvista.core.grid._StructuredMixin.offset` indices where the cropping region
+            originates. If specified, then ``dimensions`` must also be provided.
 
         dimensions : VectorLikeInt, optional
-            Length-3 vector of integers specifying the :attr:`~pyvista.Grid.dimensions` of
-            the cropping region. ``offset`` may also be provided, but if it is not, the crop is
-            centered in the image.
+            Length-3 vector of integers specifying the
+            :attr:`~pyvista.core.grid._StructuredMixin.dimensions` of the cropping region.
+            ``offset`` may also be provided, but if it is not, the crop is centered in the image.
 
         extent : VectorLikeInt, optional
             Length-6 vector of integers specifying the full
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.extent` of the cropping region. If the
+            :attr:`~pyvista.core.grid._StructuredMixin.extent` of the cropping region. If the
             region extends beyond the extents of this mesh, it is clipped to the part this mesh
             covers.
 
@@ -692,8 +688,7 @@ class ImageDataFilters(DataSetFilters):
             Rebase the coordinate reference of the cropped output:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
-            - the :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset` is reset to
-              ``(0, 0, 0)``
+            - the :attr:`~pyvista.core.grid._StructuredMixin.offset` is reset to ``(0, 0, 0)``
 
             The rebasing effectively applies a positive translation in world (XYZ)
             coordinates and a similar (that is, inverse) negative translation in voxel
@@ -3078,7 +3073,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as voxel cells instead of as points.
 
         .. note::
-            Only the input's :attr:`~pyvista.Grid.dimensions`, and
+            Only the input's :attr:`~pyvista.core.grid._StructuredMixin.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -3282,7 +3277,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as points instead of as voxel cells.
 
         .. note::
-            Only the input's :attr:`~pyvista.Grid.dimensions`, and
+            Only the input's :attr:`~pyvista.core.grid._StructuredMixin.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -4428,9 +4423,9 @@ class ImageDataFilters(DataSetFilters):
 
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resized to the reference's
-            :attr:`~pyvista.Grid.dimensions`, and the reference's
+            :attr:`~pyvista.core.grid._StructuredMixin.dimensions`, and the reference's
             :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset`, and
+            :attr:`~pyvista.core.grid._StructuredMixin.offset`, and
             :attr:`~pyvista.ImageData.direction_matrix` are applied to the output.
 
             .. note::
@@ -4439,7 +4434,8 @@ class ImageDataFilters(DataSetFilters):
                 reference image's points. Use :meth:`reslice` to sample at those points.
 
         dimensions : VectorLikeInt, optional
-            Set the output :attr:`~pyvista.Grid.dimensions` of the resampled image.
+            Set the output :attr:`~pyvista.core.grid._StructuredMixin.dimensions` of the resampled
+            image.
 
             .. note::
 
@@ -4635,10 +4631,10 @@ class ImageDataFilters(DataSetFilters):
           Spacing:      5.000e-01, 5.000e-01, 1.000e+00
           N Arrays:     1
 
-        Note that the up-sampled :attr:`~pyvista.Grid.dimensions` are doubled and
-        the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
-        however, that the physical bounds of the input differ from the output.
-        The up-sampled :attr:`~pyvista.ImageData.origin` also differs:
+        Note that the up-sampled :attr:`~pyvista.core.grid._StructuredMixin.dimensions` are doubled
+        and the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note, however,
+        that the physical bounds of the input differ from the output. The up-sampled
+        :attr:`~pyvista.ImageData.origin` also differs:
 
         >>> image.origin
         (0.0, 0.0, 0.0)
@@ -5046,9 +5042,8 @@ class ImageDataFilters(DataSetFilters):
 
         The image is sampled at the physical position of each point of the
         ``reference_image``, so the two images are aligned in space. The
-        :attr:`~pyvista.Grid.dimensions`, :attr:`~pyvista.ImageData.spacing`,
-        :attr:`~pyvista.ImageData.origin`,
-        :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset`, and
+        :attr:`~pyvista.core.grid._StructuredMixin.dimensions`, :attr:`~pyvista.ImageData.spacing`,
+        :attr:`~pyvista.ImageData.origin`, :attr:`~pyvista.core.grid._StructuredMixin.offset`, and
         :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference.
 
         Use this filter to map an image onto the grid of another image, for example, to
@@ -5739,8 +5734,8 @@ class ImageDataFilters(DataSetFilters):
             Concatenation mode to use. This determines how images are placed in the output. All
             modes operate along the specified ``axis`` except for ``'preserve-extents'``, which is
             also the only mode that uses the images'
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset`; all other modes ignore it and
-            take the output's offset from the input. Specify one of:
+            :attr:`~pyvista.core.grid._StructuredMixin.offset`; all other modes ignore it and take
+            the output's offset from the input. Specify one of:
 
             - ``'strict'``: all images must have identical dimensions except along the specified
               ``axis``.
@@ -5894,8 +5889,8 @@ class ImageDataFilters(DataSetFilters):
 
             Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the
             desired result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is
-            completely overwritten since their
-            :attr:`~pyvista.core.utilities.misc._ExtentMixin.extent` fully overlap.
+            completely overwritten since their :attr:`~pyvista.core.grid._StructuredMixin.extent`
+            fully overlap.
 
             >>> beach.extent
             (0, 99, 0, 99, 0, 0)
@@ -5907,8 +5902,8 @@ class ImageDataFilters(DataSetFilters):
             (0, 457, 0, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
 
-            Set the ``beach`` :attr:`~pyvista.core.utilities.misc._ExtentMixin.offset` so that
-            there is only partial overlap instead.
+            Set the ``beach`` :attr:`~pyvista.core.grid._StructuredMixin.offset` so that there is
+            only partial overlap instead.
 
             >>> beach.offset = (-50, -50, 0)
             >>> beach.extent

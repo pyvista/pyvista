@@ -2111,8 +2111,8 @@ class DataObjectFilters:
         .. versionchanged:: 0.50
             Rotations which map each axis onto a coordinate axis are supported for
             :class:`~pyvista.RectilinearGrid`. Its coordinates always ascend, and its
-            :attr:`~pyvista.RectilinearGrid.dimensions`, points and arrays are ordered to
-            match.
+            :attr:`~pyvista.core.grid._StructuredMixin.dimensions`, points and arrays are ordered
+            to match.
 
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously

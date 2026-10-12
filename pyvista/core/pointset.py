@@ -47,6 +47,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .grid import _StructuredMixin
 from .utilities.arrays import convert_array
 from .utilities.cells import _get_regular_cells_from_dict
 from .utilities.cells import create_mixed_cells
@@ -54,7 +55,6 @@ from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
-from .utilities.misc import _ExtentMixin
 from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
@@ -3873,7 +3873,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return grid
 
 
-class StructuredGrid(_ExtentMixin, PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
+class StructuredGrid(_StructuredMixin, PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -3894,7 +3894,7 @@ class StructuredGrid(_ExtentMixin, PointGrid, StructuredGridFilters, _vtk.vtkStr
 
         If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty,
         this array will define the points of this :class:`StructuredGrid`.
-        Set the dimensions with :attr:`StructuredGrid.dimensions`.
+        Set the dimensions with :attr:`~pyvista.core.grid._StructuredMixin.dimensions`.
 
         Otherwise, this parameter will be loaded as the ``x`` points, and ``y``
         and ``z`` points must be set. The shape of this array defines the shape
@@ -4068,37 +4068,12 @@ class StructuredGrid(_ExtentMixin, PointGrid, StructuredGridFilters, _vtk.vtkStr
         self.SetDimensions(dim)
         self.SetPoints(vtk_points(points, force_float=force_float))
 
-    @property
-    def dimensions(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
-        """Return a length 3 tuple of the grid's dimensions.
-
-        Returns
-        -------
-        tuple
-            Grid dimensions.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
-        >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
-        >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
-        >>> grid = pv.StructuredGrid(x, y, z)
-        >>> grid.dimensions
-        (20, 10, 4)
-
-        """
-        dims = [0, 0, 0]
-        self.GetDimensions(dims)
-        return dims[0], dims[1], dims[2]
-
-    @dimensions.setter
-    def dimensions(self, dims: VectorLikeInt) -> None:
-        nx, ny, nz = int(dims[0]), int(dims[1]), int(dims[2])
-        self.SetDimensions(nx, ny, nz)
-        self.Modified()
+    def _check_dimensions(self, dims: tuple[int, int, int]) -> None:
+        """Raise if ``dims`` does not match the number of points."""
+        n_points = self.n_points
+        if n_points and np.prod(dims) != n_points:
+            msg = f'Dimensions {dims} do not match the {n_points} points of the {type(self).__name__}.'
+            raise ValueError(msg)
 
     @property
     def x(self) -> NDArray[_Real]:  # numpydoc ignore=RT01
@@ -4323,7 +4298,7 @@ class StructuredGrid(_ExtentMixin, PointGrid, StructuredGridFilters, _vtk.vtkStr
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructuredGrid):
+class ExplicitStructuredGrid(_StructuredMixin, PointGrid, _vtk.vtkExplicitStructuredGrid):
     """Extend the functionality of the :vtk:`vtkExplicitStructuredGrid` class.
 
     Can be initialized by the following:
@@ -4387,6 +4362,8 @@ class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructured
         '.vtu': XMLUnstructuredGridWriter,
         '.vtk': UnstructuredGridWriter,
     }
+
+    _fixed_dimensions: ClassVar[bool] = True
 
     def __init__(
         self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False
@@ -4817,37 +4794,10 @@ class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructured
             grid.show_cells(inplace=True)
             return grid
 
-    def _dimensions(self) -> tuple[int, int, int]:
-        # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
-        # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
-        dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
-        dims = np.diff(dims, axis=1)
-        dims = dims.flatten() + 1  # type: ignore[assignment]
-        return int(dims[0]), int(dims[1]), int(dims[2])
-
-    @property
-    def dimensions(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
-        """Return the topological dimensions of the grid.
-
-        Returns
-        -------
-        tuple[int, int, int]
-            Number of sampling points in the ``i``, ``j``, and ``k`` directions respectively.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> grid = examples.load_explicit_structured()
-        >>> grid.dimensions
-        (5, 6, 7)
-
-        """
-        return self._dimensions()
-
     def _set_extent(self, extent: list[int]) -> None:
         """Set the extent, keeping the cells and links that ``SetExtent`` resets."""
         cells, links = self.GetCells(), self.GetLinks()
-        self.SetLinks(None)
+        self.SetLinks(None)  # type: ignore[arg-type]
         self.SetExtent(extent)
         self.SetCells(cells)
         self.SetLinks(links)
@@ -4940,7 +4890,7 @@ class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructured
             msg = f'Cell coordinates must be integers, got dtype {array.dtype}.'
             raise TypeError(msg)
         index = tuple(array.T) if array.ndim == 2 else array
-        dims = self._dimensions()
+        dims = self.dimensions
         try:
             ind = np.ravel_multi_index(index, np.array(dims) - 1, order='F')
         except ValueError:
@@ -4992,7 +4942,7 @@ class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructured
         if not isinstance(index, int) and index.dtype != np.bool_ and not _is_integer(index):
             msg = f'Cell IDs must be integers, got dtype {index.dtype}.'
             raise TypeError(msg)
-        dims = self._dimensions()
+        dims = self.dimensions
         try:
             coords = np.unravel_index(index, np.array(dims) - 1, order='F')
         except ValueError:
