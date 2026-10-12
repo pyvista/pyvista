@@ -4665,7 +4665,8 @@ def test_validate_mesh_hidden_cells_keep_their_size(to_ugrid):
 @pytest.mark.parametrize(
     ('dtype', 'n_ghosts', 'invalid_fields'),
     [
-        (np.uint8, 2, ('cell_data_wrong_length', 'zero_size')),
+        # Longer than the cells, since VTK would read past the end of a shorter array
+        (np.uint8, 4, ('cell_data_wrong_length', 'zero_size')),
         (float, 3, ('zero_size',)),
         (np.int32, 3, ('zero_size',)),
     ],
