@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
 from typing import TextIO
@@ -88,7 +89,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     """
 
     _vtk_class_name: str = ''
-    _format_name: str | None = None
+    _format_name: ClassVar[str]
 
     def __repr__(self) -> str:
         """Representation of a FileIO object."""
@@ -144,12 +145,16 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         return tuple(sorted(extensions))
 
     @classmethod
-    def _get_format_name(cls) -> str | None:
+    def _get_format_name(cls) -> str:
         """Return the format name declared by this class."""
-        return cls._format_name
+        try:
+            return cls._format_name
+        except AttributeError:
+            msg = f'{cls.__name__} does not declare a file format name.'
+            raise AttributeError(msg) from None
 
     @_classproperty
-    def format_name(cls) -> str | None:  # noqa: N805
+    def format_name(cls) -> str:  # noqa: N805
         """Return the human-readable name of the file format.
 
         A reader and a writer for the same format share the same name.
@@ -158,8 +163,8 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         Returns
         -------
-        str | None
-            Name of the file format, or ``None`` if it cannot be determined.
+        str
+            Name of the file format.
 
         Examples
         --------

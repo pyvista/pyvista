@@ -3707,13 +3707,25 @@ def test_writer_format_name_from_reader():
         def _get_extension_mappings(cls):
             return [mapping]
 
-    assert _Writer.format_name is None
+    match = '_Writer does not declare a file format name'
+    with pytest.raises(AttributeError, match=match):
+        _ = _Writer.format_name
     mapping['.vtu'] = _Writer
     assert _Writer.format_name == pv.XMLUnstructuredGridReader.format_name
     mapping['.vtp'] = _Writer
-    assert _Writer.format_name is None
+    with pytest.raises(AttributeError, match=match):
+        _ = _Writer.format_name
     _Writer._format_name = 'Custom'
     assert _Writer.format_name == 'Custom'
+
+
+def test_reader_format_name_undeclared():
+    class _Reader(pv.BaseReader):
+        _vtk_class_name = 'vtkXMLUnstructuredGridReader'
+
+    with pytest.raises(AttributeError, match='_Reader does not declare a file format name'):
+        _ = _Reader.format_name
+    assert getattr(_Reader, 'format_name', None) is None
 
 
 def test_ply_writer(sphere, tmp_path):

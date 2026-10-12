@@ -133,12 +133,15 @@ class BaseWriter(_FileIOBase):
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
     @classmethod
-    def _get_format_name(cls) -> str | None:
+    def _get_format_name(cls) -> str:
         """Return the declared format name, else the name of the reader for the same extensions."""
-        if cls._format_name is not None:
-            return cls._format_name
+        with contextlib.suppress(AttributeError):
+            return super()._get_format_name()
         names = {CLASS_READERS[ext].format_name for ext in cls.extensions if ext in CLASS_READERS}
-        return names.pop() if len(names) == 1 else None
+        if len(names) != 1:
+            msg = f'{cls.__name__} does not declare a file format name.'
+            raise AttributeError(msg)
+        return names.pop()
 
     @property
     def writer(self) -> _vtk.vtkWriter:
