@@ -80,11 +80,15 @@ class _StructuredDataMixin:
         dims_ = _validation.validate_array3(
             dims, must_be_integer=True, must_be_nonnegative=True, dtype_out=int, name='Dimensions'
         )
-        if 0 in dims_ and any(dims_):
-            dims_tuple = tuple(int(d) for d in dims_)
+        dims_tuple = (int(dims_[0]), int(dims_[1]), int(dims_[2]))
+        if 0 in dims_tuple and any(dims_tuple):
             msg = f'Dimensions {dims_tuple} must be all zero (empty) or all positive.'
             raise ValueError(msg)
-        self.extent = _extent_from(self.offset, dims_)
+        extent = self.extent
+        new_extent = _extent_from(extent[::2], dims_tuple)
+        if new_extent != list(extent):
+            self._check_dimensions(dims_tuple)
+            self._set_extent(new_extent)
 
     @property
     def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
