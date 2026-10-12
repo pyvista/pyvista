@@ -2318,6 +2318,7 @@ class DataObjectFilters:
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = dataset.dimensions
                 _transform_rectilinear_axes(output, dataset, components)
+                output.offset = dataset.offset
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 _permute_rectilinear_arrays(output, dimensions, components)

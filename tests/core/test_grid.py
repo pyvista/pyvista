@@ -947,6 +947,49 @@ def test_cast_keeps_offset(cast):
     assert np.allclose(cast_grid.points, image.points)
 
 
+@pytest.mark.parametrize('offset', [(0, 0, 0), (10, -3, 2), (-5, 4, -4)])
+@pytest.mark.parametrize('key', [(slice(1, None, 2), slice(None), 0), (slice(None, None, 3),) * 3])
+def test_slice_structured_with_step_matches_image_data(offset, key):
+    image = pv.ImageData(dimensions=(9, 7, 5), offset=offset)
+    grid = image.cast_to_structured_grid()
+    sliced = grid[key]
+    voi, rate = [], []
+    for k, lo, hi in zip(key, image.extent[::2], image.extent[1::2], strict=True):
+        if isinstance(k, int):
+            voi.extend((lo + k, lo + k))
+            rate.append(1)
+        else:
+            voi.extend((lo + (k.start or 0), hi))
+            rate.append(k.step or 1)
+    expected = image.extract_subset(voi, rate=rate, rebase_coordinates=False)
+    assert sliced.extent == expected.extent
+    points = grid.points.reshape((*grid.dimensions, 3), order='F')[key]
+    assert np.allclose(sliced.points, points.reshape((-1, 3), order='F'))
+
+
+def test_structured_grid_concatenate_keeps_offset():
+    grid = pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid()
+    grid.offset = (1, -2, 3)
+    other = grid.translate((2.0, 0.0, 0.0))
+    joined = grid.concatenate(other, axis=0)
+    assert joined.offset == grid.offset
+    assert joined.dimensions == (5, 4, 2)
+
+
+@pytest.mark.parametrize('offset', [(0, 0, 0), (7, 7, 7)])
+def test_cast_to_explicit_structured_grid_block_arrays(offset):
+    # The extent follows the block indices when they are given
+    grid = pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid()
+    grid.offset = offset
+    i, j, k = np.unravel_index(np.arange(grid.n_cells), (2, 3, 1), order='F')
+    grid.cell_data['BLOCK_I'] = i + 5
+    grid.cell_data['BLOCK_J'] = j
+    grid.cell_data['BLOCK_K'] = k
+    explicit = grid.cast_to_explicit_structured_grid()
+    assert explicit.offset == (5, 0, 0)
+    assert explicit.cell_data['BLOCK_I'].min() == 5
+
+
 def test_invalid_init_structured():
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 2)

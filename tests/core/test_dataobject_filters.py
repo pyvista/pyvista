@@ -2810,6 +2810,16 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
 
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize(
+    'transformation', [pv.Transform().translate(1.0, 0.0, 0.0), pv.Transform().rotate_z(90)]
+)
+def test_transform_rectilinear_keeps_offset(rectilinear, transformation, inplace):
+    rectilinear.offset = (1, 2, 3)
+    transformed = rectilinear.transform(transformation, inplace=inplace)
+    assert transformed.offset == (1, 2, 3)
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
     'transformation',
     [pv.Transform().rotate_z(90), pv.Transform().rotate_z(90).rotate_x(90)],
     ids=['one-axis-pair', 'all-three-axes'],

@@ -207,6 +207,8 @@ class StructuredGridFilters(DataSetFilters):
         joined = pv.StructuredGrid()
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
+        # The other grid is joined onto this one, so keep this grid's offset
+        joined.offset = self.offset  # type: ignore[attr-defined]
         joined.point_data.update(new_point_data)
         joined.cell_data.update(new_cell_data)
 
