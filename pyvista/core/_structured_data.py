@@ -27,7 +27,7 @@ class _StructuredDataMixin:
     """
 
     #: Whether the dimensions are defined by the dataset's coordinates or cells.
-    _fixed_dimensions: ClassVar[bool] = False
+    _has_fixed_dimensions: ClassVar[bool] = False
 
     @property
     def dimensions(self) -> tuple[int, int, int]:
@@ -69,7 +69,7 @@ class _StructuredDataMixin:
 
     @dimensions.setter
     def dimensions(self, dims: VectorLikeInt) -> None:
-        if self._fixed_dimensions:
+        if self._has_fixed_dimensions:
             name = type(self).__name__
             article = 'an' if name[0] in 'AEIOU' else 'a'
             msg = (
@@ -154,7 +154,7 @@ class _StructuredDataMixin:
 
     def _check_dimensions(self, dims: tuple[int, int, int]) -> None:
         """Raise if the dimensions cannot change to ``dims``."""
-        if self._fixed_dimensions:
+        if self._has_fixed_dimensions:
             msg = (
                 f'Cannot change the dimensions of `{type(self).__name__}` from '
                 f'{self.dimensions} to {dims}. Set the offset to shift the extent instead.'

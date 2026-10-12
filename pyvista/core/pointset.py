@@ -4368,7 +4368,7 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
         '.vtk': UnstructuredGridWriter,
     }
 
-    _fixed_dimensions: ClassVar[bool] = True
+    _has_fixed_dimensions: ClassVar[bool] = True
 
     def __init__(
         self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False

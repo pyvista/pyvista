@@ -238,7 +238,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         '.vtr': XMLRectilinearGridWriter,
     }
 
-    _fixed_dimensions: ClassVar[bool] = True
+    _has_fixed_dimensions: ClassVar[bool] = True
 
     def __init__(
         self: Self,
