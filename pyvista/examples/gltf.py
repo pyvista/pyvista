@@ -24,8 +24,6 @@ warn_external(
 def download_damaged_helmet():  # pragma: no cover
     """Download the damaged helmet example.
 
-    Files hosted at https://github.com/pyvista/data
-
     Returns
     -------
     str
@@ -72,8 +70,6 @@ def download_sheen_chair():  # pragma: no cover
 def download_gearbox():  # pragma: no cover
     """Download the gearbox example.
 
-    Files hosted at https://github.com/pyvista/data
-
     Returns
     -------
     str
@@ -90,8 +86,6 @@ def download_gearbox():  # pragma: no cover
 def download_avocado():  # pragma: no cover
     """Download the avocado example.
 
-    Files hosted at https://github.com/pyvista/data
-
     Returns
     -------
     str
@@ -107,8 +101,6 @@ def download_avocado():  # pragma: no cover
 
 def download_milk_truck():  # pragma: no cover
     """Download the milk truck example.
-
-    Files hosted at https://github.com/pyvista/data
 
     Returns
     -------
