@@ -1909,7 +1909,11 @@ def test_explicit_structured_grid_empty_extent():
     assert grid.extent == (0, -1, 0, -1, 0, -1)
     assert grid.dimensions == (0, 0, 0)
     assert grid.offset == (0, 0, 0)
-    assert grid.n_cells == 0
+
+
+@pytest.mark.needs_vtk_version(9, 4, reason='empty extent has a phantom cell')
+def test_explicit_structured_grid_empty_n_cells():
+    assert pv.ExplicitStructuredGrid().n_cells == 0
 
 
 def test_explicit_structured_grid_offset_keeps_cells():
