@@ -3715,6 +3715,85 @@ def test_file_formats_unique_and_used():
     assert {cls._format for cls in [*READER_CLASSES, *WRITER_CLASSES]} == set(FILE_FORMATS)
 
 
+# Every extension save dispatches on, per mesh type, so dropping or moving one is deliberate
+@pytest.mark.parametrize(
+    ('mesh_type', 'expected'),
+    [
+        (
+            pv.ImageData,
+            {
+                '.bmp': pv.BMPWriter,
+                '.jpeg': pv.JPEGWriter,
+                '.jpg': pv.JPEGWriter,
+                '.nii': pv.NIFTIImageWriter,
+                '.nii.gz': pv.NIFTIImageWriter,
+                '.png': pv.PNGWriter,
+                '.pnm': pv.PNMWriter,
+                '.tif': pv.TIFFWriter,
+                '.tiff': pv.TIFFWriter,
+                '.vti': pv.XMLImageDataWriter,
+                '.vtk': pv.DataSetWriter,
+            },
+        ),
+        (
+            pv.RectilinearGrid,
+            {'.vtk': pv.RectilinearGridWriter, '.vtr': pv.XMLRectilinearGridWriter},
+        ),
+        (
+            pv.PolyData,
+            {
+                '.geo': pv.HoudiniPolyDataWriter,
+                '.hdf': pv.HDFWriter,
+                '.iv': pv.IVWriter,
+                '.obj': pv.OBJWriter,
+                '.ply': pv.PLYWriter,
+                '.stl': pv.STLWriter,
+                '.vtk': pv.PolyDataWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtp': pv.XMLPolyDataWriter,
+            },
+        ),
+        (pv.StructuredGrid, {'.vtk': pv.StructuredGridWriter, '.vts': pv.XMLStructuredGridWriter}),
+        (
+            pv.UnstructuredGrid,
+            {
+                '.case': pv.EnSightWriter,
+                '.hdf': pv.HDFWriter,
+                '.vtk': pv.UnstructuredGridWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtu': pv.XMLUnstructuredGridWriter,
+            },
+        ),
+        (
+            pv.ExplicitStructuredGrid,
+            {'.vtk': pv.UnstructuredGridWriter, '.vtu': pv.XMLUnstructuredGridWriter},
+        ),
+        (pv.PointSet, {'.xyz': pv.SimplePointsWriter}),
+        (
+            pv.MultiBlock,
+            {
+                '.hdf': pv.HDFWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtm': pv.XMLMultiBlockDataWriter,
+                '.vtmb': pv.XMLMultiBlockDataWriter,
+            },
+        ),
+        (
+            pv.PartitionedDataSet,
+            {
+                '.hdf': pv.HDFWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtpd': pv.XMLPartitionedDataSetWriter,
+            },
+        ),
+    ],
+)
+def test_writers_snapshot(mesh_type, expected):
+    if pv.vtk_version_info < (9, 4):
+        expected = {ext: cls for ext, cls in expected.items() if cls is not pv.HDFWriter}
+    assert expected == mesh_type._WRITERS
+
+
 def test_map_extensions_rejects_shared_extension():
     match = r'\.vtk is claimed by both DataSetWriter and PolyDataWriter'
     with pytest.raises(ValueError, match=match):

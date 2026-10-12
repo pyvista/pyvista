@@ -24,7 +24,6 @@ from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 
@@ -58,9 +57,9 @@ from .utilities.fileio import get_ext
 from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+from .utilities.writer import _HDF_WRITERS
 from .utilities.writer import BaseWriter
 from .utilities.writer import EnSightWriter
-from .utilities.writer import HDFWriter
 from .utilities.writer import HoudiniPolyDataWriter
 from .utilities.writer import IVWriter
 from .utilities.writer import OBJWriter
@@ -838,9 +837,8 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         PolyDataWriter,
         STLWriter,
         XMLPolyDataWriter,
+        *_HDF_WRITERS,
     )
-    if vtk_version_info >= (9, 4):
-        _WRITERS.update(_map_extensions(HDFWriter))
 
     def __init__(
         self,
@@ -2726,10 +2724,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     """
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
-        EnSightWriter, UnstructuredGridWriter, XMLUnstructuredGridWriter
+        EnSightWriter, UnstructuredGridWriter, XMLUnstructuredGridWriter, *_HDF_WRITERS
     )
-    if vtk_version_info >= (9, 4):
-        _WRITERS.update(_map_extensions(HDFWriter))
 
     def __init__(
         self,

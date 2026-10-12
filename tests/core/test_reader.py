@@ -14,11 +14,15 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.utilities import reader as reader_module
+from pyvista.core.utilities.fileio import _map_extensions
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import _CLASS_READERS
+from pyvista.core.utilities.reader import _REPLACED_READERS
 from pyvista.core.utilities.reader import _PVDReader
+from pyvista.core.utilities.reader import _registered_readers
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
@@ -38,9 +42,106 @@ def test_reader_output_type_defined():
     assert actual == expected, 'Return type must be defined for every reader'
 
 
-def test_registered_reader_prefers_subclass_with_same_format():
-    assert _CLASS_READERS['.foam'] is pv.POpenFOAMReader
-    assert pv.OpenFOAMReader not in _CLASS_READERS.values()
+# Every extension get_reader and read dispatch on, so dropping or moving one is deliberate
+_EXPECTED_CLASS_READERS = {
+    '.3ds': pv.ThreeDSReader,
+    '.bmp': pv.BMPReader,
+    '.cas': pv.FluentReader,
+    '.case': pv.EnSightReader,
+    '.cgns': pv.CGNSReader,
+    '.cube': pv.GaussianCubeReader,
+    '.dat': pv.TecplotReader,
+    '.dcm': pv.DICOMReader,
+    '.dem': pv.DEMReader,
+    '.e': pv.ExodusIIReader,
+    '.ex2': pv.ExodusIIReader,
+    '.exii': pv.ExodusIIReader,
+    '.exo': pv.ExodusIIReader,
+    '.facet': pv.FacetReader,
+    '.foam': pv.POpenFOAMReader,
+    '.g': pv.BYUReader,
+    '.gif': pv.GIFReader,
+    '.glb': pv.GLTFReader,
+    '.gltf': pv.GLTFReader,
+    '.grdecl': pv.GRDECLReader,
+    '.h5': pv.FLUENTCFFReader,
+    '.hdf': pv.HDFReader,
+    '.hdr': pv.HDRReader,
+    '.img': pv.DICOMReader,
+    '.inp': pv.AVSucdReader,
+    '.jpeg': pv.JPEGReader,
+    '.jpg': pv.JPEGReader,
+    '.mha': pv.MetaImageReader,
+    '.mhd': pv.MetaImageReader,
+    '.mnc': pv.MINCImageReader,
+    '.mr': pv.GESignaReader,
+    '.nek5000': pv.Nek5000Reader,
+    '.neu': pv.GambitReader,
+    '.nhdr': pv.NRRDReader,
+    '.nii': pv.NIFTIReader,
+    '.nii.gz': pv.NIFTIReader,
+    '.nrrd': pv.NRRDReader,
+    '.obj': pv.OBJReader,
+    '.p3d': pv.Plot3DMetaReader,
+    '.pdb': pv.PDBReader,
+    '.ply': pv.PLYReader,
+    '.png': pv.PNGReader,
+    '.pnm': pv.PNMReader,
+    '.pts': pv.PTSReader,
+    '.pvd': pv.PVDReader,
+    '.pvti': pv.XMLPImageDataReader,
+    '.pvtk': pv.VTKPDataSetReader,
+    '.pvtr': pv.XMLPRectilinearGridReader,
+    '.pvtu': pv.XMLPUnstructuredGridReader,
+    '.raw': pv.ParticleReader,
+    '.res': pv.MFIXReader,
+    '.segy': pv.SegYReader,
+    '.series': pv.SeriesReader,
+    '.sgy': pv.SegYReader,
+    '.slc': pv.SLCReader,
+    '.stl': pv.STLReader,
+    '.tif': pv.TIFFReader,
+    '.tiff': pv.TIFFReader,
+    '.tri': pv.BinaryMarchingCubesReader,
+    '.vrml': pv.VRMLReader,
+    '.vrt': pv.ProStarReader,
+    '.vti': pv.XMLImageDataReader,
+    '.vtk': pv.VTKDataSetReader,
+    '.vtkhdf': pv.HDFReader,
+    '.vtm': pv.XMLMultiBlockDataReader,
+    '.vtmb': pv.XMLMultiBlockDataReader,
+    '.vtp': pv.XMLPolyDataReader,
+    '.vtpd': pv.XMLPartitionedDataSetReader,
+    '.vtr': pv.XMLRectilinearGridReader,
+    '.vts': pv.XMLStructuredGridReader,
+    '.vtu': pv.XMLUnstructuredGridReader,
+    '.wrl': pv.VRMLReader,
+    '.xdmf': pv.XdmfReader,
+}
+
+
+def test_class_readers_snapshot():
+    assert _CLASS_READERS == _EXPECTED_CLASS_READERS
+    assert [(display, cls) for display, _, cls in _CLASS_READER_PATTERNS] == [
+        ('.e.N.p', pv.PExodusIIReader),
+        ('.n.N.p', pv.PExodusIIReader),
+    ]
+
+
+@pytest.mark.parametrize(('replaced', 'replacement'), _REPLACED_READERS.items())
+def test_replaced_readers(replaced, replacement):
+    assert issubclass(replacement, replaced)
+    assert replacement._format is replaced._format
+    assert replaced not in _CLASS_READERS.values()
+    assert all(_CLASS_READERS[ext] is replacement for ext in replaced._format.extensions)
+
+
+def test_reader_sharing_an_extension_must_be_replaced(monkeypatch):
+    class _STLSubReader(pv.STLReader): ...
+
+    monkeypatch.setitem(vars(reader_module), '_STLSubReader', _STLSubReader)
+    with pytest.raises(ValueError, match=r'\.stl is claimed by both STLReader and _STLSubReader'):
+        _map_extensions(*_registered_readers())
 
 
 def test_class_readers_deprecated():

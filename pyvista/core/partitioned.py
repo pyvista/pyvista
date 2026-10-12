@@ -8,7 +8,6 @@ from typing import overload
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core._vtk_utilities import vtk_version_info
 
 from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
@@ -17,7 +16,7 @@ from .formatting_html import build_repr_html
 from .utilities.fileio import _map_extensions
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
-from .utilities.writer import HDFWriter
+from .utilities.writer import _HDF_WRITERS
 from .utilities.writer import XMLPartitionedDataSetWriter
 
 if TYPE_CHECKING:
@@ -63,10 +62,9 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     plot = pv._plot.plot
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(XMLPartitionedDataSetWriter)
-
-    if vtk_version_info >= (9, 4):
-        _WRITERS.update(_map_extensions(HDFWriter))
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
+        XMLPartitionedDataSetWriter, *_HDF_WRITERS
+    )
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the PartitionedDataSet."""

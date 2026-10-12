@@ -4131,9 +4131,9 @@ class PExodusIIReader(ExodusIIReader):
     """Reader for the Exodus II (partitioned) format (``.e.N.p``, ``.n.N.p``).
 
     Reads parallel Exodus II and Nemesis files split into ``N`` partitions, with
-    partition index ``p``. Passing any single
-    file from a series to this reader automatically reads every file in the
-    series and loads the complete dataset. Wraps :vtk:`vtkPExodusIIReader`.
+    partition index ``p``. Passing any single file from a series to this reader
+    automatically reads every file in the series and loads the complete dataset.
+    Wraps :vtk:`vtkPExodusIIReader`.
 
     .. versionadded:: 0.49.0
 
@@ -4544,31 +4544,33 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         self.set_active_time_value(self.time_values[time_point])
 
 
+# Reader -> the subclass that takes over its extensions in the dispatch table
+_REPLACED_READERS: dict[type[BaseReader[Any]], type[BaseReader[Any]]] = {
+    OpenFOAMReader: POpenFOAMReader,
+}
+
+
 def _registered_readers() -> list[type[BaseReader[Any]]]:
-    """Return this module's readers with a format, minus those a same-format subclass replaces."""
-    readers = [
+    """Return this module's readers with a format, minus those in ``_REPLACED_READERS``."""
+    return [
         obj
         for obj in globals().values()
-        if isinstance(obj, type) and issubclass(obj, BaseReader) and hasattr(obj, '_format')
-    ]
-    return [
-        cls
-        for cls in readers
-        if not any(
-            other is not cls and issubclass(other, cls) and other._format is cls._format
-            for other in readers
-        )
+        if isinstance(obj, type)
+        and issubclass(obj, BaseReader)
+        and hasattr(obj, '_format')
+        and obj not in _REPLACED_READERS
     ]
 
 
-# Extension -> reader dispatch for get_reader and read; each extension maps to exactly one reader
-_CLASS_READERS = _map_extensions(*_registered_readers())
+_READERS = _registered_readers()
+# Extension -> reader dispatch for get_reader and read; each extension maps to exactly one
+# reader, so two readers with the same extension fail here unless one is in _REPLACED_READERS
+_CLASS_READERS = _map_extensions(*_READERS)
 # Matched against the filename only, so dots in parent directories cannot affect selection
 _CLASS_READER_PATTERNS = [
-    (display, pattern, cls)
-    for cls in _registered_readers()
-    for display, pattern in cls._format.patterns
+    (display, pattern, cls) for cls in _READERS for display, pattern in cls._format.patterns
 ]
+del _READERS
 
 
 def __getattr__(name: str) -> Any:
@@ -4577,7 +4579,8 @@ def __getattr__(name: str) -> Any:
         # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
         msg = (
             '`CLASS_READERS` is deprecated. Use `pyvista.get_reader` to get the reader for a '
-            'file, or `extensions` and `format_name` on a reader class to look up its file format.'
+            'file, `extensions` and `format_name` on a reader class to look up its file format, '
+            'or `pyvista.register_reader` to add a reader.'
         )
         warn_external(msg, PyVistaDeprecationWarning)
         if _is_deprecation_due((0, 53)):  # pragma: no cover

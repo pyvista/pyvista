@@ -14,6 +14,7 @@ import numpy as np
 import pyvista_validation as _validation
 
 import pyvista as pv
+from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.filters.composite import _format_nested_index
 from pyvista.core.utilities import _file_formats as _formats
 from pyvista.core.utilities.fileio import _CompressionOptions
@@ -309,6 +310,10 @@ class HDFWriter(BaseWriter):
                     f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
                 )
                 raise TypeError(msg)
+
+
+# HDFWriter where the installed VTK can write VTKHDF, for splatting into a _WRITERS table
+_HDF_WRITERS: tuple[type[HDFWriter], ...] = (HDFWriter,) if vtk_version_info >= (9, 4) else ()
 
 
 class HoudiniPolyDataWriter(BaseWriter):

@@ -29,7 +29,6 @@ from typing_extensions import Unpack
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core._vtk_utilities import vtk_version_info
 
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
@@ -51,7 +50,7 @@ from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 from .utilities.misc import _BoundsSizeMixin
-from .utilities.writer import HDFWriter
+from .utilities.writer import _HDF_WRITERS
 from .utilities.writer import XMLMultiBlockDataWriter
 
 if TYPE_CHECKING:
@@ -175,9 +174,9 @@ class MultiBlock(
 
     plot = pv._plot.plot
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(XMLMultiBlockDataWriter)
-    if vtk_version_info >= (9, 4):
-        _WRITERS.update(_map_extensions(HDFWriter))
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
+        XMLMultiBlockDataWriter, *_HDF_WRITERS
+    )
 
     # fmt: off
     # ruff: disable[E501]
