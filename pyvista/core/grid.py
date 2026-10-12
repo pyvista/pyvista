@@ -890,19 +890,24 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             points = np.zeros((0, 3))
 
         else:
-            # Map each structured index to physical space, with x varying fastest, as VTK does
+            # Map each structured index to physical space, as VTK does, by adding the
+            # contribution of each axis, laid out as (nz, ny, nx) so that x varies fastest
             extent = self.extent
-            k, j, i = np.meshgrid(
-                np.arange(extent[4], extent[5] + 1),
-                np.arange(extent[2], extent[3] + 1),
-                np.arange(extent[0], extent[1] + 1),
-                indexing='ij',
-            )
-            ijk = np.column_stack([i.ravel(), j.ravel(), k.ravel()]).astype(float)
             matrix = self.index_to_physical_matrix
             # A non-finite or huge geometry gives non-finite points
             with np.errstate(invalid='ignore', over='ignore'):
-                points = ijk @ matrix[:3, :3].T + matrix[:3, 3]
+                i, j, k = (
+                    np.arange(extent[2 * axis], extent[2 * axis + 1] + 1, dtype=float)[
+                        :, np.newaxis
+                    ]
+                    * matrix[:3, axis]
+                    for axis in range(3)
+                )
+                points = (
+                    k[:, np.newaxis, np.newaxis]
+                    + j[np.newaxis, :, np.newaxis]
+                    + (i + matrix[:3, 3])[np.newaxis, np.newaxis]
+                ).reshape(-1, 3)
 
         return self._convert_points_precision(points)
 
