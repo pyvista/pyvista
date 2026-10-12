@@ -30,9 +30,9 @@ class StructuredGridFilters(DataSetFilters):
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max
-        indices that specify a rectangular region in the data. (Note
-        that these are 0-offset.) You can also specify a sampling rate
-        to subsample the data.
+        indices that specify a rectangular region in the data. They are in
+        the same index space as the extent, so they include the offset. You
+        can also specify a sampling rate to subsample the data.
 
         Typical applications of this filter are to extract a slice
         from a volume for image processing, subsampling large volumes

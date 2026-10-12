@@ -569,7 +569,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         alg = _vtk.vtkRectilinearGridToPointSet()
         alg.SetInputData(self)
         alg.Update()
-        return _get_output(alg)
+        out = _get_output(alg)
+        out.offset = self.offset
+        return out
 
 
 class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
@@ -1075,6 +1077,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         alg.SetInputData(self)
         alg.Update()
         out = _get_output(alg)
+        out.offset = self.offset
         out.set_active_scalars(self.active_scalars_name)
         return out
 
@@ -1089,6 +1092,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """
         rectilinear_coords = self._generate_rectilinear_coords()
         grid = pv.RectilinearGrid(*rectilinear_coords)
+        grid.offset = self.offset
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
