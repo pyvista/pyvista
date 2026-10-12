@@ -1920,6 +1920,70 @@ def test_resample_premultiply_alpha_raises(n_components):
         image.resample(0.5, premultiply_alpha=True)
 
 
+def _linear_to_srgb(value):
+    """Encode a linear value in [0, 1] with the sRGB transfer function."""
+    return np.where(value <= 0.0031308, value * 12.92, 1.055 * value ** (1 / 2.4) - 0.055)
+
+
+@pytest.mark.parametrize(
+    ('dtype', 'scale', 'tolerance'), [('uint8', 1, 0.5), ('float32', 255, 1e-4)]
+)
+def test_resample_is_srgb(dtype, scale, tolerance):
+    image = pv.ImageData(dimensions=(2, 1, 1))
+    image['rgb'] = (np.array([[0, 0, 0], [255, 255, 255]]) / scale).astype(dtype)
+    kwargs = dict(dimensions=(3, 1, 1), interpolation='linear', extend_border=False)
+
+    # Black and white average to half the light, not half the encoded value
+    gray = image.resample(is_srgb=True, **kwargs)['rgb'][1] * scale
+    assert np.allclose(gray, 255 * _linear_to_srgb(0.5), atol=tolerance)
+    assert np.allclose(image.resample(**kwargs)['rgb'][1] * scale, 127.5, atol=tolerance)
+    assert image.resample(is_srgb=True, **kwargs)['rgb'].dtype == dtype
+
+
+def test_resample_is_srgb_premultiply_alpha():
+    image = pv.ImageData(dimensions=(2, 1, 1))
+    image['rgba'] = np.array([[255, 0, 0, 255], [0, 0, 255, 51]], dtype=np.uint8)
+    kwargs = dict(
+        dimensions=(3, 1, 1), interpolation='linear', extend_border=False, premultiply_alpha=True
+    )
+
+    rgba = image.resample(is_srgb=True, **kwargs)['rgba'][1]
+    # Linear red and blue are weighted by alpha, then encoded, and alpha is not encoded
+    expected = 255 * _linear_to_srgb(np.array([255, 0, 51]) / (255 + 51))
+    assert np.allclose(rgba[:3], expected, atol=0.5)
+    assert rgba[3] == image.resample(**kwargs)['rgba'][1, 3]
+
+
+def test_resample_is_srgb_round_trip():
+    # Decoding and encoding every 8-bit value returns it unchanged
+    image = pv.ImageData(dimensions=(16, 16, 1))
+    image['rgba'] = np.repeat(np.arange(256, dtype=np.uint8)[:, None], 4, axis=1)
+    assert np.array_equal(image.resample(is_srgb=True)['rgba'], image['rgba'])
+
+
+@pytest.mark.parametrize(
+    ('values', 'error', 'match'),
+    [
+        (np.zeros(16), ValueError, "RGB or RGBA scalars with 3 or 4 components, but 'rgb' has 1"),
+        (
+            np.zeros((16, 2)),
+            ValueError,
+            "RGB or RGBA scalars with 3 or 4 components, but 'rgb' has 2",
+        ),
+        (
+            np.zeros((16, 3), dtype=np.int32),
+            TypeError,
+            "uint8 or floating point scalars, but 'rgb' has dtype int32",
+        ),
+    ],
+)
+def test_resample_is_srgb_raises(values, error, match):
+    image = pv.ImageData(dimensions=(4, 4, 1))
+    image['rgb'] = values
+    with pytest.raises(error, match=re.escape(match)):
+        image.resample(0.5, is_srgb=True)
+
+
 def test_reslice_physical_alignment():
     # The image is sampled at the physical position of the reference's points
     image = pv.ImageData(dimensions=(10, 10, 10))

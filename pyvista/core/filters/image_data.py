@@ -4327,6 +4327,7 @@ class ImageDataFilters(DataSetFilters):
         rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         anti_aliasing: bool = False,
         premultiply_alpha: bool = False,
+        is_srgb: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: PointLiteral | CellLiteral = 'point',
@@ -4482,6 +4483,16 @@ class ImageDataFilters(DataSetFilters):
             channel is clipped to its range over the input pixels that are not fully
             transparent, and fully transparent output pixels have a color of ``0``. The
             scalars must have four components.
+
+            .. versionadded:: 0.50
+
+        is_srgb : bool, default: False
+            Treat the scalars as sRGB-encoded RGB or RGBA colors and resample them in
+            linear light. The color channels are decoded to linear values before
+            interpolating and encoded back to sRGB afterwards, so blending light and dark
+            colors does not darken them. Alpha is not decoded. The scalars must have three
+            or four components and be ``uint8`` in the range ``[0, 255]`` or floating
+            point in the range ``[0, 1]``. Color channels are clipped to that range.
 
             .. versionadded:: 0.50
 
@@ -4849,6 +4860,30 @@ class ImageDataFilters(DataSetFilters):
                          [255,   0,   0, 128],
                          [  0,   0,   0,   0]], dtype=uint8)
 
+        Colors are also blended in their sRGB encoding by default, so the average of a
+        black and a white pixel is darker than the gray they appear to make together.
+
+        >>> stripes = pv.ImageData(dimensions=(2, 1, 1))
+        >>> stripes['rgb'] = np.array([[0, 0, 0], [255, 255, 255]], dtype=np.uint8)
+        >>> stripes.resample(
+        ...     dimensions=(3, 1, 1), interpolation='linear', extend_border=False
+        ... )['rgb']
+        pyvista_ndarray([[  0,   0,   0],
+                         [128, 128, 128],
+                         [255, 255, 255]], dtype=uint8)
+
+        Enable ``is_srgb`` to blend them in linear light instead.
+
+        >>> stripes.resample(
+        ...     dimensions=(3, 1, 1),
+        ...     interpolation='linear',
+        ...     extend_border=False,
+        ...     is_srgb=True,
+        ... )['rgb']
+        pyvista_ndarray([[  0,   0,   0],
+                         [188, 188, 188],
+                         [255, 255, 255]], dtype=uint8)
+
         Load an MRI of a knee and down-sample it.
 
         >>> knee = pv.examples.download_knee().resample(
@@ -4941,6 +4976,10 @@ class ImageDataFilters(DataSetFilters):
         if input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
             input_image.point_data[name] = input_image.point_data[name].astype(float)
 
+        if is_srgb:
+            input_image.point_data[name] = _srgb_to_linear_colors(
+                input_image.point_data[name], name=name
+            )
         if premultiply_alpha:
             input_rgba = input_image.point_data[name]
             input_image.point_data[name] = _premultiply_alpha(input_rgba, name=name)
@@ -5045,6 +5084,10 @@ class ImageDataFilters(DataSetFilters):
         if premultiply_alpha:
             output_image.point_data[name] = _unpremultiply_alpha(
                 output_image.active_scalars, rgb_range
+            )
+        if is_srgb:
+            output_image.point_data[name] = _linear_to_srgb_colors(
+                output_image.active_scalars, max_value=255 if input_dtype == np.uint8 else 1
             )
         output_array = output_image.active_scalars
         if output_array.dtype != input_dtype:
@@ -6496,6 +6539,40 @@ def _reslice_image(
         modes[interpolation]()
     _update_alg(alg, progress_bar=progress_bar, message='Reslicing image.')
     return _get_output(alg)
+
+
+def _srgb_to_linear_colors(colors: NDArray[Any], *, name: str) -> NDArray[np.floating]:
+    """Decode the RGB channels of sRGB colors to linear values in the same range."""
+    n_components = 1 if colors.ndim == 1 else colors.shape[1]
+    if n_components not in (3, 4):
+        msg = (
+            f'`is_srgb` requires RGB or RGBA scalars with 3 or 4 components, but {name!r} '
+            f'has {n_components}.'
+        )
+        raise ValueError(msg)
+    if colors.dtype != np.uint8 and colors.dtype.kind != 'f':
+        msg = (
+            f'`is_srgb` requires uint8 or floating point scalars, but {name!r} has dtype '
+            f'{colors.dtype}.'
+        )
+        raise TypeError(msg)
+    max_value = 255 if colors.dtype == np.uint8 else 1
+    linear = np.array(colors, dtype=colors.dtype if colors.dtype.kind == 'f' else float)
+    rgb = np.clip(linear[:, :3] / max_value, 0, 1)
+    rgb = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    linear[:, :3] = rgb * max_value
+    return linear
+
+
+def _linear_to_srgb_colors(
+    linear: NDArray[np.floating], *, max_value: float
+) -> NDArray[np.floating]:
+    """Encode the RGB channels of linear colors to sRGB values in the same range."""
+    rgb = np.clip(linear[:, :3] / max_value, 0, 1)
+    rgb = np.where(rgb <= 0.0031308, rgb * 12.92, 1.055 * rgb ** (1 / 2.4) - 0.055)
+    colors = linear.copy()
+    colors[:, :3] = rgb * max_value
+    return colors
 
 
 def _premultiply_alpha(rgba: NDArray[Any], *, name: str) -> NDArray[np.floating]:
