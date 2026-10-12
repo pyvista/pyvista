@@ -4156,7 +4156,16 @@ class StructuredGrid(
             voi.extend((start + offset[i], stop + offset[i]))
             rate.append(step)
 
-        return self.extract_subset(voi, rate, boundary=False)
+        sliced = self.extract_subset(voi, rate, boundary=False)
+        if any(step != 1 for step in rate):
+            # VTK rebases a stepped axis to 0. Divide its extent by the step instead, as for
+            # ImageData, rounding down.
+            extent = self.extent
+            sliced.offset = [
+                sliced_offset if step == 1 else max(voi[2 * i], extent[2 * i]) // step
+                for i, (step, sliced_offset) in enumerate(zip(rate, sliced.offset, strict=True))
+            ]
+        return sliced
 
     def hide_cells(self, ind: VectorLikeInt | VectorLikeBool, *, inplace: bool = False) -> Self:
         """Hide cells without deleting them.
@@ -4276,12 +4285,13 @@ class StructuredGrid(
                 shape=(ni - 1, nj - 1, nk - 1),
                 order='F',
             )
-            grid.cell_data['BLOCK_I'] = i
-            grid.cell_data['BLOCK_J'] = j
-            grid.cell_data['BLOCK_K'] = k
+            # The block indices are in extent space, from which VTK sets the extent
+            offset = self.offset
+            grid.cell_data['BLOCK_I'] = i + offset[0]
+            grid.cell_data['BLOCK_J'] = j + offset[1]
+            grid.cell_data['BLOCK_K'] = k + offset[2]
 
         explicit_grid = grid.cast_to_explicit_structured_grid()
-        explicit_grid.offset = self.offset
 
         if not s1.issubset(self.cell_data):
             for key in s1:
