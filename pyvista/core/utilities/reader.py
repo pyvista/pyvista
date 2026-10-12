@@ -4542,8 +4542,8 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         self.set_active_time_value(self.time_values[time_point])
 
 
-# Readers :func:`pyvista.get_reader` and :func:`pyvista.read` dispatch to by file format
-_READER_CLASSES: tuple[type[BaseReader[Any]], ...] = (
+# Readers :func:`pyvista.get_reader` and :func:`pyvista.read` dispatch to by file extension
+_CLASS_READERS = _extension_mapping(
     AVSucdReader,
     BinaryMarchingCubesReader,
     BMPReader,
@@ -4574,7 +4574,6 @@ _READER_CLASSES: tuple[type[BaseReader[Any]], ...] = (
     OBJReader,
     ParticleReader,
     PDBReader,
-    PExodusIIReader,
     Plot3DMetaReader,
     PLYReader,
     PNGReader,
@@ -4605,10 +4604,9 @@ _READER_CLASSES: tuple[type[BaseReader[Any]], ...] = (
     XMLStructuredGridReader,
     XMLUnstructuredGridReader,
 )
-_CLASS_READERS = _extension_mapping(*_READER_CLASSES)
 # Matched against the filename only, so dots in parent directories cannot affect selection
 _CLASS_READER_PATTERNS = [
-    (display, pattern, cls) for cls in _READER_CLASSES for display, pattern in cls._format.patterns
+    (display, pattern, PExodusIIReader) for display, pattern in PExodusIIReader._format.patterns
 ]
 
 
@@ -4683,7 +4681,8 @@ def _derive_reader_output_types(
 # The mapping is derived from each reader's ``BaseReader[X]`` parameterization
 # (with a per-class ``_output_types`` attribute on multi-output readers), so
 # adding a new reader automatically produces the right entry here. We seed the
-# iteration from :data:`_READER_CLASSES`.
+# iteration from :data:`_CLASS_READERS` and :data:`_CLASS_READER_PATTERNS`.
 _CLASS_READER_RETURN_TYPE: dict[type[BaseReader[Any]], _mesh_types | tuple[_mesh_types, ...]] = {
-    cls: _derive_reader_output_types(cls) for cls in _READER_CLASSES
+    cls: _derive_reader_output_types(cls)
+    for cls in {*_CLASS_READERS.values(), *(reader for *_, reader in _CLASS_READER_PATTERNS)}
 }

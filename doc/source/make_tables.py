@@ -51,8 +51,9 @@ from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import StrEnum
+from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
-from pyvista.core.utilities.reader import _READER_CLASSES
+from pyvista.core.utilities.reader import _CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
@@ -148,11 +149,10 @@ def _resolve_jobs(jobs: str) -> int:
 
 # Map readers to Plotter import methods
 READER_IMPORTERS: dict[type[pv.BaseReader], str] = {}
-for reader in _READER_CLASSES:
-    for ext in reader._format.extensions:
-        method = f'import_{ext.removeprefix(".")}'
-        if hasattr(pv.Plotter, method):
-            READER_IMPORTERS.setdefault(reader, method)
+for ext, reader in _CLASS_READERS.items():
+    method = f'import_{ext.removeprefix(".")}'
+    if hasattr(pv.Plotter, method):
+        READER_IMPORTERS.setdefault(reader, method)
 
 
 def _aligned_dedent(txt):
@@ -252,7 +252,7 @@ def _sort_by_class_name(mapping: dict[Any, Any]):
 def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
     # Create dict for reader info: extension(s) and output type(s)
     reader_info = {}
-    for reader in _READER_CLASSES:
+    for reader in {*_CLASS_READERS.values(), *(reader for *_, reader in _CLASS_READER_PATTERNS)}:
         fmt = reader._format
         extensions = {*fmt.extensions, *(display for display, _ in fmt.patterns)}
         types = _CLASS_READER_RETURN_TYPE[reader]
