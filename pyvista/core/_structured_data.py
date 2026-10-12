@@ -41,10 +41,6 @@ class _StructuredDataMixin:
         cells and cannot be set. The dimensions of a :class:`~pyvista.StructuredGrid`
         must match its number of points, so set its points first.
 
-        .. versionchanged:: 0.50
-            Setting the dimensions keeps the :attr:`offset`, and the dimensions of a
-            :class:`~pyvista.StructuredGrid` must match its number of points.
-
         Returns
         -------
         tuple[int, int, int]
@@ -80,7 +76,7 @@ class _StructuredDataMixin:
             )
             raise AttributeError(msg)
         dims_ = _validation.validate_array3(
-            dims, must_be_integer=True, must_be_nonnegative=True, dtype_out=int
+            dims, must_be_integer=True, must_be_nonnegative=True, dtype_out=int, name='Dimensions'
         )
         self.extent = _extent_from(self.offset, dims_)
 
@@ -146,9 +142,7 @@ class _StructuredDataMixin:
             new_extent_[3] - new_extent_[2] + 1,
             new_extent_[5] - new_extent_[4] + 1,
         )
-        if min(new_dims) < 0:
-            msg = f'Extent {tuple(new_extent_)} has negative dimensions {new_dims}.'
-            raise ValueError(msg)
+        _validation.check_nonnegative(new_dims, name='Dimensions')
         if new_dims != self.dimensions:
             self._check_dimensions(new_dims)
         self._set_extent(new_extent_)

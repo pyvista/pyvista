@@ -1922,7 +1922,11 @@ def test_rectilinear_grid_coordinates_keep_offset():
 
 @pytest.mark.parametrize(
     ('dims', 'match'),
-    [((1, 2), 'shape'), ((-1, 2, 2), 'greater than or equal to 0'), ((1.5, 2, 2), 'integer-like')],
+    [
+        ((1, 2), 'Dimensions has shape'),
+        ((-1, 2, 2), 'Dimensions values must all be greater than or equal to 0'),
+        ((1.5, 2, 2), 'Dimensions must have integer-like values'),
+    ],
 )
 @pytest.mark.parametrize('name', ['ImageData', 'StructuredGrid'])
 def test_dimensions_raises(name, dims, match):
@@ -1933,7 +1937,7 @@ def test_dimensions_raises(name, dims, match):
 
 def test_extent_negative_dimensions_raises(extent_grid):
     extent = extent_grid.extent
-    match = re.escape('Extent (5, 0, 0, 1, 0, 1) has negative dimensions (-4, 2, 2).')
+    match = 'Dimensions values must all be greater than or equal to 0'
     with pytest.raises(ValueError, match=match):
         extent_grid.extent = (5, 0, 0, 1, 0, 1)
     assert extent_grid.extent == extent
