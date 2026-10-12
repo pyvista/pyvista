@@ -1517,9 +1517,10 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
 
     if extension == '.vtk' and not is_identity_matrix:
         match = re.escape(
-            'The direction matrix for ImageData cannot be saved using the legacy `.vtk` format.'
+            'The direction matrix for ImageData cannot be saved using the '
+            'Legacy VTK `.vtk` format.'
             '\nSee https://gitlab.kitware.com/vtk/vtk/-/issues/19663 '
-            '\nUse the `.vti` extension instead (XML format).'
+            '\nUse the `.vti` extension instead (VTK Image Data format).'
         )
         with pytest.raises(ValueError, match=match):
             uniform.save(filename, binary=binary)

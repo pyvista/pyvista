@@ -308,7 +308,7 @@ def get_ext(filename: str | Path) -> str:
     """Extract the extension of the filename.
 
     For files with the .gz suffix, the previous extension is returned as well.
-    This is needed for example, for the compressed NIFTI format (.nii.gz).
+    This is needed for example, for the compressed NIfTI format (``.nii.gz``).
 
     Parameters
     ----------

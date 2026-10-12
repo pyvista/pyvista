@@ -97,7 +97,7 @@ _legacy_dataset_types = Literal[  # no PointSet
 def get_reader(filename: str | Path, force_ext: str | None = None) -> Any:
     """Get a reader for fine-grained control of reading data files.
 
-    Supported file types and Readers:
+    Supported file formats and readers:
 
     .. include:: /api/readers/readers_table.rst
 
@@ -731,7 +731,7 @@ class TimeReader(ABC):
 
 
 class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
-    """XML Image Data Reader for .vti files.
+    """Reader for the VTK Image Data format (``.vti``).
 
     Wraps :vtk:`vtkXMLImageDataReader`.
 
@@ -742,7 +742,7 @@ class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
 
 class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
-    """Parallel XML Image Data Reader for .pvti files.
+    """Reader for the VTK Image Data (partitioned) format (``.pvti``).
 
     Wraps :vtk:`vtkXMLPImageDataReader`.
 
@@ -753,7 +753,7 @@ class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
 
 class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelection):
-    """XML RectilinearGrid Reader for .vtr files.
+    """Reader for the VTK Rectilinear Grid format (``.vtr``).
 
     Wraps :vtk:`vtkXMLRectilinearGridReader`.
 
@@ -781,7 +781,7 @@ class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelec
 
 
 class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelection):
-    """Parallel XML RectilinearGrid Reader for .pvtr files.
+    """Reader for the VTK Rectilinear Grid (partitioned) format (``.pvtr``).
 
     Wraps :vtk:`vtkXMLPRectilinearGridReader`.
 
@@ -792,7 +792,7 @@ class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSele
 
 
 class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
-    """XML UnstructuredGrid Reader for .vtu files.
+    """Reader for the VTK Unstructured Grid format (``.vtu``).
 
     Wraps :vtk:`vtkXMLUnstructuredGridReader`.
 
@@ -820,7 +820,7 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
 
 
 class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
-    """Parallel XML UnstructuredGrid Reader for .pvtu files.
+    """Reader for the VTK Unstructured Grid (partitioned) format (``.pvtu``).
 
     Wraps :vtk:`vtkXMLPUnstructuredGridReader`.
 
@@ -831,7 +831,7 @@ class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSe
 
 
 class XMLPolyDataReader(BaseReader['PolyData'], PointCellDataSelection):
-    """XML PolyData Reader for .vtp files.
+    """Reader for the VTK PolyData format (``.vtp``).
 
     Wraps :vtk:`vtkXMLPolyDataReader`.
 
@@ -861,7 +861,7 @@ class XMLPolyDataReader(BaseReader['PolyData'], PointCellDataSelection):
 
 
 class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelection):
-    """XML StructuredGrid Reader for .vts files.
+    """Reader for the VTK Structured Grid format (``.vts``).
 
     Wraps :vtk:`vtkXMLStructuredGridReader`.
 
@@ -884,7 +884,7 @@ class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelecti
 
 
 class XMLMultiBlockDataReader(BaseReader['MultiBlock'], PointCellDataSelection):
-    """XML MultiBlock Data Reader for .vtm or .vtmb files.
+    """Reader for the VTK MultiBlock format (``.vtm``, ``.vtmb``).
 
     Wraps :vtk:`vtkXMLMultiBlockDataReader`.
 
@@ -895,7 +895,7 @@ class XMLMultiBlockDataReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
 
 class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
-    """EnSight Reader for .case files.
+    """Reader for the EnSight format (``.case``).
 
     Wraps :vtk:`vtkGenericEnSightReader`.
 
@@ -1014,10 +1014,10 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 
 
 class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
-    """OpenFOAM Reader for .foam files.
+    """Reader for the OpenFOAM format (``.foam``).
 
-    By default, pyvista enables all patch arrays.  This is a deviation
-    from the vtk default.
+    By default, PyVista enables all patch arrays.  This is a deviation
+    from the VTK default.
 
     Wraps :vtk:`vtkOpenFOAMReader`.
 
@@ -1330,7 +1330,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
 
 class POpenFOAMReader(OpenFOAMReader):
-    """Parallel OpenFOAM Reader for .foam files.
+    """Parallel reader for the OpenFOAM format (``.foam``).
 
     Wraps :vtk:`vtkPOpenFOAMReader`.
 
@@ -1383,7 +1383,7 @@ class POpenFOAMReader(OpenFOAMReader):
 
 
 class PLYReader(BaseReader['PolyData']):
-    """PLY Reader for reading .ply files.
+    """Reader for the Stanford PLY format (``.ply``).
 
     Wraps :vtk:`vtkPLYReader`.
 
@@ -1406,7 +1406,7 @@ class PLYReader(BaseReader['PolyData']):
 
 
 class OBJReader(BaseReader['PolyData']):
-    """OBJ Reader for reading .obj files.
+    """Reader for the Wavefront OBJ format (``.obj``).
 
     Wraps :vtk:`vtkOBJReader`.
 
@@ -1429,7 +1429,7 @@ class OBJReader(BaseReader['PolyData']):
 
 
 class STLReader(BaseReader['PolyData']):
-    """STL Reader for .stl files.
+    """Reader for the Stereolithography format (``.stl``).
 
     Wraps :vtk:`vtkSTLReader`.
 
@@ -1452,9 +1452,9 @@ class STLReader(BaseReader['PolyData']):
 
 
 class TecplotReader(BaseReader['MultiBlock']):
-    """Tecplot Reader for ascii .dat files.
+    """Reader for the Tecplot format (``.dat``).
 
-    Wraps :vtk:`vtkTecplotReader`.
+    Reads ASCII Tecplot files. Wraps :vtk:`vtkTecplotReader`.
 
     Examples
     --------
@@ -1472,7 +1472,7 @@ class TecplotReader(BaseReader['MultiBlock']):
 
 
 class VTKDataSetReader(BaseReader['DataSet']):
-    """VTK Data Set Reader for .vtk files.
+    """Reader for the Legacy VTK format (``.vtk``).
 
     Wraps :vtk:`vtkDataSetReader`.
 
@@ -1512,7 +1512,7 @@ class VTKDataSetReader(BaseReader['DataSet']):
 
 
 class VTKPDataSetReader(BaseReader['DataSet']):
-    """Parallel VTK Data Set Reader for .pvtk files.
+    """Reader for the Legacy VTK (partitioned) format (``.pvtk``).
 
     Wraps :vtk:`vtkPDataSetReader`.
 
@@ -1524,7 +1524,7 @@ class VTKPDataSetReader(BaseReader['DataSet']):
 
 
 class BYUReader(BaseReader['PolyData']):
-    """BYU Reader for .g files.
+    """Reader for the MOVIE.BYU format (``.g``).
 
     Wraps :vtk:`vtkBYUReader`.
 
@@ -1547,7 +1547,7 @@ class BYUReader(BaseReader['PolyData']):
 
 
 class FacetReader(BaseReader['PolyData']):
-    """Facet Reader for .facet files.
+    """Reader for the Facet Polygonal Data format (``.facet``).
 
     Wraps :vtk:`vtkFacetReader`.
 
@@ -1570,7 +1570,7 @@ class FacetReader(BaseReader['PolyData']):
 
 
 class Plot3DMetaReader(BaseReader['MultiBlock']):
-    """Plot3DMeta Reader for .p3d files.
+    """Reader for the PLOT3D Meta format (``.p3d``).
 
     Wraps :vtk:`vtkPlot3DMetaReader`.
 
@@ -1605,7 +1605,7 @@ class Plot3DFunctionEnum(IntEnum):
 
 
 class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
-    """MultiBlock Plot3D Reader.
+    """Reader for the PLOT3D format.
 
     Wraps :vtk:`vtkMultiBlockPLOT3DReader`.
 
@@ -1779,7 +1779,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
 
 
 class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
-    """CGNS Reader for .cgns files.
+    """Reader for the CGNS format (``.cgns``).
 
     Creates a multi-block dataset and reads unstructured grids and structured
     meshes from binary files stored in CGNS file format, with data stored at
@@ -2072,7 +2072,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
 
 class BinaryMarchingCubesReader(BaseReader['PolyData']):
-    """BinaryMarchingCubes Reader for .tri files.
+    """Reader for the Binary Marching Cubes format (``.tri``).
 
     Wraps :vtk:`vtkMCubesReader`.
 
@@ -2179,7 +2179,7 @@ class _PVDReader(BaseVTKReader):
 
 
 class PVDReader(BaseReader['MultiBlock'], TimeReader):
-    """PVD Reader for .pvd files.
+    """Reader for the ParaView Data format (``.pvd``).
 
     Reading a time point returns a :class:`pyvista.MultiBlock`, even when
     it contains only one dataset. This differs from ParaView, which returns
@@ -2285,14 +2285,14 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
 
 
 class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, TimeReader):
-    """Class for reading .nek5000 files produced by Nek5000 and NekRS.
+    """Reader for the Nek5000 format (``.nek5000``).
 
-    Wraps :vtk:`vtkNek5000Reader`.
+    Reads files produced by Nek5000 and NekRS. Wraps :vtk:`vtkNek5000Reader`.
 
     .. versionadded:: 0.45.0
 
     .. note::
-        This reader requires vtk version >=9.3.0.
+        This reader requires VTK version >=9.3.0.
 
     Examples
     --------
@@ -2496,11 +2496,11 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
 
 
 class DICOMReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
-    """DICOM Reader for reading ``.dcm`` files.
+    """Reader for the DICOM format (``.dcm``, ``.img``).
 
     Wraps :vtk:`vtkDICOMImageReader`.
 
-    This reader reads a single file or a path containing a several ``.dcm``
+    This reader reads a single file or a directory containing several ``.dcm``
     files (DICOM stack).
 
     Parameters
@@ -2538,7 +2538,7 @@ class DICOMReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
 
 
 class BMPReader(BaseReader['ImageData']):
-    """BMP Reader for .bmp files.
+    """Reader for the BMP Image format (``.bmp``).
 
     Wraps :vtk:`vtkBMPReader`.
 
@@ -2561,7 +2561,7 @@ class BMPReader(BaseReader['ImageData']):
 
 
 class DEMReader(BaseReader['ImageData']):
-    """DEM Reader for .dem files.
+    """Reader for the Digital Elevation Model format (``.dem``).
 
     Wraps :vtk:`vtkDEMReader`.
 
@@ -2584,7 +2584,7 @@ class DEMReader(BaseReader['ImageData']):
 
 
 class JPEGReader(BaseReader['ImageData']):
-    """JPEG Reader for .jpeg and .jpg files.
+    """Reader for the JPEG Image format (``.jpeg``, ``.jpg``).
 
     Wraps :vtk:`vtkJPEGReader`.
 
@@ -2607,7 +2607,7 @@ class JPEGReader(BaseReader['ImageData']):
 
 
 class MetaImageReader(BaseReader['ImageData']):
-    """Meta Image Reader for .mha and .mhd files.
+    """Reader for the MetaImage format (``.mha``, ``.mhd``).
 
     Wraps :vtk:`vtkMetaImageReader`.
 
@@ -2633,7 +2633,7 @@ class MetaImageReader(BaseReader['ImageData']):
 
 
 class NIFTIReader(BaseReader['ImageData']):
-    """NIFTI Reader for .nii and .nii.gz files.
+    """Reader for the NIfTI format (``.nii``, ``.nii.gz``).
 
     Wraps :vtk:`vtkNIFTIImageReader`.
 
@@ -2656,7 +2656,7 @@ class NIFTIReader(BaseReader['ImageData']):
 
 
 class NRRDReader(BaseReader['ImageData']):
-    """``NRRDReader`` for .nrrd and .nhdr files.
+    """Reader for the NRRD format (``.nhdr``, ``.nrrd``).
 
     Wraps :vtk:`vtkNrrdReader`.
 
@@ -2679,7 +2679,7 @@ class NRRDReader(BaseReader['ImageData']):
 
 
 class PNGReader(BaseReader['ImageData']):
-    """``PNGReader`` for .png files.
+    """Reader for the PNG Image format (``.png``).
 
     Wraps :vtk:`vtkPNGReader`.
 
@@ -2702,7 +2702,7 @@ class PNGReader(BaseReader['ImageData']):
 
 
 class PNMReader(BaseReader['ImageData']):
-    """``PNMReader`` for .pnm files.
+    """Reader for the PNM Image format (``.pnm``).
 
     Wraps :vtk:`vtkPNMReader`.
 
@@ -2728,7 +2728,7 @@ class PNMReader(BaseReader['ImageData']):
 
 
 class SLCReader(BaseReader['ImageData']):
-    """``SLCReader`` for .slc files.
+    """Reader for the SLC Volume format (``.slc``).
 
     Wraps :vtk:`vtkSLCReader`.
 
@@ -2751,7 +2751,7 @@ class SLCReader(BaseReader['ImageData']):
 
 
 class TIFFReader(BaseReader['ImageData']):
-    """``TIFFReader`` for .tif and .tiff files.
+    """Reader for the TIFF Image format (``.tif``, ``.tiff``).
 
     Wraps :vtk:`vtkTIFFReader`.
 
@@ -2783,7 +2783,7 @@ class TIFFReader(BaseReader['ImageData']):
 
 
 class HDRReader(BaseReader['ImageData']):
-    """``HDRReader`` for .hdr files.
+    """Reader for the Radiance HDR format (``.hdr``).
 
     Wraps :vtk:`vtkHDRReader`.
 
@@ -2815,7 +2815,7 @@ class HDRReader(BaseReader['ImageData']):
 
 
 class PTSReader(BaseReader['PolyData']):
-    """``PTSReader`` for .pts files.
+    """Reader for the PTS Point Cloud format (``.pts``).
 
     Wraps :vtk:`vtkPTSReader`.
 
@@ -2826,7 +2826,7 @@ class PTSReader(BaseReader['PolyData']):
 
 
 class AVSucdReader(BaseReader['UnstructuredGrid']):
-    """AVSucdReader for .inp files.
+    """Reader for the AVS UCD format (``.inp``).
 
     Wraps :vtk:`vtkAVSucdReader`.
 
@@ -2849,7 +2849,7 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
 
 
 class HDFReader(BaseReader['DataObject']):
-    """``HDFReader`` for .hdf files.
+    """Reader for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFReader`.
 
@@ -2879,7 +2879,7 @@ class HDFReader(BaseReader['DataObject']):
 
 
 class GLTFReader(BaseReader['MultiBlock']):
-    """``GLTFReader`` for .gltf and .glb files.
+    """Reader for the glTF 2.0 format (``.glb``, ``.gltf``).
 
     Wraps :vtk:`vtkGLTFReader`.
 
@@ -2899,7 +2899,7 @@ class GLTFReader(BaseReader['MultiBlock']):
 
 
 class FluentReader(BaseReader['UnstructuredGrid']):
-    """FluentReader for .cas files.
+    """Reader for the Fluent Case format (``.cas``).
 
     Wraps :vtk:`vtkFLUENTReader`.
 
@@ -2910,7 +2910,7 @@ class FluentReader(BaseReader['UnstructuredGrid']):
 
 
 class MFIXReader(BaseReader['UnstructuredGrid']):
-    """``MFIXReader`` for .res files.
+    """Reader for the MFIX format (``.res``).
 
     Wraps :vtk:`vtkMFIXReader`.
 
@@ -2921,7 +2921,7 @@ class MFIXReader(BaseReader['UnstructuredGrid']):
 
 
 class SegYReader(BaseReader['DataSet']):
-    """SegYReader for .sgy and .segy files.
+    """Reader for the SEG-Y format (``.segy``, ``.sgy``).
 
     Wraps :vtk:`vtkSegYReader`.
 
@@ -2971,7 +2971,7 @@ class _GRDECLReader(BaseVTKReader):
 
 
 class GRDECLReader(BaseReader['ExplicitStructuredGrid']):  # numpydoc ignore=PR02
-    """``GRDECLReader`` for .grdecl files.
+    """Reader for the Eclipse GRDECL format (``.grdecl``).
 
     Uses :func:`~pyvista.read_grdecl` internally.
 
@@ -3063,7 +3063,7 @@ class _GIFReader(BaseVTKReader):
 
 
 class GIFReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
-    """``GIFReader`` for .gif files.
+    """Reader for the GIF Image format (``.gif``).
 
     Parameters
     ----------
@@ -3112,7 +3112,7 @@ class _VRMLReader(BaseVTKReader):
 
 
 class VRMLReader(BaseReader['MultiBlock']):  # numpydoc ignore=PR02
-    """``VRMLReader`` for .wrl and .vrml files.
+    """Reader for the VRML 2.0 format (``.vrml``, ``.wrl``).
 
     .. note::
         This reads the file's mesh geometry only. Any plot-specific
@@ -3160,7 +3160,7 @@ class _ThreeDSReader(BaseVTKReader):
 
 
 class ThreeDSReader(BaseReader['MultiBlock']):  # numpydoc ignore=PR02
-    """ThreeDSReader for .3ds files.
+    """Reader for the 3D Studio format (``.3ds``).
 
     .. note::
         This reads the file's mesh geometry only. Any plot-specific
@@ -3199,7 +3199,7 @@ class ThreeDSReader(BaseReader['MultiBlock']):  # numpydoc ignore=PR02
 class XdmfReader(
     BaseReader['DataObject'], PointCellDataSelection, TimeReader
 ):  # numpydoc ignore=PR02
-    """XdmfReader for .xdmf files.
+    """Reader for the XDMF format (``.xdmf``).
 
     Wraps :vtk:`vtkXdmfReader`.
 
@@ -3302,7 +3302,7 @@ class XdmfReader(
 
 
 class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
-    """XML PartitionedDataSet Reader for reading .vtpd files.
+    """Reader for the VTK Partitioned Dataset format (``.vtpd``).
 
     Wraps :vtk:`vtkXMLPartitionedDataSetReader`.
 
@@ -3325,7 +3325,7 @@ class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
 
 
 class FLUENTCFFReader(BaseReader['MultiBlock']):
-    """``FLUENTCFFReader`` for .h5 files.
+    """Reader for the Fluent CFF Case format (``.h5``).
 
     Wraps :vtk:`vtkFLUENTCFFReader`.
 
@@ -3346,7 +3346,7 @@ class FLUENTCFFReader(BaseReader['MultiBlock']):
 
 
 class GambitReader(BaseReader['UnstructuredGrid']):
-    """GambitReader for .neu files.
+    """Reader for the GAMBIT Neutral format (``.neu``).
 
     Wraps :vtk:`vtkGAMBITReader`.
 
@@ -3368,7 +3368,7 @@ class GambitReader(BaseReader['UnstructuredGrid']):
 
 
 class GaussianCubeReader(BaseReader['DataSet']):
-    """GaussianCubeReader for .cube files.
+    """Reader for the Gaussian Cube format (``.cube``).
 
     Wraps :vtk:`vtkGaussianCubeReader`.
 
@@ -3463,7 +3463,7 @@ class GaussianCubeReader(BaseReader['DataSet']):
 
 
 class MINCImageReader(BaseReader['ImageData']):
-    """MINCImageReader for .mnc files.
+    """Reader for the MINC Image format (``.mnc``).
 
     Wraps :vtk:`vtkMINCImageReader`.
 
@@ -3485,7 +3485,7 @@ class MINCImageReader(BaseReader['ImageData']):
 
 
 class PDBReader(BaseReader['PolyData']):
-    """``PDBReader`` for .pdb files.
+    """Reader for the Protein Data Bank format (``.pdb``).
 
     Wraps :vtk:`vtkPDBReader`.
 
@@ -3507,7 +3507,7 @@ class PDBReader(BaseReader['PolyData']):
 
 
 class GESignaReader(BaseReader['ImageData']):
-    """GESignaReader for .MR files.
+    """Reader for the GE Signa MR format (``.mr``).
 
     Wraps :vtk:`vtkGESignaReader`.
 
@@ -3529,7 +3529,7 @@ class GESignaReader(BaseReader['ImageData']):
 
 
 class ParticleReader(BaseReader['PolyData']):
-    """ParticleReader for .raw files.
+    """Reader for the VTK Particle format (``.raw``).
 
     Wraps :vtk:`vtkParticleReader`.
 
@@ -3576,11 +3576,11 @@ class ParticleReader(BaseReader['PolyData']):
 
 
 class ProStarReader(BaseReader['UnstructuredGrid']):
-    """ProStarReader for .vrt files.
+    """Reader for the proSTAR format (``.vrt``).
 
     Wraps :vtk:`vtkProStarReader`.
 
-    Reads geometry in proSTAR (STARCD) file format.
+    Reads geometry in the proSTAR (STAR-CD) file format.
 
     .. versionadded:: 0.44.0
 
@@ -3600,9 +3600,9 @@ class ProStarReader(BaseReader['UnstructuredGrid']):
 
 
 class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
-    """ExodusIIReader for .e and .exo files.
+    """Reader for the Exodus II format (``.e``, ``.ex2``, ``.exii``, ``.exo``).
 
-    Reads Exodus II files. Wraps :vtk:`vtkExodusIIReader`.
+    Wraps :vtk:`vtkExodusIIReader`.
 
     .. versionadded:: 0.45.0
 
@@ -4128,10 +4128,10 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
 
 class PExodusIIReader(ExodusIIReader):
-    """PExodusIIReader reads parallel Exodus II and Nemesis files.
+    """Reader for the Exodus II (partitioned) format (``.e.N.p``, ``.n.N.p``).
 
-    Parallel files use the extensions ``.e.N.p`` and ``.n.N.p``, where ``N`` is
-    the number of partitions and ``p`` is the partition index. Passing any single
+    Reads parallel Exodus II and Nemesis files, where ``N`` is the number of
+    partitions and ``p`` is the partition index. Passing any single
     file from a series to this reader automatically reads every file in the
     series and loads the complete dataset. Wraps :vtk:`vtkPExodusIIReader`.
 
@@ -4446,7 +4446,9 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
 
 
 class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachReader]):
-    """Class for reading .series file supported by ParaView.
+    """Reader for the VTK File Series format (``.series``).
+
+    Reads the JSON file ParaView uses to list the files and times of a time series.
 
     .. versionadded:: 0.47.0
 

@@ -3700,6 +3700,14 @@ def test_fileio_extensions_match_format(cls):
     assert cls.extension_patterns == tuple(pattern for _, pattern in cls._format.patterns)
 
 
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_docstring_names_format(cls):
+    summary = cls.__doc__.strip().splitlines()[0]
+    assert f'the {cls.format_name} format' in summary
+    for ext in (*cls._format.extensions, *(display for display, _ in cls._format.patterns)):
+        assert f'``{ext}``' in summary
+
+
 def test_file_formats_unique_and_used():
     names = [fmt.name for fmt in FILE_FORMATS]
     assert len(set(names)) == len(names)

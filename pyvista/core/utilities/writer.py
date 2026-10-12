@@ -1,4 +1,4 @@
-"""Writers for writing vtk objects to file."""
+"""Writers for writing VTK objects to file."""
 
 from __future__ import annotations
 
@@ -221,7 +221,7 @@ class BaseWriter(_FileIOBase):
 
 
 class BMPWriter(BaseWriter):
-    """``BMPWriter`` for ``.bmp`` files.
+    """Writer for the BMP Image format (``.bmp``).
 
     Wraps :vtk:`vtkBMPWriter`.
 
@@ -234,7 +234,7 @@ class BMPWriter(BaseWriter):
 
 
 class DataSetWriter(BaseWriter, _DataFormatMixin):
-    """DataSetWriter for VTK legacy dataset files ``.vtk``.
+    """Writer for the Legacy VTK format (``.vtk``), for any dataset.
 
     Wraps :vtk:`vtkDataSetWriter`.
 
@@ -252,15 +252,15 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
         ):
             msg = (
                 'The direction matrix for ImageData cannot be saved using the '
-                'legacy `.vtk` format.\n'
+                'Legacy VTK `.vtk` format.\n'
                 'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                'Use the `.vti` extension instead (XML format).'
+                'Use the `.vti` extension instead (VTK Image Data format).'
             )
             raise ValueError(msg)
 
 
 class HDFWriter(BaseWriter):
-    """``HDFWriter`` for ``.hdf`` and ``.vtkhdf`` files.
+    """Writer for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFWriter`.
 
@@ -278,13 +278,13 @@ class HDFWriter(BaseWriter):
         if pv.vtk_version_info < (9, 5, 0):
             if mesh.is_nested:
                 msg = (
-                    'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                    'Nested MultiBlocks are not supported by the VTKHDF format in VTK 9.4.'
                     '\nUpgrade to VTK>=9.5 for this functionality.'
                 )
                 raise TypeError(msg)
             if type(None) in mesh.block_types:
                 msg = (
-                    'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                    'Saving None blocks is not supported by the VTKHDF format in VTK 9.4.'
                     '\nUpgrade to VTK>=9.5 for this functionality.'
                 )
                 raise TypeError(msg)
@@ -302,14 +302,14 @@ class HDFWriter(BaseWriter):
                 msg = (
                     f"Block at index {index_fmt} with name '{name}' has type "
                     f'{block.__class__.__name__!r} '
-                    f'which cannot be saved to the .vtkhdf format.\n'
+                    f'which cannot be saved to the VTKHDF format.\n'
                     f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
                 )
                 raise TypeError(msg)
 
 
 class HoudiniPolyDataWriter(BaseWriter):
-    """HoudiniPolyDataWriter for Houdini geometry ``.geo`` files.
+    """Writer for the Houdini Geometry format (``.geo``).
 
     Wraps :vtk:`vtkHoudiniPolyDataWriter`.
 
@@ -322,7 +322,7 @@ class HoudiniPolyDataWriter(BaseWriter):
 
 
 class IVWriter(BaseWriter):
-    """``IVWriter`` for OpenInventor ``.iv`` files.
+    """Writer for the Open Inventor format (``.iv``).
 
     Wraps :vtk:`vtkIVWriter`.
 
@@ -335,7 +335,7 @@ class IVWriter(BaseWriter):
 
 
 class JPEGWriter(BaseWriter):
-    """``JPEGWriter`` for ``.jpeg`` and ``.jpg`` files.
+    """Writer for the JPEG Image format (``.jpeg``, ``.jpg``).
 
     Wraps :vtk:`vtkJPEGWriter`.
 
@@ -348,7 +348,7 @@ class JPEGWriter(BaseWriter):
 
 
 class NIFTIImageWriter(BaseWriter):
-    """NIFTIImageWriter for ``.nii`` and ``.nii.gz`` files.
+    """Writer for the NIfTI format (``.nii``, ``.nii.gz``).
 
     Wraps :vtk:`vtkNIFTIImageWriter`.
 
@@ -361,7 +361,7 @@ class NIFTIImageWriter(BaseWriter):
 
 
 class OBJWriter(BaseWriter):
-    """``OBJWriter`` for Wavefront ``.obj`` files.
+    """Writer for the Wavefront OBJ format (``.obj``).
 
     Wraps :vtk:`vtkOBJWriter`.
 
@@ -374,7 +374,7 @@ class OBJWriter(BaseWriter):
 
 
 class PLYWriter(BaseWriter, _DataFormatMixin):
-    """``PLYWriter`` for PLY polygonal ``.ply`` files.
+    """Writer for the Stanford PLY format (``.ply``).
 
     Wraps :vtk:`vtkPLYWriter`.
 
@@ -413,7 +413,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
 
 
 class PNGWriter(BaseWriter):
-    """``PNGWriter`` for ``.png`` files.
+    """Writer for the PNG Image format (``.png``).
 
     Wraps :vtk:`vtkPNGWriter`.
 
@@ -426,7 +426,7 @@ class PNGWriter(BaseWriter):
 
 
 class PNMWriter(BaseWriter):
-    """``PNMWriter`` for ``.pnm`` files.
+    """Writer for the PNM Image format (``.pnm``).
 
     Wraps :vtk:`vtkPNMWriter`.
 
@@ -439,7 +439,7 @@ class PNMWriter(BaseWriter):
 
 
 class PolyDataWriter(BaseWriter, _DataFormatMixin):
-    """PolyDataWriter for legacy VTK PolyData ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.PolyData`.
 
     Wraps :vtk:`vtkPolyDataWriter`.
 
@@ -452,7 +452,7 @@ class PolyDataWriter(BaseWriter, _DataFormatMixin):
 
 
 class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
-    """RectilinearGridWriter for legacy VTK rectilinear grid ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.RectilinearGrid`.
 
     Wraps :vtk:`vtkRectilinearGridWriter`.
 
@@ -465,7 +465,7 @@ class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class STLWriter(BaseWriter, _DataFormatMixin):
-    """``STLWriter`` for stereolithography  ``.stl`` files.
+    """Writer for the Stereolithography format (``.stl``).
 
     Wraps :vtk:`vtkSTLWriter`.
 
@@ -478,7 +478,7 @@ class STLWriter(BaseWriter, _DataFormatMixin):
 
 
 class SimplePointsWriter(BaseWriter, _DataFormatMixin):
-    """SimplePointsWriter for simple point-set ``.xyz`` files.
+    """Writer for the XYZ Point Cloud format (``.xyz``).
 
     Wraps :vtk:`vtkSimplePointsWriter`.
 
@@ -491,7 +491,7 @@ class SimplePointsWriter(BaseWriter, _DataFormatMixin):
 
 
 class StructuredGridWriter(BaseWriter, _DataFormatMixin):
-    """StructuredGridWriter for legacy VTK structured grid ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.StructuredGrid`.
 
     Wraps :vtk:`vtkStructuredGridWriter`.
 
@@ -504,7 +504,7 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class TIFFWriter(BaseWriter):
-    """``TIFFWriter`` for ``.tif`` and ``.tiff`` files.
+    """Writer for the TIFF Image format (``.tif``, ``.tiff``).
 
     Wraps :vtk:`vtkTIFFWriter`.
 
@@ -517,7 +517,7 @@ class TIFFWriter(BaseWriter):
 
 
 class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
-    """UnstructuredGridWriter for legacy VTK unstructured grid ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.UnstructuredGrid`.
 
     Wraps :vtk:`vtkUnstructuredGridWriter`.
 
@@ -530,7 +530,7 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class EnSightWriter(BaseWriter):
-    """EnSightWriter for ``.case`` files.
+    """Writer for the EnSight format (``.case``).
 
     Wraps :vtk:`vtkEnSightWriter`.
 
@@ -623,7 +623,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
 
 
 class XMLImageDataWriter(_XMLWriter):
-    """XMLImageDataWriter for VTK XML image data ``.vti`` files.
+    """Writer for the VTK Image Data format (``.vti``).
 
     Wraps :vtk:`vtkXMLImageDataWriter`.
 
@@ -636,7 +636,7 @@ class XMLImageDataWriter(_XMLWriter):
 
 
 class XMLMultiBlockDataWriter(_XMLWriter):
-    """XMLMultiBlockDataWriter for VTK XML multiblock ``.vtm`` files.
+    """Writer for the VTK MultiBlock format (``.vtm``, ``.vtmb``).
 
     Wraps :vtk:`vtkXMLMultiBlockDataWriter`.
 
@@ -652,7 +652,7 @@ class XMLMultiBlockDataWriter(_XMLWriter):
 
 
 class XMLPartitionedDataSetWriter(_XMLWriter):
-    """XMLPartitionedDataSetWriter for VTK XML partitioned datasets ``.vtpd`` files.
+    """Writer for the VTK Partitioned Dataset format (``.vtpd``).
 
     Wraps :vtk:`vtkXMLPartitionedDataSetWriter`.
 
@@ -665,7 +665,7 @@ class XMLPartitionedDataSetWriter(_XMLWriter):
 
 
 class XMLPolyDataWriter(_XMLWriter):
-    """XMLPolyDataWriter for VTK XML polydata ``.vtp`` files.
+    """Writer for the VTK PolyData format (``.vtp``).
 
     Wraps :vtk:`vtkXMLPolyDataWriter`.
 
@@ -678,7 +678,7 @@ class XMLPolyDataWriter(_XMLWriter):
 
 
 class XMLRectilinearGridWriter(_XMLWriter):
-    """XMLRectilinearGridWriter for VTK XML rectilinear grid ``.vtr`` files.
+    """Writer for the VTK Rectilinear Grid format (``.vtr``).
 
     Wraps :vtk:`vtkXMLRectilinearGridWriter`.
 
@@ -691,7 +691,7 @@ class XMLRectilinearGridWriter(_XMLWriter):
 
 
 class XMLStructuredGridWriter(_XMLWriter):
-    """XMLStructuredGridWriter for VTK XML structured grid ``.vts`` files.
+    """Writer for the VTK Structured Grid format (``.vts``).
 
     Wraps :vtk:`vtkXMLStructuredGridWriter`.
 
@@ -704,7 +704,7 @@ class XMLStructuredGridWriter(_XMLWriter):
 
 
 class XMLUnstructuredGridWriter(_XMLWriter):
-    """XMLUnstructuredGridWriter for VTK XML unstructured grid ``.vtu`` files.
+    """Writer for the VTK Unstructured Grid format (``.vtu``).
 
     Wraps :vtk:`vtkXMLUnstructuredGridWriter`.
 
