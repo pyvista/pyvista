@@ -938,13 +938,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         def get_non_finite_point_ids() -> list[int]:
             if isinstance(mesh, pv.ImageData):
-                # Points are affine in the index, so the corners that set the bounds are extremes
-                if np.isfinite(mesh.bounds).all():
-                    return []
                 # A non-finite origin, spacing or direction reaches every point
                 geometry = [*mesh.origin, *mesh.spacing, *np.ravel(mesh.direction_matrix)]
                 if not np.isfinite(geometry).all():
                     return list(range(mesh.n_points))
+                # Points are affine in the index, so the corners that set the bounds are extremes
+                if np.isfinite(mesh.bounds).all():
+                    return []
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
@@ -2009,7 +2009,9 @@ class DataObjectFilters:
                     + size_data['Volume']
                 )
 
-                # These types build hidden cells as empty cells, which have no size
+                # compute_cell_sizes may measure hidden cells of these types as empty cells, so
+                # their size says nothing about their geometry. ImageData is measured from its
+                # spacing. VTK only reads hidden cells from a uint8 ghost array.
                 ghosts = mesh.cell_data.get(_GHOST_ARRAY)
                 if (
                     isinstance(
@@ -2017,7 +2019,7 @@ class DataObjectFilters:
                     )
                     and ghosts is not None
                     and ghosts.shape == (mesh.n_cells,)
-                    and np.issubdtype(ghosts.dtype, np.integer)
+                    and ghosts.dtype == np.uint8
                 ):
                     hidden = ghosts & _vtk.vtkDataSetAttributes.HIDDENCELL
                     size = np.where(hidden, np.nan, size)
@@ -2029,9 +2031,12 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            # Grid connectivity is implicit and cannot reference an invalid point id
-            if isinstance(mesh, pv.Grid):
-                state[_grid_coincident_cells(mesh, tol)] |= CellStatus.COINCIDENT_POINTS
+            if (
+                isinstance(mesh, pv.Grid)
+                and (coincident := _grid_coincident_cells(mesh, tol)) is not None
+            ):
+                state[coincident] |= CellStatus.COINCIDENT_POINTS
+                # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
 
             ugrid = (
@@ -2059,8 +2064,10 @@ class DataObjectFilters:
                 # indexing so the gather never raises on out-of-range ids.
                 group_valid = np.all(valid_conn[entry_ids], axis=1)
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
-                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
-                dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                # Non-finite points compare as not coincident; they are reported separately
+                with np.errstate(invalid='ignore', over='ignore'):
+                    diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                    dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
                 iu = np.triu_indices(size, k=1)
                 any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
                 coincident[cells] = any_coincident & group_valid
@@ -6610,20 +6617,32 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
+def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_] | None:
     """Return a mask of the cells of a grid with two points within ``tolerance``.
 
     This matches the per-cell point distance check used for other datasets, but uses the grid
-    geometry to avoid building every cell.
+    geometry to avoid building every cell. Return ``None`` for an :class:`~pyvista.ImageData`
+    whose points overflow, which needs that per-cell check.
     """
     if grid.n_cells == 0:
         return np.zeros(0, dtype=bool)
     # Non-finite points compare as not coincident; they are reported as non-finite points
     with np.errstate(invalid='ignore', over='ignore'):
         if isinstance(grid, pv.ImageData):
-            # Every cell is a translated copy of the first, so measuring one cell decides all.
-            # Its corners are index offsets of 0 or 1 along each axis with more than one point,
-            # mapped to physical space; the direction matrix may skew the cell.
+            # While its points are finite, every cell is a translated copy of the first, so
+            # measuring one cell decides all. Overflowing points break that, since cells past
+            # the overflow collapse to infinity. A non-finite geometry makes every point
+            # non-finite, so no cell is coincident either way.
+            if (
+                not np.isfinite(grid.bounds).all()
+                and np.isfinite(
+                    [*grid.origin, *grid.spacing, *np.ravel(grid.direction_matrix)]
+                ).all()
+            ):
+                return None
+            # The corners of the first cell are index offsets of 0 or 1 along each axis with
+            # more than one point, mapped to physical space. The direction matrix may skew the
+            # cell, so every pair of corners is compared, not only the edges.
             steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
             ijk = np.array(list(itertools.product(*steps)), dtype=float)
             matrix = grid.index_to_physical_matrix
@@ -6637,10 +6656,10 @@ def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]
         # so the closest pair of corners is always the two ends of one edge. Checking the edge
         # lengths along each axis is therefore enough.
         #
-        # The ends of an edge along one axis share their coordinates on the other two axes, and
-        # a cell offers two such coordinates per axis (one for a flat axis). The edge counts only
-        # if it can be placed at finite coordinates, which needs one finite coordinate on each
-        # of the other axes.
+        # An edge along one axis joins two corners that share their other two coordinates. The
+        # per-point check sees a NaN distance when a shared coordinate is not finite, so the
+        # edge only counts when the cell has a finite coordinate on each of the other axes: one
+        # of its two, or the single one on a flat axis.
         short_edge, finite = [], []
         for coords in (grid.x, grid.y, grid.z):
             if coords.size > 1:
