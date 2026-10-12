@@ -59,6 +59,8 @@ _MAX_CATEGORY_TABLE_SIZE = 65536
 _CATEGORY_BAND_TABLE_SIZE = 4096
 # Table entries per category, so a volume's transfer function resolves each band
 _CATEGORY_ENTRIES_PER_VALUE = 8
+# Machine epsilons of relative spread below which a data range counts as constant
+_NEAR_CONSTANT_EPS = 4
 
 _ColorModeOptions = Literal['direct', 'map']
 _ScalarMapModeOptions = Literal['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
@@ -85,6 +87,16 @@ def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
     if step is None:
         step = np.diff(values).min()
     return float(values[0] - step / 2), float(values[-1] + step / 2)
+
+
+def _data_range(values: NDArray[Any]) -> tuple[float, float]:
+    """Return the range of ``values``, collapsed to its maximum when within rounding noise."""
+    low, high = float(np.nanmin(values)), float(np.nanmax(values))
+    if np.issubdtype(values.dtype, np.floating) and np.isfinite([low, high]).all():
+        tolerance = _NEAR_CONSTANT_EPS * np.finfo(values.dtype).eps * max(abs(low), abs(high))
+        if high - low <= tolerance:
+            return high, high
+    return low, high
 
 
 def _clim_has_no_bounds(clim: float | VectorLikeFloat | None) -> bool:
@@ -749,7 +761,7 @@ class _BaseDataSetMapper(_BaseMapper):
         elif np.issubdtype(array.dtype, np.number):
             if np.isnan(array).all():
                 return
-            clim = (float(np.nanmin(array)), float(np.nanmax(array)))
+            clim = _data_range(array)
         else:
             return
 
@@ -1156,7 +1168,7 @@ class _BaseDataSetMapper(_BaseMapper):
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
-            scalar_range = (float(np.nanmin(scalars)), float(np.nanmax(scalars)))
+            scalar_range = _data_range(scalars)
         elif isinstance(clim, (int, float)):
             scalar_range = (-float(clim), float(clim))
         else:

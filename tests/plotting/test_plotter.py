@@ -907,6 +907,72 @@ def test_plotter_add_volume_clim(uniform: pv.ImageData):
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
 
 
+def _rounding_noise(value, dtype, n):
+    """Return ``n`` values within two units of rounding of ``value``."""
+    value = dtype(value)
+    steps = np.resize(np.arange(-2, 3), n)
+    return (value + steps * np.spacing(value)).astype(dtype)
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('value', [3.0, -3.0e5])
+def test_add_mesh_near_constant_scalars_range(dtype, value):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(value, dtype, mesh.n_points)
+    assert np.ptp(mesh['data']) > 0
+    actor = pv.Plotter().add_mesh(mesh, scalars='data')
+    expected = float(mesh['data'].max())
+    assert actor.mapper.scalar_range == (expected, expected)
+    assert actor.mapper.lookup_table.scalar_range == (expected, expected)
+
+
+def test_add_mesh_near_constant_vector_magnitude_range():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    angles = np.linspace(0, 2 * np.pi, mesh.n_points)
+    mesh['vectors'] = np.column_stack(
+        [np.cos(angles), np.sin(angles), np.zeros_like(angles)]
+    ).astype(np.float32)
+    magnitude = np.linalg.norm(mesh['vectors'], axis=1)
+    assert np.ptp(magnitude) > 0
+    actor = pv.Plotter().add_mesh(mesh, scalars='vectors')
+    assert actor.mapper.scalar_range == (float(magnitude.max()),) * 2
+
+
+def test_mapper_array_name_near_constant_scalars_range():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points)
+    mapper = pv.DataSetMapper(mesh)
+    mapper.array_name = 'data'
+    expected = float(mesh['data'].max())
+    assert mapper.scalar_range == (expected, expected)
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_add_mesh_small_real_scalars_range(dtype):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = np.linspace(1.0, 1.001, mesh.n_points, dtype=dtype)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data')
+    assert actor.mapper.scalar_range == (float(mesh['data'].min()), float(mesh['data'].max()))
+
+
+def test_add_mesh_near_constant_scalars_user_clim():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points)
+    clim = (float(mesh['data'].min()), float(mesh['data'].max()))
+    actor = pv.Plotter().add_mesh(mesh, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == clim
+
+
+def test_add_volume_near_constant_scalars_range(uniform: pv.ImageData):
+    scalars = _rounding_noise(2.0, np.float32, uniform.n_points)
+    vol = pv.Plotter().add_volume(uniform, scalars=scalars)
+    assert vol.mapper.scalar_range == (float(scalars.max()),) * 2
+
+    clim = (float(scalars.min()), float(scalars.max()))
+    vol = pv.Plotter().add_volume(uniform, scalars=scalars, clim=clim)
+    assert vol.mapper.scalar_range == clim
+
+
 def test_plotter_meshes(sphere, cube):
     pl = pv.Plotter()
     pl.add_mesh(sphere)

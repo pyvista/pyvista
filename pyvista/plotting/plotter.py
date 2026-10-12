@@ -82,6 +82,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
 from .mapper import _BaseMapper
 from .mapper import _category_range
+from .mapper import _data_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .mapper import _PolyDataMapper
@@ -5359,10 +5360,8 @@ class BasePlotter(_BoundsSizeMixin):
                 category_values = None
 
         # Set scalars range
-        min_, max_ = None, None
         if clim is None:
-            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-            clim = (min_, max_)
+            clim = _data_range(scalars)
         elif isinstance(clim, (float, int)):
             clim = (-clim, clim)
 
