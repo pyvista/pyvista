@@ -1994,6 +1994,14 @@ class DataObjectFilters:
 
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
+            # Grids are checked from their geometry, other meshes from their cells
+            ugrid: pv.UnstructuredGrid | None = None
+            if not isinstance(mesh, pv.Grid):
+                ugrid = (
+                    mesh
+                    if isinstance(mesh, pv.UnstructuredGrid)
+                    else mesh.cast_to_unstructured_grid()
+                )
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
@@ -2021,17 +2029,17 @@ class DataObjectFilters:
                     + size_data['Area']
                     + size_data['Volume']
                 )
-                # Verdict clamps triangle and quad areas and hexahedron volumes to +/-1e30 and
-                # reports a NaN one, from non-finite or overflowing points, as -1e30, summed over
-                # the sub-cells of higher-order cells. Such a size is unknown; a real size beyond
-                # -1e30 cannot be told apart from it.
+                # Verdict clamps triangle areas and hexahedron volumes to +/-1e30 and reports a
+                # NaN one, from non-finite or overflowing points, as -1e30, summed over the
+                # sub-cells of higher-order cells. Such a size is unknown; a real size beyond
+                # -1e30 cannot be told apart from it. An overflowing quad measures 0 instead.
                 unknown = (size_data['Area'] <= -_VERDICT_DBL_MAX) | (
                     size_data['Volume'] <= -_VERDICT_DBL_MAX
                 )
                 # A cell with a non-finite point cannot be measured either, which some cells,
                 # such as polyhedra, report as zero. Its points are reported as non-finite.
-                if not isinstance(mesh, pv.Grid):
-                    unknown |= _cells_with_non_finite_points(mesh)
+                if ugrid is not None:
+                    unknown |= _cells_with_non_finite_points(ugrid)
                 size = np.where(unknown, np.nan, size)
 
                 # NEGATIVE_SIZE
@@ -2041,14 +2049,11 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            if isinstance(mesh, pv.Grid):
-                state[_grid_coincident_cells(mesh, tol)] |= CellStatus.COINCIDENT_POINTS
+            if ugrid is None:
+                grid = cast('pv.Grid', mesh)
+                state[_grid_coincident_cells(grid, tol)] |= CellStatus.COINCIDENT_POINTS
                 # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
-
-            ugrid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
 
             conn = ugrid.cell_connectivity
             offset = ugrid.cell_offsets
@@ -6625,12 +6630,11 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _cells_with_non_finite_points(mesh: DataSet) -> NDArray[np.bool_]:
-    """Return a mask of the cells of a mesh that reference a non-finite point."""
-    non_finite = ~np.isfinite(mesh.points).all(axis=1)
+def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a grid that reference a non-finite point."""
+    non_finite = ~np.isfinite(grid.points).all(axis=1)
     if not non_finite.any():
-        return np.zeros(mesh.n_cells, dtype=bool)
-    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+        return np.zeros(grid.n_cells, dtype=bool)
     # Count each cell's non-finite points from the cumulative count along its connectivity
     count = np.concatenate([[0], np.cumsum(non_finite[grid.cell_connectivity])])
     offsets = grid.cell_offsets

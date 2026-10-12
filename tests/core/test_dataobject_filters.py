@@ -3814,7 +3814,8 @@ def test_validate_mesh_unmeasurable_cells_have_no_size(make_mesh, n_points, valu
 
 
 @pytest.mark.expect_vtk_output(
-    'Unable to factor linear system', reason='VTK < 9.4 cannot measure the polyhedron'
+    'Unable to factor linear system',
+    reason='VTK may fail to triangulate a polyhedron with a non-finite point',
 )
 @pytest.mark.parametrize('value', [np.inf, np.nan])
 def test_validate_mesh_polyhedron_non_finite_point(value):
