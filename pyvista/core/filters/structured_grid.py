@@ -43,8 +43,8 @@ class StructuredGridFilters(DataSetFilters):
         ----------
         voi : VectorLikeInt
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-            These bounds specify the volume of interest in i-j-k min/max
-            indices.
+            These bounds specify the volume of interest in i-j-k min/max indices. Must be within
+            this mesh's :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent`.
 
         rate : VectorLikeInt, default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.

@@ -4788,7 +4788,9 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
         pv.MultiBlock([pv.PolyData()]),
         pytest.param(
             pv.ExplicitStructuredGrid(),
-            marks=pytest.mark.needs_vtk_version(9, 4, reason='empty extent has a phantom cell'),
+            marks=pytest.mark.needs_vtk_version(
+                9, 4, reason='empty extent has a phantom cell and segfaults'
+            ),
         ),
     ],
 )
