@@ -96,7 +96,7 @@ class _StructuredDataMixin:
 
         Examples
         --------
-        Create an ``ImageData`` and show its extent.
+        Create an :class:`~pyvista.ImageData` and show its extent.
 
         >>> import pyvista as pv
         >>> grid = pv.ImageData(dimensions=(10, 10, 10))
@@ -107,7 +107,7 @@ class _StructuredDataMixin:
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        For an ``ImageData``, this also modifies the :attr:`offset`,
+        For an :class:`~pyvista.ImageData`, this also modifies the :attr:`offset`,
         :attr:`dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
         we use default spacing of 1 here, the bounds match the extent exactly.
 
@@ -186,7 +186,7 @@ class _StructuredDataMixin:
 
         Examples
         --------
-        Create an ``ImageData`` and show that the offset is zeros by default.
+        Create an :class:`~pyvista.ImageData` and show that the offset is zeros by default.
 
         >>> import pyvista as pv
         >>> grid = pv.ImageData(dimensions=(10, 10, 10))
@@ -215,7 +215,7 @@ class _StructuredDataMixin:
         >>> grid.extent
         (-1, 8, -2, 7, -3, 6)
 
-        Set the offset of a ``StructuredGrid``. Its points, and therefore its bounds,
+        Set the offset of a :class:`~pyvista.StructuredGrid`. Its points, and therefore its bounds,
         are unchanged.
 
         >>> grid = pv.ImageData(dimensions=(3, 3, 3)).cast_to_structured_grid()
