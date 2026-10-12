@@ -4375,6 +4375,7 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
     ) -> None:
         """Initialize the explicit structured grid."""
         super().__init__()
+        self.SetExtent(0, -1, 0, -1, 0, -1)  # vtkExplicitStructuredGrid leaves it uninitialized
         n = len(args)
         if n > 3:
             msg = 'Too many args to create ExplicitStructuredGrid.'

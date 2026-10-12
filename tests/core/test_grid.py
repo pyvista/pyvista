@@ -1904,6 +1904,14 @@ def test_empty_structured_grid_dimensions():
     assert grid.dimensions == (2, 3, 4)
 
 
+def test_explicit_structured_grid_empty_extent():
+    grid = pv.ExplicitStructuredGrid()
+    assert grid.extent == (0, -1, 0, -1, 0, -1)
+    assert grid.dimensions == (0, 0, 0)
+    assert grid.offset == (0, 0, 0)
+    assert grid.n_cells == 0
+
+
 def test_explicit_structured_grid_offset_keeps_cells():
     grid = examples.load_explicit_structured()
     connectivity = grid.cast_to_unstructured_grid().cell_connectivity
