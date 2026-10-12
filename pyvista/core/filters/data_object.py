@@ -6625,13 +6625,20 @@ def _hidden_structured_cells(
     """Return a mask of the cells VTK hides through the ghost arrays of structured data."""
 
     def ghost_flags(data: DataSetAttributes, n_values: int, flag: int) -> NDArray[np.bool_]:
-        # VTK only reads ghosts from a uint8 array
+        # VTK only reads ghosts from a uint8 array, and reads the first values of a longer one
         ghosts = data.get(_GHOST_ARRAY)
-        if ghosts is None or ghosts.shape != (n_values,) or ghosts.dtype != np.uint8:
+        if (
+            ghosts is None
+            or ghosts.ndim != 1
+            or len(ghosts) < n_values
+            or ghosts.dtype != np.uint8
+        ):
             return np.zeros(n_values, dtype=bool)
-        return (ghosts & flag) != 0
+        return (ghosts[:n_values] & flag) != 0
 
-    hidden = ghost_flags(mesh.cell_data, mesh.n_cells, _vtk.vtkDataSetAttributes.HIDDENCELL)
+    # VTK hides refined cells as well as hidden ones
+    hidden_cell = _vtk.vtkDataSetAttributes.HIDDENCELL | _vtk.vtkDataSetAttributes.REFINEDCELL
+    hidden = ghost_flags(mesh.cell_data, mesh.n_cells, hidden_cell)
     if isinstance(mesh, pv.ExplicitStructuredGrid) or mesh.n_cells == 0:
         # Its cells are explicit and ignore hidden points
         return hidden

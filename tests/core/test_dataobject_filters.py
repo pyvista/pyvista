@@ -4609,9 +4609,9 @@ def test_validate_mesh_coincident_points_rectilinear_grid(z):
     assert 'coincident_points' in grid.validate_mesh().invalid_fields
 
 
-def _hide_cells(mesh, ids):
+def _hide_cells(mesh, ids, flag=_vtk.vtkDataSetAttributes.HIDDENCELL):
     ghosts = np.zeros(mesh.n_cells, dtype=np.uint8)
-    ghosts[ids] = _vtk.vtkDataSetAttributes.HIDDENCELL
+    ghosts[ids] = flag
     mesh.cell_data['vtkGhostType'] = ghosts
     return mesh
 
@@ -4644,9 +4644,15 @@ def test_validate_mesh_coincident_points_image_data(kwargs, hidden):
     ],
     ids=['RectilinearGrid', 'StructuredGrid', 'ExplicitStructuredGrid'],
 )
-def test_validate_mesh_hidden_cells_have_no_size(cast):
+@pytest.mark.parametrize(
+    'flag',
+    [_vtk.vtkDataSetAttributes.HIDDENCELL, _vtk.vtkDataSetAttributes.REFINEDCELL],
+    ids=['hidden', 'refined'],
+)
+def test_validate_mesh_hidden_cells_have_no_size(cast, flag):
     # Cell 1 is degenerate along x
-    mesh = _hide_cells(cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])), [0])
+    grid = pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])
+    mesh = _hide_cells(cast(grid), [0], flag)
     assert mesh.validate_mesh().zero_size == [1]
 
 
@@ -4655,9 +4661,10 @@ def test_validate_mesh_hidden_cells_have_no_size(cast):
     [lambda grid: grid, lambda grid: grid.cast_to_structured_grid()],
     ids=['RectilinearGrid', 'StructuredGrid'],
 )
-def test_validate_mesh_hidden_points_have_no_size(cast):
+@pytest.mark.parametrize('z', [[0.0, 1.0], [0.0]], ids=['3D', 'flat'])
+def test_validate_mesh_hidden_points_have_no_size(cast, z):
     # Cell 1 is degenerate along x, and hiding point 3 hides cell 2
-    mesh = cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0]))
+    mesh = cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], z))
     ghosts = np.zeros(mesh.n_points, dtype=np.uint8)
     ghosts[3] = _vtk.vtkDataSetAttributes.HIDDENPOINT
     mesh.point_data['vtkGhostType'] = ghosts
@@ -4680,8 +4687,8 @@ def test_validate_mesh_hidden_cells_keep_their_size(to_ugrid):
 @pytest.mark.parametrize(
     ('dtype', 'n_ghosts', 'invalid_fields'),
     [
-        # Longer than the cells, since VTK would read past the end of a shorter array
-        (np.uint8, 4, ('cell_data_wrong_length', 'zero_size')),
+        # VTK reads the first values of a longer array, and past the end of a shorter one
+        (np.uint8, 4, ('cell_data_wrong_length',)),
         (float, 3, ('zero_size',)),
         (np.int32, 3, ('zero_size',)),
     ],
@@ -4697,7 +4704,6 @@ def test_validate_mesh_invalid_ghost_array(dtype, n_ghosts, invalid_fields):
     mesh.GetCellData().AddArray(array)
     report = mesh.validate_mesh(['data', 'zero_size'])
     assert report.invalid_fields == invalid_fields
-    assert report.zero_size == [1]
 
 
 def test_validate_mesh_invalid_point_references_explicit_structured_grid():
