@@ -3753,10 +3753,15 @@ def test_validate_mesh_explicit_structured_grid_unused_points():
 
 
 @pytest.mark.parametrize(
-    ('attr', 'value'), [('origin', (np.nan, 0.0, 0.0)), ('spacing', (np.inf, 1.0, 1.0))]
+    ('attr', 'value'),
+    [
+        ('origin', (np.nan, 0.0, 0.0)),
+        ('spacing', (np.inf, 1.0, 1.0)),
+        ('spacing', (1e308, 1.0, 1.0)),  # Finite geometry with overflowing points
+    ],
 )
 def test_validate_mesh_image_data_non_finite_points(attr, value):
-    image = pv.ImageData(dimensions=(2, 2, 2))
+    image = pv.ImageData(dimensions=(3, 2, 2))
     setattr(image, attr, value)
     expected = np.flatnonzero(~np.isfinite(image.points).all(axis=1)).tolist()
     assert expected

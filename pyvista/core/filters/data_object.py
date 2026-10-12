@@ -938,14 +938,14 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
-            # ImageData points are computed from its origin, spacing and direction
-            if (
-                isinstance(mesh, pv.ImageData)
-                and np.isfinite(
-                    [*mesh.origin, *mesh.spacing, *np.ravel(mesh.direction_matrix)]
-                ).all()
-            ):
-                return []
+            if isinstance(mesh, pv.ImageData):
+                # Points are affine in the index, so the corners that set the bounds are extremes
+                if np.isfinite(mesh.bounds).all():
+                    return []
+                # A non-finite origin, spacing or direction reaches every point
+                geometry = [*mesh.origin, *mesh.spacing, *np.ravel(mesh.direction_matrix)]
+                if not np.isfinite(geometry).all():
+                    return list(range(mesh.n_points))
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
