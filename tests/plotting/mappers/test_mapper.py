@@ -584,6 +584,44 @@ def test_as_rgba_keeps_scalar_range(sphere):
     assert mapper.lookup_table.scalar_range == pytest.approx(expected)
 
 
+def test_as_rgba_replaces_cell_colors():
+    """Mapping new cell scalars rebuilds the RGBA array instead of reusing the old one."""
+    points = pv.PolyData(np.random.default_rng(seed=0).random((50, 3)))
+    points.cell_data['data'] = np.arange(points.n_cells, dtype=float)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(points, scalars='data', preference='cell', style='points_gaussian')
+    before = np.array(actor.mapper.dataset.cell_data['__rgba__'])
+
+    actor.mapper.set_scalars(points.cell_data['data'][::-1].copy(), 'reversed', preference='cell')
+
+    after = np.array(actor.mapper.dataset.cell_data['__rgba__'])
+    assert np.array_equal(after, before[::-1])
+
+
+def test_opacity_array_keeps_scalar_range(sphere):
+    """An opacity array bakes colors, but the scalar bar still spans the data."""
+    sphere['data'] = sphere.points[:, 2] * 0.01
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', opacity=np.linspace(0, 1, sphere.n_points))
+    expected = sphere.get_data_range('data')
+    assert actor.mapper.color_mode == 'direct'
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == pytest.approx(expected)
+
+
+@pytest.mark.parametrize('clim', [None, [-1, 1]])
+def test_copy_keeps_scalar_range(sphere, clim):
+    """A copied mapper keeps the original's range, including a user ``clim``."""
+    sphere['data'] = sphere.points[:, 2] * 0.01
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', clim=clim)
+
+    copied = actor.mapper.copy()
+
+    assert copied.scalar_range == pytest.approx(actor.mapper.scalar_range)
+    assert copied._use_default_scalar_range is (clim is None)
+
+
 def test_as_rgba_without_mapped_scalars(sphere):
     """A mapper with nothing mapped has no RGBA array to build."""
     mapper = DataSetMapper(dataset=sphere)
