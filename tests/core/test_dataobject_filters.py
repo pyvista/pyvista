@@ -3853,7 +3853,10 @@ def test_validate_mesh_imagedata(image150):
         image150.validate_mesh('cells')
 
 
-@pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
+@pytest.mark.parametrize(
+    'field',
+    [f.lower() for f in _VTK_CELL_STATUS_INFO if f not in ('VALID', 'COINCIDENT_POINTS')],
+)
 def test_validate_mesh_imagedata_vtk_fields(image150, field):
     # Ensure vtk fields raise error
     match = f'Cell field {field!r} is not supported for ImageData.'
@@ -4562,6 +4565,21 @@ def degenerate_structured_grid_quad():
 def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_grid_quad):
     report = degenerate_structured_grid_quad.validate_mesh()
     assert report.invalid_fields == ('coincident_points',)
+
+
+def test_validate_mesh_coincident_points_rectilinear_grid():
+    grid = pv.RectilinearGrid([0.0, 0.0, 1.0], [0.0, 1.0, 2.0], [0.0, 1.0])
+    expected = grid.cast_to_structured_grid().cell_validator().field_data['coincident_points']
+    assert expected.tolist() == [0, 2]
+    assert grid.cell_validator().field_data['coincident_points'].tolist() == expected.tolist()
+    assert 'coincident_points' in grid.validate_mesh().invalid_fields
+
+
+@pytest.mark.parametrize('spacing', [(1.0, 1.0, 1.0), (1.0, 1e-9, 1.0)])
+def test_validate_mesh_coincident_points_image_data(spacing):
+    image = pv.ImageData(dimensions=(3, 3, 2), spacing=spacing)
+    expected = image.cast_to_structured_grid().cell_validator().field_data['coincident_points']
+    assert image.cell_validator().field_data['coincident_points'].tolist() == expected.tolist()
 
 
 @pytest.mark.parametrize(

@@ -473,7 +473,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'inverted_faces',
                 'non_planar_faces',
                 'degenerate_faces',
-                'coincident_points',
             )
         for field in unsupported:
             if field in cell_fields or field in point_fields:
@@ -2022,9 +2021,9 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            # Skip remaining checks for datasets where cell connectivity cannot be invalid
-            # Do not skip types StructuredGrid where coincident points are possible
+            # Grid cells are axis-aligned and cannot reference an invalid point id
             if isinstance(mesh, pv.Grid):
+                state[_grid_coincident_cells(mesh, tol)] |= CellStatus.COINCIDENT_POINTS
                 return
 
             ugrid = (
@@ -6601,6 +6600,27 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     if mesh._has_hidden_cells:
         cell_types.add(CellType.EMPTY_CELL)
     return cell_types
+
+
+def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a grid with two points within ``tolerance``."""
+    if grid.n_cells == 0:
+        return np.zeros(0, dtype=bool)
+    # Non-finite points compare as not coincident; they are reported as non-finite points
+    with np.errstate(invalid='ignore', over='ignore'):
+        if isinstance(grid, pv.ImageData):
+            # All cells are translated copies of one another
+            points = grid.get_cell(0).points
+            dist = np.linalg.norm(points[:, np.newaxis] - points[np.newaxis], axis=-1)
+            coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
+            return np.full(grid.n_cells, coincident)
+        # Cells are axis-aligned boxes, so two points are within tolerance only if an edge is
+        small = [
+            np.abs(np.diff(coords)) <= tolerance if coords.size > 1 else np.zeros(1, dtype=bool)
+            for coords in (grid.x, grid.y, grid.z)
+        ]
+    # Cell ids are ordered with x varying fastest
+    return (small[0] | small[1][:, np.newaxis] | small[2][:, np.newaxis, np.newaxis]).ravel()
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
