@@ -110,6 +110,7 @@ StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
 TrameModeOptions = Literal['trame', 'server', 'client']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
+TransparentBackgroundOptions = bool | Literal['straight', 'premultiplied']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
 # 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
