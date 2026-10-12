@@ -2009,9 +2009,17 @@ class DataObjectFilters:
                     + size_data['Volume']
                 )
 
-                # Hidden cells of structured data have no size, so do not check them
-                if _GHOST_ARRAY in mesh.cell_data:
-                    hidden = mesh.cell_data[_GHOST_ARRAY] & _vtk.vtkDataSetAttributes.HIDDENCELL
+                # These types build hidden cells as empty cells, which have no size
+                ghosts = mesh.cell_data.get(_GHOST_ARRAY)
+                if (
+                    isinstance(
+                        mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
+                    )
+                    and ghosts is not None
+                    and ghosts.shape == (mesh.n_cells,)
+                    and np.issubdtype(ghosts.dtype, np.integer)
+                ):
+                    hidden = ghosts & _vtk.vtkDataSetAttributes.HIDDENCELL
                     size = np.where(hidden, np.nan, size)
 
                 # NEGATIVE_SIZE
@@ -2021,7 +2029,7 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            # Grid cells are axis-aligned and cannot reference an invalid point id
+            # Grid connectivity is implicit and cannot reference an invalid point id
             if isinstance(mesh, pv.Grid):
                 state[_grid_coincident_cells(mesh, tol)] |= CellStatus.COINCIDENT_POINTS
                 return
@@ -6609,18 +6617,32 @@ def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]
     # Non-finite points compare as not coincident; they are reported as non-finite points
     with np.errstate(invalid='ignore', over='ignore'):
         if isinstance(grid, pv.ImageData):
-            # All cells are translated copies of one another
-            points = grid.get_cell(0).points
+            # All cells are translated copies of one another, so check the corners of one
+            steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
+            ijk = np.array(list(itertools.product(*steps)), dtype=float)
+            matrix = grid.index_to_physical_matrix
+            points = ijk @ matrix[:3, :3].T + matrix[:3, 3]
             dist = np.linalg.norm(points[:, np.newaxis] - points[np.newaxis], axis=-1)
             coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
             return np.full(grid.n_cells, coincident)
-        # Cells are axis-aligned boxes, so two points are within tolerance only if an edge is
-        small = [
-            np.abs(np.diff(coords)) <= tolerance if coords.size > 1 else np.zeros(1, dtype=bool)
-            for coords in (grid.x, grid.y, grid.z)
-        ]
-    # Cell ids are ordered with x varying fastest
-    return (small[0] | small[1][:, np.newaxis] | small[2][:, np.newaxis, np.newaxis]).ravel()
+        # Cells are axis-aligned boxes, so two points are within tolerance only if an edge is.
+        # An edge is a pair of finite points only if every other axis has a finite coordinate.
+        small, finite = [], []
+        for coords in (grid.x, grid.y, grid.z):
+            if coords.size > 1:
+                small.append(np.abs(np.diff(coords)) <= tolerance)
+                finite.append(np.isfinite(coords[:-1]) | np.isfinite(coords[1:]))
+            else:
+                small.append(np.zeros(1, dtype=bool))
+                finite.append(np.isfinite(coords))
+
+    def per_cell(axis_mask: list[NDArray[np.bool_]]) -> list[NDArray[np.bool_]]:
+        # Cell ids are ordered with x varying fastest
+        x, y, z = axis_mask
+        return [x, y[:, np.newaxis], z[:, np.newaxis, np.newaxis]]
+
+    (s0, s1, s2), (f0, f1, f2) = per_cell(small), per_cell(finite)
+    return ((s0 & f1 & f2) | (s1 & f0 & f2) | (s2 & f0 & f1)).ravel()
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
