@@ -19,6 +19,7 @@ from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.reader import CLASS_READERS
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -130,6 +131,14 @@ class BaseWriter(_FileIOBase):
             pv.PartitionedDataSet,
         )
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
+
+    @classmethod
+    def _get_format_name(cls) -> str | None:
+        """Return the declared format name, else the name of the reader for the same extensions."""
+        if cls._format_name is not None:
+            return cls._format_name
+        names = {CLASS_READERS[ext].format_name for ext in cls.extensions if ext in CLASS_READERS}
+        return names.pop() if len(names) == 1 else None
 
     @property
     def writer(self) -> _vtk.vtkWriter:
@@ -314,6 +323,7 @@ class HoudiniPolyDataWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkHoudiniPolyDataWriter'
+    _format_name = 'Houdini Geometry'
 
 
 class IVWriter(BaseWriter):
@@ -326,6 +336,7 @@ class IVWriter(BaseWriter):
     """
 
     _vtk_class_name = 'vtkIVWriter'
+    _format_name = 'Open Inventor'
 
 
 class JPEGWriter(BaseWriter):
@@ -472,6 +483,7 @@ class SimplePointsWriter(BaseWriter, _DataFormatMixin):
     """
 
     _vtk_class_name = 'vtkSimplePointsWriter'
+    _format_name = 'XYZ Point Cloud'
 
 
 class StructuredGridWriter(BaseWriter, _DataFormatMixin):

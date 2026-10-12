@@ -88,6 +88,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     """
 
     _vtk_class_name: str = ''
+    _format_name: str | None = None
 
     def __repr__(self) -> str:
         """Representation of a FileIO object."""
@@ -141,6 +142,38 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
                 if typ is cls:  # type: ignore[comparison-overlap]
                     extensions.add(ext)  # type: ignore[unreachable]
         return tuple(sorted(extensions))
+
+    @classmethod
+    def _get_format_name(cls) -> str | None:
+        """Return the format name declared by this class."""
+        return cls._format_name
+
+    @_classproperty
+    def format_name(cls) -> str | None:  # noqa: N805
+        """Return the human-readable name of the file format.
+
+        A reader and a writer for the same format share the same name.
+
+        .. versionadded:: 0.50
+
+        Returns
+        -------
+        str | None
+            Name of the file format, or ``None`` if it cannot be determined.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pv.get_reader(examples.hexbeamfile).format_name
+        'Legacy VTK'
+        >>> pv.XMLUnstructuredGridReader.format_name
+        'VTK Unstructured Grid'
+        >>> pv.XMLUnstructuredGridWriter.format_name
+        'VTK Unstructured Grid'
+
+        """
+        return cls._get_format_name()
 
     @_classproperty
     def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805

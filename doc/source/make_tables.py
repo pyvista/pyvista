@@ -292,26 +292,6 @@ class FileFormatInfo:
 
 
 def _meshio_info_dict():
-    def get_format_name(io_class: type, extensions: set[str]) -> str:
-        # Clean up the names of both reader and writer classes
-        name = io_class.__name__.removeprefix('vtk').removesuffix('Reader').removesuffix('Writer')
-        if not name.startswith('VTKP'):
-            name = name.removeprefix('VTK')
-        # Remove terms from name
-        class_names = get_args(_mesh_types)
-        other_names = ['DataSet', 'Image', 'Data', 'Partitioned']
-        for class_name in [*class_names, *other_names]:
-            name = name.replace(class_name, '')
-        if name == '':
-            # Use a single extension as the format name
-            assert len(extensions) == 1, (
-                f'File format name could not be determined for {io_class.__name__}'
-            )
-            name = next(iter(extensions)).removeprefix('.').upper()
-
-        # Convert number in name to actual number, e.g. `ThreeDS` -> `3DS`
-        return name.replace('Three', '3')
-
     meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
     reader_info = _reader_info_dict()
     for class_name in get_args(_mesh_types):
@@ -322,7 +302,7 @@ def _meshio_info_dict():
             return_types = [return_type] if isinstance(return_type, str) else return_type
             if class_name in return_types:
                 # This reader may return this class, so include it
-                format_name = get_format_name(reader, extensions)
+                format_name = reader.format_name
                 info = FileFormatInfo(name=format_name, extensions=extensions, readable=True)
                 meshio_info[class_name][format_name] = info
 
@@ -331,7 +311,7 @@ def _meshio_info_dict():
         writer_extensions = _swap_extension_mapping(cls._WRITERS)
         for writer, extensions in writer_extensions:
             # Check if the format was already added from the reader
-            format_name = get_format_name(writer, extensions)
+            format_name = writer.format_name
             if format_name in meshio_info[class_name].keys():
                 # Ensure reader and writer have compatible extensions
                 reader_extensions = meshio_info[class_name][format_name].extensions
@@ -359,10 +339,11 @@ class ReadersTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: PyVista Readers
-        |   :widths: 33 33 33
+        |   :widths: 25 25 25 25
         |   :header-rows: 1
         |
         |   * - Reader
+        |     - File Format
         |     - File Extension(s)
         |     - Return Type(s)
         """,
@@ -370,6 +351,7 @@ class ReadersTable(DocTable):
     row_template = _aligned_dedent(
         """
         |   * - {}
+        |     - {}
         |     - {}
         |     - {}
         """,
@@ -390,7 +372,9 @@ class ReadersTable(DocTable):
         reader_fmt = f':class:`~pyvista.{reader.__name__}`'
         extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
         output_types_fmt = ', '.join(f':class:`~pyvista.{typ}`' for typ in sorted(output_types))
-        return cls.row_template.format(reader_fmt, extensions_fmt, output_types_fmt)
+        return cls.row_template.format(
+            reader_fmt, reader.format_name, extensions_fmt, output_types_fmt
+        )
 
 
 class MeshIOTable(DocTable):
@@ -427,7 +411,7 @@ class MeshIOTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return dict(sorted(MESHIO_INFO[cls.class_name].items())).values()
+        return sorted(MESHIO_INFO[cls.class_name].values(), key=lambda info: info.name.lower())
 
     @classmethod
     def get_header(cls, _):

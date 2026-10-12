@@ -3676,6 +3676,46 @@ def test_fileio_extensions(cls):
     assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
 
 
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_format_name(cls):
+    if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
+    assert isinstance(cls.format_name, str)
+    assert cls.format_name
+
+
+def test_fileio_format_name_unique():
+    declared = [
+        cls.__dict__['_format_name']
+        for cls in [*READER_CLASSES, *WRITER_CLASSES]
+        if '_format_name' in cls.__dict__
+    ]
+    assert len(set(declared)) == len(declared)
+
+
+@pytest.mark.parametrize('writer_cls', _writer_params())
+def test_writer_format_name_declared_without_reader(writer_cls):
+    if '_format_name' in writer_cls.__dict__:
+        assert not set(writer_cls.extensions) & set(pv.core.utilities.reader.CLASS_READERS)
+
+
+def test_writer_format_name_from_reader():
+    mapping = {}
+
+    class _Writer(pv.BaseWriter):
+        @classmethod
+        def _get_extension_mappings(cls):
+            return [mapping]
+
+    assert _Writer.format_name is None
+    mapping['.vtu'] = _Writer
+    assert _Writer.format_name == pv.XMLUnstructuredGridReader.format_name
+    mapping['.vtp'] = _Writer
+    assert _Writer.format_name is None
+    _Writer._format_name = 'Custom'
+    assert _Writer.format_name == 'Custom'
+
+
 def test_ply_writer(sphere, tmp_path):
     writer_cls = pv.PLYWriter
     assert writer_cls.extensions == ('.ply',)
