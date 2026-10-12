@@ -1798,6 +1798,13 @@ def fixed_dims_grid(request):
     return request.param()
 
 
+@pytest.mark.parametrize('name', list(_EXTENT_GRIDS))
+def test_structured_data_repr_has_dimensions(name):
+    grid = _EXTENT_GRIDS[name]()
+    dims = grid.dimensions
+    assert f'Dimensions:   {dims[0]}, {dims[1]}, {dims[2]}\n' in repr(grid)
+
+
 def test_offset_round_trip(extent_grid):
     dims = extent_grid.dimensions
     extent_grid.offset = (-2, 3, -4)

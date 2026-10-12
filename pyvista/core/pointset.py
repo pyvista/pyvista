@@ -4119,12 +4119,6 @@ class StructuredGrid(
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
 
-    def _get_attrs(self) -> list[tuple[str, Any, str]]:
-        """Return the representation methods (internal helper)."""
-        attrs = PointGrid._get_attrs(self)
-        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
-        return attrs
-
     @overload
     def __getitem__(
         self, key: str | tuple[str, Literal['cell', 'point', 'field']]

@@ -162,12 +162,6 @@ class Grid(_StructuredDataMixin, DataSet):
             raise ValueError(msg)
         return self.cast_to_structured_grid().cast_to_unstructured_grid()
 
-    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
-        """Return the representation methods (internal helper)."""
-        attrs = DataSet._get_attrs(self)
-        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
-        return attrs
-
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
