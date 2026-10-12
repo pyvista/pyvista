@@ -3777,14 +3777,27 @@ def test_validate_mesh_image_data_non_finite_points(attr, value):
 
 @pytest.mark.parametrize('value', [np.inf, np.nan, 1e308])
 @pytest.mark.parametrize(
-    'make_mesh',
-    [pv.Sphere, lambda: pv.ImageData(dimensions=(3, 3, 3)).cast_to_unstructured_grid()],
-    ids=['PolyData', 'UnstructuredGrid'],
+    ('make_mesh', 'n_points'),
+    [
+        (pv.Sphere, 1),
+        # Hexahedra, unlike voxels, are measured by verdict
+        (
+            lambda: (
+                pv.ImageData(dimensions=(3, 3, 3))
+                .cast_to_structured_grid()
+                .cast_to_unstructured_grid()
+            ),
+            1,
+        ),
+        # Its sub-triangle areas add up
+        (examples.cells.QuadraticTriangle, 2),
+    ],
+    ids=['PolyData', 'UnstructuredGrid', 'QuadraticTriangle'],
 )
-def test_validate_mesh_unmeasurable_cells_have_no_size(make_mesh, value):
+def test_validate_mesh_unmeasurable_cells_have_no_size(make_mesh, n_points, value):
     mesh = make_mesh()
     points = mesh.points.astype(float)
-    points[0] = (value, 0.0, 0.0)
+    points[:n_points] = (value, 0.0, 0.0)
     mesh.points = points
     report = mesh.validate_mesh(['negative_size', 'zero_size'])
     assert report.is_valid
@@ -4635,6 +4648,26 @@ def test_validate_mesh_hidden_cells_have_no_size(cast):
     # Cell 1 is degenerate along x
     mesh = _hide_cells(cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])), [0])
     assert mesh.validate_mesh().zero_size == [1]
+
+
+@pytest.mark.parametrize(
+    'cast',
+    [lambda grid: grid, lambda grid: grid.cast_to_structured_grid()],
+    ids=['RectilinearGrid', 'StructuredGrid'],
+)
+def test_validate_mesh_hidden_points_have_no_size(cast):
+    # Cell 1 is degenerate along x, and hiding point 3 hides cell 2
+    mesh = cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0]))
+    ghosts = np.zeros(mesh.n_points, dtype=np.uint8)
+    ghosts[3] = _vtk.vtkDataSetAttributes.HIDDENPOINT
+    mesh.point_data['vtkGhostType'] = ghosts
+    assert mesh.validate_mesh().zero_size == [1]
+
+
+def test_validate_mesh_structured_grid_hide_points():
+    grid = pv.ImageData(dimensions=(4, 3, 2)).cast_to_structured_grid()
+    grid.hide_points([0])
+    assert grid.validate_mesh().is_valid
 
 
 @pytest.mark.parametrize('to_ugrid', [False, True], ids=['PolyData', 'UnstructuredGrid'])

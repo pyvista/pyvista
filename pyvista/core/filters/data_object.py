@@ -944,6 +944,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 # Points are affine in the index, so the corners that set the bounds are extremes
                 if np.isfinite(mesh.bounds).all():
                     return []
+            elif isinstance(mesh, pv.RectilinearGrid):
+                # A point is non-finite if any of its coordinates is, with x varying fastest
+                x, y, z = (~np.isfinite(coords) for coords in (mesh.x, mesh.y, mesh.z))
+                mask = x | y[:, np.newaxis] | z[:, np.newaxis, np.newaxis]
+                return np.flatnonzero(mask).tolist()
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
@@ -2007,27 +2012,22 @@ class DataObjectFilters:
                     + size_data['Area']
                     + size_data['Volume']
                 )
-                # Areas and volumes are clamped to +/-1e30, and a NaN one, from non-finite or
-                # overflowing points, is reported as -1e30, so that size is unknown
-                unknown = (size_data['Area'] == -_VERDICT_DBL_MAX) | (
-                    size_data['Volume'] == -_VERDICT_DBL_MAX
+                # Verdict clamps triangle and quad areas and hexahedron volumes to +/-1e30 and
+                # reports a NaN one, from non-finite or overflowing points, as -1e30, summed over
+                # the sub-cells of higher-order cells. Such a size is unknown; a real size beyond
+                # -1e30 cannot be told apart from it.
+                unknown = (size_data['Area'] <= -_VERDICT_DBL_MAX) | (
+                    size_data['Volume'] <= -_VERDICT_DBL_MAX
                 )
                 size = np.where(unknown, np.nan, size)
 
                 # compute_cell_sizes may measure hidden cells of these types as empty cells, so
                 # their size says nothing about their geometry. ImageData is measured from its
-                # spacing. VTK only reads hidden cells from a uint8 ghost array.
-                ghosts = mesh.cell_data.get(_GHOST_ARRAY)
-                if (
-                    isinstance(
-                        mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
-                    )
-                    and ghosts is not None
-                    and ghosts.shape == (mesh.n_cells,)
-                    and ghosts.dtype == np.uint8
+                # spacing.
+                if isinstance(
+                    mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
                 ):
-                    hidden = ghosts & _vtk.vtkDataSetAttributes.HIDDENCELL
-                    size = np.where(hidden, np.nan, size)
+                    size = np.where(_hidden_structured_cells(mesh), np.nan, size)
 
                 # NEGATIVE_SIZE
                 state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
@@ -6617,6 +6617,39 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     if mesh._has_hidden_cells:
         cell_types.add(CellType.EMPTY_CELL)
     return cell_types
+
+
+def _hidden_structured_cells(
+    mesh: pv.RectilinearGrid | pv.StructuredGrid | pv.ExplicitStructuredGrid,
+) -> NDArray[np.bool_]:
+    """Return a mask of the cells VTK hides through the ghost arrays of structured data."""
+
+    def ghost_flags(data: DataSetAttributes, n_values: int, flag: int) -> NDArray[np.bool_]:
+        # VTK only reads ghosts from a uint8 array
+        ghosts = data.get(_GHOST_ARRAY)
+        if ghosts is None or ghosts.shape != (n_values,) or ghosts.dtype != np.uint8:
+            return np.zeros(n_values, dtype=bool)
+        return (ghosts & flag) != 0
+
+    hidden = ghost_flags(mesh.cell_data, mesh.n_cells, _vtk.vtkDataSetAttributes.HIDDENCELL)
+    if isinstance(mesh, pv.ExplicitStructuredGrid) or mesh.n_cells == 0:
+        # Its cells are explicit and ignore hidden points
+        return hidden
+    points = ghost_flags(mesh.point_data, mesh.n_points, _vtk.vtkDataSetAttributes.HIDDENPOINT)
+    if not points.any():
+        return hidden
+    # A cell is hidden if any of its corners is. Combine neighbouring points along each axis
+    # with cells, laid out as (nz, ny, nx) so that x varies fastest.
+    nx, ny, nz = mesh.dimensions
+    corners = points.reshape(nz, ny, nx)
+    for axis in range(3):
+        if corners.shape[axis] > 1:
+            lower = [slice(None)] * 3
+            upper = [slice(None)] * 3
+            lower[axis] = slice(None, -1)
+            upper[axis] = slice(1, None)
+            corners = corners[tuple(lower)] | corners[tuple(upper)]
+    return hidden | corners.ravel()
 
 
 def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
