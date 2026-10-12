@@ -380,7 +380,8 @@ def read(
     fallback for HTTP(S).  Third-party reader plugins registered via
     :func:`pyvista.register_reader` are also checked.
 
-    See :func:`pyvista.get_reader` for list of vtk formats supported.
+    See the tables below for a list of all supported file formats. See also
+    :func:`pyvista.get_reader` for a similar list organized by reader class.
 
     .. include:: /api/utilities/mesh_io.rst
 
