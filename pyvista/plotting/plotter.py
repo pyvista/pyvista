@@ -4221,7 +4221,7 @@ class BasePlotter(_BoundsSizeMixin):
         ... )
 
         Plot spheres using ``'points_gaussian'`` style and scale them by radius
-        with the mapper's :attr:`~pyvista.PointGaussianMapper.scale_array`.
+        with the mapper's :attr:`~pyvista.plotting.mapper.PointGaussianMapper.scale_array`.
 
         >>> N_SPHERES = 10_000
         >>> rng = np.random.default_rng(seed=0)
