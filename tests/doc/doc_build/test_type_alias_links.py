@@ -26,16 +26,16 @@ def split_api_page(filename: str) -> tuple[str, str]:
     """Return the signature and the rest of a generated single-object API page."""
     page = next(Path(BUILD_HTML_DIR).rglob(filename), None)
     assert page is not None, f'{filename} not found under {BUILD_HTML_DIR}'
-    html = page.read_text()
-    start = html.index('<dt class="sig sig-object py"')
-    end = html.index('</dt>', start)
-    return html[start:end], html[end:]
+    text = page.read_text()
+    start = text.index('<dt class="sig sig-object py"')
+    end = text.index('</dt>', start)
+    return text[start:end], text[end:]
 
 
-def link_anchors(html: str, text: str) -> list[str]:
+def link_anchors(page: str, text: str) -> list[str]:
     """Return the anchors of internal links displayed as ``text``."""
     pattern = rf'<a class="reference internal" href="[^"]*#([^"]+)"[^>]*>(?:<[^>]+>)*{text}<'
-    return re.findall(pattern, html)
+    return re.findall(pattern, page)
 
 
 @pytest.mark.parametrize(('filename', 'alias'), SIGNATURE_ALIASES)
@@ -54,20 +54,22 @@ def test_docstring_links_type_alias(filename, alias):
 
 def test_type_alias_drops_inherited_docstring():
     """Confirm a type alias does not show the docstring of its ``typing`` origin."""
-    html = (Path(BUILD_HTML_DIR) / 'api' / 'core' / 'typing.html').read_text()
-    assert 'pyvista.typing.ColorLike' in html
-    assert 'Represent a union type' not in html
-    assert 'Type aliases are created through the type statement' not in html
+    page = typing_page()
+    assert 'pyvista.typing.ColorLike' in page
+    assert 'Represent a union type' not in page
+    assert 'Type aliases are created through the type statement' not in page
 
 
-def type_alias_value(page: str, alias: str) -> str | None:
-    """Return the text of the value block of a type alias, or ``None`` without one."""
-    start = page.index(f'<dd id="pyvista.typing.{alias}"')
-    entry = page[start : page.index('</dd>', start)]
-    if 'type-alias-value' not in entry:
-        return None
-    block = entry[entry.index('<pre>') + len('<pre>') : entry.index('</pre>')]
-    return html.unescape(re.sub(r'<[^>]+>', '', block)).strip()
+def typing_page() -> str:
+    """Return the HTML of the typing page."""
+    return (Path(BUILD_HTML_DIR) / 'api' / 'core' / 'typing.html').read_text()
+
+
+def type_alias_value(page: str, alias: str) -> str:
+    """Return the HTML of the value block of a type alias."""
+    start = page.index(f'id="pyvista.typing.{alias}"')
+    assert 'type-alias-value' in page[page.rindex('<pre', 0, start) : start]
+    return page[start : page.index('</pre>', start)]
 
 
 @pytest.mark.parametrize(
@@ -76,14 +78,47 @@ def type_alias_value(page: str, alias: str) -> str | None:
         ('CellsLike', 'MatrixLikeInt | VectorLikeInt'),
         ('TransformLike', 'RotationLike | vtkMatrix4x4 | vtkTransform'),
         ('LineStyle', "Literal['', '-', '--', ':', '-.', '-..']"),
-        # documented with ``:no-value:``
-        ('NamedColors', None),
-        ('NamedColormaps', None),
+        (
+            'VectorLikeInt',
+            (
+                'Sequence[int]\n'
+                '| Sequence[np.integer | np.bool]\n'
+                '| np.ndarray[tuple[int], np.dtype[np.integer | np.bool]]'
+            ),
+        ),
     ],
 )
 def test_type_alias_value_replaces_signature(alias, value):
     """Confirm a type alias shows its value in place of its signature, keeping its anchor."""
-    page = (Path(BUILD_HTML_DIR) / 'api' / 'core' / 'typing.html').read_text()
+    page = typing_page()
     assert f'<dt class="sig sig-object py" id="pyvista.typing.{alias}"' not in page
-    assert 'alias of' not in page
-    assert type_alias_value(page, alias) == value
+    text = re.sub(r'<[^>]+>', '', type_alias_value(page, alias).split('>', 1)[1])
+    assert html.unescape(text).strip() == value
+
+
+@pytest.mark.parametrize(
+    ('alias', 'anchor'),
+    [
+        ('CellsLike', 'pyvista.typing.MatrixLikeInt'),
+        ('VectorLikeInt', 'numpy.integer'),
+        ('VectorLikeInt', 'collections.abc.Sequence'),
+    ],
+)
+def test_type_alias_value_links_types(alias, anchor):
+    """Confirm the value of a type alias links the types it names."""
+    assert re.search(rf'href="[^"]*#{re.escape(anchor)}"', type_alias_value(typing_page(), alias))
+
+
+def test_type_alias_drops_alias_line():
+    """Confirm no type alias repeats its value as an "alias of" line."""
+    assert 'alias of' not in typing_page()
+
+
+@pytest.mark.parametrize('alias', ['NamedColors', 'NamedColormaps'])
+def test_type_alias_hidden_value(alias):
+    """Confirm a type alias documented without its value keeps its anchor but no signature."""
+    page = typing_page()
+    assert f'<dt class="sig sig-object py" id="pyvista.typing.{alias}"' not in page
+    start = page.index(f'id="pyvista.typing.{alias}"')
+    assert page[page.rindex('<', 0, start) : start].startswith('<dd')
+    assert 'type-alias-value' not in page[start : page.index('</dd>', start)]

@@ -191,6 +191,7 @@ _DOCUMENTED_TYPES = [
     'CellsLike',
     'Chart',
     'ColorLike',
+    'ColormapOptions',
     'InteractionEventType',
     'JupyterBackendOptions',
     'LineStyle',
@@ -221,7 +222,6 @@ _UNDOCUMENTED_TYPES = [
     'CellLiteral',
     'CellQualityInfo',
     'Colormap',
-    'ColormapOptions',
     'CrinkleAlgorithm',
     'CullingOptions',
     'Cycler',
@@ -1127,86 +1127,111 @@ def drop_type_alias_docstring(  # noqa: PLR0917
         lines.clear()
 
 
-# Widest line that fits the code-block column at a 1280 px window without scrolling
+# Type forms whose value the typing page shows
+_TYPE_ALIAS_FORMS = (Literal, Union, UnionType)
+
+# Widest line that fits the content column at a 1280 px window without scrolling
 _TYPE_ALIAS_LINE_LENGTH = 72
 
+# A cross-reference role, whose displayed text is its title
+_TYPE_REFERENCE = re.compile(r':py:\w+:`([^`<]*?)(?: <[^`]*>)?`')
 
-def _type_name(obj: object) -> str:
-    """Return the short name of a type, with ``np.`` for NumPy."""
+
+def _display_width(text: str) -> int:
+    """Return the width of reStructuredText as rendered, without roles and escapes."""
+    text = _TYPE_REFERENCE.sub(r'\1', text).replace('\\ ', '')
+    return len(re.sub(r'\\(.)', r'\1', text))
+
+
+def _escape(text: str) -> str:
+    """Escape the characters reStructuredText would read as inline markup."""
+    return re.sub(r'([\\`*_|])', r'\\\1', text)
+
+
+def _type_reference(obj: object, aliases: dict[object, str]) -> str:
+    """Return a cross-reference to a type, titled with its short name and ``np.`` for NumPy."""
     if obj is None or obj is type(None):
-        return 'None'
-    if obj is Ellipsis:
-        return '...'
+        return ':py:obj:`None`'
     if isinstance(obj, ForwardRef):
-        return obj.__forward_arg__
+        name = obj.__forward_arg__
+        if name in aliases.values():
+            return f':py:data:`{name} <pyvista.typing.{name}>`'
+        return f':py:class:`{name}`'
     module = getattr(obj, '__module__', '') or ''
+    qualname = getattr(obj, '__qualname__', None) or obj.__name__
+    if module == 'builtins':
+        return f':py:class:`{qualname}`'
+    target = f'{module}.{qualname}'
     if module == 'numpy':
-        return f'np.{obj.__name__}'
-    if module.startswith('vtkmodules.'):
-        # Keep the owning class of a nested VTK enum, as in ``vtkCommand.EventIds``
-        return '.'.join([*module.split('.')[2:], obj.__qualname__])
-    return getattr(obj, '__qualname__', None) or getattr(obj, '__name__', None) or repr(obj)
+        title = f'np.{obj.__name__}'
+    elif module.startswith('vtkmodules.'):
+        # Show and link the owning class of a nested VTK enum, as in ``vtkCommand.EventIds``
+        title = '.'.join([*module.split('.')[2:], qualname])
+        target = target if qualname.startswith('vtk') else module
+    else:
+        title = qualname
+    return f':py:class:`{title} <{target}>`'
 
 
 def _collapse_aliases(members: tuple, aliases: dict[object, str]) -> list:
-    """Replace each run of union members that spells a documented alias with its name."""
+    """Replace the union members that make up a documented alias with its name."""
     members = list(members)
     for alias, name in aliases.items():
-        run = get_args(alias)
-        if get_origin(alias) not in (Union, UnionType) or len(run) >= len(members):
+        alias_members = get_args(alias)
+        if get_origin(alias) not in (Union, UnionType) or len(alias_members) >= len(members):
             continue
-        i = 0
-        while i <= len(members) - len(run):
-            if tuple(members[i : i + len(run)]) == run:
-                members[i : i + len(run)] = [ForwardRef(name)]
-            i += 1
+        if all(member in members for member in alias_members):
+            first = min(members.index(member) for member in alias_members)
+            members = [member for member in members if member not in alias_members]
+            members.insert(first, ForwardRef(name))
     return members
 
 
 def _format_type(  # noqa: PLR0911
     obj: object, *, indent: int = 0, lead: int = 0, aliases: dict[object, str] | None = None
 ) -> str:
-    """Format a type expression the way ``ruff format`` lays out a long expression."""
+    """Format a type expression as linked reStructuredText, in a ``ruff format`` style layout."""
     aliases = aliases or {}
-    if isinstance(obj, list):
-        return f'[{", ".join(_format_type(arg, aliases=aliases) for arg in obj)}]'
     if obj in aliases:
-        return aliases[obj]
+        return f':py:data:`{aliases[obj]} <pyvista.typing.{aliases[obj]}>`'
     origin, args = get_origin(obj), get_args(obj)
+    if obj is Ellipsis:
+        return '...'
     if origin is None:
-        return _type_name(obj)
+        return _type_reference(obj, aliases)
     if origin is Unpack:
-        return f'*{_format_type(args[0], indent=indent, lead=lead + 1, aliases=aliases)}'
+        # An escaped space separates inline markup that touches other text
+        return f'\\*\\ {_format_type(args[0], indent=indent, lead=lead + 1, aliases=aliases)}'
     if origin in (Union, UnionType):
         args = _collapse_aliases(args, aliases)
-        flat = ' | '.join(_format_type(arg, aliases=aliases) for arg in args)
-        if indent + lead + len(flat) <= _TYPE_ALIAS_LINE_LENGTH:
+        flat = ' \\| '.join(_format_type(arg, aliases=aliases) for arg in args)
+        if indent + lead + _display_width(flat) <= _TYPE_ALIAS_LINE_LENGTH:
             return flat
         members = [
             _format_type(arg, indent=indent, lead=2 * bool(i), aliases=aliases)
             for i, arg in enumerate(args)
         ]
-        return f'\n{" " * indent}| '.join(members)
-    name = 'Literal' if origin is Literal else _type_name(origin)
-    if not args:
-        return f'{name}[()]'
+        return f'\n{" " * indent}\\| '.join(members)
     if origin is Literal:
-        items = [repr(arg) for arg in args]
+        name = ':py:data:`Literal <typing.Literal>`'
+        items = [_escape(repr(arg)) for arg in args]
     else:
+        name = _type_reference(origin, aliases)
         items = [_format_type(arg, aliases=aliases) for arg in args]
     flat_args = ', '.join(items)
-    if indent + lead + len(name) + len(flat_args) + 2 <= _TYPE_ALIAS_LINE_LENGTH:
-        return f'{name}[{flat_args}]'
+    width = _display_width(name) + _display_width(flat_args) + 2
+    if indent + lead + width <= _TYPE_ALIAS_LINE_LENGTH:
+        return f'{name}\\ [{flat_args}]'
     pad = ' ' * (indent + 4)
     if origin is not Literal:
         items = [_format_type(arg, indent=indent + 4, aliases=aliases) for arg in args]
     if len(args) == 1:
         inner = items[0]
-    elif indent + 4 + len(flat_args) <= _TYPE_ALIAS_LINE_LENGTH:
+    elif indent + 4 + _display_width(flat_args) <= _TYPE_ALIAS_LINE_LENGTH:
         inner = flat_args
     else:
         inner = f',\n{pad}'.join(items) + ','
-    return f'{name}[\n{pad}{inner}\n{" " * indent}]'
+    return f'{name}\\ [\n{pad}{inner}\n{" " * indent}]'
 
 
 def show_type_alias_value(  # noqa: PLR0917
@@ -1217,11 +1242,11 @@ def show_type_alias_value(  # noqa: PLR0917
     options: object,
     lines: list[str],
 ) -> None:
-    """Show the value of a type alias as a code block, ``ruff format`` style."""
+    """Show the value of a type alias as a linked, preformatted block."""
     if (
         what != 'data'
         or getattr(options, 'no_value', False)
-        or get_origin(obj) not in (Literal, Union, UnionType)
+        or get_origin(obj) not in _TYPE_ALIAS_FORMS
     ):
         return
     # Name the other documented aliases it contains, largest first
@@ -1236,7 +1261,7 @@ def show_type_alias_value(  # noqa: PLR0917
     lines.extend(
         [
             '',
-            '.. code-block:: python',
+            '.. parsed-literal::',
             '   :class: type-alias-value',
             '',
             *(f'   {line}' for line in _format_type(obj, aliases=aliases).splitlines()),
@@ -1245,16 +1270,28 @@ def show_type_alias_value(  # noqa: PLR0917
 
 
 def drop_type_alias_signature(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
-    """Drop the signature and alias line of each ``pyvista.typing`` alias, keeping its anchor."""
+    """Drop the signature and alias line of each type alias whose value is shown or hidden."""
     for desc in list(doctree.findall(addnodes.desc)):
         signatures = [n for n in desc.children if isinstance(n, addnodes.desc_signature)]
         if desc.get('objtype') != 'data' or not signatures:
             continue
         if signatures[0].get('module') != 'pyvista.typing':
             continue
+        alias = getattr(pv.typing, signatures[0]['fullname'], None)
+        if get_origin(alias) not in _TYPE_ALIAS_FORMS:
+            continue
         content = next(n for n in desc.children if isinstance(n, addnodes.desc_content))
+        # The anchor moves to the value block, or to the description when the value is hidden
+        target = next(
+            (
+                n
+                for n in content.findall(nodes.literal_block)
+                if 'type-alias-value' in n['classes']
+            ),
+            content,
+        )
         for signature in signatures:
-            content['ids'].extend(signature['ids'])
+            target['ids'].extend(signature['ids'])
             desc.remove(signature)
         for paragraph in [n for n in content.children if isinstance(n, nodes.paragraph)]:
             if paragraph.astext().startswith('alias of '):
