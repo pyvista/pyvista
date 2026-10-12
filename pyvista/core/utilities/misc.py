@@ -800,7 +800,7 @@ class _ExtentMixin:
     """
 
     #: Whether setting the extent may change the dimensions.
-    _extent_sets_dimensions: ClassVar[bool] = True
+    _extent_sets_dimensions: ClassVar[bool] = False
 
     @property
     def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
@@ -808,17 +808,16 @@ class _ExtentMixin:
 
         The extent is simply the first and last indices for each of the three axes.
         It encodes information about the grid's :attr:`offset` and dimensions.
+        Only the extent of an :class:`~pyvista.ImageData` can be resized; other grids
+        can only be shifted.
 
-        The extent of a :class:`~pyvista.RectilinearGrid` or an
-        :class:`~pyvista.ExplicitStructuredGrid` can be shifted but not resized.
-
-        .. versionadded:: 0.50
+        .. versionchanged:: 0.50
             Available on :class:`~pyvista.RectilinearGrid`,
             :class:`~pyvista.StructuredGrid` and :class:`~pyvista.ExplicitStructuredGrid`.
 
         Examples
         --------
-        Create a ``ImageData`` and show its extent.
+        Create an ``ImageData`` and show its extent.
 
         >>> import pyvista as pv
         >>> grid = pv.ImageData(dimensions=(10, 10, 10))
@@ -829,7 +828,7 @@ class _ExtentMixin:
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the grid's :attr:`offset`,
+        Note how this also modifies the image's :attr:`offset`,
         :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
         we use default spacing of 1 here, the bounds match the extent exactly.
 
@@ -888,13 +887,13 @@ class _ExtentMixin:
 
         .. versionadded:: 0.45
 
-        .. versionadded:: 0.50
+        .. versionchanged:: 0.50
             Available on :class:`~pyvista.RectilinearGrid`,
             :class:`~pyvista.StructuredGrid` and :class:`~pyvista.ExplicitStructuredGrid`.
 
         Examples
         --------
-        Create a ``ImageData`` and show that the offset is zeros by default.
+        Create an ``ImageData`` and show that the offset is zeros by default.
 
         >>> import pyvista as pv
         >>> grid = pv.ImageData(dimensions=(10, 10, 10))

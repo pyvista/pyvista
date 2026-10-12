@@ -272,8 +272,6 @@ class RectilinearGrid(_ExtentMixin, Grid, RectilinearGridFilters, _vtk.vtkRectil
         '.vtr': XMLRectilinearGridWriter,
     }
 
-    _extent_sets_dimensions: ClassVar[bool] = False
-
     def __init__(
         self: Self,
         *args,
@@ -738,6 +736,8 @@ class ImageData(_ExtentMixin, Grid, ImageDataFilters, _vtk.vtkImageData):
         '.vtk': DataSetWriter,
         '.vti': XMLImageDataWriter,
     }
+
+    _extent_sets_dimensions: ClassVar[bool] = True
 
     def __init__(
         self: Self,

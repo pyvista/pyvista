@@ -4388,8 +4388,6 @@ class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructured
         '.vtk': UnstructuredGridWriter,
     }
 
-    _extent_sets_dimensions: ClassVar[bool] = False
-
     def __init__(
         self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False
     ) -> None:
@@ -4847,10 +4845,12 @@ class ExplicitStructuredGrid(_ExtentMixin, PointGrid, _vtk.vtkExplicitStructured
         return self._dimensions()
 
     def _set_extent(self, extent: list[int]) -> None:
-        """Set the extent, keeping the cells that ``SetExtent`` resets."""
-        cells = self.GetCells()
+        """Set the extent, keeping the cells and links that ``SetExtent`` resets."""
+        cells, links = self.GetCells(), self.GetLinks()
+        self.SetLinks(None)
         self.SetExtent(extent)
         self.SetCells(cells)
+        self.SetLinks(links)
 
     @property
     def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
