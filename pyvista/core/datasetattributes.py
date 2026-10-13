@@ -1025,7 +1025,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        # Optimization: index lookup is constant time, while lookup by name scans every array
+        # Optimization: lookup by index instead of by name for O(1) instead of O(N) performance
         return [self.get_array(i) for i in range(self.VTKObject.GetNumberOfArrays())]
 
     def _iter_flat_columns(self: Self) -> Iterator[tuple[str, NDArray[Any]]]:
