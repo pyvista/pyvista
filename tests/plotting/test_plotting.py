@@ -1668,6 +1668,16 @@ def test_plot_near_constant_scalars():
     pl.show()
 
 
+def test_plot_composite_near_constant_scalars():
+    sphere = pv.Sphere(theta_resolution=64, phi_resolution=64).triangulate()
+    blocks = pv.MultiBlock([sphere, sphere.translate((1.2, 0, 0))])
+    pl = pv.Plotter()
+    pl.add_composite(blocks, scalars='Normals', show_scalar_bar=False)
+    low, high = pl.mapper.scalar_range
+    assert low == high
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_invalid_n_arrays(sphere):
     pl = pv.Plotter()
