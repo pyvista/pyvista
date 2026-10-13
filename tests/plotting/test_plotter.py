@@ -948,14 +948,6 @@ def test_mapper_array_name_near_constant_scalars_range():
 
 
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_add_mesh_small_real_scalars_range(dtype):
-    mesh = pv.ImageData(dimensions=(5, 5, 1))
-    mesh['data'] = np.linspace(1.0, 1.001, mesh.n_points, dtype=dtype)
-    actor = pv.Plotter().add_mesh(mesh, scalars='data')
-    assert actor.mapper.scalar_range == (float(mesh['data'].min()), float(mesh['data'].max()))
-
-
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_add_mesh_rounding_spread_above_threshold_range(dtype):
     mesh = pv.ImageData(dimensions=(5, 5, 1))
     mesh['data'] = _rounding_noise(3.0, dtype, mesh.n_points, ulps=3)
@@ -988,6 +980,17 @@ def test_add_composite_near_constant_scalars_range():
     assert actor.mapper.scalar_range == (float(magnitudes.min()), float(magnitudes.max()))
 
 
+@pytest.mark.parametrize('reverse', [False, True])
+def test_add_composite_mixed_dtype_scalars_range(reverse):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = np.ones(mesh.n_points, dtype=np.float32)
+    other = mesh.copy()
+    other['data'] = 1.0 + np.linspace(0, 2e-7, other.n_points)
+    blocks = [mesh, other][::-1] if reverse else [mesh, other]
+    actor, _ = pv.Plotter().add_composite(pv.MultiBlock(blocks), scalars='data')
+    assert actor.mapper.scalar_range == (1.0, float(other['data'].max()))
+
+
 def test_add_mesh_near_constant_scalars_below_color():
     mesh = pv.ImageData(dimensions=(5, 5, 1))
     mesh.cell_data['data'] = _rounding_noise(3.0, np.float32, mesh.n_cells)
@@ -1002,9 +1005,10 @@ def test_add_mesh_near_constant_scalars_below_color():
     assert mapper.scalar_range == expected
 
 
-def test_add_mesh_near_constant_scalars_custom_opacity():
+@pytest.mark.parametrize('ulps', [0, 2])
+def test_add_mesh_near_constant_scalars_custom_opacity(ulps):
     mesh = pv.ImageData(dimensions=(5, 5, 1))
-    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points)
+    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points, ulps=ulps)
     opacity = np.linspace(0.2, 1.0, mesh.n_points)
     actor = pv.Plotter().add_mesh(mesh, scalars='data', opacity=opacity)
     rgba = actor.mapper.dataset.point_data['__custom_rgba']

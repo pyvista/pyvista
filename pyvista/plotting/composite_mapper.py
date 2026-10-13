@@ -783,9 +783,9 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
 
         clim : VectorLikeFloat
             Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array, or to the maximum alone when the two
-            differ only by floating-point rounding.  Example: ``[-1, 2]``.
-            ``rng`` is also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
@@ -850,9 +850,15 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             scalar_range = (-0.5, 1.5)
         else:
             if clim is None:
+                data_attr = f'{field.name.lower()}_data'
+                block_dtypes = [
+                    getattr(block, data_attr)[scalars_name].dtype
+                    for block in dataset.recursive_iterator(skip_none=True)
+                    if scalars_name in getattr(block, data_attr)
+                ]
                 clim = _default_scalar_range(
                     *dataset.get_data_range(scalars_name, allow_missing=True),
-                    dtype,
+                    np.result_type(*block_dtypes) if block_dtypes else dtype,
                     below_range_color=bool(below_color)
                     or self.lookup_table.below_range_color is not None,
                 )

@@ -3142,9 +3142,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array, or to the maximum alone when the two
-            differ only by floating-point rounding.  Example: ``[-1, 2]``.
-            ``rng`` is also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -3758,9 +3758,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array, or to the maximum alone when the two
-            differ only by floating-point rounding.  Example: ``[-1, 2]``.
-            ``rng`` is also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -4898,8 +4898,8 @@ class BasePlotter(_BoundsSizeMixin):
         clim : sequence[float] | float, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
-            ``np.uint8``, or to the maximum alone when the two differ only by
-            floating-point rounding. ``rng`` is also an accepted alias for this
+            ``np.uint8``. A range that spans only floating-point rounding
+            becomes ``(max, max)``. ``rng`` is also an accepted alias for this
             parameter.
 
             If the scalars datatype is ``np.uint8``, this parameter defaults to

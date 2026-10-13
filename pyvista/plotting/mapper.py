@@ -1105,9 +1105,9 @@ class _BaseDataSetMapper(_BaseMapper):
 
         clim : VectorLikeFloat | float, optional
             Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array, or to the maximum alone when the two
-            differ only by floating-point rounding.  Example: ``(-1, 2)``. A
-            single value ``c`` is the range ``(-c, c)``.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``(-1, 2)``. A single value ``c`` is the range ``(-c, c)``.
 
         """
         if _clim_has_no_bounds(clim):
