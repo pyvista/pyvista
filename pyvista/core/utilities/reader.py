@@ -794,7 +794,7 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
     >>> from pathlib import Path
     >>> filename = examples.download_notch_displacement(load=False)
     >>> Path(filename).name
-    'notch_disp.vtu'
+    'notch_disp_v2.vtu'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(

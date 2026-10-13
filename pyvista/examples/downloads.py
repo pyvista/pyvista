@@ -3368,7 +3368,7 @@ def download_structured_grid_two(*, load: bool = True) -> StructuredGrid | str:
     return _download_dataset(_dataset_structured_grid_two, load=load)
 
 
-_dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStructGrid.vtk')
+_dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStructGrid_v2.vtk')
 
 
 @overload
@@ -5826,7 +5826,7 @@ def download_notch_stress(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed_v2.vtk')
 
 
 @overload
@@ -5870,7 +5870,7 @@ def download_notch_displacement(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_notch_displacement, load=load)
 
 
-_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp.vtu')
+_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp_v2.vtu')
 
 
 @overload
@@ -6512,7 +6512,7 @@ def download_pump_bracket(*, load: bool = True) -> UnstructuredGrid | str:
 
 
 _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
-    'fea/pump_bracket/pump_bracket.zip',
+    'fea/pump_bracket/pump_bracket_v2.zip',
     target_file='pump_bracket.vtk',
 )
 
@@ -6608,11 +6608,11 @@ def _electronics_cooling_files_func() -> tuple[
     _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
 ]:
     _structure = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets.zip',
+        'fvm/cooling_electronics/datasets_v2.zip',
         target_file='structure.vtp',
     )
     _air = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets.zip',
+        'fvm/cooling_electronics/datasets_v2.zip',
         target_file='air.vtu',
     )
     return _structure, _air
@@ -8361,7 +8361,9 @@ def download_aero_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_aero_bracket, load=load)
 
 
-_dataset_aero_bracket = _SingleFileDownloadableDatasetLoader('fea/aero_bracket/aero_bracket.vtu')
+_dataset_aero_bracket = _SingleFileDownloadableDatasetLoader(
+    'fea/aero_bracket/aero_bracket_v2.vtu'
+)
 
 
 @overload
