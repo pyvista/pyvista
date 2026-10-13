@@ -8568,7 +8568,9 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     and performance of different techniques, simulators, algorithms, among others.
     See more at https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview
 
-    This dataset is licenced under the Database Contents License: https://opendatacommons.org/licenses/dbcl/1-0/
+    The simulation decks are licensed under the Open Database License
+    (https://opendatacommons.org/licenses/odbl/1-0/) and their contents under the
+    Database Contents License (https://opendatacommons.org/licenses/dbcl/1-0/).
 
     Parameters
     ----------
