@@ -1418,12 +1418,12 @@ class DataObjectFilters:
             - ``zero_size`` and ``negative_size`` use a default size tolerance which scales with
               each cell and the precision of the points. See
               :meth:`~pyvista.DataObjectFilters.cell_validator`.
-            - Thin cells and cells far from the origin are no longer reported with intersecting
-              edges or inverted faces due to rounding error.
             - ``coincident_points`` allows a polyline to revisit a point other than the one
               before it, and a triangle strip to repeat points if it has at least three distinct
               points.
-            - A field group skips the fields the mesh type cannot check instead of raising.
+            - A field group skips the fields the mesh type cannot check instead of raising. For
+              example, ``validate_mesh('cells')`` on :class:`~pyvista.ImageData` checks only
+              ``invalid_point_references``, ``negative_size``, and ``zero_size``.
 
         Parameters
         ----------
@@ -1801,12 +1801,9 @@ class DataObjectFilters:
             Add tolerance keywords.
 
         .. versionchanged:: 0.50
-
-            - Each cell is checked in coordinates centered on the cell, so thin cells and cells
-              far from the origin are not reported as invalid due to rounding error.
-            - :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` allows a polyline to revisit a
-              point other than the one before it, and a triangle strip to repeat points if it has
-              at least three distinct points.
+            :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` allows a polyline to revisit a point
+            other than the one before it, and a triangle strip to repeat points if it has at least
+            three distinct points.
 
         Parameters
         ----------
