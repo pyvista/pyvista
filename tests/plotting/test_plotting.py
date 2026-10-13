@@ -1820,9 +1820,8 @@ def test_screenshot_transparent_background_alpha(opacity, anti_aliasing, backgro
     pl.close()
 
     alpha = straight[..., 3]
-    # Edge alpha is resolved from different buffers, which some drivers blend differently
-    assert np.array_equal(blended[..., 3] == 0, alpha == 0)
-    assert np.array_equal(blended[..., 3] == 255, alpha == 255)
+    # Some drivers cover edge pixels with a different sample from the front and back buffers
+    assert np.abs(blended[..., 3] - alpha).max() <= 255 / 8
     assert np.array_equal(premultiplied[..., 3], alpha)
     assert np.all(straight[alpha == 0] == 0)
     assert np.all(premultiplied[alpha == 0] == 0)
