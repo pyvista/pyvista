@@ -8597,17 +8597,29 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
       X Bounds:   3.104e+05, 3.177e+05
       Y Bounds:   7.477e+06, 7.486e+06
       Z Bounds:   -2.472e+03, -1.577e+03
-      N Arrays:   5
+      N Arrays:   4
 
+    The ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays are the structured
+    indices of each cell. Plot the grid colored by its layer index ``'BLOCK_K'``.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(dataset, show_edges=True)
+    >>> _ = pl.add_mesh(dataset, scalars='BLOCK_K', show_edges=True)
     >>> camera = pl.camera
     >>> camera.position = (312452, 7474760, 3507)
     >>> camera.focal_point = (314388, 7481520, -2287)
     >>> camera.up = (0.09, 0.63, 0.77)
     >>> camera.distance = 9112
     >>> camera.clipping_range = (595, 19595)
+    >>> pl.show()
+
+    Show the layers in a cross-section, with the elevation exaggerated.
+
+    >>> section = dataset.extract_cells(dataset.cell_data['BLOCK_J'] == 34)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(section, scalars='BLOCK_K', show_edges=True)
+    >>> pl.set_scale(zscale=5)
+    >>> pl.view_xz()
+    >>> pl.camera.zoom(2)
     >>> pl.show()
 
     .. seealso::
@@ -8619,17 +8631,9 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     return _download_dataset(_dataset_reservoir, load=load)
 
 
-def _reservoir_load_func(grid: pv.ExplicitStructuredGrid) -> pv.ExplicitStructuredGrid:
-    """Compute the faces connectivity flags and make them the active scalars."""
-    grid.compute_connectivity(inplace=True)
-    grid.set_active_scalars('ConnectivityFlags')
-    return grid
-
-
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.vtu',
     read_func=pv.ExplicitStructuredGrid,
-    load_func=_reservoir_load_func,
 )
 
 
