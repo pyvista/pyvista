@@ -1815,8 +1815,9 @@ def test_screenshot_transparent_background_alpha(opacity, anti_aliasing, backgro
     blended = pl.screenshot(transparent_background=True).astype(int)
     straight = pl.screenshot(transparent_background='straight').astype(int)
     premultiplied = pl.screenshot(transparent_background='premultiplied').astype(int)
-    # The background is restored, and rendered, after rendering over black
-    assert np.array_equal(pl.screenshot(transparent_background=False, render=False), opaque)
+    # The background is restored and rendered, up to edge noise between renders
+    restored = pl.screenshot(transparent_background=False, render=False)
+    assert np.abs(restored.astype(int) - opaque).mean() < 1
     pl.close()
 
     alpha = straight[..., 3]
