@@ -450,7 +450,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             data_fields=data_fields,
             point_fields=point_fields,
             cell_fields=cell_fields,
-            explicit=validation_fields is not None,
+            named_fields=_MeshValidator._named_fields(validation_fields),
             **cell_validator_kwargs,
         )
 
@@ -460,9 +460,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
         *,
-        explicit: bool,
+        named_fields: tuple[str, ...],
     ) -> tuple[tuple[_PointFields, ...], tuple[_CellFields, ...]]:
-        """Drop the fields this mesh type cannot check, or raise if they were asked for."""
+        """Drop the fields this mesh type cannot check, or raise if they were named."""
         unsupported: tuple[_LiteralMeshValidationFields, ...] = ()
         if isinstance(mesh, pv.PointSet):
             unsupported = ('unused_points', *_MeshValidator._allowed_cell_fields)
@@ -481,13 +481,27 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             )
         for field in unsupported:
             if field in cell_fields or field in point_fields:
-                if explicit:
+                if field in named_fields:
                     kind = 'Point' if field in point_fields else 'Cell'
                     msg = f'{kind} field {field!r} is not supported for {type(mesh).__name__}.'
                     raise ValueError(msg)
                 cell_fields = tuple(f for f in cell_fields if f != field)
                 point_fields = tuple(f for f in point_fields if f != field)
         return point_fields, cell_fields
+
+    @staticmethod
+    def _named_fields(
+        validation_fields: _LiteralMeshValidationFields
+        | Sequence[_LiteralMeshValidationFields]
+        | None,
+    ) -> tuple[str, ...]:
+        """Return the validation fields requested by name rather than through a group."""
+        if validation_fields is None:
+            return ()
+        requested = (
+            (validation_fields,) if isinstance(validation_fields, str) else validation_fields
+        )
+        return tuple(f for f in requested if f not in _MeshValidator._allowed_field_groups)
 
     @staticmethod
     def _validate_fields(
@@ -617,7 +631,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        explicit: bool,
+        named_fields: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
@@ -633,7 +647,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    explicit=explicit,
+                    named_fields=named_fields,
                     **cell_validator_kwargs,
                 )
             else:
@@ -643,7 +657,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    explicit=explicit,
+                    named_fields=named_fields,
                     **cell_validator_kwargs,
                 )
 
@@ -655,11 +669,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        explicit: bool,
+        named_fields: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetType]:
         point_fields, cell_fields = _MeshValidator._supported_fields(
-            mesh, point_fields, cell_fields, explicit=explicit
+            mesh, point_fields, cell_fields, named_fields=named_fields
         )
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
@@ -712,7 +726,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        explicit: bool,
+        named_fields: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
@@ -730,7 +744,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    explicit=explicit,
+                    named_fields=named_fields,
                     **cell_validator_kwargs,
                 )
                 reports.append(report)
@@ -1408,6 +1422,7 @@ class DataObjectFilters:
               edges or inverted faces due to rounding error.
             - ``coincident_points`` excludes closed polylines and triangle strips which repeat
               points for degenerate triangles.
+            - A field group skips the fields the mesh type cannot check instead of raising.
 
         Parameters
         ----------
@@ -1423,7 +1438,9 @@ class DataObjectFilters:
               fault and crash Python. This option includes ``cell_data_wrong_length``,
               ``point_data_wrong_length``, and ``invalid_point_references``.
 
-            Fields that are excluded from the report will have a value of ``None``.
+            Fields that are excluded from the report will have a value of ``None``. A group
+            skips the fields the mesh type cannot check, such as cell fields for a
+            :class:`~pyvista.PointSet`, but naming such a field raises a ``ValueError``.
 
         action : 'warn' | 'error', optional
             Issue a warning or raise an error if the mesh is not valid for the specified fields.

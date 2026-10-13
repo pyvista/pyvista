@@ -3817,9 +3817,11 @@ def test_validate_mesh_imagedata(image150):
     image150.cell_validator()
     image150.validate_mesh(action='error')
 
-    match = "Cell field 'wrong_number_of_points' is not supported for ImageData."
-    with pytest.raises(ValueError, match=match):
-        image150.validate_mesh('cells')
+    # A group checks only the fields the mesh supports
+    report = image150.validate_mesh('cells')
+    assert report.is_valid
+    assert report.zero_size == []
+    assert report.wrong_number_of_points is None
 
 
 @pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
@@ -4167,7 +4169,7 @@ def test_validate_mesh_str_filtered():
     assert actual == expected
 
 
-@pytest.mark.parametrize('fields', ['cells', 'non_convex', 'unused_points'])
+@pytest.mark.parametrize('fields', ['non_convex', 'unused_points'])
 def test_validate_mesh_composite_pointset_block(ant, fields):
     # By default the fields a PointSet cannot have are skipped for that block alone
     multi = pv.MultiBlock({'ant': ant, 'points': ant.cast_to_pointset()})
@@ -4177,12 +4179,20 @@ def test_validate_mesh_composite_pointset_block(ant, fields):
         ant.cast_to_pointset().validate_mesh()
     )
 
-    # Asking for them explicitly raises, as it does for a bare PointSet
-    match = f'field {fields!r} is not supported for PointSet' if fields != 'cells' else 'PointSet'
+    # Asking for them by name raises, as it does for a bare PointSet
+    match = f'field {fields!r} is not supported for PointSet'
     with pytest.raises(ValueError, match=match):
         ant.cast_to_pointset().validate_mesh(fields)
     with pytest.raises(ValueError, match=match):
         multi.validate_mesh(fields)
+
+
+@pytest.mark.parametrize('group', ['points', 'cells', 'memory_safe', ['points', 'cells']])
+def test_validate_mesh_group_skips_unsupported_fields(ant, uniform, group):
+    pointset = ant.cast_to_pointset()
+    multi = pv.MultiBlock({'ant': ant, 'points': pointset, 'image': uniform})
+    for mesh in [pointset, uniform, pv.RectilinearGrid([0, 1], [0, 1], [0, 1]), multi]:
+        assert mesh.validate_mesh(group).is_valid
 
 
 def test_validate_mesh_composite_grid_block(uniform):
