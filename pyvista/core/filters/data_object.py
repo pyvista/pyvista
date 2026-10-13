@@ -1767,6 +1767,10 @@ class DataObjectFilters:
         .. versionadded:: 0.48
             Add tolerance keywords.
 
+        .. versionchanged:: 0.50
+            Cells are checked in coordinates centered on the mesh, so a valid mesh far from the
+            origin is not reported as invalid due to rounding error.
+
         Parameters
         ----------
         tolerance : float, default: 1.1920929e-07
@@ -1953,8 +1957,14 @@ class DataObjectFilters:
         if skip_validator:
             output = self.copy(deep=False)
         else:
+            # VTK checks cells in absolute coordinates, so center them to limit rounding error
+            centered = self.copy(deep=False)
+            center = np.asarray(self.center)
+            if np.isfinite(center).all():
+                # New points, since the copy shares its points with this mesh
+                centered.SetPoints(pv.vtk_points(self.points - center, deep=False))
             cell_validator = _vtk.vtkCellValidator()
-            cell_validator.SetInputData(self)
+            cell_validator.SetInputData(centered)
             cell_validator.SetTolerance(tol)
             if pv.vtk_version_info >= (9, 6, 0):
                 # vtkCellValidator stores PlanarityTolerance as static class state, so we must
@@ -1963,7 +1973,10 @@ class DataObjectFilters:
                     planarity_tolerance if planarity_tolerance is not None else 0.1
                 )
             cell_validator.Update()
-            output = _get_output(cell_validator)
+            output = self.copy(deep=False)
+            output.cell_data['ValidityState'] = _get_output(cell_validator).cell_data[
+                'ValidityState'
+            ]
 
         def post_process(mesh: DataSet) -> None:
             # Make scalars 64-bit, rename, and make them active

@@ -4502,6 +4502,28 @@ def test_cell_validator_size_rounding_scales_with_coordinates():
     assert near.validate_mesh().is_valid
 
 
+@pytest.mark.parametrize('offset', [0.0, 1.0e6, 7.5e6])
+def test_cell_validator_large_coordinates(offset):
+    # A warped reservoir grid cell, at the scale of UTM coordinates
+    points = [
+        [-28.1, -74.7, -2.4],
+        [61.3, -9.3, -10.0],
+        [27.2, 67.4, -0.4],
+        [-64.4, 15.1, 3.8],
+        [-26.0, -73.9, 2.1],
+        [63.4, -8.5, -5.5],
+        [28.9, 68.0, 3.8],
+        [-62.2, 15.9, 8.5],
+    ]
+    hexa = pv.UnstructuredGrid([8, *range(8)], [pv.CellType.HEXAHEDRON], points)
+    hexa = hexa.translate((offset / 25, offset, 0.0))
+    expected = hexa.points.copy()
+    report = hexa.validate_mesh()
+    assert report.is_valid, report.message
+    assert np.array_equal(hexa.points, expected)
+    assert np.array_equal(report.mesh.points, expected)
+
+
 @pytest.mark.parametrize(
     'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
 )
