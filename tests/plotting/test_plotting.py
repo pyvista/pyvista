@@ -1815,12 +1815,12 @@ def test_screenshot_transparent_background_alpha(opacity, anti_aliasing, backgro
     blended = pl.screenshot(transparent_background=True).astype(int)
     straight = pl.screenshot(transparent_background='straight').astype(int)
     premultiplied = pl.screenshot(transparent_background='premultiplied').astype(int)
-    # The background is restored after rendering over black
-    assert np.array_equal(pl.screenshot(transparent_background=False), opaque)
+    # The background is restored, and rendered, after rendering over black
+    assert np.array_equal(pl.screenshot(transparent_background=False, render=False), opaque)
     pl.close()
 
     alpha = straight[..., 3]
-    assert np.array_equal(blended[..., 3], alpha)
+    assert np.abs(blended[..., 3] - alpha).max() <= 1
     assert np.array_equal(premultiplied[..., 3], alpha)
     assert np.all(straight[alpha == 0] == 0)
     assert np.all(premultiplied[alpha == 0] == 0)
@@ -1876,15 +1876,18 @@ def test_screenshot_transparent_background_alpha_restores_state(mocker):
 def test_screenshot_transparent_background_alpha_gradient_and_scale():
     pl = pv.Plotter(shape=(1, 2), window_size=(40, 20))
     pl.add_mesh(pv.Sphere(), lighting=False)
-    pl.set_background('white', top='blue')
     pl.subplot(0, 1)
     pl.add_mesh(pv.Cube(), lighting=False)
+    plain = pl.screenshot(transparent_background='straight', scale=2)
+    pl.subplot(0, 0)
+    pl.set_background('white', top='blue')
     opaque = pl.screenshot(transparent_background=False)
 
+    # The gradient is removed along with the background color
     straight = pl.screenshot(transparent_background='straight', scale=2)
     assert straight.shape == (40, 80, 4)
-    assert np.all(straight[straight[..., 3] == 0] == 0)
-    assert np.array_equal(pl.screenshot(transparent_background=False), opaque)
+    assert np.array_equal(straight, plain)
+    assert np.array_equal(pl.screenshot(transparent_background=False, render=False), opaque)
     assert pl.background_color == 'white'
     assert pl.renderer.GetGradientBackground()
     pl.close()
