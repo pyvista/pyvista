@@ -7274,6 +7274,45 @@ class BasePlotter(_BoundsSizeMixin):
 
         >>> image = pl.screenshot(transparent_background='straight')  # doctest:+SKIP
 
+        .. pyvista-plot::
+            :force_static:
+
+            Take a screenshot of an opaque sphere and a translucent cube with each
+            ``transparent_background`` option.
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter(off_screen=True, window_size=[150, 150])
+            >>> sphere = pv.Sphere(center=(-0.3, 0, 0))
+            >>> _ = pl.add_mesh(sphere, color='navy', lighting=False)
+            >>> cube = pv.Cube(center=(0.3, 0, 0))
+            >>> _ = pl.add_mesh(cube, color='crimson', opacity=0.5, lighting=False)
+            >>> pl.view_xy()
+            >>> images = {
+            ...     str(option): pv.Texture(
+            ...         pl.screenshot(transparent_background=option)
+            ...     ).to_image()
+            ...     for option in [False, True, 'straight', 'premultiplied']
+            ... }
+
+            Compare the images over a black background. With ``True``, the white
+            background color shows as a light halo around the sphere and lightens the
+            cube. ``'straight'`` has neither. ``'premultiplied'`` is for software that
+            expects colors multiplied by alpha, and looks darker when shown as straight
+            alpha.
+
+            >>> pv.plot_compare(
+            ...     images,
+            ...     rgba=True,
+            ...     background='black',
+            ...     label_kwargs={'color': 'darkorange'},
+            ...     border_color='gray',
+            ...     border_width=6,
+            ...     lighting=False,
+            ...     show_axes=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ... )
+
         """
         with self.window_size_context(window_size):
             # configure image filter
