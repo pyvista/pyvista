@@ -4546,6 +4546,13 @@ def test_cell_validator_large_coordinates(offset):
     assert np.array_equal(hexa.points, expected)
     assert np.array_equal(report.mesh.points, expected)
 
+    # A pinched cell repeats point ids, which leaves the other cells checked locally
+    pinched = pv.UnstructuredGrid(
+        [8, 0, 1, 2, 3, 0, 1, 2, 3], [pv.CellType.HEXAHEDRON], hexa.points[:4]
+    )
+    state = pv.merge([hexa, pinched], merge_points=False).cell_validator()['validity_state']
+    assert state[0] == pv.CellStatus.VALID
+
 
 @pytest.mark.parametrize('offset', [0.0, 10.0, 1.0e3])
 def test_cell_validator_thin_cells_away_from_center(offset):

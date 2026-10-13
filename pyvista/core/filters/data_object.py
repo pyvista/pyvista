@@ -6660,22 +6660,31 @@ def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> Da
     shrink.Update()
     local = cast('pv.UnstructuredGrid', _get_output(shrink))
     offsets = ugrid.cell_offsets
-    # The filter drops cells without points and gives each cell its points in connectivity order
-    if not np.array_equal(local.cell_offsets, offsets) or not np.array_equal(
-        local.cell_connectivity, np.arange(offsets[-1])
+    # The filter drops cells without points
+    if not np.array_equal(local.cell_offsets, offsets):
+        return mesh
+    # Each new point copies one point of one cell, which it replaces in the connectivity
+    local_ids = local.cell_connectivity
+    counts = np.diff(offsets)
+    cell_ids = np.repeat(np.arange(ugrid.n_cells), counts)
+    source = np.zeros(local.n_points, dtype=int)
+    source[local_ids] = ugrid.cell_connectivity
+    cell = np.zeros(local.n_points, dtype=int)
+    cell[local_ids] = cell_ids
+    if not (
+        np.array_equal(source[local_ids], ugrid.cell_connectivity)
+        and np.array_equal(cell[local_ids], cell_ids)
     ):
         return mesh
     # Take the points from the mesh, since the filter rounds them about the cell center
     points = ugrid.points[ugrid.cell_connectivity].astype(float)
-    counts = np.diff(offsets)
     nonempty = counts > 0
     center = np.zeros((ugrid.n_cells, 3))
     if nonempty.any():
         sums = np.add.reduceat(points, offsets[:-1][nonempty])
         center[nonempty] = sums / counts[nonempty, np.newaxis]
     with np.errstate(invalid='ignore'):
-        points -= np.repeat(center, counts, axis=0)
-    local.points = points
+        local.points = ugrid.points[source].astype(float) - center[cell]
     return local
 
 
@@ -6683,7 +6692,7 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
     """Return how much rounding the points by one unit in the last place may change cell sizes.
 
     Each axis is rounded at the mesh's largest coordinate along it. Moving a face of a cell's
-    bounding box by that amount changes the box's length, area or volume, which bounds the change
+    bounding box by that amount changes the box's length, area, or volume, which bounds the change
     of the cell. ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a
     :class:`pyvista.Grid`.
     """
