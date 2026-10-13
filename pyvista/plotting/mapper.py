@@ -1222,10 +1222,10 @@ class _BaseDataSetMapper(_BaseMapper):
                     raise ValueError(msg)
                 # need to round the colors here since we're
                 # directly displaying the colors
-                if scalar_range[0] == scalar_range[1]:
-                    hue = np.zeros(scalars.shape)
-                else:
+                if scalar_range[0] != scalar_range[1]:
                     hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                else:
+                    hue = np.zeros(scalars.shape)
                 rounded = np.round(hue * n_colors) / n_colors
                 rgba: NDArray[np.floating] = get_cmap_safe(cmap)(rounded) * 255
                 rgba[:, -1] *= opacity
