@@ -255,7 +255,7 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
                 'The direction matrix for ImageData cannot be saved using the '
                 'Legacy VTK `.vtk` format.\n'
                 'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                'Use the `.vti` extension instead (VTK Image Data format).'
+                'Use the `.vti` extension instead (VTK ImageData format).'
             )
             raise ValueError(msg)
 
@@ -628,7 +628,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
 
 
 class XMLImageDataWriter(_XMLWriter):
-    """Writer for the VTK Image Data format (``.vti``).
+    """Writer for the VTK ImageData format (``.vti``).
 
     Wraps :vtk:`vtkXMLImageDataWriter`.
 
@@ -657,7 +657,7 @@ class XMLMultiBlockDataWriter(_XMLWriter):
 
 
 class XMLPartitionedDataSetWriter(_XMLWriter):
-    """Writer for the VTK Partitioned Dataset format (``.vtpd``).
+    """Writer for the VTK PartitionedDataSet format (``.vtpd``).
 
     Wraps :vtk:`vtkXMLPartitionedDataSetWriter`.
 
@@ -683,7 +683,7 @@ class XMLPolyDataWriter(_XMLWriter):
 
 
 class XMLRectilinearGridWriter(_XMLWriter):
-    """Writer for the VTK Rectilinear Grid format (``.vtr``).
+    """Writer for the VTK RectilinearGrid format (``.vtr``).
 
     Wraps :vtk:`vtkXMLRectilinearGridWriter`.
 
@@ -696,7 +696,7 @@ class XMLRectilinearGridWriter(_XMLWriter):
 
 
 class XMLStructuredGridWriter(_XMLWriter):
-    """Writer for the VTK Structured Grid format (``.vts``).
+    """Writer for the VTK StructuredGrid format (``.vts``).
 
     Wraps :vtk:`vtkXMLStructuredGridWriter`.
 
@@ -709,7 +709,7 @@ class XMLStructuredGridWriter(_XMLWriter):
 
 
 class XMLUnstructuredGridWriter(_XMLWriter):
-    """Writer for the VTK Unstructured Grid format (``.vtu``).
+    """Writer for the VTK UnstructuredGrid format (``.vtu``).
 
     Wraps :vtk:`vtkXMLUnstructuredGridWriter`.
 

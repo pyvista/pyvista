@@ -731,7 +731,7 @@ class TimeReader(ABC):
 
 
 class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
-    """Reader for the VTK Image Data format (``.vti``).
+    """Reader for the VTK ImageData format (``.vti``).
 
     Wraps :vtk:`vtkXMLImageDataReader`.
 
@@ -742,7 +742,7 @@ class XMLImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
 
 class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
-    """Reader for the VTK Image Data (partitioned) format (``.pvti``).
+    """Reader for the VTK ImageData (partitioned) format (``.pvti``).
 
     Wraps :vtk:`vtkXMLPImageDataReader`.
 
@@ -753,7 +753,7 @@ class XMLPImageDataReader(BaseReader['ImageData'], PointCellDataSelection):
 
 
 class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelection):
-    """Reader for the VTK Rectilinear Grid format (``.vtr``).
+    """Reader for the VTK RectilinearGrid format (``.vtr``).
 
     Wraps :vtk:`vtkXMLRectilinearGridReader`.
 
@@ -781,7 +781,7 @@ class XMLRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelec
 
 
 class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSelection):
-    """Reader for the VTK Rectilinear Grid (partitioned) format (``.pvtr``).
+    """Reader for the VTK RectilinearGrid (partitioned) format (``.pvtr``).
 
     Wraps :vtk:`vtkXMLPRectilinearGridReader`.
 
@@ -792,7 +792,7 @@ class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSele
 
 
 class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
-    """Reader for the VTK Unstructured Grid format (``.vtu``).
+    """Reader for the VTK UnstructuredGrid format (``.vtu``).
 
     Wraps :vtk:`vtkXMLUnstructuredGridReader`.
 
@@ -820,7 +820,7 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
 
 
 class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
-    """Reader for the VTK Unstructured Grid (partitioned) format (``.pvtu``).
+    """Reader for the VTK UnstructuredGrid (partitioned) format (``.pvtu``).
 
     Wraps :vtk:`vtkXMLPUnstructuredGridReader`.
 
@@ -861,7 +861,7 @@ class XMLPolyDataReader(BaseReader['PolyData'], PointCellDataSelection):
 
 
 class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelection):
-    """Reader for the VTK Structured Grid format (``.vts``).
+    """Reader for the VTK StructuredGrid format (``.vts``).
 
     Wraps :vtk:`vtkXMLStructuredGridReader`.
 
@@ -3302,7 +3302,7 @@ class XdmfReader(
 
 
 class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
-    """Reader for the VTK Partitioned Dataset format (``.vtpd``).
+    """Reader for the VTK PartitionedDataSet format (``.vtpd``).
 
     Wraps :vtk:`vtkXMLPartitionedDataSetReader`.
 

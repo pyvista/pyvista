@@ -178,9 +178,9 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         >>> pv.get_reader(examples.hexbeamfile).format_description
         'Legacy VTK'
         >>> pv.XMLUnstructuredGridReader.format_description
-        'VTK Unstructured Grid'
+        'VTK UnstructuredGrid'
         >>> pv.XMLUnstructuredGridWriter.format_description
-        'VTK Unstructured Grid'
+        'VTK UnstructuredGrid'
 
         """
         return cls._format.description if hasattr(cls, '_format') else ''
