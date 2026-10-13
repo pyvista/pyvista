@@ -1184,6 +1184,7 @@ class _BaseDataSetMapper(_BaseMapper):
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
+            # Collapse rounding noise to one value unless a below-range color is shown
             scalar_range = _default_scalar_range(
                 np.nanmin(scalars),
                 np.nanmax(scalars),

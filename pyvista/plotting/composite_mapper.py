@@ -850,12 +850,14 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             scalar_range = (-0.5, 1.5)
         else:
             if clim is None:
+                # Precision to judge rounding noise against, wide enough for every block
                 data_attr = f'{field.name.lower()}_data'
                 block_dtypes = [
                     getattr(block, data_attr)[scalars_name].dtype
                     for block in dataset.recursive_iterator(skip_none=True)
                     if scalars_name in getattr(block, data_attr)
                 ]
+                # Collapse rounding noise to one value unless a below-range color is shown
                 clim = _default_scalar_range(
                     *dataset.get_data_range(scalars_name, allow_missing=True),
                     np.result_type(*block_dtypes) if block_dtypes else dtype,
