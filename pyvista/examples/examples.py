@@ -242,7 +242,7 @@ def _tetbeam_load_func() -> pv.UnstructuredGrid:
     zrng = np.linspace(0, 5, 11)
     grid = pv.RectilinearGrid(xrng, yrng, zrng)
     tetra = grid.to_tetrahedra()
-    # Reorient inverted tetra, see https://github.com/pyvista/pyvista/issues/6254
+    # to_tetrahedra emits every tetra with negative volume
     inverted = tetra.compute_cell_sizes(length=False, area=False)['Volume'] < 0
     cells = tetra.cell_connectivity.reshape(-1, 4).copy()
     cells[inverted] = cells[inverted][:, [0, 1, 3, 2]]
