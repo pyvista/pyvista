@@ -1025,7 +1025,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        return [self.get_array(name) for name in self.keys()]
+        # Optimization: index lookup is constant time, while lookup by name scans every array
+        return [self.get_array(i) for i in range(self.VTKObject.GetNumberOfArrays())]
 
     def _iter_flat_columns(self: Self) -> Iterator[tuple[str, NDArray[Any]]]:
         """Yield ``(column_name, 1d_ndarray)`` pairs with multi-component arrays expanded.
