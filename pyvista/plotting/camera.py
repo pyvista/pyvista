@@ -1162,9 +1162,9 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         if adjust_render_window:
             ren_win = self._renderer.GetRenderWindow()
             size = list(ren_win.GetSize())
-            size_ratio = size[0] / size[1]
+            # Fit the renderer's viewport, which is a fraction of the window in subplots
             tight_ratio = horiz_dist / vert_dist
-            resize_ratio = tight_ratio / size_ratio
+            resize_ratio = tight_ratio / aspect[0]
             if resize_ratio < 1:
                 size[0] = round(size[0] * resize_ratio)
             else:
