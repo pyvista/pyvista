@@ -1048,6 +1048,14 @@ def test_download_reservoir():
 
     mesh = examples.download_reservoir()
     assert isinstance(mesh, pv.ExplicitStructuredGrid)
+    assert mesh.active_scalars_name == 'ConnectivityFlags'
+    assert mesh.array_names == [
+        'ConnectivityFlags',
+        'BLOCK_I',
+        'BLOCK_J',
+        'BLOCK_K',
+        'vtkGhostType',
+    ]
 
 
 @parametrize(high_resolution=[True, False])
