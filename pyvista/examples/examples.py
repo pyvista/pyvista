@@ -241,7 +241,12 @@ def _tetbeam_load_func() -> pv.UnstructuredGrid:
     yrng = np.linspace(0, 1, 3)
     zrng = np.linspace(0, 5, 11)
     grid = pv.RectilinearGrid(xrng, yrng, zrng)
-    return grid.to_tetrahedra()
+    tetra = grid.to_tetrahedra()
+    # Swap two nodes of each inverted tetra, see https://github.com/pyvista/pyvista/issues/6254
+    inverted = tetra.compute_cell_sizes(length=False, area=False)['Volume'] < 0
+    cells = tetra.cell_connectivity.reshape(-1, 4)
+    cells[inverted] = cells[inverted][:, [0, 1, 3, 2]]
+    return tetra
 
 
 _dataset_tetbeam = _DatasetLoader(_tetbeam_load_func)
