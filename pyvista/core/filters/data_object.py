@@ -285,7 +285,11 @@ _VTK_CELL_STATUS_INFO = {
     ),
     'COINCIDENT_POINTS': _CellStatusTuple(
         value=0x100,
-        doc='Cell has duplicate coordinates or repeated use of the same connectivity entry.',
+        doc=(
+            'Cell has duplicate coordinates or repeated use of the same connectivity entry. '
+            'A polyline is only checked for consecutive duplicates, and a triangle strip for '
+            'having fewer than three distinct points.'
+        ),
     ),
 }
 
@@ -1333,7 +1337,8 @@ class DataObjectFilters:
         **Cell validation fields**
 
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
-          same connectivity entry.
+          same connectivity entry. A polyline may revisit a point other than the one before it,
+          and a triangle strip may repeat points if it has at least three distinct points.
         - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
           collocated vertices.
         - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.
@@ -1393,6 +1398,16 @@ class DataObjectFilters:
             - The body of the report now shows the error message instead of validation fields,
               that is, the default value of ``report_body`` is now ``'message'`` instead of
               ``'fields'``.
+
+        .. versionchanged:: 0.50
+
+            - ``zero_size`` and ``negative_size`` use a default size tolerance which scales with
+              each cell and the precision of the points. See
+              :meth:`~pyvista.DataObjectFilters.cell_validator`.
+            - A valid mesh far from the origin is no longer reported as invalid due to rounding
+              error.
+            - ``coincident_points`` excludes closed polylines and triangle strips which repeat
+              points for degenerate triangles.
 
         Parameters
         ----------
@@ -1768,8 +1783,11 @@ class DataObjectFilters:
             Add tolerance keywords.
 
         .. versionchanged:: 0.50
-            Cells are checked in coordinates centered on the mesh, so a valid mesh far from the
-            origin is not reported as invalid due to rounding error.
+
+            - Cells are checked in coordinates centered on the mesh, so a valid mesh far from the
+              origin is not reported as invalid due to rounding error.
+            - :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` excludes closed polylines and
+              triangle strips which repeat points for degenerate triangles.
 
         Parameters
         ----------
@@ -2050,8 +2068,10 @@ class DataObjectFilters:
             # VTK's face-based vtkCellValidator never flags 2D cells,
             # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
             # check: a cell is coincident if any two of its points are within tol. This
-            # applies to all cell types (also OR-ing the bit into already-caught cases).
+            # applies to all cell types (also OR-ing the bit into already-caught cases),
+            # except those which repeat points by design.
             coincident = np.zeros(n_cells, dtype=bool)
+            celltypes = ugrid.celltypes
             n_cell_points = np.diff(offset)
             valid_conn = (conn >= 0) & (conn < n_points)
             for size in np.unique(n_cell_points[n_cell_points >= 2]):
@@ -2065,8 +2085,23 @@ class DataObjectFilters:
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
                 diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
                 dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                close = dist_sq <= tol * tol
                 iu = np.triu_indices(size, k=1)
-                any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
+                any_coincident = np.any(close[:, iu[0], iu[1]], axis=1)
+                # A polyline may revisit its points, such as to close a loop, so only a
+                # zero-length segment is coincident
+                is_line = celltypes[cells] == CellType.POLY_LINE
+                if is_line.any():
+                    segment = np.arange(size - 1)
+                    any_coincident[is_line] = np.any(
+                        close[is_line][:, segment, segment + 1], axis=1
+                    )
+                # A strip repeats points for degenerate triangles, so only a strip without
+                # three distinct points is coincident
+                is_strip = celltypes[cells] == CellType.TRIANGLE_STRIP
+                if is_strip.any():
+                    repeated = np.any(np.tril(close[is_strip], k=-1), axis=2)
+                    any_coincident[is_strip] = size - repeated.sum(axis=1) < 3
                 coincident[cells] = any_coincident & group_valid
             state[coincident] |= CellStatus.COINCIDENT_POINTS
 

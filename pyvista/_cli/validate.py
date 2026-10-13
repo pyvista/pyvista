@@ -49,7 +49,8 @@ Fields to validate. Specify individual fields or groups of fields:
 **Cell fields**
 
 - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
-  same connectivity entry.
+  same connectivity entry. A polyline may revisit a point other than the one before it,
+  and a triangle strip may repeat points if it has at least three distinct points.
 - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
   collocated vertices.
 - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.

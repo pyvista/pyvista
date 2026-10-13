@@ -4545,6 +4545,34 @@ def test_validate_mesh_coincident_points(mesh_name):
     assert state[0] & pv.CellStatus.COINCIDENT_POINTS
 
 
+def test_validate_mesh_coincident_points_closed_polyline():
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]]
+    closed = pv.PolyData(points, lines=[4, 0, 1, 2, 0])
+    assert closed.validate_mesh().is_valid
+
+    # A polyline may cross itself through a repeated point
+    figure_eight = pv.PolyData([*points, [0.0, 1.0, 0.0]], lines=[6, 0, 1, 2, 0, 3, 0])
+    assert figure_eight.validate_mesh().is_valid
+
+    # A segment of zero length is coincident
+    repeated = pv.PolyData(points, lines=[5, 0, 1, 1, 2, 0])
+    assert repeated.validate_mesh().invalid_fields == ('coincident_points',)
+
+
+def test_validate_mesh_coincident_points_triangle_strip():
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 2.0, 0.0]]
+    strip = pv.PolyData(points, strips=[5, 0, 1, 2, 3, 4])
+    assert strip.validate_mesh().is_valid
+
+    # Repeated points turn the strip with degenerate triangles
+    turned = pv.PolyData(points, strips=[7, 0, 1, 2, 2, 3, 2, 4])
+    assert turned.validate_mesh().is_valid
+
+    # A strip without three distinct points is degenerate
+    collapsed = pv.PolyData(points, strips=[4, 0, 1, 0, 1])
+    assert 'coincident_points' in collapsed.validate_mesh().invalid_fields
+
+
 @pytest.fixture
 def degenerate_structured_grid_quad():
     x = np.array(
