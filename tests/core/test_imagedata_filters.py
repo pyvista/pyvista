@@ -1832,12 +1832,11 @@ def test_resample_cell_data_sample_rate_raises():
 
 
 @pytest.mark.parametrize(
-    ('dtype', 'scale', 'tolerance', 'max_alpha'),
-    [('uint8', 1, 1, 255), ('int64', 1, 1, None), ('float32', 255, 1e-6, 1)],
+    ('dtype', 'scale', 'tolerance'), [('uint8', 1, 1), ('int64', 1, 1), ('float32', 255, 1e-6)]
 )
 @pytest.mark.parametrize('interpolation', ['linear', 'cubic', 'lanczos', 'bspline'])
 @pytest.mark.parametrize('n_points', [6, 40])
-def test_resample_premultiply_alpha(dtype, scale, tolerance, max_alpha, interpolation, n_points):
+def test_resample_premultiply_alpha(dtype, scale, tolerance, interpolation, n_points):
     # An opaque color next to transparent white, as in a transparent screenshot
     color = np.array([40, 80, 120, 255]) / scale
     rgba = np.where(np.arange(16)[:, None] < 8, color, np.array([255, 255, 255, 0]) / scale)
@@ -1848,7 +1847,7 @@ def test_resample_premultiply_alpha(dtype, scale, tolerance, max_alpha, interpol
     straight = image.resample(**kwargs)['rgba']
     premultiplied = image.resample(premultiply_alpha=True, **kwargs)['rgba']
     assert premultiplied.dtype == dtype
-    assert np.allclose(premultiplied[:, 3], np.clip(straight[:, 3], 0, max_alpha), atol=tolerance)
+    assert np.allclose(premultiplied[:, 3], np.clip(straight[:, 3], 0, color[3]), atol=tolerance)
 
     alpha = premultiplied[:, 3]
     edge = (alpha > 0) & (alpha < color[3])
@@ -1898,19 +1897,18 @@ def test_resample_premultiply_alpha_clips_to_visible_colors(interpolation):
 @pytest.mark.parametrize(('dtype', 'scale'), [('float32', 255), ('uint8', 1)])
 @pytest.mark.parametrize('interpolation', ['lanczos', 'bspline'])
 def test_resample_premultiply_alpha_clips_alpha(dtype, scale, interpolation):
-    # Ringing kernels overshoot the alpha of a sharp edge
+    # Ringing kernels overshoot the alpha of a sharp edge, within the range of the dtype
     image = pv.ImageData(dimensions=(32, 1, 1))
-    rgba = np.where(np.arange(32)[:, None] < 12, [40, 80, 120, 255], [255, 255, 255, 0])
+    rgba = np.where(np.arange(32)[:, None] < 12, [40, 80, 120, 204], [255, 255, 255, 102])
     image['rgba'] = (rgba / scale).astype(dtype)
     kwargs = dict(dimensions=(80, 1, 1), interpolation=interpolation)
 
     straight_alpha = image.resample(**kwargs)['rgba'][:, 3] * scale
     alpha = image.resample(premultiply_alpha=True, **kwargs)['rgba'][:, 3] * scale
-    if dtype == 'float32':
-        assert straight_alpha.min() < 0
-        assert straight_alpha.max() > 255
-    assert alpha.min() == 0
-    assert alpha.max() == 255
+    assert straight_alpha.min() < 101
+    assert straight_alpha.max() > 205
+    assert np.isclose(alpha.min(), 102)
+    assert np.isclose(alpha.max(), 204)
 
 
 def test_resample_premultiply_alpha_cell_data():

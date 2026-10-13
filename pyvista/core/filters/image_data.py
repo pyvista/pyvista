@@ -4483,10 +4483,9 @@ class ImageDataFilters(DataSetFilters):
             before interpolating and divided by the interpolated alpha afterwards, so the
             color of transparent pixels does not bleed into their neighbors. Each color
             channel is clipped to its range over the input pixels that are not fully
-            transparent, and fully transparent output pixels have a color of ``0``. Alpha
-            is clipped to ``[0, 1]`` for floating point scalars and to ``[0, max]`` for
-            integer scalars, where ``max`` is the largest value of the data type. The
-            scalars must have four components.
+            transparent, alpha is clipped to its range over the input, and fully
+            transparent output pixels have a color of ``0``. The scalars must have four
+            components.
 
             .. versionadded:: 0.50
 
@@ -5006,11 +5005,12 @@ class ImageDataFilters(DataSetFilters):
         if premultiply_alpha:
             input_rgba = input_image.point_data[name]
             input_image.point_data[name] = _premultiply_alpha(input_rgba, name=name)
-            visible_rgb = input_rgba[input_rgba[:, 3] > 0, :3]
+            alpha = input_rgba[:, 3]
+            visible_rgb = input_rgba[alpha > 0, :3]
+            rgba_min, rgba_max = np.zeros(4), np.zeros(4)
             if visible_rgb.size:
-                rgb_range = (visible_rgb.min(axis=0), visible_rgb.max(axis=0))
-            else:
-                rgb_range = (np.zeros(3), np.zeros(3))
+                rgba_min[:3], rgba_max[:3] = visible_rgb.min(axis=0), visible_rgb.max(axis=0)
+            rgba_min[3], rgba_max[3] = alpha.min(), alpha.max()
 
         # Compute the output dimensions of the point image
         old_dimensions = np.array(input_image.dimensions)
@@ -5105,9 +5105,8 @@ class ImageDataFilters(DataSetFilters):
 
         output_image.rename_array(output_image.active_scalars_name, name)
         if premultiply_alpha:
-            max_alpha = np.iinfo(input_dtype).max if input_dtype.kind in 'iu' else 1
             output_image.point_data[name] = _unpremultiply_alpha(
-                output_image.active_scalars, rgb_range, max_alpha=max_alpha
+                output_image.active_scalars, rgba_min, rgba_max
             )
         if is_srgb:
             output_image.point_data[name] = _linear_to_srgb_colors(
@@ -6612,20 +6611,16 @@ def _premultiply_alpha(rgba: NDArray[Any], *, name: str) -> NDArray[np.floating]
 
 def _unpremultiply_alpha(
     premultiplied: NDArray[np.floating],
-    rgb_range: tuple[NDArray[Any], NDArray[Any]],
-    *,
-    max_alpha: float,
+    rgba_min: NDArray[np.floating],
+    rgba_max: NDArray[np.floating],
 ) -> NDArray[np.floating]:
-    """Divide RGBA colors by a positive alpha, clipping colors to ``rgb_range`` and alpha."""
+    """Divide RGBA colors by a positive alpha, clipping each channel to its range."""
     alpha = premultiplied[:, 3:]
-    rgb = np.divide(
-        premultiplied[:, :3], alpha, out=np.zeros_like(premultiplied[:, :3]), where=alpha > 0
-    )
     straight = premultiplied.copy()
+    np.divide(premultiplied[:, :3], alpha, out=straight[:, :3], where=alpha > 0)
+    straight[(alpha <= 0)[:, 0], :3] = 0
     # Bound the overshoot of ringing kernels, which a near-zero alpha amplifies
-    straight[:, :3] = np.clip(rgb, *rgb_range)
-    straight[:, 3] = np.clip(straight[:, 3], 0, max_alpha)
-    return straight
+    return np.clip(straight, rgba_min, rgba_max, out=straight)
 
 
 def _round_to_dtype(array: NDArray[np.floating], dtype: np.dtype[Any]) -> NDArray[Any]:
