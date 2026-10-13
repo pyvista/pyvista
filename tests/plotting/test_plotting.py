@@ -1912,6 +1912,34 @@ def test_screenshot_transparent_background_from_theme():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_transparent_background_alpha_image_and_write_frame(mocker):
+    pl = pv.Plotter(window_size=(100, 100))
+    pl.add_mesh(pv.Plane(), color=(200, 50, 120), lighting=False, opacity=0.5)
+    pl.view_xy()
+    straight = pl.screenshot(transparent_background='straight').astype(int)
+    # The image keeps the option of the last screenshot
+    assert np.array_equal(pl.image, straight)
+
+    writer = mocker.Mock()
+    mocker.patch.object(pv.Plotter, '_get_mwriter_not_none', return_value=writer)
+
+    def written_frame(**kwargs):
+        pl.write_frame(**kwargs)
+        return writer.append_data.call_args.args[0].astype(int)
+
+    assert np.array_equal(written_frame(), straight)
+    premultiplied = written_frame(transparent_background='premultiplied')
+    expected = straight[..., :3] * straight[..., 3:] / 255
+    assert np.abs(premultiplied[..., :3] - expected).max() <= 1
+    assert written_frame(transparent_background=False).shape[-1] == 3
+
+    match = re.escape("(True, False, 'straight', 'premultiplied')")
+    with pytest.raises(ValueError, match=match):
+        pl.write_frame(transparent_background='associated')
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_scaled_restores_window(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))

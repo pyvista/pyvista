@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import get_args
 from typing import overload
 import uuid
 import warnings
@@ -63,6 +64,7 @@ from ._plotting import _remap_scalars_through_topology_change
 from ._plotting import _stamp_raw_numpy_scalars
 from ._plotting import process_opacity
 from ._property import Property
+from ._typing import _TransparentBackgroundOptions
 from .actor import Actor
 from .camera import Camera
 from .colors import Color
@@ -101,7 +103,6 @@ from .text import TextPositionOptions
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .theme_registry import _resolve_theme_like
-from .themes import _TRANSPARENT_BACKGROUND_OPTIONS
 from .themes import Theme
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
@@ -161,7 +162,6 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting._typing import ThemeOptions
-    from pyvista.plotting._typing import TransparentBackgroundOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
@@ -2500,9 +2500,15 @@ class BasePlotter(_BoundsSizeMixin):
     def image(self) -> NDArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
 
+        The image has an alpha channel when the plotter has a transparent background,
+        which is set by the theme and by :meth:`screenshot`. With the ``'straight'`` and
+        ``'premultiplied'`` options, reading the image renders the scene again over a
+        black background; see :meth:`screenshot`.
+
         .. versionchanged:: 0.50
             A :class:`RuntimeError` is raised instead of an
-            :class:`AttributeError` when the plotter has not been rendered.
+            :class:`AttributeError` when the plotter has not been rendered, and the
+            ``'straight'`` and ``'premultiplied'`` transparent backgrounds are supported.
 
         Returns
         -------
@@ -2523,7 +2529,16 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._check_rendered()
         self._check_has_ren_win()
-        return self._read_image(ignore_alpha=not self.image_transparent_background)
+        return self._image_with_background(self.image_transparent_background)
+
+    def _image_with_background(
+        self, transparent_background: _TransparentBackgroundOptions
+    ) -> NDArray[np.uint8]:
+        """Read the render window with a ``transparent_background`` option."""
+        if transparent_background in ('straight', 'premultiplied'):
+            image = self._image_over_black()
+            return _unpremultiply_alpha(image) if transparent_background == 'straight' else image
+        return self._read_image(ignore_alpha=not transparent_background)
 
     def _read_image(self, *, ignore_alpha: bool, front_buffer: bool = True) -> NDArray[np.uint8]:
         """Read the render window at the image scale."""
@@ -6316,8 +6331,20 @@ class BasePlotter(_BoundsSizeMixin):
 
         self.mwriter = get_writer(filename, **kwargs)
 
-    def write_frame(self) -> None:
+    def write_frame(
+        self, *, transparent_background: _TransparentBackgroundOptions | None = None
+    ) -> None:
         """Write a single frame to the movie file.
+
+        Parameters
+        ----------
+        transparent_background : bool | 'straight' | 'premultiplied', optional
+            Whether the frame has a transparent background, with the same options as
+            :meth:`screenshot`. ``'straight'`` and ``'premultiplied'`` render the scene
+            again over a black background. Defaults to the plotter's transparent
+            background, which is set by the theme and by :meth:`screenshot`.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -6334,9 +6361,16 @@ class BasePlotter(_BoundsSizeMixin):
             self._on_first_render_request()
             self.render()
 
+        if transparent_background is None:
+            transparent_background = self.image_transparent_background
+        _validation.check_contains(
+            get_args(_TransparentBackgroundOptions),
+            must_contain=transparent_background,
+            name='transparent_background',
+        )
         mwriter = self._get_mwriter_not_none()
         self.update()
-        mwriter.append_data(self.image)
+        mwriter.append_data(self._image_with_background(transparent_background))
 
     def get_image_depth(
         self,
@@ -7178,18 +7212,18 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501, FBT001]
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: TransparentBackgroundOptions | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: TransparentBackgroundOptions | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: TransparentBackgroundOptions | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
     # ruff: enable[E501, FBT001]
     # fmt: on
     def screenshot(
         self,
         filename: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
         *,
-        transparent_background: TransparentBackgroundOptions | None = None,
+        transparent_background: _TransparentBackgroundOptions | None = None,
         return_img: bool = True,
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
@@ -7319,7 +7353,7 @@ class BasePlotter(_BoundsSizeMixin):
             if transparent_background is None:
                 transparent_background = self._theme.transparent_background
             _validation.check_contains(
-                _TRANSPARENT_BACKGROUND_OPTIONS,
+                get_args(_TransparentBackgroundOptions),
                 must_contain=transparent_background,
                 name='transparent_background',
             )
@@ -7359,13 +7393,7 @@ class BasePlotter(_BoundsSizeMixin):
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()
-                if transparent_background in ('straight', 'premultiplied'):
-                    image = self._image_over_black()
-                    if transparent_background == 'straight':
-                        image = _unpremultiply_alpha(image)
-                else:
-                    image = self.image
-                return self._save_image(image, filename, return_img)
+                return self._save_image(self.image, filename, return_img)
 
     def _repr_png_(self) -> bytes | None:
         """Return the last cached screenshot as PNG bytes for IPython display hooks.

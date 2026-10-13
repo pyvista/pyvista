@@ -40,6 +40,7 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import get_args
 
 import pyvista_validation as _validation
 
@@ -49,6 +50,7 @@ from pyvista.core.config import _ConfigBase
 from pyvista.jupyter import _validate_jupyter_backend
 
 from . import _property
+from ._typing import _TransparentBackgroundOptions
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -76,10 +78,6 @@ if TYPE_CHECKING:
     from ._typing import ColormapOptions
     from ._typing import ThemeOptions
     from ._typing import TrameModeOptions
-    from ._typing import TransparentBackgroundOptions
-
-
-_TRANSPARENT_BACKGROUND_OPTIONS = (True, False, 'straight', 'premultiplied')
 
 
 def _set_plot_theme_from_env() -> None:
@@ -1986,7 +1984,7 @@ class Theme(_ConfigBase):
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
         self._point_shape: str | None = None
-        self._transparent_background: TransparentBackgroundOptions = False
+        self._transparent_background: _TransparentBackgroundOptions = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
@@ -2983,11 +2981,13 @@ class Theme(_ConfigBase):
         self._render_lines_as_tubes = bool(render_lines_as_tubes)
 
     @property
-    def transparent_background(self) -> TransparentBackgroundOptions:  # numpydoc ignore=RT01
+    def transparent_background(self) -> _TransparentBackgroundOptions:  # numpydoc ignore=RT01
         """Return or set whether the background is transparent by default.
 
         Accepts the same values as the ``transparent_background`` parameter of
-        :meth:`pyvista.Plotter.screenshot`.
+        :meth:`pyvista.Plotter.screenshot`. With ``'straight'`` and ``'premultiplied'``,
+        every screenshot, :attr:`pyvista.Plotter.image`, and movie frame renders the
+        scene again over a black background.
 
         .. versionchanged:: 0.50
             Added the ``'straight'`` and ``'premultiplied'`` options.
@@ -3007,9 +3007,11 @@ class Theme(_ConfigBase):
         return self._transparent_background
 
     @transparent_background.setter
-    def transparent_background(self, transparent_background: TransparentBackgroundOptions) -> None:
+    def transparent_background(
+        self, transparent_background: _TransparentBackgroundOptions
+    ) -> None:
         _validation.check_contains(
-            _TRANSPARENT_BACKGROUND_OPTIONS,
+            get_args(_TransparentBackgroundOptions),
             must_contain=transparent_background,
             name='transparent_background',
         )
