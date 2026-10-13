@@ -958,9 +958,34 @@ def test_add_mesh_small_real_scalars_range(dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_add_mesh_rounding_spread_above_threshold_range(dtype):
     mesh = pv.ImageData(dimensions=(5, 5, 1))
-    mesh['data'] = _rounding_noise(3.0, dtype, mesh.n_points, ulps=8)
+    mesh['data'] = _rounding_noise(3.0, dtype, mesh.n_points, ulps=3)
     actor = pv.Plotter().add_mesh(mesh, scalars='data')
     assert actor.mapper.scalar_range == (float(mesh['data'].min()), float(mesh['data'].max()))
+
+
+def test_add_mesh_small_spread_large_offset_range():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = (np.float32(6.371e6) + np.linspace(0, 3, mesh.n_points)).astype(np.float32)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data')
+    assert actor.mapper.scalar_range == (6.371e6, 6.371e6 + 3)
+
+
+def test_add_composite_near_constant_scalars_range():
+    angles = np.linspace(0, 2 * np.pi, 50)
+    vectors = np.column_stack([np.cos(angles), np.sin(angles), np.zeros_like(angles)])
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['vectors'] = vectors[:25].astype(np.float32)
+    other = mesh.copy()
+    other['vectors'] = vectors[25:].astype(np.float32)
+    blocks = pv.MultiBlock([mesh, other])
+    magnitudes = np.linalg.norm(np.vstack([mesh['vectors'], other['vectors']]), axis=1)
+    assert np.ptp(magnitudes) > 0
+
+    actor, _ = pv.Plotter().add_composite(blocks, scalars='vectors')
+    assert actor.mapper.scalar_range == (float(magnitudes.max()),) * 2
+
+    actor, _ = pv.Plotter().add_composite(blocks, scalars='vectors', below_color='red')
+    assert actor.mapper.scalar_range == (float(magnitudes.min()), float(magnitudes.max()))
 
 
 def test_add_mesh_near_constant_scalars_below_color():

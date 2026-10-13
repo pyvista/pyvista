@@ -59,8 +59,8 @@ _MAX_CATEGORY_TABLE_SIZE = 65536
 _CATEGORY_BAND_TABLE_SIZE = 4096
 # Table entries per category, so a volume's transfer function resolves each band
 _CATEGORY_ENTRIES_PER_VALUE = 8
-# Machine epsilons of relative spread below which a data range counts as constant
-_NEAR_CONSTANT_EPS = 4
+# Units in the last place a data range may span and still count as constant
+_NEAR_CONSTANT_ULPS = 4
 
 _ColorModeOptions = Literal['direct', 'map']
 _ScalarMapModeOptions = Literal['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
@@ -90,17 +90,21 @@ def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
 
 
 def _default_scalar_range(
-    values: NDArray[Any], *, below_range_color: bool = False
+    low: float | np.number[Any] | np.bool_,
+    high: float | np.number[Any] | np.bool_,
+    dtype: np.dtype[Any],
+    *,
+    below_range_color: bool = False,
 ) -> tuple[float, float]:
-    """Return the range of ``values``, collapsed to its maximum when within rounding noise."""
-    low, high = float(np.nanmin(values)), float(np.nanmax(values))
+    """Return ``(low, high)``, collapsed to ``high`` when within a few ulps of ``dtype``."""
+    low, high = float(low), float(high)
     if (
         not below_range_color
-        and np.issubdtype(values.dtype, np.floating)
+        and np.issubdtype(dtype, np.floating)
         and np.isfinite([low, high]).all()
     ):
-        tolerance = _NEAR_CONSTANT_EPS * np.finfo(values.dtype).eps * max(abs(low), abs(high))
-        if high - low <= tolerance:
+        ulp = np.spacing(np.abs(np.array([low, high], dtype=dtype)).max())
+        if high - low <= _NEAR_CONSTANT_ULPS * ulp:
             return high, high
     return low, high
 
@@ -768,7 +772,10 @@ class _BaseDataSetMapper(_BaseMapper):
             if np.isnan(array).all():
                 return
             clim = _default_scalar_range(
-                array, below_range_color=self.lookup_table.below_range_color is not None
+                np.nanmin(array),
+                np.nanmax(array),
+                array.dtype,
+                below_range_color=self.lookup_table.below_range_color is not None,
             )
         else:
             return
@@ -1098,8 +1105,9 @@ class _BaseDataSetMapper(_BaseMapper):
 
         clim : VectorLikeFloat | float, optional
             Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``(-1, 2)``. A single value
-            ``c`` is the range ``(-c, c)``.
+            maximum of scalars array, or to the maximum alone when the two
+            differ only by floating-point rounding.  Example: ``(-1, 2)``. A
+            single value ``c`` is the range ``(-c, c)``.
 
         """
         if _clim_has_no_bounds(clim):
@@ -1177,7 +1185,9 @@ class _BaseDataSetMapper(_BaseMapper):
         use_default_scalar_range = clim is None
         if clim is None:
             scalar_range = _default_scalar_range(
-                scalars,
+                np.nanmin(scalars),
+                np.nanmax(scalars),
+                scalars.dtype,
                 below_range_color=bool(below_color)
                 or self.lookup_table.below_range_color is not None,
             )
