@@ -80,6 +80,15 @@ if TYPE_CHECKING:
     from ._typing import TrameModeOptions
 
 
+def _validate_transparent_background(transparent_background: object) -> None:
+    """Raise if ``transparent_background`` is not one of its options."""
+    _validation.check_contains(
+        get_args(_TransparentBackgroundOptions),
+        must_contain=transparent_background,
+        name='transparent_background',
+    )
+
+
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
     if 'PYVISTA_PLOT_THEME' in os.environ:
@@ -3010,11 +3019,7 @@ class Theme(_ConfigBase):
     def transparent_background(
         self, transparent_background: _TransparentBackgroundOptions
     ) -> None:
-        _validation.check_contains(
-            get_args(_TransparentBackgroundOptions),
-            must_contain=transparent_background,
-            name='transparent_background',
-        )
+        _validate_transparent_background(transparent_background)
         self._transparent_background = transparent_background
 
     @property

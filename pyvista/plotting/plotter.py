@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
-from typing import get_args
 from typing import overload
 import uuid
 import warnings
@@ -64,7 +63,6 @@ from ._plotting import _remap_scalars_through_topology_change
 from ._plotting import _stamp_raw_numpy_scalars
 from ._plotting import process_opacity
 from ._property import Property
-from ._typing import _TransparentBackgroundOptions
 from .actor import Actor
 from .camera import Camera
 from .colors import Color
@@ -104,6 +102,7 @@ from .text import TextProperty
 from .texture import numpy_to_texture
 from .theme_registry import _resolve_theme_like
 from .themes import Theme
+from .themes import _validate_transparent_background
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -162,6 +161,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting._typing import ThemeOptions
+    from pyvista.plotting._typing import _TransparentBackgroundOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
@@ -6367,11 +6367,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         if transparent_background is None:
             transparent_background = self.image_transparent_background
-        _validation.check_contains(
-            get_args(_TransparentBackgroundOptions),
-            must_contain=transparent_background,
-            name='transparent_background',
-        )
+        _validate_transparent_background(transparent_background)
         mwriter = self._get_mwriter_not_none()
         self.update()
         mwriter.append_data(self._image_with_background(transparent_background))
@@ -7356,11 +7352,7 @@ class BasePlotter(_BoundsSizeMixin):
             # configure image filter
             if transparent_background is None:
                 transparent_background = self._theme.transparent_background
-            _validation.check_contains(
-                get_args(_TransparentBackgroundOptions),
-                must_contain=transparent_background,
-                name='transparent_background',
-            )
+            _validate_transparent_background(transparent_background)
             self.image_transparent_background = transparent_background
 
             # This if statement allows you to save screenshots of closed plotters
