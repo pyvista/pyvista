@@ -82,7 +82,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
 from .mapper import _BaseMapper
 from .mapper import _category_range
-from .mapper import _data_range
+from .mapper import _default_scalar_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .mapper import _PolyDataMapper
@@ -5361,7 +5361,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         # Set scalars range
         if clim is None:
-            clim = _data_range(scalars)
+            clim = _default_scalar_range(scalars)
         elif isinstance(clim, (float, int)):
             clim = (-clim, clim)
 

@@ -89,10 +89,16 @@ def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
     return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
-def _data_range(values: NDArray[Any]) -> tuple[float, float]:
+def _default_scalar_range(
+    values: NDArray[Any], *, below_range_color: bool = False
+) -> tuple[float, float]:
     """Return the range of ``values``, collapsed to its maximum when within rounding noise."""
     low, high = float(np.nanmin(values)), float(np.nanmax(values))
-    if np.issubdtype(values.dtype, np.floating) and np.isfinite([low, high]).all():
+    if (
+        not below_range_color
+        and np.issubdtype(values.dtype, np.floating)
+        and np.isfinite([low, high]).all()
+    ):
         tolerance = _NEAR_CONSTANT_EPS * np.finfo(values.dtype).eps * max(abs(low), abs(high))
         if high - low <= tolerance:
             return high, high
@@ -761,7 +767,9 @@ class _BaseDataSetMapper(_BaseMapper):
         elif np.issubdtype(array.dtype, np.number):
             if np.isnan(array).all():
                 return
-            clim = _data_range(array)
+            clim = _default_scalar_range(
+                array, below_range_color=self.lookup_table.below_range_color is not None
+            )
         else:
             return
 
@@ -1168,7 +1176,11 @@ class _BaseDataSetMapper(_BaseMapper):
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
-            scalar_range = _data_range(scalars)
+            scalar_range = _default_scalar_range(
+                scalars,
+                below_range_color=bool(below_color)
+                or self.lookup_table.below_range_color is not None,
+            )
         elif isinstance(clim, (int, float)):
             scalar_range = (-float(clim), float(clim))
         else:
@@ -1210,7 +1222,10 @@ class _BaseDataSetMapper(_BaseMapper):
                     raise ValueError(msg)
                 # need to round the colors here since we're
                 # directly displaying the colors
-                hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                if scalar_range[0] == scalar_range[1]:
+                    hue = np.zeros(scalars.shape)
+                else:
+                    hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
                 rounded = np.round(hue * n_colors) / n_colors
                 rgba: NDArray[np.floating] = get_cmap_safe(cmap)(rounded) * 255
                 rgba[:, -1] *= opacity

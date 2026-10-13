@@ -907,10 +907,10 @@ def test_plotter_add_volume_clim(uniform: pv.ImageData):
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
 
 
-def _rounding_noise(value, dtype, n):
-    """Return ``n`` values within two units of rounding of ``value``."""
+def _rounding_noise(value, dtype, n, ulps=2):
+    """Return ``n`` values within ``ulps`` units of rounding of ``value``."""
     value = dtype(value)
-    steps = np.resize(np.arange(-2, 3), n)
+    steps = np.resize(np.arange(-ulps, ulps + 1), n)
     return (value + steps * np.spacing(value)).astype(dtype)
 
 
@@ -953,6 +953,38 @@ def test_add_mesh_small_real_scalars_range(dtype):
     mesh['data'] = np.linspace(1.0, 1.001, mesh.n_points, dtype=dtype)
     actor = pv.Plotter().add_mesh(mesh, scalars='data')
     assert actor.mapper.scalar_range == (float(mesh['data'].min()), float(mesh['data'].max()))
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_add_mesh_rounding_spread_above_threshold_range(dtype):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, dtype, mesh.n_points, ulps=8)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data')
+    assert actor.mapper.scalar_range == (float(mesh['data'].min()), float(mesh['data'].max()))
+
+
+def test_add_mesh_near_constant_scalars_below_color():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh.cell_data['data'] = _rounding_noise(3.0, np.float32, mesh.n_cells)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data', below_color='red')
+    expected = (float(mesh['data'].min()), float(mesh['data'].max()))
+    assert actor.mapper.scalar_range == expected
+    assert actor.mapper.lookup_table.map_value(expected[0]) != pv.Color('red').float_rgba
+
+    mapper = pv.DataSetMapper(mesh)
+    mapper.lookup_table.below_range_color = 'red'
+    mapper.array_name = 'data'
+    assert mapper.scalar_range == expected
+
+
+def test_add_mesh_near_constant_scalars_custom_opacity():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points)
+    opacity = np.linspace(0.2, 1.0, mesh.n_points)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data', opacity=opacity)
+    rgba = actor.mapper.dataset.point_data['__custom_rgba']
+    assert np.unique(rgba[:, :3], axis=0).shape[0] == 1
+    assert np.array_equal(rgba[:, 3], (opacity * 255).astype(np.uint8))
 
 
 def test_add_mesh_near_constant_scalars_user_clim():
