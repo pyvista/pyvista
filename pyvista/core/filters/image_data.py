@@ -4864,29 +4864,48 @@ class ImageDataFilters(DataSetFilters):
                          [255,   0,   0, 128],
                          [  0,   0,   0,   0]], dtype=uint8)
 
-        Colors are also blended in their sRGB encoding by default, so the average of a
-        black and a white pixel is darker than the gray they appear to make together.
+        Down-sample the PyVista logo, which has a transparent background.
 
-        >>> stripes = pv.ImageData(dimensions=(2, 1, 1))
-        >>> stripes['rgb'] = np.array([[0, 0, 0], [255, 255, 255]], dtype=np.uint8)
-        >>> stripes.resample(
-        ...     dimensions=(3, 1, 1), interpolation='linear', extend_border=False
-        ... )['rgb']
-        pyvista_ndarray([[  0,   0,   0],
-                         [128, 128, 128],
-                         [255, 255, 255]], dtype=uint8)
+        >>> logo = examples.load_logo()
+        >>> straight = logo.resample(1 / 16, 'lanczos', anti_aliasing=True)
+        >>> premultiplied = logo.resample(
+        ...     1 / 16, 'lanczos', anti_aliasing=True, premultiply_alpha=True
+        ... )
 
-        Enable ``is_srgb`` to blend them in linear light instead.
+        Show the images over black, as an image viewer would. Focus on the ``i`` and
+        ``s``, which are partly transparent. By default (top), the white stored in
+        the transparent pixels bleeds into them and washes them out. With
+        ``premultiply_alpha`` (bottom), the ``i`` stays red and the ``s`` stays brown.
 
-        >>> stripes.resample(
-        ...     dimensions=(3, 1, 1),
-        ...     interpolation='linear',
-        ...     extend_border=False,
-        ...     is_srgb=True,
-        ... )['rgb']
-        pyvista_ndarray([[  0,   0,   0],
-                         [188, 188, 188],
-                         [255, 255, 255]], dtype=uint8)
+        >>> def over_black(image):
+        ...     rgba = image.active_scalars
+        ...     image['rgb'] = (rgba[:, :3] * (rgba[:, 3:] / 255)).astype(np.uint8)
+        ...     return image.points_to_cells(scalars='rgb')
+        >>> pl = pv.Plotter(shape=(2, 1), window_size=[800, 690], border_width=6)
+        >>> _ = pl.add_mesh(over_black(straight), rgba=True, lighting=False)
+        >>> pl.view_xy()
+        >>> pl.camera.tight(adjust_render_window=False)
+        >>> pl.subplot(1, 0)
+        >>> _ = pl.add_mesh(over_black(premultiplied), rgba=True, lighting=False)
+        >>> pl.link_views()
+        >>> pl.show()
+
+        Colors are also blended in their sRGB encoding by default. Down-sample red and
+        green stripes, which look yellow from a distance.
+
+        >>> stripes = pv.ImageData(dimensions=(32, 8, 1))
+        >>> red_green = np.array([[255, 0, 0], [0, 255, 0]], dtype=np.uint8)
+        >>> stripes['rgb'] = np.tile(red_green, (stripes.n_points // 2, 1))
+        >>> encoded = stripes.resample(0.5, 'linear', anti_aliasing=True)
+
+        Enable ``is_srgb`` to blend them in linear light instead. The default (left)
+        blends the stripes to a dark olive, and ``is_srgb`` (right) to yellow.
+
+        >>> linear = stripes.resample(0.5, 'linear', anti_aliasing=True, is_srgb=True)
+        >>> pl = compare_images_plotter(
+        ...     encoded.points_to_cells(), linear.points_to_cells()
+        ... )
+        >>> pl.show()
 
         Load an MRI of a knee and down-sample it.
 
