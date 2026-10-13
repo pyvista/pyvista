@@ -98,6 +98,8 @@ _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
+# VTK 9.7 corrected the wedge point ordering; the `_v2` wedge datasets follow it
+_WEDGE_V2 = pv.vtk_version_info >= (9, 7)
 
 
 def _warn_invalid_dir_not_used(path: Path, env_var: str) -> None:
@@ -5826,7 +5828,9 @@ def download_notch_stress(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed_v2.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader(
+    'notch_stress_fixed_v2.vtk' if _WEDGE_V2 else 'notch_stress_fixed.vtk'
+)
 
 
 @overload
@@ -5870,7 +5874,9 @@ def download_notch_displacement(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_notch_displacement, load=load)
 
 
-_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp_v2.vtu')
+_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader(
+    'notch_disp_v2.vtu' if _WEDGE_V2 else 'notch_disp.vtu'
+)
 
 
 @overload
@@ -6607,12 +6613,13 @@ def download_electronics_cooling(
 def _electronics_cooling_files_func() -> tuple[
     _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
 ]:
+    zip_name = 'datasets_v2.zip' if _WEDGE_V2 else 'datasets.zip'
     _structure = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets_v2.zip',
+        f'fvm/cooling_electronics/{zip_name}',
         target_file='structure.vtp',
     )
     _air = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets_v2.zip',
+        f'fvm/cooling_electronics/{zip_name}',
         target_file='air.vtu',
     )
     return _structure, _air
