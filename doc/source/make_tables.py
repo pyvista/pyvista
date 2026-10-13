@@ -283,12 +283,14 @@ def _meshio_info_dict():
             if class_name in output_types:
                 # This reader may return this class, so include it
                 formats[reader._format] = FileFormatInfo(
-                    name=reader.format_name, extensions=extensions, readable=True
+                    name=reader.format_description, extensions=extensions, readable=True
                 )
         for writer in set(getattr(pv, class_name)._WRITERS.values()):
             info = formats.setdefault(
                 writer._format,
-                FileFormatInfo(name=writer.format_name, extensions=set(writer._format.extensions)),
+                FileFormatInfo(
+                    name=writer.format_description, extensions=set(writer._format.extensions)
+                ),
             )
             info.writeable = True
         meshio_info[class_name] = formats
@@ -340,7 +342,7 @@ class ReadersTable(DocTable):
         extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
         output_types_fmt = ', '.join(f':class:`~pyvista.{typ}`' for typ in sorted(output_types))
         return cls.row_template.format(
-            reader_fmt, reader.format_name, extensions_fmt, output_types_fmt
+            reader_fmt, reader.format_description, extensions_fmt, output_types_fmt
         )
 
 

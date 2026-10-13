@@ -4579,8 +4579,8 @@ def __getattr__(name: str) -> Any:
         # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
         msg = (
             '`CLASS_READERS` is deprecated. Use `pyvista.get_reader` to get the reader for a '
-            'file, `extensions` and `format_name` on a reader class to look up its file format, '
-            'or `pyvista.register_reader` to add a reader.'
+            'file, `extensions` and `format_description` on a reader class to look up its file '
+            'format, or `pyvista.register_reader` to add a reader.'
         )
         warn_external(msg, PyVistaDeprecationWarning)
         if _is_deprecation_due((0, 53)):  # pragma: no cover

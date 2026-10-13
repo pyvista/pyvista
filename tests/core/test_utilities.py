@@ -3686,7 +3686,7 @@ FILE_FORMATS = [
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
 def test_fileio_format(cls):
     assert cls._format in FILE_FORMATS
-    assert cls.format_name == cls._format.name
+    assert cls.format_description == cls._format.description
 
 
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
@@ -3704,13 +3704,13 @@ def test_fileio_extensions_match_format(cls):
 @pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
 def test_fileio_docstring_names_format(cls):
     summary = cls.__doc__.strip().splitlines()[0]
-    assert f'the {cls.format_name} format' in summary
+    assert f'the {cls.format_description} format' in summary
     for ext in (*cls._format.extensions, *(display for display, _ in cls._format.patterns)):
         assert f'``{ext}``' in summary
 
 
 def test_file_formats_unique_and_used():
-    names = [fmt.name for fmt in FILE_FORMATS]
+    names = [fmt.description for fmt in FILE_FORMATS]
     assert len(set(names)) == len(names)
     assert {cls._format for cls in [*READER_CLASSES, *WRITER_CLASSES]} == set(FILE_FORMATS)
 
@@ -3803,18 +3803,18 @@ def test_map_extensions_rejects_shared_extension():
 def test_format_name_undeclared():
     class _Reader(pv.BaseReader): ...
 
-    assert _Reader.format_name == ''
-    assert pv.core.utilities.fileio._FileIOBase.format_name == ''
+    assert _Reader.format_description == ''
+    assert pv.core.utilities.fileio._FileIOBase.format_description == ''
     with pytest.raises(AttributeError, match='_Reader does not declare a file format'):
         _map_extensions(_Reader)
 
 
 def test_format_name_custom_reader():
     class _Reader(pv.BaseReader):
-        format_name = 'My Format'
+        format_description = 'My Format'
 
-    assert _Reader.format_name == 'My Format'
-    assert pv.BaseReader.format_name == ''
+    assert _Reader.format_description == 'My Format'
+    assert pv.BaseReader.format_description == ''
 
 
 def test_ply_writer(sphere, tmp_path):

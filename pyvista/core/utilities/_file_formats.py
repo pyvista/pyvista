@@ -8,9 +8,9 @@ import re
 
 @dataclass(frozen=True)
 class _FileFormat:
-    """A file format's human-readable name and the file extensions it uses."""
+    """A file format's human-readable description and the file extensions it uses."""
 
-    name: str
+    description: str
     extensions: tuple[str, ...] = ()
     # Display name and filename pattern, for formats whose extension encodes partitioning
     patterns: tuple[tuple[str, re.Pattern[str]], ...] = ()
@@ -26,9 +26,9 @@ DICOM = _FileFormat('DICOM', ('.dcm', '.img'))
 ECLIPSE_GRDECL = _FileFormat('Eclipse GRDECL', ('.grdecl',))
 ENSIGHT = _FileFormat('EnSight', ('.case',))
 EXODUS = _FileFormat('Exodus II', ('.e', '.ex2', '.exii', '.exo'))
-# ``.e.N.p`` and ``.n.N.p``, for ``N`` partitions and partition index ``p``
 EXODUS_PARTITIONED = _FileFormat(
     'Exodus II (partitioned)',
+    # ``.e.N.p`` and ``.n.N.p``, for ``N`` partitions and partition index ``p``
     patterns=(
         ('.e.N.p', re.compile(r'\.e\.\d+\.\d+$', re.IGNORECASE)),
         ('.n.N.p', re.compile(r'\.n\.\d+\.\d+$', re.IGNORECASE)),

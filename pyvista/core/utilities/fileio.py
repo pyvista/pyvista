@@ -156,33 +156,34 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
             raise AttributeError(msg) from None
 
     @_classproperty
-    def format_name(cls) -> str:  # noqa: N805
-        """Return the human-readable name of the file format.
+    def format_description(cls) -> str:  # noqa: N805
+        """Return the human-readable description of the file format.
 
-        A reader and a writer for the same format share the same name.
-        A custom reader subclass can set its own with ``format_name = 'My Format'`` in
-        the class body.
+        A reader and a writer for the same format share the same description. A custom
+        reader subclass can set its own with ``format_description = 'My Format'`` in the
+        class body.
 
         .. versionadded:: 0.50
 
         Returns
         -------
         str
-            Name of the file format, or an empty string if the class does not declare one.
+            Description of the file format, or an empty string if the class does not
+            declare one.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pv.get_reader(examples.hexbeamfile).format_name
+        >>> pv.get_reader(examples.hexbeamfile).format_description
         'Legacy VTK'
-        >>> pv.XMLUnstructuredGridReader.format_name
+        >>> pv.XMLUnstructuredGridReader.format_description
         'VTK Unstructured Grid'
-        >>> pv.XMLUnstructuredGridWriter.format_name
+        >>> pv.XMLUnstructuredGridWriter.format_description
         'VTK Unstructured Grid'
 
         """
-        return cls._format.name if hasattr(cls, '_format') else ''
+        return cls._format.description if hasattr(cls, '_format') else ''
 
     @_classproperty
     def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805
