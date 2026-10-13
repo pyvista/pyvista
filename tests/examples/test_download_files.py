@@ -1056,6 +1056,9 @@ def test_download_reservoir():
         'BLOCK_K',
         'vtkGhostType',
     ]
+    visible = mesh.cell_data['vtkGhostType'] == 0
+    volume = mesh.compute_cell_sizes(length=False, area=False)['Volume']
+    assert np.all(volume[visible] > 0)
 
 
 @parametrize(high_resolution=[True, False])
