@@ -1637,7 +1637,11 @@ class _TrameConfig(_ConfigBase):
     @jupyter_extension_enabled.setter
     def jupyter_extension_enabled(self, enabled: bool) -> None:
         if enabled and not self.jupyter_extension_available:
-            msg = 'The trame_jupyter_extension is not available'
+            msg = (
+                'jupyter_extension_enabled requires the trame_jupyter_extension, which was '
+                'not detected. Install it with `pip install trame_jupyter_extension` and '
+                'restart Jupyter.'
+            )
             raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:

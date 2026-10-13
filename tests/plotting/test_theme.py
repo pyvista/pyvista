@@ -694,6 +694,30 @@ def test_load_theme_unknown_key(default_theme):
     assert loaded_theme == default_theme
 
 
+@pytest.mark.parametrize(
+    ('keys', 'value', 'match'),
+    [
+        (('trame', 'jupyter_extension_enabled'), True, 'pip install trame_jupyter_extension'),
+        (('logo_file',), 'missing_logo.png', r'Logo file \(missing_logo.png\) not found'),
+    ],
+    ids=['trame-extension', 'logo-file'],
+)
+def test_load_theme_rejected_value(monkeypatch, default_theme, keys, value, match):
+    monkeypatch.delenv('TRAME_JUPYTER_WWW', raising=False)
+    dict_ = default_theme.to_dict()
+    *parents, key = keys
+    target = dict_
+    for parent in parents:
+        target = target[parent]
+    target[key] = value
+
+    with pytest.warns(UserWarning, match=match) as record:
+        loaded_theme = Theme.from_dict(dict_)
+    assert len(record) == 1
+    assert f'cannot set {key!r} to {value!r}. Ignoring it.' in str(record[0].message)
+    assert loaded_theme == default_theme
+
+
 def test_save_interactor_style(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     default_theme.interactor_style = 'terrain_style'
@@ -858,7 +882,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):  # noqa: B017, PT011
+    with pytest.raises(ValueError, match='pip install trame_jupyter_extension'):
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available
