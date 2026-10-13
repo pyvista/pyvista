@@ -2505,10 +2505,13 @@ class BasePlotter(_BoundsSizeMixin):
         ``'premultiplied'`` options, reading the image renders the scene again over a
         black background; see :meth:`screenshot`.
 
+        .. versionadded:: 0.50
+            Support for the ``'straight'`` and ``'premultiplied'`` transparent
+            backgrounds.
+
         .. versionchanged:: 0.50
             A :class:`RuntimeError` is raised instead of an
-            :class:`AttributeError` when the plotter has not been rendered, and the
-            ``'straight'`` and ``'premultiplied'`` transparent backgrounds are supported.
+            :class:`AttributeError` when the plotter has not been rendered.
 
         Returns
         -------
@@ -7257,8 +7260,11 @@ class BasePlotter(_BoundsSizeMixin):
             ``(0, 0, 0, 0)``. FXAA anti-aliasing is not applied, since it does not smooth
             the alpha channel.
 
+            .. versionadded:: 0.50
+                The ``'straight'`` and ``'premultiplied'`` options.
+
             .. versionchanged:: 0.50
-                Added the ``'straight'`` and ``'premultiplied'`` options.
+                Other values raise a :class:`ValueError`.
 
         return_img : bool, default: True
             If ``True``, a :class:`numpy.ndarray` of the image will be

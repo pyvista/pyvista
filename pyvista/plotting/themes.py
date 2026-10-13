@@ -2998,8 +2998,11 @@ class Theme(_ConfigBase):
         every screenshot, :attr:`pyvista.Plotter.image`, and movie frame renders the
         scene again over a black background.
 
+        .. versionadded:: 0.50
+            The ``'straight'`` and ``'premultiplied'`` options.
+
         .. versionchanged:: 0.50
-            Added the ``'straight'`` and ``'premultiplied'`` options.
+            Other values raise a :class:`ValueError`.
 
         Examples
         --------
