@@ -1999,7 +1999,7 @@ class DataObjectFilters:
         else:
             cell_validator = _vtk.vtkCellValidator()
             cell_validator.SetInputData(
-                _cells_in_local_coordinates(self, cast('pv.UnstructuredGrid', ugrid))
+                _cells_in_local_coordinates(cast('pv.UnstructuredGrid', ugrid))
             )
             cell_validator.SetTolerance(tol)
             if pv.vtk_version_info >= (9, 6, 0):
@@ -6663,12 +6663,11 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> DataSet:
-    """Return the cells of a mesh, each with its own copy of its points centered on the cell.
+def _cells_in_local_coordinates(ugrid: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
+    """Return the cells of a grid, each with its own copy of its points centered on the cell.
 
     :vtk:`vtkCellValidator` intersects edges with a tolerance relative to the distance from the
-    origin, which this makes relative to the size of each cell. ``ugrid`` is the mesh as an
-    unstructured grid.
+    origin, which this makes relative to the size of each cell.
     """
     offsets = ugrid.cell_offsets
     counts = np.diff(offsets)
@@ -6681,12 +6680,7 @@ def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> Da
             center[nonempty] = sums / counts[nonempty, np.newaxis]
         points -= np.repeat(center, counts, axis=0)
 
-    # Polyhedron faces reference point ids, and structured grids hide cells with ghost arrays
-    structured = isinstance(mesh, (pv.StructuredGrid, pv.ExplicitStructuredGrid))
-    if not (
-        np.any(ugrid.celltypes == CellType.POLYHEDRON)
-        or (structured and (_GHOST_ARRAY in mesh.cell_data or _GHOST_ARRAY in mesh.point_data))
-    ):
+    if not np.any(ugrid.celltypes == CellType.POLYHEDRON):
         local = pv.UnstructuredGrid()
         local.SetPoints(pv.vtk_points(points, deep=False))
         local.SetCells(
@@ -6695,15 +6689,20 @@ def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> Da
         )
         return local
 
-    # Let VTK copy the points of each cell, which keeps the faces and turns hidden cells empty
+    # Polyhedron faces store point ids, which must point to the copies of each cell. VTK stores
+    # faces differently before and after 9.4, so let vtkShrinkFilter copy the points of each cell
+    # and renumber the faces. Only its cells are used: its points are float32, and are replaced
+    # below by the centered points. Drop the data arrays, which it would copy to every point.
+    bare = ugrid.copy(deep=False)
+    bare.clear_data()
     shrink = _vtk.vtkShrinkFilter()
     shrink.SetShrinkFactor(1.0)
-    shrink.SetInputData(mesh)
+    shrink.SetInputData(bare)
     shrink.Update()
-    local = cast('pv.UnstructuredGrid', _get_output(shrink))
+    local = cast('pv.UnstructuredGrid', pv.wrap(shrink.GetOutput()))
     # The filter outputs nothing for a mesh without points
     if not np.array_equal(local.cell_offsets, offsets):
-        return mesh
+        return ugrid
     # Each copied point replaces its point in the connectivity of one cell
     entry = np.zeros(local.n_points, dtype=int)
     entry[local.cell_connectivity] = np.arange(offsets[-1])

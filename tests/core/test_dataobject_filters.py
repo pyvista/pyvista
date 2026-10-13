@@ -34,6 +34,7 @@ from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _cells_in_local_coordinates
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
@@ -4555,6 +4556,32 @@ def test_cell_validator_size_beyond_clamp():
 )
 def test_cell_validator_size_rounding_grid(grid, valid):
     assert grid.validate_mesh().invalid_fields == (() if valid else ('zero_size',))
+
+
+@pytest.mark.parametrize('points_dtype', [None, 'float32', 'float64'])
+def test_cells_in_local_coordinates_keeps_precision(points_dtype):
+    # Polyhedra are separated by a filter which outputs float32 points
+    pv.global_config.points_dtype = points_dtype
+    mesh = examples.cells.Polyhedron()
+    mesh.points = mesh.points.astype(np.float64) * 1.000000123 + 7.5e6
+    local = _cells_in_local_coordinates(mesh)
+    points = mesh.points[mesh.cell_connectivity]
+    assert np.array_equal(local.points[local.cell_connectivity], points - points.mean(axis=0))
+    assert mesh.cell_validator().points.dtype == mesh.points.dtype
+
+
+def test_cell_validator_hidden_cell_with_polyhedra():
+    # A hidden cell is checked like any other, also when the mesh holds polyhedra
+    hexa = examples.cells.Hexahedron()
+    hexa.points = hexa.points * [1.0, 1.0, -1.0]
+    polyhedron = examples.cells.Polyhedron().translate((5.0, 0.0, 0.0))
+    mesh = pv.merge([polyhedron, hexa], merge_points=False)
+    ghosts = np.array([0, _vtk.vtkDataSetAttributes.HIDDENCELL], np.uint8)
+    mesh.cell_data['vtkGhostType'] = ghosts
+    validated = mesh.cell_validator()
+    assert validated.field_data['invalid'].tolist() == [1]
+    assert validated.field_data['inverted_faces'].tolist() == [1]
+    assert np.array_equal(mesh.cell_data['vtkGhostType'], ghosts)
 
 
 @pytest.mark.parametrize('offset', [0.0, 1.0e6, 7.5e6])
