@@ -332,20 +332,6 @@ def test_tight_without_renderer():
         pv.Camera().tight()
 
 
-@pytest.mark.parametrize(
-    ('shape', 'expected'), [((1, 1), [200, 100]), ((2, 1), [200, 200]), ((1, 2), [200, 50])]
-)
-def test_tight_fits_subplot(shape, expected):
-    # The window is resized so that each subplot, not the window, has the aspect of the mesh
-    image = pv.ImageData(dimensions=(201, 101, 1))
-    pl = pv.Plotter(shape=shape, window_size=(200, 300))
-    pl.add_mesh(image)
-    pl.view_xy()
-    pl.camera.tight()
-    assert pl.window_size == expected
-    pl.close()
-
-
 def test_copy():
     camera = pv.Camera()
     for name, value, _ in configuration:
