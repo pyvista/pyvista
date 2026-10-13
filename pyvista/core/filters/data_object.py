@@ -1404,8 +1404,8 @@ class DataObjectFilters:
             - ``zero_size`` and ``negative_size`` use a default size tolerance which scales with
               each cell and the precision of the points. See
               :meth:`~pyvista.DataObjectFilters.cell_validator`.
-            - A valid mesh far from the origin is no longer reported as invalid due to rounding
-              error.
+            - Thin cells and cells far from the origin are no longer reported with intersecting
+              edges or inverted faces due to rounding error.
             - ``coincident_points`` excludes closed polylines and triangle strips which repeat
               points for degenerate triangles.
 
@@ -1784,8 +1784,8 @@ class DataObjectFilters:
 
         .. versionchanged:: 0.50
 
-            - Cells are checked in coordinates centered on the mesh, so a valid mesh far from the
-              origin is not reported as invalid due to rounding error.
+            - Each cell is checked in coordinates centered on the cell, so thin cells and cells
+              far from the origin are not reported as invalid due to rounding error.
             - :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` excludes closed polylines and
               triangle strips which repeat points for degenerate triangles.
 
@@ -1970,19 +1970,22 @@ class DataObjectFilters:
         # so skip the checks which dereference cell points when the connectivity is invalid
         invalid_references = _has_invalid_point_references(self)
 
+        # Grids are checked from their geometry, other meshes from their cells
+        ugrid: pv.UnstructuredGrid | None = None
+        if not isinstance(self, pv.Grid):
+            ugrid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
-        skip_validator = isinstance(self, pv.Grid) or invalid_references
+        skip_validator = ugrid is None or invalid_references
         if skip_validator:
             output = self.copy(deep=False)
         else:
-            # VTK checks cells in absolute coordinates, so center them to limit rounding error
-            centered = self.copy(deep=False)
-            center = np.asarray(self.center)
-            if np.isfinite(center).all():
-                # New points, since the copy shares its points with this mesh
-                centered.SetPoints(pv.vtk_points(self.points - center, deep=False))
             cell_validator = _vtk.vtkCellValidator()
-            cell_validator.SetInputData(centered)
+            cell_validator.SetInputData(
+                _cells_in_local_coordinates(self, cast('pv.UnstructuredGrid', ugrid))
+            )
             cell_validator.SetTolerance(tol)
             if pv.vtk_version_info >= (9, 6, 0):
                 # vtkCellValidator stores PlanarityTolerance as static class state, so we must
@@ -2023,13 +2026,6 @@ class DataObjectFilters:
 
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
-            ugrid: pv.UnstructuredGrid | None = None
-            if not isinstance(mesh, pv.Grid):
-                ugrid = (
-                    mesh
-                    if isinstance(mesh, pv.UnstructuredGrid)
-                    else mesh.cast_to_unstructured_grid()
-                )
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
@@ -6649,6 +6645,38 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
+def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> DataSet:
+    """Return the cells of a mesh, each with its own copy of its points centered on the cell.
+
+    :vtk:`vtkCellValidator` intersects edges with a tolerance relative to the distance from the
+    origin, which this makes relative to the size of each cell. ``ugrid`` is the mesh as an
+    unstructured grid. The mesh is returned as is when a cell cannot be separated.
+    """
+    shrink = _vtk.vtkShrinkFilter()
+    shrink.SetShrinkFactor(1.0)
+    shrink.SetInputData(mesh)
+    shrink.Update()
+    local = cast('pv.UnstructuredGrid', _get_output(shrink))
+    offsets = ugrid.cell_offsets
+    # The filter drops cells without points and gives each cell its points in connectivity order
+    if not np.array_equal(local.cell_offsets, offsets) or not np.array_equal(
+        local.cell_connectivity, np.arange(offsets[-1])
+    ):
+        return mesh
+    # Take the points from the mesh, since the filter rounds them about the cell center
+    points = ugrid.points[ugrid.cell_connectivity].astype(float)
+    counts = np.diff(offsets)
+    nonempty = counts > 0
+    center = np.zeros((ugrid.n_cells, 3))
+    if nonempty.any():
+        sums = np.add.reduceat(points, offsets[:-1][nonempty])
+        center[nonempty] = sums / counts[nonempty, np.newaxis]
+    with np.errstate(invalid='ignore'):
+        points -= np.repeat(center, counts, axis=0)
+    local.points = points
+    return local
+
+
 def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDArray[np.float64]:
     """Return the rounding error of each cell's size from the precision of the points.
 
@@ -6658,7 +6686,9 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
     """
     if ugrid is None:
         grid = cast('pv.Grid', mesh)
-        dtype = grid.x.dtype if isinstance(grid, pv.RectilinearGrid) else np.dtype(np.float64)
+        dtype: np.dtype[Any] = (
+            grid.x.dtype if isinstance(grid, pv.RectilinearGrid) else np.dtype(np.float64)
+        )
         if grid.n_cells == 0:
             return np.zeros(0)
         cell = grid.get_cell(0)
@@ -6696,12 +6726,16 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
         for celltype in np.unique(celltypes):
             dimension[celltypes == celltype] = CellType(celltype).dimension
 
-    if not np.issubdtype(dtype, np.floating):
-        dtype = np.dtype(np.float64)
+    float_dtype = cast(
+        'np.dtype[np.floating[Any]]',
+        dtype if np.issubdtype(dtype, np.floating) else np.dtype(np.float64),
+    )
     bounds = np.abs(np.asarray(mesh.bounds))
-    magnitude = min(np.max(bounds[np.isfinite(bounds)], initial=0.0), np.finfo(dtype).max)
+    magnitude = min(
+        float(np.max(bounds[np.isfinite(bounds)], initial=0.0)), float(np.finfo(float_dtype).max)
+    )
     with np.errstate(invalid='ignore', over='ignore'):
-        ulp = np.spacing(np.asarray(magnitude, dtype=dtype)).astype(float)
+        ulp = np.spacing(np.asarray(magnitude, dtype=float_dtype)).astype(float)
         rounding = _SIZE_ROUNDING_ULPS * ulp * extent ** np.maximum(dimension - 1, 0)
     # A vertex is measured by its point count, which has no rounding
     return np.where(dimension > 0, rounding, 0.0)

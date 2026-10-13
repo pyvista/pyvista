@@ -4524,6 +4524,29 @@ def test_cell_validator_large_coordinates(offset):
     assert np.array_equal(report.mesh.points, expected)
 
 
+@pytest.mark.parametrize('offset', [0.0, 10.0, 1.0e3])
+def test_cell_validator_thin_cells_away_from_center(offset):
+    # A thin hexahedron of an airfoil boundary layer, with copies 10 units apart
+    points = np.array(
+        [
+            [1.2240802, 0.0, -0.12059101],
+            [1.2240802, -1.0, -0.12059101],
+            [1.22020109, -1.0, -0.11988245],
+            [1.22020109, 0.0, -0.11988245],
+            [1.22407935, 0.0, -0.12059615],
+            [1.22407935, -1.0, -0.12059615],
+            [1.22020028, -1.0, -0.11988648],
+            [1.22020028, 0.0, -0.11988648],
+        ]
+    )
+    points = np.vstack([points, points + np.array([10.0, 0.0, 0.0])])
+    points[:, 0] += offset
+    cells = [8, *range(8), 8, *range(8, 16)]
+    grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, points)
+    report = grid.validate_mesh()
+    assert report.is_valid, report.message
+
+
 @pytest.mark.parametrize(
     'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
 )
