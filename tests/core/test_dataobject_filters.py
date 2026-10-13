@@ -4468,6 +4468,40 @@ def test_validate_mesh_degenerate_cells():
         mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
 
 
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('offset', [0.0, 1.0])
+def test_cell_validator_size_small_units(dtype, offset):
+    # A millimetre tetra in metres has a volume far below the eps of its points dtype
+    tetra = examples.cells.Tetrahedron().scale(1e-3).translate((offset, 0.0, 0.0))
+    tetra.points = tetra.points.astype(dtype)
+    assert tetra.validate_mesh().is_valid
+
+    inverted = tetra.copy()
+    inverted.points[[0, 1]] = inverted.points[[1, 0]]
+    assert inverted.validate_mesh(exclude_fields='inverted_faces').invalid_fields == (
+        'negative_size',
+    )
+
+    # A tetra flattened into the plane of three of its points has zero volume
+    flat = tetra.copy()
+    flat.points[3] = flat.points[:3].mean(axis=0)
+    assert 'zero_size' in flat.validate_mesh().invalid_fields
+    assert 'negative_size' not in flat.validate_mesh().invalid_fields
+
+
+def test_cell_validator_size_rounding_scales_with_coordinates():
+    # A sliver one float32 rounding step thick far from the origin is zero size
+    tri = pv.PolyData([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, 0.0, 0.0]], faces=[3, 0, 1, 2])
+    tri = tri.translate((1.0e4, 0.0, 0.0))
+    tri.points = tri.points.astype(np.float32)
+    tri.points[2, 1] = np.spacing(np.float32(1.0e4))
+    assert tri.area > 0
+    assert 'zero_size' in tri.validate_mesh().invalid_fields
+    # The same triangle near the origin is resolved by the point precision
+    near = tri.translate((-1.0e4, 0.0, 0.0))
+    assert near.validate_mesh().is_valid
+
+
 @pytest.mark.parametrize(
     'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
 )

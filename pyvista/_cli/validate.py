@@ -91,8 +91,9 @@ the largest distance between a face center and any of its corner points.
 """
 size_tolerance_help = """
 Value used for evaluating the size of a cell. Cells with an absolute size less than or equal to
-this value are flagged as having zero size, and cells with a size less than this value are flagged
-as having negative size.
+this value are flagged as having zero size, and cells with a size less than the negative of this
+value are flagged as having negative size. By default, each cell's size is compared with how much
+it can change from rounding its points.
 """
 report_help = """
 Show report. Control the body of the report with:

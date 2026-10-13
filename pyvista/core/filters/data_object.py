@@ -1796,12 +1796,20 @@ class DataObjectFilters:
             :meth:`size <pyvista.DataObjectFilters.compute_cell_sizes>` of a cell. Cells with an
             absolute size less than or equal to this value are flagged as having
             :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
-            cells with a size less than this value are flagged as having
+            cells with a size less than the negative of this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
-            The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
-            :class:`numpy.finfo`.
+
+            By default, each cell's size is compared with how much it can change from rounding
+            its points: four units in the last place of the points ``dtype`` at the mesh's
+            largest absolute coordinate, times the cell's extent raised to the power of its
+            dimension minus one. A cell of any scale is checked this way, and only a cell too
+            small to resolve at the precision of its points has zero size.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
+
+            .. versionchanged:: 0.50
+                The default depends on the size of each cell and the magnitude of the
+                coordinates. Previously, it was the epsilon of the points ``dtype``.
 
             .. note::
                 This tolerance is independent of any other tolerances.
@@ -1984,14 +1992,20 @@ class DataObjectFilters:
 
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
+            ugrid: pv.UnstructuredGrid | None = None
+            if not isinstance(mesh, pv.Grid):
+                ugrid = (
+                    mesh
+                    if isinstance(mesh, pv.UnstructuredGrid)
+                    else mesh.cast_to_unstructured_grid()
+                )
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
-                # Use points dtype eps by default
-                size_tol: float = (
+                size_tol: float | NDArray[np.float64] = (
                     size_tolerance
                     if size_tolerance is not None
-                    else np.finfo(mesh.points.dtype).eps
+                    else _cell_size_rounding(mesh, ugrid)
                 )
                 size_data = mesh.compute_cell_sizes(
                     vertex_count=True, length=True, area=True, volume=True
@@ -2012,12 +2026,8 @@ class DataObjectFilters:
             # COINCIDENT_POINTS
             # Skip remaining checks for datasets where cell connectivity cannot be invalid
             # Do not skip types StructuredGrid where coincident points are possible
-            if isinstance(mesh, pv.Grid):
+            if ugrid is None:
                 return
-
-            ugrid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
 
             conn = ugrid.cell_connectivity
             offset = ugrid.cell_offsets
@@ -6591,6 +6601,64 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
+def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDArray[np.float64]:
+    """Return the rounding error of each cell's size from the precision of the points.
+
+    A coordinate error of ``_SIZE_ROUNDING_ULPS`` units in the last place at the mesh's largest
+    coordinate changes a cell of extent ``L`` and dimension ``d`` by ``L ** (d - 1)`` times that
+    error. ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a :class:`pyvista.Grid`.
+    """
+    if ugrid is None:
+        grid = cast('pv.Grid', mesh)
+        dtype = grid.x.dtype if isinstance(grid, pv.RectilinearGrid) else np.dtype(np.float64)
+        if grid.n_cells == 0:
+            return np.zeros(0)
+        cell = grid.get_cell(0)
+        dimension = np.full(grid.n_cells, cell.dimension)
+        if isinstance(grid, pv.ImageData):
+            # Every cell has the shape of the first
+            extent = np.full(
+                grid.n_cells, np.linalg.norm(np.diff(np.reshape(cell.bounds, (3, 2))))
+            )
+        else:
+            dx, dy, dz = (
+                np.diff(coords).astype(float) if coords.size > 1 else np.zeros(1)
+                for coords in (grid.x, grid.y, grid.z)
+            )
+            # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
+            extent = np.sqrt(
+                dx**2 + dy[:, np.newaxis] ** 2 + dz[:, np.newaxis, np.newaxis] ** 2
+            ).ravel()
+    else:
+        dtype = ugrid.points.dtype
+        offsets = ugrid.cell_offsets
+        extent = np.zeros(ugrid.n_cells)
+        nonempty = np.diff(offsets) > 0
+        if nonempty.any():
+            # Each cell's extent is the diagonal of its bounding box
+            points = ugrid.points[ugrid.cell_connectivity]
+            starts = offsets[:-1][nonempty]
+            with np.errstate(invalid='ignore', over='ignore'):
+                diagonal = np.maximum.reduceat(points, starts) - np.minimum.reduceat(
+                    points, starts
+                )
+                extent[nonempty] = np.linalg.norm(diagonal.astype(float), axis=1)
+        celltypes = ugrid.celltypes
+        dimension = np.zeros(ugrid.n_cells, dtype=int)
+        for celltype in np.unique(celltypes):
+            dimension[celltypes == celltype] = CellType(celltype).dimension
+
+    if not np.issubdtype(dtype, np.floating):
+        dtype = np.dtype(np.float64)
+    bounds = np.abs(np.asarray(mesh.bounds))
+    magnitude = min(np.max(bounds[np.isfinite(bounds)], initial=0.0), np.finfo(dtype).max)
+    with np.errstate(invalid='ignore', over='ignore'):
+        ulp = np.spacing(np.asarray(magnitude, dtype=dtype)).astype(float)
+        rounding = _SIZE_ROUNDING_ULPS * ulp * extent ** np.maximum(dimension - 1, 0)
+    # A vertex is measured by its point count, which has no rounding
+    return np.where(dimension > 0, rounding, 0.0)
+
+
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
     """Return ``True`` if any cell of a mesh or of its blocks references a missing point id."""
     blocks = (
@@ -6635,6 +6703,8 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
+# Units in the last place of a point coordinate a cell's size may round by
+_SIZE_ROUNDING_ULPS = 4
 
 
 def _slice_image_along_axis(
