@@ -4490,16 +4490,39 @@ def test_cell_validator_size_small_units(dtype, offset):
 
 
 def test_cell_validator_size_rounding_scales_with_coordinates():
-    # A sliver one float32 rounding step thick far from the origin is zero size
-    tri = pv.PolyData([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, 0.0, 0.0]], faces=[3, 0, 1, 2])
-    tri = tri.translate((1.0e4, 0.0, 0.0))
-    tri.points = tri.points.astype(np.float32)
-    tri.points[2, 1] = np.spacing(np.float32(1.0e4))
+    # A sliver one float32 rounding step thick, along an axis far from the origin, is zero size
+    y = np.float32(1.0e4)
+    points = np.array([[0.0, y, 0.0], [1.0, y, 0.0], [0.5, y + np.spacing(y), 0.0]], np.float32)
+    tri = pv.PolyData(points, faces=[3, 0, 1, 2])
     assert tri.area > 0
-    assert 'zero_size' in tri.validate_mesh().invalid_fields
-    # The same triangle near the origin is resolved by the point precision
-    near = tri.translate((-1.0e4, 0.0, 0.0))
-    assert near.validate_mesh().is_valid
+    assert tri.validate_mesh().invalid_fields == ('zero_size',)
+    # Far from the origin along another axis, the thin axis is resolved by the point precision
+    height = np.spacing(y)
+    across = np.array([[y, 0.0, 0.0], [y + 1, 0.0, 0.0], [y + 0.5, height, 0.0]], np.float32)
+    assert pv.PolyData(across, faces=[3, 0, 1, 2]).validate_mesh().is_valid
+    # Near the origin, the sliver is resolved too
+    near = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, height, 0.0]], np.float32)
+    assert pv.PolyData(near, faces=[3, 0, 1, 2]).validate_mesh().is_valid
+
+
+@pytest.mark.parametrize('scale', [1.0e10, 1.0e20])
+def test_cell_validator_size_beyond_clamp(scale):
+    # VTK clamps sizes to 1e30, so the largest cells cannot be compared with the tolerance
+    sphere = pv.Sphere().scale(scale)
+    assert sphere.validate_mesh().is_valid
+
+
+@pytest.mark.parametrize(
+    ('grid', 'valid'),
+    [
+        (pv.ImageData(dimensions=(2, 2, 2), origin=(1.0e4, 0, 0), spacing=(1e-12, 1, 1)), False),
+        (pv.ImageData(dimensions=(2, 2, 2), spacing=(1e-12, 1, 1)), True),
+        (pv.RectilinearGrid([1.0e4, np.nextafter(1.0e4, np.inf)], [0.0, 1.0], [0.0, 1.0]), False),
+        (pv.RectilinearGrid([0.0, 1e-12], [1.0e4, 1.0e4 + 1.0], [0.0, 1.0]), True),
+    ],
+)
+def test_cell_validator_size_rounding_grid(grid, valid):
+    assert grid.validate_mesh().invalid_fields == (() if valid else ('zero_size',))
 
 
 @pytest.mark.parametrize('offset', [0.0, 1.0e6, 7.5e6])

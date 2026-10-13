@@ -1821,11 +1821,10 @@ class DataObjectFilters:
             cells with a size less than the negative of this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
 
-            By default, each cell's size is compared with how much it can change from rounding
-            its points: four units in the last place of the points ``dtype`` at the mesh's
-            largest absolute coordinate, times the cell's extent raised to the power of its
-            dimension minus one. A cell of any scale is checked this way, and only a cell too
-            small to resolve at the precision of its points has zero size.
+            By default, each cell's size is compared with how much it can change when its points
+            move by one unit in the last place of the points ``dtype``, taken at the mesh's
+            largest absolute coordinate along each axis. Only a cell too small to resolve at the
+            precision of its points has zero size, whatever the scale of the mesh.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
 
@@ -2044,11 +2043,14 @@ class DataObjectFilters:
                     + size_data['Volume']
                 )
 
+                # A size at the clamp is too large to compare with the tolerance
+                clamped = np.abs(size) >= _VERDICT_DBL_MAX
+
                 # NEGATIVE_SIZE
-                state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
+                state[(size < -size_tol) | (clamped & (size < 0))] |= CellStatus.NEGATIVE_SIZE
 
                 # ZERO_SIZE
-                state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
+                state[(np.abs(size) <= size_tol) & ~clamped] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
             # Skip remaining checks for datasets where cell connectivity cannot be invalid
@@ -6678,11 +6680,12 @@ def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> Da
 
 
 def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDArray[np.float64]:
-    """Return the rounding error of each cell's size from the precision of the points.
+    """Return how much rounding the points by one unit in the last place may change cell sizes.
 
-    A coordinate error of ``_SIZE_ROUNDING_ULPS`` units in the last place at the mesh's largest
-    coordinate changes a cell of extent ``L`` and dimension ``d`` by ``L ** (d - 1)`` times that
-    error. ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a :class:`pyvista.Grid`.
+    Each axis is rounded at the mesh's largest coordinate along it. Moving a face of a cell's
+    bounding box by that amount changes the box's length, area or volume, which bounds the change
+    of the cell. ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a
+    :class:`pyvista.Grid`.
     """
     if ugrid is None:
         grid = cast('pv.Grid', mesh)
@@ -6695,32 +6698,34 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
         dimension = np.full(grid.n_cells, cell.dimension)
         if isinstance(grid, pv.ImageData):
             # Every cell has the shape of the first
-            extent = np.full(
-                grid.n_cells, np.linalg.norm(np.diff(np.reshape(cell.bounds, (3, 2))))
-            )
+            extent = np.tile(np.ptp(np.reshape(cell.bounds, (3, 2)), axis=1), (grid.n_cells, 1))
         else:
             dx, dy, dz = (
                 np.diff(coords).astype(float) if coords.size > 1 else np.zeros(1)
                 for coords in (grid.x, grid.y, grid.z)
             )
             # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
-            extent = np.sqrt(
-                dx**2 + dy[:, np.newaxis] ** 2 + dz[:, np.newaxis, np.newaxis] ** 2
-            ).ravel()
+            shape = (dz.size, dy.size, dx.size)
+            extent = np.stack(
+                [
+                    np.broadcast_to(dx, shape),
+                    np.broadcast_to(dy[:, np.newaxis], shape),
+                    np.broadcast_to(dz[:, np.newaxis, np.newaxis], shape),
+                ],
+                axis=-1,
+            ).reshape(-1, 3)
     else:
         dtype = ugrid.points.dtype
         offsets = ugrid.cell_offsets
-        extent = np.zeros(ugrid.n_cells)
+        extent = np.zeros((ugrid.n_cells, 3))
         nonempty = np.diff(offsets) > 0
         if nonempty.any():
-            # Each cell's extent is the diagonal of its bounding box
             points = ugrid.points[ugrid.cell_connectivity]
             starts = offsets[:-1][nonempty]
             with np.errstate(invalid='ignore', over='ignore'):
-                diagonal = np.maximum.reduceat(points, starts) - np.minimum.reduceat(
+                extent[nonempty] = np.maximum.reduceat(points, starts) - np.minimum.reduceat(
                     points, starts
                 )
-                extent[nonempty] = np.linalg.norm(diagonal.astype(float), axis=1)
         celltypes = ugrid.celltypes
         dimension = np.zeros(ugrid.n_cells, dtype=int)
         for celltype in np.unique(celltypes):
@@ -6730,15 +6735,24 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
         'np.dtype[np.floating[Any]]',
         dtype if np.issubdtype(dtype, np.floating) else np.dtype(np.float64),
     )
-    bounds = np.abs(np.asarray(mesh.bounds))
-    magnitude = min(
-        float(np.max(bounds[np.isfinite(bounds)], initial=0.0)), float(np.finfo(float_dtype).max)
+    bounds = np.abs(np.reshape(mesh.bounds, (3, 2)))
+    magnitude = np.minimum(
+        np.max(np.where(np.isfinite(bounds), bounds, 0.0), axis=1), np.finfo(float_dtype).max
     )
     with np.errstate(invalid='ignore', over='ignore'):
-        ulp = np.spacing(np.asarray(magnitude, dtype=float_dtype)).astype(float)
-        rounding = _SIZE_ROUNDING_ULPS * ulp * extent ** np.maximum(dimension - 1, 0)
-    # A vertex is measured by its point count, which has no rounding
-    return np.where(dimension > 0, rounding, 0.0)
+        ulp = np.spacing(magnitude.astype(float_dtype)).astype(float)
+        ex, ey, ez = extent.T
+        dx, dy, dz = ulp
+        return np.select(
+            [dimension == 1, dimension == 2, dimension == 3],
+            [
+                np.full(len(dimension), np.linalg.norm(ulp)),
+                dx * np.hypot(ey, ez) + dy * np.hypot(ex, ez) + dz * np.hypot(ex, ey),
+                dx * ey * ez + dy * ex * ez + dz * ex * ey,
+            ],
+            # A vertex is measured by its point count, which has no rounding
+            default=0.0,
+        )
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
@@ -6785,8 +6799,8 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
-# Units in the last place of a point coordinate a cell's size may round by
-_SIZE_ROUNDING_ULPS = 4
+# Verdict clamps lengths, areas and volumes to +/-1e30
+_VERDICT_DBL_MAX = 1.0e30
 
 
 def _slice_image_along_axis(
