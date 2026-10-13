@@ -7250,7 +7250,7 @@ class BasePlotter(_BoundsSizeMixin):
             - ``'premultiplied'`` returns an RGBA image whose colors are already multiplied
               by alpha (associated alpha) and contain no background color. Use it for
               compositing software and formats that expect colors multiplied by alpha,
-              such as OpenEXR, or to filter the image further without halos.
+              or to filter the image further without halos.
 
             ``'straight'`` and ``'premultiplied'`` render the scene once more over a black
             background and then restore the background. Fully transparent pixels are
