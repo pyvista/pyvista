@@ -4973,15 +4973,15 @@ class ImageDataFilters(DataSetFilters):
         if extend_border is None:
             extend_border = not (processing_cell_scalars or reference_image_provided)
 
-        # 64-bit integers are not supported by the VTK image filters, so cast to float
         input_dtype = input_image.point_data[name].dtype
-        if input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
-            input_image.point_data[name] = input_image.point_data[name].astype(float)
-
         if is_srgb:
             input_image.point_data[name] = _srgb_to_linear_colors(
                 input_image.point_data[name], name=name
             )
+        # 64-bit integers are not supported by the VTK image filters, so cast to float
+        elif input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
+            input_image.point_data[name] = input_image.point_data[name].astype(float)
+
         if premultiply_alpha:
             input_rgba = input_image.point_data[name]
             input_image.point_data[name] = _premultiply_alpha(input_rgba, name=name)

@@ -1954,6 +1954,13 @@ def test_resample_is_srgb_premultiply_alpha():
     assert rgba[3] == image.resample(**kwargs)['rgba'][1, 3]
 
 
+def test_resample_is_srgb_cell_data():
+    image = pv.ImageData(dimensions=(3, 2, 1))
+    image.cell_data['rgb'] = np.array([[0, 0, 0], [255, 255, 255]], dtype=np.uint8)
+    resampled = image.resample(dimensions=(4, 2, 1), interpolation='linear', is_srgb=True)
+    assert np.allclose(resampled.cell_data['rgb'][1], 255 * _linear_to_srgb(0.5), atol=0.5)
+
+
 def test_resample_is_srgb_round_trip():
     # Decoding and encoding every 8-bit value returns it unchanged
     image = pv.ImageData(dimensions=(16, 16, 1))
@@ -1974,6 +1981,11 @@ def test_resample_is_srgb_round_trip():
             np.zeros((16, 3), dtype=np.int32),
             TypeError,
             "uint8 or floating point scalars, but 'rgb' has dtype int32",
+        ),
+        (
+            np.zeros((16, 3), dtype=np.int64),
+            TypeError,
+            "uint8 or floating point scalars, but 'rgb' has dtype int64",
         ),
     ],
 )
