@@ -4812,28 +4812,30 @@ class ImageDataFilters(DataSetFilters):
 
         Compare the ``downsampled`` image to the original and zoom in to show detail.
 
-        >>> def compare_images_plotter(image1, image2):
-        ...     pl = pv.Plotter(shape=(1, 2))
-        ...     _ = pl.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
-        ...     pl.subplot(0, 1)
-        ...     _ = pl.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
-        ...     pl.link_views()
-        ...     pl.view_xy()
-        ...     pl.camera.zoom(3.0)
-        ...     return pl
-
-        >>> pl = compare_images_plotter(gourds, downsampled)
-        >>> pl.show()
+        >>> kwargs = dict(
+        ...     rgba=True,
+        ...     lighting=False,
+        ...     show_axes=False,
+        ...     cpos='xy',
+        ...     border_color='black',
+        ...     border_width=6,
+        ... )
+        >>> pv.plot_compare(
+        ...     {'original': gourds, 'downsampled': downsampled}, zoom=3, **kwargs
+        ... )
 
         Note that down-sampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
         >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
 
-        Compare down-sampling with aliasing (left) to without aliasing (right).
+        Compare down-sampling with and without anti-aliasing.
 
-        >>> pl = compare_images_plotter(downsampled, downsampled2)
-        >>> pl.show()
+        >>> pv.plot_compare(
+        ...     {'aliased': downsampled, 'anti-aliased': downsampled2},
+        ...     zoom=3,
+        ...     **kwargs,
+        ... )
 
         Resample RGBA colors with transparency. Here two opaque red pixels are next to
         two fully transparent white pixels, like the background of a screenshot taken
@@ -4872,22 +4874,25 @@ class ImageDataFilters(DataSetFilters):
         ... )
 
         Show the images over black, as an image viewer would. Focus on the ``i`` and
-        ``s``, which are partly transparent. By default (top), the white stored in
-        the transparent pixels bleeds into them and washes them out. With
-        ``premultiply_alpha`` (bottom), the ``i`` stays red and the ``s`` stays brown.
+        ``s``, which are partly transparent. By default, the white stored in the
+        transparent pixels bleeds into them and washes them out. With
+        ``premultiply_alpha``, the ``i`` stays red and the ``s`` stays brown.
 
         >>> def over_black(image):
         ...     rgba = image.active_scalars
         ...     image['rgb'] = (rgba[:, :3] * (rgba[:, 3:] / 255)).astype(np.uint8)
         ...     return image.points_to_cells(scalars='rgb')
-        >>> pl = pv.Plotter(shape=(2, 1), window_size=[800, 690], border_width=6)
-        >>> _ = pl.add_mesh(over_black(straight), rgba=True, lighting=False)
-        >>> pl.view_xy()
-        >>> pl.camera.tight(adjust_render_window=False)
-        >>> pl.subplot(1, 0)
-        >>> _ = pl.add_mesh(over_black(premultiplied), rgba=True, lighting=False)
-        >>> pl.link_views()
-        >>> pl.show()
+        >>> pv.plot_compare(
+        ...     {
+        ...         'default': over_black(straight),
+        ...         'premultiply_alpha': over_black(premultiplied),
+        ...     },
+        ...     zoom=2.4,
+        ...     window_size=[800, 690],
+        ...     label_kwargs={'color': 'darkorange'},
+        ...     shape=(2, 1),
+        ...     **kwargs,
+        ... )
 
         Colors are also blended in their sRGB encoding by default. Down-sample red and
         green stripes, which look yellow from a distance.
@@ -4897,14 +4902,21 @@ class ImageDataFilters(DataSetFilters):
         >>> stripes['rgb'] = np.tile(red_green, (stripes.n_points // 2, 1))
         >>> encoded = stripes.resample(0.5, 'linear', anti_aliasing=True)
 
-        Enable ``is_srgb`` to blend them in linear light instead. The default (left)
-        blends the stripes to a dark olive, and ``is_srgb`` (right) to yellow.
+        Enable ``is_srgb`` to blend them in linear light instead. The default blends
+        the stripes to a dark olive, and ``is_srgb`` to yellow.
 
         >>> linear = stripes.resample(0.5, 'linear', anti_aliasing=True, is_srgb=True)
-        >>> pl = compare_images_plotter(
-        ...     encoded.points_to_cells(), linear.points_to_cells()
+        >>> pv.plot_compare(
+        ...     {
+        ...         'default': encoded.points_to_cells(),
+        ...         'is_srgb': linear.points_to_cells(),
+        ...     },
+        ...     zoom=4,
+        ...     window_size=[800, 406],
+        ...     label_kwargs={'color': 'black'},
+        ...     shape=(2, 1),
+        ...     **kwargs,
         ... )
-        >>> pl.show()
 
         Load an MRI of a knee and down-sample it.
 
