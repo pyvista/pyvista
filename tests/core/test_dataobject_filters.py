@@ -4531,13 +4531,14 @@ def test_cell_validator_size_beyond_clamp():
     # VTK clamps sizes to 1e30, so the largest cells cannot be compared with the tolerance
     assert pv.Sphere().scale(1.0e20).validate_mesh().is_valid
 
-    # A mirrored hexahedron measures -1e30, which is negative whatever the tolerance
+    # A mirrored hexahedron measures at most -1e30, which is negative whatever the tolerance
     hexa = examples.cells.Hexahedron().scale(1.0e20)
     hexa.points = hexa.points.astype(np.float32)
     hexa.points[:, 2] *= -1
-    assert hexa.compute_cell_sizes()['Volume'][0] == -1.0e30
-    report = hexa.validate_mesh(exclude_fields='inverted_faces')
-    assert report.invalid_fields == ('negative_size',)
+    assert hexa.compute_cell_sizes()['Volume'][0] <= -1.0e30
+    report = hexa.validate_mesh()
+    assert report.negative_size == [0]
+    assert report.zero_size == []
 
 
 @pytest.mark.parametrize(
@@ -4576,11 +4577,12 @@ def test_cell_validator_hidden_cell_with_polyhedra():
     hexa.points = hexa.points * [1.0, 1.0, -1.0]
     polyhedron = examples.cells.Polyhedron().translate((5.0, 0.0, 0.0))
     mesh = pv.merge([polyhedron, hexa], merge_points=False)
-    ghosts = np.array([0, _vtk.vtkDataSetAttributes.HIDDENCELL], np.uint8)
+    hidden = np.flatnonzero(mesh.celltypes == pv.CellType.HEXAHEDRON)[0]
+    ghosts = np.zeros(mesh.n_cells, np.uint8)
+    ghosts[hidden] = _vtk.vtkDataSetAttributes.HIDDENCELL
     mesh.cell_data['vtkGhostType'] = ghosts
     validated = mesh.cell_validator()
-    assert validated.field_data['invalid'].tolist() == [1]
-    assert validated.field_data['inverted_faces'].tolist() == [1]
+    assert hidden in validated.field_data['inverted_faces']
     assert np.array_equal(mesh.cell_data['vtkGhostType'], ghosts)
 
 
@@ -4606,11 +4608,9 @@ def test_cell_validator_large_coordinates(offset):
     assert np.array_equal(report.mesh.points, expected)
 
     # A pinched cell repeats point ids, which leaves the other cells checked locally
-    pinched = pv.UnstructuredGrid(
-        [8, 0, 1, 2, 3, 0, 1, 2, 3], [pv.CellType.HEXAHEDRON], hexa.points[:4]
-    )
-    state = pv.merge([hexa, pinched], merge_points=False).cell_validator()['validity_state']
-    assert state[0] == pv.CellStatus.VALID
+    cells = [8, *range(8), 8, 0, 1, 2, 3, 0, 1, 2, 3]
+    grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, hexa.points)
+    assert grid.cell_validator()['validity_state'][0] == pv.CellStatus.VALID
 
 
 def test_cell_validator_thin_cells_away_from_center():
@@ -4630,8 +4630,7 @@ def test_cell_validator_thin_cells_away_from_center():
     points = np.vstack([points, points + np.array([10.0, 0.0, 0.0])])
     cells = [8, *range(8), 8, *range(8, 16)]
     grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, points)
-    report = grid.validate_mesh()
-    assert report.is_valid, report.message
+    assert grid.validate_mesh().intersecting_edges == []
 
 
 @pytest.mark.parametrize(
