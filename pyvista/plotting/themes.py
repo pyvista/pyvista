@@ -1488,6 +1488,9 @@ class _TrameConfig(_ConfigBase):
 
     """
 
+    # Detected from the environment, so never serialized.
+    _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'jupyter_extension_available'})
+
     __slots__ = [
         '_default_mode',
         '_interactive_ratio',

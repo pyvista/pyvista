@@ -107,8 +107,8 @@ class _ConfigBase(metaclass=_ForceSlots):
 
     __slots__: ClassVar[list[str]] = []
 
-    # Slot names (without the leading underscore) that should be omitted from
-    # ``to_dict`` output even though they live in ``__slots__``. Subclasses may
+    # Slot names (without the leading underscore) that ``to_dict`` omits and
+    # ``from_dict`` ignores even though they live in ``__slots__``. Subclasses may
     # override this with their own ``frozenset``.
     _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset()
 
@@ -124,7 +124,7 @@ class _ConfigBase(metaclass=_ForceSlots):
             reconstructed via their own ``from_dict``. A key that is not a
             valid attribute of ``cls`` is skipped with a warning instead of
             raising, so a dict saved by a different pyvista version can
-            still be loaded.
+            still be loaded. Names listed in ``_TO_DICT_SKIP`` are ignored.
 
         Returns
         -------
@@ -133,7 +133,10 @@ class _ConfigBase(metaclass=_ForceSlots):
 
         """
         inst = cls()
+        skip = cls._TO_DICT_SKIP
         for key, value in dict_.items():
+            if key in skip:
+                continue
             if not hasattr(inst, key):
                 msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
                 warn_external(msg)
