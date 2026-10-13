@@ -1420,8 +1420,9 @@ class DataObjectFilters:
               :meth:`~pyvista.DataObjectFilters.cell_validator`.
             - Thin cells and cells far from the origin are no longer reported with intersecting
               edges or inverted faces due to rounding error.
-            - ``coincident_points`` excludes closed polylines and triangle strips which repeat
-              points for degenerate triangles.
+            - ``coincident_points`` allows a polyline to revisit a point other than the one
+              before it, and a triangle strip to repeat points if it has at least three distinct
+              points.
             - A field group skips the fields the mesh type cannot check instead of raising.
 
         Parameters
@@ -1803,8 +1804,9 @@ class DataObjectFilters:
 
             - Each cell is checked in coordinates centered on the cell, so thin cells and cells
               far from the origin are not reported as invalid due to rounding error.
-            - :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` excludes closed polylines and
-              triangle strips which repeat points for degenerate triangles.
+            - :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` allows a polyline to revisit a
+              point other than the one before it, and a triangle strip to repeat points if it has
+              at least three distinct points.
 
         Parameters
         ----------
@@ -6669,39 +6671,46 @@ def _cells_in_local_coordinates(mesh: DataSet, ugrid: pv.UnstructuredGrid) -> Da
 
     :vtk:`vtkCellValidator` intersects edges with a tolerance relative to the distance from the
     origin, which this makes relative to the size of each cell. ``ugrid`` is the mesh as an
-    unstructured grid. The mesh is returned as is when a cell cannot be separated.
+    unstructured grid.
     """
+    offsets = ugrid.cell_offsets
+    counts = np.diff(offsets)
+    points = ugrid.points[ugrid.cell_connectivity].astype(float, copy=False)
+    nonempty = counts > 0
+    center = np.zeros((ugrid.n_cells, 3))
+    with np.errstate(invalid='ignore', over='ignore'):
+        if nonempty.any():
+            sums = np.add.reduceat(points, offsets[:-1][nonempty])
+            center[nonempty] = sums / counts[nonempty, np.newaxis]
+        points -= np.repeat(center, counts, axis=0)
+
+    # Polyhedron faces reference point ids, and structured grids hide cells with ghost arrays
+    structured = isinstance(mesh, (pv.StructuredGrid, pv.ExplicitStructuredGrid))
+    if not (
+        np.any(ugrid.celltypes == CellType.POLYHEDRON)
+        or (structured and (_GHOST_ARRAY in mesh.cell_data or _GHOST_ARRAY in mesh.point_data))
+    ):
+        local = pv.UnstructuredGrid()
+        local.SetPoints(pv.vtk_points(points, deep=False))
+        local.SetCells(
+            _vtk.numpy_to_vtk(ugrid.celltypes.astype(np.uint8), deep=True),
+            pv.CellArray.from_arrays(offsets, np.arange(offsets[-1])),
+        )
+        return local
+
+    # Let VTK copy the points of each cell, which keeps the faces and turns hidden cells empty
     shrink = _vtk.vtkShrinkFilter()
     shrink.SetShrinkFactor(1.0)
     shrink.SetInputData(mesh)
     shrink.Update()
     local = cast('pv.UnstructuredGrid', _get_output(shrink))
-    offsets = ugrid.cell_offsets
-    # The filter drops cells without points
+    # The filter outputs nothing for a mesh without points
     if not np.array_equal(local.cell_offsets, offsets):
         return mesh
-    # Each new point copies one point of one cell, which it replaces in the connectivity
-    local_ids = local.cell_connectivity
-    counts = np.diff(offsets)
-    cell_ids = np.repeat(np.arange(ugrid.n_cells), counts)
-    source = np.zeros(local.n_points, dtype=int)
-    source[local_ids] = ugrid.cell_connectivity
-    cell = np.zeros(local.n_points, dtype=int)
-    cell[local_ids] = cell_ids
-    if not (
-        np.array_equal(source[local_ids], ugrid.cell_connectivity)
-        and np.array_equal(cell[local_ids], cell_ids)
-    ):
-        return mesh
-    # Take the points from the mesh, since the filter rounds them about the cell center
-    points = ugrid.points[ugrid.cell_connectivity].astype(float)
-    nonempty = counts > 0
-    center = np.zeros((ugrid.n_cells, 3))
-    if nonempty.any():
-        sums = np.add.reduceat(points, offsets[:-1][nonempty])
-        center[nonempty] = sums / counts[nonempty, np.newaxis]
-    with np.errstate(invalid='ignore'):
-        local.points = ugrid.points[source].astype(float) - center[cell]
+    # Each copied point replaces its point in the connectivity of one cell
+    entry = np.zeros(local.n_points, dtype=int)
+    entry[local.cell_connectivity] = np.arange(offsets[-1])
+    local.points = points[entry]
     return local
 
 
@@ -6715,8 +6724,10 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
     """
     if ugrid is None:
         grid = cast('pv.Grid', mesh)
-        dtype: np.dtype[Any] = (
-            grid.x.dtype if isinstance(grid, pv.RectilinearGrid) else np.dtype(np.float64)
+        dtypes: list[np.dtype[Any]] = (
+            [grid.x.dtype, grid.y.dtype, grid.z.dtype]
+            if isinstance(grid, pv.RectilinearGrid)
+            else [np.dtype(np.float64)] * 3
         )
         if grid.n_cells == 0:
             return np.zeros(0)
@@ -6741,7 +6752,7 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
                 axis=-1,
             ).reshape(-1, 3)
     else:
-        dtype = ugrid.points.dtype
+        dtypes = [ugrid.points.dtype] * 3
         offsets = ugrid.cell_offsets
         extent = np.zeros((ugrid.n_cells, 3))
         nonempty = np.diff(offsets) > 0
@@ -6757,16 +6768,17 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
         for celltype in np.unique(celltypes):
             dimension[celltypes == celltype] = CellType(celltype).dimension
 
-    float_dtype = cast(
-        'np.dtype[np.floating[Any]]',
-        dtype if np.issubdtype(dtype, np.floating) else np.dtype(np.float64),
-    )
     bounds = np.abs(np.reshape(mesh.bounds, (3, 2)))
-    magnitude = np.minimum(
-        np.max(np.where(np.isfinite(bounds), bounds, 0.0), axis=1), np.finfo(float_dtype).max
-    )
+    magnitude = np.max(np.where(np.isfinite(bounds), bounds, 0.0), axis=1)
+    ulp = np.zeros(3)
     with np.errstate(invalid='ignore', over='ignore'):
-        ulp = np.spacing(magnitude.astype(float_dtype)).astype(float)
+        for axis, dtype in enumerate(dtypes):
+            float_dtype = cast(
+                'np.dtype[np.floating[Any]]',
+                dtype if np.issubdtype(dtype, np.floating) else np.dtype(np.float64),
+            )
+            value = min(float(magnitude[axis]), float(np.finfo(float_dtype).max))
+            ulp[axis] = np.spacing(np.asarray(value, dtype=float_dtype))
         ex, ey, ez = extent.T
         dx, dy, dz = ulp
         return np.select(
@@ -6825,7 +6837,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
-# Verdict clamps lengths, areas and volumes to +/-1e30
+# Areas and volumes are clamped to +/-1e30
 _VERDICT_DBL_MAX = 1.0e30
 
 

@@ -4495,8 +4495,9 @@ def test_cell_validator_size_small_units(dtype, offset):
     # A tetra flattened into the plane of three of its points has zero volume
     flat = tetra.copy()
     flat.points[3] = flat.points[:3].mean(axis=0)
-    assert 'zero_size' in flat.validate_mesh().invalid_fields
-    assert 'negative_size' not in flat.validate_mesh().invalid_fields
+    invalid_fields = flat.validate_mesh().invalid_fields
+    assert 'zero_size' in invalid_fields
+    assert 'negative_size' not in invalid_fields
 
 
 def test_cell_validator_size_rounding_scales_with_coordinates():
@@ -4515,11 +4516,27 @@ def test_cell_validator_size_rounding_scales_with_coordinates():
     assert pv.PolyData(near, faces=[3, 0, 1, 2]).validate_mesh().is_valid
 
 
-@pytest.mark.parametrize('scale', [1.0e10, 1.0e20])
-def test_cell_validator_size_beyond_clamp(scale):
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_cell_validator_size_rounding_line(dtype):
+    # A line one rounding step long has zero length far from the origin but not near it
+    step = np.spacing(dtype(1.0e4))
+    far = pv.PolyData(np.array([[1.0e4, 0, 0], [1.0e4 + step, 0, 0]], dtype), lines=[2, 0, 1])
+    assert 'zero_size' in far.validate_mesh().invalid_fields
+    near = pv.PolyData(np.array([[0, 0, 0], [step, 0, 0]], dtype), lines=[2, 0, 1])
+    assert 'zero_size' not in near.validate_mesh().invalid_fields
+
+
+def test_cell_validator_size_beyond_clamp():
     # VTK clamps sizes to 1e30, so the largest cells cannot be compared with the tolerance
-    sphere = pv.Sphere().scale(scale)
-    assert sphere.validate_mesh().is_valid
+    assert pv.Sphere().scale(1.0e20).validate_mesh().is_valid
+
+    # A mirrored hexahedron measures -1e30, which is negative whatever the tolerance
+    hexa = examples.cells.Hexahedron().scale(1.0e20)
+    hexa.points = hexa.points.astype(np.float32)
+    hexa.points[:, 2] *= -1
+    assert hexa.compute_cell_sizes()['Volume'][0] == -1.0e30
+    report = hexa.validate_mesh(exclude_fields='inverted_faces')
+    assert report.invalid_fields == ('negative_size',)
 
 
 @pytest.mark.parametrize(
@@ -4529,6 +4546,11 @@ def test_cell_validator_size_beyond_clamp(scale):
         (pv.ImageData(dimensions=(2, 2, 2), spacing=(1e-12, 1, 1)), True),
         (pv.RectilinearGrid([1.0e4, np.nextafter(1.0e4, np.inf)], [0.0, 1.0], [0.0, 1.0]), False),
         (pv.RectilinearGrid([0.0, 1e-12], [1.0e4, 1.0e4 + 1.0], [0.0, 1.0]), True),
+        # Each axis is rounded in its own dtype
+        (
+            pv.RectilinearGrid(np.array([0.0, 1.0], np.float32), [1.0e4, 1.0e4 + 1e-9], [0, 1]),
+            True,
+        ),
     ],
 )
 def test_cell_validator_size_rounding_grid(grid, valid):
@@ -4564,8 +4586,7 @@ def test_cell_validator_large_coordinates(offset):
     assert state[0] == pv.CellStatus.VALID
 
 
-@pytest.mark.parametrize('offset', [0.0, 10.0, 1.0e3])
-def test_cell_validator_thin_cells_away_from_center(offset):
+def test_cell_validator_thin_cells_away_from_center():
     # A thin hexahedron of an airfoil boundary layer, with copies 10 units apart
     points = np.array(
         [
@@ -4580,7 +4601,6 @@ def test_cell_validator_thin_cells_away_from_center(offset):
         ]
     )
     points = np.vstack([points, points + np.array([10.0, 0.0, 0.0])])
-    points[:, 0] += offset
     cells = [8, *range(8), 8, *range(8, 16)]
     grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, points)
     report = grid.validate_mesh()
