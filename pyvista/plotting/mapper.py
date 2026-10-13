@@ -96,7 +96,31 @@ def _default_scalar_range(
     *,
     below_range_color: bool = False,
 ) -> tuple[float, float]:
-    """Return ``(low, high)``, collapsed to ``high`` when within a few ulps of ``dtype``."""
+    """Return the default scalar range of data spanning ``low`` to ``high``.
+
+    Parameters
+    ----------
+    low : float
+        Minimum of the data.
+
+    high : float
+        Maximum of the data.
+
+    dtype : numpy.dtype
+        Data type the data is stored in.
+
+    below_range_color : bool, default: False
+        Whether values below the range are drawn in a separate color.
+
+    Returns
+    -------
+    tuple[float, float]
+        ``(high, high)`` when ``dtype`` is floating, both bounds are finite,
+        ``below_range_color`` is ``False`` and the bounds are at most
+        ``_NEAR_CONSTANT_ULPS`` units in the last place apart. Otherwise
+        ``(low, high)``.
+
+    """
     low, high = float(low), float(high)
     if (
         not below_range_color
