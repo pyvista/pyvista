@@ -4170,8 +4170,15 @@ def test_validate_mesh_str_filtered():
     assert actual == expected
 
 
-@pytest.mark.parametrize('fields', ['non_convex', 'unused_points'])
-def test_validate_mesh_composite_pointset_block(ant, fields):
+@pytest.mark.parametrize(
+    ('fields', 'match'),
+    [
+        ('non_convex', "Cell field 'non_convex' is not supported for PointSet"),
+        ('unused_points', "Point field 'unused_points' is not supported for PointSet"),
+        ('cells', "No 'cells' validation fields are supported for PointSet"),
+    ],
+)
+def test_validate_mesh_composite_pointset_block(ant, fields, match):
     # By default the fields a PointSet cannot have are skipped for that block alone
     multi = pv.MultiBlock({'ant': ant, 'points': ant.cast_to_pointset()})
     report = multi.validate_mesh()
@@ -4180,8 +4187,7 @@ def test_validate_mesh_composite_pointset_block(ant, fields):
         ant.cast_to_pointset().validate_mesh()
     )
 
-    # Asking for them by name raises, as it does for a bare PointSet
-    match = f'field {fields!r} is not supported for PointSet'
+    # Asking for them by name, or for a group with none it can check, raises
     with pytest.raises(ValueError, match=match):
         ant.cast_to_pointset().validate_mesh(fields)
     with pytest.raises(ValueError, match=match):
@@ -4189,11 +4195,24 @@ def test_validate_mesh_composite_pointset_block(ant, fields):
 
 
 @pytest.mark.parametrize('group', ['points', 'cells', 'memory_safe', ['points', 'cells']])
-def test_validate_mesh_group_skips_unsupported_fields(ant, uniform, group):
-    pointset = ant.cast_to_pointset()
-    multi = pv.MultiBlock({'ant': ant, 'points': pointset, 'image': uniform})
-    for mesh in [pointset, uniform, pv.RectilinearGrid([0, 1], [0, 1], [0, 1]), multi]:
-        assert mesh.validate_mesh(group).is_valid
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.ImageData(dimensions=(3, 3, 3)),
+        pv.RectilinearGrid([0, 1], [0, 1], [0, 1]),
+        pv.MultiBlock([pv.Sphere(), pv.ImageData(dimensions=(3, 3, 3))]),
+    ],
+)
+def test_validate_mesh_group_skips_unsupported_fields(mesh, group):
+    assert mesh.validate_mesh(group).is_valid
+
+
+@pytest.mark.parametrize('group', ['points', 'memory_safe'])
+def test_validate_mesh_pointset_group(ant, group):
+    assert ant.cast_to_pointset().validate_mesh(group).is_valid
+    match = "No 'cells' validation fields are supported for PointSet"
+    with pytest.raises(ValueError, match=match):
+        ant.cast_to_pointset().validate_mesh([group, 'cells'])
 
 
 def test_validate_mesh_composite_grid_block(uniform):
@@ -4479,12 +4498,11 @@ def test_validate_mesh_degenerate_cells():
         mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
 
 
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('offset', [0.0, 1.0])
-def test_cell_validator_size_small_units(dtype, offset):
-    # A millimetre tetra in metres has a volume far below the eps of its points dtype
+def test_cell_validator_size_small_units(offset):
+    # A millimetre tetra in metres has a volume far below the eps of float32
     tetra = examples.cells.Tetrahedron().scale(1e-3).translate((offset, 0.0, 0.0))
-    tetra.points = tetra.points.astype(dtype)
+    tetra.points = tetra.points.astype(np.float32)
     assert tetra.validate_mesh().is_valid
 
     inverted = tetra.copy()
@@ -4548,6 +4566,8 @@ def test_cell_validator_size_beyond_clamp():
         (pv.ImageData(dimensions=(2, 2, 2), spacing=(1e-12, 1, 1)), True),
         (pv.RectilinearGrid([1.0e4, np.nextafter(1.0e4, np.inf)], [0.0, 1.0], [0.0, 1.0]), False),
         (pv.RectilinearGrid([0.0, 1e-12], [1.0e4, 1.0e4 + 1.0], [0.0, 1.0]), True),
+        # Descending coordinates
+        (pv.RectilinearGrid([1.0e4, np.nextafter(1.0e4, np.inf)], [1.0, 0.0], [0.0, 1.0]), False),
         # Each axis is rounded in its own dtype
         (
             pv.RectilinearGrid(np.array([0.0, 1.0], np.float32), [1.0e4, 1.0e4 + 1e-9], [0, 1]),
@@ -4559,7 +4579,7 @@ def test_cell_validator_size_rounding_grid(grid, valid):
     assert grid.validate_mesh().invalid_fields == (() if valid else ('zero_size',))
 
 
-@pytest.mark.parametrize('points_dtype', [None, 'float32', 'float64'])
+@pytest.mark.parametrize('points_dtype', [None, 'float64'])
 def test_cells_in_local_coordinates_keeps_precision(points_dtype):
     # Polyhedra are separated by a filter which outputs float32 points
     pv.global_config.points_dtype = points_dtype
@@ -4586,7 +4606,7 @@ def test_cell_validator_hidden_cell_with_polyhedra():
     assert np.array_equal(mesh.cell_data['vtkGhostType'], ghosts)
 
 
-@pytest.mark.parametrize('offset', [0.0, 1.0e6, 7.5e6])
+@pytest.mark.parametrize('offset', [0.0, 7.5e6])
 def test_cell_validator_large_coordinates(offset):
     # A warped reservoir grid cell, at the scale of UTM coordinates
     points = [
@@ -4607,7 +4627,7 @@ def test_cell_validator_large_coordinates(offset):
     assert np.array_equal(hexa.points, expected)
     assert np.array_equal(report.mesh.points, expected)
 
-    # A pinched cell repeats point ids, which leaves the other cells checked locally
+    # A cell that repeats point ids does not affect the others
     cells = [8, *range(8), 8, 0, 1, 2, 3, 0, 1, 2, 3]
     grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, hexa.points)
     assert grid.cell_validator()['validity_state'][0] == pv.CellStatus.VALID

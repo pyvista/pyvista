@@ -450,7 +450,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             data_fields=data_fields,
             point_fields=point_fields,
             cell_fields=cell_fields,
-            named_fields=_MeshValidator._named_fields(validation_fields),
+            requested=_MeshValidator._requested(validation_fields),
             **cell_validator_kwargs,
         )
 
@@ -460,9 +460,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
         *,
-        named_fields: tuple[str, ...],
+        requested: tuple[str, ...],
     ) -> tuple[tuple[_PointFields, ...], tuple[_CellFields, ...]]:
-        """Drop the fields this mesh type cannot check, or raise if they were named."""
+        """Drop the fields this mesh type cannot check, or raise if they were requested.
+
+        A field named in ``requested`` raises, and so does a group in ``requested`` of which no
+        field can be checked. Other fields of a group which cannot be checked are dropped.
+        """
         unsupported: tuple[_LiteralMeshValidationFields, ...] = ()
         if isinstance(mesh, pv.PointSet):
             unsupported = ('unused_points', *_MeshValidator._allowed_cell_fields)
@@ -479,9 +483,19 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'degenerate_faces',
                 'coincident_points',
             )
+        group_fields = {
+            'data': _MeshValidator._allowed_data_fields,
+            'points': _MeshValidator._allowed_point_fields,
+            'cells': _MeshValidator._allowed_cell_fields,
+            'memory_safe': get_args(_MemorySafeFields),
+        }
+        for group, members in group_fields.items():
+            if group in requested and all(field in unsupported for field in members):
+                msg = f'No {group!r} validation fields are supported for {type(mesh).__name__}.'
+                raise ValueError(msg)
         for field in unsupported:
             if field in cell_fields or field in point_fields:
-                if field in named_fields:
+                if field in requested:
                     kind = 'Point' if field in point_fields else 'Cell'
                     msg = f'{kind} field {field!r} is not supported for {type(mesh).__name__}.'
                     raise ValueError(msg)
@@ -490,18 +504,17 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         return point_fields, cell_fields
 
     @staticmethod
-    def _named_fields(
+    def _requested(
         validation_fields: _LiteralMeshValidationFields
         | Sequence[_LiteralMeshValidationFields]
         | None,
     ) -> tuple[str, ...]:
-        """Return the validation fields requested by name rather than through a group."""
+        """Return the validation fields and groups requested by name."""
         if validation_fields is None:
             return ()
-        requested = (
-            (validation_fields,) if isinstance(validation_fields, str) else validation_fields
-        )
-        return tuple(f for f in requested if f not in _MeshValidator._allowed_field_groups)
+        if isinstance(validation_fields, str):
+            return (validation_fields,)
+        return tuple(validation_fields)
 
     @staticmethod
     def _validate_fields(
@@ -631,7 +644,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        named_fields: tuple[str, ...],
+        requested: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
@@ -647,7 +660,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    named_fields=named_fields,
+                    requested=requested,
                     **cell_validator_kwargs,
                 )
             else:
@@ -657,7 +670,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    named_fields=named_fields,
+                    requested=requested,
                     **cell_validator_kwargs,
                 )
 
@@ -669,11 +682,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        named_fields: tuple[str, ...],
+        requested: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetType]:
         point_fields, cell_fields = _MeshValidator._supported_fields(
-            mesh, point_fields, cell_fields, named_fields=named_fields
+            mesh, point_fields, cell_fields, requested=requested
         )
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
@@ -726,7 +739,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        named_fields: tuple[str, ...],
+        requested: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
@@ -744,7 +757,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    named_fields=named_fields,
+                    requested=requested,
                     **cell_validator_kwargs,
                 )
                 reports.append(report)
@@ -1421,8 +1434,9 @@ class DataObjectFilters:
             - ``coincident_points`` allows a polyline to revisit a point other than the one
               before it, and a triangle strip to repeat points if it has at least three distinct
               points.
-            - A field group skips the fields the mesh type cannot check instead of raising. For
-              example, ``validate_mesh('cells')`` on :class:`~pyvista.ImageData` checks only
+            - A field group skips the fields the mesh type cannot check instead of raising, if
+              it has any field the mesh type can check. For example,
+              ``validate_mesh('cells')`` on :class:`~pyvista.ImageData` checks only
               ``invalid_point_references``, ``negative_size``, and ``zero_size``.
 
         Parameters
@@ -1439,9 +1453,16 @@ class DataObjectFilters:
               fault and crash Python. This option includes ``cell_data_wrong_length``,
               ``point_data_wrong_length``, and ``invalid_point_references``.
 
-            Fields that are excluded from the report will have a value of ``None``. A group
-            skips the fields the mesh type cannot check, such as cell fields for a
-            :class:`~pyvista.PointSet`, but naming such a field raises a ``ValueError``.
+            Fields that are excluded from the report will have a value of ``None``.
+
+            Some fields cannot be checked for some mesh types, such as ``unused_points`` and
+            all cell fields for a :class:`~pyvista.PointSet`. For these fields:
+
+            - A group skips them and checks the rest. For example, ``'points'`` checks only
+              ``non_finite_points`` for a :class:`~pyvista.PointSet`.
+            - A group raises a ``ValueError`` if it has no field left to check. For example,
+              ``'cells'`` raises for a :class:`~pyvista.PointSet`.
+            - Naming such a field directly raises a ``ValueError``.
 
         action : 'warn' | 'error', optional
             Issue a warning or raise an error if the mesh is not valid for the specified fields.
@@ -1985,7 +2006,7 @@ class DataObjectFilters:
         # so skip the checks which dereference cell points when the connectivity is invalid
         invalid_references = _has_invalid_point_references(self)
 
-        # Grids are checked from their geometry, other meshes from their cells
+        # Grids cannot have invalid connectivity, so they skip vtkCellValidator
         ugrid: pv.UnstructuredGrid | None = None
         if not isinstance(self, pv.Grid):
             ugrid = (
@@ -6713,10 +6734,10 @@ def _cells_in_local_coordinates(ugrid: pv.UnstructuredGrid) -> pv.UnstructuredGr
 def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDArray[np.float64]:
     """Return how much rounding the points by one unit in the last place may change cell sizes.
 
-    Each axis is rounded at the mesh's largest coordinate along it. Moving a face of a cell's
-    bounding box by that amount changes the box's length, area, or volume, which bounds the change
-    of the cell. ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a
-    :class:`pyvista.Grid`.
+    Each axis is rounded at the mesh's largest coordinate along it. A line changes by at most the
+    length of the rounding vector. An area or volume changes by at most the sum, over the axes, of
+    the rounding along the axis times the extent of the cell's bounding box across it.
+    ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a :class:`pyvista.Grid`.
     """
     if ugrid is None:
         grid = cast('pv.Grid', mesh)
@@ -6734,7 +6755,7 @@ def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDA
             extent = np.tile(np.ptp(np.reshape(cell.bounds, (3, 2)), axis=1), (grid.n_cells, 1))
         else:
             dx, dy, dz = (
-                np.diff(coords).astype(float) if coords.size > 1 else np.zeros(1)
+                np.abs(np.diff(coords).astype(float)) if coords.size > 1 else np.zeros(1)
                 for coords in (grid.x, grid.y, grid.z)
             )
             # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
