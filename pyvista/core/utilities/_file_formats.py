@@ -1,4 +1,4 @@
-"""File formats PyVista reads and writes, each with its name and file extensions."""
+"""File formats PyVista reads and writes, each with its description and file extensions."""
 
 from __future__ import annotations
 

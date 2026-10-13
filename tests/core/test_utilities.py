@@ -3800,7 +3800,7 @@ def test_map_extensions_rejects_shared_extension():
         _map_extensions(pv.DataSetWriter, pv.PolyDataWriter)
 
 
-def test_format_name_undeclared():
+def test_format_description_undeclared():
     class _Reader(pv.BaseReader): ...
 
     assert _Reader.format_description == ''
@@ -3809,7 +3809,7 @@ def test_format_name_undeclared():
         _map_extensions(_Reader)
 
 
-def test_format_name_custom_reader():
+def test_format_description_custom_reader():
     class _Reader(pv.BaseReader):
         format_description = 'My Format'
 

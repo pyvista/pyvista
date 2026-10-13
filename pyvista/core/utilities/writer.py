@@ -267,9 +267,6 @@ class HDFWriter(BaseWriter):
 
     .. versionadded:: 0.47.0
 
-    .. versionchanged:: 0.50
-        Also writes the ``.hdf`` extension.
-
     """
 
     _vtk_class_name = 'vtkHDFWriter'
