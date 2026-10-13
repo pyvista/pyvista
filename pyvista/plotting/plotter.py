@@ -7245,10 +7245,12 @@ class BasePlotter(_BoundsSizeMixin):
               edges and translucent surfaces keep the color of the background they were
               blended with.
             - ``'straight'`` returns an RGBA image with straight (unassociated) alpha and
-              the background color removed, which is what image viewers, web browsers, and
-              ``PIL`` expect.
+              the background color removed, which is what image viewers, web browsers,
+              PNG files, and ``PIL`` expect. Use it for images that are saved or shown.
             - ``'premultiplied'`` returns an RGBA image whose colors are already multiplied
-              by alpha (associated alpha) and contain no background color.
+              by alpha (associated alpha) and contain no background color. Use it for
+              compositing software and formats that expect colors multiplied by alpha,
+              such as OpenEXR, or to filter the image further without halos.
 
             ``'straight'`` and ``'premultiplied'`` render the scene once more over a black
             background and then restore the background. Fully transparent pixels are
