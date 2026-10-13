@@ -1862,6 +1862,11 @@ def test_screenshot_transparent_background_alpha_restores_state(mocker):
     pl.screenshot(transparent_background='straight')
     assert not interactor.GetEnableRender()
     assert pl.renderer.GetTexturedBackground()
+    assert pl.render_window.GetSwapBuffers()
+    pl.render_window.SwapBuffersOff()
+    pl.screenshot(transparent_background='straight')
+    assert not pl.render_window.GetSwapBuffers()
+    pl.render_window.SwapBuffersOn()
 
     mocker.patch.object(pv.Plotter, '_read_image', side_effect=RuntimeError('read failed'))
     with pytest.raises(RuntimeError, match='read failed'):

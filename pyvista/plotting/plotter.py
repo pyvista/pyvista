@@ -2561,6 +2561,7 @@ class BasePlotter(_BoundsSizeMixin):
         render_window = cast('_vtk.vtkRenderWindow', self.render_window)
         interactor = render_window.GetInteractor()
         render_enabled = interactor.GetEnableRender()
+        swap_buffers = render_window.GetSwapBuffers()
         interactor.EnableRenderOn()
         renderers = list(self.renderers)
         states = [
@@ -2579,6 +2580,8 @@ class BasePlotter(_BoundsSizeMixin):
                 renderer.SetTexturedBackground(False)
                 # FXAA smooths colors but not alpha, so it would blend the edges with black
                 renderer.SetUseFXAA(False)
+            # Keep the black render off the screen
+            render_window.SwapBuffersOff()
             render_window.Render()
             # The back buffer averages multisamples in the same color space that translucent
             # surfaces are blended in, so every partially transparent color is multiplied by alpha
@@ -2589,6 +2592,7 @@ class BasePlotter(_BoundsSizeMixin):
                 renderer.SetGradientBackground(gradient)
                 renderer.SetTexturedBackground(textured)
                 renderer.SetUseFXAA(fxaa)
+            render_window.SetSwapBuffers(swap_buffers)
             render_window.Render()
             interactor.SetEnableRender(render_enabled)
         image[image[..., 3] == 0, :3] = 0
