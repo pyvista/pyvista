@@ -4483,7 +4483,9 @@ class ImageDataFilters(DataSetFilters):
             before interpolating and divided by the interpolated alpha afterwards, so the
             color of transparent pixels does not bleed into their neighbors. Each color
             channel is clipped to its range over the input pixels that are not fully
-            transparent, and fully transparent output pixels have a color of ``0``. The
+            transparent, and fully transparent output pixels have a color of ``0``. Alpha
+            is clipped to ``[0, 1]`` for floating point scalars and to ``[0, max]`` for
+            integer scalars, where ``max`` is the largest value of the data type. The
             scalars must have four components.
 
             .. versionadded:: 0.50
@@ -5084,8 +5086,9 @@ class ImageDataFilters(DataSetFilters):
 
         output_image.rename_array(output_image.active_scalars_name, name)
         if premultiply_alpha:
+            max_alpha = np.iinfo(input_dtype).max if input_dtype.kind in 'iu' else 1
             output_image.point_data[name] = _unpremultiply_alpha(
-                output_image.active_scalars, rgb_range
+                output_image.active_scalars, rgb_range, max_alpha=max_alpha
             )
         if is_srgb:
             output_image.point_data[name] = _linear_to_srgb_colors(
@@ -6589,9 +6592,12 @@ def _premultiply_alpha(rgba: NDArray[Any], *, name: str) -> NDArray[np.floating]
 
 
 def _unpremultiply_alpha(
-    premultiplied: NDArray[np.floating], rgb_range: tuple[NDArray[Any], NDArray[Any]]
+    premultiplied: NDArray[np.floating],
+    rgb_range: tuple[NDArray[Any], NDArray[Any]],
+    *,
+    max_alpha: float,
 ) -> NDArray[np.floating]:
-    """Divide RGBA color channels by a positive alpha and clip them to ``rgb_range``."""
+    """Divide RGBA colors by a positive alpha, clipping colors to ``rgb_range`` and alpha."""
     alpha = premultiplied[:, 3:]
     rgb = np.divide(
         premultiplied[:, :3], alpha, out=np.zeros_like(premultiplied[:, :3]), where=alpha > 0
@@ -6599,6 +6605,7 @@ def _unpremultiply_alpha(
     straight = premultiplied.copy()
     # Bound the overshoot of ringing kernels, which a near-zero alpha amplifies
     straight[:, :3] = np.clip(rgb, *rgb_range)
+    straight[:, 3] = np.clip(straight[:, 3], 0, max_alpha)
     return straight
 
 
