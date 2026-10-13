@@ -8595,7 +8595,7 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
       X Bounds:   3.104e+05, 3.177e+05
       Y Bounds:   7.477e+06, 7.486e+06
       Z Bounds:   -2.472e+03, -1.577e+03
-      N Arrays:   6
+      N Arrays:   5
 
 
     >>> pl = pv.Plotter()
@@ -8618,23 +8618,14 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
 
 
 def _reservoir_load_func(grid: pv.ExplicitStructuredGrid) -> pv.ExplicitStructuredGrid:
-    # See loading steps from this example:
-    # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
-    grid.ComputeFacesConnectivityFlagsArray()
+    """Compute the faces connectivity flags and make them the active scalars."""
+    grid.compute_connectivity(inplace=True)
     grid.set_active_scalars('ConnectivityFlags')
-
-    # Remove misc data fields stored with the dataset
-    grid.field_data.remove('dimensions')
-    grid.field_data.remove('name')
-    grid.field_data.remove('properties')
-    grid.field_data.remove('filename')
-
     return grid
 
 
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
-    'reservoir/UNISIM-II-D.zip',
-    target_file='UNISIM-II-D.vtu',
+    'reservoir/UNISIM-II-D.vtu',
     read_func=pv.ExplicitStructuredGrid,
     load_func=_reservoir_load_func,
 )
