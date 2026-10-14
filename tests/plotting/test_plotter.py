@@ -1579,3 +1579,22 @@ def test_backface_params_culling(sphere, value, expected):
     actor = pl.add_mesh(sphere, backface_params={'culling': value})
     assert actor.backface_prop.culling == expected
     pl.close()
+
+
+def test_close_warns_when_movie_writer_fails():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = OSError('disk full')
+    with pytest.warns(UserWarning, match='disk full'):
+        pl.close()
+    assert pl.mwriter is None
+
+
+def test_close_propagates_keyboard_interrupt_from_movie_writer():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = KeyboardInterrupt
+    with pytest.raises(KeyboardInterrupt):
+        pl.close()
+    assert pl.mwriter is None
+    pl.close()

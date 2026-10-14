@@ -6031,9 +6031,12 @@ class BasePlotter(_BoundsSizeMixin):
 
         # end movie
         if self.mwriter is not None:
-            with contextlib.suppress(BaseException):
+            try:
                 self.mwriter.close()
-            self.mwriter = None
+            except Exception as e:  # noqa: BLE001 - finish closing the plotter
+                warn_external(f'Failed to finalize the movie file, it may be incomplete:\n{e}')
+            finally:
+                self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
