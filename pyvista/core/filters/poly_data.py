@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -1553,7 +1554,7 @@ class PolyDataFilters(DataSetFilters):
         and strips are removed.
 
         Point data is interpolated onto the dash end points. Cell data is copied from
-        the parent line cell, unless ``join`` merges those cells together.
+        the line cell each dash lies on.
 
         .. versionadded:: 0.50
 
@@ -1583,8 +1584,8 @@ class PolyDataFilters(DataSetFilters):
 
         join : bool, default: True
             Join connected line cells into polylines with :func:`strip` first so the
-            pattern runs continuously across them. Joined cells have no cell data of
-            their own, so the input's cell data is dropped.
+            pattern runs continuously across them. A dash crossing into a cell with
+            different cell data is split there, so each piece keeps its own cell's data.
 
         inplace : bool, default: False
             Update this dataset in place. When ``False``, return a new dataset.
@@ -1629,8 +1630,8 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_finite(scale, name='scale')
             _validation.check_greater_than(scale, 0, name='scale')
 
-        source = self.strip(join=True, progress_bar=progress_bar) if join else self
-        output = _dashed_polydata(source, runs, period=period, scale=scale)
+        source = _join_lines(self, progress_bar=progress_bar) if join else self
+        output = _dashed_polydata(source, self, runs, period=period, scale=scale)
         for array_name, array in self.field_data.items():
             output.field_data[array_name] = array
         _copy_active_names(self.point_data, output.point_data)
@@ -4982,8 +4983,55 @@ def _drawn_intervals(
     return intervals
 
 
+def _line_edges(mesh: PolyData) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
+    """Return the distinct undirected edges of the line cells of a mesh and the cell holding each.
+
+    Each edge is encoded as ``low * n_points + high``, and the codes come sorted.
+    """
+    cells = mesh.GetLines()
+    connectivity = _vtk.vtk_to_numpy(cells.GetConnectivityArray()).astype(np.int64)
+    offsets = _vtk.vtk_to_numpy(cells.GetOffsetsArray())
+    left, right = connectivity[:-1], connectivity[1:]
+    # a pair whose second id opens the next cell does not lie on any cell
+    within = left != right
+    ends = offsets[1:-1] - 1
+    within[ends[(ends >= 0) & (ends < within.size)]] = False
+    owners = np.searchsorted(offsets, np.arange(left.size), side='right') - 1 + mesh.n_verts
+    codes = np.minimum(left, right) * mesh.n_points + np.maximum(left, right)
+    # overlapping cells share an edge, which goes to the first of them
+    codes, first = np.unique(codes[within], return_index=True)
+    return codes, owners[within][first]
+
+
+def _join_lines(mesh: PolyData, *, progress_bar: bool) -> PolyData:
+    """Return the line cells of a mesh joined into polylines, keeping its point ids."""
+    codes, _ = _line_edges(mesh)
+    edges = np.column_stack([np.full(codes.size, 2), *np.divmod(codes, max(mesh.n_points, 1))])
+    # the stripper invents edges when joining longer polylines, so give it bare segments
+    segments = pv.PolyData(mesh.points, lines=edges.ravel())
+    return segments.strip(join=True, progress_bar=progress_bar)
+
+
+def _cell_data_labels(mesh: PolyData) -> NDArray[np.intp]:
+    """Return one label per cell, equal for cells whose cell data rows all match."""
+    labels = []
+    for array in mesh.cell_data.values():
+        rows = np.ascontiguousarray(np.asarray(array).reshape(mesh.n_cells, -1))
+        # compare the raw bytes so that NaN rows match one another
+        raw = rows.view(np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))).ravel()
+        labels.append(np.unique(raw, return_inverse=True)[1].ravel())
+    if not labels:
+        return np.zeros(mesh.n_cells, dtype=np.intp)
+    return np.unique(np.column_stack(labels), axis=0, return_inverse=True)[1].ravel()
+
+
 def _build_dashes(
-    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
+    source: PolyData,
+    original: PolyData,
+    runs: list[tuple[float, float]] | None,
+    *,
+    period: float,
+    scale: float,
 ) -> tuple[
     NDArray[np.int64],
     NDArray[np.int64],
@@ -4991,7 +5039,11 @@ def _build_dashes(
     NDArray[np.int64],
     NDArray[np.int64],
 ]:
-    """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
+    """Return blend indices, weights, line connectivity and original cell ids for the dashes."""
+    # a joined source has its own cells, so trace each of its edges back to the original
+    traced = source is not original and bool(original.cell_data)
+    codes, edge_owners = _line_edges(original) if traced else (None, None)
+    labels = _cell_data_labels(original) if traced else None
     points = source.points
     cycle = period * scale
     index_a: list[int] = []
@@ -5017,22 +5069,38 @@ def _build_dashes(
         total = float(cumulative[-1])
         if total == 0.0:
             continue
+        owners = np.full(size - 1, parent)
+        breaks = np.zeros(0)
+        if codes is not None and edge_owners is not None and labels is not None:
+            # repeated points leave segments of no length, which no dash can lie on
+            drawn = np.flatnonzero(distance > 0)
+            tail, head = ids[drawn].astype(np.int64), ids[drawn + 1].astype(np.int64)
+            found = np.searchsorted(
+                codes, np.minimum(tail, head) * original.n_points + np.maximum(tail, head)
+            )
+            owners[drawn] = edge_owners[found]
+            label = labels[owners[drawn]]
+            # a dash is cut where the cell data changes from one segment to the next
+            breaks = cumulative[drawn[1:][label[1:] != label[:-1]]]
         for start, stop in _drawn_intervals(runs, total=total, cycle=cycle, scale=scale):
-            # keep the polyline's own points so the dash still follows its bends
-            inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
-            blend = [
-                _locate(ids, cumulative, start),
-                *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
-                _locate(ids, cumulative, stop),
-            ]
-            lines.append(len(blend))
-            for left, right, fraction in blend:
-                # the points are appended in order, so each id is the count so far
-                lines.append(len(index_a))
-                index_a.append(left)
-                index_b.append(right)
-                weight.append(fraction)
-            cells.append(parent)
+            bounds = [start, *breaks[(breaks > start) & (breaks < stop)].tolist(), stop]
+            for low, high in itertools.pairwise(bounds):
+                # keep the polyline's own points so the dash still follows its bends
+                inner = np.flatnonzero((cumulative > low) & (cumulative < high))
+                blend = [
+                    _locate(ids, cumulative, low),
+                    *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
+                    _locate(ids, cumulative, high),
+                ]
+                lines.append(len(blend))
+                for left, right, fraction in blend:
+                    # the points are appended in order, so each id is the count so far
+                    lines.append(len(index_a))
+                    index_a.append(left)
+                    index_b.append(right)
+                    weight.append(fraction)
+                segment = int(np.searchsorted(cumulative, (low + high) / 2.0)) - 1
+                cells.append(int(owners[segment]))
     return (
         np.asarray(index_a, dtype=np.int64),
         np.asarray(index_b, dtype=np.int64),
@@ -5043,16 +5111,25 @@ def _build_dashes(
 
 
 def _dashed_polydata(
-    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float | None
+    source: PolyData,
+    original: PolyData,
+    runs: list[tuple[float, float]] | None,
+    *,
+    period: float,
+    scale: float | None,
 ) -> PolyData:
-    """Return a dataset holding only the drawn parts of a source's line cells."""
+    """Return a dataset holding only the drawn parts of a source's line cells.
+
+    The source is the original mesh, or its lines joined into polylines over the same
+    points. Point and cell data come from the original either way.
+    """
     output = pv.PolyData()
     if source.n_lines == 0:
         return output
     # a two hundredth of the bounding box diagonal gives a readable default
     interval = source.length / 200.0 if scale is None else float(scale)
     index_a, index_b, weight, lines, cells = _build_dashes(
-        source, runs, period=period, scale=interval
+        source, original, runs, period=period, scale=interval
     )
     if lines.size == 0:
         return output
@@ -5060,13 +5137,13 @@ def _dashed_polydata(
         source.points, index_a=index_a, index_b=index_b, weight=weight
     )
     output.lines = lines
-    for name, array in source.point_data.items():
+    for name, array in original.point_data.items():
         # set_array rather than an item assignment, which would activate the first array
         output.point_data.set_array(
             _interpolate_rows(np.asarray(array), index_a=index_a, index_b=index_b, weight=weight),
             name,
         )
-    for name, array in source.cell_data.items():
+    for name, array in original.cell_data.items():
         output.cell_data.set_array(np.asarray(array)[cells], name)
     return output
 

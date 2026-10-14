@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -253,12 +254,73 @@ def test_dash_lines_interpolates_point_data():
     assert np.allclose(dashed['x'], dashed.points[:, 0], atol=1e-6)
 
 
-def test_dash_lines_copies_cell_data():
+@pytest.mark.parametrize('join', [True, False])
+def test_dash_lines_copies_cell_data(join):
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
     line.cell_data['tag'] = np.array([7])
-    dashed = line.dash_lines('--', scale=0.01, join=False)
+    dashed = line.dash_lines('--', scale=0.01, join=join)
     assert np.all(dashed.cell_data['tag'] == 7)
-    assert 'tag' not in line.dash_lines('--', scale=0.01).cell_data
+
+
+def _segments_out_of_order():
+    """Return eight unit segments along x, listed shuffled and half reversed, after a vert."""
+    points = np.zeros((9, 3))
+    points[:, 0] = np.arange(9)
+    order = [5, 0, 7, 2, 4, 1, 6, 3]
+    segments = [[2, i + 1, i] if i % 2 else [2, i, i + 1] for i in order]
+    mesh = pv.PolyData(points, lines=np.ravel(segments), verts=[1, 0])
+    # the vert takes cell id 0, so each line's start x sits one cell later
+    starts = np.array([-1, *order])
+    mesh.cell_data['start'] = starts
+    mesh.cell_data['half'] = np.array(['left' if x < 4 else 'right' for x in starts])
+    return mesh
+
+
+def test_dash_lines_join_keeps_the_cell_data_of_each_segment():
+    mesh = _segments_out_of_order()
+    dashed = mesh.dash_lines(pattern=[3, 1], scale=1.0)
+    centers = dashed.cell_centers().points[:, 0]
+    # every dash piece lies on the segment its cell data came from
+    assert np.array_equal(dashed.cell_data['start'], np.floor(centers))
+    assert np.array_equal(dashed.cell_data['half'], np.where(centers < 4, 'left', 'right'))
+    assert np.isclose(dashed.compute_cell_sizes().cell_data['Length'].sum(), 6.0)
+
+
+def test_dash_lines_join_splits_only_where_cell_data_changes():
+    mesh = _segments_out_of_order()
+    starts = mesh.cell_data.pop('start')
+    # the cell data changes at x = 4, which falls in the gap between the two dashes
+    assert mesh.dash_lines(pattern=[3, 1], scale=1.0).n_cells == 2
+    mesh.cell_data.remove('half')
+    assert mesh.dash_lines(pattern=[3, 1], scale=1.0).n_cells == 2
+    mesh.cell_data['quarter'] = starts // 2
+    # changes at x = 2 and 6 now fall inside a dash and cut it in two
+    dashed = mesh.dash_lines(pattern=[3, 1], scale=1.0)
+    assert dashed.n_cells == 4
+    centers = dashed.cell_centers().points[:, 0]
+    assert np.array_equal(dashed.cell_data['quarter'], np.floor(centers) // 2)
+
+
+@pytest.mark.parametrize('cell_data', [True, False])
+def test_dash_lines_join_keeps_to_the_input_edges(cell_data):
+    angles = np.linspace(0, 2 * np.pi, 11, endpoint=False)
+    points = np.column_stack([np.cos(angles), np.sin(angles), np.zeros(11)])
+    lines = [4, 5, 1, 0, 10, 3, 9, 8, 10, 3, 10, 5, 9, 3, 10, 8, 5, 3, 7, 8, 10]
+    mesh = pv.PolyData(points, lines=lines)
+    if cell_data:
+        mesh.cell_data['id'] = np.arange(mesh.n_cells)
+
+    def edges(poly):
+        ends = (
+            frozenset(map(tuple, poly.points[list(pair)].round(9).tolist()))
+            for cell in poly.cell
+            for pair in itertools.pairwise(cell.point_ids)
+        )
+        # skip the segments of no length
+        return {pair for pair in ends if len(pair) == 2}
+
+    joined = mesh.dash_lines('-')
+    assert edges(joined) == edges(mesh)
 
 
 def test_dash_lines_removes_non_line_cells():
