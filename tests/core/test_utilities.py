@@ -431,7 +431,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     fname = tmpdir / 'airplane.vtu'
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
-    with pytest.raises(pv.VTKExecutionError, match='vtkXMLStructuredGridReader'):
+    with pytest.raises(pv.VTKExecutionError, match='Cannot find StructuredGrid element'):
         fileio.read(fname, force_ext='.vts')
 
     # try to read a .ply file as .vtm
@@ -440,7 +440,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         if pv.vtk_version_info >= (9, 7):
-            with pytest.raises(pv.VTKExecutionError, match='vtkXMLMultiBlockDataReader'):
+            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
                 fileio.read(fname, force_ext='.vtm')
         else:
             assert len(fileio.read(fname, force_ext='.vtm')) == 0
@@ -1019,6 +1019,29 @@ def test_update_alg_raises_upstream_error():
     alg.SetInputConnection(reader.GetOutputPort())
     with pytest.raises(pv.VTKExecutionError, match='Error opening file'):
         _update_alg(alg)
+
+
+@pytest.mark.expect_vtk_output(
+    'about to fail',
+    'failed',
+    'Algorithm vtkPythonAlgorithm',
+    reason='the algorithm warns and then fails on purpose',
+)
+def test_update_alg_warns_on_failure():
+    class WarnThenFail(_vtk.VTKPythonAlgorithmBase):
+        def __init__(self):
+            super().__init__(nInputPorts=0, nOutputPorts=1, outputType='vtkPolyData')
+
+        def RequestData(self, *_):  # noqa: N802
+            _vtk.vtkOutputWindow.GetInstance().DisplayWarningText('about to fail')
+            _vtk.vtkOutputWindow.GetInstance().DisplayErrorText('failed')
+            return 0
+
+    with (
+        pytest.warns(pv.VTKExecutionWarning, match='about to fail'),
+        pytest.raises(pv.VTKExecutionError, match='failed'),
+    ):
+        _update_alg(WarnThenFail())
 
 
 @pytest.mark.expect_vtk_output(

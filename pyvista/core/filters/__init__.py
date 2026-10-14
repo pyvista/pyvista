@@ -38,19 +38,28 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PrecisionWarning
 from pyvista.core.errors import VTKExecutionError
+from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
-from pyvista.core.utilities.observers import _output_window_errors
+from pyvista.core.utilities.observers import _output_window_events
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Sequence
 
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.core.utilities.observers import VtkEvent
 
 
-def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: str = '') -> None:
-    """Update an algorithm with or without a progress bar."""
+def _update_alg(
+    alg: _vtk.vtkAlgorithm,
+    *,
+    progress_bar: bool = False,
+    message: str = '',
+    prior_errors: Sequence[VtkEvent] = (),
+) -> None:
+    """Update an algorithm, raising the errors VTK reports if the update fails."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
     if pv.vtk_version_info >= (9, 7):
@@ -62,7 +71,7 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
             # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
             to_be_updated = alg
 
-    errors_before = _output_window_errors.watch()
+    events_before = _output_window_events.watch()
 
     # Do the update
     with _requested_points_precision(alg):
@@ -73,7 +82,10 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
             status = to_be_updated.Update()
 
     if status is not None and status == 0:
-        errors = _output_window_errors.since(errors_before)
+        errors, vtk_warnings = _output_window_events.since(events_before)
+        if vtk_warnings:
+            warn_external('\n'.join(map(str, vtk_warnings)), VTKExecutionWarning)
+        errors = [*prior_errors, *errors]
         msg = '\n'.join(map(str, errors)) or f'{alg.GetClassName()} failed to update.'
         raise VTKExecutionError(msg)
 

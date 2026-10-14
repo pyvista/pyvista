@@ -30,6 +30,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.filters import _update_alg
+from pyvista.core.utilities.observers import _output_window_events
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -59,6 +60,7 @@ if TYPE_CHECKING:
     from pyvista import RectilinearGrid  # noqa: F401
     from pyvista import StructuredGrid  # noqa: F401
     from pyvista import UnstructuredGrid  # noqa: F401
+    from pyvista.core.utilities.observers import VtkEvent
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}
@@ -301,6 +303,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         self._filename: str | None = None
         self._progress_bar = False
         self._progress_msg = ''
+        self._information_errors: list[VtkEvent] = []
         self.__directory: str | None = None
         self._set_defaults()
         self.path = str(path)
@@ -449,7 +452,12 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
             :class:`~pyvista.UnstructuredGrid`.
 
         """
-        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+        _update_alg(
+            self.reader,
+            progress_bar=self._progress_bar,
+            message=self._progress_msg,
+            prior_errors=self._information_errors,
+        )
         data = wrap(self.reader.GetOutputDataObject(0), validate=validate)
         if data is None:  # pragma: no cover
             msg = 'File reader failed to read and/or produced no output.'
@@ -461,7 +469,9 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         return cast('_T_Output_co', data)
 
     def _update_information(self) -> None:
+        events_before = _output_window_events.watch()
         self.reader.UpdateInformation()
+        self._information_errors = _output_window_events.since(events_before)[0]
 
     def _set_defaults(self) -> None:
         """Set defaults on reader, if needed."""
@@ -3354,7 +3364,12 @@ class GaussianCubeReader(BaseReader['DataSet']):
             PyVista dataset read from the file.
 
         """
-        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+        _update_alg(
+            self.reader,
+            progress_bar=self._progress_bar,
+            message=self._progress_msg,
+            prior_errors=self._information_errors,
+        )
         data = (
             wrap(self.reader.GetGridOutput(), validate=validate)
             if grid

@@ -30,7 +30,7 @@ from pyvista.core.utilities.arrays import USER_DICT_KEY
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from .observers import _output_window_errors
+from .observers import _output_window_events
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -570,9 +570,9 @@ def _read_dispatch(  # noqa: PLR0911
         _set_reader_attributes(reader, **kwargs)
         if progress_bar:
             reader.show_progress()
-        errors_before = _output_window_errors.watch()
+        events_before = _output_window_events.watch()
         mesh = reader.read(validate=validate)
-        if errors := _output_window_errors.since(errors_before):
+        if errors := _output_window_events.since(events_before)[0]:
             warn_external(
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'

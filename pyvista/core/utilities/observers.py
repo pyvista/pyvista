@@ -375,48 +375,52 @@ class Observer(_NoNewAttrMixin):
         self.__observing = True
 
 
-class _OutputWindowErrors:
-    """Keep the latest errors reported to whichever VTK output window is current."""
+class _OutputWindowEvents:
+    """Keep the latest errors and warnings reported to whichever VTK output window is current."""
 
     CallDataType = 'string0'
 
     def __init__(self) -> None:
         """Initialize an empty record."""
         self.count = 0
-        self._recent: deque[VtkEvent] = deque(maxlen=64)
+        self._recent: deque[tuple[str, VtkEvent]] = deque(maxlen=64)
 
-    def __call__(self, _obj: vtkObject, _event: str, message: str = '') -> None:
-        """Record an error event."""
+    def __call__(self, _obj: vtkObject, event: str, message: str = '') -> None:
+        """Record an error or warning event."""
         self.count += 1
-        self._recent.append(Observer.parse_message(message))
+        self._recent.append((event, Observer.parse_message(message)))
 
     def watch(self) -> int:
-        """Observe the current output window and return the number of errors so far."""
+        """Observe the current output window and return the number of events so far."""
         window = _vtk.vtkOutputWindow.GetInstance()
-        if not getattr(window, '_pyvista_error_record', False):
+        if not getattr(window, '_pyvista_event_record', False):
             window.AddObserver('ErrorEvent', self)  # type: ignore[arg-type]
-            window._pyvista_error_record = True  # type: ignore[attr-defined]
+            window.AddObserver('WarningEvent', self)  # type: ignore[arg-type]
+            window._pyvista_event_record = True  # type: ignore[attr-defined]
         return self.count
 
-    def since(self, count: int) -> list[VtkEvent]:
-        """Return the recorded errors reported after ``count`` errors.
+    def since(self, count: int) -> tuple[list[VtkEvent], list[VtkEvent]]:
+        """Return the errors and warnings reported after ``count`` events.
 
         Parameters
         ----------
         count : int
-            Number of errors returned by :meth:`watch` before the errors of interest.
+            Number of events returned by :meth:`watch` before the events of interest.
 
         Returns
         -------
-        list[VtkEvent]
-            Errors reported since then, up to the most recent 64.
+        tuple[list[VtkEvent], list[VtkEvent]]
+            Errors and warnings reported since then, from the most recent 64 events.
 
         """
         recent = list(self._recent)
-        return recent[len(recent) - min(self.count - count, len(recent)) :]
+        recent = recent[len(recent) - min(self.count - count, len(recent)) :]
+        errors = [event for name, event in recent if name == 'ErrorEvent']
+        warnings = [event for name, event in recent if name == 'WarningEvent']
+        return errors, warnings
 
 
-_output_window_errors = _OutputWindowErrors()
+_output_window_events = _OutputWindowEvents()
 
 
 def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
