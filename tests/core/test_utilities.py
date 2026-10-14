@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 import importlib.util
 import inspect
+from io import StringIO
 import itertools
 import json
 import operator
@@ -850,6 +851,22 @@ def test_observer():
     obs.observe(alg)
     with pytest.raises(RuntimeError, match='algorithm'):
         obs.observe(alg)
+
+
+def test_observer_prints_traceback_of_handling_error(monkeypatch):
+    def parse_message(_message):
+        msg = 'parse failure'
+        raise ValueError(msg)
+
+    obs = Observer()
+    monkeypatch.setattr(obs, 'parse_message', parse_message)
+    stdout, stderr = StringIO(), StringIO()
+    monkeypatch.setattr(sys, '__stdout__', stdout)
+    monkeypatch.setattr(sys, '__stderr__', stderr)
+    obs(None, None, 'foo')
+    assert "'foo'" in stdout.getvalue()
+    assert 'parse_message' in stderr.getvalue()
+    assert 'ValueError: parse failure' in stderr.getvalue()
 
 
 def test_observer_default_event():

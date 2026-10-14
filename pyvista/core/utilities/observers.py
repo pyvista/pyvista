@@ -314,7 +314,7 @@ class Observer(_NoNewAttrMixin):
                 self._event_history_etc.append(message)
             if self.__log:
                 self.log_message(event.kind, event.alert)
-        except Exception:  # noqa: BLE001  # pragma: no cover
+        except Exception:  # noqa: BLE001 - an exception must not propagate into VTK
             try:
                 if len(message) > 120:
                     message = f'{message[:100]!r} ... ({len(message)} characters)'
@@ -324,8 +324,8 @@ class Observer(_NoNewAttrMixin):
                     f'PyVista error in handling VTK error message:\n{message}',
                     file=sys.__stdout__,
                 )
-                traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
-            except Exception as e:  # noqa: BLE001
+                traceback.print_exc(file=sys.__stderr__)
+            except Exception as e:  # noqa: BLE001 - the streams may be unusable, e.g. under pythonw
                 log.debug('Failed to print VTK error message: %s', e)
 
     def has_event_occurred(self) -> bool:  # numpydoc ignore=RT01
