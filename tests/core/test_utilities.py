@@ -14,6 +14,7 @@ import pickle
 import platform
 import re
 import shutil
+import signal
 import sys
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -780,6 +781,45 @@ def test_progress_monitor_interrupt_without_abort_execute():
     monitor = ProgressMonitor(reader)
     monitor._interrupt_signal_received = True
     monitor(reader)
+
+
+def _interrupting_elevation_filter():
+    """Return an elevation filter that sends SIGINT to the process at its first progress event."""
+    alg = _vtk.vtkElevationFilter()
+    alg.SetInputData(pv.Sphere(theta_resolution=400, phi_resolution=400))
+
+    def send_sigint(*_):
+        alg.RemoveObservers(_vtk.vtkCommand.StartEvent)
+        signal.raise_signal(signal.SIGINT)
+
+    alg.AddObserver(_vtk.vtkCommand.StartEvent, send_sigint)
+    return alg
+
+
+def test_progress_monitor_interrupt_raises():
+    old_handler = signal.getsignal(signal.SIGINT)
+    alg = _interrupting_elevation_filter()
+    with pytest.raises(KeyboardInterrupt), ProgressMonitor(alg):
+        alg.Update()
+    assert alg.GetAbortExecute()
+    assert signal.getsignal(signal.SIGINT) is old_handler
+
+
+def test_progress_monitor_interrupt_calls_previous_handler():
+    received = []
+
+    def previous_handler(sig, _frame):
+        received.append(sig)
+
+    old_handler = signal.signal(signal.SIGINT, previous_handler)
+    try:
+        alg = _interrupting_elevation_filter()
+        with ProgressMonitor(alg):
+            alg.Update()
+        assert signal.getsignal(signal.SIGINT) is previous_handler
+    finally:
+        signal.signal(signal.SIGINT, old_handler)
+    assert received == [signal.SIGINT]
 
 
 def test_observer():

@@ -386,8 +386,8 @@ def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
 class ProgressMonitor(_NoNewAttrMixin):
     """A standard class for monitoring the progress of a VTK algorithm.
 
-    This must be use in a ``with`` context and it will block keyboard
-    interrupts from happening until the exit event as interrupts will crash
+    This must be use in a ``with`` context. A keyboard interrupt aborts the
+    algorithm and is delayed until the exit event, as interrupts will crash
     the kernel if the VTK algorithm is still executing.
 
     Parameters
@@ -410,7 +410,7 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._last_progress = self.progress
         self.algorithm = algorithm
         self.message = message
-        self._interrupt_signal_received = False
+        self._interrupt_signal_received: tuple[int, FrameType | None] | None = None
         self._old_progress: float = 0
         self._old_handler: Callable[[int, FrameType | None], object] | int | None = None
         self._progress_bar: tqdm | None = None
@@ -427,7 +427,7 @@ class ProgressMonitor(_NoNewAttrMixin):
             Current stack frame.
 
         """
-        self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
+        self._interrupt_signal_received = (sig, frame)
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
     def __call__(
@@ -472,3 +472,10 @@ class ProgressMonitor(_NoNewAttrMixin):
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)
+        if self._interrupt_signal_received:
+            # Deliver the interrupt that was delayed while the algorithm ran
+            sig, frame = self._interrupt_signal_received
+            if callable(self._old_handler):
+                self._old_handler(sig, frame)
+            elif self._old_handler != signal.SIG_IGN:
+                raise KeyboardInterrupt
