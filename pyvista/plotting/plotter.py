@@ -1183,9 +1183,8 @@ class BasePlotter(_BoundsSizeMixin):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except (
-                            AttributeError
-                        ) as e:  # mapper without a PyVista dataset  # pragma: no cover
+                        except AttributeError as e:  # pragma: no cover
+                            # The mapper has no PyVista dataset
                             log.debug('Failed to rename array during gLTF export: %s', e)
 
         exporter = _vtk.vtkGLTFExporter()
