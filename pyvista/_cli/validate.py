@@ -272,7 +272,7 @@ def _validate_one(
             size_tolerance=size_tolerance,
             report_body=report_body,
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 - reported as a CLI error
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
         print_error_and_exit(message=msg)
 
