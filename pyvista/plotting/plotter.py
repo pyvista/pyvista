@@ -6457,7 +6457,9 @@ class BasePlotter(_BoundsSizeMixin):
             pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
         )
 
-        actor = Actor(mapper=DataSetMapper(lines_polydata))
+        mapper = DataSetMapper(lines_polydata)
+        mapper.scalar_visibility = False
+        actor = Actor(mapper=mapper)
         actor.prop.line_width = width
         actor.prop.show_edges = True
         actor.prop.edge_color = color

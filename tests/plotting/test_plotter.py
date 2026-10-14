@@ -813,6 +813,18 @@ def test_add_lines(connected, n_lines):
     assert dataset.n_cells == n_lines
 
 
+def test_add_lines_scalar_visibility():
+    """Lines are drawn in a solid color, so the mapper must not color by scalars."""
+    pl = pv.Plotter()
+    points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+    actor = pl.add_lines(points)
+    assert actor.mapper.scalar_visibility is False
+
+    # match a solid-color ``add_mesh`` actor
+    mesh_actor = pl.add_mesh(pv.Sphere(), color='r')
+    assert actor.mapper.scalar_visibility is mesh_actor.mapper.scalar_visibility
+
+
 def test_clear_actors(cube, sphere):
     pl = pv.Plotter()
     pl.add_mesh(cube)
