@@ -423,18 +423,16 @@ def test_read_reader_kwargs():
     'Error parsing input file.',
     'Algorithm vtkXMLStructuredGridReader',
     'Algorithm vtkXMLMultiBlockDataReader',
+    'No whole extent has been set',
+    'No update piece number has been set',
     reason='a .vtu file read as .vts fails in the reader, which is how PyVista detects it',
 )
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
-    # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
-    # the returned dataset is empty
     fname = tmpdir / 'airplane.vtu'
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        data = fileio.read(fname, force_ext='.vts')
-    assert data.n_points == 0
+    with pytest.raises(pv.VTKExecutionError, match='vtkXMLStructuredGridReader'):
+        fileio.read(fname, force_ext='.vts')
 
     # try to read a .ply file as .vtm
     # the file is not XML at all, and VTK only reports the parse failure from 9.7 on
@@ -442,7 +440,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         if pv.vtk_version_info >= (9, 7):
-            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
+            with pytest.raises(pv.VTKExecutionError, match='vtkXMLMultiBlockDataReader'):
                 fileio.read(fname, force_ext='.vtm')
         else:
             assert len(fileio.read(fname, force_ext='.vtm')) == 0
@@ -1007,6 +1005,54 @@ def test_update_alg_raises_request_data_error(tmp_path):
     reader.SetFileName(str(obj_file))
     with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
         _update_alg(reader)
+
+
+@pytest.mark.expect_vtk_output(
+    'Error opening file this_file_does_not_exist.vtp',
+    'Algorithm vtkXMLPolyDataReader',
+    reason='the upstream reader fails, and _update_alg raises for the downstream filter',
+)
+def test_update_alg_raises_upstream_error():
+    reader = _vtk.vtkXMLPolyDataReader()
+    reader.SetFileName('this_file_does_not_exist.vtp')
+    alg = _vtk.vtkTriangleFilter()
+    alg.SetInputConnection(reader.GetOutputPort())
+    with pytest.raises(pv.VTKExecutionError, match='Error opening file'):
+        _update_alg(alg)
+
+
+@pytest.mark.expect_vtk_output(
+    'Unexpected point index value: 0',
+    'Algorithm vtkOBJReader',
+    reason='the OBJ indices are out of range, and _update_alg raises on the VTK error',
+)
+def test_update_alg_executes_failing_alg_once(tmp_path):
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    starts = []
+    reader.AddObserver('StartEvent', lambda *_: starts.append(True))
+    with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
+        _update_alg(reader)
+    assert len(starts) == 1
+
+
+@pytest.mark.expect_vtk_output(
+    'Unexpected point index value: 0',
+    'Algorithm vtkOBJReader',
+    reason='the OBJ indices are out of range, and _update_alg raises on the VTK error',
+)
+def test_update_alg_raises_with_error_observer(tmp_path):
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    observer = pv.Observer()
+    observer.observe(reader)
+    with pytest.raises(pv.VTKExecutionError, match='vtkOBJReader failed to update'):
+        _update_alg(reader)
+    assert observer.has_event_occurred()
 
 
 def test_axis_angle_rotation():

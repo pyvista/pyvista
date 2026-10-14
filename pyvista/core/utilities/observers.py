@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 import importlib.util
 import logging
 from pathlib import Path
@@ -372,6 +373,50 @@ class Observer(_NoNewAttrMixin):
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)  # type: ignore[arg-type]
         self.__observing = True
+
+
+class _OutputWindowErrors:
+    """Keep the latest errors reported to whichever VTK output window is current."""
+
+    CallDataType = 'string0'
+
+    def __init__(self) -> None:
+        """Initialize an empty record."""
+        self.count = 0
+        self._recent: deque[VtkEvent] = deque(maxlen=64)
+
+    def __call__(self, _obj: vtkObject, _event: str, message: str = '') -> None:
+        """Record an error event."""
+        self.count += 1
+        self._recent.append(Observer.parse_message(message))
+
+    def watch(self) -> int:
+        """Observe the current output window and return the number of errors so far."""
+        window = _vtk.vtkOutputWindow.GetInstance()
+        if not getattr(window, '_pyvista_error_record', False):
+            window.AddObserver('ErrorEvent', self)  # type: ignore[arg-type]
+            window._pyvista_error_record = True  # type: ignore[attr-defined]
+        return self.count
+
+    def since(self, count: int) -> list[VtkEvent]:
+        """Return the recorded errors reported after ``count`` errors.
+
+        Parameters
+        ----------
+        count : int
+            Number of errors returned by :meth:`watch` before the errors of interest.
+
+        Returns
+        -------
+        list[VtkEvent]
+            Errors reported since then, up to the most recent 64.
+
+        """
+        recent = list(self._recent)
+        return recent[len(recent) - min(self.count - count, len(recent)) :]
+
+
+_output_window_errors = _OutputWindowErrors()
 
 
 def send_errors_to_logging() -> None:  # numpydoc ignore=RT01

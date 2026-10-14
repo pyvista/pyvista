@@ -37,8 +37,10 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PrecisionWarning
+from pyvista.core.errors import VTKExecutionError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.observers import _output_window_errors
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -60,6 +62,8 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
             # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
             to_be_updated = alg
 
+    errors_before = _output_window_errors.watch()
+
     # Do the update
     with _requested_points_precision(alg):
         if progress_bar:
@@ -69,14 +73,9 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
             status = to_be_updated.Update()
 
     if status is not None and status == 0:
-        # There was an error with the update. Re-run so we can catch it and
-        # raise it as a proper Python error.
-        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
-        # with VTK observers can be slow.
-        # VTK marks even a failed execution as up-to-date, so force the re-run to execute.
-        alg.Modified()
-        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
-            alg.Update()
+        errors = _output_window_errors.since(errors_before)
+        msg = '\n'.join(map(str, errors)) or f'{alg.GetClassName()} failed to update.'
+        raise VTKExecutionError(msg)
 
 
 DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION
