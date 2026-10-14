@@ -185,6 +185,71 @@ def test_ruled_surface():
     assert ruled.n_cells
 
 
+def _mixed_strip_mesh():
+    """Return a vert, line segments out of order, a polyline and two triangles that strip."""
+    points = np.array([[x, y, 0.0] for y in (0, 1) for x in range(6)])
+    mesh = pv.PolyData(
+        points,
+        verts=[1, 11],
+        lines=[2, 2, 3, 2, 0, 1, 2, 1, 2, 3, 3, 4, 5],
+        faces=[3, 6, 7, 9, 3, 7, 10, 9],
+    )
+    mesh.cell_data['c'] = np.arange(mesh.n_cells) * 10.0
+    return mesh
+
+
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_passes_cell_data_per_piece(join):
+    mesh = _mixed_strip_mesh()
+    stripped = mesh.strip(join=join, pass_cell_data=True, pass_cell_ids=True)
+    ids = stripped.field_data['vtkOriginalCellIds']
+    assert np.array_equal(stripped.field_data['c'], mesh.cell_data['c'][ids])
+
+    # one tuple per piece, in the order triangulate splits the output into pieces
+    pieces = stripped.triangulate(pass_verts=True, pass_lines=True)
+    assert pieces.n_cells == ids.size
+    for piece, owner in zip(pieces.cell, ids, strict=True):
+        assert set(piece.point_ids) <= set(mesh.get_cell(owner).point_ids)
+    assert sorted(ids) == [0, 1, 2, 3, 4, 4, 5, 6]
+
+
+def test_strip_cell_ids_follow_the_verts():
+    points = np.array([[0.0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
+    mesh = pv.PolyData(points, faces=[3, 0, 1, 2, 3, 1, 3, 2], verts=[1, 3])
+    stripped = mesh.strip(pass_cell_ids=True)
+    assert stripped.field_data['vtkOriginalCellIds'].tolist() == [0, 1, 2]
+
+
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_keeps_lines_without_two_distinct_points(join):
+    points = np.array([[0.0, 0, 0], [1, 0, 0], [2, 0, 0]])
+    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 1, 1, 2, 2, 1, 2])
+    mesh.cell_data['c'] = [0, 1, 2, 3]
+    stripped = mesh.strip(join=join, pass_cell_data=True)
+    # the stripper alone drops the single point and reads past the repeated one
+    cells = sorted(list(cell.point_ids) for cell in stripped.cell)
+    assert cells in ([[0, 1, 2], [1, 1], [2]], [[1, 1], [2], [2, 1, 0]])
+    assert sorted(stripped.field_data['c']) == [0, 1, 3]
+
+
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_keeps_to_the_input_edges(join):
+    angles = np.linspace(0, 2 * np.pi, 11, endpoint=False)
+    points = np.column_stack([np.cos(angles), np.sin(angles), np.zeros(11)])
+    lines = [4, 5, 1, 0, 10, 3, 9, 8, 10, 3, 10, 5, 9, 3, 10, 8, 5, 3, 7, 8, 10]
+    mesh = pv.PolyData(points, lines=lines)
+
+    def edges(poly):
+        return {
+            frozenset(pair)
+            for cell in poly.cell
+            for pair in itertools.pairwise(cell.point_ids)
+            if pair[0] != pair[1]
+        }
+
+    assert edges(mesh.strip(join=join)) == edges(mesh)
+
+
 def test_dash_lines_solid_returns_the_lines_whole():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
     line.point_data['ids'] = np.arange(line.n_points)

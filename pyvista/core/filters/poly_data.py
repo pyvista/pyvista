@@ -1630,7 +1630,11 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_finite(scale, name='scale')
             _validation.check_greater_than(scale, 0, name='scale')
 
-        source = _join_lines(self, progress_bar=progress_bar) if join else self
+        source = (
+            self.strip(join=True, pass_cell_ids=bool(self.cell_data), progress_bar=progress_bar)
+            if join
+            else self
+        )
         output = _dashed_polydata(source, self, runs, period=period, scale=scale)
         for array_name, array in self.field_data.items():
             output.field_data[array_name] = array
@@ -4181,9 +4185,9 @@ class PolyDataFilters(DataSetFilters):
 
         Also note that if triangle strips or polylines are defined in
         the input they are passed through and not joined nor
-        extended. (If you wish to strip these use ``triangulate``
-        filter to fragment the input into triangles and lines prior to
-        running this filter.)
+        extended, except that ``join`` joins polylines too. (If you
+        wish to strip these use ``triangulate`` filter to fragment the
+        input into triangles and lines prior to running this filter.)
 
         This filter implements :vtk:`vtkStripper`.
 
@@ -4199,14 +4203,19 @@ class PolyDataFilters(DataSetFilters):
             strip, and/or the maximum number of lines in a polyline.
 
         pass_cell_data : bool, default: False
-            Enable/Disable passing of the cell data in the input to the
-            output as FieldData. Note the field data is transformed.
+            Pass the cell data of the input to the output as field data,
+            with one tuple per piece of the output in cell order: each
+            vertex and polygon cell, each polyline segment and each
+            triangle of a strip. This is the order in which
+            :func:`triangulate` with ``pass_verts`` and ``pass_lines``
+            splits the output, apart from polygons with more than three
+            points.
 
         pass_cell_ids : bool, default: False
-            If ``True``, the output polygonal dataset will have a
-            cell data array that holds the cell index of the original
-            3D cell that produced each output cell. This is useful for
-            picking. The default is ``False`` to conserve memory.
+            If ``True``, the output has a field data array
+            ``'vtkOriginalCellIds'`` holding the id of the input cell
+            that produced each piece of the output, in the same order
+            as ``pass_cell_data``.
 
         pass_point_ids : bool, default: False
             If ``True``, the output polygonal dataset will have a
@@ -4233,15 +4242,25 @@ class PolyDataFilters(DataSetFilters):
         >>> stripped.plot(show_edges=True, line_width=3)
 
         """
+        source = _strip_source(self, join=join)
         alg = _vtk.vtkStripper()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(source)
         alg.SetJoinContiguousSegments(join)
         alg.SetMaximumLength(max_length)
-        alg.SetPassCellDataAsFieldData(pass_cell_data)
-        alg.SetPassThroughCellIds(pass_cell_ids)
         alg.SetPassThroughPointIds(pass_point_ids)
         _update_alg(alg, progress_bar=progress_bar, message='Stripping Mesh')
-        return _get_output(alg)
+        output = _get_output(alg)
+        if source is not self:
+            output.lines = _restore_lines(self, output, join=join)
+        if pass_cell_data or pass_cell_ids:
+            # the stripper's own tracing skips segments and miscounts after verts
+            ids = _original_cell_ids(self, output)
+            if pass_cell_data:
+                for name, array in self.cell_data.items():
+                    output.field_data[name] = np.asarray(array)[ids]
+            if pass_cell_ids:
+                output.field_data['vtkOriginalCellIds'] = ids
+        return output
 
     def collision(  # type: ignore[misc]
         self: PolyData,
@@ -4909,6 +4928,122 @@ class PolyDataFilters(DataSetFilters):
         return out
 
 
+def _cell_windows(
+    cells: _vtk.vtkCellArray, width: int, *, first_id: int = 0
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
+    """Return every run of ``width`` consecutive point ids in each cell and the cell id of each.
+
+    The ids of each run are sorted, so a run read backwards matches itself.
+    """
+    connectivity = _vtk.vtk_to_numpy(cells.GetConnectivityArray()).astype(np.int64)
+    offsets = _vtk.vtk_to_numpy(cells.GetOffsetsArray()).astype(np.int64)
+    counts = np.maximum(np.diff(offsets) - width + 1, 0)
+    owners = np.repeat(np.arange(counts.size, dtype=np.int64) + first_id, counts)
+    # number the runs within each cell, then shift them to where the cell starts
+    local = np.arange(counts.sum()) - np.repeat(np.cumsum(counts) - counts, counts)
+    starts = np.repeat(offsets[:-1], counts) + local
+    runs = connectivity[starts[:, np.newaxis] + np.arange(width)]
+    return np.sort(runs, axis=1), owners
+
+
+def _match_runs(
+    runs: NDArray[np.int64], owners: NDArray[np.int64], targets: NDArray[np.int64]
+) -> NDArray[np.int64]:
+    """Return the owner of the first of ``runs`` equal to each of ``targets``."""
+    if targets.shape[0] == 0:
+        return np.zeros(0, dtype=np.int64)
+    _, inverse = np.unique(np.concatenate([runs, targets]), axis=0, return_inverse=True)
+    inverse = inverse.ravel()
+    found = np.full(inverse.max() + 1, -1, dtype=np.int64)
+    # assign back to front so the first of duplicated runs wins
+    found[inverse[: runs.shape[0]][::-1]] = owners[::-1]
+    return found[inverse[runs.shape[0] :]]
+
+
+def _flat_cells(connectivity: NDArray[np.int64], sizes: NDArray[np.int64]) -> NDArray[np.int64]:
+    """Return cells given by their point ids and sizes in the flat ``[size, *ids, ...]`` layout."""
+    return np.insert(connectivity, np.concatenate([[0], np.cumsum(sizes)[:-1]]), sizes)
+
+
+def _line_cells(
+    mesh: PolyData,
+) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.bool_]]:
+    """Return the line connectivity and sizes, the distinct segments, and the lines with none."""
+    cells = mesh.GetLines()
+    connectivity = _vtk.vtk_to_numpy(cells.GetConnectivityArray()).astype(np.int64)
+    sizes = np.diff(_vtk.vtk_to_numpy(cells.GetOffsetsArray()).astype(np.int64))
+    runs, owners = _cell_windows(cells, 2)
+    distinct = runs[:, 0] != runs[:, 1]
+    loose = np.ones(sizes.size, dtype=bool)
+    loose[owners[distinct]] = False
+    return connectivity, sizes, runs[distinct], loose
+
+
+def _strip_source(mesh: PolyData, *, join: bool) -> PolyData:
+    """Return the mesh to hand the stripper, keeping its lines to cells it handles soundly.
+
+    The stripper reads past a line of one repeated point and drops a line of one point,
+    so lines with no two distinct points are left out and added back afterwards. When
+    joining, longer polylines gain invented edges, so the lines are split into segments.
+    """
+    if mesh.n_lines == 0:
+        return mesh
+    connectivity, sizes, segments, loose = _line_cells(mesh)
+    if join:
+        lines = np.column_stack([np.full(len(segments), 2), segments]).ravel()
+    elif loose.any():
+        kept = ~loose
+        lines = _flat_cells(connectivity[np.repeat(kept, sizes)], sizes[kept])
+    else:
+        return mesh
+    source = pv.PolyData(
+        mesh.points, verts=mesh.verts, lines=lines, faces=mesh.faces, strips=mesh.strips
+    )
+    source.point_data.update(mesh.point_data)
+    source.field_data.update(mesh.field_data)
+    return source
+
+
+def _restore_lines(mesh: PolyData, output: PolyData, *, join: bool) -> NDArray[np.int64]:
+    """Return the stripped lines followed by the input lines that were left out of stripping."""
+    cells = output.GetLines()
+    connectivity = _vtk.vtk_to_numpy(cells.GetConnectivityArray()).astype(np.int64)
+    sizes = np.diff(_vtk.vtk_to_numpy(cells.GetOffsetsArray()).astype(np.int64))
+    if join:
+        owners = np.repeat(np.arange(sizes.size), sizes)
+        # joining repeats the point where two polylines meet
+        keep = np.ones(connectivity.size, dtype=bool)
+        keep[1:] = (connectivity[1:] != connectivity[:-1]) | (owners[1:] != owners[:-1])
+        connectivity = connectivity[keep]
+        sizes = np.bincount(owners[keep], minlength=sizes.size)
+    stripped = _flat_cells(connectivity, sizes)
+    connectivity, sizes, _, loose = _line_cells(mesh)
+    return np.concatenate(
+        [stripped, _flat_cells(connectivity[np.repeat(loose, sizes)], sizes[loose])]
+    )
+
+
+def _original_cell_ids(mesh: PolyData, output: PolyData) -> NDArray[np.int64]:
+    """Return the input cell of each vert, polygon, line segment and strip triangle of a strip."""
+    first_poly = mesh.n_verts + mesh.n_lines
+    first_strip = first_poly + mesh.GetNumberOfPolys()
+    line_runs, line_owners = _cell_windows(mesh.GetLines(), 2, first_id=mesh.n_verts)
+    lines = _match_runs(line_runs, line_owners, _cell_windows(output.GetLines(), 2)[0])
+    poly_sizes = np.diff(_vtk.vtk_to_numpy(mesh.GetPolys().GetOffsetsArray()))
+    # the stripper turns every triangle into a strip and passes other polygons through
+    polygons = first_poly + np.flatnonzero(poly_sizes != 3)
+    triangle_runs, triangle_owners = _cell_windows(mesh.GetPolys(), 3, first_id=first_poly)
+    triangles = np.isin(triangle_owners, polygons, invert=True)
+    strip_runs, strip_owners = _cell_windows(mesh.GetStrips(), 3, first_id=first_strip)
+    strips = _match_runs(
+        np.concatenate([triangle_runs[triangles], strip_runs]),
+        np.concatenate([triangle_owners[triangles], strip_owners]),
+        _cell_windows(output.GetStrips(), 3)[0],
+    )
+    verts = np.arange(output.n_verts, dtype=np.int64)
+    return np.concatenate([verts, lines, polygons.astype(np.int64), strips])
+
+
 def _resolve_dash_pattern(
     style: LineStyle | None, pattern: VectorLikeFloat | None
 ) -> tuple[list[tuple[float, float]] | None, float]:
@@ -4983,35 +5118,6 @@ def _drawn_intervals(
     return intervals
 
 
-def _line_edges(mesh: PolyData) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
-    """Return the distinct undirected edges of the line cells of a mesh and the cell holding each.
-
-    Each edge is encoded as ``low * n_points + high``, and the codes come sorted.
-    """
-    cells = mesh.GetLines()
-    connectivity = _vtk.vtk_to_numpy(cells.GetConnectivityArray()).astype(np.int64)
-    offsets = _vtk.vtk_to_numpy(cells.GetOffsetsArray())
-    left, right = connectivity[:-1], connectivity[1:]
-    # a pair whose second id opens the next cell does not lie on any cell
-    within = left != right
-    ends = offsets[1:-1] - 1
-    within[ends[(ends >= 0) & (ends < within.size)]] = False
-    owners = np.searchsorted(offsets, np.arange(left.size), side='right') - 1 + mesh.n_verts
-    codes = np.minimum(left, right) * mesh.n_points + np.maximum(left, right)
-    # overlapping cells share an edge, which goes to the first of them
-    codes, first = np.unique(codes[within], return_index=True)
-    return codes, owners[within][first]
-
-
-def _join_lines(mesh: PolyData, *, progress_bar: bool) -> PolyData:
-    """Return the line cells of a mesh joined into polylines, keeping its point ids."""
-    codes, _ = _line_edges(mesh)
-    edges = np.column_stack([np.full(codes.size, 2), *np.divmod(codes, max(mesh.n_points, 1))])
-    # the stripper invents edges when joining longer polylines, so give it bare segments
-    segments = pv.PolyData(mesh.points, lines=edges.ravel())
-    return segments.strip(join=True, progress_bar=progress_bar)
-
-
 def _cell_data_labels(mesh: PolyData) -> NDArray[np.intp]:
     """Return one label per cell, equal for cells whose cell data rows all match."""
     labels = []
@@ -5040,10 +5146,13 @@ def _build_dashes(
     NDArray[np.int64],
 ]:
     """Return blend indices, weights, line connectivity and original cell ids for the dashes."""
-    # a joined source has its own cells, so trace each of its edges back to the original
-    traced = source is not original and bool(original.cell_data)
-    codes, edge_owners = _line_edges(original) if traced else (None, None)
-    labels = _cell_data_labels(original) if traced else None
+    segment_cells: NDArray[np.int64] | None = None
+    labels: NDArray[np.intp] | None = None
+    if source is not original and original.cell_data:
+        # a joined source has its own cells, so take each segment's cell from the strip
+        segment_cells = np.asarray(source.field_data['vtkOriginalCellIds'])[source.n_verts :]
+        labels = _cell_data_labels(original)
+    consumed = 0
     points = source.points
     cycle = period * scale
     index_a: list[int] = []
@@ -5062,6 +5171,8 @@ def _build_dashes(
         position += 1 + size
         parent = cell
         cell += 1
+        first_segment = consumed
+        consumed += max(size - 1, 0)
         if size < 2:
             continue
         distance = np.linalg.norm(np.diff(points[ids], axis=0), axis=1)
@@ -5071,14 +5182,10 @@ def _build_dashes(
             continue
         owners = np.full(size - 1, parent)
         breaks = np.zeros(0)
-        if codes is not None and edge_owners is not None and labels is not None:
+        if segment_cells is not None and labels is not None:
+            owners = segment_cells[first_segment:consumed]
             # repeated points leave segments of no length, which no dash can lie on
             drawn = np.flatnonzero(distance > 0)
-            tail, head = ids[drawn].astype(np.int64), ids[drawn + 1].astype(np.int64)
-            found = np.searchsorted(
-                codes, np.minimum(tail, head) * original.n_points + np.maximum(tail, head)
-            )
-            owners[drawn] = edge_owners[found]
             label = labels[owners[drawn]]
             # a dash is cut where the cell data changes from one segment to the next
             breaks = cumulative[drawn[1:][label[1:] != label[:-1]]]
