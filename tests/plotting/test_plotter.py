@@ -1460,10 +1460,10 @@ def test_off_screen_background_thread_rendering():
             assert img is not None
             assert img.shape[0] > 0
             pl.close()
-        except Exception as e:  # noqa: BLE001 - re-raised as an assertion below  # pragma: no cover
+        except Exception as e:  # noqa: BLE001 - reported by the assertion below  # pragma: no cover
             errors.append(e)
 
-    t = threading.Thread(target=render_on_thread)
+    t = threading.Thread(target=render_on_thread, daemon=True)
     t.start()
     t.join(timeout=10)
 
