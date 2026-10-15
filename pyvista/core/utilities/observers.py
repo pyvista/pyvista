@@ -21,6 +21,7 @@ from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 log = logging.getLogger(__name__)
+_vtk_log = logging.getLogger('pyvista.vtk')
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -318,7 +319,7 @@ class Observer(_NoNewAttrMixin):
         return VtkEvent(kind='', path='', line='', name='', address='', alert=message.strip())
 
     def log_message(self, kind: str, alert: str) -> None:
-        """Parse different event types and passes them to logging.
+        """Log a VTK event with the ``pyvista.vtk`` logger.
 
         Parameters
         ----------
@@ -330,9 +331,9 @@ class Observer(_NoNewAttrMixin):
 
         """
         if kind == 'ERROR':
-            logging.error(alert)  # noqa: LOG015
+            _vtk_log.error(alert)
         else:
-            logging.warning(alert)  # noqa: LOG015
+            _vtk_log.warning(alert)
 
     def __call__(self, _obj: vtkObject, _event: str, message: str = '') -> None:
         """Declare standard call function for the observer.
@@ -410,13 +411,26 @@ class Observer(_NoNewAttrMixin):
         self.__observing = True
 
 
-def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
-    """Send all VTK error/warning messages to Python's logging module."""
+def send_errors_to_logging() -> None:
+    """Send VTK errors and warnings to the ``pyvista.vtk`` logger.
+
+    PyVista calls this on import. VTK errors are logged at the ``ERROR`` level and
+    warnings at the ``WARNING`` level.
+
+    Examples
+    --------
+    Silence VTK messages in Python logging, then restore them.
+
+    >>> import logging
+    >>> logger = logging.getLogger('pyvista.vtk')
+    >>> logger.setLevel(logging.CRITICAL)
+    >>> logger.setLevel(logging.NOTSET)
+
+    """
     error_output = _vtk.vtkStringOutputWindow()
-    error_win = _vtk.vtkOutputWindow()
-    error_win.SetInstance(error_output)
-    obs = Observer()
-    return obs.observe(error_output)
+    _vtk.vtkOutputWindow.SetInstance(error_output)
+    Observer(event_type='ErrorEvent').observe(error_output)
+    Observer(event_type='WarningEvent').observe(error_output)
 
 
 class ProgressMonitor(_NoNewAttrMixin):
@@ -464,7 +478,7 @@ class ProgressMonitor(_NoNewAttrMixin):
 
         """
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
-        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
+        log.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
     def __call__(
         self,

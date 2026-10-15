@@ -7,6 +7,7 @@ import importlib.util
 import inspect
 import itertools
 import json
+import logging
 import operator
 import os
 from pathlib import Path
@@ -1026,6 +1027,22 @@ def test_vtk_error_catcher_keeps_propagating_exception():
 
     with pytest.raises(KeyboardInterrupt):
         interrupted()
+
+
+@pytest.mark.expect_vtk_output(
+    'No input provided!',
+    'Nothing to merge!',
+    reason='the test triggers a VTK error and warning to log',
+)
+def test_vtk_messages_logged(caplog):
+    with caplog.at_level(logging.DEBUG):
+        _generate_vtk_err()
+        _generate_vtk_warn()
+    assert [(r.name, r.levelname) for r in caplog.records] == [
+        ('pyvista.vtk', 'ERROR'),
+        ('pyvista.vtk', 'WARNING'),
+    ]
+    assert caplog.records[0].getMessage() == 'No input provided!'
 
 
 def test_vtk_error_catcher_send_to_logging_deprecated():
