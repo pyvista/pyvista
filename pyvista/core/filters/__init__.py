@@ -41,7 +41,7 @@ from pyvista.core.errors import VTKExecutionError
 from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
-from pyvista.core.utilities.observers import _output_window_events
+from pyvista.core.utilities.observers import _join
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -71,10 +71,8 @@ def _update_alg(
             # Some PyVista classes aren't true vtkAlgorithm types and don't implement GetExecutive
             to_be_updated = alg
 
-    events_before = _output_window_events.watch()
-
     # Do the update
-    with _requested_points_precision(alg):
+    with pv.VtkErrorCatcher() as catcher, _requested_points_precision(alg):
         if progress_bar:
             with ProgressMonitor(alg, message=message):
                 status = to_be_updated.Update()
@@ -82,11 +80,12 @@ def _update_alg(
             status = to_be_updated.Update()
 
     if status is not None and status == 0:
-        errors, vtk_warnings = _output_window_events.since(events_before)
-        if vtk_warnings:
-            warn_external('\n'.join(map(str, vtk_warnings)), VTKExecutionWarning)
-        errors = [*prior_errors, *errors]
-        msg = '\n'.join(map(str, errors)) or f'{alg.GetClassName()} failed to update.'
+        if catcher.warning_events:
+            warn_external(_join(catcher.warning_events), VTKExecutionWarning)
+        msg = (
+            _join([*prior_errors, *catcher.error_events])
+            or f'{alg.GetClassName()} failed to update.'
+        )
         raise VTKExecutionError(msg)
 
 

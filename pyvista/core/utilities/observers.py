@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import deque
 import importlib.util
 import logging
 from pathlib import Path
@@ -13,10 +12,10 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
-from typing import NoReturn
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKExecutionError
 from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -61,37 +60,45 @@ def set_error_output_file(
 
 
 class VtkErrorCatcher:
-    """Context manager to temporarily catch VTK errors.
+    """Context manager to record the errors and warnings VTK reports.
+
+    Recording leaves VTK's output untouched: messages still reach the current VTK output
+    window, and with it the ``pyvista.vtk`` logger set up by
+    :func:`~pyvista.send_errors_to_logging`. Catchers can be nested, and each one records
+    every message reported while it is active.
 
     Parameters
     ----------
     raise_errors : bool, default: False
-        Raise a ``pyvista.VTKExecutionError`` (a runtime error) when a VTK error
-        is observed.
+        Raise a ``pyvista.VTKExecutionError`` (a runtime error) on exit when a VTK error
+        was recorded.
 
         .. versionchanged:: 0.47
 
             A ``pyvista.VTKExecutionError`` is now raised instead of a generic
             ``RuntimeError``.
 
-    send_to_logging : bool, default: True
-        Determine whether VTK errors raised within the context should
-        also be sent to logging.
+    send_to_logging : bool, optional
+        Has no effect. VTK messages are logged by the ``pyvista.vtk`` logger whether or
+        not they are recorded.
+
+        .. deprecated:: 0.50
 
     emit_warnings : bool, default: False
-        Emit a ``pyvista.VTKExecutionWarning`` (a runtime warning) when a VTK warning
-        is observed.
+        Emit a ``pyvista.VTKExecutionWarning`` (a runtime warning) on exit when a VTK
+        warning was recorded.
 
         .. versionadded:: 0.47
 
     Examples
     --------
-    Catch VTK errors using the context manager. This only sends to
-    logging by default.
+    Record VTK errors and warnings.
 
     >>> import pyvista as pv
     >>> with pv.VtkErrorCatcher() as error_catcher:
     ...     sphere = pv.Sphere()
+    >>> error_catcher.events
+    []
 
     Raise VTK errors as Python errors and emit VTK warnings as Python warnings.
 
@@ -106,90 +113,118 @@ class VtkErrorCatcher:
         self,
         *,
         raise_errors: bool = False,
-        send_to_logging: bool = True,
+        send_to_logging: bool | None = None,
         emit_warnings: bool = False,
     ) -> None:
         """Initialize context manager."""
+        if send_to_logging is not None:
+            # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
+            msg = (
+                '`send_to_logging` is deprecated and has no effect. VTK messages are '
+                "logged by the 'pyvista.vtk' logger."
+            )
+            warn_external(msg, PyVistaDeprecationWarning)
         self.raise_errors = raise_errors
-        self.send_to_logging = send_to_logging
         self.emit_warnings = emit_warnings
+        self._events: list[tuple[str, VtkEvent]] = []
 
     def __enter__(self: Self) -> Self:
-        """Observe VTK string output window for errors."""
-        self._start_observing()
+        """Start recording VTK errors and warnings."""
+        self._events = []
+        _vtk_event_dispatcher.add(self)
         return self
 
-    def _start_observing(self) -> None:
-        output_window = _vtk.vtkStringOutputWindow()
-        error_win = _vtk.vtkOutputWindow()
-        self._error_output_orig = error_win.GetInstance()
-        error_win.SetInstance(output_window)
+    def __exit__(self, exc_type: type[BaseException] | None, *args: object) -> None:
+        """Stop recording, then warn and raise unless an exception is propagating."""
+        _vtk_event_dispatcher.remove(self)
+        if exc_type is None:
+            if self.emit_warnings and self.warning_events:
+                warn_external(_join(self.warning_events), VTKExecutionWarning)
+            if self.raise_errors and self.error_events:
+                raise VTKExecutionError(_join(self.error_events))
 
-        obs = Observer(event_type='ErrorEvent', log=self.send_to_logging, store_history=True)
-        obs.observe(output_window)
-        self._error_observer = obs
-
-        obs = Observer(event_type='WarningEvent', log=self.send_to_logging, store_history=True)
-        obs.observe(output_window)
-        self._warning_observer = obs
-
-    def __exit__(self, *args: object) -> None:
-        """Stop observing VTK string output window."""
-        self._stop_observing()
-        self._emit_warnings_and_raise_errors()
-
-    def _stop_observing(self) -> None:
-        error_win = _vtk.vtkOutputWindow()
-        error_win.SetInstance(self._error_output_orig)
-
-    def _emit_warnings_and_raise_errors(self) -> None:
-        if self.emit_warnings and self.warning_events:
-            self._emit_warning(self._runtime_warning_message)
-        if self.raise_errors and self.error_events:
-            self._raise_error(self._runtime_error_message)
+    def _record(self, event_type: str, event: VtkEvent) -> None:
+        """Record one VTK event."""
+        self._events.append((event_type, event))
 
     @property
     def events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of all VTK warning and error events observed.
+        """List of all VTK warning and error events recorded, in the order reported.
 
         .. versionadded:: 0.47
 
         """
-        return [*self._warning_observer.event_history, *self._error_observer.event_history]
+        return [event for _, event in self._events]
 
     @property
     def error_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed.
+        """List of VTK error events recorded.
 
         .. versionadded:: 0.47
 
         """
-        return self._error_observer.event_history
+        return [event for event_type, event in self._events if event_type == 'ErrorEvent']
 
     @property
     def warning_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of VTK error events observed.
+        """List of VTK warning events recorded.
 
         .. versionadded:: 0.47
 
         """
-        return self._warning_observer.event_history
+        return [event for event_type, event in self._events if event_type == 'WarningEvent']
 
-    @property
-    def _runtime_error_message(self) -> str:  # numpydoc ignore=RT01
-        """List of VTK error events formatted as runtime errors."""
-        return '\n'.join([str(e) for e in self.error_events])
 
-    @property
-    def _runtime_warning_message(self) -> str:  # numpydoc ignore=RT01
-        """List of VTK error events formatted as runtime errors."""
-        return '\n'.join([str(e) for e in self.warning_events])
+def _join(events: list[VtkEvent]) -> str:
+    """Format VTK events as one message."""
+    return '\n'.join(map(str, events))
 
-    def _raise_error(self, message: str) -> NoReturn:
-        raise VTKExecutionError(message)
 
-    def _emit_warning(self, message: str) -> None:
-        warn_external(message, VTKExecutionWarning)
+class _VtkEventDispatcher:
+    """Pass the errors and warnings VTK reports to the active catchers."""
+
+    CallDataType = 'string0'
+
+    def __init__(self) -> None:
+        """Initialize with no active catchers."""
+        self._catchers: list[VtkErrorCatcher] = []
+
+    def __call__(self, _obj: vtkObject, event_type: str, message: str = '') -> None:
+        """Pass one VTK event to the active catchers."""
+        if self._catchers:
+            event = Observer.parse_message(message)
+            for catcher in self._catchers:
+                catcher._record(event_type, event)
+
+    def add(self, catcher: VtkErrorCatcher) -> None:
+        """Activate a catcher, observing the current output window once per window.
+
+        Parameters
+        ----------
+        catcher : VtkErrorCatcher
+            Catcher to pass events to.
+
+        """
+        window = _vtk.vtkOutputWindow.GetInstance()
+        if not getattr(window, '_pyvista_event_dispatcher', False):
+            window.AddObserver('ErrorEvent', self)  # type: ignore[arg-type]
+            window.AddObserver('WarningEvent', self)  # type: ignore[arg-type]
+            window._pyvista_event_dispatcher = True  # type: ignore[attr-defined]
+        self._catchers.append(catcher)
+
+    def remove(self, catcher: VtkErrorCatcher) -> None:
+        """Deactivate a catcher.
+
+        Parameters
+        ----------
+        catcher : VtkErrorCatcher
+            Catcher to stop passing events to.
+
+        """
+        self._catchers.remove(catcher)
+
+
+_vtk_event_dispatcher = _VtkEventDispatcher()
 
 
 class VtkEvent(NamedTuple):
@@ -373,54 +408,6 @@ class Observer(_NoNewAttrMixin):
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)  # type: ignore[arg-type]
         self.__observing = True
-
-
-class _OutputWindowEvents:
-    """Keep the latest errors and warnings reported to whichever VTK output window is current."""
-
-    CallDataType = 'string0'
-
-    def __init__(self) -> None:
-        """Initialize an empty record."""
-        self.count = 0
-        self._recent: deque[tuple[str, VtkEvent]] = deque(maxlen=64)
-
-    def __call__(self, _obj: vtkObject, event: str, message: str = '') -> None:
-        """Record an error or warning event."""
-        self.count += 1
-        self._recent.append((event, Observer.parse_message(message)))
-
-    def watch(self) -> int:
-        """Observe the current output window and return the number of events so far."""
-        window = _vtk.vtkOutputWindow.GetInstance()
-        if not getattr(window, '_pyvista_event_record', False):
-            window.AddObserver('ErrorEvent', self)  # type: ignore[arg-type]
-            window.AddObserver('WarningEvent', self)  # type: ignore[arg-type]
-            window._pyvista_event_record = True  # type: ignore[attr-defined]
-        return self.count
-
-    def since(self, count: int) -> tuple[list[VtkEvent], list[VtkEvent]]:
-        """Return the errors and warnings reported after ``count`` events.
-
-        Parameters
-        ----------
-        count : int
-            Number of events returned by :meth:`watch` before the events of interest.
-
-        Returns
-        -------
-        tuple[list[VtkEvent], list[VtkEvent]]
-            Errors and warnings reported since then, from the most recent 64 events.
-
-        """
-        recent = list(self._recent)
-        recent = recent[len(recent) - min(self.count - count, len(recent)) :]
-        errors = [event for name, event in recent if name == 'ErrorEvent']
-        warnings = [event for name, event in recent if name == 'WarningEvent']
-        return errors, warnings
-
-
-_output_window_events = _OutputWindowEvents()
 
 
 def send_errors_to_logging() -> None:  # numpydoc ignore=RT01

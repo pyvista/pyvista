@@ -30,7 +30,6 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities.observers import _output_window_events
 
 from .fileio import _FileIOBase
 from .fileio import _get_ext_force
@@ -469,9 +468,9 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         return cast('_T_Output_co', data)
 
     def _update_information(self) -> None:
-        events_before = _output_window_events.watch()
-        self.reader.UpdateInformation()
-        self._information_errors = _output_window_events.since(events_before)[0]
+        with pv.VtkErrorCatcher() as catcher:
+            self.reader.UpdateInformation()
+        self._information_errors = catcher.error_events
 
     def _set_defaults(self) -> None:
         """Set defaults on reader, if needed."""

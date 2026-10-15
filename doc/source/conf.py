@@ -515,7 +515,7 @@ class ResetPyVista:
 
         # An example that aborted may have left the previous recording open.
         self._stop_catching_vtk_output()
-        catcher = pv.VtkErrorCatcher(send_to_logging=False)
+        catcher = pv.VtkErrorCatcher()
         catcher.__enter__()
         self._error_catcher = catcher
 

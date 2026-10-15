@@ -915,6 +915,11 @@ def _generate_vtk_warn():
     merge.Update()
 
 
+@pytest.mark.expect_vtk_output(
+    'No input provided!',
+    'Nothing to merge!',
+    reason='the test triggers VTK errors and warnings for the catcher to record',
+)
 def test_vtk_error_catcher():
     # raise_errors: False
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
@@ -956,9 +961,7 @@ def test_vtk_error_catcher():
             _generate_vtk_err()
             _generate_vtk_err()
 
-    # Warn and raise error. The order emitted by VTK is not guaranteed to be the same
-    # since warn and err events are logged independently.
-    # Here we generate VTK err then warn, but expect warning then error
+    # Warnings are emitted before the error is raised
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
         raise_errors=True, emit_warnings=True
     )
@@ -978,6 +981,62 @@ def test_vtk_error_catcher():
     )
     with error_catcher:
         pass
+
+
+@pytest.mark.expect_vtk_output(
+    'No input provided!',
+    'Nothing to merge!',
+    reason='the test triggers VTK errors and warnings for the catchers to record',
+)
+def test_vtk_error_catcher_nested():
+    with pv.VtkErrorCatcher() as outer:
+        _generate_vtk_err()
+        with pv.VtkErrorCatcher() as inner:
+            _generate_vtk_warn()
+    assert outer.events == [outer.error_events[0], inner.warning_events[0]]
+    assert inner.error_events == []
+
+
+@pytest.mark.expect_vtk_output(
+    'No input provided!',
+    reason='the test triggers a VTK error for the catcher to record',
+)
+def test_vtk_error_catcher_keeps_output_window(tmp_path):
+    original = _vtk.vtkOutputWindow.GetInstance()
+    path = tmp_path / 'vtk.log'
+    pv.set_error_output_file(path)
+    try:
+        with pv.VtkErrorCatcher() as catcher:
+            _generate_vtk_err()
+    finally:
+        _vtk.vtkOutputWindow.SetInstance(original)
+    assert len(catcher.error_events) == 1
+    assert 'No input provided!' in path.read_text()
+
+
+@pytest.mark.expect_vtk_output(
+    'No input provided!',
+    reason='the test triggers a VTK error while another exception propagates',
+)
+def test_vtk_error_catcher_keeps_propagating_exception():
+    def interrupted():
+        with pv.VtkErrorCatcher(raise_errors=True):
+            _generate_vtk_err()
+            raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        interrupted()
+
+
+def test_vtk_error_catcher_send_to_logging_deprecated():
+    with pytest.warns(PyVistaDeprecationWarning, match='send_to_logging'):
+        pv.VtkErrorCatcher(send_to_logging=False)
+    if pv._version.version_info[:2] > (0, 53):
+        msg = 'Convert the `send_to_logging` deprecation to an error'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 54):
+        msg = 'Remove the `send_to_logging` parameter'
+        raise RuntimeError(msg)
 
 
 @pytest.mark.expect_vtk_output(
