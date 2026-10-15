@@ -785,42 +785,69 @@ def test_progress_monitor_interrupt_without_abort_execute():
 
 
 def _interrupting_elevation_filter():
-    """Return an elevation filter that sends SIGINT to the process at its first progress event."""
+    """Return an elevation filter that sends SIGINT to the process when it starts."""
     alg = _vtk.vtkElevationFilter()
     alg.SetInputData(pv.Sphere(theta_resolution=400, phi_resolution=400))
 
     def send_sigint(*_):
         alg.RemoveObservers(_vtk.vtkCommand.StartEvent)
-        signal.raise_signal(signal.SIGINT)
+        # An interrupt that reaches a VTK callback unhandled exits the process
+        if isinstance(getattr(signal.getsignal(signal.SIGINT), '__self__', None), ProgressMonitor):
+            signal.raise_signal(signal.SIGINT)
 
     alg.AddObserver(_vtk.vtkCommand.StartEvent, send_sigint)
     return alg
 
 
-def test_progress_monitor_interrupt_raises():
+@pytest.fixture
+def restore_sigint():
+    """Restore the SIGINT handler a test replaces."""
     old_handler = signal.getsignal(signal.SIGINT)
+    yield
+    signal.signal(signal.SIGINT, old_handler)
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_interrupt_raises():
+    signal.signal(signal.SIGINT, signal.default_int_handler)
     alg = _interrupting_elevation_filter()
     with pytest.raises(KeyboardInterrupt), ProgressMonitor(alg):
         alg.Update()
     assert alg.GetAbortExecute()
-    assert signal.getsignal(signal.SIGINT) is old_handler
+    assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
 
 
+@pytest.mark.usefixtures('restore_sigint')
 def test_progress_monitor_interrupt_calls_previous_handler():
     received = []
 
     def previous_handler(sig, _frame):
         received.append(sig)
 
-    old_handler = signal.signal(signal.SIGINT, previous_handler)
-    try:
-        alg = _interrupting_elevation_filter()
-        with ProgressMonitor(alg):
-            alg.Update()
-        assert signal.getsignal(signal.SIGINT) is previous_handler
-    finally:
-        signal.signal(signal.SIGINT, old_handler)
+    signal.signal(signal.SIGINT, previous_handler)
+    alg = _interrupting_elevation_filter()
+    with ProgressMonitor(alg):
+        alg.Update()
+    assert alg.GetAbortExecute()
+    assert signal.getsignal(signal.SIGINT) is previous_handler
     assert received == [signal.SIGINT]
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_keeps_ignored_sigint():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    with ProgressMonitor(_vtk.vtkSphereSource()):
+        assert signal.getsignal(signal.SIGINT) is signal.SIG_IGN
+    assert signal.getsignal(signal.SIGINT) is signal.SIG_IGN
+
+
+def test_progress_monitor_keeps_handler_installed_outside_python(monkeypatch):
+    monkeypatch.setattr(signal, 'getsignal', lambda _sig: None)
+    set_handler = MagicMock()
+    monkeypatch.setattr(signal, 'signal', set_handler)
+    with ProgressMonitor(_vtk.vtkSphereSource()):
+        pass
+    set_handler.assert_not_called()
 
 
 def test_observer():

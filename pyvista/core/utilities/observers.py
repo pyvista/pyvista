@@ -325,7 +325,7 @@ class Observer(_NoNewAttrMixin):
                     file=sys.__stdout__,
                 )
                 traceback.print_exc(file=sys.__stderr__)
-            except Exception as e:  # noqa: BLE001 - the streams may be unusable, e.g. under pythonw
+            except Exception as e:  # noqa: BLE001 - the streams may be unusable, e.g. closed
                 log.debug('Failed to print VTK error message: %s', e)
 
     def has_event_occurred(self) -> bool:  # numpydoc ignore=RT01
@@ -386,7 +386,7 @@ def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
 class ProgressMonitor(_NoNewAttrMixin):
     """A standard class for monitoring the progress of a VTK algorithm.
 
-    This must be use in a ``with`` context. A keyboard interrupt aborts the
+    This must be used in a ``with`` context. A keyboard interrupt aborts the
     algorithm and is delayed until the exit event, as interrupts will crash
     the kernel if the VTK algorithm is still executing.
 
@@ -410,12 +410,12 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._last_progress = self.progress
         self.algorithm = algorithm
         self.message = message
-        self._interrupt_signal_received: tuple[int, FrameType | None] | None = None
+        self._interrupt_signal_received = False
         self._old_progress: float = 0
         self._old_handler: Callable[[int, FrameType | None], object] | int | None = None
         self._progress_bar: tqdm | None = None
 
-    def handler(self, sig: int, frame: FrameType | None) -> None:
+    def handler(self, sig: int, frame: FrameType | None) -> None:  # noqa: ARG002
         """Pass signal to custom interrupt handler.
 
         Parameters
@@ -427,7 +427,7 @@ class ProgressMonitor(_NoNewAttrMixin):
             Current stack frame.
 
         """
-        self._interrupt_signal_received = (sig, frame)
+        self._interrupt_signal_received = True
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
     def __call__(
@@ -452,8 +452,11 @@ class ProgressMonitor(_NoNewAttrMixin):
         """Enter event for ``with`` context."""
         from tqdm import tqdm  # noqa: PLC0415
 
-        # check if in main thread
-        if threading.current_thread().__class__.__name__ == '_MainThread':
+        # Handlers can only be set from the main thread. A handler installed outside
+        # Python cannot be restored, and an ignored SIGINT stays ignored.
+        if threading.current_thread().__class__.__name__ == '_MainThread' and (
+            signal.getsignal(signal.SIGINT) not in (None, signal.SIG_IGN)
+        ):
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
             total=1,
@@ -470,12 +473,10 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._progress_bar.refresh()  # type: ignore[union-attr]
         self._progress_bar.close()  # type: ignore[union-attr]
         self.algorithm.RemoveObservers(self.event_type)
-        if threading.current_thread().__class__.__name__ == '_MainThread':
+        if self._old_handler is not None:
             signal.signal(signal.SIGINT, self._old_handler)
+            self._old_handler = None
         if self._interrupt_signal_received:
-            # Deliver the interrupt that was delayed while the algorithm ran
-            sig, frame = self._interrupt_signal_received
-            if callable(self._old_handler):
-                self._old_handler(sig, frame)
-            elif self._old_handler != signal.SIG_IGN:
-                raise KeyboardInterrupt
+            self._interrupt_signal_received = False
+            # Deliver the interrupt delayed while the algorithm ran to the restored handler
+            signal.raise_signal(signal.SIGINT)
