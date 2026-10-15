@@ -213,6 +213,17 @@ def test_strip_passes_cell_data_per_piece(join):
     assert sorted(ids) == [0, 1, 2, 3, 4, 4, 5, 6]
 
 
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_pass_cell_data_keeps_field_data(join):
+    mesh = _mixed_strip_mesh()
+    mesh.user_dict['name'] = 'mixed'
+    mesh.field_data['f'] = [1, 2, 3]
+    stripped = mesh.strip(join=join, pass_cell_data=True)
+    assert stripped.user_dict == {'name': 'mixed'}
+    assert stripped.field_data['f'].tolist() == [1, 2, 3]
+    assert 'c' in stripped.field_data
+
+
 def test_strip_cell_ids_follow_the_verts():
     points = np.array([[0.0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
     mesh = pv.PolyData(points, faces=[3, 0, 1, 2, 3, 1, 3, 2], verts=[1, 3])
