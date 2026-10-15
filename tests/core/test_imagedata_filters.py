@@ -3355,3 +3355,322 @@ def test_concatenate_background_value(background_value, mode, origin, spacing):
     assert concatenated.spacing == spacing
     assert concatenated.user_dict == user_dict
     assert concatenated.active_scalars_name == image_a.active_scalars_name
+
+
+@pytest.fixture
+def block_volume():
+    """Return a volume which is zero except for a block of 100 spanning ``z = 8`` to ``12``."""
+    volume = pv.ImageData(dimensions=(20, 20, 20))
+    z = volume.points[:, 2]
+    volume['values'] = np.where((z >= 8) & (z <= 12), 100.0, 0.0)
+    return volume
+
+
+@pytest.mark.parametrize(
+    ('mode', 'expected'), [('max', 100.0), ('mean', 300.0 / 11), ('min', 0.0)]
+)
+def test_slab_projection_mode(block_volume, mode, expected):
+    """Test each mode combines the samples of a slab which misses the reference slice."""
+    plane = block_volume.slice_index(k=5)
+    assert plane['values'].max() == 0.0
+
+    projected = block_volume.slab_projection(plane, 10, mode=mode)
+    assert np.allclose(projected['values'], expected)
+    single_slice = block_volume.slab_projection(plane, 0, mode=mode)
+    assert np.array_equal(single_slice['values'], plane['values'])
+
+
+def test_slab_projection_modes_differ(block_volume):
+    """Test the maximum, mean, and a single slice of the same slab all differ."""
+    plane = block_volume.slice_index(k=5)
+    maximum = block_volume.slab_projection(plane, 10, mode='max')['values']
+    mean = block_volume.slab_projection(plane, 10, mode='mean')['values']
+    single_slice = block_volume.slab_projection(plane, 0)['values']
+    assert not np.allclose(maximum, mean)
+    assert not np.allclose(maximum, single_slice)
+    assert not np.allclose(mean, single_slice)
+
+
+@pytest.mark.parametrize('thickness', [0.5, 1, 2, 3.5, 9])
+def test_slab_projection_centered(thickness):
+    """Test the slab is centered on the reference for any thickness."""
+    volume = pv.ImageData(dimensions=(20, 20, 20))
+    volume['z'] = volume.points[:, 2]
+    plane = volume.slice_index(k=10)
+    kwargs = {'interpolation': 'linear'}
+    assert np.allclose(volume.slab_projection(plane, thickness, mode='mean', **kwargs)['z'], 10)
+    maximum = volume.slab_projection(plane, thickness, mode='max', **kwargs)['z']
+    assert np.allclose(maximum, 10 + thickness / 2)
+    minimum = volume.slab_projection(plane, thickness, mode='min', **kwargs)['z']
+    assert np.allclose(minimum, 10 - thickness / 2)
+
+
+@pytest.mark.parametrize('axis', ['i', 'j', 'k'])
+def test_slab_projection_flat_axis(axis):
+    """Test a plane is projected along its own flat axis."""
+    volume = pv.ImageData(dimensions=(6, 7, 8), spacing=(1.0, 2.0, 0.5), origin=(1, 2, 3))
+    volume['values'] = np.arange(volume.n_points, dtype=float)
+    plane = volume.slice_index(**{axis: 2})
+    projected = volume.slab_projection(plane)
+
+    index = 'ijk'.index(axis)
+    expected = volume['values'].reshape(volume.dimensions[::-1]).max(axis=2 - index)
+    assert np.array_equal(projected['values'], expected.ravel())
+    assert projected.dimensions == plane.dimensions
+    assert projected.origin == plane.origin
+    assert projected.offset == plane.offset
+    assert projected.spacing == plane.spacing
+
+
+@pytest.fixture
+def slab_axis_volume():
+    """Return a volume of random values with distinct dimensions, spacing, and offset."""
+    volume = pv.ImageData(dimensions=(6, 7, 8), spacing=(1.0, 2.0, 0.5), origin=(1, 2, 3))
+    volume.offset = (2, -1, 3)
+    volume['values'] = np.random.default_rng(0).random(volume.n_points)
+    return volume
+
+
+@pytest.mark.parametrize('axis', ['i', 'j', 'k'])
+def test_slab_projection_default_reference(slab_axis_volume, axis):
+    """Test the image is projected across its middle slice without a reference."""
+    volume = slab_axis_volume
+    projected = volume.slab_projection(axis=axis)
+
+    index = 'ijk'.index(axis)
+    middle = (volume.extent[2 * index] + volume.extent[2 * index + 1]) // 2
+    plane = volume.slice_index(**{axis: middle - volume.offset[index]})
+    expected = volume['values'].reshape(volume.dimensions[::-1]).max(axis=2 - index)
+    assert np.array_equal(projected['values'], expected.ravel())
+    assert projected.dimensions == plane.dimensions
+    assert projected.origin == plane.origin
+    assert projected.offset == plane.offset
+    assert projected.spacing == plane.spacing
+
+
+def test_slab_projection_default_axis(slab_axis_volume):
+    """Test the image is projected along k without a reference or an axis."""
+    projected = slab_axis_volume.slab_projection()
+    assert projected == slab_axis_volume.slab_projection(axis='k')
+
+
+@pytest.mark.parametrize(
+    ('direction', 'expected_axes'),
+    [(np.eye(3), 'ijk'), (np.diag([-1.0, -1.0, 1.0]), 'ijk'), (np.eye(3)[[2, 0, 1]], 'kij')],
+)
+def test_slab_projection_world_axis_parallel(slab_axis_volume, direction, expected_axes):
+    """Test a world axis parallel to an image axis projects along that image axis."""
+    slab_axis_volume.direction_matrix = direction
+    for world_axis, index_axis in zip('xyz', expected_axes, strict=True):
+        projected = slab_axis_volume.slab_projection(axis=world_axis)
+        assert projected == slab_axis_volume.slab_projection(axis=index_axis)
+
+
+def test_slab_projection_world_axis_oblique():
+    """Test an oblique world axis projects onto an axis-aligned plane over the bounds."""
+    volume = pv.ImageData(dimensions=(10, 12, 14), spacing=(1.0, 0.5, 2.0), origin=(-3, -3, -3))
+    volume = volume.transform(pv.Transform().rotate_z(30), inplace=False)
+    volume['z'] = volume.points[:, 2]
+
+    projected = volume.slab_projection(axis='x', interpolation='linear', background_value=-1)
+    assert np.array_equal(projected.direction_matrix, np.eye(3))
+    assert projected.spacing == (0.5, 0.5, 0.5)
+    assert projected.dimensions[0] == 1
+    assert np.isclose(projected.origin[0], np.mean(volume.bounds[:2]))
+    assert np.allclose(projected.bounds[2:], volume.bounds[2:], atol=0.25)
+
+    inside = projected['z'] != -1
+    assert inside.sum() > projected.n_points / 2
+    assert np.allclose(projected['z'][inside], projected.points[inside, 2], atol=1e-4)
+
+
+def test_slab_projection_axis_override():
+    """Test a volume reference slides a slab along a chosen axis."""
+    volume = pv.ImageData(dimensions=(12, 5, 4))
+    volume['x'] = volume.points[:, 0]
+    projected = volume.slab_projection(volume, 2, axis='i', interpolation='linear')
+    expected = np.clip(volume.points[:, 0] + 1, None, 11)
+    assert np.allclose(projected['x'], expected)
+    assert projected.dimensions == volume.dimensions
+
+
+def test_slab_projection_default_reference_cell_data():
+    """Test cell data is projected across the middle slice without a reference."""
+    volume = pv.ImageData(dimensions=(5, 6, 7))
+    volume.cell_data['values'] = np.random.default_rng(0).random(volume.n_cells)
+    projected = volume.slab_projection(axis='k')
+    expected = volume.cell_data['values'].reshape(6, 5, 4).max(axis=0)
+    assert projected.dimensions == (5, 6, 1)
+    assert np.array_equal(projected.cell_data['values'], expected.ravel())
+
+
+@pytest.mark.parametrize('interpolation', ['nearest', 'linear', 'cubic'])
+def test_slab_projection_zero_thickness_matches_reslice(interpolation):
+    """Test a slab with zero thickness samples the same values as reslice."""
+    volume = pv.ImageData(dimensions=(12, 13, 14), spacing=(1.0, 0.5, 2.0))
+    volume['values'] = np.random.default_rng(0).random(volume.n_points)
+    reference = pv.ImageData(dimensions=(9, 7, 1), origin=(1.3, 0.7, 5.1), spacing=(0.8, 0.9, 1))
+    reference.direction_matrix = pv.Transform().rotate_x(25).rotate_z(10).matrix[:3, :3]
+    projected = volume.slab_projection(reference, 0, interpolation=interpolation)
+    resliced = volume.reslice(reference, interpolation)
+    assert np.array_equal(projected['values'], resliced['values'])
+
+
+def test_slab_projection_oblique():
+    """Test an oblique plane is projected along its normal."""
+    volume = pv.ImageData(dimensions=(30, 30, 30), origin=(-15, -15, -15))
+    normal = np.array([1.0, 1.0, 1.0]) / np.sqrt(3)
+    volume['distance'] = volume.points @ normal
+
+    plane = pv.ImageData(dimensions=(5, 5, 1), origin=(-2, -2, 0))
+    plane.direction_matrix = (
+        pv.Transform().rotate_vector((-1, 1, 0), np.degrees(np.arccos(normal[2]))).matrix[:3, :3]
+    )
+    assert np.allclose(plane.direction_matrix[:, 2], normal)
+
+    projected = volume.slab_projection(plane, 4, interpolation='linear')
+    assert np.allclose(projected['distance'], plane.points @ normal + 2, atol=1e-4)
+    assert np.allclose(projected.direction_matrix, plane.direction_matrix)
+
+
+@pytest.mark.parametrize(('slice_spacing', 'thickness'), [(2, 2), (2, 4), (0.5, 1)])
+def test_slab_projection_sliding_slab(slice_spacing, thickness):
+    """Test a volume reference gets a separate slab centered on each slice."""
+    volume = pv.ImageData(dimensions=(4, 4, 30))
+    volume['z'] = volume.points[:, 2]
+    reference = pv.ImageData(dimensions=(4, 4, 5), origin=(0, 0, 5), spacing=(1, 1, slice_spacing))
+    kwargs = {'interpolation': 'linear'}
+    projected = volume.slab_projection(reference, thickness, mode='max', **kwargs)
+    assert np.allclose(projected['z'], reference.points[:, 2] + thickness / 2)
+    projected = volume.slab_projection(reference, thickness, mode='mean', **kwargs)
+    assert np.allclose(projected['z'], reference.points[:, 2])
+
+
+def test_slab_projection_outside():
+    """Test samples outside the image are ignored and a slab entirely outside is filled."""
+    volume = pv.ImageData(dimensions=(4, 4, 20))
+    volume['z'] = volume.points[:, 2] + 1.0
+
+    plane = volume.slice_index(k=0)
+    assert np.array_equal(volume.slab_projection(plane, 4, mode='min')['z'], plane['z'])
+    assert np.allclose(volume.slab_projection(plane, 4, mode='mean')['z'], 2.0)
+    assert np.array_equal(
+        volume.slab_projection(plane, mode='max')['z'], volume.slab_projection(plane, 1e12)['z']
+    )
+
+    outside = pv.ImageData(dimensions=(4, 4, 1), origin=(0, 0, 40))
+    projected = volume.slab_projection(outside, 4, background_value=-1)
+    assert np.array_equal(projected['z'], np.full(16, -1.0))
+
+
+@pytest.mark.parametrize('rotate_input', [False, True])
+@pytest.mark.parametrize('rotate_reference', [False, True])
+@pytest.mark.parametrize(
+    ('reference_dimensions', 'axis'), [((6, 7, 2), 2), ((6, 2, 7), 1), ((5, 6, 4), 2)]
+)
+def test_slab_projection_cell_data(rotate_input, rotate_reference, reference_dimensions, axis):
+    """Test cell data is projected at the cell centers of the reference."""
+    gradient = np.array([0.3, -0.7, 1.1])
+    volume = pv.ImageData(dimensions=(20, 20, 20), origin=(-10, -10, -10))
+    if rotate_input:
+        volume = volume.transform(pv.Transform().rotate_z(30, point=volume.center), inplace=False)
+    volume.cell_data['f'] = volume.cell_centers().points @ gradient
+    reference = pv.ImageData(
+        dimensions=reference_dimensions, spacing=(0.5, 0.5, 0.5), offset=(1, 2, 3)
+    )
+    if rotate_reference:
+        reference.direction_matrix = pv.Transform().rotate_x(40).rotate_z(20).matrix[:3, :3]
+
+    centers = reference.cell_centers().points @ gradient
+    projected = volume.slab_projection(reference, 0, mode='mean', interpolation='linear')
+    assert np.allclose(projected.cell_data['f'], centers, atol=1e-4)
+    normal = reference.direction_matrix[:, axis]
+    projected = volume.slab_projection(reference, 2, mode='max', interpolation='linear')
+    assert np.allclose(projected.cell_data['f'], centers + abs(gradient @ normal), atol=1e-4)
+
+    assert projected.cell_data.keys() == ['f']
+    assert projected.point_data.keys() == []
+    assert projected.dimensions == reference.dimensions
+    assert projected.origin == reference.origin
+    assert projected.offset == reference.offset
+    assert projected.spacing == reference.spacing
+    assert np.array_equal(projected.direction_matrix, reference.direction_matrix)
+
+
+@pytest.mark.parametrize('dtype', [bool, np.uint8, np.int16, np.int64, np.float32])
+def test_slab_projection_dtype(dtype):
+    """Test the scalars keep their data type."""
+    volume = pv.ImageData(dimensions=(4, 4, 4))
+    volume['values'] = np.arange(volume.n_points).astype(dtype)
+    projected = volume.slab_projection(volume.slice_index(k=1), 2, mode='mean')
+    assert projected['values'].dtype == dtype
+    assert np.array_equal(projected['values'], volume.slice_index(k=1)['values'])
+
+
+def test_slab_projection_zero_spacing():
+    """Test a zero spacing along the normal of the reference or of the image."""
+    volume = pv.ImageData(dimensions=(4, 4, 20))
+    volume['z'] = volume.points[:, 2]
+    plane = pv.ImageData(dimensions=(4, 4, 1), spacing=(1, 1, 0), origin=(0, 0, 5))
+    assert np.array_equal(volume.slab_projection(plane, 2)['z'], np.full(16, 6.0))
+    assert np.array_equal(volume.slab_projection(plane)['z'], np.full(16, 19.0))
+
+    flat = pv.ImageData(dimensions=(4, 4, 1), spacing=(1, 1, 0))
+    flat['values'] = np.arange(16.0)
+    assert np.array_equal(flat.slab_projection(flat, 2)['values'], flat['values'])
+
+
+def test_slab_projection_multi_component():
+    """Test each component is combined separately."""
+    volume = pv.ImageData(dimensions=(3, 3, 5))
+    volume['vectors'] = np.c_[volume.points[:, 2], -volume.points[:, 2]]
+    projected = volume.slab_projection(volume.slice_index(k=2), 2)
+    assert np.array_equal(projected['vectors'], np.tile([3.0, -1.0], (9, 1)))
+
+
+@pytest.mark.parametrize('interpolation', get_args(_InterpolationOptions))
+def test_slab_projection_interpolation(interpolation):
+    """Test every interpolation mode reproduces the image at its own points."""
+    volume = pv.ImageData(dimensions=(40, 40, 40))
+    volume['values'] = np.random.default_rng(0).random(volume.n_points)
+    plane = volume.slice_index(k=20)
+    projected = volume.slab_projection(plane, 0, interpolation=interpolation)
+    # High-degree splines are exact only away from the image border
+    interior = np.s_[15:25, 15:25]
+    actual = projected['values'].reshape(40, 40)[interior]
+    assert np.allclose(actual, plane['values'].reshape(40, 40)[interior], atol=1e-4)
+
+
+def test_slab_projection_inplace(block_volume):
+    """Test the projection replaces the image in place."""
+    plane = block_volume.slice_index(k=5)
+    output = block_volume.slab_projection(plane, 10, inplace=True)
+    assert output is block_volume
+    assert block_volume.dimensions == plane.dimensions
+    assert np.array_equal(block_volume['values'], np.full(plane.n_points, 100.0))
+
+
+def test_slab_projection_scalars(block_volume):
+    """Test only the requested scalars are projected."""
+    block_volume['other'] = -block_volume['values']
+    projected = block_volume.slab_projection(block_volume.slice_index(k=5), 10, scalars='other')
+    assert projected.point_data.keys() == ['other']
+    assert np.array_equal(projected['other'], np.full(400, 0.0))
+
+
+def test_slab_projection_raises(block_volume):
+    """Test invalid inputs raise."""
+    plane = block_volume.slice_index(k=5)
+    with pytest.raises(TypeError, match='reference_image'):
+        block_volume.slab_projection(pv.Sphere())
+    with pytest.raises(ValueError, match='thickness'):
+        block_volume.slab_projection(plane, -1)
+    with pytest.raises(ValueError, match='mode'):
+        block_volume.slab_projection(plane, mode='sum')
+    with pytest.raises(ValueError, match='interpolation'):
+        block_volume.slab_projection(plane, interpolation='area')
+    with pytest.raises(ValueError, match='axis'):
+        block_volume.slab_projection(axis=0)
+    plane.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    with pytest.raises(ValueError, match="Axis 'x' is not parallel"):
+        block_volume.slab_projection(plane, axis='x')
