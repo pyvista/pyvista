@@ -16,13 +16,13 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
+from typing import Self
 from typing import Union
 from typing import cast
 from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
-from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import TypeVar
 from typing_extensions import Unpack
@@ -189,7 +189,7 @@ class MultiBlock(
     @overload  # copy
     def __init__(self, dataset: _vtk.vtkMultiBlockDataSet, /, *, deep: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
     @overload  # read from file
-    def __init__(self, *args: Unpack[tuple[str | Path]], validate: bool | _NestedMeshValidationFields = ..., **kwargs: Any) -> None: ...  # pragma: no cover
+    def __init__(self, *args: *tuple[str | Path], validate: bool | _NestedMeshValidationFields = ..., **kwargs: Any) -> None: ...  # pragma: no cover
     @overload  # build from blocks, named or not
     def __init__(self, dataset: Sequence[_BlockType] | dict[str, _BlockType], /, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
     @overload  # build from raw VTK blocks, which are wrapped

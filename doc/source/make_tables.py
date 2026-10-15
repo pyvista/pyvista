@@ -27,6 +27,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+from typing import get_overloads
 
 import cmcrameri
 import cmocean
@@ -42,7 +43,6 @@ from sphinx.util.console import bold
 from sphinx.util.console import color_terminal
 from sphinx.util.console import darkgreen
 from sphinx.util.console import nocolor
-from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_INFO

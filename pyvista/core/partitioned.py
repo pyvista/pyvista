@@ -23,8 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Any
     from typing import ClassVar
-
-    from typing_extensions import Self
+    from typing import Self
 
     from .dataset import DataSet
     from .utilities.arrays import CellLiteral
