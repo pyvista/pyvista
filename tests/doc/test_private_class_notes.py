@@ -23,7 +23,9 @@ NOTE = 'private internal implementation detail'
 def _import_all_modules():
     """Return the importable ``pyvista`` modules and ``{name: error}`` for the rest."""
     modules, failed = [pv], {}
-    for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.'):
+    # ``onerror`` records a broken package instead of skipping or raising on it
+    on_package_error = lambda name: failed.setdefault(name, 'failed to import')
+    for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.', onerror=on_package_error):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', PyVistaDeprecationWarning)  # deprecated shims
@@ -90,11 +92,10 @@ def needs_note(imported):
 
 
 def test_every_module_imports(imported):
-    """Classes in a module that fails to import go unchecked, so name the modules."""
+    """Classes in a module that fails to import would go unchecked."""
     _, failed = imported
-    if failed:  # pragma: no cover
-        details = '\n  '.join(f'{name}: {error}' for name, error in sorted(failed.items()))
-        pytest.xfail(f'Not checked for the note, failed to import:\n  {details}')
+    details = '\n  '.join(f'{name}: {error}' for name, error in sorted(failed.items()))
+    assert not failed, f'These modules failed to import:\n  {details}'
 
 
 def test_some_classes_need_the_note(needs_note):
