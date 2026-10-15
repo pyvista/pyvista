@@ -250,6 +250,55 @@ def test_strip_keeps_to_the_input_edges(join):
     assert edges(mesh.strip(join=join)) == edges(mesh)
 
 
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_keeps_the_active_point_array(join):
+    points = np.array([[0.0, 0, 0], [1, 0, 0], [2, 0, 0]])
+    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 1, 2, 1, 2])
+    mesh.point_data['a'] = np.arange(3)
+    mesh.point_data['b'] = np.arange(3) * 2
+    mesh.point_data.active_scalars_name = 'b'
+    assert mesh.strip(join=join).point_data.active_scalars_name == 'b'
+
+
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_skips_ghost_lines(join):
+    points = np.column_stack([np.arange(5.0), np.zeros(5), np.zeros(5)])
+    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3, 2, 3, 4, 1, 4])
+    ghosts = np.zeros(mesh.n_cells, dtype=np.uint8)
+    ghosts[[1, 4]] = 32
+    mesh.cell_data['vtkGhostType'] = ghosts
+    stripped = mesh.strip(join=join, pass_cell_ids=True)
+    edges = {
+        frozenset(pair) for cell in stripped.cell for pair in itertools.pairwise(cell.point_ids)
+    }
+    assert edges == {frozenset((0, 1)), frozenset((2, 3)), frozenset((3, 4))}
+    assert [4] not in [list(cell.point_ids) for cell in stripped.cell]
+    assert sorted(stripped.field_data['vtkOriginalCellIds']) == [0, 2, 3]
+
+
+def test_strip_traces_triangles_with_a_repeated_point():
+    points = np.array([[0.0, 0, 0], [1, 0, 0], [0, 1, 0]])
+    mesh = pv.PolyData(points, faces=[3, 0, 0, 1, 3, 0, 1, 2, 3, 1, 2, 1])
+    stripped = mesh.strip(pass_cell_ids=True)
+    # the stripper alone drops the real triangle beside the repeated point
+    assert sorted(stripped.field_data['vtkOriginalCellIds']) == [0, 1, 2]
+    assert stripped.n_strips == 1
+
+
+@pytest.mark.parametrize(
+    ('lines', 'faces'),
+    [
+        ([2, 0, 1, 2, 1, 0, 2, 1, 2], None),
+        (None, [3, 0, 1, 2, 3, 2, 1, 0, 3, 1, 3, 2]),
+    ],
+)
+def test_strip_traces_each_copy_of_a_repeated_cell(lines, faces):
+    points = np.array([[0.0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
+    mesh = pv.PolyData(points, lines=lines, faces=faces)
+    stripped = mesh.strip(join=True, pass_cell_ids=True)
+    assert sorted(stripped.field_data['vtkOriginalCellIds']) == [0, 1, 2]
+
+
 def test_dash_lines_solid_returns_the_lines_whole():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
     line.point_data['ids'] = np.arange(line.n_points)
@@ -386,6 +435,14 @@ def test_dash_lines_join_keeps_to_the_input_edges(cell_data):
 
     joined = mesh.dash_lines('-')
     assert edges(joined) == edges(mesh)
+    if cell_data:
+        # each piece lies on the cell its data came from
+        def segments(coords):
+            rows = map(tuple, coords.round(9).tolist())
+            return {frozenset(pair) for pair in itertools.pairwise(rows) if pair[0] != pair[1]}
+
+        for cell, owner in zip(joined.cell, joined['id'], strict=True):
+            assert segments(cell.points) <= segments(mesh.get_cell(owner).points)
 
 
 def test_dash_lines_removes_non_line_cells():
@@ -452,6 +509,13 @@ def test_dash_lines_degenerate_cells():
     dashed = mesh.dash_lines(join=False)
     assert dashed.n_points == 0
     assert dashed.n_cells == 0
+
+
+def test_dash_lines_join_treats_signed_zeros_as_equal():
+    points = np.column_stack([np.arange(4.0), np.zeros(4), np.zeros(4)])
+    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+    mesh.cell_data['z'] = [0.0, -0.0, 0.0]
+    assert mesh.dash_lines(pattern=[30, 1], scale=1.0).n_cells == 1
 
 
 def test_dash_lines_snaps_integer_point_data():
