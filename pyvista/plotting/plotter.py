@@ -82,6 +82,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
 from .mapper import _BaseMapper
 from .mapper import _category_range
+from .mapper import _default_scalar_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .mapper import _PolyDataMapper
@@ -3141,8 +3142,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
-            also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -3756,8 +3758,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
-            also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -4895,7 +4898,9 @@ class BasePlotter(_BoundsSizeMixin):
         clim : sequence[float] | float, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
-            ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
+            ``np.uint8``. A range that spans only floating-point rounding
+            becomes ``(max, max)``. ``rng`` is also an accepted alias for this
+            parameter.
 
             If the scalars datatype is ``np.uint8``, this parameter defaults to
             ``[0, 256]``.
@@ -5359,10 +5364,8 @@ class BasePlotter(_BoundsSizeMixin):
                 category_values = None
 
         # Set scalars range
-        min_, max_ = None, None
         if clim is None:
-            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-            clim = (min_, max_)
+            clim = _default_scalar_range(np.nanmin(scalars), np.nanmax(scalars), scalars.dtype)
         elif isinstance(clim, (float, int)):
             clim = (-clim, clim)
 
