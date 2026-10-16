@@ -22,6 +22,7 @@ from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
 from .mapper import _clim_has_no_bounds
+from .mapper import _default_scalar_range
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -782,8 +783,9 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
 
         clim : VectorLikeFloat
             Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
-            is also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
@@ -848,7 +850,20 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             scalar_range = (-0.5, 1.5)
         else:
             if clim is None:
-                clim = dataset.get_data_range(scalars_name, allow_missing=True)
+                # Precision to judge rounding noise against, wide enough for every block
+                data_attr = f'{field.name.lower()}_data'
+                block_dtypes = [
+                    getattr(block, data_attr)[scalars_name].dtype
+                    for block in dataset.recursive_iterator(skip_none=True)
+                    if scalars_name in getattr(block, data_attr)
+                ]
+                # Collapse rounding noise to one value unless a below-range color is shown
+                clim = _default_scalar_range(
+                    *dataset.get_data_range(scalars_name, allow_missing=True),
+                    np.result_type(*block_dtypes) if block_dtypes else dtype,
+                    below_range_color=bool(below_color)
+                    or self.lookup_table.below_range_color is not None,
+                )
             scalar_range = (float(clim[0]), float(clim[1]))
         if log_scale and scalar_range[0] <= 0:
             scalar_range = (sys.float_info.min, scalar_range[1])
