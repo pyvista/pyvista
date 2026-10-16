@@ -2605,6 +2605,7 @@ class MultiBlock(
 
         Nested blocks of the same class at the same depth are described together, so
         every :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
+        Nested composites are listed before the other block types.
         A composite without blocks is a bare ``MultiBlock``.
 
         .. versionadded:: 0.50
@@ -2625,7 +2626,7 @@ class MultiBlock(
 
         >>> nested = pv.MultiBlock([multi, pv.ImageData(), None])
         >>> nested.inferred_type
-        'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
+        'MultiBlock[MultiBlock[PolyData] | ImageData | None]'
 
         """
         return _inferred_type(type(self).__name__, self, float('inf'))[0]
@@ -2850,7 +2851,7 @@ def _inferred_type(
             leaves.add('None' if block is None else type(block).__name__)
     if not leaves and not nested:
         return name, 1
-    members = sorted([*(leaves - {'None'}), *nested]) + sorted(leaves & {'None'})
+    members = [*sorted(nested), *sorted(leaves - {'None'}), *sorted(leaves & {'None'})]
     shown: list[str] = []
     used = 1
     for member in members:
