@@ -56,6 +56,16 @@ else:
             return self.value
 
 
+def _srgb_to_linear(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Decode sRGB values in the range ``[0, 1]`` to linear values."""
+    return np.where(values < 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4)
+
+
+def _linear_to_srgb(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Encode linear values in the range ``[0, 1]`` to sRGB values."""
+    return np.where(values < 0.0031308, values * 12.92, 1.055 * values ** (1 / 2.4) - 0.055)
+
+
 def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
 
@@ -140,7 +150,7 @@ def _resolve_line_style(style: LineStyle, *, name: str = 'style') -> int:
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Decorate a class, overriding ``__new__``.
 
-    Preventing a class from being instantiated similar to abc.ABCMeta
+    Preventing a class from being instantiated similar to ``abc.ABCMeta``
     but does not require an abstract method.
 
     Parameters
