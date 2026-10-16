@@ -84,10 +84,18 @@ jobs:
       # Tag builds are the docs published to docs.pyvista.org; `conf.py` expands
       # the sidebar navigation for them.
       _PYVISTA_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      PYVISTA_DATASETS_TOML: ${{ github.workspace }}/DATASETS.toml
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      # TEMPORARY: revert with the commit that added it once pyvista/data#70 has
+      # merged, so the gallery reads the published file like everything else.
+      - name: Fetch DATASETS.toml from pyvista/data#70
+        run: |
+          curl -fsSL -o "$PYVISTA_DATASETS_TOML" \
+            https://raw.githubusercontent.com/pyvista/data/maint/dataset-metadata/DATASETS.toml
 
       - uses: actions/setup-python@v7
         with:
