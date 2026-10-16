@@ -10,6 +10,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
+from pyvista.plotting.scalar_bars import _LEGIBLE_FONT_SIZE as LEGIBLE_FONT_SIZE
 from pyvista.plotting.scalar_bars import _bar_title_height
 from pyvista.plotting.scalar_bars import _box_pixels
 from pyvista.plotting.scalar_bars import _fitted_label_font
@@ -808,17 +809,79 @@ def _ink_bands(pl, bar):
     return [band for band in bands if band > 2]
 
 
-def _text_outside_the_box(pl, bar):
-    """Return whether any of a bar's blue text is drawn outside its box."""
-    image = pl.screenshot(return_img=True)
-    text = _blue_text(image)
+def _blue_ink(pl):
+    """Return a mask of the pixels a render draws in blue."""
+    return _blue_text(pl.screenshot(return_img=True))
+
+
+def _drawn_box(pl, bar):
+    """Return the box drawn around a bar in pixels, as left, bottom, width and height."""
     left, bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
-    width, height = _box_pixels(bar, pl.renderer)
-    rows = image.shape[0]
+    return left, bottom, *_box_pixels(bar, pl.renderer)
+
+
+def _flat_title(bar):
+    """Return the property a bar's title is measured by when it is drawn flat."""
+    probe = _vtk.vtkTextProperty()
+    probe.ShallowCopy(bar.GetTitleTextProperty())
+    probe.SetOrientation(0)
+    probe.SetLineOffset(0)
+    return probe
+
+
+def _ramp_ends(pl, bar):
+    """Return the rows a vertical bar's ramp runs between."""
+    rect = [0, 0, 0, 0]
+    bar.GetScalarBarRect(rect, pl.renderer)
+    return rect[1], rect[1] + rect[3]
+
+
+def _label_ink(pl, bar):
+    """Return the runs of rows a vertical bar's labels ink, bottom up."""
+    text = _blue_ink(pl)
+    rect = [0, 0, 0, 0]
+    bar.GetScalarBarRect(rect, pl.renderer)
+    width = _label_size(bar, bar.GetLabelTextProperty(), pl.render_window.GetDPI())[0]
+    # The labels are drawn from the far side of the ramp, and a turned title past them
+    left = rect[0] + rect[2] + 2
+    inked = text[::-1, left : left + int(width) + 2].any(axis=1)
+    runs = []
+    row = 0
+    for holds_ink, run in itertools.groupby(inked):
+        length = len(list(run))
+        if holds_ink and length > 2:
+            runs.append((row, row + length - 1))
+        row += length
+    return runs
+
+
+def _label_centers(pl, bar):
+    """Return the rows the ink of a vertical bar's top and bottom labels is centered on."""
+    runs = _label_ink(pl, bar)
+    return sum(runs[-1]) / 2, sum(runs[0]) / 2
+
+
+def _text_outside_the_box(pl, bar):
+    """Return whether any of a bar's blue text is drawn outside the box drawn around it."""
+    text = _blue_ink(pl)
+    left, bottom, width, height = _drawn_box(pl, bar)
+    rows = text.shape[0]
     inside = text.copy()
     inside[rows - bottom - height - 2 : rows - bottom + 2, left - 2 : left + width + 2] = False
     assert text.any()
     return bool(inside.any())
+
+
+def _registered(pl, bar):
+    """Return whether a vertical bar's end labels are centered on the ends of its ramp.
+
+    VTK centers them there itself, so this holds the fit to leaving them alone.
+    """
+    # The ramp is laid out by the render the ink is read from
+    top, bottom = _label_centers(pl, bar)
+    ramp_bottom, ramp_top = _ramp_ends(pl, bar)
+    label_height = _label_size(bar, bar.GetLabelTextProperty(), pl.render_window.GetDPI())[1]
+    return max(abs(top - ramp_top), abs(bottom - ramp_bottom)) <= label_height / 4
 
 
 def _fitted_bar(plotter, sphere, *, vertical, box, **kwargs):
@@ -863,6 +926,7 @@ def test_fit_box_encloses_the_title(sphere, vertical: bool, box):
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+@pytest.mark.filterwarnings('ignore:The text of scalar bar')
 def test_fit_box_keeps_the_ramp(sphere, vertical: bool, box):
     # The box grows around the ramp rather than taking its size from it
     sphere[KEY] = sphere.points[:, 2]
@@ -1246,6 +1310,66 @@ def test_stacked_boxed_bar_reaches_only_to_its_box(sphere):
     assert second_bar(outline=True, unconstrained_font_size=True) == second_bar()
 
 
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_stacked_turned_bars_clear_the_boxes_beside_them(sphere):
+    # A box holds a turned title, so the bar beside it clears the box, not the title
+    sphere[KEY] = sphere.points[:, 2]
+
+    def positions(**box):
+        pl = pv.Plotter(window_size=[1024, 768])
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        bars = [
+            pl.add_scalar_bar(
+                title,
+                vertical=True,
+                rotate_title=True,
+                title_font_size=24,
+                label_font_size=24,
+                n_labels=5,
+                mapper=pv.DataSetMapper(sphere),
+                **box,
+            )
+            for title in ('Alpha', 'Beta and gamma', 'Delta')
+        ]
+        pl.screenshot(return_img=True)
+        places = [(bar.GetPosition()[0], bar.GetWidth()) for bar in bars]
+        pl.close()
+        return places
+
+    boxed = positions(outline=True)
+    bare = positions()
+    # Each box stands a fifth of itself from the next, whatever the title inside it says
+    for (place, width), (nearer, _) in zip(boxed[1:], boxed[:-1], strict=True):
+        assert nearer - place == pytest.approx(width * 1.2, abs=0.01)
+    # A box is wider than the bar inside it, so the bars stand further apart, not nearer
+    assert boxed[0][0] - boxed[1][0] > bare[0][0] - bare[1][0]
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_stacked_bar_clears_a_turned_neighbor_by_the_height_of_its_title(sphere):
+    # A title reaching into the gap is one line tall whatever it says
+    sphere[KEY] = sphere.points[:, 2]
+    turned = dict(
+        vertical=True, rotate_title=True, title_font_size=24, label_font_size=24, n_labels=5
+    )
+
+    def beside(title):
+        pl = pv.Plotter(window_size=[1024, 768])
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        neighbor = pl.add_scalar_bar(
+            title, outline=True, mapper=pv.DataSetMapper(sphere), **turned
+        )
+        pl.screenshot(return_img=True)
+        # The box comes off between renders, so the fit is what the neighbor is measured by
+        neighbor.SetDrawFrame(False)
+        bar = pl.add_scalar_bar('Delta', mapper=pv.DataSetMapper(sphere), **turned)
+        place = bar.GetPosition()[0]
+        pl.close()
+        return place
+
+    assert beside('Beta and gamma and delta') == pytest.approx(beside('Beta'), abs=0.005)
+
+
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 def test_fit_box_without_a_box(sphere, vertical: bool):
     # There is nothing to fit when no box is drawn
@@ -1294,6 +1418,679 @@ def test_fit_box_keeps_a_given_size(sphere, sizing, vertical: bool, text, box):
 
     for name, given in sizing.items():
         assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_seats_a_sized_vertical_title(sphere, box):
+    # A vertical box kept at a size of its own holds its title inside itself rather than
+    # across the top edge the layout lifts the title through
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box=box,
+        fmt='%.1f',
+        width=0.25,
+        height=0.6,
+        position_x=0.6,
+        position_y=0.2,
+        color='blue',
+    )
+
+    assert bar.GetWidth() == pytest.approx(0.25)
+    assert bar.GetHeight() == pytest.approx(0.6)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    assert bar.GetTitleTextProperty().GetLineOffset() > 0
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_widens_a_vertical_bar_given_only_a_height(sphere, box):
+    # A vertical title spans the width of its box, so only a width of its own holds the
+    # text to it; a height leaves the box free to widen around the title at full size
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=True, box=box, fmt='%.1f', height=0.6, color='blue')
+
+    dpi = pl.render_window.GetDPI()
+    assert bar.GetHeight() == pytest.approx(0.6)
+    assert bar.GetWidth() > 0.08
+    assert _box_pixels(bar, pl.renderer)[0] >= _title_width(
+        bar.GetTitleTextProperty(), FIT_TITLE, dpi
+    )
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_encloses_a_turned_title(sphere, box):
+    # A turned title is drawn alongside the bar, past the tick labels, and the box holds
+    # the ramp, the labels and the title in a row rather than leaving the title outside,
+    # reaching past the ramp's ends for the labels centered on them
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl, sphere, vertical=True, box=box, rotate_title=True, fmt='%.1f', color='blue'
+    )
+
+    dpi = pl.render_window.GetDPI()
+    title_text = bar.GetTitleTextProperty()
+    # The title is turned by its text property and moved beside the labels rather than
+    # to the far side of the bar, and the spaces that move it along the bar are carried
+    # past the title rather than in it
+    assert not bar.GetForceVerticalTitle()
+    assert title_text.GetOrientation() == 90
+    assert title_text.GetLineOffset() > 0
+    assert bar.GetTitle() == FIT_TITLE
+    ramp = bar.GetBarRatio() * _box_pixels(bar, pl.renderer)[0]
+    labels = _label_size(bar, bar.GetLabelTextProperty(), dpi)[0]
+    # The property measures the title turned and offset, so measure it flat and in place
+    turned = _title_height(_flat_title(bar), FIT_TITLE, dpi)
+    assert _box_pixels(bar, pl.renderer)[0] >= ramp + labels + turned
+    # The box grows around the ramp by the half label reaching past its top
+    label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+    asked = pl.theme.colorbar_vertical.height * 768
+    assert _box_pixels(bar, pl.renderer)[1] >= asked + label_height / 2
+    assert _registered(pl, bar)
+    assert not _text_outside_the_box(pl, bar)
+    # The box reaches no further past the top label than the pad and the line, and the
+    # few pixels the ink of a digit stops short of its bounds by
+    _, bottom, _, height = _drawn_box(pl, bar)
+    top_ink = _label_ink(pl, bar)[-1][1]
+    line_width = int(bar.GetFrameProperty().GetLineWidth())
+    assert bottom + height - top_ink <= bar.GetTextPad() + line_width + 3
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+@pytest.mark.parametrize(
+    ('asked', 'gives_way'),
+    [((24, 24), 'both'), ((24, 12), 'title'), ((12, 24), 'labels')],
+    ids=['same', 'larger-title', 'larger-labels'],
+)
+def test_fit_box_shares_a_given_width_between_a_turned_title_and_the_labels(
+    sphere, asked, gives_way
+):
+    # A width of its own is the room the row past the ramp has, and the one that asked
+    # for the larger size gives way first, both together once they match
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=True,
+        outline=True,
+        rotate_title=True,
+        fmt='%.1f',
+        title_font_size=asked[0],
+        label_font_size=asked[1],
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+        width=0.08,
+        color='blue',
+    )
+
+    title = bar.GetTitleTextProperty().GetFontSize()
+    labels = bar.GetLabelTextProperty().GetFontSize()
+    assert bar.GetWidth() == pytest.approx(0.08)
+    if gives_way == 'both':
+        assert title == labels < 24
+    elif gives_way == 'title':
+        assert labels == 12
+        assert 12 < title < 24
+    else:
+        assert title == 12
+        assert 12 < labels < 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_keeps_a_turned_bar_the_height_it_was_given(sphere):
+    # The box keeps the height it was given, and the ramp gives the labels their room
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box={'outline': True},
+        rotate_title=True,
+        fmt='%.1f',
+        height=0.6,
+        color='blue',
+    )
+    pl.screenshot(return_img=True)
+
+    assert _box_pixels(bar, pl.renderer)[1] == pytest.approx(0.6 * 768, abs=1)
+    # The ramp is held back from the top for the label centered on its end
+    label_height = _label_size(bar, bar.GetLabelTextProperty(), pl.render_window.GetDPI())[1]
+    _, bar_bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
+    assert _ramp_ends(pl, bar)[1] <= bar_bottom + 0.6 * 768 - label_height / 2
+    assert _registered(pl, bar)
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_lets_a_swatch_hold_a_turned_bar_label(sphere):
+    # A swatch drawn above the ramp already holds the top label off the frame, so the
+    # box has no half label to grow by.  VTK draws the swatch's annotation on the far
+    # side of the ramp, outside any box, so the ink is not checked
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box={'outline': True},
+        rotate_title=True,
+        fmt='%.1f',
+        above_label='over',
+        color='blue',
+    )
+    pl.screenshot(return_img=True)
+
+    asked = pl.theme.colorbar_vertical.height * 768
+    assert _box_pixels(bar, pl.renderer)[1] <= asked + 4
+    assert _registered(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_moves_a_turned_bar_box_with_it(sphere):
+    # A bar placed after it is added takes its box along
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box={'outline': True},
+        rotate_title=True,
+        fmt='%.1f',
+        color='blue',
+    )
+    pl.screenshot(return_img=True)
+    bar.SetPosition(0.1, 0.2)
+    pl.screenshot(return_img=True)
+
+    left, bottom, width, _ = _drawn_box(pl, bar)
+    # A vertical box is anchored at its right edge and grows away from it
+    assert bottom == pytest.approx(0.2 * 768, abs=1)
+    assert left + width == pytest.approx((0.1 + pl.theme.colorbar_vertical.width) * 1024, abs=1)
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+@pytest.mark.parametrize('gone', ['hidden', 'removed', 'taken out'])
+def test_fit_box_takes_a_turned_bar_box_away_with_it(sphere, gone):
+    # The box is drawn only while the bar is
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box={'outline': True},
+        rotate_title=True,
+        fmt='%.1f',
+        color='blue',
+    )
+    assert _blue_ink(pl).any()
+
+    if gone == 'hidden':
+        bar.SetVisibility(False)
+    elif gone == 'removed':
+        pl.remove_scalar_bar(FIT_TITLE)
+    else:
+        pl.remove_actor(bar)
+
+    assert not _blue_ink(pl).any()
+    if gone == 'removed':
+        # A bar taken off the plotter is given back the layout it was added with
+        title_text = bar.GetTitleTextProperty()
+        assert bar.GetForceVerticalTitle()
+        assert title_text.GetOrientation() == 0
+        assert title_text.GetLineOffset() == 0
+        assert bar.GetVerticalTitleSeparation() >= 0
+        assert bar.GetComponentTitle() == ''
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+@pytest.mark.parametrize('box', [{}, {'height': 0.45}], ids=['grows', 'kept'])
+def test_fit_box_holds_a_long_turned_title(sphere, box):
+    # A title longer than the ramp reaches past its ends too, so the box grows around
+    # it, unless the box was given a height, which holds the title to it instead
+    sphere[KEY] = sphere.points[:, 2]
+    title = 'Elevation above the reference ellipsoid'
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        title,
+        vertical=True,
+        outline=True,
+        rotate_title=True,
+        fmt='%.1f',
+        title_font_size=24,
+        label_font_size=24,
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+        color='blue',
+        **box,
+    )
+    pl.screenshot(return_img=True)
+
+    dpi = pl.render_window.GetDPI()
+    # The property measures the title turned, so the length it is grown around is flat
+    length = _title_width(_flat_title(bar), title, dpi)
+    if box:
+        assert bar.GetTitleTextProperty().GetFontSize() < 24
+        assert _drawn_box(pl, bar)[3] == pytest.approx(0.45 * 768, abs=1)
+    else:
+        assert bar.GetTitleTextProperty().GetFontSize() == 24
+        assert _drawn_box(pl, bar)[3] > length
+    assert _registered(pl, bar)
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+@pytest.mark.parametrize(
+    'placed',
+    [{'title_font_size': 40, 'label_font_size': 40}, {'position_x': 0.0}],
+    ids=['upward', 'leftward'],
+)
+def test_fit_box_grows_a_turned_box_no_further_than_the_window(sphere, placed):
+    # The box grows around a title longer than it, and the window is as far as it grows
+    sphere[KEY] = sphere.points[:, 2]
+    title = 'Elevation above the reference ellipsoid'
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    kwargs = dict(
+        vertical=True,
+        outline=True,
+        rotate_title=True,
+        fmt='%.1f',
+        title_font_size=24,
+        label_font_size=24,
+        n_labels=5,
+        color='blue',
+    )
+    bar = pl.add_scalar_bar(title, mapper=pv.DataSetMapper(sphere), **{**kwargs, **placed})
+    pl.screenshot(return_img=True)
+
+    left, bottom, width, height = _drawn_box(pl, bar)
+    assert left >= 0
+    assert left + width <= 1024
+    assert bottom + height <= 768
+    if 'position_x' not in placed:
+        # The title is held to the box the window would not let grow around it
+        assert bar.GetTitleTextProperty().GetFontSize() < 40
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_keeps_a_component_title_given_to_a_turned_bar(sphere):
+    # The padding that places the title along the bar is not the bar's component title
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(
+        pl, sphere, vertical=True, box={'outline': True}, rotate_title=True, fmt='%.1f'
+    )
+    pl.screenshot(return_img=True)
+    bar.SetComponentTitle('m/s')
+    pl.window_size = [800, 600]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetComponentTitle().rstrip(' ') == 'm/s'
+    assert bar.GetComponentTitle() != 'm/s'
+    assert bar.GetTitle() == FIT_TITLE
+
+    pl.remove_scalar_bar(FIT_TITLE)
+    assert bar.GetComponentTitle() == 'm/s'
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_leaves_a_title_of_several_lines_to_the_bar(sphere):
+    # Spaces shear the lines of a title apart, so the bar is left to turn it itself
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        'Surface\nElevation',
+        vertical=True,
+        outline=True,
+        rotate_title=True,
+        fmt='%.1f',
+        title_font_size=24,
+        label_font_size=24,
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+    )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetForceVerticalTitle()
+    assert bar.GetTitleTextProperty().GetOrientation() == 0
+    assert not bar.GetComponentTitle()
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_lays_out_a_turned_bar_with_no_title(sphere):
+    # There is no title to move along the bar, so the box holds the ramp and the labels
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        '',
+        vertical=True,
+        outline=True,
+        rotate_title=True,
+        fmt='%.1f',
+        title_font_size=24,
+        label_font_size=24,
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+        color='blue',
+    )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitle() == ''
+    # Nothing is carried past the title, so the component title stays empty
+    assert not bar.GetComponentTitle()
+    assert _registered(pl, bar)
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_keeps_a_turned_bar_the_box_it_was_given(sphere):
+    # Given both, the box keeps both and the text is held to what they leave
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box={'outline': True, 'width': 0.08, 'height': 0.45},
+        rotate_title=True,
+        fmt='%.1f',
+        color='blue',
+    )
+    pl.screenshot(return_img=True)
+
+    width, height = _box_pixels(bar, pl.renderer)
+    assert width == pytest.approx(0.08 * 1024, abs=1)
+    assert height == pytest.approx(0.45 * 768, abs=1)
+    assert bar.GetTitleTextProperty().GetFontSize() < 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_holds_a_turned_bar_too_small_for_any_font(sphere):
+    # The text stops at a size that can still be read, and says that it does not fit
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.warns(UserWarning, match='does not fit its box'):
+        bar = _fitted_bar(
+            pl,
+            sphere,
+            vertical=True,
+            box={'outline': True, 'width': 0.02, 'height': 0.12},
+            rotate_title=True,
+            fmt='%.1f',
+        )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    assert bar.GetLabelTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+
+
+def test_fit_box_keeps_a_narrow_horizontal_title_legible(sphere):
+    # VTK shrinks the text of a horizontal box to whatever room the box leaves it, so a
+    # box too narrow for a legible title is laid out the way a vertical one is instead
+    sphere[KEY] = sphere.points[:, 2]
+    title = 'Elevation above mean sea level (m)'
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.warns(UserWarning, match='does not fit its box'):
+        bar = pl.add_scalar_bar(
+            title,
+            vertical=False,
+            outline=True,
+            width=0.12,
+            height=0.12,
+            n_labels=3,
+            title_font_size=24,
+            label_font_size=24,
+            mapper=pv.DataSetMapper(sphere),
+        )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetUnconstrainedFontSize()
+    assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    pl.close()
+
+
+def test_fit_box_leaves_a_horizontal_box_with_room_to_vtk(sphere):
+    # A box wide enough for a legible title is laid out by VTK, which sizes the text
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=False, box={'outline': True}, width=0.5, height=0.12)
+    pl.screenshot(return_img=True)
+
+    assert not bar.GetUnconstrainedFontSize()
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    pl.close()
+
+
+def test_fit_box_warns_once_that_a_title_does_not_fit_its_box(sphere):
+    # A box too narrow for the title keeps it legible and overflowing, and says so once
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    warning = re.escape(f'scalar bar {FIT_TITLE!r} does not fit its box')
+    box = {'outline': True, 'width': 0.03, 'height': 0.4}
+    with pytest.warns(UserWarning, match=warning):
+        bar = _fitted_bar(pl, sphere, vertical=True, box=box)
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    # The size it stops at is one the title can still be read at
+    assert LEGIBLE_FONT_SIZE >= 12
+    # The refit a resized window runs says nothing more about a box already reported
+    pl.window_size = [900, 700]
+    pl.screenshot(return_img=True)
+    pl.close()
+
+
+def test_fit_box_sizes_a_box_with_no_tick_labels(sphere):
+    # There are no labels to shrink, so the width it was given holds the title alone
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=True,
+        outline=True,
+        width=0.1,
+        tick_locations=[],
+        title_font_size=24,
+        label_font_size=24,
+        mapper=pv.DataSetMapper(sphere),
+        color='blue',
+    )
+    pl.screenshot(return_img=True)
+
+    assert _label_texts(bar) == []
+    assert _box_pixels(bar, pl.renderer)[0] == pytest.approx(0.1 * 1024, abs=1)
+    # The title is held to the width, which it no longer shares with any label
+    assert bar.GetTitleTextProperty().GetFontSize() < 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_leaves_a_turned_title_alone_without_a_box(sphere):
+    # With nothing drawn around it the title keeps the far side of the bar to itself
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=True, box={}, rotate_title=True, fmt='%.1f')
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetLineOffset() < 0
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_frees_a_turned_title_with_its_box(sphere):
+    # A box taken off a bar after it is added leaves the turned title the far side of
+    # the bar, where a bar added without a box has it
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(
+        pl, sphere, vertical=True, box={'outline': True}, rotate_title=True, fmt='%.1f'
+    )
+    pl.screenshot(return_img=True)
+    bar.SetDrawFrame(False)
+    pl.screenshot(return_img=True)
+
+    bare = pv.Plotter(window_size=[1024, 768])
+    bare.add_mesh(sphere, show_scalar_bar=False)
+    twin = _fitted_bar(bare, sphere, vertical=True, box={}, rotate_title=True, fmt='%.1f')
+    bare.screenshot(return_img=True)
+    bare.close()
+
+    offset = bar.GetTitleTextProperty().GetLineOffset()
+    assert offset == twin.GetTitleTextProperty().GetLineOffset()
+    assert offset < 0
+    assert bar.GetWidth() == twin.GetWidth()
+    # The bar turns the title itself again
+    assert bar.GetForceVerticalTitle()
+    assert bar.GetTitleTextProperty().GetOrientation() == 0
+    assert bar.GetComponentTitle() == ''
+
+
+def test_fit_box_shrinks_a_sized_vertical_title(sphere):
+    # A title wider than the box it was given is shrunk to it, and the labels keep the
+    # size they asked for
+    sphere[KEY] = sphere.points[:, 2]
+    title = 'Elevation above the reference ellipsoid, in metres'
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        title,
+        vertical=True,
+        outline=True,
+        fmt='%.1f',
+        width=0.3,
+        height=0.6,
+        position_x=0.6,
+        position_y=0.2,
+        title_font_size=24,
+        label_font_size=20,
+        n_labels=5,
+        color='blue',
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    assert bar.GetTitleTextProperty().GetFontSize() < 24
+    assert bar.GetLabelTextProperty().GetFontSize() == 20
+    assert not _text_outside_the_box(pl, bar)
+
+
+def test_fit_box_shrinks_sized_vertical_labels(sphere):
+    # Labels wider than the room left beside the ramp are shrunk to it, and the title
+    # keeps the size it asked for
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        'Depth',
+        vertical=True,
+        outline=True,
+        fmt='%.6f',
+        width=0.12,
+        height=0.6,
+        position_x=0.6,
+        position_y=0.2,
+        title_font_size=24,
+        label_font_size=20,
+        n_labels=5,
+        color='blue',
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    assert bar.GetLabelTextProperty().GetFontSize() < 20
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+def test_fit_box_refits_a_sized_vertical_bar(sphere):
+    # The box is a fraction of the window and the text is not, so the text is fitted to
+    # the box again whenever the window changes, and gets its size back when there is room
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1400, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(
+        pl, sphere, vertical=True, box={'outline': True}, fmt='%.1f', width=0.15, height=0.6
+    )
+    pl.screenshot(return_img=True)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+
+    pl.window_size = [500, 700]
+    pl.screenshot(return_img=True)
+    assert bar.GetTitleTextProperty().GetFontSize() < 24
+
+    pl.window_size = [1400, 700]
+    pl.screenshot(return_img=True)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
 
 
 @pytest.mark.parametrize('window_size', [[400, 300], [1400, 1000]], ids=['small', 'large'])
@@ -1407,6 +2204,34 @@ def test_fit_box_keeps_a_size_set_on_the_actor(sphere, vertical: bool):
 
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_keeps_a_font_set_on_the_actor(sphere, box):
+    # A font size set after the bar is added is the one it asks for, so the next fit
+    # measures the text at that size rather than putting the first one back
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=True, box=box, color='blue')
+    pl.screenshot(return_img=True)
+    bar.GetTitleTextProperty().SetFontSize(36)
+    bar.GetLabelTextProperty().SetFontSize(12)
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == 36
+    assert bar.GetLabelTextProperty().GetFontSize() == 12
+    assert not _text_outside_the_box(pl, bar)
+
+    # A refit of the box, here for a new window, measures against those sizes too
+    pl.window_size = [1000, 700]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == 36
+    assert bar.GetLabelTextProperty().GetFontSize() == 12
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 def test_fit_box_fits_a_size_set_on_the_actor(sphere, box):
     # A box around a bar that was sized after it was added is fitted to the text inside
     # that size, not inside the one the bar was added with
@@ -1503,6 +2328,41 @@ def test_fit_box_window_size_render(sphere, window_size):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.show()
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_height_only_vertical_render(sphere, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box=box, fmt='%.1f', height=0.6)
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_turned_title_render(sphere, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box=box, rotate_title=True, fmt='%.1f')
+    pl.show()
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.filterwarnings('ignore:The text of scalar bar')
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_sized_vertical_render(sphere, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box=box, width=0.15, height=0.6, position_x=0.7)
     pl.show()
 
 
@@ -2006,6 +2866,7 @@ def test_fit_fonts_fit_a_boxed_bar_to_the_box_it_grows(sphere):
 
 
 @pytest.mark.parametrize('box', [{}, {'width': 0.1, 'height': 0.4}], ids=['grown', 'sized'])
+@pytest.mark.filterwarnings('ignore:The text of scalar bar')
 def test_fit_fonts_hold_the_labels_of_a_vertical_box_apart(sphere, box):
     # A vertical box keeps its text unconstrained, so its labels are held apart whether
     # the box grows around them or keeps the size it was given
@@ -2023,22 +2884,15 @@ def test_fit_fonts_hold_the_labels_of_a_vertical_box_apart(sphere, box):
         assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
 
 
-@pytest.mark.parametrize('box', [{}, {'outline': True}], ids=['bare', 'boxed'])
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
-def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere, box):
+def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere):
     # A turned title keeps its seat alongside the bar, and the labels are held apart
-    # along the whole ramp it leaves them, inside a box as well as without one
+    # along the whole ramp it leaves them
     pl = pv.Plotter(window_size=SMALL_WINDOW)
     pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = _wide_bar(
-        pl,
-        sphere,
-        vertical=True,
-        n_labels=CROWDED_LABELS,
-        color='blue',
-        rotate_title=True,
-        **box,
+        pl, sphere, vertical=True, n_labels=CROWDED_LABELS, color='blue', rotate_title=True
     )
     pl.screenshot(return_img=True)
 
@@ -2050,6 +2904,31 @@ def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere, box):
     assert bar.GetTitleTextProperty().GetLineOffset() == -seat
     assert bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
     assert _label_runs(pl, bar) == CROWDED_LABELS
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_fonts_hold_the_labels_beside_a_boxed_turned_title_apart(sphere):
+    # A box lays the turned title out inside it rather than alongside the bar, and the
+    # labels are held apart along the ramp it leaves them there
+    pl = pv.Plotter(window_size=SMALL_WINDOW)
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(
+        pl,
+        sphere,
+        vertical=True,
+        n_labels=CROWDED_LABELS,
+        color='blue',
+        rotate_title=True,
+        outline=True,
+    )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetOrientation() == 90
+    assert not _text_outside_the_box(pl, bar)
+    assert bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
+    # The turned title is drawn past the labels, in the columns _label_runs reads
+    assert len(_label_ink(pl, bar)) == CROWDED_LABELS
 
 
 def test_fit_fonts_size_vertical_labels_for_the_seat_their_title_takes(sphere):
