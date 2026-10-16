@@ -155,6 +155,12 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
                 self.DeepCopy(vtk_cell)
             else:
                 self.ShallowCopy(vtk_cell)
+                # vtkGenericCell.ShallowCopy shares the point coordinates but leaves
+                # the point ids of the internal cell untouched, so a shallow copy
+                # would report every point id as zero.  Set them here to keep the
+                # reference-counted sharing that vtkCell.ShallowCopy defines.
+                # See https://github.com/pyvista/pyvista/issues/4723
+                self.SetPointIds(vtk_cell.GetPointIds())
 
     @property
     def type(self: Self) -> CellType:
@@ -622,6 +628,33 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
+    def __eq__(self: Self, other: object) -> bool:
+        """Return whether two cells are equivalent.
+
+        Two cells are equivalent when their type, point ids, and point
+        coordinates match.  The connectivity is part of the comparison, so a
+        copy that shares the point coordinates but not the point ids is not
+        equivalent to the cell it was copied from.
+
+        Examples
+        --------
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> cell = Tetrahedron().get_cell(0)
+        >>> cell == cell.copy(deep=True)
+        True
+
+        """
+        if not isinstance(other, Cell):
+            return False
+        return (
+            self.type == other.type
+            and self.point_ids == other.point_ids
+            and np.array_equal(self.points, other.points, equal_nan=True)
+        )
+
+    # Cells are mutable, so they are not hashable.
+    __hash__ = None  # type: ignore[assignment]
+
     def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the cell.
 
@@ -652,6 +685,8 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         Create a shallow copy of the cell and demonstrate it is shallow.
 
         >>> shallow_cell = cell.copy(deep=False)
+        >>> shallow_cell.point_ids == cell.point_ids
+        True
         >>> shallow_cell.points[:] = 0
         >>> cell == shallow_cell
         True

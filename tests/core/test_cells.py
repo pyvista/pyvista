@@ -349,11 +349,14 @@ def test_cell_copy_generic(cell):
     cell = cell.copy()
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
     cell_copy.points[:] = 1000
     assert cell_copy != cell
 
     cell_copy = cell.copy(deep=False)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
+    assert np.shares_memory(cell_copy.points, cell.points)
     cell_copy.points[:] = 1000
     assert cell_copy == cell
 
@@ -363,13 +366,30 @@ def test_cell_copy():
     assert isinstance(cell, pv.Cell)
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
     cell_copy.points[:] = 0
     assert cell_copy != cell
 
     cell_copy = cell.copy(deep=False)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
     cell_copy.points[:] = 0
     assert cell_copy == cell
+
+
+def test_cell_eq_compares_point_ids():
+    points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+    cell = pv.PolyData(points, faces=[3, 0, 1, 2]).get_cell(0)
+
+    # Same coordinates in the same order, but stored under different point ids
+    shifted = pv.PolyData(np.vstack((points, points)), faces=[3, 3, 4, 5]).get_cell(0)
+
+    assert cell.type == shifted.type
+    assert np.array_equal(cell.points, shifted.points)
+    assert cell.point_ids != shifted.point_ids
+    assert cell != shifted
+    assert cell == cell.copy(deep=True)
+    assert cell != 'not a cell'
 
 
 @pytest.mark.parametrize('cell', cells, ids=cell_ids)
