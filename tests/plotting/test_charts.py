@@ -712,13 +712,21 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.orientation == ori
     assert plot.label == l[0]
 
+    # Test multi comp constructor with a single color for every component
+    for color in (c[0], 'r'):
+        plot = charts.BarPlot(chart_2d, x, y, color=color, orientation=ori, label=l)
+        assert plot.colors == [pv.Color(color)] * len(y)
+
+    # Test multi comp constructor with an array of colors and with too few colors
+    plot = charts.BarPlot(chart_2d, x, y, color=np.array(c), orientation=ori, label=l)
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
+    with pytest.raises(ValueError, match='sequence of 3 ColorLike colors'):
+        charts.BarPlot(chart_2d, x, y, color=c[:2], orientation=ori, label=l)
+
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(TypeError):
-        charts.BarPlot(chart_2d, x, y, color=c[0], orientation=ori, label=l)
-    # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='sequence of 1 ColorLike colors'):
         charts.BarPlot(chart_2d, x, y[0], color=c, orientation=ori, label=l[0])
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='takes a single label'):
         charts.BarPlot(chart_2d, x, y[0], color=c[0], orientation=ori, label=l)
 
     # Test remaining properties
@@ -755,13 +763,21 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.color == c[0]
     assert plot.label == l[0]
 
+    # Test multi comp constructor with a single color for every component
+    for color in (c[0], 'r'):
+        plot = charts.StackPlot(chart_2d, x, ys, colors=color, labels=l)
+        assert plot.colors == [pv.Color(color)] * len(ys)
+
+    # Test multi comp constructor with an array of colors and with too few colors
+    plot = charts.StackPlot(chart_2d, x, ys, colors=np.array(c), labels=l)
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=True))
+    with pytest.raises(ValueError, match='sequence of 3 ColorLike colors'):
+        charts.StackPlot(chart_2d, x, ys, colors=c[:2], labels=l)
+
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(TypeError):
-        charts.StackPlot(chart_2d, x, ys, colors=c[0], labels=l)
-    # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='sequence of 1 ColorLike colors'):
         charts.StackPlot(chart_2d, x, ys[0], colors=c, labels=l[0])
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='takes a single label'):
         charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l)
 
     # Test remaining properties
@@ -1049,6 +1065,13 @@ def test_chart_mpl(pl):
 
 
 @pytest.mark.skip_plotting
+def test_chart_mpl_title_defaults_to_empty():
+    chart = pv.ChartMPL()
+
+    assert chart.title == ''
+
+
+@pytest.mark.skip_plotting
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 
@@ -1185,6 +1208,12 @@ def test_chart_interaction():
     assert not chart_bl.GetInteractive()
     assert chart_br.GetInteractive()
     ics = pl.set_chart_interaction([0, 1])
+    assert chart_bl in ics
+    assert chart_br in ics
+    assert chart_bl.GetInteractive()
+    assert chart_br.GetInteractive()
+    pl.set_chart_interaction(False)
+    ics = pl.set_chart_interaction((chart_bl, chart_br))
     assert chart_bl in ics
     assert chart_br in ics
     assert chart_bl.GetInteractive()
