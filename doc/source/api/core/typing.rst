@@ -37,106 +37,64 @@ arrays are not included; annotate an input that accepts them as
 
 pyvista.typing.VectorLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-One-dimensional array-like object with numerical values.
-
-Accepts NumPy arrays of :class:`numpy.floating`, :class:`numpy.integer` or
-:class:`numpy.bool` dtype, and sequences of :class:`float`, :class:`int` and :class:`bool`
-values or of NumPy scalars of those dtypes.
-
-Includes sequences and one-dimensional NumPy arrays.
+One-dimensional array-like object with numerical values, such as a list of numbers or a 1D
+NumPy array.
 
 .. autodata:: VectorLikeFloat
 
 pyvista.typing.VectorLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-One-dimensional array-like object with integer values.
-
-Accepts NumPy arrays of :class:`numpy.integer` or :class:`numpy.bool` dtype, and sequences
-of :class:`int` and :class:`bool` values or of NumPy scalars of those dtypes. Floating values
-are not included.
-
-Includes sequences and one-dimensional NumPy arrays.
+One-dimensional array-like object with integer values, such as a list of integers or a 1D
+NumPy array.
 
 .. autodata:: VectorLikeInt
 
 pyvista.typing.VectorLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-One-dimensional array-like object with boolean values.
-
-Accepts NumPy arrays of :class:`numpy.bool` dtype and sequences of :class:`bool` values or
-of :class:`numpy.bool` scalars only. Integer and floating values are not included.
-
-Includes sequences and one-dimensional NumPy arrays.
+One-dimensional array-like object with boolean values, such as a list of booleans or a 1D
+NumPy array.
 
 .. autodata:: VectorLikeBool
 
 pyvista.typing.MatrixLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Two-dimensional array-like object with numerical values.
-
-Accepts NumPy arrays of :class:`numpy.floating`, :class:`numpy.integer` or
-:class:`numpy.bool` dtype, and sequences of :class:`float`, :class:`int` and :class:`bool`
-values or of NumPy scalars of those dtypes.
-
-Includes sequences of vectors and two-dimensional NumPy arrays.
+Two-dimensional array-like object with numerical values, such as a list of vectors or a 2D
+NumPy array.
 
 .. autodata:: MatrixLikeFloat
 
 pyvista.typing.MatrixLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Two-dimensional array-like object with integer values.
-
-Accepts NumPy arrays of :class:`numpy.integer` or :class:`numpy.bool` dtype, and sequences
-of :class:`int` and :class:`bool` values or of NumPy scalars of those dtypes. Floating values
-are not included.
-
-Includes sequences of vectors and two-dimensional NumPy arrays.
+Two-dimensional array-like object with integer values, such as a list of vectors or a 2D
+NumPy array.
 
 .. autodata:: MatrixLikeInt
 
 pyvista.typing.MatrixLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Two-dimensional array-like object with boolean values.
-
-Accepts NumPy arrays of :class:`numpy.bool` dtype and sequences of :class:`bool` values or
-of :class:`numpy.bool` scalars only. Integer and floating values are not included.
-
-Includes sequences of vectors and two-dimensional NumPy arrays.
+Two-dimensional array-like object with boolean values, such as a list of vectors or a 2D
+NumPy array.
 
 .. autodata:: MatrixLikeBool
 
 pyvista.typing.ArrayLikeFloat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Any-dimensional array-like object with numerical values.
-
-Accepts NumPy arrays of :class:`numpy.floating`, :class:`numpy.integer` or
-:class:`numpy.bool` dtype, and sequences of :class:`float`, :class:`int` and :class:`bool`
-values or of NumPy scalars of those dtypes.
-
-Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
+Any-dimensional array-like object with numerical values, such as nested lists of numbers or
+a NumPy array.
 
 .. autodata:: ArrayLikeFloat
 
 pyvista.typing.ArrayLikeInt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Any-dimensional array-like object with integer values.
-
-Accepts NumPy arrays of :class:`numpy.integer` or :class:`numpy.bool` dtype, and sequences
-of :class:`int` and :class:`bool` values or of NumPy scalars of those dtypes. Floating values
-are not included.
-
-Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
+Any-dimensional array-like object with integer values, such as nested lists of integers or a
+NumPy array.
 
 .. autodata:: ArrayLikeInt
 
 pyvista.typing.ArrayLikeBool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Any-dimensional array-like object with boolean values.
-
-Accepts NumPy arrays of :class:`numpy.bool` dtype and sequences of :class:`bool` values or
-of :class:`numpy.bool` scalars only. Integer and floating values are not included.
-
-Includes NumPy arrays and sequences nested up to four deep. Scalar values are not included.
+Any-dimensional array-like object with boolean values, such as nested lists of booleans or a
+NumPy array.
 
 .. autodata:: ArrayLikeBool
 
@@ -146,10 +104,8 @@ VTK Related Types
 
 pyvista.typing.WrappableType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Object accepted by :func:`~pyvista.wrap`.
-
-Includes PyVista and VTK data objects, VTK data arrays, NumPy arrays, sequences of
-points, ``trimesh`` meshes, ``meshio`` meshes, and ``None``.
+Object accepted by :func:`~pyvista.wrap`, such as a VTK data object, a NumPy array of
+points, or a mesh from another library.
 
 .. currentmodule:: pyvista.typing
 
@@ -178,9 +134,7 @@ pyvista.typing.CellArrayLike
 
 pyvista.typing.RotationLike
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Array or object representing a spatial rotation.
-
-Includes 3x3 arrays and SciPy Rotation objects.
+Array or object representing a spatial rotation, such as a 3x3 matrix.
 
 .. currentmodule:: pyvista.typing
 
@@ -188,9 +142,8 @@ Includes 3x3 arrays and SciPy Rotation objects.
 
 pyvista.typing.TransformLike
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Array or object representing a spatial transformation.
-
-Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects.
+Array or object representing a spatial transformation, such as a 4x4 matrix or a
+:data:`RotationLike`.
 
 .. currentmodule:: pyvista.typing
 
@@ -198,10 +151,7 @@ Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects.
 
 pyvista.typing.InteractionEventType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Interaction event mostly used for widgets.
-
-Includes both strings such as ``'end'``, ``'start'`` and ``'always'``
-and :vtk:`vtkCommand.EventIds`.
+Interaction event mostly used for widgets, given by name or as a VTK event ID.
 
 .. currentmodule:: pyvista.typing
 
@@ -253,21 +203,16 @@ Any object that can be converted to a :class:`~pyvista.Color`.
 
 pyvista.typing.Chart
 ~~~~~~~~~~~~~~~~~~~~
-Any of :class:`~pyvista.Chart2D`, :class:`~pyvista.ChartBox`, :class:`~pyvista.ChartPie`
-or :class:`~pyvista.ChartMPL`, as accepted by :meth:`~pyvista.Plotter.add_chart`.
+Chart accepted by :meth:`~pyvista.Plotter.add_chart`.
 
 .. currentmodule:: pyvista.typing
 
 .. autodata:: Chart
-   :no-value:
 
 pyvista.typing.PlottableType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Object accepted by :func:`~pyvista.plot` or :meth:`~pyvista.Plotter.add_mesh`.
-
-Includes PyVista and VTK datasets, multiblock and partitioned datasets, ``trimesh`` and
-``meshio`` meshes, NumPy arrays of points or of volume values, sequences of points,
-and the path of a mesh file.
+Object accepted by :func:`~pyvista.plot` or :meth:`~pyvista.Plotter.add_mesh`, such as a
+dataset, a NumPy array of points, or the path of a mesh file.
 
 .. currentmodule:: pyvista.typing
 
