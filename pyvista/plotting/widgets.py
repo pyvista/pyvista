@@ -15,7 +15,9 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_set import _set_threshold_limit
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -437,8 +439,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        from pyvista.core.filters import _get_output  # avoids circular import
-
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
@@ -874,8 +874,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.widgets.plane_clipped_meshes  # doctest:+SKIP
 
         """
-        from pyvista.core.filters import _get_output  # avoids circular import
-
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
@@ -1865,9 +1863,6 @@ class WidgetComponent(_NoNewAttrMixin):
             VTK actor of the mesh.
 
         """
-        # avoid circular import
-        from pyvista.core.filters.data_set import _set_threshold_limit
-
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         if isinstance(mesh, pv.PointSet):
@@ -3138,7 +3133,7 @@ class WidgetComponent(_NoNewAttrMixin):
             logo = pv.global_theme.logo_file
         if logo is None:
             # Fallback to PyVista logo
-            from pyvista import examples
+            from pyvista import examples  # noqa: PLC0415
 
             logo = examples.logofile
 

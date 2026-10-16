@@ -97,6 +97,10 @@ jobs:
   vale:
     name: Vale
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      # For the `github-pr-check` reporter's check run.
+      checks: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -106,6 +110,17 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: 3.14
+
+      - name: Install Vale
+        run: |
+          VALE_VERSION="$(python3 doc/run_vale.py --print-vale-version)"
+          curl -sSfL "https://github.com/vale-cli/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
+          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
+          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
+        env:
+          # From vale_<version>_checksums.txt on the release page, for VALE_VERSION in
+          # doc/run_vale.py; update both together.
+          VALE_SHA256: 52f5cd0314a1b7384cac6aa102a68193977312f6ba9c9f3ae001b5deec8e3a10
 
       - name: Install Vale Dependencies
         run: pip install 'docutils<0.22' 'sphinx-gallery<0.22.0'
@@ -131,23 +146,16 @@ jobs:
           config: doc/.vale.ini
           reporter: github-pr-check
           filter_mode: nofilter
+          version: none
+          # Otherwise vale-action passes the job once reviewdog hits GitHub's annotation limit.
+          fail_on_error: true
           # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
           fail_level: warning
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # A heading in a scanned file has to pass, so nothing above would notice
-      # `Google.Headings` going slack. This runs Vale over a fixture of
-      # headings that must be flagged, and fails if any of them stops being.
-      - name: Install Vale
-        run: |
-          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
-          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
-          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
-        env:
-          VALE_VERSION: 3.18.0
-          # From vale_<version>_checksums.txt on the release page; update both together.
-          VALE_SHA256: a6f71a75a12fe689345b754f2412b90367fe33648abb7d200fa19eaadc2dbf6d
-
-      - name: "Check Vale still catches known-bad headings"
+      # Scanned files have to pass, so nothing above would notice a rule going
+      # slack. This runs Vale over fixtures of text that must be flagged, and
+      # fails if any of it stops being.
+      - name: "Check Vale still catches known-bad text"
         run: python3 tests/doc/vale/check_expected_failures.py

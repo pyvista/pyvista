@@ -43,9 +43,10 @@ from typing import ClassVar
 
 import pyvista_validation as _validation
 
-import pyvista  # noqa: TC001
+import pyvista
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
+from pyvista.jupyter import _validate_jupyter_backend
 
 from . import _property
 from .colors import Color
@@ -171,8 +172,6 @@ def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     >>> pv.set_plot_theme('pyvista.plotting.themes:DarkTheme')
 
     """
-    import pyvista  # noqa: PLC0415
-
     pyvista.global_theme.load_theme(_resolve_theme_like(theme))
 
 
@@ -2288,8 +2287,6 @@ class Theme(_ConfigBase):
 
     @jupyter_backend.setter
     def jupyter_backend(self, backend: str | None) -> None:
-        from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
-
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
     @property
