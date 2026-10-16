@@ -141,6 +141,7 @@ extensions = [
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext._autoclassproperty',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
     'pyvista.ext._embed_py_file',
