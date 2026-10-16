@@ -309,7 +309,7 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+            if self._WRITERS[file_ext] in (pv.HDFWriter, pv.EnSightWriter) and not binary:
                 msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
