@@ -800,7 +800,7 @@ class DataObject(
         return user_dict
 
     def _sync_user_dict(self: Self) -> None:
-        """Give this object its own user dict when it has one or shares another's."""
+        """Give this object its own user dict when it has one or shares another object's."""
         array = self.GetFieldData().GetAbstractArray(USER_DICT_KEY)
         if '_user_dict' in self.__dict__ or isinstance(array, _SerializedDictArray):
             self._config_user_dict()

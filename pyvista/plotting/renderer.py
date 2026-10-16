@@ -3324,7 +3324,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         View a built-in mesh from the ``(1, 1, 1)`` direction. The camera is
         placed along this vector and looks back toward the center of the mesh,
-        so the positive x, y and z axes all point toward the viewer.
+        so the positive x, y, and z axes all point toward the viewer.
 
         >>> from pyvista import examples
         >>> airplane = examples.load_airplane()

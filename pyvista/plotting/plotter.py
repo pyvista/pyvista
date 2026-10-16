@@ -9227,7 +9227,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Returns
         -------
         list[DataSet | MultiBlock]
-            List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
+            List of mesh objects such as :class:`pyvista.PolyData`,
+            :class:`pyvista.UnstructuredGrid`, etc.
 
         """
 
