@@ -487,7 +487,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'inverted_faces',
                 'non_planar_faces',
                 'degenerate_faces',
-                'coincident_points',
             )
         for field in unsupported:
             if field in cell_fields or field in point_fields:
@@ -940,8 +939,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            if hasattr(mesh, 'dimensions'):
-                return []  # Cells are implicitly defined and cannot have unused points
+            # Grid and StructuredGrid cells are implicit; ExplicitStructuredGrid stores its cells
+            if isinstance(mesh, (pv.Grid, pv.StructuredGrid)):
+                return []
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -951,8 +951,18 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
-            if isinstance(mesh, pv.Grid):
-                return []  # Points are implicitly defined and cannot be non-finite
+            if isinstance(mesh, pv.ImageData):
+                # A non-finite origin, spacing or direction reaches every point
+                if not np.isfinite(mesh.index_to_physical_matrix).all():
+                    return list(range(mesh.n_points))
+                # Points are affine in the index, so the corners that set the bounds are extremes
+                if np.isfinite(mesh.bounds).all():
+                    return []
+            elif isinstance(mesh, pv.RectilinearGrid):
+                # A point is non-finite if any of its coordinates is, with x varying fastest
+                x, y, z = (~np.isfinite(coords) for coords in (mesh.x, mesh.y, mesh.z))
+                mask = x | y[:, np.newaxis] | z[:, np.newaxis, np.newaxis]
+                return np.flatnonzero(mask).tolist()
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
@@ -1998,6 +2008,14 @@ class DataObjectFilters:
 
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
+            # Grids are checked from their geometry, other meshes from their cells
+            ugrid: pv.UnstructuredGrid | None = None
+            if not isinstance(mesh, pv.Grid):
+                ugrid = (
+                    mesh
+                    if isinstance(mesh, pv.UnstructuredGrid)
+                    else mesh.cast_to_unstructured_grid()
+                )
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
@@ -2007,7 +2025,16 @@ class DataObjectFilters:
                     if size_tolerance is not None
                     else np.finfo(mesh.points.dtype).eps
                 )
-                size_data = mesh.compute_cell_sizes(
+                measured = mesh
+                if isinstance(
+                    mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
+                ) and (_GHOST_ARRAY in mesh.cell_data or _GHOST_ARRAY in mesh.point_data):
+                    # VTK measures the cells these types hide as empty cells, so measure the
+                    # geometry of every cell without the ghost arrays
+                    measured = mesh.copy(deep=False)
+                    measured.cell_data.pop(_GHOST_ARRAY, None)
+                    measured.point_data.pop(_GHOST_ARRAY, None)
+                size_data = measured.compute_cell_sizes(
                     vertex_count=True, length=True, area=True, volume=True
                 ).cell_data
                 size = (
@@ -2016,6 +2043,18 @@ class DataObjectFilters:
                     + size_data['Area']
                     + size_data['Volume']
                 )
+                # Verdict clamps triangle areas and hexahedron volumes to +/-1e30 and reports a
+                # NaN one, from non-finite or overflowing points, as -1e30, summed over the
+                # sub-cells of higher-order cells. Such a size is unknown; a real size beyond
+                # -1e30 cannot be told apart from it. An overflowing quad measures 0 instead.
+                unknown = (size_data['Area'] <= -_VERDICT_DBL_MAX) | (
+                    size_data['Volume'] <= -_VERDICT_DBL_MAX
+                )
+                # A cell with a non-finite point cannot be measured either, which some cells,
+                # such as polyhedra, report as zero. Its points are reported as non-finite.
+                if ugrid is not None:
+                    unknown |= _cells_with_non_finite_points(ugrid)
+                size = np.where(unknown, np.nan, size)
 
                 # NEGATIVE_SIZE
                 state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
@@ -2024,14 +2063,11 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            # Skip remaining checks for datasets where cell connectivity cannot be invalid
-            # Do not skip types StructuredGrid where coincident points are possible
-            if isinstance(mesh, pv.Grid):
+            if ugrid is None:
+                grid = cast('pv.Grid', mesh)
+                state[_grid_coincident_cells(grid, tol)] |= CellStatus.COINCIDENT_POINTS
+                # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
-
-            ugrid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
 
             conn = ugrid.cell_connectivity
             offset = ugrid.cell_offsets
@@ -2054,8 +2090,10 @@ class DataObjectFilters:
                 # indexing so the gather never raises on out-of-range ids.
                 group_valid = np.all(valid_conn[entry_ids], axis=1)
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
-                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
-                dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                # Non-finite points compare as not coincident; they are reported separately
+                with np.errstate(invalid='ignore', over='ignore'):
+                    diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                    dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
                 iu = np.triu_indices(size, k=1)
                 any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
                 coincident[cells] = any_coincident & group_valid
@@ -6598,7 +6636,7 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     :attr:`~pyvista.DataSet.distinct_cell_types` builds every cell, so a cell referencing a
     point id which does not exist makes VTK read out of bounds.
     """
-    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid)):
+    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid, pv.ExplicitStructuredGrid)):
         # Connectivity is implicit and cannot reference an invalid point id
         return mesh.distinct_cell_types
     grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
@@ -6606,6 +6644,48 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     if mesh._has_hidden_cells:
         cell_types.add(CellType.EMPTY_CELL)
     return cell_types
+
+
+def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a grid that reference a non-finite point."""
+    non_finite = ~np.isfinite(grid.points).all(axis=1)
+    if not non_finite.any():
+        return np.zeros(grid.n_cells, dtype=bool)
+    # Count each cell's non-finite points from the cumulative count along its connectivity
+    count = np.concatenate([[0], np.cumsum(non_finite[grid.cell_connectivity])])
+    offsets = grid.cell_offsets
+    return count[offsets[1:]] > count[offsets[:-1]]
+
+
+def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a grid with two points within ``tolerance``.
+
+    This uses the grid geometry rather than building every cell. Cells with non-finite points,
+    which are reported separately, may differ from the per-cell check of other datasets.
+    """
+    if grid.n_cells == 0:
+        return np.zeros(0, dtype=bool)
+    if isinstance(grid, pv.ImageData):
+        # Every cell has the shape of the first. Its corners are index offsets of 0 or 1 along
+        # each axis with more than one point. The direction matrix may skew the cell, so every
+        # pair of corners is compared, not only the edges.
+        steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
+        ijk = np.array(list(itertools.product(*steps)), dtype=float)
+        matrix = grid.index_to_physical_matrix
+        with np.errstate(invalid='ignore', over='ignore'):
+            points = ijk @ matrix[:3, :3].T + matrix[:3, 3]
+            dist = np.linalg.norm(points[:, np.newaxis] - points[np.newaxis], axis=-1)
+        coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
+        return np.full(grid.n_cells, coincident)
+
+    # A cell is an axis-aligned box, and its closest pair of corners are the ends of an edge
+    with np.errstate(invalid='ignore', over='ignore'):
+        x, y, z = (
+            np.abs(np.diff(coords)) <= tolerance if coords.size > 1 else np.zeros(1, dtype=bool)
+            for coords in (grid.x, grid.y, grid.z)
+        )
+    # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
+    return (x | y[:, np.newaxis] | z[:, np.newaxis, np.newaxis]).ravel()
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
@@ -6625,6 +6705,8 @@ def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
             ]
         elif isinstance(mesh, pv.UnstructuredGrid):
             arrays = [mesh.cell_connectivity]
+        elif isinstance(mesh, pv.ExplicitStructuredGrid):
+            arrays = [_vtk.vtk_to_numpy(mesh.GetCells().GetConnectivityArray())]
         else:
             # Connectivity is implicit and cannot reference an invalid point id
             continue
@@ -6652,6 +6734,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
+_VERDICT_DBL_MAX = 1.0e30
 
 
 def _slice_image_along_axis(

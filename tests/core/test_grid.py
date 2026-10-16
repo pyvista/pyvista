@@ -1424,6 +1424,18 @@ def test_image_data_empty_init(dims):
     assert np.array_equal(points, np.zeros((0, 3)))
 
 
+def test_image_data_points_match_vtk():
+    image = pv.ImageData(
+        dimensions=(3, 4, 2),
+        spacing=(0.5, 2.0, 3.0),
+        origin=(1.0, 2.0, 3.0),
+        direction_matrix=[[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]],
+        offset=(1, -2, 0),
+    )
+    expected = [image.GetPoint(i) for i in range(image.n_points)]
+    assert np.allclose(image.points, expected)
+
+
 @pytest.mark.parametrize('dims', [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
 def test_image_data_mixed_zero_dimensions(dims):
     match = re.escape(f'Dimensions {dims} must be all zero (empty) or all positive.')
