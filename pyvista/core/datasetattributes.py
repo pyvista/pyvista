@@ -116,7 +116,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     Parameters
     ----------
     vtkobject : :vtk:`vtkFieldData`
-        The vtk object to wrap as a :class:~pyvista.DataSetAttribute`,
+        The vtk object to wrap as a :class:`~pyvista.DataSetAttributes`,
         usually an instance of :vtk:`vtkCellData`, :vtk:`vtkPointData`, or
         :vtk:`vtkFieldData`.
 
