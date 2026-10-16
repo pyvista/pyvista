@@ -33,49 +33,36 @@ Plotting a Mesh Using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This `example
 <https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ shows that
-loading and plotting an STL file requires a lot of code
+loading and plotting a mesh file requires a lot of code
 when using only the `vtk`_ library. PyVista on the other hand only
 requires a few lines of code.
 
-.. pyvista-plot::
-   :include-source: False
-   :context:
-
-   >>> bunny_cpos = [
-   ...     (0.14826, 0.275729, 0.4215911),
-   ...     (-0.01684, 0.110154, -0.0015369),
-   ...     (-0.15446, 0.939031, -0.3071841),
-   ... ]
-   >>> from pyvista import examples
-   >>> examples.download_bunny().save('bunny.stl')
-
-+----------------------------------------------------+-------------------------------------+
-| Read and plot STL file using `vtk`_                | Read an STL file using PyVista      |
-+====================================================+=====================================+
-| .. code-block:: python                             | .. pyvista-plot::                   |
-|                                                    |    :nofigs:                         |
-|    import vtk                                      |    :context:                        |
-|    reader = vtk.vtkSTLReader()                     |                                     |
-|    reader.SetFileName("bunny.stl")                 |    import pyvista as pv             |
-|    mapper = vtk.vtkDataSetMapper()                 |    mesh = pv.read('bunny.stl')      |
-|    output_port = reader.GetOutputPort()            |    mesh.plot()                      |
-|    mapper.SetInputConnection(output_port)          |                                     |
-|    actor = vtk.vtkActor()                          | .. pyvista-plot::                   |
-|    actor.SetMapper(mapper)                         |    :include-source: False           |
-|    ren = vtk.vtkRenderer()                         |    :context:                        |
-|    renWin = vtk.vtkRenderWindow()                  |                                     |
-|    renWin.AddRenderer(ren)                         |    from pyvista import examples     |
-|    iren = vtk.vtkRenderWindowInteractor()          |    mesh = examples.download_bunny() |
-|    style = vtk.vtkInteractorStyleTrackballCamera() |    mesh.plot(cpos=bunny_cpos)       |
-|    iren.SetRenderWindow(renWin)                    |                                     |
-|    iren.SetInteractorStyle(style)                  |                                     |
-|    ren.AddActor(actor)                             |                                     |
-|    iren.Initialize()                               |                                     |
-|    renWin.Render()                                 |                                     |
-|    iren.Start()                                    |                                     |
-|    del iren, renWin                                |                                     |
-+----------------------------------------------------+-------------------------------------+
-
++----------------------------------------------------+---------------------------------------------------+
+| Read and plot a PLY file using `vtk`_              | Read and plot a PLY file using PyVista            |
++====================================================+===================================================+
+| .. code-block:: python                             | .. pyvista-plot::                                 |
+|                                                    |                                                   |
+|    import vtk                                      |    import pyvista as pv                           |
+|    reader = vtk.vtkPLYReader()                     |    from pyvista import examples                   |
+|    reader.SetFileName("bunny.ply")                 |                                                   |
+|    mapper = vtk.vtkDataSetMapper()                 |    filename = examples.download_bunny(load=False) |
+|    output_port = reader.GetOutputPort()            |    mesh = pv.read(filename)                       |
+|    mapper.SetInputConnection(output_port)          |    mesh.plot(cpos='xy')                           |
+|    actor = vtk.vtkActor()                          |                                                   |
+|    actor.SetMapper(mapper)                         |                                                   |
+|    ren = vtk.vtkRenderer()                         |                                                   |
+|    renWin = vtk.vtkRenderWindow()                  |                                                   |
+|    renWin.AddRenderer(ren)                         |                                                   |
+|    iren = vtk.vtkRenderWindowInteractor()          |                                                   |
+|    style = vtk.vtkInteractorStyleTrackballCamera() |                                                   |
+|    iren.SetRenderWindow(renWin)                    |                                                   |
+|    iren.SetInteractorStyle(style)                  |                                                   |
+|    ren.AddActor(actor)                             |                                                   |
+|    iren.Initialize()                               |                                                   |
+|    renWin.Render()                                 |                                                   |
+|    iren.Start()                                    |                                                   |
+|    del iren, renWin                                |                                                   |
++----------------------------------------------------+---------------------------------------------------+
 
 The PyVista data model and API allows you to rapidly load meshes and
 handles much of the "grunt work" of setting up plots, connecting
