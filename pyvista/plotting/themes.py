@@ -40,6 +40,7 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import get_args
 
 import pyvista_validation as _validation
 
@@ -49,6 +50,7 @@ from pyvista.core.config import _ConfigBase
 from pyvista.jupyter import _validate_jupyter_backend
 
 from . import _property
+from ._typing import _TransparentBackgroundOptions
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -76,6 +78,15 @@ if TYPE_CHECKING:
     from ._typing import ColormapOptions
     from ._typing import ThemeOptions
     from ._typing import TrameModeOptions
+
+
+def _validate_transparent_background(transparent_background: object) -> None:
+    """Raise if ``transparent_background`` is not one of its options."""
+    _validation.check_contains(
+        get_args(_TransparentBackgroundOptions),
+        must_contain=transparent_background,
+        name='transparent_background',
+    )
 
 
 def _set_plot_theme_from_env() -> None:
@@ -1982,7 +1993,7 @@ class Theme(_ConfigBase):
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
         self._point_shape: str | None = None
-        self._transparent_background = False
+        self._transparent_background: _TransparentBackgroundOptions = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
@@ -2979,8 +2990,19 @@ class Theme(_ConfigBase):
         self._render_lines_as_tubes = bool(render_lines_as_tubes)
 
     @property
-    def transparent_background(self) -> bool:  # numpydoc ignore=RT01
+    def transparent_background(self) -> _TransparentBackgroundOptions:  # numpydoc ignore=RT01
         """Return or set whether the background is transparent by default.
+
+        Accepts the same values as the ``transparent_background`` parameter of
+        :meth:`pyvista.Plotter.screenshot`. With ``'straight'`` and ``'premultiplied'``,
+        every screenshot, :attr:`pyvista.Plotter.image`, and movie frame renders the
+        scene again over a black background.
+
+        .. versionadded:: 0.50
+            The ``'straight'`` and ``'premultiplied'`` options.
+
+        .. versionchanged:: 0.50
+            Other values raise a :class:`ValueError`.
 
         Examples
         --------
@@ -2989,11 +3011,18 @@ class Theme(_ConfigBase):
         >>> import pyvista as pv
         >>> pv.global_theme.transparent_background = True
 
+        Remove the background color from the edges of transparent screenshots.
+
+        >>> pv.global_theme.transparent_background = 'straight'
+
         """
         return self._transparent_background
 
     @transparent_background.setter
-    def transparent_background(self, transparent_background: bool) -> None:
+    def transparent_background(
+        self, transparent_background: _TransparentBackgroundOptions
+    ) -> None:
+        _validate_transparent_background(transparent_background)
         self._transparent_background = transparent_background
 
     @property

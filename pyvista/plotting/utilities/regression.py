@@ -168,6 +168,20 @@ def image_from_window(
         The image as an array or as an image depending on the ``as_vtk`` parameter.
 
     """
+    data = _read_window(render_window, ignore_alpha=ignore_alpha, scale=scale)
+    if as_vtk:
+        return wrap_image_array(data)
+    return data
+
+
+def _read_window(
+    render_window: _vtk.vtkRenderWindow,
+    *,
+    ignore_alpha: bool = False,
+    scale: int = 1,
+    front_buffer: bool = True,
+) -> NDArray[np.uint8]:
+    """Read the pixels of a render window from its front or back buffer."""
     off = not render_window.GetInteractor().GetEnableRender()
     if off:
         render_window.GetInteractor().EnableRenderOn()
@@ -180,9 +194,6 @@ def image_from_window(
         imfilter.SetInputBufferTypeToRGB()
     else:
         imfilter.SetInputBufferTypeToRGBA()
-    # Read the front buffer, and say so once.  This used to be turned off here and then
-    # straight back on a few lines later, so only the second call ever took effect.
-    #
     # The buffers are not interchangeable when multisampling is on (the default is
     # ``multi_samples=8``).  A front-buffer read returns VTK's DisplayFramebuffer, which
     # Frame() has already resolved with a gamma-correct shader; a back-buffer read
@@ -190,13 +201,11 @@ def image_from_window(
     # resolves inline with a plain glBlitFramebuffer average.  The two disagree on every
     # anti-aliased edge pixel, by enough to fail image regression.  Reported upstream at
     # https://gitlab.kitware.com/vtk/vtk/-/work_items/20138
-    imfilter.ReadFrontBufferOn()
+    imfilter.SetReadFrontBuffer(front_buffer)
     data = cast('NDArray[np.uint8]', run_image_filter(imfilter))
     if off:
         # Critical for Trame and other offscreen tools
         render_window.GetInteractor().EnableRenderOff()
-    if as_vtk:
-        return wrap_image_array(data)
     return data
 
 
