@@ -529,9 +529,7 @@ def test_points_to_cells_ghost_array_hides_unsampled_cells(uniform):
 
     hidden_cells = converted.cell_data[GHOST_ARRAY_NAME] == HIDDEN_CELL
     assert np.array_equal(hidden_cells, hidden_points)
-    assert np.array_equal(
-        converted.cell_data['vtkValidPointMask'], sampled.point_data['vtkValidPointMask']
-    )
+    assert np.array_equal(converted.cell_data['mask'], sampled.point_data['mask'])
 
 
 def test_points_to_cells_and_cells_to_points_ghost_array_round_trip(uniform):
