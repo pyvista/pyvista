@@ -3124,7 +3124,7 @@ class DatasetCarousel(DocTable):
             content = f.read()
         for real_url in (
             'https://github.com/pyvista/data/blob/master/Data/cow.vtp',
-            'https://github.com/KhronosGroup/glTF-Sample-Models/blob/main/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
+            'https://github.com/pyvista/data/blob/master/Data/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
         ):
             assert real_url in content
         return path
