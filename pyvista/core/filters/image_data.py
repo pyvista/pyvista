@@ -34,6 +34,8 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _linear_to_srgb
+from pyvista.core.utilities.misc import _srgb_to_linear
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -4326,6 +4328,8 @@ class ImageDataFilters(DataSetFilters):
         spacing: float | VectorLikeFloat | None = None,
         rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         anti_aliasing: bool = False,
+        premultiply_alpha: bool = False,
+        is_srgb: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: PointLiteral | CellLiteral = 'point',
@@ -4472,6 +4476,28 @@ class ImageDataFilters(DataSetFilters):
                 fixed blur was applied to all three axes, including axes which are not
                 down-sampled, which left aliasing at large sampling ratios and blurred
                 more than necessary at small ones.
+
+        premultiply_alpha : bool, default: False
+            Treat the scalars as straight (unassociated) RGBA colors and weight the
+            colors by alpha while resampling. The color channels are multiplied by alpha
+            before interpolating and divided by the interpolated alpha afterwards, so the
+            color of transparent pixels does not bleed into their neighbors. Each color
+            channel is clipped to its range over the input pixels that are not fully
+            transparent, alpha is clipped to its range over the input, and fully
+            transparent output pixels have a color of ``0``. The scalars must have four
+            components.
+
+            .. versionadded:: 0.50
+
+        is_srgb : bool, default: False
+            Treat the scalars as sRGB-encoded RGB or RGBA colors and resample them in
+            linear light. The color channels are decoded to linear values before
+            interpolating and encoded back to sRGB afterwards, so blending light and dark
+            colors does not darken them. Alpha is not decoded. The scalars must have three
+            or four components and be ``uint8`` in the range ``[0, 255]`` or floating
+            point in the range ``[0, 1]``. Color channels are clipped to that range.
+
+            .. versionadded:: 0.50
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -4786,28 +4812,111 @@ class ImageDataFilters(DataSetFilters):
 
         Compare the ``downsampled`` image to the original and zoom in to show detail.
 
-        >>> def compare_images_plotter(image1, image2):
-        ...     pl = pv.Plotter(shape=(1, 2))
-        ...     _ = pl.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
-        ...     pl.subplot(0, 1)
-        ...     _ = pl.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
-        ...     pl.link_views()
-        ...     pl.view_xy()
-        ...     pl.camera.zoom(3.0)
-        ...     return pl
-
-        >>> pl = compare_images_plotter(gourds, downsampled)
-        >>> pl.show()
+        >>> kwargs = dict(
+        ...     rgba=True,
+        ...     lighting=False,
+        ...     show_axes=False,
+        ...     cpos='xy',
+        ...     border_color='white',
+        ...     border_width=6,
+        ... )
+        >>> pv.plot_compare(
+        ...     {'original': gourds, 'downsampled': downsampled}, zoom=3, **kwargs
+        ... )
 
         Note that down-sampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
         >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
 
-        Compare down-sampling with aliasing (left) to without aliasing (right).
+        Compare down-sampling with and without anti-aliasing.
 
-        >>> pl = compare_images_plotter(downsampled, downsampled2)
-        >>> pl.show()
+        >>> pv.plot_compare(
+        ...     {'aliased': downsampled, 'anti-aliased': downsampled2},
+        ...     zoom=3,
+        ...     **kwargs,
+        ... )
+
+        Resample RGBA colors with transparency. Here two opaque red pixels are next to
+        two fully transparent white pixels, like the background of a screenshot taken
+        with a transparent background.
+
+        >>> rgba = pv.ImageData(dimensions=(4, 1, 1))
+        >>> rgba['rgba'] = np.array(
+        ...     [[255, 0, 0, 255]] * 2 + [[255, 255, 255, 0]] * 2, dtype=np.uint8
+        ... )
+
+        By default, the color and alpha channels are interpolated independently, so the
+        white of the transparent pixels bleeds into the half-transparent pixel and turns
+        it pink.
+
+        >>> rgba.resample(dimensions=(3, 1, 1), interpolation='linear')['rgba']
+        pyvista_ndarray([[255,   0,   0, 255],
+                         [255, 128, 128, 128],
+                         [255, 255, 255,   0]], dtype=uint8)
+
+        Enable ``premultiply_alpha`` to weight the colors by their alpha instead. The
+        half-transparent pixel stays red.
+
+        >>> rgba.resample(
+        ...     dimensions=(3, 1, 1), interpolation='linear', premultiply_alpha=True
+        ... )['rgba']
+        pyvista_ndarray([[255,   0,   0, 255],
+                         [255,   0,   0, 128],
+                         [  0,   0,   0,   0]], dtype=uint8)
+
+        Down-sample the PyVista logo, which has a transparent background.
+
+        >>> logo = examples.load_logo()
+        >>> straight = logo.resample(1 / 16, 'lanczos', anti_aliasing=True)
+        >>> premultiplied = logo.resample(
+        ...     1 / 16, 'lanczos', anti_aliasing=True, premultiply_alpha=True
+        ... )
+
+        Show the images over black, as an image viewer would. Focus on the ``i`` and
+        ``s``, which are partly transparent. By default, the white stored in the
+        transparent pixels bleeds into them and washes them out. With
+        ``premultiply_alpha``, the ``i`` stays red and the ``s`` stays brown.
+
+        >>> def over_black(image):
+        ...     rgba = image.active_scalars
+        ...     image['rgb'] = (rgba[:, :3] * (rgba[:, 3:] / 255)).astype(np.uint8)
+        ...     return image.points_to_cells(scalars='rgb')
+        >>> pv.plot_compare(
+        ...     {
+        ...         'default': over_black(straight),
+        ...         'premultiply_alpha': over_black(premultiplied),
+        ...     },
+        ...     zoom=2.6,
+        ...     window_size=[800, 682],
+        ...     label_kwargs={'color': 'darkorange'},
+        ...     shape=(2, 1),
+        ...     **kwargs,
+        ... )
+
+        Colors are also blended in their sRGB encoding by default. Down-sample red and
+        green stripes, which look yellow from a distance.
+
+        >>> stripes = pv.ImageData(dimensions=(32, 8, 1))
+        >>> red_green = np.array([[255, 0, 0], [0, 255, 0]], dtype=np.uint8)
+        >>> stripes['rgb'] = np.tile(red_green, (stripes.n_points // 2, 1))
+        >>> encoded = stripes.resample(0.5, 'linear', anti_aliasing=True)
+
+        Enable ``is_srgb`` to blend them in linear light instead. The default blends
+        the stripes to a dark olive, and ``is_srgb`` to yellow.
+
+        >>> linear = stripes.resample(0.5, 'linear', anti_aliasing=True, is_srgb=True)
+        >>> pv.plot_compare(
+        ...     {
+        ...         'default': encoded.points_to_cells(),
+        ...         'is_srgb': linear.points_to_cells(),
+        ...     },
+        ...     zoom=4.2,
+        ...     window_size=[800, 400],
+        ...     label_kwargs={'color': 'black'},
+        ...     shape=(2, 1),
+        ...     **kwargs,
+        ... )
 
         Load an MRI of a knee and down-sample it.
 
@@ -4896,10 +5005,24 @@ class ImageDataFilters(DataSetFilters):
         if extend_border is None:
             extend_border = not (processing_cell_scalars or reference_image_provided)
 
-        # 64-bit integers are not supported by the VTK image filters, so cast to float
         input_dtype = input_image.point_data[name].dtype
-        if input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
+        if is_srgb:
+            input_image.point_data[name] = _srgb_to_linear_colors(
+                input_image.point_data[name], name=name
+            )
+        # 64-bit integers are not supported by the VTK image filters, so cast to float
+        elif input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
             input_image.point_data[name] = input_image.point_data[name].astype(float)
+
+        if premultiply_alpha:
+            input_rgba = input_image.point_data[name]
+            input_image.point_data[name] = _premultiply_alpha(input_rgba, name=name)
+            alpha = input_rgba[:, 3]
+            visible_rgb = input_rgba[alpha > 0, :3]
+            rgba_min, rgba_max = np.zeros(4), np.zeros(4)
+            if visible_rgb.size:
+                rgba_min[:3], rgba_max[:3] = visible_rgb.min(axis=0), visible_rgb.max(axis=0)
+            rgba_min[3], rgba_max[3] = alpha.min(), alpha.max()
 
         # Compute the output dimensions of the point image
         old_dimensions = np.array(input_image.dimensions)
@@ -4993,9 +5116,21 @@ class ImageDataFilters(DataSetFilters):
         output_image = _get_output(resize_filter)
 
         output_image.rename_array(output_image.active_scalars_name, name)
+        if premultiply_alpha:
+            output_image.point_data[name] = _unpremultiply_alpha(
+                output_image.active_scalars, rgba_min, rgba_max
+            )
+        if is_srgb:
+            output_image.point_data[name] = _linear_to_srgb_colors(
+                output_image.active_scalars, max_value=255 if input_dtype == np.uint8 else 1
+            )
         output_array = output_image.active_scalars
         if output_array.dtype != input_dtype:
             output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
+        if premultiply_alpha:
+            # Zero after rounding, since rounding can make a slightly positive alpha zero
+            output_rgba = output_image.point_data[name]
+            output_rgba[output_rgba[:, 3] <= 0, :3] = 0
 
         if reference_image is not None:
             output_image.direction_matrix = reference_image.direction_matrix
@@ -6439,6 +6574,65 @@ def _reslice_image(
         modes[interpolation]()
     _update_alg(alg, progress_bar=progress_bar, message='Reslicing image.')
     return _get_output(alg)
+
+
+def _srgb_to_linear_colors(colors: NDArray[Any], *, name: str) -> NDArray[np.floating]:
+    """Decode the RGB channels of sRGB colors to linear values in the same range."""
+    n_components = 1 if colors.ndim == 1 else colors.shape[1]
+    if n_components not in (3, 4):
+        msg = (
+            f'`is_srgb` requires RGB or RGBA scalars with 3 or 4 components, but {name!r} '
+            f'has {n_components}.'
+        )
+        raise ValueError(msg)
+    if colors.dtype != np.uint8 and colors.dtype.kind != 'f':
+        msg = (
+            f'`is_srgb` requires uint8 or floating point scalars, but {name!r} has dtype '
+            f'{colors.dtype}.'
+        )
+        raise TypeError(msg)
+    max_value = 255 if colors.dtype == np.uint8 else 1
+    linear = np.array(colors, dtype=colors.dtype if colors.dtype.kind == 'f' else float)
+    linear[:, :3] = _srgb_to_linear(np.clip(linear[:, :3] / max_value, 0, 1)) * max_value
+    return linear
+
+
+def _linear_to_srgb_colors(
+    linear: NDArray[np.floating], *, max_value: float
+) -> NDArray[np.floating]:
+    """Encode the RGB channels of linear colors to sRGB values in the same range."""
+    colors = linear.copy()
+    colors[:, :3] = _linear_to_srgb(np.clip(linear[:, :3] / max_value, 0, 1)) * max_value
+    return colors
+
+
+def _premultiply_alpha(rgba: NDArray[Any], *, name: str) -> NDArray[np.floating]:
+    """Multiply the color channels of straight RGBA values by their alpha."""
+    if rgba.ndim != 2 or rgba.shape[1] != 4:
+        n_components = 1 if rgba.ndim == 1 else rgba.shape[1]
+        msg = (
+            f'`premultiply_alpha` requires RGBA scalars with 4 components, but '
+            f'{name!r} has {n_components}.'
+        )
+        raise ValueError(msg)
+    dtype = rgba.dtype if rgba.dtype.kind == 'f' else np.dtype(float)
+    premultiplied = np.array(rgba, dtype=dtype)
+    premultiplied[:, :3] *= premultiplied[:, 3:]
+    return premultiplied
+
+
+def _unpremultiply_alpha(
+    premultiplied: NDArray[np.floating],
+    rgba_min: NDArray[np.floating],
+    rgba_max: NDArray[np.floating],
+) -> NDArray[np.floating]:
+    """Divide RGBA colors by a positive alpha, clipping each channel to its range."""
+    alpha = premultiplied[:, 3:]
+    straight = premultiplied.copy()
+    np.divide(premultiplied[:, :3], alpha, out=straight[:, :3], where=alpha > 0)
+    straight[(alpha <= 0)[:, 0], :3] = 0
+    # Bound the overshoot of ringing kernels, which a near-zero alpha amplifies
+    return np.clip(straight, rgba_min, rgba_max, out=straight)
 
 
 def _round_to_dtype(array: NDArray[np.floating], dtype: np.dtype[Any]) -> NDArray[Any]:

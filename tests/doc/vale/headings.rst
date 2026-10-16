@@ -89,9 +89,3 @@ Building on a Mac mini (64-bit)
 -------------------------------
 
 ``mini`` is Apple's spelling and ``64-bit`` is the ordinary one.
-
-pyvista.typing.ArrayLike
-------------------------
-
-An API name is a heading in ``doc/source/api/core/typing.rst``, so the
-``pyvista.`` namespace is exempt.

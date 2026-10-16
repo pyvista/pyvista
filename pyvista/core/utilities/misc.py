@@ -26,6 +26,7 @@ from typing_extensions import Self
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core._aliases import LineStyle
+from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
@@ -53,6 +54,16 @@ else:
     class StrEnum(str, Enum):  # noqa: D101
         def __str__(self) -> str:
             return self.value
+
+
+def _srgb_to_linear(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Decode sRGB values in the range ``[0, 1]`` to linear values."""
+    return np.where(values < 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4)
+
+
+def _linear_to_srgb(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Encode linear values in the range ``[0, 1]`` to sRGB values."""
+    return np.where(values < 0.0031308, values * 12.92, 1.055 * values ** (1 / 2.4) - 0.055)
 
 
 def assert_empty_kwargs(**kwargs) -> bool:
@@ -139,7 +150,7 @@ def _resolve_line_style(style: LineStyle, *, name: str = 'style') -> int:
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Decorate a class, overriding ``__new__``.
 
-    Preventing a class from being instantiated similar to abc.ABCMeta
+    Preventing a class from being instantiated similar to ``abc.ABCMeta``
     but does not require an abstract method.
 
     Parameters
@@ -589,8 +600,6 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                     if key in base.__dict__:
                         return
 
-                from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
                 msg = (
                     f'Attribute {key!r} does not exist and cannot be added to class '
                     f'{cls.__name__!r}\nUse `pyvista.set_new_attribute` '
@@ -652,8 +661,6 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     """
     if hasattr(obj, name):
-        from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
         msg = (
             f'Attribute {name!r} already exists. '
             '`set_new_attribute` can only be used for setting NEW attributes.'
