@@ -912,6 +912,102 @@ def test_slice_structured(struct_grid):
         struct_grid[:, :]
 
 
+@pytest.mark.parametrize('offset', [(0, 0, 0), (10, -3, 2)])
+def test_slice_structured_keeps_offset(offset):
+    grid = pv.ImageData(dimensions=(5, 4, 3)).cast_to_structured_grid()
+    expected = grid[1:3, :, 0]
+    grid.offset = offset
+    sliced = grid[1:3, :, 0]
+    assert sliced.dimensions == expected.dimensions == (2, 4, 1)
+    assert np.array_equal(sliced.points, expected.points)
+    # Slicing a slice indexes from its own first point
+    assert np.array_equal(sliced[1:2, :, :].points, grid[2:3, :, 0].points)
+
+
+@pytest.mark.parametrize(
+    'cast',
+    [
+        lambda grid: grid.cast_to_structured_grid(),
+        lambda grid: grid.cast_to_rectilinear_grid(),
+        lambda grid: grid.cast_to_rectilinear_grid().cast_to_structured_grid(),
+        lambda grid: grid.cast_to_structured_grid().cast_to_explicit_structured_grid(),
+    ],
+    ids=[
+        'ImageData-StructuredGrid',
+        'ImageData-RectilinearGrid',
+        'RectilinearGrid-StructuredGrid',
+        'StructuredGrid-ExplicitStructuredGrid',
+    ],
+)
+def test_cast_keeps_offset(cast):
+    image = pv.ImageData(dimensions=(3, 4, 2), offset=(1, -2, 3))
+    cast_grid = cast(image)
+    assert cast_grid.offset == image.offset
+    assert cast_grid.dimensions == image.dimensions
+    assert np.allclose(cast_grid.points, image.points)
+
+
+@pytest.mark.parametrize('offset', [(0, 0, 0), (10, -3, 2), (-5, 4, -4)])
+@pytest.mark.parametrize(
+    'key',
+    [
+        (slice(1, None, 2), slice(None), 0),
+        (slice(None, None, 3),) * 3,
+        # A start below the extent clamps to its first point
+        (slice(-2, None, 2), slice(None), 0),
+    ],
+)
+def test_slice_structured_with_step_matches_image_data(offset, key):
+    image = pv.ImageData(dimensions=(9, 7, 5), offset=offset)
+    grid = image.cast_to_structured_grid()
+    sliced = grid[key]
+    voi, rate = [], []
+    for k, lo, hi in zip(key, image.extent[::2], image.extent[1::2], strict=True):
+        if isinstance(k, int):
+            voi.extend((lo + k, lo + k))
+            rate.append(1)
+        else:
+            voi.extend((lo + (k.start or 0), hi))
+            rate.append(k.step or 1)
+    # ImageData rejects a VOI outside its extent, so clamp it there
+    clamped = [
+        max(v, e) if i % 2 == 0 else v
+        for i, (v, e) in enumerate(zip(voi, image.extent, strict=True))
+    ]
+    expected = image.extract_subset(clamped, rate=rate, rebase_coordinates=False)
+    assert sliced.extent == expected.extent
+    assert grid.extract_subset(voi, rate=rate).extent == expected.extent
+    numpy_key = tuple(
+        slice(max(k.start or 0, 0), k.stop, k.step) if isinstance(k, slice) else k for k in key
+    )
+    points = grid.points.reshape((*grid.dimensions, 3), order='F')[numpy_key]
+    assert np.allclose(sliced.points, points.reshape((-1, 3), order='F'))
+
+
+def test_structured_grid_concatenate_keeps_offset():
+    grid = pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid()
+    grid.offset = (1, -2, 3)
+    other = grid.translate((2.0, 0.0, 0.0))
+    other.offset = (0, 0, 0)
+    joined = grid.concatenate(other, axis=0)
+    assert joined.offset == grid.offset
+    assert joined.dimensions == (5, 4, 2)
+
+
+@pytest.mark.parametrize('offset', [(0, 0, 0), (7, 7, 7)])
+def test_cast_to_explicit_structured_grid_block_arrays(offset):
+    # The extent follows the block indices when they are given
+    grid = pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid()
+    grid.offset = offset
+    i, j, k = np.unravel_index(np.arange(grid.n_cells), (2, 3, 1), order='F')
+    grid.cell_data['BLOCK_I'] = i + 5
+    grid.cell_data['BLOCK_J'] = j
+    grid.cell_data['BLOCK_K'] = k
+    explicit = grid.cast_to_explicit_structured_grid()
+    assert explicit.offset == (5, 0, 0)
+    assert explicit.cell_data['BLOCK_I'].min() == 5
+
+
 def test_invalid_init_structured():
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 2)
@@ -1316,9 +1412,27 @@ def test_image_data_init_kwargs():
     assert np.allclose(image.offset, vector)
 
 
-@pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
+@pytest.mark.parametrize('dims', [None, (0, 0, 0)])
 def test_image_data_empty_init(dims):
     image = pv.ImageData(dimensions=dims)
+    assert image.n_points == 0
+    assert image.n_cells == 0
+    assert image.area == 0
+    assert image.volume == 0
+
+    points = image.points
+    assert np.array_equal(points, np.zeros((0, 3)))
+
+
+@pytest.mark.parametrize('dims', [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+def test_image_data_mixed_zero_dimensions(dims):
+    match = re.escape(f'Dimensions {dims} must be all zero (empty) or all positive.')
+    with pytest.raises(ValueError, match=match):
+        pv.ImageData(dimensions=dims)
+
+    vtk_image = _vtk.vtkImageData()
+    vtk_image.SetDimensions(*dims)
+    image = pv.wrap(vtk_image)
     assert image.n_points == 0
     assert image.n_cells == 0
     assert image.area == 0
@@ -1758,6 +1872,267 @@ def test_imagedata_offset():
     # Test to make sure dimensions are unchanged since setting offset
     # modifies the extent which could modify dimensions.
     assert grid.dimensions == actual_dimensions
+
+
+_EXTENT_GRIDS = {
+    'ImageData': lambda: pv.ImageData(dimensions=(3, 4, 5)),
+    'RectilinearGrid': lambda: pv.ImageData(dimensions=(3, 4, 5)).cast_to_rectilinear_grid(),
+    'StructuredGrid': lambda: pv.ImageData(dimensions=(3, 4, 5)).cast_to_structured_grid(),
+    'ExplicitStructuredGrid': examples.load_explicit_structured,
+}
+
+
+@pytest.fixture(params=_EXTENT_GRIDS.values(), ids=_EXTENT_GRIDS.keys())
+def extent_grid(request):
+    return request.param()
+
+
+_FIXED_DIMS_GRIDS = ['RectilinearGrid', 'ExplicitStructuredGrid']
+
+
+@pytest.fixture(params=[_EXTENT_GRIDS[name] for name in _FIXED_DIMS_GRIDS], ids=_FIXED_DIMS_GRIDS)
+def fixed_dims_grid(request):
+    return request.param()
+
+
+def test_structured_data_repr_has_dimensions(extent_grid):
+    dims = extent_grid.dimensions
+    assert f'Dimensions:   {dims[0]}, {dims[1]}, {dims[2]}\n' in repr(extent_grid)
+
+
+def test_offset_round_trip(extent_grid):
+    dims = extent_grid.dimensions
+    extent_grid.offset = (-2, 3, -4)
+    assert extent_grid.offset == (-2, 3, -4)
+    assert isinstance(extent_grid.offset, tuple)
+    assert extent_grid.dimensions == dims
+    assert extent_grid.extent == (-2, dims[0] - 3, 3, dims[1] + 2, -4, dims[2] - 5)
+
+    extent_grid.offset = 1
+    assert extent_grid.offset == (1, 1, 1)
+    assert extent_grid.dimensions == dims
+
+
+def test_extent_round_trip(extent_grid):
+    dims = extent_grid.dimensions
+    extent = (-1, dims[0] - 2, 5, dims[1] + 4, 0, dims[2] - 1)
+    extent_grid.extent = np.array(extent)
+    assert extent_grid.extent == extent
+    assert isinstance(extent_grid.extent, tuple)
+    assert extent_grid.offset == (-1, 5, 0)
+    assert extent_grid.dimensions == dims
+
+
+@pytest.mark.parametrize('deep', [True, False])
+def test_extent_preserved_by_copy(extent_grid, deep):
+    extent_grid.offset = (-1, 2, -3)
+    copied = extent_grid.copy(deep=deep)
+    assert copied.extent == extent_grid.extent
+    assert copied.offset == (-1, 2, -3)
+
+
+@pytest.mark.parametrize('name', ['RectilinearGrid', 'StructuredGrid', 'ExplicitStructuredGrid'])
+def test_offset_keeps_points(name):
+    grid = _EXTENT_GRIDS[name]()
+    points = grid.points.copy()
+    grid.offset = (-1, 2, -3)
+    assert np.array_equal(grid.points, points)
+
+
+@pytest.mark.parametrize(
+    ('offset', 'match'),
+    [((1.5, 0, 0), 'integer-like'), ((1, 2), 'shape'), ((1, 2, 3, 4), 'shape')],
+)
+def test_offset_raises(extent_grid, offset, match):
+    with pytest.raises(ValueError, match=match):
+        extent_grid.offset = offset
+
+
+@pytest.mark.parametrize(
+    ('extent', 'match'), [((0, 1, 0, 1), 'length'), ((0.5, 1, 0, 1, 0, 1), 'integer-like')]
+)
+def test_extent_raises(extent_grid, extent, match):
+    with pytest.raises(ValueError, match=match):
+        extent_grid.extent = extent
+
+
+_FIXED_DIMENSIONS_HINTS = {
+    'RectilinearGrid': (
+        'Set the x, y and z coordinates to resize it, or the offset to shift its extent.'
+    ),
+    'ExplicitStructuredGrid': 'Set the offset to shift the extent instead.',
+}
+
+
+def test_extent_cannot_change_fixed_dimensions(fixed_dims_grid):
+    extent = fixed_dims_grid.extent
+    dims = fixed_dims_grid.dimensions
+    hint = _FIXED_DIMENSIONS_HINTS[type(fixed_dims_grid).__name__]
+    match = re.escape(
+        f'Cannot change the dimensions of `{type(fixed_dims_grid).__name__}` from {dims} '
+        f'to (2, 2, 2). {hint}'
+    )
+    with pytest.raises(ValueError, match=match):
+        fixed_dims_grid.extent = (1, 2, 1, 2, 1, 2)
+    assert fixed_dims_grid.extent == extent
+
+
+def test_fixed_dimensions_cannot_be_set(fixed_dims_grid):
+    dims = fixed_dims_grid.dimensions
+    name = type(fixed_dims_grid).__name__
+    article = 'an' if name == 'ExplicitStructuredGrid' else 'a'
+    match = re.escape(
+        f'The dimensions of {article} `{name}` are implicitly defined and thus cannot be set. '
+        f'{_FIXED_DIMENSIONS_HINTS[name]}'
+    )
+    with pytest.raises(AttributeError, match=match):
+        fixed_dims_grid.dimensions = dims
+
+
+@pytest.mark.parametrize('attr', ['dimensions', 'extent'])
+def test_structured_grid_dimensions_must_match_points(attr):
+    grid = _EXTENT_GRIDS['StructuredGrid']()
+    grid.offset = (1, 2, 3)
+    value = (2, 2, 2) if attr == 'dimensions' else (1, 2, 2, 3, 3, 4)
+    match = re.escape(
+        'Dimensions (2, 2, 2) do not match the 60 points of the `StructuredGrid`. '
+        'Set the points before the dimensions.'
+    )
+    with pytest.raises(ValueError, match=match):
+        setattr(grid, attr, value)
+    assert grid.extent == (1, 3, 2, 5, 3, 7)
+
+
+def test_structured_grid_reshape_keeps_offset():
+    grid = _EXTENT_GRIDS['StructuredGrid']()
+    grid.offset = (1, 2, 3)
+    grid.dimensions = (5, 4, 3)
+    assert grid.extent == (1, 5, 2, 5, 3, 5)
+
+
+def test_empty_structured_grid_dimensions():
+    grid = pv.StructuredGrid()
+    grid.dimensions = (2, 3, 4)
+    assert grid.dimensions == (2, 3, 4)
+
+
+def test_explicit_structured_grid_empty_extent():
+    grid = pv.ExplicitStructuredGrid()
+    assert grid.extent == (0, -1, 0, -1, 0, -1)
+    assert grid.dimensions == (0, 0, 0)
+    assert grid.offset == (0, 0, 0)
+
+
+@pytest.mark.needs_vtk_version(9, 4, reason='empty extent has a phantom cell and segfaults')
+def test_explicit_structured_grid_empty_n_cells():
+    assert pv.ExplicitStructuredGrid().n_cells == 0
+
+
+def test_explicit_structured_grid_offset_keeps_cells():
+    grid = examples.load_explicit_structured()
+    connectivity = grid.cast_to_unstructured_grid().cell_connectivity
+    neighbors = grid.neighbors(10)
+    grid.offset = (2, -1, 5)
+    assert np.array_equal(grid.cast_to_unstructured_grid().cell_connectivity, connectivity)
+    assert grid.neighbors(10) == neighbors
+
+
+def test_explicit_structured_grid_offset_keeps_links():
+    grid = examples.load_explicit_structured()
+    grid.BuildLinks()
+    links = grid.GetLinks()
+    size = links.GetActualMemorySize()
+    grid.offset = (2, -1, 5)
+    assert grid.GetLinks() is links
+    assert links.GetActualMemorySize() == size
+
+
+def test_image_data_dimensions_keep_offset():
+    grid = pv.ImageData(dimensions=(3, 4, 5))
+    grid.offset = (1, -2, 3)
+    grid.dimensions = (2, 3, 4)
+    assert grid.extent == (1, 2, -2, 0, 3, 6)
+
+
+def test_rectilinear_grid_coordinates_keep_offset():
+    grid = _EXTENT_GRIDS['RectilinearGrid']()
+    grid.offset = (1, -2, 3)
+    grid.x = np.arange(6.0)
+    assert grid.extent == (1, 6, -2, 1, 3, 7)
+    assert grid.dimensions == (6, 4, 5)
+
+
+@pytest.mark.parametrize(
+    ('dims', 'match'),
+    [
+        ((1, 2), 'Dimensions has shape'),
+        ((-1, 2, 2), 'Dimensions values must all be greater than or equal to 0'),
+        ((1.5, 2, 2), 'Dimensions must have integer-like values'),
+    ],
+)
+@pytest.mark.parametrize('name', ['ImageData', 'StructuredGrid'])
+def test_dimensions_raises(name, dims, match):
+    grid = _EXTENT_GRIDS[name]()
+    with pytest.raises(ValueError, match=match):
+        grid.dimensions = dims
+
+
+@pytest.mark.parametrize('extent', [(0, -1, 0, 2, 0, 2), (0, 2, 0, -1, 0, -1)])
+def test_extent_mixed_zero_dimensions_raises(extent_grid, extent):
+    old_extent = extent_grid.extent
+    new_dims = (extent[1] - extent[0] + 1, extent[3] - extent[2] + 1, extent[5] - extent[4] + 1)
+    match = re.escape(
+        f'Extent {extent} has dimensions {new_dims}, which must be all zero (empty) or all '
+        'positive.'
+    )
+    with pytest.raises(ValueError, match=match):
+        extent_grid.extent = extent
+    assert extent_grid.extent == old_extent
+
+
+@pytest.mark.parametrize('name', ['ImageData', 'StructuredGrid'])
+def test_dimensions_mixed_zero_raises(name):
+    grid = _EXTENT_GRIDS[name]()
+    match = re.escape('Dimensions (0, 3, 3) must be all zero (empty) or all positive.')
+    with pytest.raises(ValueError, match=match):
+        grid.dimensions = (0, 3, 3)
+
+
+def test_offset_shifts_mixed_zero_grid():
+    vtk_image = _vtk.vtkImageData()
+    vtk_image.SetDimensions(1, 0, 0)
+    image = pv.wrap(vtk_image)
+    image.offset = (1, 2, 3)
+    assert image.offset == (1, 2, 3)
+    assert image.dimensions == (1, 0, 0)
+
+    grid = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0])
+    grid.z = np.array([])
+    dims = grid.dimensions
+    grid.offset = (1, 2, 3)
+    assert grid.offset == (1, 2, 3)
+    assert grid.dimensions == dims
+
+
+@pytest.mark.parametrize('make_grid', [_EXTENT_GRIDS['ImageData'], pv.StructuredGrid])
+def test_dimensions_all_zero_empties_grid(make_grid):
+    grid = make_grid()
+    grid.offset = (1, 2, 3)
+    grid.dimensions = (0, 0, 0)
+    assert grid.dimensions == (0, 0, 0)
+    assert grid.offset == (1, 2, 3)
+    assert grid.n_points == 0
+
+
+def test_extent_negative_dimensions_raises(extent_grid):
+    extent = extent_grid.extent
+    match = re.escape(
+        'Extent (5, 0, 0, 1, 0, 1) has negative dimensions (-4, 2, 2). Each maximum must be at '
+        'least its minimum minus 1.'
+    )
+    with pytest.raises(ValueError, match=match):
+        extent_grid.extent = (5, 0, 0, 1, 0, 1)
+    assert extent_grid.extent == extent
 
 
 def test_unstructured_grid_cast_to_explicit_structured_grid():
@@ -2212,15 +2587,6 @@ def test_rect_grid_raises_args(args):
         match=re.escape('Arguments not understood by `RectilinearGrid`.'),
     ):
         pv.RectilinearGrid(*args)
-
-
-def test_rect_grid_dimensions_raises():
-    g = pv.RectilinearGrid()
-    match = re.escape(
-        'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
-    )
-    with pytest.raises(AttributeError, match=match):
-        g.dimensions = 1
 
 
 @pytest.fixture
