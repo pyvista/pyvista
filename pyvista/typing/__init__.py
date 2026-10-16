@@ -6,6 +6,8 @@ import importlib
 import sys
 from typing import TYPE_CHECKING
 
+from pyvista._version import _is_deprecation_due
+from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import ArrayLikeBool as ArrayLikeBool
 from pyvista.core._typing_core import ArrayLikeFloat as ArrayLikeFloat
 from pyvista.core._typing_core import ArrayLikeInt as ArrayLikeInt
@@ -22,6 +24,7 @@ from pyvista.core._typing_core import VectorLikeBool as VectorLikeBool
 from pyvista.core._typing_core import VectorLikeFloat as VectorLikeFloat
 from pyvista.core._typing_core import VectorLikeInt as VectorLikeInt
 from pyvista.core._typing_core import WrappableType as WrappableType
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
@@ -134,10 +137,6 @@ _DEPRECATED_ALIASES = {
 
 def _get_deprecated_alias(module: str, name: str) -> object:
     """Return a type alias with a warning that ``module`` no longer provides it."""
-    from pyvista._version import _is_deprecation_due  # noqa: PLC0415
-    from pyvista._warn_external import warn_external  # noqa: PLC0415
-    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
-
     if name in _DEPRECATED_ALIASES:
         source, attribute, advice = _DEPRECATED_ALIASES[name]
         alias = getattr(importlib.import_module(source), attribute)
