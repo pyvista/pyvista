@@ -34,6 +34,7 @@ from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _cells_in_local_coordinates
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
@@ -3817,9 +3818,11 @@ def test_validate_mesh_imagedata(image150):
     image150.cell_validator()
     image150.validate_mesh(action='error')
 
-    match = "Cell field 'wrong_number_of_points' is not supported for ImageData."
-    with pytest.raises(ValueError, match=match):
-        image150.validate_mesh('cells')
+    # A group checks only the fields the mesh supports
+    report = image150.validate_mesh('cells')
+    assert report.is_valid
+    assert report.zero_size == []
+    assert report.wrong_number_of_points is None
 
 
 @pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
@@ -4167,8 +4170,15 @@ def test_validate_mesh_str_filtered():
     assert actual == expected
 
 
-@pytest.mark.parametrize('fields', ['cells', 'non_convex', 'unused_points'])
-def test_validate_mesh_composite_pointset_block(ant, fields):
+@pytest.mark.parametrize(
+    ('fields', 'match'),
+    [
+        ('non_convex', "Cell field 'non_convex' is not supported for PointSet"),
+        ('unused_points', "Point field 'unused_points' is not supported for PointSet"),
+        ('cells', "No 'cells' validation fields are supported for PointSet"),
+    ],
+)
+def test_validate_mesh_composite_pointset_block(ant, fields, match):
     # By default the fields a PointSet cannot have are skipped for that block alone
     multi = pv.MultiBlock({'ant': ant, 'points': ant.cast_to_pointset()})
     report = multi.validate_mesh()
@@ -4177,12 +4187,32 @@ def test_validate_mesh_composite_pointset_block(ant, fields):
         ant.cast_to_pointset().validate_mesh()
     )
 
-    # Asking for them explicitly raises, as it does for a bare PointSet
-    match = f'field {fields!r} is not supported for PointSet' if fields != 'cells' else 'PointSet'
+    # Asking for them by name, or for a group with none it can check, raises
     with pytest.raises(ValueError, match=match):
         ant.cast_to_pointset().validate_mesh(fields)
     with pytest.raises(ValueError, match=match):
         multi.validate_mesh(fields)
+
+
+@pytest.mark.parametrize('group', ['points', 'cells', 'memory_safe', ['points', 'cells']])
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.ImageData(dimensions=(3, 3, 3)),
+        pv.RectilinearGrid([0, 1], [0, 1], [0, 1]),
+        pv.MultiBlock([pv.Sphere(), pv.ImageData(dimensions=(3, 3, 3))]),
+    ],
+)
+def test_validate_mesh_group_skips_unsupported_fields(mesh, group):
+    assert mesh.validate_mesh(group).is_valid
+
+
+@pytest.mark.parametrize('group', ['points', 'memory_safe'])
+def test_validate_mesh_pointset_group(ant, group):
+    assert ant.cast_to_pointset().validate_mesh(group).is_valid
+    match = "No 'cells' validation fields are supported for PointSet"
+    with pytest.raises(ValueError, match=match):
+        ant.cast_to_pointset().validate_mesh([group, 'cells'])
 
 
 def test_validate_mesh_composite_grid_block(uniform):
@@ -4468,6 +4498,161 @@ def test_validate_mesh_degenerate_cells():
         mesh.cast_to_multiblock().validate_mesh(size_tolerance=1e-8, action='error')
 
 
+@pytest.mark.parametrize('offset', [0.0, 1.0])
+def test_cell_validator_size_small_units(offset):
+    # A millimetre tetra in metres has a volume far below the eps of float32
+    tetra = examples.cells.Tetrahedron().scale(1e-3).translate((offset, 0.0, 0.0))
+    tetra.points = tetra.points.astype(np.float32)
+    assert tetra.validate_mesh().is_valid
+
+    inverted = tetra.copy()
+    inverted.points[[0, 1]] = inverted.points[[1, 0]]
+    assert inverted.validate_mesh(exclude_fields='inverted_faces').invalid_fields == (
+        'negative_size',
+    )
+
+    # A tetra flattened into the plane of three of its points has zero volume
+    flat = tetra.copy()
+    flat.points[3] = flat.points[:3].mean(axis=0)
+    invalid_fields = flat.validate_mesh().invalid_fields
+    assert 'zero_size' in invalid_fields
+    assert 'negative_size' not in invalid_fields
+
+
+def test_cell_validator_size_rounding_scales_with_coordinates():
+    # A sliver one float32 rounding step thick, along an axis far from the origin, is zero size
+    y = np.float32(1.0e4)
+    points = np.array([[0.0, y, 0.0], [1.0, y, 0.0], [0.5, y + np.spacing(y), 0.0]], np.float32)
+    tri = pv.PolyData(points, faces=[3, 0, 1, 2])
+    assert tri.area > 0
+    assert tri.validate_mesh().invalid_fields == ('zero_size',)
+    # Far from the origin along another axis, the thin axis is resolved by the point precision
+    height = np.spacing(y)
+    across = np.array([[y, 0.0, 0.0], [y + 1, 0.0, 0.0], [y + 0.5, height, 0.0]], np.float32)
+    assert pv.PolyData(across, faces=[3, 0, 1, 2]).validate_mesh().is_valid
+    # Near the origin, the sliver is resolved too
+    near = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.5, height, 0.0]], np.float32)
+    assert pv.PolyData(near, faces=[3, 0, 1, 2]).validate_mesh().is_valid
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_cell_validator_size_rounding_line(dtype):
+    # A line one rounding step long has zero length far from the origin but not near it
+    step = np.spacing(dtype(1.0e4))
+    far = pv.PolyData(np.array([[1.0e4, 0, 0], [1.0e4 + step, 0, 0]], dtype), lines=[2, 0, 1])
+    assert 'zero_size' in far.validate_mesh().invalid_fields
+    near = pv.PolyData(np.array([[0, 0, 0], [step, 0, 0]], dtype), lines=[2, 0, 1])
+    assert 'zero_size' not in near.validate_mesh().invalid_fields
+
+
+def test_cell_validator_size_beyond_clamp():
+    # VTK clamps sizes to 1e30, so the largest cells cannot be compared with the tolerance
+    assert pv.Sphere().scale(1.0e20).validate_mesh().is_valid
+
+    # A mirrored hexahedron measures at most -1e30, which is negative whatever the tolerance
+    hexa = examples.cells.Hexahedron().scale(1.0e20)
+    hexa.points = hexa.points.astype(np.float32)
+    hexa.points[:, 2] *= -1
+    assert hexa.compute_cell_sizes()['Volume'][0] <= -1.0e30
+    report = hexa.validate_mesh()
+    assert report.negative_size == [0]
+    assert report.zero_size == []
+
+
+@pytest.mark.parametrize(
+    ('grid', 'valid'),
+    [
+        (pv.ImageData(dimensions=(2, 2, 2), origin=(1.0e4, 0, 0), spacing=(1e-12, 1, 1)), False),
+        (pv.ImageData(dimensions=(2, 2, 2), spacing=(1e-12, 1, 1)), True),
+        (pv.RectilinearGrid([1.0e4, np.nextafter(1.0e4, np.inf)], [0.0, 1.0], [0.0, 1.0]), False),
+        (pv.RectilinearGrid([0.0, 1e-12], [1.0e4, 1.0e4 + 1.0], [0.0, 1.0]), True),
+        # Descending coordinates
+        (pv.RectilinearGrid([1.0e4, np.nextafter(1.0e4, np.inf)], [1.0, 0.0], [0.0, 1.0]), False),
+        # Each axis is rounded in its own dtype
+        (
+            pv.RectilinearGrid(np.array([0.0, 1.0], np.float32), [1.0e4, 1.0e4 + 1e-9], [0, 1]),
+            True,
+        ),
+    ],
+)
+def test_cell_validator_size_rounding_grid(grid, valid):
+    assert grid.validate_mesh().invalid_fields == (() if valid else ('zero_size',))
+
+
+@pytest.mark.parametrize('points_dtype', [None, 'float64'])
+def test_cells_in_local_coordinates_keeps_precision(points_dtype):
+    # Polyhedra are separated by a filter which outputs float32 points
+    pv.global_config.points_dtype = points_dtype
+    mesh = examples.cells.Polyhedron()
+    mesh.points = mesh.points.astype(np.float64) * 1.000000123 + 7.5e6
+    local = _cells_in_local_coordinates(mesh)
+    points = mesh.points[mesh.cell_connectivity]
+    assert np.array_equal(local.points[local.cell_connectivity], points - points.mean(axis=0))
+    assert mesh.cell_validator().points.dtype == mesh.points.dtype
+
+
+def test_cell_validator_hidden_cell_with_polyhedra():
+    # A hidden cell is checked like any other, also when the mesh holds polyhedra
+    hexa = examples.cells.Hexahedron()
+    hexa.points = hexa.points * [1.0, 1.0, -1.0]
+    polyhedron = examples.cells.Polyhedron().translate((5.0, 0.0, 0.0))
+    mesh = pv.merge([polyhedron, hexa], merge_points=False)
+    hidden = np.flatnonzero(mesh.celltypes == pv.CellType.HEXAHEDRON)[0]
+    ghosts = np.zeros(mesh.n_cells, np.uint8)
+    ghosts[hidden] = _vtk.vtkDataSetAttributes.HIDDENCELL
+    mesh.cell_data['vtkGhostType'] = ghosts
+    validated = mesh.cell_validator()
+    assert hidden in validated.field_data['inverted_faces']
+    assert np.array_equal(mesh.cell_data['vtkGhostType'], ghosts)
+
+
+@pytest.mark.parametrize('offset', [0.0, 7.5e6])
+def test_cell_validator_large_coordinates(offset):
+    # A warped reservoir grid cell, at the scale of UTM coordinates
+    points = [
+        [-28.1, -74.7, -2.4],
+        [61.3, -9.3, -10.0],
+        [27.2, 67.4, -0.4],
+        [-64.4, 15.1, 3.8],
+        [-26.0, -73.9, 2.1],
+        [63.4, -8.5, -5.5],
+        [28.9, 68.0, 3.8],
+        [-62.2, 15.9, 8.5],
+    ]
+    hexa = pv.UnstructuredGrid([8, *range(8)], [pv.CellType.HEXAHEDRON], points)
+    hexa = hexa.translate((offset / 25, offset, 0.0))
+    expected = hexa.points.copy()
+    report = hexa.validate_mesh()
+    assert report.is_valid, report.message
+    assert np.array_equal(hexa.points, expected)
+    assert np.array_equal(report.mesh.points, expected)
+
+    # A cell that repeats point ids does not affect the others
+    cells = [8, *range(8), 8, 0, 1, 2, 3, 0, 1, 2, 3]
+    grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, hexa.points)
+    assert grid.cell_validator()['validity_state'][0] == pv.CellStatus.VALID
+
+
+def test_cell_validator_thin_cells_away_from_center():
+    # A thin hexahedron of an airfoil boundary layer, with copies 10 units apart
+    points = np.array(
+        [
+            [1.2240802, 0.0, -0.12059101],
+            [1.2240802, -1.0, -0.12059101],
+            [1.22020109, -1.0, -0.11988245],
+            [1.22020109, 0.0, -0.11988245],
+            [1.22407935, 0.0, -0.12059615],
+            [1.22407935, -1.0, -0.12059615],
+            [1.22020028, -1.0, -0.11988648],
+            [1.22020028, 0.0, -0.11988648],
+        ]
+    )
+    points = np.vstack([points, points + np.array([10.0, 0.0, 0.0])])
+    cells = [8, *range(8), 8, *range(8, 16)]
+    grid = pv.UnstructuredGrid(cells, [pv.CellType.HEXAHEDRON] * 2, points)
+    assert grid.validate_mesh().intersecting_edges == []
+
+
 @pytest.mark.parametrize(
     'mesh_name', ['PolyVertex', 'PolyLine', 'Line', 'Quadrilateral', 'Polygon', 'Hexahedron']
 )
@@ -4487,6 +4672,34 @@ def test_validate_mesh_coincident_points(mesh_name):
 
     state = mesh.cell_validator()['validity_state']
     assert state[0] & pv.CellStatus.COINCIDENT_POINTS
+
+
+def test_validate_mesh_coincident_points_closed_polyline():
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]]
+    closed = pv.PolyData(points, lines=[4, 0, 1, 2, 0])
+    assert closed.validate_mesh().is_valid
+
+    # A polyline may cross itself through a repeated point
+    figure_eight = pv.PolyData([*points, [0.0, 1.0, 0.0]], lines=[6, 0, 1, 2, 0, 3, 0])
+    assert figure_eight.validate_mesh().is_valid
+
+    # A segment of zero length is coincident
+    repeated = pv.PolyData(points, lines=[5, 0, 1, 1, 2, 0])
+    assert repeated.validate_mesh().invalid_fields == ('coincident_points',)
+
+
+def test_validate_mesh_coincident_points_triangle_strip():
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 2.0, 0.0]]
+    strip = pv.PolyData(points, strips=[5, 0, 1, 2, 3, 4])
+    assert strip.validate_mesh().is_valid
+
+    # Repeated points turn the strip with degenerate triangles
+    turned = pv.PolyData(points, strips=[7, 0, 1, 2, 2, 3, 2, 4])
+    assert turned.validate_mesh().is_valid
+
+    # A strip without three distinct points is degenerate
+    collapsed = pv.PolyData(points, strips=[4, 0, 1, 0, 1])
+    assert 'coincident_points' in collapsed.validate_mesh().invalid_fields
 
 
 @pytest.fixture
