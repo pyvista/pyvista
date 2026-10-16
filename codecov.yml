@@ -26,16 +26,15 @@ coverage:
         if_ci_failed: error
         if_no_uploads: error
       # A test line that never executes is a test that does not test what it appears
-      # to, so `patch` below still holds new test code to 100%. The project-level
-      # threshold matches `default` because `target: auto` compares against the base
-      # report's ratio, and legitimately deleting covered test lines (a version-gate
-      # whose branch is gone, a moved import) lowers that ratio with no new uncovered
-      # code to point at; a 0% threshold would block any PR that shrinks tests.
+      # to, so the goal here is 100% rather than "do not regress". The tree measures
+      # 98.87% today, so this ratchets at `threshold: 0%` and the target rises as the
+      # remainder is cleared; `patch` below already holds new code to 100%. Reach for
+      # `# pragma: no cover` when a branch exists to prove it is never taken.
       tests:
         flags:
           - tests
         target: auto
-        threshold: 0.5%
+        threshold: 0%
         if_not_found: success
         if_ci_failed: error
         if_no_uploads: error
