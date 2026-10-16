@@ -106,6 +106,39 @@ jobs:
           print('screenshot ok:', img.shape, 'non-zero px:', int(np.count_nonzero(img)))
           "
 
+      # Binder and JupyterHub serve Jupyter under a per-user base URL and reach the
+      # trame iframe through jupyter-server-proxy beneath it. Check that PyVista builds
+      # that prefix and that the proxy route resolves instead of returning a 404.
+      - name: Smoke test (jupyter-server-proxy)
+        if: matrix.target == 'jupyter'
+        run: |
+          docker run -d --name pv-proxy -e JUPYTERHUB_SERVICE_PREFIX=/user/ci/ pyvista-ci:jupyter \
+            jupyter server --ServerApp.base_url=/user/ci/ --IdentityProvider.token=ci
+          trap 'docker logs pv-proxy; docker rm -f pv-proxy' EXIT
+          docker exec -d pv-proxy python -m http.server 9000
+          docker exec -i pv-proxy python - <<'EOF'
+          import time
+          import urllib.request
+
+          import pyvista as pv
+
+          prefix = pv.global_theme.trame.server_proxy_prefix
+          assert prefix == '/user/ci/proxy/', prefix
+          url = f'http://localhost:8888{prefix}9000/?token=ci'
+          for _ in range(60):
+              try:
+                  with urllib.request.urlopen(url, timeout=5) as response:
+                      body = response.read()
+                  break
+              except OSError as err:
+                  error = err
+                  time.sleep(1)
+          else:
+              raise SystemExit(f'{url} did not resolve: {error}')
+          assert b'Directory listing' in body, body[:200]
+          print('proxy ok:', url)
+          EOF
+
       # Second build is a cache hit from the step above; this pushes the
       # already-validated image to the registry under the real tags.
       - name: Push image

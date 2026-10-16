@@ -585,7 +585,7 @@ _ASSOCIATION_ATTRIBUTES = {
 def _assoc_array(
     obj: DataSet | _vtk.vtkDataSet, name: str, association: str = 'point'
 ) -> pyvista_ndarray | None:
-    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+    """Return a point, cell, or field array from a :class:`pyvista.DataSet` or VTK object.
 
     If the array or index doesn't exist, return nothing. This matches VTK's
     behavior when using ``GetAbstractArray`` with an invalid key or index.
