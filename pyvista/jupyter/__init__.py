@@ -327,6 +327,7 @@ def set_jupyter_backend(
     --------
     Enable the trame Trame backend.
 
+    >>> import pyvista as pv
     >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
 
     Just show static images.

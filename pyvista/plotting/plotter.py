@@ -6267,7 +6267,7 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.open_movie(filename)  # doctest:+SKIP
+        >>> pl.open_movie('movie.mp4')  # doctest:+SKIP
         >>> pl.add_mesh(pv.Sphere())  # doctest:+SKIP
         >>> pl.write_frame()  # doctest:+SKIP
 
