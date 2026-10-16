@@ -147,6 +147,7 @@ SciPy
 Segmentations
 Sextic
 Siggraph
+Signa
 Skybox
 Snoeyink
 Sphinx
