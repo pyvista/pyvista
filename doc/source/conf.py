@@ -191,6 +191,7 @@ _DOCUMENTED_TYPES = [
     'CellsLike',
     'Chart',
     'ColorLike',
+    'ColormapOptions',
     'InteractionEventType',
     'JupyterBackendOptions',
     'LineStyle',
@@ -198,6 +199,8 @@ _DOCUMENTED_TYPES = [
     'MatrixLikeFloat',
     'MatrixLikeInt',
     'MeshValidationFields',
+    'NamedColormaps',
+    'NamedColors',
     'PlottableType',
     'RotationLike',
     'TransformLike',
@@ -219,7 +222,6 @@ _UNDOCUMENTED_TYPES = [
     'CellLiteral',
     'CellQualityInfo',
     'Colormap',
-    'ColormapOptions',
     'CrinkleAlgorithm',
     'CullingOptions',
     'Cycler',
@@ -1125,6 +1127,9 @@ def drop_type_alias_docstring(  # noqa: PLR0917
         lines.clear()
 
 
+# Type forms whose value the typing page shows
+_TYPE_ALIAS_FORMS = (Literal, Union, UnionType)
+
 # Widest line that fits the content column at a 1280 px window without scrolling
 _TYPE_ALIAS_LINE_LENGTH = 68
 
@@ -1234,11 +1239,15 @@ def show_type_alias_value(  # noqa: PLR0917
     what: str,
     name: str,
     obj: object,
-    options: dict,  # noqa: ARG001
+    options: object,
     lines: list[str],
 ) -> None:
     """Show the value of a type alias as a linked, preformatted block."""
-    if what != 'data' or get_origin(obj) not in (Literal, Union, UnionType):
+    if (
+        what != 'data'
+        or getattr(options, 'no_value', False)
+        or get_origin(obj) not in _TYPE_ALIAS_FORMS
+    ):
         return
     # Name the other documented aliases it contains, largest first
     documented = {getattr(pv.typing, alias): alias for alias in _DOCUMENTED_TYPES}
@@ -1261,16 +1270,28 @@ def show_type_alias_value(  # noqa: PLR0917
 
 
 def drop_type_alias_signature(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
-    """Drop the signature and alias line of a type alias shown by its value block."""
-    for block in list(doctree.findall(nodes.literal_block)):
-        if 'type-alias-value' not in block['classes']:
+    """Drop the signature and alias line of each type alias whose value is shown or hidden."""
+    for desc in list(doctree.findall(addnodes.desc)):
+        signatures = [n for n in desc.children if isinstance(n, addnodes.desc_signature)]
+        if desc.get('objtype') != 'data' or not signatures:
             continue
-        content = block.parent
-        if not isinstance(content, addnodes.desc_content):
+        if signatures[0].get('module') != 'pyvista.typing':
             continue
-        desc = content.parent
-        for signature in [n for n in desc.children if isinstance(n, addnodes.desc_signature)]:
-            block['ids'].extend(signature['ids'])
+        alias = getattr(pv.typing, signatures[0]['fullname'], None)
+        if get_origin(alias) not in _TYPE_ALIAS_FORMS:
+            continue
+        content = next(n for n in desc.children if isinstance(n, addnodes.desc_content))
+        # The anchor moves to the value block, or to the description when the value is hidden
+        target = next(
+            (
+                n
+                for n in content.findall(nodes.literal_block)
+                if 'type-alias-value' in n['classes']
+            ),
+            content,
+        )
+        for signature in signatures:
+            target['ids'].extend(signature['ids'])
             desc.remove(signature)
         for paragraph in [n for n in content.children if isinstance(n, nodes.paragraph)]:
             if paragraph.astext().startswith('alias of '):
