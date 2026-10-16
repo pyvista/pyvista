@@ -458,7 +458,7 @@ def download_masonry_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -501,7 +501,7 @@ def download_usa_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -546,7 +546,7 @@ def download_puppy_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -587,7 +587,7 @@ def download_puppy(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -630,7 +630,7 @@ def download_usa(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -668,7 +668,7 @@ def download_st_helens(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -713,7 +713,7 @@ def download_bunny(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -760,7 +760,7 @@ def download_bunny_coarse(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -806,7 +806,7 @@ def download_cow(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -846,7 +846,7 @@ def download_cow_head(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -940,7 +940,7 @@ def download_faults(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -976,7 +976,7 @@ def download_tensors(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1018,7 +1018,7 @@ def download_head(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1074,7 +1074,7 @@ def download_head_2(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1118,7 +1118,7 @@ def download_bolt_nut(*, load: bool = True) -> MultiBlock[ImageData] | tuple[str
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and the path of every file is returned instead.
 
     Returns
@@ -1182,7 +1182,7 @@ def download_clown(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1218,7 +1218,7 @@ def download_topo_global(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1257,7 +1257,7 @@ def download_topo_land(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1298,7 +1298,7 @@ def download_coastlines(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1334,7 +1334,7 @@ def download_knee(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1372,7 +1372,7 @@ def download_knee_full(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1419,7 +1419,7 @@ def download_lidar(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1458,7 +1458,7 @@ def download_exodus(*, load: bool = True) -> MultiBlock[MultiBlock[UnstructuredG
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1515,7 +1515,7 @@ def download_nefertiti(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1603,7 +1603,7 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1659,7 +1659,7 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1703,7 +1703,7 @@ def download_blood_vessels(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1748,7 +1748,7 @@ def download_iron_protein(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1787,7 +1787,7 @@ def download_tetrahedron(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1826,7 +1826,7 @@ def download_saddle_surface(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1864,7 +1864,7 @@ def download_sparse_points(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1918,7 +1918,7 @@ def download_foot_bones(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1954,7 +1954,7 @@ def download_guitar(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -1992,7 +1992,7 @@ def download_quadratic_pyramid(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2031,7 +2031,7 @@ def download_bird(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2069,7 +2069,7 @@ def download_bird_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2113,7 +2113,7 @@ def download_office(*, load: bool = True) -> StructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2149,7 +2149,7 @@ def download_horse_points(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2187,7 +2187,7 @@ def download_horse(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2225,7 +2225,7 @@ def download_cake_easy(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2263,7 +2263,7 @@ def download_cake_easy_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2304,7 +2304,7 @@ def download_rectilinear_grid(*, load: bool = True) -> RectilinearGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2345,7 +2345,7 @@ def download_gourds(*, zoom: bool = False, load: bool = True) -> ImageData | str
         When ``True``, return the zoomed picture of the gourds.
 
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2396,7 +2396,7 @@ def download_gourds_texture(*, zoom: bool = False, load: bool = True) -> Texture
         When ``True``, return the zoomed picture of the gourds.
 
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2447,7 +2447,7 @@ def download_gourds_pnm(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2490,7 +2490,7 @@ def download_unstructured_grid(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2526,7 +2526,7 @@ def download_letter_k(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2564,7 +2564,7 @@ def download_letter_a(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2602,7 +2602,7 @@ def download_poly_line(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2638,7 +2638,7 @@ def download_cad_model(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2680,7 +2680,7 @@ def download_frog(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2735,7 +2735,7 @@ def download_chest(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2777,7 +2777,7 @@ def download_brain_atlas_with_sides(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2815,7 +2815,7 @@ def download_prostate(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2851,7 +2851,7 @@ def download_filled_contours(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2896,7 +2896,7 @@ def download_doorman(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -2974,7 +2974,7 @@ def download_mug(*, load: bool = True) -> MultiBlock[MultiBlock[UnstructuredGrid
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3020,7 +3020,7 @@ def download_parallel_exodus(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3064,7 +3064,7 @@ def download_oblique_cone(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3100,7 +3100,7 @@ def download_emoji(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3138,7 +3138,7 @@ def download_emoji_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3186,7 +3186,7 @@ def download_teapot(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3222,7 +3222,7 @@ def download_brain(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3305,7 +3305,7 @@ def download_structured_grid(*, load: bool = True) -> StructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3343,7 +3343,7 @@ def download_structured_grid_two(*, load: bool = True) -> StructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3381,7 +3381,7 @@ def download_trumpet(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3419,7 +3419,7 @@ def download_face(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3458,7 +3458,7 @@ def download_sky_box_nz(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3501,7 +3501,7 @@ def download_sky_box_nz_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3547,7 +3547,7 @@ def download_disc_quads(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3583,7 +3583,7 @@ def download_honolulu(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3624,7 +3624,7 @@ def download_motor(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3660,7 +3660,7 @@ def download_tri_quadratic_hexahedron(*, load: bool = True) -> UnstructuredGrid 
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3709,7 +3709,7 @@ def download_human(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3745,7 +3745,7 @@ def download_vtk(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3783,7 +3783,7 @@ def download_spider(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3819,7 +3819,7 @@ def download_carotid(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3872,7 +3872,7 @@ def download_blow(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3920,7 +3920,7 @@ def download_shark(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -3979,7 +3979,7 @@ def download_great_white_shark(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4045,7 +4045,7 @@ def download_grey_nurse_shark(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4095,7 +4095,7 @@ def download_dragon(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4134,7 +4134,7 @@ def download_armadillo(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4181,7 +4181,7 @@ def download_gears(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4225,7 +4225,7 @@ def download_torso(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4268,7 +4268,7 @@ def download_kitchen(*, split: bool = False, load: bool = True) -> StructuredGri
         :class:`pyvista.MultiBlock`.
 
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4350,7 +4350,7 @@ def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock[UnstructuredGrid]
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and the path of every file is returned instead.
 
     Returns
@@ -4415,7 +4415,7 @@ def download_model_with_variance(*, load: bool = True) -> UnstructuredGrid | str
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4451,7 +4451,7 @@ def download_thermal_probes(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4487,7 +4487,7 @@ def download_carburetor(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4526,7 +4526,7 @@ def download_turbine_blade(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4562,7 +4562,7 @@ def download_pine_roots(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4601,7 +4601,7 @@ def download_crater_topo(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4640,7 +4640,7 @@ def download_crater_imagery(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4688,7 +4688,7 @@ def download_dolfin(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4729,7 +4729,7 @@ def download_damavand_volcano(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4793,7 +4793,7 @@ def download_delaunay_example(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4829,7 +4829,7 @@ def download_embryo(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4878,7 +4878,7 @@ def download_antarctica_velocity(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4922,7 +4922,7 @@ def download_room_surface_mesh(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4958,7 +4958,7 @@ def download_beach(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -4994,7 +4994,7 @@ def download_rgba_texture(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5036,7 +5036,7 @@ def download_vtk_logo(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5077,7 +5077,7 @@ def download_sky_box_cube_map(*, load: bool = True) -> Texture | tuple[str, ...]
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and the path of every face is returned instead.
 
     Returns
@@ -5150,7 +5150,7 @@ def download_cubemap_park(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5211,7 +5211,7 @@ def download_cubemap_space_4k(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5273,7 +5273,7 @@ def download_cubemap_space_16k(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5335,7 +5335,7 @@ def download_backward_facing_step(*, load: bool = True) -> MultiBlock[Unstructur
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5374,7 +5374,7 @@ def download_gpr_data_array(*, load: bool = True) -> ndarray | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5422,7 +5422,7 @@ def download_gpr_path(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5466,7 +5466,7 @@ def download_woman(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5510,7 +5510,7 @@ def download_lobster(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5548,7 +5548,7 @@ def download_face2(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5588,7 +5588,7 @@ def download_urn(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5632,7 +5632,7 @@ def download_pepper(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5670,7 +5670,7 @@ def download_drill(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5728,7 +5728,7 @@ def download_action_figure(*, load: bool = True, high_resolution: bool = False) 
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -5795,7 +5795,7 @@ def download_notch_stress(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5839,7 +5839,7 @@ def download_notch_displacement(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5889,7 +5889,7 @@ def download_louis_louvre(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -5945,7 +5945,7 @@ def download_cylinder_crossflow(*, load: bool = True) -> MultiBlock[Unstructured
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6000,7 +6000,7 @@ def download_naca(*, load: bool = True) -> MultiBlock[StructuredGrid] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6059,7 +6059,7 @@ def download_lshape(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6111,7 +6111,7 @@ def download_wavy(*, load: bool = True) -> MultiBlock[StructuredGrid] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6147,7 +6147,7 @@ def download_single_sphere_animation(*, load: bool = True) -> MultiBlock[PolyDat
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6210,7 +6210,7 @@ def download_dual_sphere_animation(*, load: bool = True) -> MultiBlock[PolyData]
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6280,7 +6280,7 @@ def download_cavity(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6329,7 +6329,7 @@ def download_openfoam_tubes(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6393,7 +6393,7 @@ def download_lucy(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6463,7 +6463,7 @@ def download_pump_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6538,7 +6538,7 @@ def download_electronics_cooling(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and the path of every file is returned instead.
 
     Returns
@@ -6641,7 +6641,7 @@ def download_can_crushed_hdf(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6687,7 +6687,7 @@ def download_can_crushed_vtu(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6735,7 +6735,7 @@ def download_cgns_structured(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6781,7 +6781,7 @@ def download_tecplot_ascii(*, load: bool = True) -> MultiBlock[UnstructuredGrid]
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6827,7 +6827,7 @@ def download_cgns_multi(*, load: bool = True) -> MultiBlock[MultiBlock[Structure
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6908,7 +6908,7 @@ def download_dicom_stack(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -6921,9 +6921,9 @@ def download_dicom_stack(
     * **Data Citation**
 
         National Cancer Institute Clinical Proteomic Tumor Analysis Consortium
-        (CPTAC). (2018).  Radiology Data from the Clinical Proteomic Tumor
+        (CPTAC). (2018). Radiology Data from the Clinical Proteomic Tumor
         Analysis Consortium Sarcomas [CPTAC-SAR] collection [Data set]. The
-        Cancer Imaging Archive.  DOI: 10.7937/TCIA.2019.9bt23r95
+        Cancer Imaging Archive. DOI: 10.7937/TCIA.2019.9bt23r95
 
     * **Acknowledgement**
 
@@ -6971,7 +6971,7 @@ def download_parched_canal_4k(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7026,7 +7026,7 @@ def download_cells_nd(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7070,7 +7070,7 @@ def download_moonlanding_image(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7111,7 +7111,7 @@ def download_angular_sector(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7154,7 +7154,7 @@ def download_mount_damavand(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7200,7 +7200,7 @@ def download_particles_lethe(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7247,7 +7247,7 @@ def download_gif_simple(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7303,7 +7303,7 @@ def download_cloud_dark_matter(*, load: bool = True) -> PointSet | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7372,7 +7372,7 @@ def download_cloud_dark_matter_dense(*, load: bool = True) -> PointSet | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7455,7 +7455,7 @@ def download_stars_cloud_hyg(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7522,7 +7522,7 @@ def download_fea_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7581,7 +7581,7 @@ def download_fea_hertzian_contact_cylinder(*, load: bool = True) -> Unstructured
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -7668,7 +7668,7 @@ def download_black_vase(*, load: bool = True, high_resolution: bool = False) -> 
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -7752,7 +7752,7 @@ def download_ivan_angel(*, load: bool = True, high_resolution: bool = False) -> 
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -7842,7 +7842,7 @@ def download_bird_bath(*, load: bool = True, high_resolution: bool = False) -> P
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -7920,7 +7920,7 @@ def download_owl(*, load: bool = True, high_resolution: bool = False) -> PolyDat
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -8007,7 +8007,7 @@ def download_plastic_vase(*, load: bool = True, high_resolution: bool = False) -
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -8091,7 +8091,7 @@ def download_sea_vase(*, load: bool = True, high_resolution: bool = False) -> Po
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -8156,7 +8156,7 @@ def download_dikhololo_night(*, load: bool = True) -> Texture | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8224,7 +8224,7 @@ def download_cad_model_case(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8290,7 +8290,7 @@ def download_aero_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8377,7 +8377,7 @@ def download_coil_magnetic_field(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8478,7 +8478,7 @@ def download_meshio_xdmf(*, load: bool = True) -> MultiBlock[UnstructuredGrid] |
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8523,7 +8523,7 @@ def download_victorian_goblet_face_illusion(*, load: bool = True) -> PolyData | 
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8573,7 +8573,7 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -8709,7 +8709,7 @@ def download_whole_body_ct_male(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -9050,7 +9050,7 @@ def download_whole_body_ct_female(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     high_resolution : bool, default: False
@@ -9187,7 +9187,7 @@ def download_room_cff(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | st
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9233,7 +9233,7 @@ def download_m4_total_density(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9302,7 +9302,7 @@ def download_headsq(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9349,7 +9349,7 @@ def download_prism(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9387,7 +9387,7 @@ def download_t3_grid_0(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9425,7 +9425,7 @@ def download_caffeine(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9475,7 +9475,7 @@ def download_e07733s002i009(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9513,7 +9513,7 @@ def download_particles(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9572,7 +9572,7 @@ def download_prostar(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9617,7 +9617,7 @@ def download_3gqp(*, load: bool = True) -> PolyData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9661,7 +9661,7 @@ def download_full_head(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, optional
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9714,7 +9714,7 @@ def download_nek5000(*, load: bool = True) -> UnstructuredGrid | str:
     Parameters
     ----------
     load : bool, optional
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned. True requires
         vtk >= 9.3.
 
@@ -9762,7 +9762,7 @@ def download_biplane(*, load: bool = True) -> MultiBlock[MultiBlock[Unstructured
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9802,7 +9802,7 @@ def download_yinyang(*, load: bool = True) -> ImageData | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9854,7 +9854,7 @@ def download_warping_spheres(*, load: bool = True) -> PartitionedDataSet | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9906,7 +9906,7 @@ def download_teapot_vrml(*, load: bool = True) -> MultiBlock[PolyData] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9945,7 +9945,7 @@ def download_sextant(*, load: bool = True) -> MultiBlock[PolyData] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -9989,7 +9989,7 @@ def download_grasshopper(*, load: bool = True) -> MultiBlock[PolyData] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -10035,7 +10035,7 @@ def download_flamingo(*, load: bool = True) -> MultiBlock[PolyData] | str:
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -10078,7 +10078,7 @@ def download_damaged_helmet(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -10136,7 +10136,7 @@ def download_gearbox(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -10179,7 +10179,7 @@ def download_avocado(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns
@@ -10227,7 +10227,7 @@ def download_milk_truck(
     Parameters
     ----------
     load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
+        Load the dataset after downloading it when ``True``. Set this
         to ``False`` and only the filename will be returned.
 
     Returns

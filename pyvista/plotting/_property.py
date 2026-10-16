@@ -76,13 +76,13 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.color`
         Used to make the entire mesh have a single solid color.
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 
     style : str, default: 'surface'
-        Visualization style of the mesh.  One of the following:
+        Visualization style of the mesh. One of the following:
         ``style='surface'``, ``style='wireframe'``, ``style='points'``.
         Note that ``'wireframe'`` only shows a wireframe of the outer
         geometry.
@@ -132,7 +132,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         concentrates it into a small, sharp spot.
 
     show_edges : bool, default: :attr:`pyvista.plotting.themes.Theme.show_edges`
-        Shows the edges.  Does not apply to a wireframe representation.
+        Shows the edges. Does not apply to a wireframe representation.
 
     edge_color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.edge_color`
         The solid color to give the edges when ``show_edges=True``.
@@ -146,14 +146,14 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     render_lines_as_tubes : bool, \
         default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
 
-        Show lines as thick tubes rather than flat lines.  Control
+        Show lines as thick tubes rather than flat lines. Control
         the width with ``line_width``.
 
     lighting : bool, default: :attr:`pyvista.plotting.themes.Theme.lighting`
         Enable or disable view direction lighting.
 
     line_width : float, default: :attr:`pyvista.plotting.themes.Theme.line_width`
-        Thickness of lines.  Only valid for wireframe and surface
+        Thickness of lines. Only valid for wireframe and surface
         representations, expressed in screen units. Must be in the range
         ``[0.0, inf)``.
 
@@ -444,7 +444,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
@@ -1191,7 +1191,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def ambient_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the ambient color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
@@ -1224,7 +1224,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def specular_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the specular color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``.
 
@@ -1263,7 +1263,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def diffuse_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the diffuse color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``.
 

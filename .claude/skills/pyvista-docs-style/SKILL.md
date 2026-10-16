@@ -21,6 +21,9 @@ finishes by confirming the rules still reject the fixtures in `tests/doc/vale/`.
 spell the `vale` invocation out by hand -- four copies of it had already drifted apart
 once.
 
+Double spaces between sentences are the `sentence-spacing` pre-commit hook's job
+(`hooks/sentence_spacing.py`), not Vale's: run `pre-commit run sentence-spacing --files ...`.
+
 Prose in a `.py` file is checked through the `.rst` the extraction script generates, not
 from the `.py` itself. The extracted file has the same line numbers as the source
 (`doc/extract_rst_from_py_for_vale.py:31:1`) -- read an alert's `.vale/examples/...` or

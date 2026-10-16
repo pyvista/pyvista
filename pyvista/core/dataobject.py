@@ -218,17 +218,17 @@ class DataObject(
             the extension of the filename.
 
         binary : bool, default: True
-            If ``True``, write as binary.  Otherwise, write as ASCII.
+            If ``True``, write as binary. Otherwise, write as ASCII.
 
         texture : str, np.ndarray, optional
             Write a single texture array to file when using a PLY
-            file.  Texture array must be a 3 or 4 component array with
-            the datatype ``np.uint8``.  Array may be a cell array or a
+            file. Texture array must be a 3 or 4 component array with
+            the datatype ``np.uint8``. Array may be a cell array or a
             point array, and may also be a string if the array already
             exists in the PolyData.
 
             If a string is provided, the texture array will be saved
-            to disk as that name.  If an array is provided, the
+            to disk as that name. If an array is provided, the
             texture array will be saved as ``'RGBA'``
 
             .. note::
@@ -245,9 +245,9 @@ class DataObject(
 
         **writer_kwargs : dict, optional
             Additional keyword arguments forwarded verbatim to a custom
-            writer registered via :func:`pyvista.register_writer`.  Use
+            writer registered via :func:`pyvista.register_writer`. Use
             these to expose format-specific options such as compression
-            level or thread count.  When the target extension dispatches
+            level or thread count. When the target extension dispatches
             to a built-in VTK writer, passing any extra keyword arguments
             raises :class:`TypeError`—PyVista never silently drops
             writer options.
@@ -476,14 +476,14 @@ class DataObject(
         Parameters
         ----------
         deep : bool, default: True
-            When ``True`` makes a full copy of the object.  When
+            When ``True`` makes a full copy of the object. When
             ``False``, performs a shallow copy where the points, cell,
             and data arrays are references to the original object.
 
         Returns
         -------
         pyvista.DataSet
-            Deep or shallow copy of the input.  Type is identical to
+            Deep or shallow copy of the input. Type is identical to
             the input.
 
         Examples

@@ -183,12 +183,12 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            The behavior of this filter varies from the
-           :func:`PolyDataFilters.merge` filter.  This filter attempts
+           :func:`PolyDataFilters.merge` filter. This filter attempts
            to create a manifold mesh and will not include internal
            surfaces when two meshes overlap.
 
         .. note::
-           Both meshes must be composed of all triangles.  Check with
+           Both meshes must be composed of all triangles. Check with
            :attr:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
 
@@ -217,7 +217,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Demonstrate a boolean union with two spheres.  Note how the
+        Demonstrate a boolean union with two spheres. Note how the
         final mesh includes both spheres.
 
         >>> import pyvista as pv
@@ -267,7 +267,7 @@ class PolyDataFilters(DataSetFilters):
 
 
         .. note::
-           Both meshes must be composed of all triangles.  Check with
+           Both meshes must be composed of all triangles. Check with
            :attr:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
 
@@ -295,7 +295,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Demonstrate a boolean intersection with two spheres.  Note how
+        Demonstrate a boolean intersection with two spheres. Note how
         the final mesh only includes the intersection of the two.
 
         >>> import pyvista as pv
@@ -350,7 +350,7 @@ class PolyDataFilters(DataSetFilters):
            normals.
 
         .. note::
-           Both meshes must be composed of all triangles.  Check with
+           Both meshes must be composed of all triangles. Check with
            :attr:`PolyData.is_all_triangles` and convert with
            :func:`PolyDataFilters.triangulate`.
 
@@ -376,7 +376,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Demonstrate a boolean difference with two spheres.  Note how
+        Demonstrate a boolean difference with two spheres. Note how
         the final mesh only includes ``sphere_a``.
 
         >>> import pyvista as pv
@@ -520,7 +520,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            The behavior of this filter varies from the
-           :func:`PolyDataFilters.boolean_union` filter.  This filter
+           :func:`PolyDataFilters.boolean_union` filter. This filter
            does not attempt to create a manifold mesh and will include
            internal surfaces when two meshes overlap.
 
@@ -773,7 +773,7 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         curv_type : str, default: "mean"
-            Curvature type.  One of the following:
+            Curvature type. One of the following:
 
             * ``"mean"``
             * ``"gaussian"``
@@ -859,7 +859,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Plot the Gaussian curvature of an example mesh.  Override the
+        Plot the Gaussian curvature of an example mesh. Override the
         default scalar bar range as the mesh edges report high
         curvature.
 
@@ -978,7 +978,7 @@ class PolyDataFilters(DataSetFilters):
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
-            Flag to control smoothing of feature edges.  When ``True``,
+            Flag to control smoothing of feature edges. When ``True``,
             feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
@@ -1076,7 +1076,7 @@ class PolyDataFilters(DataSetFilters):
             boundary edges remain fixed.
 
         feature_smoothing : bool, default: False
-            Flag to control smoothing of feature edges.  When ``True``,
+            Flag to control smoothing of feature edges. When ``True``,
             feature edges remain fixed as defined by ``feature_angle`` and
             ``edge_angle``.
 
@@ -1286,7 +1286,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Decimate a sphere.  First plot the sphere.
+        Decimate a sphere. First plot the sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
@@ -1346,7 +1346,7 @@ class PolyDataFilters(DataSetFilters):
 
         maximum_error : float, default: 10.
             Fraction of the maximum length of the input data bounding box
-            to limit reduction.  This might prevent the full reduction from
+            to limit reduction. This might prevent the full reduction from
             being achieved. Default of ``10.`` should not limit reduction.
 
         inplace : bool, default: False
@@ -1667,12 +1667,12 @@ class PolyDataFilters(DataSetFilters):
 
         .. note::
            Subdivision filter sometimes fails for multiple part
-           meshes.  The input should be one connected mesh.
+           meshes. The input should be one connected mesh.
 
         Parameters
         ----------
         nsub : int
-            Number of subdivisions.  Each subdivision creates 4 new
+            Number of subdivisions. Each subdivision creates 4 new
             triangles, so the number of resulting triangles is
             ``nface*4**nsub`` where ``nface`` is the current number of
             faces.
@@ -1984,7 +1984,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Decimate a sphere.  First plot the sphere.
+        Decimate a sphere. First plot the sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
@@ -2124,7 +2124,7 @@ class PolyDataFilters(DataSetFilters):
             off. This option adds some computational complexity, and
             is useful if you do not want to have to inspect the
             rendered image to determine whether to turn on the
-            ``flip_normals`` flag.  However, this flag can work with
+            ``flip_normals`` flag. However, this flag can work with
             the ``flip_normals`` flag, and if both are set, all the
             normals in the output will point "inward".
 
@@ -2261,7 +2261,7 @@ class PolyDataFilters(DataSetFilters):
         faces where the input data was clipped.
 
         Non-manifold surfaces should not be used as input for this
-        filter.  The input surface should have no open edges, and must
+        filter. The input surface should have no open edges, and must
         not have any edges that are shared by more than two faces. In
         addition, the input surface should not self-intersect, meaning
         that the faces of the surface should only touch at their
@@ -2280,7 +2280,7 @@ class PolyDataFilters(DataSetFilters):
             occurs. The default is the center of the dataset.
 
         tolerance : float, optional
-            The tolerance for creating new points while clipping.  If
+            The tolerance for creating new points while clipping. If
             the tolerance is too small, then degenerate triangles
             might be produced.
 
@@ -2322,7 +2322,7 @@ class PolyDataFilters(DataSetFilters):
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         Clip the sphere at the XY plane and leave behind half the
-        sphere in the positive Z direction.  Shift the clip upwards to
+        sphere in the positive Z direction. Shift the clip upwards to
         leave a smaller mesh behind.
 
         >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
@@ -2370,7 +2370,7 @@ class PolyDataFilters(DataSetFilters):
         size of the hole that can be filled.
 
         .. warning::
-           This method is known to segfault.  Use at your own risk.
+           This method is known to segfault. Use at your own risk.
 
         Parameters
         ----------
@@ -2437,21 +2437,21 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         point_merging : bool, optional
-            Enables point merging.  ``True`` by default.
+            Enables point merging. ``True`` by default.
 
         tolerance : float, optional
-            Set merging tolerance.  When enabled merging is set to
+            Set merging tolerance. When enabled merging is set to
             absolute distance. If ``absolute`` is ``False``, then the
             merging tolerance is a fraction of the bounding box
             length. The alias ``merge_tol`` is also excepted.
 
         lines_to_points : bool, optional
             Enable or disable the conversion of degenerate lines to
-            points.  Enabled by default.
+            points. Enabled by default.
 
         polys_to_lines : bool, optional
             Enable or disable the conversion of degenerate polys to
-            lines.  Enabled by default.
+            lines. Enabled by default.
 
         strips_to_polys : bool, optional
             Enable or disable the conversion of degenerate strips to
@@ -2469,7 +2469,7 @@ class PolyDataFilters(DataSetFilters):
 
         **kwargs : dict, optional
             Accepts for ``merge_tol`` to replace the ``tolerance``
-            keyword argument.  This may be deprecated in future.
+            keyword argument. This may be deprecated in future.
 
         Returns
         -------
@@ -2713,16 +2713,16 @@ class PolyDataFilters(DataSetFilters):
             Whether to plot the ray trace results.
 
         off_screen : bool, optional
-            Plots off screen when ``plot=True``.  Used for unit testing.
+            Plots off screen when ``plot=True``. Used for unit testing.
 
         Returns
         -------
         intersection_points : numpy.ndarray
-            Location of the intersection points.  Empty array if no
+            Location of the intersection points. Empty array if no
             intersections.
 
         intersection_cells : numpy.ndarray
-            Indices of the intersection cells.  Empty array if no
+            Indices of the intersection cells. Empty array if no
             intersections.
 
         See Also
@@ -2790,7 +2790,7 @@ class PolyDataFilters(DataSetFilters):
 
         The embree library used for vectorization of the ray traces is
         known to occasionally return no intersections where the VTK
-        implementation would return an intersection.  If the result
+        implementation would return an intersection. If the result
         appears to be missing some intersection points, set
         ``retry=True`` to run a second pass over rays that returned no
         intersections, using :func:`PolyDataFilters.ray_trace`.
@@ -2813,7 +2813,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         intersection_points : numpy.ndarray
-            Location of the intersection points.  Empty array if no
+            Location of the intersection points. Empty array if no
             intersections.
 
         intersection_rays : numpy.ndarray
@@ -2821,7 +2821,7 @@ class PolyDataFilters(DataSetFilters):
             intersections.
 
         intersection_cells : numpy.ndarray
-            Indices of the intersection cells.  Empty array if no
+            Indices of the intersection cells. Empty array if no
             intersections.
 
         See Also
@@ -3011,15 +3011,15 @@ class PolyDataFilters(DataSetFilters):
             Flip the normal direction when ``True``.
 
         use_every : int, default: 1
-            Display every nth normal.  By default every normal is
-            displayed.  Display every tenth normal by setting this
+            Display every nth normal. By default every normal is
+            displayed. Display every tenth normal by setting this
             parameter to 10.
 
         faces : bool, default: False
             Plot face normals instead of the default point normals.
 
         color : ColorLike, optional
-            Color of the arrows.  Defaults to
+            Color of the arrows. Defaults to
             :attr:`pyvista.plotting.themes.Theme.edge_color`.
 
         **kwargs : dict, optional
@@ -3108,7 +3108,7 @@ class PolyDataFilters(DataSetFilters):
         ----------
         remove : VectorLikeBool | VectorLikeInt, optional
             If remove is a ``bool`` array, points that are ``True`` will
-            be removed.  Otherwise, it is treated as a list of
+            be removed. Otherwise, it is treated as a list of
             indices. Only valid for all-triangle meshes.
 
         mode : str, default: "any"
@@ -3475,7 +3475,7 @@ class PolyDataFilters(DataSetFilters):
         """Apply a 2D Delaunay filter along the best fitting plane.
 
         This filter can be used to generate a 2d surface from a set of
-        points on a plane.  If you want to create a surface from a
+        points on a plane. If you want to create a surface from a
         point cloud, see :func:`pyvista.PolyDataFilters.reconstruct_surface`.
 
         Parameters
@@ -3629,7 +3629,7 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         origin : VectorLikeFloat, optional
-            Plane origin.  Defaults to the approximate center of the
+            Plane origin. Defaults to the approximate center of the
             input mesh minus half the length of the input mesh in the
             direction of the normal.
 
@@ -3725,7 +3725,7 @@ class PolyDataFilters(DataSetFilters):
 
         scalars : str, optional
             String name of the scalars array to use to vary the ribbon
-            width.  This is only used if a scalars array is specified.
+            width. This is only used if a scalars array is specified.
 
         angle : float, optional
             Angle in degrees of the offset angle of the ribbon from
@@ -3753,7 +3753,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Ribbon mesh.  Empty if there are no lines in the input dataset.
+            Ribbon mesh. Empty if there are no lines in the input dataset.
 
         Examples
         --------
@@ -3928,12 +3928,12 @@ class PolyDataFilters(DataSetFilters):
         "skirt" or swept surface. For example, sweeping a line results
         in a cylindrical shell, and sweeping a circle creates a torus.
 
-        There are a number of control parameters for this filter.  You
+        There are a number of control parameters for this filter. You
         can control whether the sweep of a 2D object (polygon or
         triangle strip) is capped with the generating geometry via the
         ``capping`` parameter. Also, you can control the angle of
         rotation, and whether translation along the axis is
-        performed along with the rotation.  (Translation is useful for
+        performed along with the rotation. (Translation is useful for
         creating "springs".) You also can adjust the radius of the
         generating geometry with the ``dradius`` parameter.
 
@@ -4262,18 +4262,18 @@ class PolyDataFilters(DataSetFilters):
         .. warning::
             Currently only triangles are processed. Use
             :func:`PolyDataFilters.triangulate` to convert any strips
-            or polygons to triangles.  Otherwise, the mesh will be
+            or polygons to triangles. Otherwise, the mesh will be
             converted for you within this method.
 
         Parameters
         ----------
         other_mesh : pyvista.DataSet
-            Other mesh to test collision with.  If the other mesh is
+            Other mesh to test collision with. If the other mesh is
             not a surface, its external surface will be extracted and
             triangulated.
 
         contact_mode : int, default: 0
-            Contact mode.  One of the following:
+            Contact mode. One of the following:
 
             * 0 - All contacts. Find all the contacting cell pairs
               with two points per collision
@@ -4291,9 +4291,9 @@ class PolyDataFilters(DataSetFilters):
             Number of cells in each OBB.
 
         generate_scalars : bool, default: False
-            Flag to visualize the contact cells.  If ``True``, the
+            Flag to visualize the contact cells. If ``True``, the
             contacting cells will be colored from red through blue,
-            with collisions first determined colored red.  This array
+            with collisions first determined colored red. This array
             is stored as ``"collision_rgba"``.
 
             .. note::
@@ -4306,7 +4306,7 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Mesh containing collisions in the ``field_data``
-            attribute named ``"ContactCells"``.  Array only exists
+            attribute named ``"ContactCells"``. Array only exists
             when there are collisions.
 
         int
@@ -4324,7 +4324,7 @@ class PolyDataFilters(DataSetFilters):
         This method assumes no transform and is easier to use for
         single collision tests, but it is recommended to use a
         combination of ``pyvista`` and ``vtk`` for rapidly computing
-        repeated collisions.  See the `Collision Detection Example
+        repeated collisions. See the `Collision Detection Example
         <https://kitware.github.io/vtk-examples/site/Python/Visualization/CollisionDetection/>`_
 
         Examples
@@ -4341,7 +4341,7 @@ class PolyDataFilters(DataSetFilters):
         pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23]...)
 
         Plot the collisions by creating a collision mask with the
-        ``"ContactCells"`` field data.  Cells with a collision are
+        ``"ContactCells"`` field data. Cells with a collision are
         colored red.
 
         >>> scalars = np.zeros(collision.n_cells, dtype=bool)
@@ -4442,7 +4442,7 @@ class PolyDataFilters(DataSetFilters):
             maximum of the active scalars of ``scalars``.
 
         scalars : str, optional
-            The name of the scalar array to use for contouring.  If ``None``,
+            The name of the scalar array to use for contouring. If ``None``,
             the active scalar array will be used.
 
         component : int, default: 0
@@ -4450,19 +4450,19 @@ class PolyDataFilters(DataSetFilters):
             component.
 
         clip_tolerance : float, default: 1e-6
-            Set/Get the clip tolerance.  Warning: setting this too large will
+            Set/Get the clip tolerance. Warning: setting this too large will
             certainly cause numerical issues. Change from the default value at
             your own risk. The actual internal clip tolerance is computed by
             multiplying ``clip_tolerance`` by the scalar range.
 
         generate_contour_edges : bool, default: True
-            Controls whether contour edges are generated.  Contour edges are
+            Controls whether contour edges are generated. Contour edges are
             the edges between bands. If enabled, they are generated from
             polygons/triangle strips and returned as a second output.
 
         scalar_mode : str, default: 'value'
             Control whether the cell scalars are output as an integer index or
-            a scalar value.  If ``'index'``, the index refers to the bands
+            a scalar value. If ``'index'``, the index refers to the bands
             produced by the clipping range. If ``'value'``, then a scalar value
             which is a value between clip values is used.
 
@@ -4617,7 +4617,7 @@ class PolyDataFilters(DataSetFilters):
             errors on sharp boundaries.
 
         sample_spacing : float, optional
-            The spacing of the 3D sampling grid.  If not set, a
+            The spacing of the 3D sampling grid. If not set, a
             reasonable guess will be made.
 
         progress_bar : bool, default: False
