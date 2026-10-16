@@ -446,6 +446,12 @@ guaranteed to be identical.  Neither is required: without them
 :class:`pyvista.STLReader`, which also remain what
 :func:`pyvista.get_reader` hands back.
 
+They store cell connectivity with 32-bit ids, where the VTK readers use
+64-bit.  The points and cells are the same either way, and
+:attr:`~pyvista.PolyData.faces` is unaffected, but
+:attr:`~pyvista.PolyData.regular_faces` and
+:attr:`~pyvista.PolyData.face_connectivity` come back as 32-bit arrays.
+
 Because an override changes a format the user did not choose,
 :func:`pyvista.registered_readers` reports it::
 
