@@ -9230,6 +9230,17 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             List of mesh objects such as :class:`pyvista.PolyData`,
             :class:`pyvista.UnstructuredGrid`, etc.
 
+        Examples
+        --------
+        Add two meshes and inspect their point counts.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> _ = pl.add_mesh(pv.Line())
+        >>> [mesh.n_points for mesh in pl.meshes]
+        [8, 2]
+
         """
 
         def _iter_leaf_props(prop: _vtk.vtkProp) -> Iterator[_vtk.vtkProp]:
