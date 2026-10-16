@@ -15,7 +15,7 @@ Read them, then come back here.
   | Coding style, keyword-only arguments    | `Coding Style`                                             |
   | Standard library import rules           | `Import Conventions`                                       |
   | numpydoc rules and the sample docstring | `Docstrings`                                               |
-  | Three-step deprecation policy           | `Deprecating Features or other Backwards-Breaking Changes` |
+  | Three-step deprecation policy           | `Deprecating Features or Other Backwards-Breaking Changes` |
   | Image regression testing                | `Notes Regarding Image Regression Testing`                 |
   | Branch prefixes                         | `Branch Naming Conventions`                                |
   | `make` targets and tox environments     | `Quick Development Commands`                               |
@@ -28,8 +28,10 @@ Read them, then come back here.
 ## The workflow
 
 Build here, wrap with **pyvista-vtk**, test with **pyvista-testing**, critique with
-**pyvista-review**, ship with **pyvista-pr**. `AGENTS.md` at the repository root routes to
-all five and carries the rules that apply before any of them.
+**pyvista-review**, ship with **pyvista-pr**. Two more cover narrower jobs:
+**pyvista-doc-images** repairs the documentation image cache, and **pyvista-docs-style**
+owns the Vale setup behind `make docstyle`. `AGENTS.md` at the repository root routes to
+all seven and carries the rules that apply before any of them.
 
 Run the critique stage in a **subagent** and fix what it finds before opening anything.
 
@@ -178,7 +180,8 @@ what to write. This is what gets sent back:
 
 `Quick Development Commands` lists the `make` targets, each mirroring a CI job. Run
 `make lint`, `make docstyle`, `make doctest`, and the test module you touched, and treat a
-change as unfinished until they pass.
+change as unfinished until they pass. A `make docstyle` alert is read with
+**pyvista-docs-style**.
 
 `make doctest` is the one that gets skipped for looking unrelated: it runs every docstring
 example in the package rather than the ones in the diff, so anything that changes
@@ -193,9 +196,10 @@ The target runs two environments: `doctest-modules` executes the examples, and
 failures are name resolution bugs in the docstring rather than runtime errors.
 
 `tests/conftest.py` and the `doctest-modules` tox environment already set off-screen
-rendering, so the `make` targets are safe. Only a bare `pytest --doctest-modules` outside
-tox needs `PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take
-over the display.
+rendering, so the `make` targets are safe. A bare `pytest --doctest-modules` outside tox
+needs both variables that environment sets: `PYVISTA_OFF_SCREEN=true`, or the examples
+open render windows and take over the display, and `PYVISTA_BUILDING_GALLERY=true`, or the
+anti-aliasing warning above fails the run.
 
 **Never push a commit to find out whether something passes.** `AGENTS.md` opens with that
 rule and `CONTRIBUTING.rst` states it as `Continuous Integration Etiquette`. It binds you

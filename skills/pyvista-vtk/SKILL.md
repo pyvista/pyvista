@@ -25,10 +25,13 @@ concluding a wrapper is missing; if it genuinely is, add the property or filter 
 let the consumer land after it.
 
 `import vtk` and `import vtkmodules` are both banned by ruff (`banned-api` in
-`pyproject.toml`), which points you at `pyvista._vtk` instead. Examples are exempt
-because `examples/ruff.toml` defines its own `banned-api` table, which replaces the
-parent's rather than merging with it. Inside the package the sanctioned form is
-`from . import _vtk`, then `_vtk.vtkThreshold()`.
+`pyproject.toml`), which points you at `pyvista._vtk` instead. The sanctioned form in
+the package and its tests is `from pyvista import _vtk`, then `_vtk.vtkThreshold()`.
+`_vtk` is private, so docstring and gallery examples never import it. An example whose
+point is customizing VTK directly, such as the `RenderWindowInteractor.style` docstring
+or `examples/01-filter/reslice.py`, uses a targeted `vtkmodules` import instead; keep
+those rare. Gallery examples pass the lint because `examples/ruff.toml` defines its own
+`banned-api` table, which replaces the parent's rather than merging with it.
 
 The wrapper classes also gate the VTK surface at runtime: `_NoNewAttrMixin`
 (`pyvista/core/utilities/misc.py`) refuses unknown attributes, and `DisableVtkSnakeCase`
@@ -54,14 +57,15 @@ access built with `getattr`, so read the diff as well.
 ## The filter pattern
 
 Every filter in `pyvista/core/filters/` has the same shape. Copy a neighbour rather than
-inventing a variant.
+inventing a variant. The sketch below shows that shape; it is condensed, and the real
+`DataSetFilters.threshold` differs.
 
 ```python
 def threshold(
     self,
     value: float | VectorLike[float] | None = None,
-    scalars: str | None = None,
     *,
+    scalars: str | None = None,
     invert: bool = False,
     inplace: bool = False,
     progress_bar: bool = False,
@@ -72,6 +76,9 @@ def threshold(
     ----------
     value : float | VectorLike[float], optional
         Threshold value or ``(min, max)`` range. ``None`` uses the data range.
+
+    scalars : str, optional
+        Name of the array to threshold. Defaults to the active scalars.
 
     invert : bool, default: False
         Invert the threshold.
@@ -137,15 +144,17 @@ Points that reviewers raise when they are missing:
 Dataset classes combine a PyVista base, a filter mixin, and the VTK class:
 
 ```python
-class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
+class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     """Wrap :vtk:`vtkPolyData`."""
 ```
 
 Module docstring is one line and uses the `:vtk:` role. `@abstract_class` marks a base
-that must not be instantiated. Mixins that use `_NoNewAttrMixin` declare `__slots__ = ()`.
-Map each VTK getter and setter you need onto a snake_case property with validation in the
-setter, document it with numpydoc plus an `Examples` block, register the type with
-`pv.wrap`, and add tests. Do not expose a CamelCase method as public API.
+that must not be instantiated. `_NoNewAttrMixin` freezes an instance once its own
+`__init__` returns, so a public attribute has to be assigned there or exist on the class;
+private names stay settable. Map each VTK getter and setter you need onto a snake_case
+property with validation in the setter, document it with numpydoc plus an `Examples`
+block, register the type with `pv.wrap`, and add tests. Do not expose a CamelCase method
+as public API.
 
 New top-level subpackages with heavy imports go in the lazy `__getattr__` list in
 `pyvista/__init__.py` rather than being imported eagerly.

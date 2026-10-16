@@ -144,10 +144,13 @@ The resulting contribution is the responsibility of the contributor, and we valu
 concise accurate documentation, and avoiding unneeded code churn.
 
 If an AI tool wrote any part of a pull request -- code, tests, documentation, or the
-description itself -- say so in the description. Write that sentence yourself: it states
-that you reviewed the change and can explain it, which no tool can attest to on your
-behalf. One clause naming the tool and what it did is enough, in the form merged
-descriptions already use, for example ``Changes drafted by Claude Opus 5 but fully understood by me``.
+description itself -- say so in the description. A coding agent may draft that sentence,
+but it is your statement that you reviewed the change and can explain it, so confirm or
+reword it before the pull request goes up; no tool can attest to that on your behalf. One
+clause naming the tool and what it did is enough, in the form merged descriptions already
+use, for example ``Changes drafted by Claude Opus 5 but fully understood by me``.
+Disclosure in commit messages, such as a ``Co-Authored-By`` trailer, is optional; the pull
+request description is where it is required.
 
 That responsibility covers what the contribution costs us to review and to test.
 If you work with a coding agent, point it at ``AGENTS.md`` in the repository root,
@@ -217,11 +220,13 @@ document the underlying tools directly.
 Continuous Integration Etiquette
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Opening a pull request, and every push to it afterwards, starts the full
-continuous integration suite: unit tests on Linux, macOS, and Windows across
-every supported Python version, a separate VTK version matrix, the
-documentation build, the integration tests, type checking, and the style and
-docstring jobs. Every one of those runs costs runner time. Push when the
+Opening a pull request, and every push to it afterwards, starts the
+continuous integration suite: unit tests on Linux and Windows across every
+supported Python version and on macOS for the oldest and newest, with each
+Linux job on a different VTK release, the documentation build, type checking,
+and the style and docstring jobs. The VTK development and master builds, the
+integration tests, and the Docker build run only when their label is applied.
+Every one of those runs costs runner time. Push when the
 change is ready, and use the local gates rather than CI to find out whether it
 works.
 
@@ -239,8 +244,10 @@ Before you push:
    ``make test-core ARGS="-k threshold"`` or ``make test-plotting``. These
    targets use the same ``tox`` environments and ``pytest`` flags as CI, so a
    green local run means the same run is green in CI.
-#. Run ``make typecheck`` when you change type annotations, and ``make
-   doctest`` when you change a docstring example.
+#. Run ``make docstyle`` and ``make doctest``. ``make doctest`` runs every
+   docstring example in the package, so a change to import-time behavior or to
+   a plotting default can fail it with no docstring in the diff.
+#. Run ``make typecheck`` when you change type annotations.
 
 While you iterate, keep the pull request in draft and amend or squash locally,
 so a single push carries the finished change instead of five pushes carrying a
@@ -728,23 +735,28 @@ Here's an example of adding error test codes that raise deprecation warning mess
 
 .. code-block:: python
 
-    with pytest.warns(PyVistaDeprecationWarning):
-        addition(a, b)
-        if pv._version.version_info[:2] > (0, 40):
-            raise RuntimeError("Convert error this function")
-        if pv._version.version_info[:2] > (0, 41):
-            raise RuntimeError("Remove this function")
+    from pyvista._version import _is_deprecation_due
 
-In the above code example, the old test code raises an error in v0.40 and v0.41.
-This will prevent us from forgetting to remove deprecations on version upgrades.
+
+    def test_addition_deprecated():
+        with pytest.warns(PyVistaDeprecationWarning):
+            addition(a, b)
+        if _is_deprecation_due((0, 40)):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if _is_deprecation_due((0, 41)):  # pragma: no cover
+            msg = 'Remove this deprecated function.'
+            raise RuntimeError(msg)
+
+In the above code example, the test starts failing once v0.40 is being released,
+and again for v0.41. This will prevent us from forgetting to remove deprecations
+on version upgrades.
 
 .. note::
 
-    When releasing a new version, we need to update the version number to the next
-    development version. For example, if we are releasing version 0.37.0, the next
-    development version should be 0.38.0.dev0 which is greater than 0.37.0. This is
-    why we need to check if the version is greater than 0.40.0 and 0.41.0 in the
-    test code.
+    ``_is_deprecation_due((0, 40))`` is true from the first v0.40 release
+    candidate onward, and false for ``0.40.0.dev0``, the version ``main``
+    carries while v0.40 is in development.
 
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
@@ -974,7 +986,7 @@ such that:
 
             .. code-block:: bash
 
-                tox run -e py3.10-numpy_1.23-vtk_9.4.2-cov
+                tox run -e py3.10-numpy_latest-vtk_9.3.1-cov
                 tox run -e py3.13-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
     .. tab-item:: make
@@ -986,8 +998,9 @@ such that:
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
-This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
-which has a 90% target, that is, it ensures that 90% of the code modified in the PR is tested.
+This is further enforced in the CI by `codecov <https://app.codecov.io/gh/pyvista/pyvista>`_,
+whose checks fail when coverage, overall or on the lines the PR changes, falls more than 0.5%
+below the base commit, and when a line the PR adds under ``tests/`` never runs. ``codecov.yml`` holds the targets.
 It should be mentioned that branch coverage is measured on the CI, meaning for examples that both
 values of an ``if`` clause must be tested to ensure full coverage. For more details on branch
 coverage, please refer to the `coverage documentation <https://coverage.readthedocs.io/en/latest/branch.html>`_.
@@ -1446,23 +1459,19 @@ testing. In practice, this ends up being quite a bit of work because:
    desktop images (uses hardware acceleration).
 -  Different OSes render different images.
 
-As each platform and environment renders different slightly images
-relative to Linux (which these images were built from), so running these
-tests across all OSes isn’t optimal. We need to know if
-something fundamental changed with our plotting without actually looking
-at the plots (like the docs at dev.pyvista.com)
-
-Based on these points, image regression testing only occurs on Linux CI,
-and multi-sampling is disabled as that seems to be one of the biggest
-difference between software and hardware based rendering.
+The baselines are built from the Linux CI renders. The comparison also runs
+on the macOS and Windows jobs, where a test whose render legitimately differs
+opts out with ``macos_skip_image_cache`` or ``windows_skip_image_cache``.
+Multi-sampling is disabled, as it is one of the biggest differences between
+software and hardware rendering.
 
 Image cache is stored here as ``./tests/plotting/image_cache``.
 
 Image resolution is kept low at 400x400 as we don’t want to pollute git
 with large images. Small variations between versions and environments
-are to be expected, so error < ``IMAGE_REGRESSION_ERROR`` is allowable
-(and will be logged as a warning) while values over that amount will
-trigger an error.
+are to be expected: an image error above the fixture's ``warning_value``
+(200 by default) is logged as a warning, and one above its ``error_value``
+(500 by default) fails the test.
 
 There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
@@ -1476,21 +1485,21 @@ example:
 
         .. code-block:: bash
 
-            pytest tests/plotting --reset_image_cache
+            pytest tests/plotting --ignore_image_cache
 
     .. tab-item:: tox
         :sync: tox
 
         .. code-block:: bash
 
-            tox run -e py3.11 -- tests/plotting --reset_image_cache
+            tox run -e py3.11 -- tests/plotting --ignore_image_cache
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make test ARGS="tests/plotting --reset_image_cache"
+            make test ARGS="tests/plotting --ignore_image_cache"
 
 Running ``--reset_image_cache`` regenerates the baseline of every test the
 run collected, including tests that were failing for reasons unrelated to
@@ -1626,7 +1635,6 @@ Documentation can be build either directly (that is, using Python commands) or w
 
                     cd doc
                     python -msphinx -M html source _build
-                    python -msphinx -M html . _build
 
     .. tab-item:: tox
         :sync: tox
@@ -1642,7 +1650,7 @@ Documentation can be build either directly (that is, using Python commands) or w
 
             .. code-block:: bash
 
-                tox run -e docs-build -- mini18n-html # for translated languages
+                tox run -e docs-build -- dirhtml
 
     .. tab-item:: make
         :sync: make
@@ -1741,9 +1749,9 @@ When executed, the test will first pre-process the build images. The images are:
 
 #. Resized to a maximum of 400x400 pixels.
 
-#. Saved to a flat directory as JPEG images in ``./_doc_debug_images``.
+#. Saved to a flat directory as JPEG images in ``./_doc_generated_test_images``.
 
-Next, the pre-processed images in ``./_doc_debug_images`` are compared to the
+Next, the pre-processed images in ``./_doc_generated_test_images`` are compared to the
 cached images in the ``Doc Image Cache`` using :func:`pyvista.compare_images`.
 
 The tests can fail in three ways. To make it easy to review images for failed tests,
@@ -1751,16 +1759,16 @@ copies of the images are made as follows:
 
 #. If the comparison between the two images fails:
 
-    - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/errors/from_test``
+    - The cache image is copied to ``./_doc_failed_test_images/errors/from_cache``
+    - The build image is copied to ``./_doc_failed_test_images/errors/from_test``
 
 #.  If an image is in the cache but missing from the build:
 
-    - The cache image is copied to  ``./_doc_debug_images_failed/errors/from_cache``
+    - The cache image is copied to ``./_doc_failed_test_images/errors/from_cache``
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_test``
+    - The build image is copied to ``./_doc_failed_test_images/errors/from_test``
 
 If a warning is generated instead of an error, images are saved to the
 ``warnings`` sub-directory instead of ``errors``.
@@ -1773,15 +1781,12 @@ Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
 
 If a test is flaky, for example the build sometimes generates different images
-for the same plot, the multiple versions of the image may be saved to the
-flaky test directory ``./tests/doc/flaky_tests``. A folder with the same
-name as the test image should be created, and all versions of the image
-should be stored in this directory. The test will first compare the
-build image to the cached image in ``Doc Image Cache`` as normal. If that
-comparison fails, the build image is then compared to all images in the
-flaky test directory. The test is successful if one of the comparisons
-is successful, but a warning will still be issued. If a warning is
-emitted by a flaky test, images are saved to the ``flaky`` sub-directory
+for the same plot, replace its cached image with a directory of the same name
+in the ``Doc Image Cache`` and store every accepted version of the image in it.
+The build image is compared to the first version in sorted order and, if that
+comparison fails, to each of the others in turn. The test passes on the first
+version within the error threshold, with a warning when that is not the first
+one, and its images are then saved to the ``errors_as_warnings`` sub-directory
 instead of ``warnings``.
 
 .. note::
@@ -2039,12 +2044,13 @@ branch.
 
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-For PRs of branches coming from the main pyvista repository, the documentation
-is automatically deployed using `Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
-However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
-that contains a non-interactive subset of the documentation build. It typically weights
-500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
-``Build Documentation`` CI job.
+The documentation built for each PR is deployed as a preview using
+`Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_, and the
+preview link is posted as a commit status on the PR. For a PR from a fork, the
+deploy waits for a maintainer to approve it. The ``Build Documentation`` CI job
+also uploads the build as artifacts: ``docs-build`` holds the full HTML, and
+``docs-build-light``, from the ``Upload non-interactive HTML documentation``
+step, leaves out the interactive scenes and is the smaller download.
 
 Branching Model
 ~~~~~~~~~~~~~~~
@@ -2176,9 +2182,8 @@ should not wait until a minor release. The steps for a patch release
    Then create a tag from the release branch with the applicable version
    number (see above for the correct steps).
 
-#. If deemed necessary, create a release notes page. Also, open the PR
-   from conda and follow the directions in step 10 in the minor release
-   section.
+#. If deemed necessary, create a release notes page. Also, merge the
+   conda-forge feedstock pull request as in the minor release steps.
 
 Dependency Version Policy
 -------------------------
@@ -2195,103 +2200,3 @@ support those Python versions. As much as we would prefer to follow
 .. _Python versions: https://endoflife.date/python
 .. _VTK versions: https://pypi.org/project/vtk/
 .. _SPEC 0: https://scientific-python.org/specs/spec-0000/
-
-
-Self-Hosted Runners
--------------------
-GitHub hosted runners are the preferred way of running PyVista's CI. However
-given the volume of development, the number of workflows, and the need to test
-across several operating systems, it may be necessary to use self-hosted
-runners due to GitHub's concurrency limits.
-
-Any PyVista self-hosted runner must:
-
-- Be as compatible as possible with a GitHub hosted runner.
-- Use labels to denote the OS of a runner that are the same as GitHub's labels
-  appended with ``self-hosted`` to ensure that there isn't overlap with GitHub
-  labels.  For example, ``macos-15-self-hosted``. Additional labels may be
-  specified (e.g. ``GPU``), but there must always be an OS label. Do not use a
-  label that overlaps with GitHub's labels.
-- Be secure against intrusion and follow best cybersecurity practices (for example, no
-  ``sudo`` permissions, dedicated and isolated VLAN)
-- Require a compatible CI/CD workflow.
-- Provide runner documentation here.
-- Be on a host with a battery backup.
-
-GitHub Runner Workflow Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When setting up the GitHub workflow and using a ``matrix``, ensure that the
-name of each job in the matrix is fixed rather than dependent on labels. This
-way the `Branch Protection Rules
-<https://github.com/pyvista/pyvista/settings/branches>`_ can use the same
-status check label regardless of if it is self hosted.
-
-.. code-block:: yaml
-
-  macOS:
-    name: ${{ matrix.job-name }}
-    needs: cache-pyvista-data
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # GitHub-hosted runner configuration
-          - job-name: MacOS Unit Testing (Python 3.10)
-            python-version: "3.10"
-            runner-labels: "macos-15"
-          # Self-hosted runner configurations
-          - job-name: MacOS Unit Testing (Python 3.11)
-            python-version: "3.11"
-            runner-labels: "macos-15-self-hosted"
-
-With this approach, a job can be configured to use GitHub's hosted runners simply
-by changing ``"macos-15-self-hosted"`` to ``"macos-15"``.
-
-
-Setting Up a Runner on Bare Metal
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Visit PyVista's `Create self-hosted runner
-<https://github.com/organizations/pyvista/settings/actions/runners/new>`_.
-
-Follow the directions to download, run, and install. If the runner is intended
-to run public workflows, add the runner to the ``pyvista-self-hosted`` group.
-
-Follow your OSes instructions to enable a service for the runner (if
-applicable) to ensure the runner restarts should it be interrupted.
-
-PyVista Hosts and Runners
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Apple Silicon - 2024 Mac mini M4
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- CPU: 10-core CPU ARM64 (Apple Silicon)
-- GPU: 10-core GPU
-- Storage: 256 GB SSD
-- Memory: 16 GB Unified Memory
-- OS: MacOS 15
-
-With the following runners
-- macos-arm-runner-0
-- macos-arm-runner-1
-- macos-arm-runner-2
-- macos-arm-runner-3
-- macos-arm-runner-4
-
-**Notes**
-Testing showed peak memory usage of ~2 GB per runner for the
-``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
-the OS, there's room to spare. Should we encounter memory issues we can disable
-runners.
-
-
-Linux Runners
-^^^^^^^^^^^^^
-PyVista uses a high availability Linux cluster running [k3s](https://k3s.io/) and deployed
-using [Ansible](https://docs.ansible.com/). See
-[pyvista/arc-runners](https://github.com/pyvista/arc-runners) for more details.
-
-GPU enabled runs should use the ``ubuntu-24.04-self-hosted-gpu`` labels. Runners
-using this label will receive a minimum of 2 CPUs and at maximum 8 CPUs along
-with access to either an NVIDIA Quadro P2000 or a NVIDIA T400 (4GB VRAM).

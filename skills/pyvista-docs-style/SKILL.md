@@ -22,8 +22,8 @@ finishes by confirming the heading rule still rejects the fixture in
 four copies of it had already drifted apart once.
 
 Prose in a `.py` file is checked through the `.rst` the extraction script generates, not
-from the `.py` itself. The extracted file has the same line numbers as the source
-(`doc/extract_rst_from_py_for_vale.py:31:1`) -- read an alert's `.vale/examples/...` or
+from the `.py` itself. The extracted file has the same line numbers as the source (the
+extraction script pads it with blank lines) -- read an alert's `.vale/examples/...` or
 `.vale/pyvista/...` path, swap it back to `examples/...` or `pyvista/...` with a `.py`
 extension, and that is the line to fix.
 
@@ -98,11 +98,9 @@ accept). The two failure modes worth naming directly:
   code: an import, a module path (`numpy.ndarray`), a parameter default, a snake_case
   identifier. This is not a `Vale.Spelling` fix (both spellings are real words) and it is
   not machine-checked -- `Vale.Terms` would be the obvious rule for it, but it is
-  deliberately disabled (see the comment above it in `doc/.vale.ini`): it votes on whichever
-  casing is more frequent in a file or corpus and flags the other one, so it flagged a
-  module's own correct `"""NumPy plotting module."""`-style summary line as wrong the one
-  time it was tried, purely because lowercase `numpy` (real code) was more common
-  elsewhere in that file. Read for this by hand, especially in a docstring's `Examples`
+  deliberately disabled (see the comment above it in `doc/.vale.ini`): the vocabulary
+  accepts both casings of these names, and `Vale.Terms` reports each one as an
+  inconsistency with the other. Read for this by hand, especially in a docstring's `Examples`
   section, which is exactly the kind of narrative prose most likely to get it wrong and,
   until recently, was invisible to Vale entirely.
 - **Oxford comma false positives.** `Google.OxfordComma`'s regex (`(?:[^,]+,){1,}\s\w+\s

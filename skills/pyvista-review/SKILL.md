@@ -31,10 +31,12 @@ corollaries:
 The findings worth the most come from leaving the changed lines. Each of these is a
 command, not an intention:
 
-- **Look at the rendered documentation.** `make docs` builds it locally. Pull requests
-  from the main repository get a Netlify preview; pull requests from forks attach the
-  HTML as an artifact on the `Build Documentation` job. Broken images, missing gallery
-  entries, and removed `__doc__` attributes are only visible here.
+- **Look at the rendered documentation.** `make docs` builds it locally. Every pull
+  request gets a Netlify preview, linked from a commit status; one from a fork deploys
+  once a maintainer approves it. The `Build Documentation` job also uploads the HTML as
+  `docs-build`, and without the interactive scenes as `docs-build-light`. Broken
+  images, missing gallery entries, and removed `__doc__` attributes are only visible
+  here.
 - **Open the failing job and read the assertion.** Not the job name, the assertion.
 - **`grep` for the constant, helper, or alias being introduced.** It usually exists.
 - **`git log -S"<symbol>"`.** If this name has already been changed once, changing it

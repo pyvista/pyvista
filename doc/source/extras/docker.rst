@@ -56,13 +56,14 @@ optional dependency groups directly from ``pyproject.toml``, so the package
 set always matches the project's pins. There is no separate
 ``requirements.txt`` to keep in sync.
 
-Override the Python version (must match a supported VTK wheel) via a build
-argument:
+Override the Python version of the ``slim`` image (must match a supported VTK
+wheel) via a build argument. The ``jupyter`` image always uses the Python of
+its ``base-notebook`` base, currently 3.13:
 
 .. code-block:: bash
 
   docker build --build-arg PY_VERSION=3.12 \
-    -f docker/Dockerfile --target jupyter -t my-pyvista-jupyter .
+    -f docker/Dockerfile --target slim -t my-pyvista-slim .
 
 GPU Rendering With the NVIDIA Container Runtime
 -----------------------------------------------
