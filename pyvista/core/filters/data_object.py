@@ -218,7 +218,7 @@ def _transform_rectilinear_offset(
     dimensions: tuple[int, int, int],
     components: _RectilinearComponents,
 ) -> list[int]:
-    """Return a grid's offset, permuted and reflected with its axes."""
+    """Return a grid's offset permuted and reflected with its axes."""
     _, scale, axes = components
     # A reversed axis mirrors its extent about index zero
     return [
