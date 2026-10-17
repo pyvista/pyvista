@@ -16,6 +16,9 @@ from typing import TYPE_CHECKING
 
 from pyvista.core.errors import VTKVersionError
 
+#: Environment variable that selects the VTK backend.
+BACKEND_ENV_VAR = 'PYVISTA_VTK_BACKEND'
+
 
 def _resolve_vtk_root() -> str:
     """Return the root package PyVista resolves VTK imports against.
@@ -25,7 +28,7 @@ def _resolve_vtk_root() -> str:
     stock ``vtkmodules``. Resolved at import, so set the variable before importing
     :mod:`pyvista`.
     """
-    backend = os.environ.get('PYVISTA_VTK_BACKEND')
+    backend = os.environ.get(BACKEND_ENV_VAR)
     if backend:
         # `vtk` is what vtk_backend() reports for stock; map it to the real root
         # (the `vtk` shim is eager and does not re-export every name).
