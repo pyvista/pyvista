@@ -27,9 +27,9 @@ from .utilities.misc import _NoNewAttrMixin
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
