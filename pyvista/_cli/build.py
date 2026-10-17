@@ -14,6 +14,7 @@ from pyvista._build import BuildConfig
 from pyvista._build import Builder
 from pyvista._build import BuildError
 from pyvista._build import ManifestError
+from pyvista._build.manylinux import default_image
 from pyvista._build.registry import known_backends
 from pyvista._vtk import BACKEND_ENV_VAR
 
@@ -123,9 +124,21 @@ def _build(
     install: Annotated[
         bool, Parameter(help='Install the wheel into this environment without asking.')
     ] = False,
+    manylinux: Annotated[
+        bool,
+        Parameter(
+            negative='',
+            help='Build inside a manylinux container through Docker, for a portable Linux wheel.',
+        ),
+    ] = False,
+    manylinux_image: Annotated[
+        str | None,
+        Parameter(help='Container image for ``--manylinux``. Defaults to manylinux_2_28.'),
+    ] = None,
     interactive: Annotated[
         bool,
         Parameter(
+            name=['--interactive', '-i'],
             negative='',
             help='Walk through the steps, confirming each one before any command runs.',
         ),
@@ -138,7 +151,8 @@ def _build(
 
     Builds with the defaults and prints every command as it runs. ``--interactive`` walks
     through the steps, showing each setting and asking before running anything, and
-    ``--dry-run`` prints the commands without running them.
+    ``--dry-run`` prints the commands without running them. ``--manylinux`` runs the build
+    inside a manylinux container so the Linux wheel installs on any machine.
     """
     if backend is None:
         backend = os.environ.get(BACKEND_ENV_VAR)
@@ -176,6 +190,7 @@ def _build(
         install=install,
         interactive=interactive,
         dry_run=dry_run,
+        manylinux=(manylinux_image or default_image()) if manylinux else None,
     )
     try:
         Builder(config, console=CLI_APP.console).build()

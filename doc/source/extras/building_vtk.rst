@@ -43,13 +43,14 @@ The Steps
    ``--build-dir`` to put everything somewhere else. An existing checkout
    is reused as is, local edits included.
 2. **Tools.** ``git``, ``cmake``, ``ninja``, a C++ compiler and the wheel
-   repair tool are checked. ``cmake``, ``ninja`` and the repair tool can
-   be installed into the current environment with ``pip`` after you
-   confirm; a missing compiler stops with instructions for your
-   operating system. On Windows, Visual Studio's build environment is
-   imported automatically and NASM is downloaded with VTK's own script.
-   A compiler cache (``ccache`` or ``sccache``) is used when one is on
-   ``PATH``, so a second build after editing the source is fast.
+   repair tool are checked (see :ref:`build_tooling` for what each one
+   does). ``cmake``, ``ninja`` and the repair tool can be installed into
+   the current environment with ``pip`` after you confirm; a missing
+   compiler stops with instructions for your operating system. On
+   Windows, Visual Studio's build environment is imported automatically
+   and NASM is downloaded with VTK's own script. A compiler cache
+   (``ccache`` or ``sccache``) is used when one is on ``PATH``, so a
+   second build after editing the source is fast.
 3. **Build options.** The modules to build are organized into named
    groups (``rendering``, ``io``, ``web``, ``headless-egl``, ...), each
    with a one-line description. The default set matches the stock wheel
@@ -149,18 +150,69 @@ software-rendering equivalent instead.
 Portable Linux Wheels
 ~~~~~~~~~~~~~~~~~~~~~
 A wheel built on Linux is tagged for the ``glibc`` of the machine that
-built it and may not install elsewhere. To share one, run the command
-inside a `manylinux <https://github.com/pypa/manylinux>`_ container, as
-PyVista's own CI does:
+built it and may not install elsewhere. To share one, build it inside a
+`manylinux <https://github.com/pypa/manylinux>`_ container, as PyVista's
+own CI does. ``--manylinux`` does that through `Docker
+<https://docs.docker.com/get-docker/>`_, which must be installed and
+running:
 
 .. code-block:: bash
 
-    docker run --rm -it -v "$PWD:/work" -w /work quay.io/pypa/manylinux2014_x86_64 bash
-    yum install -y libX11-devel libXcursor-devel mesa-libGL-devel
-    /opt/python/cp314-cp314/bin/python -m pip install pyvista
-    /opt/python/cp314-cp314/bin/pyvista build vtk
+    pyvista build vtk --manylinux
 
-The repaired wheel is written to ``vtk-build/wheelhouse``.
+The container image matches your machine's architecture
+(``manylinux_2_28_x86_64`` or ``manylinux_2_28_aarch64``) and carries
+the same Python version as the one running the command. Inside it the
+command installs VTK's build dependencies, PyVista, and ``ccache``, then
+runs the eight steps with ``./vtk-build`` mounted as the build tree, so
+the repaired wheel lands in ``vtk-build/wheelhouse`` and the compiler
+cache is kept between runs. Files written by the container are handed
+back to your user. Pass another image with ``--manylinux-image``, and
+note that a build tree configured inside the container cannot be
+continued outside it. The install step runs on the host afterwards.
+
+.. _build_tooling:
+
+Tooling
+~~~~~~~
+What the command looks for and offers to install:
+
+- `git <https://git-scm.com/>`_ clones the source and checks out the
+  requested tag, branch or commit. It is the one tool the command never
+  installs for you.
+- `CMake <https://cmake.org/>`_ configures the build: it reads VTK's
+  ``CMakeLists.txt`` and the options chosen, finds the compiler and
+  Python, and writes the build files. Installed with ``pip`` when
+  missing.
+- `Ninja <https://ninja-build.org/>`_ is the build tool that CMake
+  generates files for; it runs the compiler across all cores and only
+  rebuilds what changed. Installed with ``pip`` when missing.
+- **A C++ compiler**: GCC or Clang on Linux, Xcode's command-line tools
+  on macOS, Visual Studio with the C++ workload on Windows. Never
+  installed by the command; a missing one stops with the instructions
+  for your operating system.
+- `ccache <https://ccache.dev/>`_ and `sccache
+  <https://github.com/mozilla/sccache>`_ are compiler caches: they store
+  each object file keyed by its inputs, so rebuilding after an edit or a
+  reconfigure only recompiles what changed. ``ccache`` is the usual
+  choice on Linux and macOS; ``sccache`` is the one that supports MSVC
+  on Windows. ``--compiler-cache auto`` uses whichever is on ``PATH``.
+- **Wheel repair tools** copy the shared libraries a wheel depends on
+  into the wheel itself and set the platform tag, so it installs on a
+  machine without the build tree: `auditwheel
+  <https://github.com/pypa/auditwheel>`_ on Linux, `delocate
+  <https://github.com/matthew-brett/delocate>`_ on macOS and `delvewheel
+  <https://github.com/adang1345/delvewheel>`_ on Windows. Installed with
+  ``pip`` when missing.
+- `NASM <https://www.nasm.us/>`_ is the assembler that VTK's bundled
+  libjpeg-turbo uses for its SIMD code paths. Needed on Windows only;
+  the command offers to download it with VTK's own script.
+- `setuptools <https://setuptools.pypa.io/>`_ and `wheel
+  <https://wheel.readthedocs.io/>`_ are the Python packages that
+  ``setup.py bdist_wheel`` needs to package the build tree. Installed
+  with ``pip`` when missing.
+- `Docker <https://docs.docker.com/get-docker/>`_ runs the manylinux
+  container for ``--manylinux``. Never installed by the command.
 
 Building by Hand
 ~~~~~~~~~~~~~~~~
