@@ -456,13 +456,19 @@ class Builder:
                 status = '[red]missing[/red]'
                 blocking.append(tool)
             table.add_row(tool.label, found, status)
+        missing_packages = _tools.python_build_packages()
+        for name in _tools.PYTHON_BUILD_PACKAGES:
+            if name in missing_packages:
+                table.add_row(f'{name} (python)', '-', '[yellow]missing[/yellow]')
+            else:
+                table.add_row(f'{name} (python)', sys.prefix, '[green]ok[/green]')
         self.console.print(table)
         if blocking:
             lines = [f'{t.name}: {t.instructions}' for t in blocking]
             msg = 'Install these and run again:\n  ' + '\n  '.join(lines)
             raise BuildError(msg)
 
-        specs = [f'{t.pip}{t.spec}' for t in missing_pip] + _tools.python_build_packages()
+        specs = [f'{t.pip}{t.spec}' for t in missing_pip] + missing_packages
         if specs:
             cmd = _tools.pip_install_command(*specs)
             if cmd is None:
@@ -678,7 +684,7 @@ class Builder:
 
         """
         cfg = self.config
-        cmd = ['cmake', '-S', str(cfg.src_dir), '-B', str(cfg.cmake_dir), '-GNinja']
+        cmd = ['cmake', '-Wno-dev', '-S', str(cfg.src_dir), '-B', str(cfg.cmake_dir), '-GNinja']
         init_cache = self.manifest.init_cache.get(cfg.os_name)
         if init_cache:
             cmd += ['-C', str(cfg.src_dir / init_cache)]
@@ -803,14 +809,14 @@ class Builder:
         """Compile with ninja through cmake."""
         cfg = self.config
         self.step('5/8 Build')
-        jobs = cfg.jobs or os.cpu_count() or 1
+        cores = os.cpu_count() or 1
+        jobs = cfg.jobs or cores
+        flag = ' (--jobs)' if cfg.jobs else ''
         self.say(
-            f'Compiling with [bold]{jobs}[/bold] jobs. '
+            f'{cores} CPU cores detected; compiling with [bold]{jobs}[/bold] jobs{flag}. '
             'A full VTK build takes tens of minutes to hours.'
         )
-        if not self.confirm('Start the build?'):
-            msg = 'Stopped before building.'
-            raise BuildError(msg)
+        jobs = self._ask_jobs(jobs)
         self.run(
             ['cmake', '--build', str(cfg.cmake_dir), '--parallel', str(jobs)],
             log=cfg.build_dir / 'build.log',
@@ -818,6 +824,44 @@ class Builder:
         if self.launcher is not None:
             self.run([self.launcher.name, '--show-stats'], fatal=False)
         self.hooks('post_build')
+
+    def _ask_jobs(self, jobs: int) -> int:
+        """Confirm the build, taking a number as the job count instead of a yes.
+
+        Parameters
+        ----------
+        jobs : int
+            Proposed job count.
+
+        Returns
+        -------
+        int
+            Job count to build with.
+
+        """
+        if not self.config.interactive:
+            if not self.confirm('Start the build?'):
+                msg = 'Stopped before building.'
+                raise BuildError(msg)
+            return jobs
+        while True:
+            answer = (
+                Prompt.ask(
+                    'Start the build? [y/n, or a number of jobs]',
+                    default='y',
+                    console=self.console,
+                )
+                .strip()
+                .lower()
+            )
+            if answer in ('y', 'yes'):
+                return jobs
+            if answer in ('n', 'no'):
+                msg = 'Stopped before building.'
+                raise BuildError(msg)
+            if answer.isdigit() and int(answer) > 0:
+                return int(answer)
+            self.say('[red]Answer y, n or a positive number.[/red]')
 
     def wheel_env(self) -> dict[str, str]:
         """Return the extra environment for ``bdist_wheel``.
