@@ -300,3 +300,13 @@ def test_interactive_reuse_prompt(tmp_path: Path, mocker: MockerFixture):
     builder.phase_source()
     assert git.call_args_list[0].args[2] == 'https://example.com/me/vtk.git'
     assert git.call_args_list[1].args[-1] == 'dev'
+
+
+def test_prompts_print_brackets_verbatim():
+    """Prompt text keeps its [y/n] hints and is not markup."""
+    console = Console(record=True, width=200, force_terminal=False)
+    prompt = phases.Prompt('Build with these? [y/n, or --with]', console=console)
+    assert '[y/n, or --with]' in str(prompt.make_prompt('y'))
+    assert str(prompt.make_prompt('y')).endswith('(y): ')
+    confirm = phases.Confirm('Delete it? [careful]', console=console)
+    assert '[careful]' in str(confirm.make_prompt(False))
