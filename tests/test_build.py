@@ -15,6 +15,7 @@ from pyvista._build import Builder
 from pyvista._build import BuildError
 from pyvista._build import ManifestError
 from pyvista._build import load_manifest
+from pyvista._build import manylinux
 from pyvista._build import phases
 from pyvista._build import tools
 from pyvista._build.manifest import Option
@@ -870,3 +871,155 @@ def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.Prompt, 'ask', return_value='n')
     with pytest.raises(BuildError, match='Stopped before building'):
         builder.phase_build()
+
+
+def test_manifest_manylinux_packages(tmp_path: Path):
+    path = tmp_path / 'pyvista-build.toml'
+    path.write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\nimport_name = "demo"\ndefault_ref = "v1"\n'
+        '[manylinux]\npackages = ["libX11-devel"]\n'
+    )
+    assert load_manifest(path).manylinux_packages == ('libX11-devel',)
+    path.write_text(
+        'manifest_version = 1\nmanylinux = 1\n'
+        '[backend]\nname = "demo"\nimport_name = "demo"\ndefault_ref = "v1"\n'
+    )
+    with pytest.raises(ManifestError, match=r'\[manylinux\] must be a table'):
+        load_manifest(path)
+    assert find_manifest('vtk', None).manylinux_packages == (
+        'libX11-devel',
+        'libXcursor-devel',
+        'mesa-libGL-devel',
+    )
+
+
+def test_manylinux_helpers(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(manylinux.platform, 'machine', return_value='arm64')
+    assert manylinux.default_image().endswith('_aarch64')
+    mocker.patch.object(manylinux.platform, 'machine', return_value='AMD64')
+    assert manylinux.default_image().endswith('_x86_64')
+    tag = f'cp{sys.version_info.major}{sys.version_info.minor}'
+    assert manylinux.container_python() == f'/opt/python/{tag}-{tag}/bin/python'
+    assert manylinux.pyvista_requirement(tmp_path) == manylinux.PYVISTA
+    mocker.patch.object(manylinux.pv, '__version__', '0.50.0')
+    assert manylinux.pyvista_requirement(None) == 'pyvista==0.50.0'
+    mocker.patch.object(manylinux.pv, '__version__', '0.51.dev0')
+    assert manylinux.pyvista_requirement(None) == 'pyvista'
+    script = manylinux.container_script(
+        python='/opt/py',
+        packages=['a-devel', 'b'],
+        pyvista='/pyvista',
+        build_args=['vtk', '--build-dir', '/work'],
+        ccache=True,
+        owner='1000:1000',
+        paths=['/work', '/cache'],
+    )
+    assert 'dnf install -y --setopt=install_weak_deps=False a-devel b' in script
+    assert 'yum install -y a-devel b' in script
+    assert 'ccache-4.14-linux-x86_64-musl-static' in script
+    assert manylinux.CCACHE_SHA256 in script
+    assert '"$PY" -m pip install --quiet --only-binary :all: /pyvista' in script
+    assert '"$PY" -m pyvista build vtk --build-dir /work' in script
+    assert script.endswith('chown -R 1000:1000 /work /cache')
+    script = manylinux.container_script(
+        python='/opt/py',
+        packages=[],
+        pyvista='pyvista',
+        build_args=['vtk'],
+        ccache=False,
+        owner=None,
+        paths=['/work'],
+    )
+    assert 'dnf' not in script
+    assert 'ccache' not in script
+    assert 'chown' not in script
+    cmd = manylinux.docker_command(
+        'img',
+        mounts={'/work': tmp_path / 'build', '/src': tmp_path / 'src'},
+        script='true',
+        interactive=True,
+        env={'CCACHE_MAXSIZE': '1G', 'PATH': '/bin', 'SCCACHE_DIR': '/x'},
+    )
+    assert cmd[:4] == ['docker', 'run', '--rm', '-i']
+    assert '-t' in cmd
+    assert cmd[cmd.index('--volume') + 1] == f'{tmp_path / "build"}:/work'
+    assert f'{tmp_path / "src"}:/src' in cmd
+    assert cmd.count('--env') == 2
+    assert 'PATH' not in cmd
+    assert cmd[-4:] == ['img', 'bash', '-c', 'true']
+    assert manylinux.file_owner() is None or ':' in manylinux.file_owner()
+
+
+def test_build_in_manylinux(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(manylinux, 'pyvista_source', return_value=tmp_path / 'pv')
+    mocker.patch.object(manylinux, 'file_owner', return_value='7:7')
+    mocker.patch.object(manylinux.platform, 'machine', return_value='x86_64')
+    cfg = _config(
+        tmp_path,
+        dry_run=False,
+        manylinux='img',
+        source=tmp_path / 'src',
+        cache_dir=tmp_path / 'cc',
+        with_=['web'],
+        without=['io'],
+        jobs=4,
+        defines=['X=1'],
+        options=['smp=TBB'],
+        repair=False,
+        version_suffix='dev0+gabc',
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(cfg, console)
+    probe = mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    run = mocker.patch.object(builder, 'run')
+    install = mocker.patch.object(builder, 'phase_install')
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_28_x86_64.whl').write_text('')
+    assert builder.build() == cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_28_x86_64.whl'
+    assert probe.call_args.args[0] == ['/usr/bin/docker', 'info']
+    cmd = run.call_args.args[0]
+    assert cmd[:4] == ['docker', 'run', '--rm', '-i']
+    assert f'{tmp_path / "vtk-build"}:/work' in cmd
+    assert f'{tmp_path / "src"}:/src' in cmd
+    assert f'{tmp_path / "cc"}:/cache' in cmd
+    assert f'{tmp_path / "pv"}:/pyvista' in cmd
+    assert cmd[cmd.index('bash') - 1] == 'img'
+    script = cmd[-1]
+    assert 'libX11-devel' in script
+    assert (
+        'pyvista build vtk --build-dir /work --no-install --source /src --cache-dir /cache '
+        '--with web --without io --build-type Release --jobs 4 -D X=1 --opt smp=TBB '
+        '--no-repair --compiler-cache auto --version-suffix dev0+gabc' in script
+    )
+    assert 'chown -R 7:7 /work /src /cache' in script
+    assert install.called
+    assert 'Done' in console.export_text()
+
+    builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 1))
+    with pytest.raises(BuildError, match='daemon is not running'):
+        builder.build()
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    with pytest.raises(BuildError, match='docker was not found'):
+        builder.build()
+
+
+def test_build_in_manylinux_dry_run(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    probe = mocker.patch.object(subprocess, 'run')
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(_config(tmp_path, manylinux=None, interactive=True), console)
+    builder.config.manylinux = 'img'
+    mocker.patch.object(builder, 'run')
+    assert builder.build() is None
+    assert not probe.called
+    out = console.export_text()
+    assert 'Run the build in the container? (n stops) -> yes (dry run)' in out
+    assert not (tmp_path / 'vtk-build').exists()
+    builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Stopped before the container build'):
+        builder.build()
