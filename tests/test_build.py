@@ -1083,3 +1083,25 @@ def test_build_in_manylinux_forwarded_args(tmp_path: Path, mocker: MockerFixture
     mocker.patch.object(phases, 'find_manifest', side_effect=ManifestError('bad manifest'))
     with pytest.raises(BuildError, match='bad manifest'):
         builder.build()
+
+
+def test_compiler_cache_row(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, compiler_cache='none')
+    assert builder._compiler_cache_row() == (
+        'compiler cache',
+        '-',
+        '[dim]off (--compiler-cache none)[/dim]',
+    )
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    builder.config.compiler_cache = 'auto'
+    assert builder._compiler_cache_row()[0] == 'ccache/sccache (compiler cache)'
+    assert 'optional' in builder._compiler_cache_row()[2]
+    builder.config.compiler_cache = 'sccache'
+    assert builder._compiler_cache_row() == ('sccache (compiler cache)', '-', '[red]missing[/red]')
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    builder.config.compiler_cache = 'auto'
+    assert builder._compiler_cache_row() == (
+        'ccache (compiler cache)',
+        '/usr/bin/ccache',
+        '[green]ok[/green]',
+    )
