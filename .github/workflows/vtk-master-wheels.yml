@@ -191,7 +191,7 @@ jobs:
         shell: bash
         # NASM on Windows and the pip-installable tools are fetched by the command itself.
         run: |
-          $RUN_IN bash -c '"${PYTHON:-python}" -m pyvista build vtk --yes \
+          $RUN_IN bash -c '"${PYTHON:-python}" -m pyvista build vtk \
             --source vtk-src --build-dir vtk-build --cache-dir compiler-cache --no-install \
             --version-suffix "dev0+g${VTK_NIGHTLY_SHA:0:8}"'
 
