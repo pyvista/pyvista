@@ -573,6 +573,10 @@ class Builder:
         self.env[var] = str(cache_dir)
         if self.launcher.name == 'ccache':
             self.env.setdefault('CCACHE_COMPILERCHECK', '%compiler% --version')
+            base = Path(os.path.commonpath([cfg.src_dir.resolve(), cfg.cmake_dir.resolve()]))
+            if base != Path(base.anchor):
+                self.env.setdefault('CCACHE_BASEDIR', str(base))
+                self.env.setdefault('CCACHE_NOHASHDIR', '1')
 
     def phase_groups(self) -> None:
         """Resolve the groups and options and show them."""
