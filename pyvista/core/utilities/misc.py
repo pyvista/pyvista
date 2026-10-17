@@ -15,13 +15,13 @@ from typing import Any
 from typing import Concatenate
 from typing import Literal
 from typing import ParamSpec
+from typing import Self
 from typing import TypeVar
 from typing import get_args
 import warnings
 
 import numpy as np
 import pyvista_validation as _validation
-from typing_extensions import Self
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
@@ -47,13 +47,15 @@ _SMP_BACKEND_NAMES: dict[str, str] = {
     'sequential': 'Sequential',
 }
 
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
 
-    class StrEnum(str, Enum):  # noqa: D101
-        def __str__(self) -> str:
-            return self.value
+def _srgb_to_linear(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Decode sRGB values in the range ``[0, 1]`` to linear values."""
+    return np.where(values < 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4)
+
+
+def _linear_to_srgb(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Encode linear values in the range ``[0, 1]`` to sRGB values."""
+    return np.where(values < 0.0031308, values * 12.92, 1.055 * values ** (1 / 2.4) - 0.055)
 
 
 def assert_empty_kwargs(**kwargs) -> bool:
@@ -140,7 +142,7 @@ def _resolve_line_style(style: LineStyle, *, name: str = 'style') -> int:
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Decorate a class, overriding ``__new__``.
 
-    Preventing a class from being instantiated similar to abc.ABCMeta
+    Preventing a class from being instantiated similar to ``abc.ABCMeta``
     but does not require an abstract method.
 
     Parameters

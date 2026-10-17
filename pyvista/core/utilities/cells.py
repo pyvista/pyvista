@@ -288,7 +288,7 @@ def create_mixed_cells(
     mixed_cell_dict: Mapping[_CellTypeKeyT, _CellsDictValue],
     nr_points: int | None = None,
 ) -> tuple[NDArray[np.uint8], NDArray[np.integer]]:
-    """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
+    """Generate the cell arrays of a :class:`pyvista.UnstructuredGrid` from a cell dictionary.
 
     This function generates all required cell arrays according to a given cell
     dictionary. The given cell-dictionary should contain a proper
@@ -387,7 +387,7 @@ def create_mixed_cells(
 def get_mixed_cells(
     vtkobj: UnstructuredGrid,
 ) -> dict[np.uint8, NDArray[np.signedinteger] | list[NDArray[np.signedinteger]]]:
-    """Create the cells dictionary from the given pyvista.UnstructuredGrid.
+    """Create the cells dictionary from the given :class:`pyvista.UnstructuredGrid`.
 
     This functions creates a cells dictionary (see
     ``create_mixed_cells``), with a mapping ``vtk_type`` -> ``np.ndarray`` (int).
@@ -421,7 +421,7 @@ def get_mixed_cells(
     Raises
     ------
     ValueError
-        If ``vtkobj`` is not a pyvista.UnstructuredGrid, any of the present
+        If ``vtkobj`` is not a :class:`pyvista.UnstructuredGrid`, any of the present
         cells are unsupported, or any cell is a
         :attr:`~pyvista.CellType.POLYHEDRON` (which is defined by its faces
         and cannot be represented as a flat point list).

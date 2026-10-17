@@ -11,10 +11,10 @@ from types import FunctionType
 from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import get_overloads
 
 import numpy as np
 import pytest
-from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista.examples import downloads

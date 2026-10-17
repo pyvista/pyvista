@@ -387,7 +387,7 @@ root_doc = 'index'
 
 # General information about the project.
 project = 'PyVista'
-year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
+year = datetime.datetime.now(tz=datetime.UTC).date().year
 copyright = f'2017-{year}, The PyVista Developers'  # noqa: A001
 author = 'Alex Kaszynski and Bane Sullivan'
 
