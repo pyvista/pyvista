@@ -387,12 +387,15 @@ def test_cell_eq_compares_point_ids():
     assert cell.type == shifted.type
     assert np.array_equal(cell.points, shifted.points)
     assert cell.point_ids != shifted.point_ids
+    same = cell
+    assert cell == same
     assert cell != shifted
     assert cell == cell.copy(deep=True)
     assert cell != 'not a cell'
     assert cell != pv.PolyData(points, lines=[3, 0, 1, 2]).get_cell(0)
 
     poly = example_cells.Polyhedron().get_cell(0)
+    assert poly == poly.copy(deep=True)
     flipped_faces = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     flipped = pv.UnstructuredGrid(
         [len(flipped_faces), *flipped_faces], [pv.CellType.POLYHEDRON], poly.points.copy()
