@@ -13,10 +13,10 @@ from typing import Generic
 from typing import Literal
 from typing import cast
 
-from typing_extensions import TypeVar
-
 # `typing.overload` registers with `get_overloads` only from 3.11
-from typing_extensions import overload
+from typing import overload
+
+from typing_extensions import TypeVar
 
 import pyvista as pv
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES

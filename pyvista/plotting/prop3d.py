@@ -22,8 +22,9 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike

@@ -37,11 +37,11 @@ from typing import Any
 from typing import Literal
 from typing import cast
 
+# `typing.overload` registers with `get_overloads` only from 3.11
+from typing import overload
+
 import numpy as np
 import pooch
-
-# `typing.overload` registers with `get_overloads` only from 3.11
-from typing_extensions import overload
 
 try:
     import filelock

@@ -58,11 +58,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+    from typing import Self
 
     from numpy.typing import NDArray
     import pandas
     import pyarrow
-    from typing_extensions import Self
 
     from pyvista import Cell
     from pyvista import CellType
