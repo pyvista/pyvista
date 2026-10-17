@@ -59,6 +59,8 @@ _MAX_CATEGORY_TABLE_SIZE = 65536
 _CATEGORY_BAND_TABLE_SIZE = 4096
 # Table entries per category, so a volume's transfer function resolves each band
 _CATEGORY_ENTRIES_PER_VALUE = 8
+# Units in the last place a data range may span and still count as constant
+_NEAR_CONSTANT_ULPS = 4
 
 _ColorModeOptions = Literal['direct', 'map']
 _ScalarMapModeOptions = Literal['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
@@ -85,6 +87,50 @@ def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
     if step is None:
         step = np.diff(values).min()
     return float(values[0] - step / 2), float(values[-1] + step / 2)
+
+
+def _default_scalar_range(
+    low: float | np.number[Any] | np.bool_,
+    high: float | np.number[Any] | np.bool_,
+    dtype: np.dtype[Any],
+    *,
+    below_range_color: bool = False,
+) -> tuple[float, float]:
+    """Return the default scalar range of data spanning ``low`` to ``high``.
+
+    Parameters
+    ----------
+    low : float
+        Minimum of the data.
+
+    high : float
+        Maximum of the data.
+
+    dtype : numpy.dtype
+        Data type the data is stored in.
+
+    below_range_color : bool, default: False
+        Whether values below the range are drawn in a separate color.
+
+    Returns
+    -------
+    tuple[float, float]
+        ``(high, high)`` when ``dtype`` is floating, both bounds are finite,
+        ``below_range_color`` is ``False`` and the bounds are at most
+        ``_NEAR_CONSTANT_ULPS`` units in the last place apart. Otherwise
+        ``(low, high)``.
+
+    """
+    low, high = float(low), float(high)
+    if (
+        not below_range_color
+        and np.issubdtype(dtype, np.floating)
+        and np.isfinite([low, high]).all()
+    ):
+        ulp = np.spacing(np.abs(np.array([low, high], dtype=dtype)).max())
+        if high - low <= _NEAR_CONSTANT_ULPS * ulp:
+            return high, high
+    return low, high
 
 
 def _clim_has_no_bounds(clim: float | VectorLikeFloat | None) -> bool:
@@ -749,7 +795,12 @@ class _BaseDataSetMapper(_BaseMapper):
         elif np.issubdtype(array.dtype, np.number):
             if np.isnan(array).all():
                 return
-            clim = (float(np.nanmin(array)), float(np.nanmax(array)))
+            clim = _default_scalar_range(
+                np.nanmin(array),
+                np.nanmax(array),
+                array.dtype,
+                below_range_color=self.lookup_table.below_range_color is not None,
+            )
         else:
             return
 
@@ -1078,8 +1129,9 @@ class _BaseDataSetMapper(_BaseMapper):
 
         clim : VectorLikeFloat | float, optional
             Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``(-1, 2)``. A single value
-            ``c`` is the range ``(-c, c)``.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``(-1, 2)``. A single value ``c`` is the range ``(-c, c)``.
 
         """
         if _clim_has_no_bounds(clim):
@@ -1156,7 +1208,14 @@ class _BaseDataSetMapper(_BaseMapper):
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
-            scalar_range = (float(np.nanmin(scalars)), float(np.nanmax(scalars)))
+            # Collapse rounding noise to one value unless a below-range color is shown
+            scalar_range = _default_scalar_range(
+                np.nanmin(scalars),
+                np.nanmax(scalars),
+                scalars.dtype,
+                below_range_color=bool(below_color)
+                or self.lookup_table.below_range_color is not None,
+            )
         elif isinstance(clim, (int, float)):
             scalar_range = (-float(clim), float(clim))
         else:
@@ -1198,7 +1257,10 @@ class _BaseDataSetMapper(_BaseMapper):
                     raise ValueError(msg)
                 # need to round the colors here since we're
                 # directly displaying the colors
-                hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                if scalar_range[0] != scalar_range[1]:
+                    hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                else:
+                    hue = np.zeros(scalars.shape)
                 rounded = np.round(hue * n_colors) / n_colors
                 rgba: NDArray[np.floating] = get_cmap_safe(cmap)(rounded) * 255
                 rgba[:, -1] *= opacity
