@@ -1549,7 +1549,7 @@ class PolyDataFilters(DataSetFilters):
         """Split line cells into dashes.
 
         Line and polyline cells are resampled into shorter line cells following a
-        repeating on-off pattern. Only those cells are returned, so vertices, polygons
+        repeating on-off pattern. Only those cells are returned, so vertices, polygons,
         and strips are removed.
 
         Point data is interpolated onto the dash end points. Cell data is copied from

@@ -45,9 +45,9 @@ if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any
     from typing import ClassVar
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import MultiBlock
 
@@ -309,7 +309,7 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+            if self._WRITERS[file_ext] in (pv.HDFWriter, pv.EnSightWriter) and not binary:
                 msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
@@ -422,8 +422,8 @@ class DataObject(
             fmt += '</table>\n'
             fmt += '\n'
             if display:
-                from IPython.display import HTML
-                from IPython.display import display as _display
+                from IPython.display import HTML  # noqa: PLC0415
+                from IPython.display import display as _display  # noqa: PLC0415
 
                 _display(HTML(fmt))
                 return ''
@@ -800,7 +800,7 @@ class DataObject(
         return user_dict
 
     def _sync_user_dict(self: Self) -> None:
-        """Give this object its own user dict when it has one or shares another's."""
+        """Give this object its own user dict when it has one or shares another object's."""
         array = self.GetFieldData().GetAbstractArray(USER_DICT_KEY)
         if '_user_dict' in self.__dict__ or isinstance(array, _SerializedDictArray):
             self._config_user_dict()

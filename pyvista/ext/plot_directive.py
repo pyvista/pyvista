@@ -598,10 +598,10 @@ def render_figures(
     include_source: bool = True,
     state: RSTState | None = None,
 ) -> list[tuple[str, list[ImageFile]]]:
-    """Run a pyplot script and save the images in *``output_dir``*.
+    """Run a pyplot script and save the images in ``output_dir``.
 
-    Save the images under *``output_dir``* with file names derived from
-    *``output_base``*. Closed plotters are ignored if they were never
+    Save the images under ``output_dir`` with file names derived from
+    ``output_base``. Closed plotters are ignored if they were never
     rendered.
 
     If ``env`` is given and ``include_source`` is true, also records the code's identifiers

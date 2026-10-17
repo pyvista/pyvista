@@ -28,9 +28,10 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import DTypeLike
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataObject
     from pyvista import DataSet
@@ -585,7 +586,7 @@ _ASSOCIATION_ATTRIBUTES = {
 def _assoc_array(
     obj: DataSet | _vtk.vtkDataSet, name: str, association: str = 'point'
 ) -> pyvista_ndarray | None:
-    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+    """Return a point, cell, or field array from a :class:`pyvista.DataSet` or VTK object.
 
     If the array or index doesn't exist, return nothing. This matches VTK's
     behavior when using ``GetAbstractArray`` with an invalid key or index.
