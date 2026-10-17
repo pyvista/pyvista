@@ -397,9 +397,7 @@ class Builder:
                 'file contents until needed).'
             )
             self.say(
-                f'A fork or branch of {cfg.backend} can be given instead (--url, --ref, '
-                f'--source); another backend is a separate run, e.g. `pyvista build '
-                f'{self._other_backend()}`.'
+                f'A fork or branch of {cfg.backend} can be given instead (--url, --ref, --source).'
             )
             source = self._ask_source()
             if source is not None:
@@ -429,11 +427,6 @@ class Builder:
         source = cfg.src_dir if cfg.src_dir.exists() else None
         self._manifest = find_manifest(cfg.backend, source)
         self.say(f'Manifest: [bold]{self.manifest.path}[/bold]')
-
-    def _other_backend(self) -> str:
-        """Return a known backend other than the one being built, for examples."""
-        others = [name for name in BACKENDS if name != self.config.backend]
-        return others[0] if others else 'cvista'
 
     def _ask_source(self) -> Path | None:
         """Confirm the clone, taking a git URL or a local checkout instead of a yes.
