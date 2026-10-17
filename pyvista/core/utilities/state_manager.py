@@ -23,7 +23,7 @@ from pyvista import _vtk
 from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 _T = TypeVar('_T')
