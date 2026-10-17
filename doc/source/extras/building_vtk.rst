@@ -19,10 +19,22 @@ PyVista ships a command that does this for you:
 
 It works on Linux, macOS, and Windows and follows the official `Building
 VTK <https://docs.vtk.org/en/latest/build_instructions/index.html>`_
-instructions, with the options PyVista's own CI uses. Run from a
-terminal, it walks through the build one step at a time, says what it
-is about to do and where, and waits for a yes. Press Enter to accept
-the default at each step.
+instructions, with the options PyVista's own CI uses. By default it
+builds with those defaults straight through, printing every command as
+it runs. Add ``--interactive`` to walk through the build one step at a
+time: each step shows its settings, says what it is about to do and
+where, and waits for a yes. Press Enter to accept the default, answer
+``n`` to go through the settings one by one, or type the same flags the
+command line takes to change one in place.
+
+.. code-block:: bash
+
+    pyvista build vtk --interactive
+
+The command reference with more examples is at :ref:`cli_build`. The
+result is a wheel, so the build selects itself through the usual
+mechanism once installed: see :envvar:`PYVISTA_VTK_BACKEND` and
+:ref:`the backend section of the installation guide <vtk_backend_install>`.
 
 The Steps
 ~~~~~~~~~
@@ -65,17 +77,19 @@ The Steps
    ``--install`` says yes up front; otherwise the wheel's path and the
    ``pip`` command are printed.
 
-Non-Interactive Use
-~~~~~~~~~~~~~~~~~~~
-``--yes`` accepts every default and ``--dry-run`` prints the commands
-without running anything. When the command is not attached to a
-terminal, for example in CI, it behaves as if ``--yes`` were given.
-Optional steps keep their own switches, so ``--yes --no-repair`` skips
-the repair step.
+Scripted Use
+~~~~~~~~~~~~
+Without ``--interactive`` nothing is asked, so the command is ready for
+CI and scripts as is. ``--dry-run`` prints the commands without running
+anything, and with ``--interactive`` it also prints each question with
+the answer it would take. Optional steps keep their own switches, so
+``--no-repair`` skips the repair step and ``--install`` installs the
+wheel at the end.
 
 .. code-block:: bash
 
-    pyvista build vtk --yes --ref master --build-type RelWithDebInfo --jobs 8
+    pyvista build vtk --ref master --build-type RelWithDebInfo --jobs 8
+    pyvista build vtk --interactive --dry-run
 
 Developer Loop
 ~~~~~~~~~~~~~~
@@ -97,13 +111,18 @@ The same command builds any VTK backend whose source tree carries a
 ``pyvista-build.toml`` manifest. That file declares the groups and
 options the backend offers, its tool requirements, per-platform CMake
 init caches and the extra commands it needs; stock VTK's manifest ships
-with PyVista. ``cvista`` is known by name, and a fork is reachable by
-URL:
+with PyVista. `cvista <https://github.com/pyvista/cvista>`_, the
+community fork described in :ref:`vtk_backend_install`, is known by
+name, and a fork is reachable by URL:
 
 .. code-block:: bash
 
     pyvista build cvista
     pyvista build myfork --url https://github.com/me/vtk.git
+
+A backend built this way is selected like any other installed one:
+automatically for ``cvista``, or explicitly through
+:envvar:`PYVISTA_VTK_BACKEND`.
 
 .. _gpu_off_screen:
 
@@ -139,7 +158,7 @@ PyVista's own CI does:
     docker run --rm -it -v "$PWD:/work" -w /work quay.io/pypa/manylinux2014_x86_64 bash
     yum install -y libX11-devel libXcursor-devel mesa-libGL-devel
     /opt/python/cp314-cp314/bin/python -m pip install pyvista
-    /opt/python/cp314-cp314/bin/pyvista build vtk --yes
+    /opt/python/cp314-cp314/bin/pyvista build vtk
 
 The repaired wheel is written to ``vtk-build/wheelhouse``.
 

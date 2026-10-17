@@ -123,8 +123,12 @@ def _build(
     install: Annotated[
         bool, Parameter(help='Install the wheel into this environment without asking.')
     ] = False,
-    yes: Annotated[
-        bool, Parameter(negative='', help='Accept every default without asking.')
+    interactive: Annotated[
+        bool,
+        Parameter(
+            negative='',
+            help='Walk through the steps, confirming each one before any command runs.',
+        ),
     ] = False,
     dry_run: Annotated[
         bool, Parameter(negative='', help='Print the commands and run nothing.')
@@ -132,8 +136,9 @@ def _build(
 ) -> None:
     """Build a VTK backend wheel from source.
 
-    Interactive when run from a terminal: each step says what it will do and waits for a
-    yes. Pass ``--yes`` to accept every default, or ``--dry-run`` to only print the commands.
+    Builds with the defaults and prints every command as it runs. ``--interactive`` walks
+    through the steps, showing each setting and asking before running anything, and
+    ``--dry-run`` prints the commands without running them.
     """
     if backend is None:
         backend = os.environ.get(BACKEND_ENV_VAR)
@@ -169,7 +174,7 @@ def _build(
         version_suffix=version_suffix,
         repair=repair,
         install=install,
-        yes=yes,
+        interactive=interactive,
         dry_run=dry_run,
     )
     try:

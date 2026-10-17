@@ -80,7 +80,7 @@ def test_interactive_adjust_selection(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.Confirm, 'ask', side_effect=answer)
     mocker.patch.object(phases.Prompt, 'ask', side_effect=prompt)
     console = Console(record=True, width=200, force_terminal=False)
-    cfg = _config(tmp_path, dry_run=False, ref='v9.7.0')
+    cfg = _config(tmp_path, dry_run=False, interactive=True, ref='v9.7.0')
     builder = Builder(cfg, console)
     mocker.patch.object(builder, 'run')
     mocker.patch.object(builder, 'version_suffix', return_value=None)
@@ -123,7 +123,7 @@ def test_interactive_required_and_conflicting_groups(tmp_path: Path, mocker: Moc
     mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
     mocker.patch.object(tools, 'executable_version', return_value='99.0')
     mocker.patch.object(tools, 'python_build_packages', return_value=[])
-    cfg = _config(tmp_path, backend='demo', source=src, dry_run=False)
+    cfg = _config(tmp_path, backend='demo', source=src, dry_run=False, interactive=True)
     builder = Builder(cfg, Console(quiet=True))
     builder.phase_source()
     builder.phase_tools()
@@ -161,7 +161,9 @@ def test_interactive_configure_flags(tmp_path: Path, mocker: MockerFixture):
         phases.Prompt, 'ask', side_effect=lambda *_, default='', **__: next(answers) or default
     )
     console = Console(record=True, width=200, force_terminal=False)
-    builder = Builder(_config(tmp_path, dry_run=False, version_suffix='dev0+gabc'), console)
+    builder = Builder(
+        _config(tmp_path, dry_run=False, interactive=True, version_suffix='dev0+gabc'), console
+    )
     run = mocker.patch.object(builder, 'run')
     builder.phase_source()
     builder.phase_tools()
@@ -185,7 +187,7 @@ def test_interactive_configure_walk(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     answers = iter(['y', 'y', 'n', 'RelWithDebInfo', 'none', 'dev0+gfeed', 'A=1 B=2', 'y'])
     mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
-    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
     run = mocker.patch.object(builder, 'run')
     builder.phase_source()
     builder.phase_tools()
@@ -203,7 +205,7 @@ def test_interactive_source_prompt(tmp_path: Path, mocker: MockerFixture):
     """The clone prompt takes a fork URL, a local checkout, or a plain yes or no."""
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     console = Console(record=True, width=200, force_terminal=False)
-    builder = Builder(_config(tmp_path, dry_run=False), console)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), console)
     git = mocker.patch.object(builder, 'git', return_value='')
     answers = iter(['nonsense', 'https://example.com/me/vtk.git', 'mybranch'])
     mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
@@ -214,13 +216,13 @@ def test_interactive_source_prompt(tmp_path: Path, mocker: MockerFixture):
 
     fork = tmp_path / 'fork'
     (fork / '.git').mkdir(parents=True)
-    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
     mocker.patch.object(phases.Prompt, 'ask', return_value=str(fork))
     builder.phase_source()
     assert builder.config.source == fork.resolve()
     assert builder.manifest.name == 'vtk'
 
-    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
     mocker.patch.object(phases.Prompt, 'ask', return_value='n')
     with pytest.raises(phases.BuildError, match='Nothing to build'):
         builder.phase_source()
@@ -245,7 +247,7 @@ def test_interactive_selection_flags(tmp_path: Path, mocker: MockerFixture):
         phases.Prompt, 'ask', side_effect=lambda *_, default='', **__: next(answers) or default
     )
     console = Console(record=True, width=200, force_terminal=False)
-    builder = Builder(_config(tmp_path, dry_run=False, ref='v9.7.0'), console)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True, ref='v9.7.0'), console)
     mocker.patch.object(builder, 'run')
     builder.phase_source()
     builder.phase_tools()

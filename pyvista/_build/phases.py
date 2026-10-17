@@ -445,7 +445,7 @@ class Builder:
 
         """
         cfg = self.config
-        if not cfg.interactive:
+        if not cfg.prompting:
             if not self.confirm('Clone it now?'):
                 msg = 'Nothing to build without a source checkout.'
                 raise BuildError(msg)
@@ -630,7 +630,7 @@ class Builder:
         self.step('3/8 Build options')
         self._resolve_selection()
         self._print_selection()
-        if not cfg.interactive:
+        if not cfg.prompting:
             self.say(
                 'Change the selection with --with/--without/--all/--minimal and --opt NAME=VALUE.'
             )
@@ -933,7 +933,7 @@ class Builder:
                 msg = 'Keeping the old configuration; run again without changing the options.'
                 raise BuildError(msg)
         self._print_configure_settings()
-        if cfg.interactive:
+        if cfg.prompting:
             self.say(
                 'To change a setting, answer with its flag, for example '
                 '[bold]--build-type Debug -D VTK_ENABLE_LOGGING=OFF[/bold].'
