@@ -20,6 +20,7 @@ from rich.prompt import Confirm
 from rich.prompt import Prompt
 from rich.table import Table
 
+from . import manylinux as _manylinux
 from . import tools as _tools
 from .manifest import MANIFEST_FILENAME
 from .manifest import ManifestError
@@ -70,11 +71,14 @@ class BuildConfig:
     clean: bool = False
     reconfigure: bool = False
     update: bool = False
+    compiler_cache: str = 'auto'
+    cache_dir: Path | None = None
     version_suffix: str | None = None
     repair: bool = True
     install: bool = False
     interactive: bool = False
     dry_run: bool = False
+    manylinux: str | None = None
     os_name: str = field(default_factory=_tools.host_os)
 
     @property
@@ -96,6 +100,11 @@ class BuildConfig:
     def wheelhouse(self) -> Path:  # numpydoc ignore=RT01
         """Where the repaired wheel goes."""
         return self.build_dir / 'wheelhouse'
+
+    @property
+    def compiler_cache_dir(self) -> Path:  # numpydoc ignore=RT01
+        """Compiler cache directory."""
+        return self.cache_dir if self.cache_dir is not None else self.build_dir / 'compiler-cache'
 
     @property
     def prompting(self) -> bool:  # numpydoc ignore=RT01
@@ -125,6 +134,7 @@ class Builder:
         self._manifest: Manifest | None = None
         self.groups: list[str] = []
         self.option_values: dict[str, bool | int | str] = {}
+        self.launcher: _tools.Tool | None = None
         self.wheel: Path | None = None
 
     @property
@@ -319,6 +329,8 @@ class Builder:
 
         """
         self.console.print(f'[bold green]Building backend: {self.config.backend}[/bold green]')
+        if self.config.manylinux:
+            return self.build_in_manylinux()
         self.say(
             'This walks through eight steps: source, tools, build options, configure, build, '
             'wheel, repair, and install. Each step explains what it will do and asks before '
@@ -426,6 +438,7 @@ class Builder:
         cfg = self.config
         self.step('2/8 Tools')
         tools = _tools.required_tools(cfg.os_name, self.manifest.tools, repair=cfg.repair)
+        self._activate_msvc(tools)
         table = Table(show_header=True, header_style='bold purple')
         table.add_column('Tool')
         table.add_column('Found')
@@ -452,6 +465,7 @@ class Builder:
                 table.add_row(f'{name} (python)', '-', '[yellow]missing[/yellow]')
             else:
                 table.add_row(f'{name} (python)', sys.prefix, '[green]ok[/green]')
+        table.add_row(*self._compiler_cache_row())
         self.console.print(table)
         if blocking:
             lines = [f'{t.name}: {t.instructions}' for t in blocking]
@@ -477,6 +491,92 @@ class Builder:
                 if bad:
                     msg = f'Still not usable after install: {", ".join(bad)}.'
                     raise BuildError(msg)
+
+        self._activate_nasm()
+        self._activate_compiler_cache()
+
+    def _activate_msvc(self, tools: list[_tools.Tool]) -> None:
+        """On Windows, import the MSVC environment when ``cl`` is not already on PATH."""
+        if self.config.os_name != 'windows':
+            return
+        msvc = next(t for t in tools if t.name == 'msvc')
+        if _tools.detect(msvc, self.env):
+            return
+        vcvarsall = _tools.find_vcvarsall()
+        if vcvarsall is None:
+            return
+        self.say(
+            f'Visual Studio found; importing its build environment from [bold]{vcvarsall}[/bold].'
+        )
+        if self.confirm('Use it?') and not self.config.dry_run:
+            self.env = _tools.msvc_environment(vcvarsall, env=self.env)
+
+    def _activate_nasm(self) -> None:
+        """On Windows, fetch NASM with VTK's own script when it is missing."""
+        cfg = self.config
+        if cfg.os_name != 'windows':
+            return
+        nasm = _tools.Tool('nasm', ('nasm',))
+        if _tools.detect(nasm, self.env):
+            return
+        script = cfg.src_dir / '.gitlab' / 'ci' / 'download_nasm.cmake'
+        if not script.is_file():
+            self.say(
+                '[yellow]nasm not found; assembler-optimised codecs will be disabled.[/yellow]'
+            )
+            return
+        target = cfg.src_dir / '.gitlab' / 'nasm'
+        self.say(f'nasm not found; VTK can download it into [bold]{target}[/bold].')
+        if self.confirm('Download nasm?'):
+            self.run(
+                ['cmake', '-P', str(script)],
+                cwd=cfg.src_dir,
+                env={'CMAKE_CONFIGURATION': 'windows'},
+            )
+            self.env['PATH'] = f'{target}{os.pathsep}{self.env.get("PATH", "")}'
+
+    def _compiler_cache_row(self) -> tuple[str, str, str]:
+        """Return the tools-table row for the ``--compiler-cache`` choice."""
+        choice = self.config.compiler_cache
+        if choice == 'none':
+            return 'compiler cache', '-', '[dim]off (--compiler-cache none)[/dim]'
+        tool = _tools.compiler_cache_tool(choice, self.config.os_name, self.env)
+        if tool is None:
+            label = 'ccache/sccache' if choice == 'auto' else choice
+            status = (
+                '[yellow]missing, optional[/yellow]' if choice == 'auto' else '[red]missing[/red]'
+            )
+            return f'{label} (compiler cache)', '-', status
+        found = f'{tool.path} ({tool.version})' if tool.version else (tool.path or '-')
+        return f'{tool.name} (compiler cache)', found, '[green]ok[/green]'
+
+    def _activate_compiler_cache(self) -> None:
+        """Pick the compiler launcher and point it at the cache directory."""
+        cfg = self.config
+        if cfg.compiler_cache == 'none':
+            self.say('Compiler cache: off')
+            return
+        self.launcher = _tools.compiler_cache_tool(cfg.compiler_cache, cfg.os_name, self.env)
+        if self.launcher is None:
+            hint = _tools.compiler_cache_instructions(cfg.os_name)
+            if cfg.compiler_cache != 'auto':
+                msg = f'{cfg.compiler_cache} was not found on PATH. Install it: {hint}'
+                raise BuildError(msg)
+            self.say(
+                '[yellow]No ccache/sccache on PATH; rebuilds will be slow. '
+                f'Install one: {hint}[/yellow]'
+            )
+            return
+        cache_dir = cfg.compiler_cache_dir
+        self.say(f'Compiler cache: [bold]{self.launcher.name}[/bold] in [bold]{cache_dir}[/bold]')
+        var = 'SCCACHE_DIR' if self.launcher.name == 'sccache' else 'CCACHE_DIR'
+        self.env[var] = str(cache_dir)
+        if self.launcher.name == 'ccache':
+            self.env.setdefault('CCACHE_COMPILERCHECK', '%compiler% --version')
+            base = Path(os.path.commonpath([cfg.src_dir.resolve(), cfg.cmake_dir.resolve()]))
+            if base != Path(base.anchor):
+                self.env.setdefault('CCACHE_BASEDIR', str(base))
+                self.env.setdefault('CCACHE_NOHASHDIR', '1')
 
     def phase_groups(self) -> None:
         """Resolve the groups and options and show them."""
@@ -581,6 +681,11 @@ class Builder:
             f'-DPython3_EXECUTABLE={self.python}',
             '-DPython3_FIND_STRATEGY=LOCATION',
         ]
+        if self.launcher is not None:
+            cmd += [
+                f'-DCMAKE_C_COMPILER_LAUNCHER={self.launcher.name}',
+                f'-DCMAKE_CXX_COMPILER_LAUNCHER={self.launcher.name}',
+            ]
         cmd.append(f'-DVTK_VERSION_SUFFIX={self.version_suffix() or ""}')
         entries = cmake_entries(
             self.manifest, cfg.os_name, groups=self.groups, options=self.option_values
@@ -662,6 +767,8 @@ class Builder:
             ['cmake', '--build', str(cfg.cmake_dir), '--parallel', str(jobs)],
             log=cfg.build_dir / 'build.log',
         )
+        if self.launcher is not None:
+            self.run([self.launcher.name, '--show-stats'], fatal=False)
         self.hooks('post_build')
 
     def _ask_jobs(self, jobs: int) -> int:
@@ -833,6 +940,119 @@ class Builder:
             self.say(f'Not installed. To install later:\n  [cyan]{shlex.join(cmd)}[/cyan]')
             return
         self.run(cmd)
+
+    def build_in_manylinux(self) -> Path | None:
+        """Run the build inside a manylinux container, then install on the host.
+
+        Returns
+        -------
+        Path or None
+            The repaired wheel, or ``None`` on a dry run.
+
+        """
+        cfg = self.config
+        image = cfg.manylinux or _manylinux.default_image()
+        self.say(
+            f'The build runs inside the [bold]{image}[/bold] container through Docker, so '
+            'the wheel is portable across Linux machines. The container installs the '
+            f'build dependencies and PyVista, then runs the eight steps with '
+            f'[bold]{cfg.build_dir}[/bold] mounted as its build tree.'
+        )
+        docker = _tools.Tool('docker', ('docker',), instructions=_manylinux.DOCKER_INSTRUCTIONS)
+        if not _tools.detect(docker, self.env):
+            msg = f'docker was not found on PATH. {docker.instructions}'
+            raise BuildError(msg)
+        if not cfg.dry_run:
+            probe = subprocess.run([str(docker.path), 'info'], capture_output=True, check=False)
+            if probe.returncode != 0:
+                msg = 'Docker is installed but its daemon is not running or not reachable.'
+                raise BuildError(msg)
+        source_tree = cfg.src_dir if (cfg.src_dir / '.git').exists() else None
+        try:
+            packages = find_manifest(cfg.backend, source_tree).manylinux_packages
+        except ManifestError as err:
+            raise BuildError(str(err)) from None
+        pv_source = _manylinux.pyvista_source()
+        mounts: dict[str, Path] = {_manylinux.WORK: cfg.build_dir}
+        if cfg.source is not None:
+            mounts[_manylinux.SOURCE] = cfg.source
+        if cfg.cache_dir is not None:
+            mounts[_manylinux.CACHE] = cfg.cache_dir
+        if pv_source is not None:
+            mounts[_manylinux.PYVISTA] = pv_source
+        owner = _manylinux.file_owner()
+        script = _manylinux.container_script(
+            python=_manylinux.container_python(),
+            packages=packages,
+            pyvista=_manylinux.pyvista_requirement(pv_source),
+            build_args=self.container_args(),
+            ccache=cfg.compiler_cache != 'none',
+            owner=owner,
+            paths=[m for m in mounts if m != _manylinux.PYVISTA],
+        )
+        cmd = _manylinux.docker_command(
+            image, mounts=mounts, script=script, interactive=cfg.prompting, env=self.env
+        )
+        if not self.confirm('Run the build in the container? (n stops)'):
+            msg = 'Stopped before the container build.'
+            raise BuildError(msg)
+        if not cfg.dry_run:
+            for folder in mounts.values():
+                folder.mkdir(parents=True, exist_ok=True)
+        self.run(cmd)
+        if not cfg.dry_run:
+            self.wheel = self._newest_wheel(cfg.wheelhouse)
+        self.phase_install()
+        self.summary()
+        return self.wheel
+
+    def container_args(self) -> list[str]:
+        """Return the ``pyvista build`` arguments that rerun this configuration in a container.
+
+        Returns
+        -------
+        list[str]
+            Arguments after ``pyvista build``, with host paths mapped to the mounts.
+
+        """
+        cfg = self.config
+        args = [cfg.backend, '--build-dir', _manylinux.WORK, '--no-install']
+        if cfg.source is not None:
+            args += ['--source', _manylinux.SOURCE]
+        if cfg.cache_dir is not None:
+            args += ['--cache-dir', _manylinux.CACHE]
+        if cfg.url is not None:
+            args += ['--url', cfg.url]
+        if cfg.ref is not None:
+            args += ['--ref', cfg.ref]
+        if cfg.with_:
+            args += ['--with', ','.join(cfg.with_)]
+        if cfg.without:
+            args += ['--without', ','.join(cfg.without)]
+        if cfg.all_:
+            args.append('--all')
+        if cfg.minimal:
+            args.append('--minimal')
+        args += ['--build-type', cfg.build_type]
+        if cfg.jobs is not None:
+            args += ['--jobs', str(cfg.jobs)]
+        for define in cfg.defines:
+            args += ['-D', define]
+        for option in cfg.options:
+            args += ['--opt', option]
+        for flag, on in (
+            ('--clean', cfg.clean),
+            ('--reconfigure', cfg.reconfigure),
+            ('--update', cfg.update),
+            ('--no-repair', not cfg.repair),
+            ('--interactive', cfg.prompting),
+        ):
+            if on:
+                args.append(flag)
+        args += ['--compiler-cache', cfg.compiler_cache]
+        if cfg.version_suffix is not None:
+            args += ['--version-suffix', cfg.version_suffix]
+        return args
 
     def summary(self) -> None:
         """Print where things ended up."""
