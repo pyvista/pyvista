@@ -76,9 +76,9 @@ from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handl
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista.core._typing_core import _Real
 

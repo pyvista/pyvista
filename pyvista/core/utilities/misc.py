@@ -15,13 +15,13 @@ from typing import Any
 from typing import Concatenate
 from typing import Literal
 from typing import ParamSpec
+from typing import Self
 from typing import TypeVar
 from typing import get_args
 import warnings
 
 import numpy as np
 import pyvista_validation as _validation
-from typing_extensions import Self
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
@@ -46,14 +46,6 @@ _SMP_BACKEND_NAMES: dict[str, str] = {
     'openmp': 'OpenMP',
     'sequential': 'Sequential',
 }
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-
-    class StrEnum(str, Enum):  # noqa: D101
-        def __str__(self) -> str:
-            return self.value
 
 
 def _srgb_to_linear(values: NDArray[np.floating]) -> NDArray[np.floating]:
