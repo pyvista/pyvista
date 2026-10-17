@@ -327,6 +327,14 @@ class Builder:
 
         """
         self.console.print(f'[bold green]Building backend: {self.config.backend}[/bold green]')
+        self.say(
+            'This walks through eight steps: source, tools, build options, configure, build, '
+            'wheel, repair and install. Each step explains what it will do and asks before '
+            'running any command.'
+        )
+        if not self.confirm('Proceed?'):
+            msg = 'Stopped before the first step.'
+            raise BuildError(msg)
         self.phase_source()
         self.phase_tools()
         self.phase_groups()
@@ -744,6 +752,7 @@ class Builder:
             raise BuildError(msg)
         self.run(self.configure_command(), env=self.configure_env())
         if not cfg.dry_run:
+            state_file.parent.mkdir(parents=True, exist_ok=True)
             state_file.write_text(json.dumps(self._state(), indent=2))
         self.hooks('post_configure')
 
