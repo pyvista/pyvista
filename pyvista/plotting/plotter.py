@@ -5596,7 +5596,25 @@ class BasePlotter(_BoundsSizeMixin):
             self.scalar_bars._resync_titles.add(title)
 
     def clear_actors(self) -> None:
-        """Clear actors from all renderers."""
+        """Clear actors from all renderers.
+
+        Examples
+        --------
+        Add a mesh to each subplot, then remove both actors.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> [bool(renderer.actors) for renderer in pl.renderers]
+        [True, True]
+        >>> pl.clear_actors()
+        >>> [bool(renderer.actors) for renderer in pl.renderers]
+        [False, False]
+
+        """
         self.renderers.clear_actors()
 
     def clear(self) -> None:
