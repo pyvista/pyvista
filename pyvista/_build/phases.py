@@ -330,7 +330,7 @@ class Builder:
         self.console.print(f'[bold green]Building backend: {self.config.backend}[/bold green]')
         self.say(
             'This walks through eight steps: source, tools, build options, configure, build, '
-            'wheel, repair and install. Each step explains what it will do and asks before '
+            'wheel, repair, and install. Each step explains what it will do and asks before '
             'running any command.'
         )
         if not self.confirm('Proceed?'):
