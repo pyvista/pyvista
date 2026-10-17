@@ -115,3 +115,13 @@ def test_interactive_required_and_conflicting_groups(tmp_path: Path, mocker: Moc
     builder.phase_groups()
     assert builder.groups == ['b', 'core']
     assert not any('core' in q or "'c'" in q for q in asked)
+
+
+def test_cli_interrupt(mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture):
+    mocker.patch.object(Builder, 'build', side_effect=KeyboardInterrupt)
+    with pytest.raises(SystemExit) as info:
+        main(f'build vtk --dry-run --build-dir {tmp_path}')
+    assert info.value.code == 130
+    captured = capsys.readouterr()
+    assert 'Stopped.' in captured.out
+    assert 'PyVista build stopped' not in captured.err

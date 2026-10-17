@@ -177,4 +177,5 @@ def _build(
     except (BuildError, ManifestError) as err:
         print_error_and_exit(str(err), title='PyVista build stopped')
     except KeyboardInterrupt:
-        print_error_and_exit('Interrupted.', title='PyVista build stopped')
+        CLI_APP.console.print('\n[dim]Stopped.[/dim]')
+        raise SystemExit(130) from None

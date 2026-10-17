@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -16,6 +17,7 @@ from pyvista._build import ManifestError
 from pyvista._build import load_manifest
 from pyvista._build import phases
 from pyvista._build import tools
+from pyvista._build.manifest import Option
 from pyvista._build.manifest import cmake_entries
 from pyvista._build.manifest import parse_manifest
 from pyvista._build.manifest import resolve_groups
@@ -488,3 +490,355 @@ def test_msvc_environment(mocker: MockerFixture, tmp_path: Path):
     assert before == {'PATH': 'old', 'KEEP': '1'}
     assert run.call_args.args[0] == f'"{vcvarsall}" x64 >nul && set'
     assert run.call_args.kwargs['shell'] is True
+
+
+def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
+    """Return a builder on the shipped VTK manifest with the source phase done."""
+    cfg = _config(tmp_path, dry_run=False, yes=True, **kwargs)
+    builder = Builder(cfg, Console(record=True, width=4000, force_terminal=False))
+    builder._manifest = find_manifest('vtk', None)
+    builder.groups = resolve_groups(builder.manifest, cfg.os_name)
+    builder.option_values = resolve_options(builder.manifest, None)
+    mocker.patch.object(builder, 'version_suffix', return_value=None)
+    return builder
+
+
+def test_manifest_before_source(tmp_path: Path):
+    with pytest.raises(BuildError, match='only available after the source phase'):
+        _ = Builder(_config(tmp_path), Console(quiet=True)).manifest
+
+
+def test_run_executes_and_reports(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    cwd = tmp_path / 'made'
+    builder.run(
+        [sys.executable, '-c', 'import os; print(os.environ["DEMO"])'], cwd=cwd, env={'DEMO': 'x'}
+    )
+    assert cwd.is_dir()
+    builder.run([sys.executable, '-c', 'raise SystemExit(3)'], fatal=False)
+    with pytest.raises(BuildError, match='exit status 3'):
+        builder.run([sys.executable, '-c', 'raise SystemExit(3)'])
+    assert '--yes' in builder.console.export_text() or builder.confirm('q?')
+
+
+def test_run_logged_filters_noise(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    log = tmp_path / 'build.log'
+    script = tmp_path / 'noisy.py'
+    script.write_text(
+        'print("ok line"); print("x.cxx(1): warning C4244: conversion"); raise SystemExit(1)'
+    )
+    with pytest.raises(BuildError):
+        builder.run([sys.executable, str(script)], log=log)
+    out = builder.console.export_text()
+    assert 'ok line' in out
+    assert 'C4244' not in out
+    assert 'C4244' in log.read_text()
+    assert 'full log is in' in out
+
+
+def test_source_not_a_checkout(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, source=tmp_path / 'plain')
+    (tmp_path / 'plain').mkdir()
+    mocker.patch.object(tools, 'detect', return_value=True)
+    with pytest.raises(BuildError, match='not a git checkout'):
+        builder.phase_source()
+
+
+def test_existing_checkout_update_and_ref(tmp_path: Path, mocker: MockerFixture):
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    builder = _builder(tmp_path, mocker, source=src, update=True)
+    git = mocker.patch.object(builder, 'git', return_value='')
+    builder._existing_checkout(src)
+    calls = [c.args for c in git.call_args_list]
+    assert ('fetch', '--tags', 'origin') in calls
+    assert any('checkout' in c and 'v9.7.0' in c for c in calls)
+    builder = _builder(tmp_path, mocker, source=src, ref='main')
+    git = mocker.patch.object(builder, 'git', return_value='')
+    builder._existing_checkout(src)
+    assert any('checkout' in c and 'main' in c for c in [c.args for c in git.call_args_list])
+
+
+def test_tools_pip_paths(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(
+        tools.shutil,
+        'which',
+        side_effect=lambda name, **_: None if name == 'ninja' else f'/usr/bin/{name}',
+    )
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    builder = _builder(tmp_path, mocker)
+    mocker.patch.object(tools, 'pip_install_command', return_value=None)
+    with pytest.raises(BuildError, match='no pip or uv found'):
+        builder.phase_tools()
+    mocker.patch.object(tools, 'pip_install_command', return_value=['pip', 'install', 'ninja'])
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Cannot build without them'):
+        builder.phase_tools()
+    mocker.patch.object(builder, 'confirm', return_value=True)
+    mocker.patch.object(builder, 'run')
+    with pytest.raises(BuildError, match='Still not usable after install: ninja'):
+        builder.phase_tools()
+
+
+def test_windows_msvc_and_nasm(tmp_path: Path, mocker: MockerFixture):
+    present = {'git', 'cmake', 'ninja', 'delvewheel'}
+
+    def which(name, path=None, **_):
+        if name == 'cl':
+            return 'C:/vs/cl' if path and 'C:/vs' in path else None
+        return f'C:/t/{name}' if name in present else None
+
+    mocker.patch.object(tools.shutil, 'which', side_effect=which)
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=None)
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
+    with pytest.raises(BuildError, match='msvc'):
+        builder.phase_tools()
+    vcvarsall = tmp_path / 'vcvarsall.bat'
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=vcvarsall)
+    activated = mocker.patch.object(
+        tools, 'msvc_environment', return_value={'PATH': 'C:/vs;C:/t', 'INCLUDE': 'x'}
+    )
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
+    builder.phase_tools()
+    activated.assert_called_once()
+    assert builder.env['INCLUDE'] == 'x'
+    assert 'nasm not found; assembler-optimised' in builder.console.export_text()
+    script = builder.config.src_dir / '.gitlab' / 'ci' / 'download_nasm.cmake'
+    script.parent.mkdir(parents=True)
+    script.write_text('')
+    run = mocker.patch.object(builder, 'run')
+    builder._activate_nasm()
+    assert run.call_args.args[0] == ['cmake', '-P', str(script)]
+    assert builder.env['PATH'].startswith(str(builder.config.src_dir / '.gitlab' / 'nasm'))
+
+
+def test_compiler_cache_auto_missing(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    mocker.patch.object(tools, 'compiler_cache_tool', return_value=None)
+    builder._activate_compiler_cache()
+    assert 'No ccache/sccache on PATH' in builder.console.export_text()
+
+
+def test_git_version_suffix(tmp_path: Path, mocker: MockerFixture):
+    cfg = _config(tmp_path, dry_run=False, yes=True)
+    (cfg.src_dir / '.git').mkdir(parents=True)
+    builder = Builder(cfg, Console(quiet=True))
+    builder._manifest = find_manifest('vtk', None)
+    mocker.patch.object(builder, 'git', return_value='v9.7.0')
+    assert builder.version_suffix() is None
+    err = subprocess.CalledProcessError(128, ['git'])
+
+    def describe_fails(*args, **_):
+        if 'describe' in args:
+            raise err
+        return 'abcdef12'
+
+    mocker.patch.object(builder, 'git', side_effect=describe_fails)
+    assert builder.version_suffix() == 'dev0+gabcdef12'
+    mocker.patch.object(builder, 'git', side_effect=err)
+    assert builder.version_suffix() is None
+
+
+def test_configure_paths(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, clean=True)
+    cfg = builder.config
+    cfg.cmake_dir.mkdir(parents=True)
+    (cfg.cmake_dir / 'stale').write_text('')
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_configure()
+    assert not (cfg.cmake_dir / 'stale').exists()
+    assert run.called
+    assert (cfg.cmake_dir / phases.STATE_FILENAME).is_file()
+    (cfg.cmake_dir / 'CMakeCache.txt').write_text('')
+    builder = _builder(tmp_path, mocker)
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_configure()
+    assert not run.called
+    assert 'already configured' in builder.console.export_text()
+    builder = _builder(tmp_path, mocker, build_type='Debug')
+    mocker.patch.object(
+        builder, 'confirm', side_effect=lambda q, **_: not q.startswith('Reconfigure')
+    )
+    with pytest.raises(BuildError, match='Keeping the old configuration'):
+        builder.phase_configure()
+    builder = _builder(tmp_path, mocker, reconfigure=True)
+    mocker.patch.object(
+        builder, 'confirm', side_effect=lambda q, **_: not q.startswith('Run cmake')
+    )
+    with pytest.raises(BuildError, match='Stopped before configure'):
+        builder.phase_configure()
+
+
+def test_build_wheel_repair_install_paths(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Stopped before building'):
+        builder.phase_build()
+    with pytest.raises(BuildError, match='Stopped before packaging'):
+        builder.phase_wheel()
+    builder.phase_repair()
+    assert 'Skipped.' in builder.console.export_text()
+    builder.phase_install()
+    assert 'Not installed' in builder.console.export_text()
+    with pytest.raises(BuildError, match='No wheel found'):
+        builder._newest_wheel(tmp_path)
+
+    builder = _builder(tmp_path, mocker, install=True)
+    run = mocker.patch.object(builder, 'run')
+    cfg = builder.config
+    cfg.dist_dir.mkdir(parents=True)
+    (cfg.dist_dir / 'vtk-9.7.0-cp314-cp314-linux_x86_64.whl').write_bytes(b'')
+    builder.phase_wheel()
+    assert builder.wheel is not None
+    assert builder.wheel.name.startswith('vtk-9.7.0')
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_39_x86_64.whl').write_bytes(b'')
+    builder.phase_repair()
+    assert 'manylinux' in builder.wheel.name
+    assert 'auditwheel' in run.call_args_list[-1].args[0]
+    builder.phase_install()
+    assert '--force-reinstall' in run.call_args.args[0]
+    builder.summary()
+    assert 'Wheel:' in builder.console.export_text()
+    mocker.patch.object(tools, 'pip_install_command', return_value=None)
+    builder.phase_install()
+    assert 'install the wheel yourself' in builder.console.export_text()
+
+
+def test_tool_helpers(mocker: MockerFixture):
+    mocker.patch.object(tools.platform, 'system', return_value='Darwin')
+    assert tools.host_os() == 'macos'
+    mocker.patch.object(tools.platform, 'system', return_value='Windows')
+    assert tools.host_os() == 'windows'
+    mocker.patch.object(tools.platform, 'system', return_value='Linux')
+    assert tools.host_os() == 'linux'
+    assert tools.executable_version('/definitely/not/here') is None
+    assert tools.executable_version(sys.executable) is not None
+    mocker.patch.object(
+        tools.subprocess,
+        'run',
+        return_value=subprocess.CompletedProcess([], 0, stdout='no digits'),
+    )
+    assert tools.executable_version('x') is None
+    for os_name in OS_NAMES:
+        assert tools.compiler_cache_instructions(os_name)
+        assert tools.compiler_instructions(os_name)
+    tool = tools.Tool('t', ('t',), spec='>=1')
+    mocker.patch.object(tools.shutil, 'which', return_value='/usr/bin/t')
+    mocker.patch.object(tools, 'executable_version', return_value=None)
+    assert tools.detect(tool)
+    mocker.patch.object(tools, 'executable_version', return_value='not.a.version')
+    assert tools.detect(tool)
+    assert isinstance(tools.python_build_packages(), list)
+
+
+def test_vswhere(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.dict(tools.os.environ, {'PROGRAMFILES(X86)': '', 'PROGRAMFILES': ''})
+    assert tools.vswhere_path() is None
+    assert tools.find_vcvarsall() is None
+    mocker.patch.dict(tools.os.environ, {'PROGRAMFILES(X86)': str(tmp_path)})
+    assert tools.vswhere_path() is None
+    vswhere = tmp_path / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+    vswhere.parent.mkdir(parents=True)
+    vswhere.write_text('')
+    assert tools.vswhere_path() == vswhere
+    run = mocker.patch.object(
+        tools.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout='')
+    )
+    assert tools.find_vcvarsall() is None
+    install = tmp_path / 'VS'
+    vcvarsall = install / 'VC' / 'Auxiliary' / 'Build' / 'vcvarsall.bat'
+    vcvarsall.parent.mkdir(parents=True)
+    vcvarsall.write_text('')
+    run.return_value = subprocess.CompletedProcess([], 0, stdout=f'{install}\n')
+    assert tools.find_vcvarsall() == vcvarsall
+
+
+def test_option_coerce_and_schema_errors():
+    flag = Option('f', help='', default=True, cmake='F={value}')
+    assert flag.coerce('on') is True
+    assert flag.coerce('off') is False
+    with pytest.raises(ManifestError, match='expects a boolean'):
+        flag.coerce('maybe')
+    count = Option('n', help='', default=2, cmake='N={value}')
+    with pytest.raises(ManifestError, match='expects an integer'):
+        count.coerce('two')
+    with pytest.raises(ManifestError, match="'name' must be str"):
+        parse_manifest(
+            dict(MINIMAL_MANIFEST, backend={'name': 1, 'import_name': 'd', 'default_ref': 'v'})
+        )
+    with pytest.raises(ManifestError, match='must be a list of strings'):
+        parse_manifest(dict(MINIMAL_MANIFEST, groups={'g': {'help': 'x', 'cmake': 'A=ON'}}))
+    with pytest.raises(ManifestError, match=r'\[tools\]'):
+        parse_manifest(dict(MINIMAL_MANIFEST, tools={'cmake': 3}))
+    with pytest.raises(ManifestError, match=r'\[cmake\] must be a table'):
+        parse_manifest(dict(MINIMAL_MANIFEST, cmake=[]))
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
+    console = Console(record=True, width=200, force_terminal=False)
+    Builder(_config(tmp_path), console).build()
+    out = console.export_text()
+    assert 'eight steps' in out
+    assert out.index('Proceed?') < out.index('1/8 Source')
+    builder = Builder(_config(tmp_path, dry_run=False, yes=True), Console(quiet=True))
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Stopped before the first step'):
+        builder.build()
+
+
+def test_confirm_asks_on_a_terminal(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    ask = mocker.patch.object(phases.Confirm, 'ask', return_value=False)
+    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    assert builder.confirm('Go?') is False
+    assert ask.call_args.args[0] == 'Go?'
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_clone_declined(tmp_path: Path, mocker: MockerFixture):
+    builder = Builder(_config(tmp_path, dry_run=False, yes=True), Console(quiet=True))
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Nothing to build without a source checkout'):
+        builder.phase_source()
+
+
+def test_groups_phase_errors_and_required_display(tmp_path: Path, mocker: MockerFixture, demo):
+    builder = _builder(tmp_path, mocker, with_=['nope'])
+    with pytest.raises(BuildError, match='Unknown group'):
+        builder.phase_groups()
+    builder = _builder(tmp_path, mocker)
+    builder._manifest = demo
+    builder.groups = resolve_groups(demo, 'linux')
+    builder.option_values = resolve_options(demo, None)
+    builder._print_selection()
+    assert '(required)' in builder.console.export_text()
+
+
+def test_version_command_output(tmp_path: Path, mocker: MockerFixture):
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    (src / 'pyvista-build.toml').write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\nimport_name = "demo"\ndefault_ref = "v1"\n'
+        'version_command = "{python} version.py"\n'
+    )
+    builder = Builder(
+        _config(tmp_path, backend='demo', source=src, dry_run=False, yes=True), Console(quiet=True)
+    )
+    builder._manifest = find_manifest('demo', src)
+    mocker.patch.object(
+        subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout='5\n', stderr='')
+    )
+    assert builder.version_suffix() == '5'
+
+
+def test_compiler_cache_tool_missing(mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    assert tools.compiler_cache_tool('sccache', 'linux') is None
+    assert tools.compiler_cache_tool('auto', 'linux') is None
