@@ -27,11 +27,11 @@ _T = TypeVar('_T')
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
+    from typing import Self
 
     from numpy.typing import NDArray
     import pandas
     import pyarrow
-    from typing_extensions import Self
 
     from pyvista import DataSet
 
@@ -116,7 +116,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     Parameters
     ----------
     vtkobject : :vtk:`vtkFieldData`
-        The vtk object to wrap as a :class:~pyvista.DataSetAttribute`,
+        The vtk object to wrap as a :class:`~pyvista.DataSetAttributes`,
         usually an instance of :vtk:`vtkCellData`, :vtk:`vtkPointData`, or
         :vtk:`vtkFieldData`.
 
