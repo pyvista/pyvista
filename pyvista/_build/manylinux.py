@@ -146,6 +146,7 @@ def container_script(
         'set -euo pipefail',
         f'PY={shlex.quote(python)}',
         'if ! test -x "$PY"; then echo "$PY is not in this image" >&2; exit 1; fi',
+        "git config --global --add safe.directory '*'",
     ]
     if packages:
         pkgs = ' '.join(shlex.quote(p) for p in packages)
