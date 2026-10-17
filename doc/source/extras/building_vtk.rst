@@ -51,9 +51,10 @@ The Steps
        pyvista build vtk --all
        pyvista build vtk --opt smp=TBB
 
-4. **Configure**, 5. **Build** and 6. **Wheel** run ``cmake``, ``ninja``
-   and ``setup.py bdist_wheel``. Every command is printed in full before
+4. **Configure** runs ``cmake``. Every command is printed in full before
    it runs.
+5. **Build** runs ``ninja`` and logs the full output to ``build.log``.
+6. **Wheel** runs ``setup.py bdist_wheel`` in the build tree.
 7. **Repair** copies VTK's shared libraries into the wheel so it installs
    anywhere, not only next to the build tree. Skip it with
    ``--no-repair``.
