@@ -27,7 +27,7 @@ jobs:
           - os: ubuntu-22.04
             python-version: "3.14" # Should be the latest version supported
           - os: windows-latest
-            python-version: "3.10" # Should be the oldest version supported
+            python-version: "3.11" # Should be the oldest version supported
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
