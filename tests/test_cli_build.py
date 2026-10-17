@@ -79,7 +79,7 @@ def test_interactive_adjust_selection(tmp_path: Path, mocker: MockerFixture):
 
     mocker.patch.object(phases.Confirm, 'ask', side_effect=answer)
     mocker.patch.object(phases.Prompt, 'ask', side_effect=prompt)
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     cfg = _config(tmp_path, dry_run=False, interactive=True, ref='v9.7.0')
     builder = Builder(cfg, console)
     mocker.patch.object(builder, 'run')
@@ -160,7 +160,7 @@ def test_interactive_configure_flags(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(
         phases.Prompt, 'ask', side_effect=lambda *_, default='', **__: next(answers) or default
     )
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     builder = Builder(
         _config(tmp_path, dry_run=False, interactive=True, version_suffix='dev0+gabc'), console
     )
@@ -204,7 +204,7 @@ def test_interactive_configure_walk(tmp_path: Path, mocker: MockerFixture):
 def test_interactive_source_prompt(tmp_path: Path, mocker: MockerFixture):
     """The clone prompt takes a fork URL, a local checkout, or a plain yes or no."""
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     builder = Builder(_config(tmp_path, dry_run=False, interactive=True), console)
     git = mocker.patch.object(builder, 'git', return_value='')
     answers = iter(['nonsense', 'https://example.com/me/vtk.git', 'mybranch'])
@@ -246,7 +246,7 @@ def test_interactive_selection_flags(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(
         phases.Prompt, 'ask', side_effect=lambda *_, default='', **__: next(answers) or default
     )
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     builder = Builder(_config(tmp_path, dry_run=False, interactive=True, ref='v9.7.0'), console)
     mocker.patch.object(builder, 'run')
     builder.phase_source()
@@ -266,7 +266,7 @@ def test_interactive_reuse_prompt(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     cfg = _config(tmp_path, dry_run=False, interactive=True)
     (cfg.src_dir / '.git').mkdir(parents=True)
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     builder = Builder(cfg, console)
     git = mocker.patch.object(builder, 'git', return_value='')
     mocker.patch.object(phases.Prompt, 'ask', return_value='y')
@@ -304,7 +304,7 @@ def test_interactive_reuse_prompt(tmp_path: Path, mocker: MockerFixture):
 
 def test_prompts_print_brackets_verbatim():
     """Prompt text keeps its [y/n] hints and is not markup."""
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     prompt = phases.Prompt('Build with these? [y/n, or --with]', console=console)
     assert '[y/n, or --with]' in str(prompt.make_prompt('y'))
     assert str(prompt.make_prompt('y')).endswith('(y): ')
