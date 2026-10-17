@@ -1,0 +1,117 @@
+"""Tests for the ``pyvista build`` command and its interactive wizard."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import pytest
+from rich.console import Console
+
+from pyvista.__main__ import main
+from pyvista._build import BuildConfig
+from pyvista._build import Builder
+from pyvista._build import phases
+from pyvista._build import tools
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+
+def _config(tmp_path: Path, **kwargs) -> BuildConfig:
+    defaults = dict(backend='vtk', build_dir=tmp_path / 'vtk-build', dry_run=True, os_name='linux')
+    defaults.update(kwargs)
+    return BuildConfig(**defaults)
+
+
+@pytest.fixture
+def no_tools(mocker: MockerFixture):
+    """Pretend every tool is present and pip is available."""
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+
+
+def test_cli_requires_backend(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture):
+    monkeypatch.delenv('PYVISTA_VTK_BACKEND', raising=False)
+    with pytest.raises(SystemExit):
+        main('build')
+    assert 'pyvista build vtk' in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_cli_env_backend(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture
+):
+    monkeypatch.setenv('PYVISTA_VTK_BACKEND', 'vtkmodules')
+    monkeypatch.chdir(tmp_path)
+    main('build --dry-run --with io,web --without rendering -D X=1')
+    out = capsys.readouterr().out
+    assert 'Building backend: vtk' in out
+    assert str(tmp_path / 'vtk-build') in ''.join(out.split())
+    assert '-DX=1' in out
+
+
+def test_cli_source_and_url_exclusive(capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit):
+        main('build vtk --source . --url x')
+    assert 'mutually exclusive' in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_adjust_selection(tmp_path: Path, mocker: MockerFixture):
+    """Declining the default selection asks about every group and option in turn."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+
+    def answer(question, **_):
+        if question.startswith('Build with these'):
+            return False
+        if question.startswith('Enable'):
+            return 'web' in question
+        return True
+
+    mocker.patch.object(phases.Confirm, 'ask', side_effect=answer)
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda _prompt, default='', **_: default)
+    console = Console(record=True, width=200, force_terminal=False)
+    cfg = _config(tmp_path, dry_run=False, ref='v9.7.0')
+    builder = Builder(cfg, console)
+    mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'version_suffix', return_value=None)
+    builder.phase_source()
+    builder.phase_tools()
+    builder.phase_groups()
+    assert builder.groups == ['web']
+    assert '-DVTK_GROUP_ENABLE_Rendering=NO' in builder.configure_command()
+    assert '-DVTK_MODULE_ENABLE_VTK_WebCore=YES' in builder.configure_command()
+
+
+def test_interactive_required_and_conflicting_groups(tmp_path: Path, mocker: MockerFixture):
+    """A required group is never asked about and a conflicting one is skipped."""
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    (src / 'pyvista-build.toml').write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\nimport_name = "demo"\ndefault_ref = "v1"\n'
+        '[groups.b]\nhelp = "B"\ndefault = false\ncmake = ["B=ON"]\nconflicts = ["c"]\n'
+        '[groups.c]\nhelp = "C"\ndefault = false\ncmake = ["C=ON"]\nconflicts = ["b"]\n'
+        '[groups.core]\nhelp = "Core"\nrequired = true\ncmake = ["CORE=ON"]\n'
+    )
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    asked: list[str] = []
+
+    def answer(question, **_):
+        asked.append(question)
+        return not question.startswith('Build with these')
+
+    mocker.patch.object(phases.Confirm, 'ask', side_effect=answer)
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    cfg = _config(tmp_path, backend='demo', source=src, dry_run=False)
+    builder = Builder(cfg, Console(quiet=True))
+    builder.phase_source()
+    builder.phase_tools()
+    builder.phase_groups()
+    assert builder.groups == ['b', 'core']
+    assert not any('core' in q or "'c'" in q for q in asked)

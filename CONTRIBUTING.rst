@@ -1091,6 +1091,10 @@ development.
 
 The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and may be applied separately or together.
 
+The same build is available locally. ``pyvista build vtk --ref master`` clones VTK, configures it with the options CI
+uses, and writes a wheel; run it again after editing the checkout under ``vtk-build/src`` for an incremental rebuild.
+See :ref:`building_vtk` for the options.
+
 .. note::
 
     The PR either needs a new commit, for example updating the branch from ``main``, or to be

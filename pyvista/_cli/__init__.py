@@ -13,3 +13,4 @@ from . import compare as compare
 from . import convert as convert
 from . import validate as validate
 from . import report as report
+from . import build as build

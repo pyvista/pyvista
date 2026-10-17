@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.prompt import Confirm
+from rich.prompt import Prompt
 from rich.table import Table
 
 from . import tools as _tools
@@ -540,7 +541,7 @@ class Builder:
             self.env.setdefault('CCACHE_COMPILERCHECK', '%compiler% --version')
 
     def phase_groups(self) -> None:
-        """Resolve the groups and options and show them."""
+        """Show the groups and options, letting the user adjust them interactively."""
         cfg = self.config
         self.step('3/8 Build options')
         try:
@@ -559,6 +560,9 @@ class Builder:
         self.say(
             'Change the selection with --with/--without/--all/--minimal and --opt NAME=VALUE.'
         )
+        if cfg.interactive and not self.confirm('Build with these?'):
+            self._adjust_selection()
+            self._print_selection()
 
     def _print_selection(self) -> None:
         """Print the group and option table."""
@@ -576,6 +580,38 @@ class Builder:
             value = str(self.option_values[option.name])
             table.add_row(f'--opt {option.name}', value, option.help)
         self.console.print(table)
+
+    def _adjust_selection(self) -> None:
+        """Ask about every group and option in turn."""
+        chosen: list[str] = []
+        for group in self.manifest.groups_for(self.config.os_name):
+            clash = sorted(set(group.conflicts) & set(chosen))
+            if clash:
+                self.say(f'[dim]{group.name}: off, conflicts with {clash}[/dim]')
+                continue
+            if group.required or Confirm.ask(
+                f'Enable {group.name!r} ({group.help})?',
+                default=group.name in self.groups,
+                console=self.console,
+            ):
+                chosen.append(group.name)
+        for option in self.manifest.options.values():
+            raw = Prompt.ask(
+                f'{option.name} ({option.help})',
+                default=str(self.option_values[option.name]),
+                choices=list(option.choices) or None,
+                console=self.console,
+            )
+            try:
+                self.option_values[option.name] = option.coerce(raw)
+            except ManifestError as err:
+                raise BuildError(str(err)) from None
+        try:
+            self.groups = resolve_groups(
+                self.manifest, self.config.os_name, with_=chosen, without=[], minimal=True
+            )
+        except ManifestError as err:
+            raise BuildError(str(err)) from None
 
     def version_suffix(self) -> str | None:
         """Return the wheel version suffix.
