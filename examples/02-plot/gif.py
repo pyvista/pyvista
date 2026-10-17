@@ -3,7 +3,9 @@
 
 Create a GIF Movie
 ~~~~~~~~~~~~~~~~~~
+
 Generate a moving gif from an active plotter.
+
 This example uses :meth:`~pyvista.Plotter.open_gif` and
 :meth:`~pyvista.Plotter.write_frame` to create the gif.
 
@@ -14,16 +16,14 @@ This example uses :meth:`~pyvista.Plotter.open_gif` and
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 
 # %%
-# Create a structured grid
+# Create a Structured Grid
 # ~~~~~~~~~~~~~~~~~~~~~~~~
-# Create a structured grid and make a "wave" my shifting the Z position based
-# on the cartesian distance from the origin.
+# Create a structured grid and make a "wave" by shifting the Z position based
+# on the Cartesian distance from the origin.
 
 x = np.arange(-10, 10, 0.5)
 y = np.arange(-10, 10, 0.5)

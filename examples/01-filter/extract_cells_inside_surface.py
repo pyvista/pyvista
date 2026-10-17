@@ -4,16 +4,15 @@
 Extract Cells Inside Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Extract the cells inside or outside a closed surface using
-:meth:`~pyvista.DataSetFilters.select_interior_points`.
+Extract the cells inside or outside a closed surface.
+
+Uses :meth:`~pyvista.DataSetFilters.select_interior_points`.
 
 """
 
 # %%
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

@@ -1,0 +1,33 @@
+"""Typing cases for :meth:`pyvista.Plotter.screenshot`."""
+
+from __future__ import annotations
+
+import numpy as np
+from numpy.typing import NDArray
+from type_assert import assert_types
+from type_assert import skip_runtime
+
+import pyvista as pv
+
+
+def a_plotter() -> pv.Plotter:
+    """Return a plotter that has rendered one mesh and is still open."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show(auto_close=False)
+    return pl
+
+
+def a_flag() -> bool:
+    """Return a flag typed only as ``bool``, so the catch-all overload applies."""
+    return True
+
+
+with skip_runtime(pv.vtk_version_info < (9, 4), reason='the VTK 9.3 wheel renders only through a display, and the core phase has none'):
+    assert_types(a_plotter().screenshot(), NDArray[np.uint8])
+    assert_types(a_plotter().screenshot(return_img=True), NDArray[np.uint8])
+
+    assert_types(a_plotter().screenshot(return_img=False), None)
+
+    # The catch-all, reached only by a flag widened to `bool`
+    assert_types(a_plotter().screenshot(return_img=a_flag()), NDArray[np.uint8] | None)

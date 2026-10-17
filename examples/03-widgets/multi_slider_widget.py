@@ -4,8 +4,10 @@
 Multiple Slider Widgets
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Use :func:`~pyvista.Plotter.add_slider_widget` and a class-based callback
-to track multiple slider widgets for updating a single mesh.
+Track multiple slider widgets updating a single mesh.
+
+Uses :func:`~pyvista.Plotter.add_slider_widget` with a class-based
+callback.
 
 In this example we simply change a few parameters for the
 :func:`pyvista.Sphere` method, but this could easily be applied to any
@@ -15,15 +17,15 @@ mesh-generating/altering code.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import pyvista as pv
 
 
-class MyCustomRoutine:  # noqa: D101
+class MyCustomRoutine:
+    """Stateful callback for updating a mesh from slider parameters."""
+
     def __init__(self, mesh):
         self.output = mesh  # Expected PyVista mesh type
         # default parameters

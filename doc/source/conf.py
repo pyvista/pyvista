@@ -4,18 +4,30 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import json
 import locale
 import os
 from pathlib import Path
+import re
+import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import get_origin
 import warnings
 
-from atsphinx.mini18n import get_template_dir
+from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
+from sphinx import addnodes
+from sphinx.ext.intersphinx import InventoryAdapter
+from sphinx.ext.intersphinx import missing_reference
+from sphinx.util.docstrings import prepare_docstring
+from sphinx.util.inspect import TypeAliasForwardRef
+from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
 if TYPE_CHECKING:
+    from docutils.nodes import Element
     from sphinx.application import Sphinx
+    from sphinx.environment import BuildEnvironment
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -36,17 +48,31 @@ warnings.filterwarnings(
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
 # during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
 # Note that `import make_tables` below imports pyvista.
-os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+os.environ['_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
+import make_search_summaries
 import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
+from pyvista.ext._autoenum import instance_property_names
+from pyvista.ext._autoenum import metaclass_property_descriptions
+from pyvista.ext._autoenum import metaclass_property_names
+from pyvista.ext._autoinherit import filter_member_rows
+from pyvista.ext._autoinherit import inherited_classes
+from pyvista.ext._autoinherit import inherited_member_rows
+from pyvista.ext._autoinherit import own_members
+from pyvista.ext._autoinherit import vtk_bases
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+
+# Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
+_vtk.import_all()
 
 # Manage errors
 pv.set_error_output_file('errors.txt')
@@ -64,20 +90,35 @@ if not Path(pv.FIGURE_PATH).exists():
 pv.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
+# Copy contents of `pyvista/examples` dir so that we have actual mesh files
+# we can run CLI commands on locally without polluting the source dir
+HERE = Path(__file__).parent
+src = HERE.parent.parent / 'pyvista' / 'examples'
+dst = HERE / '_local_examples'
+shutil.rmtree(dst, ignore_errors=True)
+shutil.copytree(src, dst)
+
 # SG warnings
 import warnings
 
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, '
-    'so cannot show the figure.',
+    message=(
+        'Matplotlib is currently using agg, which is a non-GUI backend, '
+        'so cannot show the figure.|'
+        'FigureCanvasAgg is non-interactive, and thus cannot be shown'
+    ),
 )
 
-# Prevent deprecated features from being used in examples
+# Prevent deprecated features and changing defaults from being used in examples
 warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
+)
+warnings.filterwarnings(
+    'error',
+    category=PyVistaFutureWarning,
 )
 warnings.filterwarnings(
     'always',
@@ -96,12 +137,16 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
-    'enum_tools.autoenum',
+    'erbsland.sphinx.ansi',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext._autoenum',
+    'pyvista.ext._autoinherit',
+    'pyvista.ext._embed_py_file',
     'pyvista.ext.plot_directive',
+    'sphinx_autoopengraph',
+    'sphinx_examples_as_code',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -113,6 +158,7 @@ extensions = [
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
+    'sphinxcontrib.programoutput',
     'sphinx_togglebutton',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -120,28 +166,109 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
-    'vtk_xref',
+    'sphinx_vtk_xref',
 ]
 
 
+# Configuration for sphinx.ext.duration: report in the build log, skip the JSON file
+duration_n_slowest = 50
+duration_write_json = None
+
+
+# Documented in `pyvista.typing`
+_DOCUMENTED_TYPES = [
+    'ArrayLikeBool',
+    'ArrayLikeFloat',
+    'ArrayLikeInt',
+    'CameraPositionOptions',
+    'CellArrayLike',
+    'CellsLike',
+    'Chart',
+    'ColorLike',
+    'InteractionEventType',
+    'JupyterBackendOptions',
+    'LineStyle',
+    'MatrixLikeBool',
+    'MatrixLikeFloat',
+    'MatrixLikeInt',
+    'MeshValidationFields',
+    'PlottableType',
+    'RotationLike',
+    'TransformLike',
+    'VectorLikeBool',
+    'VectorLikeFloat',
+    'VectorLikeInt',
+    'WrappableType',
+]
+
+# Names in signatures and docstrings without a documentation page
+_UNDOCUMENTED_TYPES = [
+    'ActiveArrayInfo',
+    'ActiveScalarsAlgorithm',
+    'AddIDsAlgorithm',
+    'BackfaceArgs',
+    'BasePlotter',
+    'BorderOptions',
+    'CallbackFilterAlgorithm',
+    'CellLiteral',
+    'CellQualityInfo',
+    'Colormap',
+    'ColormapOptions',
+    'CrinkleAlgorithm',
+    'CullingOptions',
+    'Cycler',
+    'EmbeddableWidget',
+    'ExampleName',
+    'FieldLiteral',
+    'FontFamilyOptions',
+    'HorizontalOptions',
+    'IFrame',
+    'Image',
+    'ImageCompareType',
+    'InteractorStyleHandler',
+    'LightType',
+    'Mesh',
+    'MeshValidationReport',
+    'OpacityOptions',
+    'PathStrSeq',
+    'PickerType',
+    'PointLiteral',
+    'PointSetToPolyDataAlgorithm',
+    'ReaderProvider',
+    'RowLiteral',
+    'ScalarBarArgs',
+    'ShaftType',
+    'SilhouetteArgs',
+    'SmoothShadingAlgorithm',
+    'SourceAlgorithm',
+    'StereoType',
+    'StyleOptions',
+    'TextPositionOptions',
+    'ThemeOptions',
+    'TipType',
+    'TrameModeOptions',
+    'VerticalOptions',
+    'VtkEvent',
+    'Widget',
+    'WrapType',
+    'WriterHandler',
+    'lookup_table_ndarray',
+    'pyarrow',
+]
+
 # Configuration for sphinx.ext.autodoc
-# Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
-    'CameraPositionOptions': 'pyvista.CameraPositionOptions',
-    'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
-    'MeshValidationFields': 'pyvista.MeshValidationFields',
-    'Chart': 'pyvista.Chart',
-    'ColorLike': 'pyvista.ColorLike',
-    'ArrayLike': 'pyvista.ArrayLike',
-    'VectorLike': 'pyvista.VectorLike',
-    'MatrixLike': 'pyvista.MatrixLike',
-    'BoundsLike': 'pyvista.BoundsLike',
-    'CellsLike': 'pyvista.CellsLike',
-    'CellArrayLike': 'pyvista.CellArrayLike',
-    'TransformLike': 'pyvista.TransformLike',
-    'RotationLike': 'pyvista.RotationLike',
-    'InteractionEventType': 'pyvista.InteractionEventType',
+    **{name: f'~pyvista.typing.{name}' for name in _DOCUMENTED_TYPES},
+    'FrameType': 'types.FrameType',
+    # generated from the example names; render it as a name, not 222 literals
+    'ExampleName': 'ExampleName',
 }
+
+# Render aliases nested in unions and generics by name, see sphinx-doc/sphinx#14003
+TypeAliasForwardRef.__repr__ = lambda self: self.name
+
+# Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
+programoutput_use_ansi = True
 
 # Needed to address a code-block parsing error by sphinx for an example
 autodoc_mock_imports = ['example']
@@ -157,192 +284,69 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+numpydoc_xref_ignore = {'optional'}
+# Link docstring types such as ``VectorLikeFloat`` from any module
+numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in _DOCUMENTED_TYPES}
+
+sphinx_examples_as_code_conf = {
+    # Replace sphinx-gallery's own per-example download footer/note with
+    # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
+    'gallery_downloads': True,
+}
+
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
 
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
 nitpick_ignore_regex = [
-    # NOTE: We need to ignore any/all pyvista objects which are used as type hints
-    # in function signatures since these are not linked by sphinx (bug).
-    # See https://github.com/pyvista/pyvista/pull/6206#issuecomment-2149138086
-    #
-    # PyVista TypeVars and TypeAliases
-    (r'py:.*', '.*ColorLike'),
-    (r'py:.*', '.*ImageCompareType'),
-    (r'py:.*', '.*ColormapOptions'),
-    (r'py:.*', '.*ArrayLike'),
-    (r'py:.*', '.*MatrixLike'),
-    (r'py:.*', '.*VectorLike'),
-    (r'py:.*', '.*TransformLike'),
-    (r'py:.*', '.*InteractionEventType'),
-    (r'py:.*', '.*InteractorStyleHandler'),
-    (r'py:.*', '.*WriterHandler'),
-    (r'py:.*', '.*ReaderHandler'),
-    (r'py:.*', '.*BoundsLike'),
-    (r'py:.*', '.*RotationLike'),
-    (r'py:.*', '.*CellsLike'),
-    (r'py:.*', '.*ShapeLike'),
-    (r'py:.*', '.*NumpyArray'),
-    (r'py:.*', '.*MeshValidationFields'),
-    (r'py:.*', '.*_ArrayLikeOrScalar'),
-    (r'py:.*', '.*NumberType'),
-    (r'py:.*', '.*_PolyDataType'),
-    (r'py:.*', '.*_UnstructuredGridType'),
-    (r'py:.*', '.*_GridType'),
-    (r'py:.*', '.*_PointGridType'),
-    (r'py:.*', '.*_PointSetType'),
-    (r'py:.*', '.*_DataSetType'),
-    (r'py:.*', '.*_DataSetOrMultiBlockType'),
-    (r'py:.*', '.*_DataObjectType'),
-    (r'py:.*', '.*_MeshType_co'),
-    (r'py:.*', '.*_WrappableVTKDataObjectType'),
-    (r'py:.*', '.*_VTKWriterType'),
-    (r'py:.*', '.*NormalsLiteral'),
-    (r'py:.*', '.*_CellQualityLiteral'),
-    (r'py:.*', '.*_CompressionOptions'),
-    (r'py:.*', '.*T'),
-    (r'py:.*', '.*Options'),
-    #
-    # Dataset-related types
-    (r'py:.*', '.*DataSet'),
-    (r'py:.*', '.*DataObject'),
-    (r'py:.*', '.*PolyData'),
-    (r'py:.*', '.*UnstructuredGrid'),
-    (r'py:.*', '.*_TypeMultiBlockLeaf'),
-    (r'py:.*', '.*Grid'),
-    (r'py:.*', '.*PointGrid'),
-    (r'py:.*', '.*_PointSet'),
-    #
-    # PyVista array-related types
-    (r'py:.*', 'ActiveArrayInfo'),
-    (r'py:.*', 'FieldAssociation'),
-    (r'py:.*', '.*CellLiteral'),
-    (r'py:.*', '.*PointLiteral'),
-    (r'py:.*', '.*FieldLiteral'),
-    (r'py:.*', '.*RowLiteral'),
-    (r'py:.*', '.*_SerializedDictArray'),
-    (r'py:.*', '.*_FiveArrays'),
-    #
-    # PyVista AxesAssembly-related types
-    (r'py:.*', '.*GeometryTypes'),
-    (r'py:.*', '.*ShaftType'),
-    (r'py:.*', '.*TipType'),
-    (r'py:.*', '.*_AxesGeometryKwargs'),
-    (r'py:.*', '.*_OrthogonalPlanesKwargs'),
-    #
-    # PyVista Widget enums
-    (r'py:.*', '.*PickerType'),
-    (r'py:.*', '.*ElementType'),
-    #
-    # PyVista shader/plotting enums
-    (r'py:.*', '.*ShaderType'),
-    (r'py:.*', '.*PointSpriteShape'),
-    #
-    # PyVista Texture enum
-    (r'py:.*', '.*WrapType'),
-    #
-    # PyVista plotting-related classes
-    (r'py:.*', '.*BasePlotter'),
-    (r'py:.*', '.*ScalarBars'),
-    (r'py:.*', '.*Theme'),
-    #
-    # Misc pyvista ignores
-    (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
-    (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
-    (r'py:.*', '.*lookup_table_ndarray'),
-    (r'py:.*', '.*colors.Colormap'),
-    (r'py:.*', 'colors.ListedColormap'),
-    (r'py:.*', '.*MeshValidationReport'),
-    (r'py:.*', '.*CellQualityInfo'),
-    (r'py:.*', 'cycler.Cycler'),
-    (r'py:.*', 'pyvista.PVDDataSet'),
-    (r'py:.*', 'pyvista.SeriesDataSet'),
-    (r'py:.*', 'ScalarBarArgs'),
-    (r'py:.*', 'SilhouetteArgs'),
-    (r'py:.*', 'BackfaceArgs'),
-    (r'py:.*', 'CullingOptions'),
-    (r'py:.*', 'OpacityOptions'),
-    (r'py:.*', 'CameraPositionOptions'),
-    (r'py:.*', 'StyleOptions'),
-    (r'py:.*', 'FontFamilyOptions'),
-    (r'py:.*', 'HorizontalOptions'),
-    (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', '.*JupyterBackendOptions'),
-    (r'py:.*', '_InterpolationOptions'),
-    (r'py:.*', 'PlottableType'),
-    (r'py:.*', '_Dimensionality'),
-    #
-    # Built-in python types. TODO: Fix links (intersphinx?)
-    (r'py:.*', '.*StringIO'),
-    (r'py:.*', '.*Path'),
-    (r'py:.*', '.*UserDict'),
-    (r'py:.*', 'sys.float_info.max'),
-    (r'py:.*', '.*NoneType'),
-    (r'py:.*', 'collections.*'),
-    (r'py:.*', '.*PathStrSeq'),
-    (r'py:.*', 'ModuleType'),
-    (r'py:.*', 'typing.Union'),
-    #
-    # NumPy types. TODO: Fix links (intersphinx?)
-    (r'py:.*', '.*DTypeLike'),
-    (r'py:.*', 'np.*'),
-    (r'py:.*', 'npt.*'),
-    (r'py:.*', 'numpy.*'),
-    (r'py:.*', '.*NDArray'),
-    #
-    # Third party ignores. TODO: Can these be linked with intersphinx?
-    (r'py:.*', 'ipywidgets.Widget'),
-    (r'py:.*', 'EmbeddableWidget'),
-    (r'py:.*', 'Widget'),
-    (r'py:.*', 'IFrame'),
-    (r'py:.*', 'Image'),
-    (r'py:.*', 'meshio.*'),
-    (r'py:.*', '.*Mesh'),
-    (r'py:.*', '.*Trimesh'),
-    (r'py:.*', 'networkx.*'),
-    (r'py:.*', 'Rotation'),
-    (r'py:.*', '.*VtkEvent'),
-    (r'py:.*', 'vtk.*'),
-    (r'py:.*', '_vtk.*'),
-    (r'py:.*', 'VTK'),
-    #
-    # Misc general ignores
-    (r'py:.*', 'optional'),
+    (r'py:.*', r'(.*\.)?_\w+'),  # ignore all private names
+    *[(r'py:.*', rf'(.*\.)?{re.escape(name)}') for name in _UNDOCUMENTED_TYPES],
 ]
 
 
 add_module_names = False
+toc_object_entries_show_parents = 'hide'
 
 # Intersphinx mapping
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
     'python': (
-        'https://docs.python.org/3.11',
-        (None, '../intersphinx/python-objects.inv'),
+        'https://docs.python.org/3.11/',
+        ('../intersphinx/python-objects.inv',),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
-        (None, '../intersphinx/scipy-objects.inv'),
+        ('../intersphinx/scipy-objects.inv',),
     ),
-    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'numpy': ('https://numpy.org/doc/stable/', ('../intersphinx/numpy-objects.inv',)),
     'matplotlib': (
-        'https://matplotlib.org/stable',
-        (None, '../intersphinx/matplotlib-objects.inv'),
+        'https://matplotlib.org/stable/',
+        ('../intersphinx/matplotlib-objects.inv',),
     ),
     'imageio': (
-        'https://imageio.readthedocs.io/en/stable',
-        (None, '../intersphinx/imageio-objects.inv'),
+        'https://imageio.readthedocs.io/en/stable/',
+        ('../intersphinx/imageio-objects.inv',),
     ),
     'pandas': (
         'https://pandas.pydata.org/pandas-docs/stable',
-        (None, '../intersphinx/pandas-objects.inv'),
+        ('../intersphinx/pandas-objects.inv',),
     ),
-    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
-    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'pyarrow': (
+        'https://arrow.apache.org/docs/',
+        ('../intersphinx/pyarrow-objects.inv',),
+    ),
+    'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
+    'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pyvista_validation': (
+        'https://validation.pyvista.org/',
+        ('../intersphinx/pyvista-validation-objects.inv',),
+    ),
+    'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
-intersphinx_timeout = 10
+intersphinx_timeout = 5
 
 # Select if we want to generate production or dev documentation
 #
@@ -350,14 +354,27 @@ intersphinx_timeout = 10
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates', get_template_dir()]
+templates_path = ['_templates']
 
 # Autosummary configuration
 autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    'skipmethods': ['__init__', 'override'],
+    # check_attribute is an undocumented hook used by DisableVtkSnakeCase
+    'skipmethods': ['__init__', 'override', 'check_attribute'],
+    # Used by _templates/autosummary/class.rst: see pyvista/ext/_autoinherit.py for how
+    # each member is routed to exactly one class page.
+    'own_members': own_members,
+    'inherited_classes': inherited_classes,
+    'inherited_member_rows': inherited_member_rows,
+    'filter_member_rows': filter_member_rows,
+    'vtk_bases': vtk_bases,
+    # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
+    # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
+    'instance_property_names': instance_property_names,
+    'metaclass_property_names': metaclass_property_names,
+    'metaclass_property_descriptions': metaclass_property_descriptions,
 }
 
 # The suffix(es) of source filenames.
@@ -369,7 +386,7 @@ root_doc = 'index'
 
 # General information about the project.
 project = 'PyVista'
-year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
+year = datetime.datetime.now(tz=datetime.UTC).date().year
 copyright = f'2017-{year}, The PyVista Developers'  # noqa: A001
 author = 'Alex Kaszynski and Bane Sullivan'
 
@@ -394,7 +411,35 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints', '_templates*']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '**.ipynb_checkpoints',
+    '_templates*',
+    # Fragments that only ever get ``.. include::``-ed into another page or into a
+    # docstring. Sphinx exempts included files from the "isn't included in any
+    # toctree" warning but still builds them as standalone documents, which puts 70
+    # title-less pages in the search index, e.g. searching `bunny` returns four
+    # `<no title>` dataset-gallery carousels. Excluding them keeps the text
+    # searchable through the page that includes it.
+    'api/core/cell_quality/*.rst',
+    'api/examples/dataset-gallery/*.rst',
+    'api/plotting/charts/plot_color_schemes.rst',
+    'api/plotting/charts/scatter_marker_styles.rst',
+    'api/plotting/line_styles.rst',
+    'api/readers/readers_table.rst',
+    'api/utilities/color_table/*.rst',
+    'api/utilities/colormap_table/*.rst',
+    'api/utilities/io_table/*.rst',
+    'api/utilities/mesh_io.rst',
+]
+_repo_context7 = Path(__file__).resolve().parents[2] / 'context7.json'
+_docs_context7 = Path(__file__).parent / '_extra' / 'context7.json'
+_context7_data = json.loads(_repo_context7.read_text())
+_context7_data['url'] = 'https://context7.com/websites/pyvista'
+_docs_context7.write_text(json.dumps(_context7_data, indent=2) + '\n')
+
 html_extra_path = ['_extra']
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -416,19 +461,36 @@ def _filter_sphinx_gallery_warnings():
         message='Call to deprecated method GetData',  # emitted by trame-vtk
         category=DeprecationWarning,
     )
+    # Matplotlib >=3.10 emits this when plt.show() runs under a non-interactive
+    # backend inside sphinx-gallery workers.
+    warnings.filterwarnings(
+        'ignore',
+        message='FigureCanvasAgg is non-interactive, and thus cannot be shown',
+        category=UserWarning,
+    )
 
     # Treat all remaining warnings as errors
     warnings.simplefilter('error', append=True)
 
 
+# Examples whose VTK warnings are noise: VTK 9.7 intermittently logs Jacobi
+# eigenvalue warnings while importing this VRML scene.
+_VTK_OUTPUT_TOLERATED = frozenset({'load_vrml.py'})
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):  # noqa: ARG002
+    def __init__(self):
+        self._error_catcher = None
+
+    def __call__(self, gallery_conf, fname, when):  # noqa: ARG002
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
         """
+        if when == 'after':
+            self._raise_for_vtk_output(fname)
         _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
@@ -443,6 +505,35 @@ class ResetPyVista:
 
         pv._wrappers['vtkPolyData'] = pv.PolyData
         pv.set_plot_theme('document_build')
+
+        if when == 'before':
+            self._start_catching_vtk_output()
+
+    def _start_catching_vtk_output(self):
+        """Begin recording the errors and warnings VTK logs while an example runs."""
+        import pyvista as pv
+
+        # An example that aborted may have left the previous recording open.
+        self._stop_catching_vtk_output()
+        catcher = pv.VtkErrorCatcher(send_to_logging=False)
+        catcher.__enter__()
+        self._error_catcher = catcher
+
+    def _stop_catching_vtk_output(self):
+        """Stop recording and return the events logged since recording began."""
+        catcher, self._error_catcher = self._error_catcher, None
+        if catcher is None:
+            return []
+        catcher.__exit__(None, None, None)
+        return catcher.events
+
+    def _raise_for_vtk_output(self, fname):
+        """Fail the build when an example logged a VTK error or warning."""
+        events = self._stop_catching_vtk_output()
+        if events and Path(fname).name not in _VTK_OUTPUT_TOLERATED:
+            logged = '\n'.join(str(event) for event in events)
+            msg = f'{fname} logged {len(events)} VTK error(s) or warning(s):\n{logged}'
+            raise RuntimeError(msg)
 
     def __repr__(self):
         return 'ResetPyVista'
@@ -471,8 +562,8 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
-    'image_scrapers': (DynamicScraper(), 'matplotlib'),
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
+    'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
@@ -480,14 +571,19 @@ sphinx_gallery_conf = {
     'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache', 'image.not_readable']
+suppress_warnings = [
+    'config.cache',
+    'image.not_readable',
+]
 
-import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
+from jinja2.sandbox import SandboxedEnvironment
+from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+# Also matches submodule imports, e.g. ``from pyvista.examples.cells import ...``.
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista(\.[\w.]+)? +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
@@ -496,6 +592,35 @@ __s_p_t('document_build')
 del __s_p_t
 """
 pyvista_plot_cleanup = pyvista_plot_setup
+
+# Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
+pyvista_plot_autocodelink = True
+
+# Append a "Used In" backreferences section to every autodoc-documented object's own
+# docstring (empty ones get nothing appended, not "No references found.").
+autocodelink_autodoc_backrefs = True
+
+# Rename backreferences group headings.
+autocodelink_category_labels = {
+    'Sphinx Gallery': 'Gallery Examples',
+    'Docstring Examples': 'API Examples',
+    'Documentation': 'Guides',
+}
+
+# show gallery examples last, not alphabetically by heading
+autocodelink_category_order = ['Documentation', 'Docstring Examples', 'Sphinx Gallery']
+
+# rank "Used In" entries by usage frequency
+autocodelink_sort = 'frequency'
+
+# show each entry's usage count alongside it
+autocodelink_show_usage_count = True
+
+# render gallery backreferences as thumbnail cards
+autocodelink_gallery_cards = True
+
+# execute and record ``.. jupyter-execute::`` cells so their identifiers link too
+autocodelink_jupyter_blocks = True
 
 
 def _str_examples(self):
@@ -524,6 +649,166 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+
+# -- "See Also" as a real section, not a `.. seealso::` admonition ------------
+# SphinxDocString's own _str_see_also always wraps the base rendering in
+# `.. seealso::`, which isn't a real docutils section: no heading, unlinkable,
+# invisible to the "on this page" navbar. The un-wrapped base rendering already
+# goes through self._str_header, so skipping the wrap turns it into a real
+# heading for free, the same way _str_header below already does for Notes,
+# References, and Examples.
+def _str_see_also(self, func_role):
+    return NumpyDocString._str_see_also(self, func_role)
+
+
+SphinxDocString._str_see_also = _str_see_also
+
+
+# -- docstring section order: Parameters, ..., Examples, See Also -------------
+# numpydoc's own template puts "See Also" right after the parameter-ish sections and
+# well before Notes/Examples. Move it to the very end instead -- sphinx-autocodelink's
+# "Used In" (appended after the whole docstring renders, via autodoc-process-docstring)
+# always lands after whatever numpydoc itself renders last, so this also puts "See
+# Also" directly before "Used In".  Identical to numpydoc's own template otherwise --
+# see numpydoc/templates/numpydoc_docstring.rst -- just with {{see_also}} moved down.
+_DOCSTRING_TEMPLATE = SandboxedEnvironment().from_string(
+    '{{index}}\n'
+    '{{summary}}\n'
+    '{{extended_summary}}\n'
+    '{{parameters}}\n'
+    '{{attributes}}\n'
+    '{{methods}}\n'
+    '{{returns}}\n'
+    '{{yields}}\n'
+    '{{receives}}\n'
+    '{{other_parameters}}\n'
+    '{{raises}}\n'
+    '{{warns}}\n'
+    '{{warnings}}\n'
+    '{{notes}}\n'
+    '{{references}}\n'
+    '{{examples}}\n'
+    '{{see_also}}\n'
+)
+
+_original_load_config = SphinxDocString.load_config
+
+
+def _load_config(self, config):
+    _original_load_config(self, config)
+    self.template = _DOCSTRING_TEMPLATE
+
+
+SphinxDocString.load_config = _load_config
+
+
+# -- headings instead of rubrics for docstring sections -----------------------
+# numpydoc renders section headers (Notes, References, Examples) as
+# `.. rubric::` by default. Rubrics aren't real docutils sections, so they're
+# invisible to the "on this page" navbar, which is built from actual heading
+# structure. Since pyvista generates one dedicated page per function/method/
+# class (see doc/source/_templates/autosummary/*.rst), each page has at most
+# one docstring, so promoting these to real headings doesn't create the
+# duplicate-heading clutter it would on a page combining many docstrings.
+def _str_header(self, name):  # noqa: ARG001
+    return [name, '-' * len(name), '']
+
+
+SphinxDocString._str_header = _str_header
+
+
+# Making the sections above real headings isn't enough on its own: autodoc wraps
+# the whole docstring in a `desc` node, and Sphinx's TocTreeCollector explicitly
+# skips any section it finds inside one. Lift them out to page level so they show
+# up in the navbar.
+def _is_nested_desc(node: Element) -> bool:
+    parent = node.parent
+    while parent is not None:
+        if isinstance(parent, addnodes.desc):
+            return True
+        parent = parent.parent
+    return False
+
+
+def promote_seealso_admonitions(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Turn a literal ``.. seealso::`` admonition in a docstring into a real section.
+
+    Some docstrings (e.g. ``pyvista.examples.downloads``) write ``.. seealso::``
+    directly rather than using numpydoc's own "See Also" section syntax. Left as
+    an admonition it has no heading, isn't linkable, and is invisible to the "on
+    this page" navbar -- the same problem fixed above for numpydoc's own "See
+    Also" section by not wrapping it in one. Converting it to a section here lets
+    hoist_docstring_sections below lift it to page level the same way.
+
+    A literal ``.. seealso::`` is written wherever the docstring author put it --
+    usually right before References/Examples -- unlike numpydoc's own "See Also",
+    which _DOCSTRING_TEMPLATE above always renders last. Reposition the promoted
+    section to match: directly before "Used In" if present, otherwise at the end.
+
+    "Used In" isn't necessarily a sibling: nothing closes off the docstring's last
+    heading before its directive runs, so it lands nested inside that heading's
+    section instead, and only reads as a sibling once hoist_docstring_sections
+    below extracts every section it finds. Search at any depth to still find it.
+    """
+    for admonition in list(doctree.findall(addnodes.seealso)):
+        if not _is_nested_desc(admonition):
+            continue
+        section = nodes.section()
+        section += nodes.title(text='See Also')
+        section.extend(admonition.children)
+        doctree.note_implicit_target(section, section)
+
+        container = admonition.parent
+        while container is not None and not isinstance(container, addnodes.desc_content):
+            container = container.parent
+
+        admonition.replace_self(section)
+        section.parent.remove(section)
+
+        used_in = (
+            next(
+                (s for s in container.findall(nodes.section) if s[0].astext() == 'Used In'),
+                None,
+            )
+            if container is not None
+            else None
+        )
+        if used_in is not None:
+            used_in.parent.insert(used_in.parent.index(used_in), section)
+        else:
+            (container if container is not None else admonition.parent).append(section)
+
+
+def hoist_docstring_sections(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Move docstring sections out of their ``desc`` node to page level.
+
+    Finds sections at any depth inside ``desc_content``, not just its direct
+    children: a section appended after numpydoc's own Examples section (e.g.
+    sphinx-autocodelink's "Used In", via ``autodoc-process-docstring``) lands
+    *inside* Examples' own section rather than beside it, since nothing closed
+    Examples' heading first. Hoisting it from wherever it actually is keeps it
+    a sibling of Notes/References/Examples/etc., not a subsection of one of
+    them.
+    """
+    for desc in list(doctree.findall(addnodes.desc)):
+        if _is_nested_desc(desc):
+            continue
+        parent = desc.parent
+        if parent is None:
+            continue
+        # Only hoist when this object owns the page, otherwise sections from
+        # several objects would collide at page level.
+        if len([node for node in parent if isinstance(node, addnodes.desc)]) != 1:
+            continue
+        content = next((node for node in desc if isinstance(node, addnodes.desc_content)), None)
+        if content is None:
+            continue
+        sections = list(content.findall(nodes.section))
+        index = parent.index(desc)
+        for offset, section in enumerate(sections):
+            section.parent.remove(section)
+            parent.insert(index + 1 + offset, section)
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -559,15 +844,25 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+# An expanded sidebar embeds the site's whole toctree (~2,100 links) in every page:
+# the write phase grew from ~40s to ~7min and pages two- to five-fold (see #9023).
+# Release builds take that cost for navigability; every other build collapses it.
+RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
+
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navigation': True,
+    'collapse_navbar': not RELEASE_BUILD,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
+    # Capping at depth 4 keeps classes nested under their section pages while
+    # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
+    'article_header_start': ['toggle-primary-sidebar.html', 'breadcrumbs.html'],
+    # Else pydata injects a hidden navbar that steals the sidebar toggles, sphinx-book-theme#988.
+    'navbar_persistent': [],
     'icon_links': [
         {
             'name': 'Slack Community',
@@ -580,14 +875,14 @@ html_theme_options = {
             'icon': 'fa fa-comment fa-fw',
         },
         {
-            'name': 'Contributing',
-            'url': 'https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst',
-            'icon': 'fa fa-gavel fa-fw',
-        },
-        {
             'name': 'The Paper',
             'url': 'https://doi.org/10.21105/joss.01450',
             'icon': 'fa fa-file-text fa-fw',
+        },
+        {
+            'name': 'PyPI',
+            'url': 'https://pypi.org/project/pyvista',
+            'icon': 'fa-brands fa-python',
         },
     ],
 }
@@ -624,6 +919,9 @@ html_css_files = [
     'cards.css',  # used in card CSS
     'no_italic.css',  # disable italic for span classes
     'announcement.css',  # override banner color
+    'codimensional.css',  # pin partner card to bottom of right sidebar
+    'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
+    'breadcrumbs.css',  # keep the trail on one line in the fixed-height article header
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -688,10 +986,16 @@ texinfo_documents = [
 
 # -- Custom 404 page
 
+# Netlify serves this page for any missing path, at any depth, so its links are
+# site-root absolute, as ``notfound_urls_prefix = None`` makes the theme's own.
+# ``notfound.js`` fills the container with suggestions built from the requested URL.
 notfound_context = {
     'body': (
-        '<h1>Page not found.</h1>\n\n'
-        'Perhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.'
+        '<h1>Page not found</h1>\n'
+        '<div id="notfound"></div>\n'
+        '<p>Try the <a href="/search.html">search page</a>, '
+        'the <a href="/api/index.html">API reference</a>, '
+        'or the <a href="/examples/index.html">examples gallery</a>.</p>'
     ),
 }
 notfound_urls_prefix = None
@@ -729,19 +1033,27 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
-# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
         'icon-links.html',
-        'mini18n/snippets/select-lang.html',
         'search-button-field.html',
         'sbt-sidebar-nav.html',
     ],
+    # The search page renders its own search box, so drop the sidebar's.
+    'search': [
+        'navbar-logo.html',
+        'icon-links.html',
+        'sbt-sidebar-nav.html',
+    ],
 }
-mini18n_default_language = language
-mini18n_support_languages = ['en', 'ja']
-locale_dirs = ['../../pyvista-doc-translations/locale']
+
+# Pin the CoDimensional PBC partner card to the bottom of the right
+# (secondary) sidebar, below the page table of contents, on every page.
+html_theme_options['secondary_sidebar_items'] = [
+    'page-toc.html',
+    'codimensional.html',
+]
 
 
 class PlaceHolderImage(Image):
@@ -782,14 +1094,130 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
     app.add_directive('image', PlaceHolderImage)
 
 
+def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
+    """Drop tag pages' toctree entries so an example's parent stays its gallery."""
+    tags_dir = f'{app.config.tags_output_dir}/'
+    for docname in list(env.toctree_includes):
+        if docname.startswith(tags_dir) and docname != f'{tags_dir}tagsindex':
+            del env.toctree_includes[docname]
+
+
+def drop_type_alias_docstring(  # noqa: PLR0917
+    app: Sphinx,  # noqa: ARG001
+    what: str,
+    name: str,  # noqa: ARG001
+    obj: object,
+    options: dict,  # noqa: ARG001
+    lines: list[str],
+) -> None:
+    """Drop the docstring a type alias inherits from ``typing`` or its origin class."""
+    if (
+        what == 'data'
+        and get_origin(obj) is not None
+        and lines == prepare_docstring(obj.__doc__ or '')
+    ):
+        lines.clear()
+
+
+def restrict_trimesh_inventory(app: Sphinx) -> None:
+    """Drop non-``trimesh`` names from trimesh's inventory so they link to their own docs."""
+    inventories = InventoryAdapter(app.env)
+    for objtype, objects in inventories.named_inventory['trimesh'].items():
+        if objtype.startswith('py:'):
+            for name in [name for name in objects if name.split('.')[0] != 'trimesh']:
+                del objects[name]
+    # Merge again as intersphinx does, so the entries trimesh overrode are restored
+    main_inventory = inventories.main_inventory
+    main_inventory.clear()
+    for inv_name in sorted(inventories.named_inventory):
+        for objtype, objects in inventories.named_inventory[inv_name].items():
+            main_inventory.setdefault(objtype, {}).update(objects)
+
+
+# Modules that references abbreviate or reach through a private path
+_REFERENCE_PREFIXES = {
+    'np.': 'numpy.',
+    'npt.': 'numpy.typing.',
+    'numpy._typing._array_like.': 'numpy.typing.',
+    'pv.': 'pyvista.',
+}
+
+# Objects that references name without their module
+_REFERENCE_NAMES = {
+    'BytesIO': 'io.BytesIO',
+    'NDArray': 'numpy.typing.NDArray',
+    'Path': 'pathlib.Path',
+    'Rotation': 'scipy.spatial.transform.Rotation',
+    'StringIO': 'io.StringIO',
+    'UserDict': 'collections.UserDict',
+    'ndarray': 'numpy.ndarray',
+}
+
+
+# Types that are documented and linked elsewhere can still fail to resolve from signature
+# annotations, which Sphinx then reports as nitpick warnings, see sphinx-doc/sphinx#14003.
+# This resolves those missing links, such as `pv.PolyData` or a bare `Path`.
+def resolve_python_reference(  # noqa: PLR0917
+    app: Sphinx,
+    env: BuildEnvironment,
+    node: addnodes.pending_xref,
+    contnode: Element,
+) -> Element | None:
+    """Resolve a Python reference to an object under its full name."""
+    if node['refdomain'] != 'py':
+        return None
+    target = node['reftarget']
+    full_name = _REFERENCE_NAMES.get(target)
+    for prefix, module in _REFERENCE_PREFIXES.items():
+        if target.startswith(prefix):
+            full_name = module + target.removeprefix(prefix)
+    if full_name is None and target.startswith('numpy.'):
+        # NumPy's inventory lists scalar types such as `numpy.float64` as attributes
+        full_name = target
+    new_node = node.deepcopy()
+    if full_name is None:
+        if '.' in target or missing_reference(app, env, node, contnode):
+            return None
+        # A bare class name, as from an import under TYPE_CHECKING, matches the one class it names
+        new_node['refspecific'] = True
+        return env.domains['py'].resolve_xref(
+            env, node['refdoc'], app.builder, 'class', target, new_node, contnode
+        )
+    new_node['reftarget'] = full_name
+    new_node['reftype'] = 'obj'
+    return env.domains['py'].resolve_xref(
+        env, node['refdoc'], app.builder, 'obj', full_name, new_node, contnode
+    ) or missing_reference(app, env, new_node, contnode)
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
-    app.connect('html-page-context', pv_html_page_context)
+    # priority > 500 so intersphinx has already loaded the inventories
+    app.connect('builder-inited', restrict_trimesh_inventory, priority=501)
+    # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
+    app.connect('env-updated', forget_tag_page_toctrees)
+    # priority < 500 so this sees the docstring before numpydoc rewrites it
+    app.connect('autodoc-process-docstring', drop_type_alias_docstring, priority=400)
+    app.connect('missing-reference', resolve_python_reference)
+    # Priority must stay above the 501 used by sphinx-book-theme's
+    # ``add_source_buttons``, which is what builds the "suggest edit" button.
+    app.connect('html-page-context', pv_html_page_context, priority=502)
+
+    # priority < 500 so this runs before Sphinx's TocTreeCollector builds the toc, and
+    # before priority 400 so hoist_docstring_sections below sees the promoted sections
+    app.connect('doctree-read', promote_seealso_admonitions, priority=300)
+    app.connect('doctree-read', hoist_docstring_sections, priority=400)
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
 
+    # feeds the search result snippets rendered by search_summaries.js
+    app.connect('build-finished', make_search_summaries.dump_search_summaries)
+
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_css_file('dataset_gallery_filter.css')
     app.add_js_file('redirect_fragments.js')
+    app.add_js_file('notfound.js')
+    app.add_js_file('dataset_gallery_filter.js')

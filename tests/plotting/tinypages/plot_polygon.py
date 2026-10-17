@@ -10,4 +10,4 @@ def not_called():
 
 def plot_poly():
     """The function that should be executed."""
-    pv.Polygon().plot()
+    pv.Polygon().plot(text='plot_poly')

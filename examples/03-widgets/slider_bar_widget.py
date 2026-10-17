@@ -4,17 +4,17 @@
 Slider Bar Widget
 ~~~~~~~~~~~~~~~~~
 
-The slider widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_slider_widget` and
-:func:`pyvista.Plotter.clear_slider_widgets` methods respectively.
-This is one of the most versatile widgets as it can control a value that can
-be used for just about anything.
+Enable and disable the slider widget to control an arbitrary value.
+
+Uses :func:`pyvista.Plotter.add_slider_widget` and
+:func:`pyvista.Plotter.clear_slider_widgets`. This is one of the most
+versatile widgets as it can control a value that can be used for just
+about anything.
+
 """
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -36,7 +36,7 @@ pl.show()
 
 # %%
 # After interacting with the scene, the threshold mesh is available as:
-pl.threshold_meshes
+pl.widgets.threshold_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -68,5 +68,4 @@ pl.show()
 #
 # .. image:: ../../images/gifs/slider-widget-resolution.gif
 #
-# %%
 # .. tags:: widgets

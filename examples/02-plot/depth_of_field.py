@@ -4,12 +4,9 @@
 Depth of Field Plotting
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-This example shows how you can use :func:`enable_depth_of_field
-<pyvista.Plotter.enable_depth_of_field>` to highlight part of your plot.
+Highlight part of a plot using :func:`~pyvista.Plotter.enable_depth_of_field`.
 
 """
-
-from __future__ import annotations
 
 # sphinx_gallery_start_ignore
 # depth field modification does not seem to work in interactive mode
@@ -21,7 +18,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Generate a bunch of bunnies
+# Generate a Bunch of Bunnies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create many bunnies using the :func:`glyph <pyvista.DataSetFilters.glyph>`
 # filter.
@@ -39,7 +36,7 @@ bunnies
 
 
 # %%
-# Show the plot without enabling depth of field
+# Show the Plot Without Enabling Depth of Field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # convert points into rgba colors
@@ -50,8 +47,8 @@ colors = colors.astype(np.uint8)
 
 # obtained camera position with `cpos = pl.show(return_cpos)`
 cpos = pv.CameraPosition(
-    position=(11.6159, -1.2803, 1.5338),
-    focal_point=(4.1354, 1.4796, 1.2711),
+    position=(11.62, -1.28, 1.534),
+    focal_point=(4.135, 1.48, 1.271),
     viewup=(-0.0352, -0.0004, 1.0),
 )
 
@@ -69,7 +66,7 @@ pl.show()
 
 
 # %%
-# Show the plot while enabling depth of field
+# Show the Plot While Enabling Depth of Field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pl = pv.Plotter()
@@ -77,7 +74,7 @@ pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos
 pl.enable_depth_of_field()
-pl.enable_anti_aliasing('ssaa')
+pl.enable_anti_aliasing('fxaa')
 pl.set_environment_texture(cubemap)
 pl.show()
 # %%

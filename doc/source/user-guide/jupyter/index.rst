@@ -6,7 +6,7 @@ Plot with ``pyvista`` interactively within a `Jupyter
 <https://jupyter.org/>`_ notebook.
 
 .. note::
-   We recommend using the Trame-based backed. See :ref:`trame_jupyter`.
+   We recommend using the Trame-based backend. See :ref:`trame_jupyter`.
 
 
 Supported Modules
@@ -25,13 +25,15 @@ a jupyter notebook:
    trame
 
 
-Usage with PyVista
+Usage With PyVista
 ~~~~~~~~~~~~~~~~~~
 There are two ways to set the jupyter plotting backend. First, it can
 be done on a plot by plot basis by setting the ``jupyter_backend`` parameter in
 either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 <pyvista.DataSet.plot>`. You can also set it globally with the
-:func:`pyvista.set_jupyter_backend`. Custom backends are also supported with
+:func:`pyvista.set_jupyter_backend` or the
+:envvar:`PYVISTA_JUPYTER_BACKEND` environment variable (see
+:ref:`configuration`). Custom backends are also supported with
 :func:`pyvista.register_jupyter_backend`. For further details:
 
 
@@ -41,6 +43,8 @@ either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 
     pv.set_jupyter_backend('trame')
 
-.. autofunction:: pyvista.set_jupyter_backend
+.. autosummary::
 
-.. autofunction:: pyvista.register_jupyter_backend
+   ~pyvista.register_jupyter_backend
+   ~pyvista.registered_jupyter_backends
+   ~pyvista.set_jupyter_backend

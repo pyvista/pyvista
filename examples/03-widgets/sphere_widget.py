@@ -4,25 +4,25 @@
 Sphere Widget
 ~~~~~~~~~~~~~
 
-The sphere widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_sphere_widget` and
-:func:`pyvista.Plotter.clear_sphere_widgets` methods respectively.
-This is a very versatile widget as it can control vertex location that can
-be used to control or update the location of just about anything.
+Enable and disable the sphere widget to control a vertex location.
+
+Uses :func:`pyvista.Plotter.add_sphere_widget` and
+:func:`pyvista.Plotter.clear_sphere_widgets`. This is a very versatile
+widget as it can control vertex location that can be used to control or
+update the location of just about anything.
 
 We don't have any convenient helper methods that utilize this widget out of
 the box, but we have added a lot of ways to use this widget so that you can
 easily add several widgets to a scene.
 
 Let's look at a few use cases that all update a surface mesh.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -118,12 +118,12 @@ from scipy.interpolate import griddata
 
 def get_colors(n):
     """Get n colors."""
-    from itertools import cycle
+    import itertools
 
     import matplotlib as mpl
 
     cycler = mpl.rcParams['axes.prop_cycle']
-    colors = cycle(cycler)
+    colors = itertools.cycle(cycler)
     return [next(colors)['color'] for i in range(n)]
 
 
@@ -178,5 +178,4 @@ pl.show()
 #
 # .. image:: ../../images/gifs/sphere-widget-c.gif
 #
-# %%
 # .. tags:: widgets

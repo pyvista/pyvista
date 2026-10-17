@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Generator
 import itertools
-import pathlib
+from pathlib import Path
 import re
 import weakref
 
@@ -15,8 +16,8 @@ from pyvista import MultiBlock
 from pyvista import PolyData
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
+from pyvista import _vtk
 from pyvista import examples as ex
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.errors import DeprecationError
 
@@ -82,6 +83,57 @@ def test_multi_block_init_list(rectilinear, airplane):
     assert multi.n_blocks == 2
     assert isinstance(multi.GetBlock(0), RectilinearGrid)
     assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_sequence(rectilinear, airplane):
+    data = deque([rectilinear, airplane])
+    multi = MultiBlock(data)
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+def test_multi_block_init_partitioned(sphere, airplane):
+    # A `PartitionedDataSet` is a sequence, so its partitions become the blocks
+    multi = MultiBlock(pv.PartitionedDataSet([sphere, airplane]))
+    assert multi.n_blocks == 2
+    assert isinstance(multi.GetBlock(0), PolyData)
+    assert isinstance(multi.GetBlock(1), PolyData)
+
+
+@pytest.mark.parametrize(
+    'add_block',
+    [
+        lambda multi, block: multi.append(block),
+        lambda multi, block: multi.__setitem__(0, block),
+        lambda multi, block: multi.insert(0, block),
+    ],
+    ids=['append', 'setitem', 'insert'],
+)
+def test_multi_block_rejects_a_block_vtk_refuses(sphere, add_block):
+    # VTK only logs when it refuses a block, leaving the slot silently empty
+    multi = MultiBlock([sphere])
+    match = re.escape(
+        'A PartitionedDataSet cannot be a block of a MultiBlock. '
+        'Call cast_to_multiblock() on it first.'
+    )
+    with pytest.raises(TypeError, match=match):
+        add_block(multi, pv.PartitionedDataSet([sphere]))
+
+    # A multi-piece dataset is one VTK does hold, so it reaches `wrap` and fails there
+    with pytest.raises(TypeError, match='is not currently supported by pyvista'):
+        add_block(multi, _vtk.vtkMultiPieceDataSet())
+
+
+def test_multi_block_init_rejects_a_block_vtk_refuses(sphere):
+    with pytest.raises(TypeError, match='cannot be a block of a MultiBlock'):
+        MultiBlock([pv.PartitionedDataSet([sphere])])
+
+
+def test_multi_block_init_str_is_a_filename(tmp_path, sphere):
+    # A `str` is a sequence, but names a file rather than giving one block per character
+    MultiBlock([sphere]).save(path := tmp_path / 'blocks.vtm')
+    assert MultiBlock(str(path)).n_blocks == 1
 
 
 def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
@@ -380,7 +432,7 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
     assert multi._repr_html_() is not None
     pattern = (
-        r'MultiBlock \(0x[0-9a-fA-F]+\)'
+        r'MultiBlock\[.+\] \(0x[0-9a-fA-F]+\)'
         r'\s+N Blocks:\s{3}\d+'
         r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
@@ -392,7 +444,7 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
 
 
 def test_multi_block_repr_bounds():
-    empty_poly = pv.PolyData().extract_cells(0)
+    empty_poly = pv.PolyData().extract_cells([])
     poly_x_bounds = repr(empty_poly).splitlines()[3]
     poly_y_bounds = repr(empty_poly).splitlines()[4]
     poly_z_bounds = repr(empty_poly).splitlines()[5]
@@ -436,19 +488,19 @@ def test_multi_block_io(
 ):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
-        pathlib.Path(filename)
+        Path(filename)
 
     # Use non-nested multiblock with no None types for vtkhdf case
     # these cases are tested separately
     multi = (
         pv.MultiBlock([pv.PolyData(), pv.UnstructuredGrid()])
-        if extension == '.vtkhdf'
+        if extension in pv.HDFWriter.extensions
         else multiblock_all_with_nested_and_none
     )
 
     # Save it out
-    if extension == '.vtkhdf' and binary is False:
-        match = '.vtkhdf files can only be written in binary format'
+    if extension in pv.HDFWriter.extensions and binary is False:
+        match = rf'\{extension} files can only be written in binary format'
         with pytest.raises(ValueError, match=match):
             multi.save(filename, binary=binary)
         return
@@ -466,7 +518,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
 
     multi = pv.MultiBlock([pv.MultiBlock()])
     match = (
-        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Nested MultiBlocks are not supported by the VTKHDF format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
     with pytest.raises(TypeError, match=match):
@@ -474,7 +526,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
 
     multi = pv.MultiBlock([None])
     match = (
-        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Saving None blocks is not supported by the VTKHDF format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
     with pytest.raises(TypeError, match=match):
@@ -488,7 +540,7 @@ def test_multi_block_hdf_invalid_block_type(tmpdir):
     multi = pv.MultiBlock([pv.ImageData()])
     match = (
         "Block at index [0] with name 'Block-00' has type 'ImageData' which cannot be saved to "
-        "the .vtkhdf format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
+        "the VTKHDF format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
         "'MultiBlock', 'PartitionedDataSet']."
     )
     with pytest.raises(TypeError, match=re.escape(match)):
@@ -502,7 +554,7 @@ def test_multi_block_hdf_invalid_nested_block(tmpdir):
     multi = pv.MultiBlock([pv.MultiBlock({'nested_block': pv.PointSet()})])
     match = (
         "Block at index [0][0] with name 'nested_block' has type 'PointSet' which cannot be saved "
-        'to the .vtkhdf format.'
+        'to the VTKHDF format.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         multi.save(filename)
@@ -565,6 +617,50 @@ def test_extract_geometry(multiblock_all_with_nested_and_none):
 def test_combine_filter(multiblock_all_with_nested_and_none):
     geom = multiblock_all_with_nested_and_none.combine()
     assert isinstance(geom, pv.UnstructuredGrid)
+
+
+def test_combine_filter_without_datasets():
+    # Nothing to append, so the result is empty rather than a VTK pipeline error
+    for multi in (pv.MultiBlock(), pv.MultiBlock({'a': None})):
+        combined = multi.combine()
+        assert isinstance(combined, pv.UnstructuredGrid)
+        assert combined.n_cells == 0
+
+
+@pytest.mark.parametrize('merge_points', [True, False])
+def test_combine_filter_empty_nested(merge_points):
+    mesh = pv.Sphere()
+    mesh.field_data['f'] = [1]
+    multi = pv.MultiBlock([pv.MultiBlock(), mesh, pv.MultiBlock([None])])
+    combined = multi.combine(merge_points=merge_points)
+    assert combined.n_cells == mesh.n_cells
+    assert combined.n_points == mesh.n_points
+    assert combined.field_data.keys() == ['f']
+
+
+@pytest.mark.parametrize('seed', range(5))
+def test_combine_filter_merge_points_nested_matches_flat(seed):
+    rng = np.random.default_rng(seed)
+    a, b, c = (pv.PolyData(rng.random((10, 3))) for _ in range(3))
+    nested = pv.MultiBlock([pv.MultiBlock([a, b]), c]).combine(merge_points=True, tolerance=0.3)
+    flat = pv.MultiBlock([a, b, c]).combine(merge_points=True, tolerance=0.3)
+    assert flat.n_points < 30
+    assert nested.n_points == flat.n_points
+    assert np.array_equal(nested.points, flat.points)
+
+
+@pytest.mark.parametrize('nested', [True, False])
+def test_outline_filters_output_type(multiblock_all_with_nested_and_none, nested):
+    # `vtkOutlineFilter` handles a composite itself and always gives one mesh,
+    # while `vtkOutlineCornerFilter` is run per block and gives one outline each
+    multi = multiblock_all_with_nested_and_none
+    assert isinstance(multi.outline(nested=nested), PolyData)
+    corners = multi.outline_corners(nested=nested)
+    if nested:
+        assert isinstance(corners, pv.MultiBlock)
+        assert corners.n_blocks == multi.n_blocks
+    else:
+        assert isinstance(corners, PolyData)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
@@ -1000,6 +1096,16 @@ def test_compute_normals(multiblock_poly):
         multiblock_poly._compute_normals()
 
 
+def test_compute_normals_track_vertices_nested():
+    sphere, cube = pv.Sphere(), pv.Cube()
+    multi = pv.MultiBlock([pv.MultiBlock([sphere]), pv.MultiBlock(), cube])
+    output = multi._compute_normals(split_vertices=True, track_vertices=True)
+    for block in output.recursive_iterator():
+        assert 'Normals' in block.point_data
+        assert 'pyvistaOriginalPointIds' in block.point_data
+    assert np.array_equal(sphere['pyvistaOriginalPointIds'], np.arange(sphere.n_points))
+
+
 def test_activate_scalars(multiblock_poly):
     for block in multiblock_poly:
         data = np.array(['a'] * block.n_points)
@@ -1052,6 +1158,57 @@ def test_clear_all_cell_data(multiblock_all):
         else:
             assert block.point_data.keys() != []
             assert block.cell_data.keys() == []
+
+
+@pytest.mark.parametrize(
+    ('method', 'point_cleared', 'cell_cleared'),
+    [
+        ('clear_all_data', True, True),
+        ('clear_all_point_data', True, False),
+        ('clear_all_cell_data', False, True),
+    ],
+)
+def test_clear_all_data_nested_none_and_empty(method, point_cleared, cell_cleared):
+    sphere, cube = pv.Sphere(), pv.Cube()
+    for mesh in (sphere, cube):
+        mesh.clear_data()
+        mesh.point_data['p'] = range(mesh.n_points)
+        mesh.cell_data['c'] = range(mesh.n_cells)
+    multi = pv.MultiBlock(
+        [sphere, None, pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock([cube])])]
+    )
+    getattr(multi, method)()
+    for mesh in (sphere, cube):
+        assert (mesh.point_data.keys() == []) is point_cleared
+        assert (mesh.cell_data.keys() == []) is cell_cleared
+    assert multi[1] is None
+    assert len(multi[2]) == 0
+
+
+@pytest.mark.parametrize(
+    ('method', 'args', 'values', 'expected_name', 'expected'),
+    [
+        ('_convert_to_real_scalars', (), np.ones(3), 'vec-real', np.ones(3)),
+        ('_convert_to_uint8_rgb_scalars', (), np.ones(3), 'vec-uint8', np.full(3, 255)),
+        ('_convert_to_uint8_rgb_scalars', (), np.full(3, 255), 'vec-uint8', np.full(3, 255)),
+        ('_convert_to_uint8_rgb_scalars', (), np.ones(3, dtype=bool), 'vec-uint8', np.ones(3)),
+        ('_convert_to_single_component', (None,), np.ones(3), 'vec-normed', np.sqrt(3)),
+        ('_convert_to_single_component', (1,), np.arange(3.0), 'vec-1', 1.0),
+    ],
+)
+def test_convert_scalars_nested_none_and_empty(method, args, values, expected_name, expected):
+    cube, sphere = pv.Cube(), pv.Sphere()
+    cube.clear_data()
+    sphere.clear_data()
+    cube.point_data['vec'] = np.tile(values, (cube.n_points, 1))
+    multi = pv.MultiBlock(
+        [None, pv.MultiBlock(), pv.MultiBlock([None, sphere, pv.MultiBlock([cube])])]
+    )
+    name = getattr(multi, method)('point_data', 'vec', *args)
+    assert name == expected_name
+    assert cube.point_data.active_scalars_name == expected_name
+    assert np.allclose(cube.point_data[expected_name], expected)
+    assert sphere.point_data.keys() == []
 
 
 @pytest.mark.parametrize('container', [pv.MultiBlock, pv.PartitionedDataSet])
@@ -1293,7 +1450,7 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
 
     # Test nested field data key overrides root field data key
     root = _make_nested_multiblock(
-        root_field_data={NAME1: VALUE1}, nested1_field_data={NAME1: VALUE1}
+        root_field_data={NAME1: [VALUE1]}, nested1_field_data={NAME1: [VALUE1]}
     )
     match = (
         "The field data array 'name1' from nested MultiBlock at index [0] with name 'Block-00'\n"
@@ -1397,7 +1554,7 @@ def test_flatten(multiblock_all_with_nested_and_none):
     expected_n_blocks = len(root_names) + len(nested_names)
 
     match = (
-        "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
+        "Block at index [7][0] with name 'Block-00' cannot be flattened. Another block \n"
         "with the same name already exists. Use `name_mode='reset'` "
         'or `check_duplicate_keys=False`.'
     )
@@ -1477,16 +1634,16 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     # Test root MultiBlock
     assert (input_ is output) == inplace
     # Test nested MultiBlock container
-    assert isinstance(input_[6], pv.MultiBlock)
-    assert (input_[6] is output[6]) == inplace
+    nested_index = next(i for i, block in enumerate(input_) if isinstance(block, pv.MultiBlock))
+    assert (input_[nested_index] is output[nested_index]) == inplace
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
     match = (
         "The filter 'resample'\ncould not be applied to the block at index 1 with name "
-        "'Block-01' and type RectilinearGrid."
+        "'Block-01' and type RectilinearGrid:\n'RectilinearGrid' object has no attribute"
     )
-    with pytest.raises(RuntimeError, match=match):
+    with pytest.raises(AttributeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             'resample',
         )
@@ -1494,22 +1651,49 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
     multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
     match = (
         "The filter 'resample'\ncould not be applied to the nested block at index [0][1] "
-        "with name 'Block-01' and type RectilinearGrid."
+        "with name 'Block-01' and type RectilinearGrid:"
     )
-    with pytest.raises(RuntimeError, match=re.escape(match)):
+    with pytest.raises(AttributeError, match=re.escape(match)):
         multi.generic_filter(
             'resample',
         )
     # Test with invalid kwargs
     match = "The filter '<bound method DataSetFilters.align_xyz of ImageData"
-    with pytest.raises(RuntimeError, match=re.escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         multiblock_all_with_nested_and_none.generic_filter('align_xyz', foo='bar')
+
     # Test with function
-    match = "The filter '<function test_generic_filter_raises"
-    with pytest.raises(RuntimeError, match=match):
-        multiblock_all_with_nested_and_none.generic_filter(
-            test_generic_filter_raises,
-        )
+    def fail(block):
+        msg = f'cannot filter {type(block).__name__}'
+        raise ValueError(msg)
+
+    match = "The filter '<function test_generic_filter_raises.<locals>.fail"
+    with pytest.raises(ValueError, match=match):
+        multiblock_all_with_nested_and_none.generic_filter(fail)
+
+
+def test_generic_filter_keeps_error_class(multiblock_all_with_nested_and_none):
+    class BlockError(Exception):
+        pass
+
+    def fail(block):
+        msg = f'cannot filter {type(block).__name__}'
+        raise BlockError(msg)
+
+    match = (
+        "could not be applied to the block at index 0 with name 'Block-00' and type "
+        'ImageData:\ncannot filter ImageData'
+    )
+    with pytest.raises(BlockError, match=match) as info:
+        multiblock_all_with_nested_and_none.generic_filter(fail)
+    assert info.value.__cause__ is None
+
+    # An error without a message gets the block, and nothing else
+    def fail_silently(_):
+        raise BlockError
+
+    with pytest.raises(BlockError, match=r'type ImageData\.$'):
+        multiblock_all_with_nested_and_none.generic_filter(fail_silently)
 
 
 def test_block_types(multiblock_all_with_nested_and_none):
@@ -1521,10 +1705,101 @@ def test_block_types(multiblock_all_with_nested_and_none):
         pv.PolyData,
         pv.UnstructuredGrid,
         pv.StructuredGrid,
+        pv.PointSet,
     }
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)
     assert multi.block_types == types
+
+
+@pytest.mark.parametrize(
+    ('blocks', 'expected'),
+    [
+        ([], 'MultiBlock'),
+        ([pv.PolyData(), pv.PolyData()], 'MultiBlock[PolyData]'),
+        ([pv.PolyData(), None, pv.ImageData()], 'MultiBlock[ImageData | PolyData | None]'),
+        ([pv.MultiBlock()], 'MultiBlock[MultiBlock]'),
+        (
+            [pv.MultiBlock([pv.MultiBlock([pv.PolyData()])])],
+            'MultiBlock[MultiBlock[MultiBlock[PolyData]]]',
+        ),
+        (
+            [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
+            'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
+        ),
+    ],
+)
+def test_inferred_type(blocks, expected):
+    assert pv.MultiBlock(blocks).inferred_type == expected
+
+
+class _SubBlock(pv.MultiBlock):
+    """MultiBlock subclass for naming tests."""
+
+
+def test_inferred_type_subclass():
+    sub = _SubBlock([pv.PolyData()])
+    assert sub.inferred_type == '_SubBlock[PolyData]'
+    multi = pv.MultiBlock([sub, pv.MultiBlock([pv.ImageData()])])
+    assert multi.inferred_type == 'MultiBlock[MultiBlock[ImageData] | _SubBlock[PolyData]]'
+
+
+def _nest(block, depth):
+    """Wrap ``block`` in ``depth`` levels of MultiBlock."""
+    for _ in range(depth):
+        block = pv.MultiBlock([block])
+    return block
+
+
+_WIDE = [
+    pv.PolyData(),
+    pv.UnstructuredGrid(),
+    pv.ImageData(),
+    pv.PointSet(),
+    pv.StructuredGrid(),
+    pv.RectilinearGrid(),
+    pv.ExplicitStructuredGrid(),
+]
+
+
+@pytest.mark.parametrize(
+    ('multi', 'header'),
+    [
+        (pv.MultiBlock([pv.PolyData()]), 'MultiBlock[PolyData]'),
+        (_nest(pv.PolyData(), 3), 'MultiBlock[MultiBlock[MultiBlock[PolyData]]]'),
+        (
+            pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.UnstructuredGrid()]),
+            'MultiBlock[MultiBlock[PolyData] | UnstructuredGrid]',
+        ),
+        (_nest(pv.PolyData(), 4), 'MultiBlock[MultiBlock[MultiBlock[...]]]'),
+        (
+            _nest(pv.MultiBlock([pv.MultiBlock([pv.PolyData()]), pv.StructuredGrid()]), 2),
+            'MultiBlock[MultiBlock[MultiBlock[...]]]',
+        ),
+        (
+            pv.MultiBlock(_WIDE),
+            'MultiBlock[ExplicitStructuredGrid | ImageData | PointSet | ...]',
+        ),
+        (
+            pv.MultiBlock(
+                [
+                    pv.ExplicitStructuredGrid(),
+                    pv.ImageData(),
+                    pv.MultiBlock([pv.PolyData()]),
+                    pv.PointSet(),
+                ]
+            ),
+            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
+        ),
+    ],
+)
+def test_inferred_type_in_repr(multi, header):
+    assert repr(multi).startswith(f'{header} (0x')
+
+
+def test_inferred_type_not_capped():
+    assert pv.MultiBlock(_WIDE).inferred_type.count('|') == len(_WIDE) - 1
+    assert _nest(pv.PolyData(), 6).inferred_type.count('MultiBlock') == 6
 
 
 def test_is_homogeneous_is_heterogeneous(multiblock_all_with_nested_and_none):

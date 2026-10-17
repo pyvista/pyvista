@@ -1,0 +1,709 @@
+name: Build/Test VTK Master Wheels
+
+permissions:
+  actions: read
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A pushed-over pull request run is cancelled; nightly and manual runs queue instead.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  ALLOW_PLOTTING: true
+  SHELLOPTS: "errexit:pipefail"
+  TOX_COLORED: "yes"
+
+jobs:
+  check-should-run:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      # For PRs, only run this job if the 'vtk-master-testing' label is applied
+      - id: check
+        env:
+          RUN: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}
+        run: echo "run=$RUN" >> "$GITHUB_OUTPUT"
+
+  build-vtk:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.14"]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/compiler-cache
+      CCACHE_MAXSIZE: 1G
+      # Version string, not mtime: survives a runner-image update that keeps the compiler.
+      CCACHE_COMPILERCHECK: "%compiler% --version"
+      SCCACHE_DIR: ${{ github.workspace }}/compiler-cache
+      SCCACHE_CACHE_SIZE: 1G
+
+    steps:
+      - name: Checkout PyVista build script
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Checkout VTK master (pinned to nightly date-stamp commit)
+        shell: bash
+        run: |
+          # Depth 200 since we want to ensure we capture kwrobot's date-stamp commit
+          git clone --depth 200 --branch master https://github.com/kitware/vtk vtk-src
+          cd vtk-src
+
+          NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' -n 1 --format=%H)"
+          if [ -z "$NIGHTLY_SHA" ]; then
+            echo "No 'VTK Nightly Date Stamp' commit found in the last 200 commits on master"
+            exit 1
+          fi
+
+          echo "Pinning build to VTK's nightly date-stamp commit: $NIGHTLY_SHA"
+          git checkout "$NIGHTLY_SHA"
+          echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
+
+          # Commits since the previous nightly date-stamp, grouped by merge topic.
+          PREV_NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' --skip=1 -n 1 --format=%H)"
+          BASE_URL="https://gitlab.kitware.com/vtk/vtk/-/commit"
+          {
+            if [ -z "$PREV_NIGHTLY_SHA" ]; then
+              echo "Could not find a previous nightly date-stamp commit within the last 200 commits;"
+              echo "showing only the pinned commit: [\`${NIGHTLY_SHA:0:8}\`](${BASE_URL}/${NIGHTLY_SHA})"
+            else
+              n_commits="$(git rev-list --count "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}")"
+              echo "Commits since the previous nightly date-stamp ([\`${PREV_NIGHTLY_SHA:0:8}\`](${BASE_URL}/${PREV_NIGHTLY_SHA})):"
+              echo
+              echo "[Compare on GitLab](https://gitlab.kitware.com/vtk/vtk/-/compare/${PREV_NIGHTLY_SHA}...${NIGHTLY_SHA})"
+              echo
+              echo "<details>"
+              echo "<summary>${n_commits} commits (grouped by merge topic)</summary>"
+              echo
+              git log --first-parent --reverse --format='%H%x09%h%x09%s%x09%an' \
+                "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}" |
+                while IFS=$'\t' read -r full short subject author; do
+                  echo "- [\`${short}\`](${BASE_URL}/${full}) ${subject} (${author})"
+                  read -r -a parents <<<"$(git log -1 --format='%P' "$full")"
+                  if [ "${#parents[@]}" -ge 2 ]; then
+                    # Second parent is the topic branch tip; list what it added over the mainline.
+                    git log --no-merges --reverse --format='%H%x09%h%x09%s%x09%an' \
+                      "${parents[0]}..${parents[1]}" |
+                      while IFS=$'\t' read -r sfull sshort ssubject sauthor; do
+                        echo "  - [\`${sshort}\`](${BASE_URL}/${sfull}) ${ssubject} (${sauthor})"
+                      done
+                  fi
+                done
+              echo
+              echo "</details>"
+            fi
+          } > "$GITHUB_WORKSPACE/vtk-commit-range.md"
+
+      - name: Upload VTK commit range
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: vtk-commit-range-${{ runner.os }}
+          path: vtk-commit-range.md
+
+      - name: Setup Python
+        if: runner.os != 'Linux'
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install macOS build dependencies
+        if: runner.os == 'macOS'
+        run: brew install ccache
+
+      - name: Install NASM (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # The pinned download VTK's own Windows wheel builds use, for libjpeg-turbo's SIMD code.
+          cd vtk-src
+          CMAKE_CONFIGURATION=windows cmake -P .gitlab/ci/download_nasm.cmake
+          cygpath -w "$PWD/.gitlab/nasm" >> "$GITHUB_PATH"
+
+      - name: Install build tools
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip wheel setuptools ninja
+          if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
+          if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
+
+      - name: Set compiler launcher
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
+          else
+            echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+          fi
+
+      # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
+      # once-a-day entry before the next nightly can restore it.
+      - name: Find the newest compiler cache uploaded from main
+        id: find-compiler-cache
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Newest first. Only runs on main upload one, but filter anyway.
+          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=10" \
+            --jq '[.artifacts[] | select((.expired | not) and .workflow_run.head_branch == "main")][0].workflow_run.id // empty')"; then
+            echo "::warning::Could not list the compiler cache artifacts; building cold"
+            run_id=""
+          fi
+          if [ -n "$run_id" ]; then
+            echo "Restoring the compiler cache uploaded by run $run_id"
+          else
+            echo "No compiler cache artifact found; building cold"
+          fi
+          echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiler cache
+        if: steps.find-compiler-cache.outputs.run-id != ''
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: compiler-cache-${{ runner.os }}
+          run-id: ${{ steps.find-compiler-cache.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: compiler-cache
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Set up sccache (Windows)
+        if: runner.os == 'Windows'
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
+
+      - name: Start manylinux container (Linux)
+        if: runner.os == 'Linux'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          # VTK's own x86_64 wheels build on this image (glibc 2.17), so auditwheel tags
+          # ours manylinux2014 as well. The steps below run through $RUN_IN, which stays
+          # empty on macOS and Windows.
+          py="cp${PYTHON_VERSION//./}"
+          docker run --detach --name manylinux \
+            --volume "$GITHUB_WORKSPACE:/work" --workdir /work \
+            --env RUNNER_OS=Linux --env VTK_NIGHTLY_SHA --env COMPILER_LAUNCHER \
+            --env CCACHE_DIR=/work/compiler-cache --env CCACHE_MAXSIZE --env CCACHE_COMPILERCHECK \
+            --env PYTHON="/opt/python/${py}-${py}/bin/python" \
+            quay.io/pypa/manylinux2014_x86_64 sleep infinity
+          docker exec manylinux bash -euxo pipefail -c '
+            yum install -y --setopt=install_weak_deps=False libX11-devel libXcursor-devel mesa-libGL-devel
+            "$PYTHON" -m pip install --upgrade pip wheel setuptools ninja cmake
+            curl -sSfL -o /tmp/ccache.tar.xz https://github.com/ccache/ccache/releases/download/v4.14/ccache-4.14-linux-x86_64-musl-static.tar.xz
+            echo "888eaf9697919d6eba77be797e9d9c9e40e734d11d67d25a79b075c3f79f6c77  /tmp/ccache.tar.xz" | sha256sum --check
+            tar -xJf /tmp/ccache.tar.xz -C /usr/local/bin --strip-components=1 ccache-4.14-linux-x86_64-musl-static/ccache
+          '
+          echo "RUN_IN=docker exec manylinux" >> "$GITHUB_ENV"
+
+      - name: Configure
+        shell: bash
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh configure
+
+      - name: Build
+        shell: bash
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh build
+
+      - name: Show compiler cache statistics
+        shell: bash
+        run: $RUN_IN $COMPILER_LAUNCHER --show-stats
+
+      - name: Upload compiler cache
+        # Never from a pull request: the nightly restores whichever upload is newest.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-cache-${{ runner.os }}
+          path: compiler-cache
+          compression-level: 0
+          retention-days: 7
+
+      - name: Build wheel
+        shell: bash
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh wheel
+
+      - name: Repair wheel
+        shell: bash
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh repair
+
+      - name: Upload VTK wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-build/wheelhouse/*.whl
+
+  # Cache pyvista/data for each runner separately
+  # Runner labels should match the actual runners used by the different jobs in this file
+
+  # GitHub-hosted runners can re-use the cache across OS's.
+  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
+  cache-github-hosted:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
+    name: Cache pyvista/data
+    uses: $/.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
+
+  test-linux:
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.14"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
+
+    steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
+          exit 1
+
+      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
+      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
+
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
+        with:
+          packages: libosmesa6
+          version: 3.0
+
+      - name: Restore pyvista/data cache
+        uses: $/.github/actions/restore-pyvista-data
+        with:
+          key: ${{ needs.cache-github-hosted.outputs.key }}
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      # Teed to a file for the failure-summary upload below.
+      - name: Core Testing (no GL)
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee core-test.log
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        uses: $/.github/actions/vtk-master-failure-summary
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+  test-macOS:
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        python-version: ["3.14"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
+
+    steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
+          exit 1
+
+      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
+      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
+
+      - name: Restore pyvista/data cache
+        uses: $/.github/actions/restore-pyvista-data
+        with:
+          key: ${{ needs.cache-github-hosted.outputs.key }}
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      # Teed to a file for the failure-summary upload below.
+      - name: Core Testing (no GL)
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee core-test.log
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() }}
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        uses: $/.github/actions/vtk-master-failure-summary
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+  test-windows:
+    needs: [check-should-run, build-vtk, cache-github-hosted]
+    if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        python-version: ["3.14"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
+
+    steps:
+      - name: Checkout PyVista
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Download VTK wheel artifact
+        id: download-wheel
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          path: vtk-wheel
+
+      - name: Skip if wheel build failed
+        if: steps.download-wheel.outcome != 'success'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
+          exit 1
+
+      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
+      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
+
+      - name: Restore pyvista/data cache
+        uses: $/.github/actions/restore-pyvista-data
+        with:
+          key: ${{ needs.cache-github-hosted.outputs.key }}
+
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      # `shell: bash`: this action's Windows default is PowerShell, which `tee` needs to avoid.
+      - name: Core Testing (no GL)
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        with:
+          timeout_minutes: 12
+          max_attempts: 3
+          retry_on: timeout
+          shell: bash
+          command: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
+
+      - name: Plotting Testing (uses GL)
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
+        if: ${{ !cancelled() }}
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: timeout
+          shell: bash
+          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        uses: $/.github/actions/vtk-master-failure-summary
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+  alert-on-failure:
+    needs:
+      [
+        check-should-run,
+        build-vtk,
+        cache-github-hosted,
+        test-linux,
+        test-macOS,
+        test-windows,
+      ]
+    if: >-
+      failure() &&
+      needs.check-should-run.outputs.run == 'true' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      actions: read # to look up which matrix jobs failed
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download VTK commit range
+        id: download-commit-range
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-commit-range-Linux
+          path: vtk-commit-range
+
+      # Populated by each test job's "Upload failure summary" step, if it failed.
+      - name: Download failure summaries
+        id: download-failure-summaries
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: failure-summary-*
+          path: failure-summaries
+
+      - name: Report VTK master wheel failure
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
+          COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
+        run: |
+          # `for x in "${arr[@]}"` below is guarded by a length check first: bash <4.4 raises
+          # an unbound-variable error under nounset for an empty array otherwise.
+          set -uo pipefail
+
+          # No failure-hash match (e.g. an older report predates this marker) is expected, not
+          # an error, so it must not raise under `set -e` above.
+          extract_hash() {
+            printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
+          }
+
+          # Strips wall-clock timing so two runs hitting the identical failure hash the same.
+          normalize_for_hash() {
+            grep -Ev '^\s*(py3\.[0-9]+-[a-z_-]+: (exit|FAIL code)|evaluation failed|congratulations|py3\.[0-9]+-[a-z_-]+: OK)' \
+              | sed -E 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//'
+          }
+
+          # Ensure the dedup label exists (idempotent).
+          gh label create vtk-master-wheel-failure \
+            --color cbb230 \
+            --description "Tracks the recurring VTK master wheel build/test failure" \
+            --force || true
+
+          # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
+          failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv' || true)
+
+          failed_jobs=()
+          while IFS=$'\t' read -r name url; do
+            [ -n "$name" ] || continue
+            failed_jobs+=("${name}"$'\t'"${url}")
+          done <<< "$failed_jobs_raw"
+
+          # Only jobs that ran pytest and failed have a failure-summary-* artifact.
+          summary_names=()
+          summary_texts=()
+          if [ -d failure-summaries ]; then
+            while IFS= read -r label_file; do
+              summary_file="$(dirname "$label_file")/failure_summary.txt"
+              [ -f "$summary_file" ] || continue
+              name="$(cat "$label_file")"
+              summary="$(cat "$summary_file")"
+              summary_names+=("$name")
+              summary_texts+=("$summary")
+            done < <(find failure-summaries -name job_label.txt | sort)
+          fi
+
+          if [ "$COMMIT_RANGE_OUTCOME" = "success" ] && [ -f vtk-commit-range/vtk-commit-range.md ]; then
+            commit_range_body="$(cat vtk-commit-range/vtk-commit-range.md)"
+          else
+            commit_range_body="(could not determine which VTK commits landed since the previous nightly)"
+          fi
+
+          # Most recently posted report: the last comment, or the issue body if none yet.
+          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty' || true)
+          prev_text=""
+          prev_url=""
+          if [ -n "$existing" ]; then
+            prev_text="$(gh issue view "$existing" --json body,comments \
+              --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)"
+            prev_url="$(gh issue view "$existing" --json url,comments \
+              --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
+          fi
+
+          jobs_list=""
+          if [ "${#failed_jobs[@]}" -eq 0 ]; then
+            jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+          else
+            for row in "${failed_jobs[@]}"; do
+              IFS=$'\t' read -r name url <<< "$row"
+
+              summary=""
+              if [ "${#summary_names[@]}" -gt 0 ]; then
+                for i in "${!summary_names[@]}"; do
+                  if [ "${summary_names[$i]}" = "$name" ]; then
+                    summary="${summary_texts[$i]}"
+                    break
+                  fi
+                done
+              fi
+
+              jobs_list+="- [\`${name}\`](${url})"$'\n'
+              if [ -z "$summary" ]; then
+                continue
+              fi
+
+              hash="$(printf '%s' "$summary" | normalize_for_hash | sha256sum | cut -d' ' -f1)"
+              prev_hash="$(extract_hash "$prev_text" "$name")"
+              if [ -n "$prev_hash" ] && [ "$prev_hash" = "$hash" ]; then
+                jobs_list+="  ⚠️ Same failure signature as the [previous report](${prev_url})."$'\n'
+              fi
+
+              # Without a pytest short-summary section the summary is the tail of the tox log.
+              n_failures="$(printf '%s\n' "$summary" | grep -cE '^(FAILED|ERROR) ' || true)"
+              if [ "$n_failures" -eq 0 ]; then
+                summary_label="failed before pytest reported (end of log)"
+              elif [ "$n_failures" -eq 1 ]; then
+                summary_label="1 failure"
+              else
+                summary_label="${n_failures} failures"
+              fi
+
+              # Indented 2 spaces to stay nested inside this list item on GitHub.
+              jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
+              jobs_list+="  <details>"$'\n'
+              jobs_list+="  <summary>❌ ${summary_label}</summary>"$'\n\n'
+              jobs_list+='  ```text'$'\n'
+              jobs_list+="$(printf '%s\n' "$summary" | sed 's/^/  /')"$'\n'
+              jobs_list+='  ```'$'\n\n'
+              jobs_list+="  </details>"$'\n'
+            done
+          fi
+
+          body=$(cat <<EOF
+          ### VTK Master Wheel Failure
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Run:** ${RUN_URL}
+
+          **Failing jobs:**
+
+          ${jobs_list}
+          ${commit_range_body}
+          EOF
+          )
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "VTK master wheel failure" --label "vtk-master-wheel-failure" --body "$body"
+          fi

@@ -1,29 +1,32 @@
-"""Writers for writing vtk objects to file."""
+"""Writers for writing VTK objects to file."""
 
 from __future__ import annotations
 
 from abc import abstractmethod
 import contextlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
-from pyvista.core import _validation
+import pyvista as pv
+from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.filters.composite import _format_nested_index
+from pyvista.core.utilities import _file_formats as _formats
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from vtkmodules.vtkIOCore import vtkWriter
+    from numpy.typing import NDArray
 
     from pyvista import DataObject
-    from pyvista import NumpyArray
+    from pyvista import _vtk
 
 _DataFormatOptions = Literal['binary', 'ascii']
 
@@ -31,20 +34,40 @@ _DataFormatOptions = Literal['binary', 'ascii']
 @abstract_class
 class _DataFormatMixin:
     # Different writers use different values to indicate the current format
+    """Add a ``data_format`` property to writers which support ASCII and binary output.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments passed to the parent class.
+
+    **kwargs : dict, optional
+        Keyword arguments passed to the parent class.
+
+
+    """
+
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
     _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
 
     @property
     @abstractmethod
-    def writer(self) -> vtkWriter: ...
+    def writer(self) -> _vtk.vtkWriter:  # numpydoc ignore=RT01
+        """Return the VTK writer this class configures."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.data_format = 'binary'
 
     @property
-    def data_format(self) -> _DataFormatOptions:
+    def data_format(self) -> _DataFormatOptions:  # numpydoc ignore=RT01
+        """Return or set whether the file is written as ``'ascii'`` or ``'binary'``."""
         try:
             mode = self.writer.GetDataMode()  # type: ignore[attr-defined]
         except AttributeError:
@@ -93,11 +116,10 @@ class BaseWriter(_FileIOBase):
         super().__init__()
         self.path = path
         self.data_object = data_object
+        self.written_path = path
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
-        import pyvista as pv  # noqa: PLC0415
-
         all_mesh_types = (
             pv.ImageData,
             pv.RectilinearGrid,
@@ -112,7 +134,7 @@ class BaseWriter(_FileIOBase):
         return [mesh_type._WRITERS for mesh_type in all_mesh_types]
 
     @property
-    def writer(self) -> vtkWriter:
+    def writer(self) -> _vtk.vtkWriter:
         """Return the vtk writer object.
 
         Returns
@@ -125,7 +147,21 @@ class BaseWriter(_FileIOBase):
 
     @property
     def path(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the filename or directory of the writer."""
+        """Return or set the filename or directory of the writer.
+
+        Notes
+        -----
+        This is the path that will be passed to the underlying VTK writer.
+        For most writers, this is the actual path of the written file.
+        For writers that write multiple files (for example, EnSightWriter),
+        this path can be renamed. See :attr:`written_path` for the actual path of the written file.
+
+        Returns
+        -------
+        str
+            The path of the file to write to.
+
+        """
         return self.writer.GetFileName()  # type: ignore[attr-defined]
 
     @path.setter
@@ -142,10 +178,35 @@ class BaseWriter(_FileIOBase):
         self._data_object = data_object
         self.writer.SetInputData(data_object)
 
-    def _execute_before_write(self) -> None:
-        """Execute code before calling `write()`.
+    @property
+    def written_path(self) -> Path:
+        """Return the formatted path of the written files.
 
-        Subclasses may optionally define this, e.g. to issue warnings.
+        .. versionadded:: 0.49.0
+
+        Notes
+        -----
+        Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
+        For most readers, ``path`` and ``written_path`` are identical. In cases where
+        multiple files are written (for example, :class:`vtkEnSightWriter`), this path corresponds
+        to the "main" output file that would be used for reading the mesh again.
+
+        Returns
+        -------
+        pathlib.Path
+            The path of the written file.
+
+        """
+        return self._written_path
+
+    @written_path.setter
+    def written_path(self, path: str | Path) -> None:
+        self._written_path = Path(path)
+
+    def _execute_before_write(self) -> None:
+        """Execute code before calling ``write()``.
+
+        Subclasses may optionally define this, for example, to issue warnings.
         """
 
     def write(self) -> None:
@@ -161,7 +222,7 @@ class BaseWriter(_FileIOBase):
 
 
 class BMPWriter(BaseWriter):
-    """BMPWriter for ``.bmp`` files.
+    """Writer for the BMP Image format (``.bmp``).
 
     Wraps :vtk:`vtkBMPWriter`.
 
@@ -169,12 +230,12 @@ class BMPWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkBMPWriter'
+    _format = _formats.BMP
 
 
 class DataSetWriter(BaseWriter, _DataFormatMixin):
-    """DataSetWriter for VTK legacy dataset files ``.vtk``.
+    """Writer for the Legacy VTK format (``.vtk``), for any dataset.
 
     Wraps :vtk:`vtkDataSetWriter`.
 
@@ -182,27 +243,25 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetWriter'
+    _format = _formats.LEGACY_VTK
 
     def _execute_before_write(self) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         # Warn if data will be lost
         if isinstance(mesh := self.data_object, pv.ImageData) and not np.allclose(
             mesh.direction_matrix, np.eye(3)
         ):
             msg = (
                 'The direction matrix for ImageData cannot be saved using the '
-                'legacy `.vtk` format.\n'
+                'Legacy VTK `.vtk` format.\n'
                 'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-                'Use the `.vti` extension instead (XML format).'
+                'Use the `.vti` extension instead (VTK ImageData format).'
             )
             raise ValueError(msg)
 
 
 class HDFWriter(BaseWriter):
-    """HDFWriter for ``.hdf`` and ``.vtkhdf`` files.
+    """Writer for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFWriter`.
 
@@ -210,25 +269,23 @@ class HDFWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFWriter'
+    _format = _formats.VTKHDF
 
     def _execute_before_write(self) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         if not isinstance(mesh := self.data_object, pv.MultiBlock):
             return
         # Check multiblock block types
         if pv.vtk_version_info < (9, 5, 0):
             if mesh.is_nested:
                 msg = (
-                    'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                    'Nested MultiBlocks are not supported by the VTKHDF format in VTK 9.4.'
                     '\nUpgrade to VTK>=9.5 for this functionality.'
                 )
                 raise TypeError(msg)
             if type(None) in mesh.block_types:
                 msg = (
-                    'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                    'Saving None blocks is not supported by the VTKHDF format in VTK 9.4.'
                     '\nUpgrade to VTK>=9.5 for this functionality.'
                 )
                 raise TypeError(msg)
@@ -242,20 +299,22 @@ class HDFWriter(BaseWriter):
         ]
         for id_, name, block in mesh.recursive_iterator('all'):
             if type(block) not in supported_block_types:
-                from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
-
                 index_fmt = _format_nested_index(id_)
                 msg = (
                     f"Block at index {index_fmt} with name '{name}' has type "
                     f'{block.__class__.__name__!r} '
-                    f'which cannot be saved to the .vtkhdf format.\n'
+                    f'which cannot be saved to the VTKHDF format.\n'
                     f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
                 )
                 raise TypeError(msg)
 
 
+# HDFWriter where the installed VTK can write VTKHDF, for splatting into a _WRITERS table
+_HDF_WRITERS: tuple[type[HDFWriter], ...] = (HDFWriter,) if vtk_version_info >= (9, 4) else ()
+
+
 class HoudiniPolyDataWriter(BaseWriter):
-    """HoudiniPolyDataWriter for Houdini geometry ``.geo`` files.
+    """Writer for the Houdini Geometry format (``.geo``).
 
     Wraps :vtk:`vtkHoudiniPolyDataWriter`.
 
@@ -263,12 +322,12 @@ class HoudiniPolyDataWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkHoudiniPolyDataWriter'
+    _format = _formats.HOUDINI
 
 
 class IVWriter(BaseWriter):
-    """IVWriter for OpenInventor ``.iv`` files.
+    """Writer for the Open Inventor format (``.iv``).
 
     Wraps :vtk:`vtkIVWriter`.
 
@@ -276,12 +335,12 @@ class IVWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkIVWriter'
+    _format = _formats.OPEN_INVENTOR
 
 
 class JPEGWriter(BaseWriter):
-    """JPEGWriter for ``.jpeg`` and ``.jpg`` files.
+    """Writer for the JPEG Image format (``.jpeg``, ``.jpg``).
 
     Wraps :vtk:`vtkJPEGWriter`.
 
@@ -289,12 +348,12 @@ class JPEGWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkJPEGWriter'
+    _format = _formats.JPEG
 
 
 class NIFTIImageWriter(BaseWriter):
-    """NIFTIImageWriter for ``.nii`` and ``.nii.gz`` files.
+    """Writer for the NIfTI format (``.nii``, ``.nii.gz``).
 
     Wraps :vtk:`vtkNIFTIImageWriter`.
 
@@ -302,12 +361,12 @@ class NIFTIImageWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkNIFTIImageWriter'
+    _format = _formats.NIFTI
 
 
 class OBJWriter(BaseWriter):
-    """OBJWriter for Wavefront ``.obj`` files.
+    """Writer for the Wavefront OBJ format (``.obj``).
 
     Wraps :vtk:`vtkOBJWriter`.
 
@@ -315,12 +374,12 @@ class OBJWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOBJWriter'
+    _format = _formats.OBJ
 
 
 class PLYWriter(BaseWriter, _DataFormatMixin):
-    """PLYWriter for PLY polygonal ``.ply`` files.
+    """Writer for the Stanford PLY format (``.ply``).
 
     Wraps :vtk:`vtkPLYWriter`.
 
@@ -328,8 +387,8 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOPLY'
     _vtk_class_name = 'vtkPLYWriter'
+    _format = _formats.PLY
 
     @property
     def texture(self) -> str | None:  # numpydoc ignore=RT01
@@ -337,7 +396,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
         return self.writer.GetArrayName()  # type: ignore[attr-defined]
 
     @texture.setter
-    def texture(self, texture: str | NumpyArray[float] | None) -> None:
+    def texture(self, texture: str | NDArray[np.uint8] | None) -> None:
         if texture is None:
             self.writer.SetArrayName(None)  # type: ignore[attr-defined]
             return
@@ -359,7 +418,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
 
 
 class PNGWriter(BaseWriter):
-    """PNGWriter for ``.png`` files.
+    """Writer for the PNG Image format (``.png``).
 
     Wraps :vtk:`vtkPNGWriter`.
 
@@ -367,12 +426,12 @@ class PNGWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNGWriter'
+    _format = _formats.PNG
 
 
 class PNMWriter(BaseWriter):
-    """PNMWriter for ``.pnm`` files.
+    """Writer for the PNM Image format (``.pnm``).
 
     Wraps :vtk:`vtkPNMWriter`.
 
@@ -380,12 +439,12 @@ class PNMWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkPNMWriter'
+    _format = _formats.PNM
 
 
 class PolyDataWriter(BaseWriter, _DataFormatMixin):
-    """PolyDataWriter for legacy VTK PolyData ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.PolyData`.
 
     Wraps :vtk:`vtkPolyDataWriter`.
 
@@ -393,12 +452,12 @@ class PolyDataWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkPolyDataWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
-    """RectilinearGridWriter for legacy VTK rectilinear grid ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.RectilinearGrid`.
 
     Wraps :vtk:`vtkRectilinearGridWriter`.
 
@@ -406,12 +465,12 @@ class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkRectilinearGridWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class STLWriter(BaseWriter, _DataFormatMixin):
-    """STLWriter for stereolithography  ``.stl`` files.
+    """Writer for the Stereolithography format (``.stl``).
 
     Wraps :vtk:`vtkSTLWriter`.
 
@@ -419,12 +478,12 @@ class STLWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkSTLWriter'
+    _format = _formats.STL
 
 
 class SimplePointsWriter(BaseWriter, _DataFormatMixin):
-    """SimplePointsWriter for simple point-set ``.xyz`` files.
+    """Writer for the XYZ Point Cloud format (``.xyz``).
 
     Wraps :vtk:`vtkSimplePointsWriter`.
 
@@ -432,12 +491,12 @@ class SimplePointsWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkSimplePointsWriter'
+    _format = _formats.XYZ_POINTS
 
 
 class StructuredGridWriter(BaseWriter, _DataFormatMixin):
-    """StructuredGridWriter for legacy VTK structured grid ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.StructuredGrid`.
 
     Wraps :vtk:`vtkStructuredGridWriter`.
 
@@ -445,12 +504,12 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkStructuredGridWriter'
+    _format = _formats.LEGACY_VTK
 
 
 class TIFFWriter(BaseWriter):
-    """TIFFWriter for ``.tif`` and ``.tiff`` files.
+    """Writer for the TIFF Image format (``.tif``, ``.tiff``).
 
     Wraps :vtk:`vtkTIFFWriter`.
 
@@ -458,12 +517,12 @@ class TIFFWriter(BaseWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOImage'
     _vtk_class_name = 'vtkTIFFWriter'
+    _format = _formats.TIFF
 
 
 class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
-    """UnstructuredGridWriter for legacy VTK unstructured grid ``.vtk`` files.
+    """Writer for the Legacy VTK format (``.vtk``), for :class:`~pyvista.UnstructuredGrid`.
 
     Wraps :vtk:`vtkUnstructuredGridWriter`.
 
@@ -471,12 +530,77 @@ class UnstructuredGridWriter(BaseWriter, _DataFormatMixin):
 
     """
 
-    _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkUnstructuredGridWriter'
+    _format = _formats.LEGACY_VTK
+
+
+class EnSightWriter(BaseWriter):
+    """Writer for the EnSight format (``.case``).
+
+    Wraps :vtk:`vtkEnSightWriter`.
+
+    .. note::
+        This is a parallel writer that prepends a process number to the ``.case`` extension,
+        for example, ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
+        to get the saved file after calling :meth:`~pyvista.BaseWriter.write`.
+
+    .. note::
+        This writer saves the mesh as a multi-block dataset.
+        Even if the input mesh is a single block, the output will be a multi-block dataset
+        and the default block name will be ``VTK Part``.
+
+    .. versionadded:: 0.49.0
+
+    """
+
+    _vtk_class_name = 'vtkEnSightWriter'
+    _format = _formats.ENSIGHT
+
+    @property
+    def path(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the filename or directory of the writer."""
+        # vtkEnSightWriter has no single FileName concept, only Path/BaseName.
+        path = Path(self.writer.GetPath())  # type: ignore[attr-defined]
+        basename = self.writer.GetBaseName()  # type: ignore[attr-defined]
+        return str(path / basename) if basename else str(path)
+
+    @path.setter
+    def path(self, path: str | Path) -> None:
+        # Set Path/BaseName directly to avoid vtkEnSightWriter's ComputeNames(),
+        # which splits FileName on the last '/' and breaks on Windows backslash
+        # paths (falls back to Path="./" and mangles the rest into BaseName).
+        raw_path = Path(path)
+        self.writer.SetPath(str(raw_path.parent))  # type: ignore[attr-defined]
+        self.writer.SetBaseName(raw_path.stem)  # type: ignore[attr-defined]
+
+    def _execute_before_write(self) -> None:
+        # ProcessNumber can still change after path is set (e.g. via writer_kwargs),
+        # so the final filename must be resolved here, not in the path setter.
+        raw_path = Path(self.path)
+        process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
+        self.written_path = raw_path.parent / f'{raw_path.stem}.{process_number}.case'
 
 
 @abstract_class
 class _XMLWriter(BaseWriter, _DataFormatMixin):
+    """Base class for the XML writers, which also support compression.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments passed to the parent class.
+
+    **kwargs : dict, optional
+        Keyword arguments passed to the parent class.
+
+
+    """
+
     _format_mapping = _DataFormatMixin._ascii0_binary1
 
     def __init__(self, *args, **kwargs) -> None:
@@ -484,7 +608,8 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         self.compression = 'zlib'
 
     @property
-    def compression(self) -> _CompressionOptions:
+    def compression(self) -> _CompressionOptions:  # numpydoc ignore=RT01
+        """Return or set the compressor the XML writer uses."""
         return self._compression
 
     @compression.setter
@@ -503,7 +628,7 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
 
 
 class XMLImageDataWriter(_XMLWriter):
-    """XMLImageDataWriter for VTK XML image data ``.vti`` files.
+    """Writer for the VTK ImageData format (``.vti``).
 
     Wraps :vtk:`vtkXMLImageDataWriter`.
 
@@ -511,12 +636,12 @@ class XMLImageDataWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLImageDataWriter'
+    _format = _formats.VTK_IMAGE_DATA
 
 
 class XMLMultiBlockDataWriter(_XMLWriter):
-    """XMLMultiBlockDataWriter for VTK XML multiblock ``.vtm`` files.
+    """Writer for the VTK MultiBlock format (``.vtm``, ``.vtmb``).
 
     Wraps :vtk:`vtkXMLMultiBlockDataWriter`.
 
@@ -524,15 +649,15 @@ class XMLMultiBlockDataWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataWriter'
+    _format = _formats.VTK_MULTIBLOCK
 
     def _execute_before_write(self) -> None:
         _warn_multiblock_nested_field_data(self.data_object)
 
 
 class XMLPartitionedDataSetWriter(_XMLWriter):
-    """XMLPartitionedDataSetWriter for VTK XML partitioned datasets ``.vtpd`` files.
+    """Writer for the VTK PartitionedDataSet format (``.vtpd``).
 
     Wraps :vtk:`vtkXMLPartitionedDataSetWriter`.
 
@@ -540,12 +665,12 @@ class XMLPartitionedDataSetWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOParallelXML'
     _vtk_class_name = 'vtkXMLPartitionedDataSetWriter'
+    _format = _formats.VTK_PARTITIONED_DATASET
 
 
 class XMLPolyDataWriter(_XMLWriter):
-    """XMLPolyDataWriter for VTK XML polydata ``.vtp`` files.
+    """Writer for the VTK PolyData format (``.vtp``).
 
     Wraps :vtk:`vtkXMLPolyDataWriter`.
 
@@ -553,12 +678,12 @@ class XMLPolyDataWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLPolyDataWriter'
+    _format = _formats.VTK_POLYDATA
 
 
 class XMLRectilinearGridWriter(_XMLWriter):
-    """XMLRectilinearGridWriter for VTK XML rectilinear grid ``.vtr`` files.
+    """Writer for the VTK RectilinearGrid format (``.vtr``).
 
     Wraps :vtk:`vtkXMLRectilinearGridWriter`.
 
@@ -566,12 +691,12 @@ class XMLRectilinearGridWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLRectilinearGridWriter'
+    _format = _formats.VTK_RECTILINEAR_GRID
 
 
 class XMLStructuredGridWriter(_XMLWriter):
-    """XMLStructuredGridWriter for VTK XML structured grid ``.vts`` files.
+    """Writer for the VTK StructuredGrid format (``.vts``).
 
     Wraps :vtk:`vtkXMLStructuredGridWriter`.
 
@@ -579,12 +704,12 @@ class XMLStructuredGridWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLStructuredGridWriter'
+    _format = _formats.VTK_STRUCTURED_GRID
 
 
 class XMLUnstructuredGridWriter(_XMLWriter):
-    """XMLUnstructuredGridWriter for VTK XML unstructured grid ``.vtu`` files.
+    """Writer for the VTK UnstructuredGrid format (``.vtu``).
 
     Wraps :vtk:`vtkXMLUnstructuredGridWriter`.
 
@@ -592,5 +717,5 @@ class XMLUnstructuredGridWriter(_XMLWriter):
 
     """
 
-    _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLUnstructuredGridWriter'
+    _format = _formats.VTK_UNSTRUCTURED_GRID

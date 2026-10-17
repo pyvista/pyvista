@@ -4,23 +4,21 @@
 Pixel Art of ALIEN MONSTERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we use :func:`pyvista.Box` to make `pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_.
+Use :func:`pyvista.Box` to make `pixel art <https://en.wikipedia.org/wiki/Pixel_art>`_.
+
 Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg>`_
 and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
 
-from __future__ import annotations
-
 import pyvista as pv
-from pyvista.demos import logo
 
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
 # sphinx_gallery_end_ignore
 
 # %%
-# Convert pixel art to an array
+# Convert Pixel Art to an Array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -47,12 +45,12 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
 
 
 # %%
-# Define function to draw pixels
+# Define Function to Draw Pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Define a helper function to add pixel boxes to plotter.
 
 
-def draw_pixels(plotter, pixels, center, color):  # noqa: PLR0917
+def draw_pixels(plotter, *, pixels, center, color):
     bounds = [
         center[0] - 1.0,
         center[0] + 1.0,
@@ -80,19 +78,17 @@ def draw_pixels(plotter, pixels, center, color):  # noqa: PLR0917
 
 # Display MONSTERS
 pl = pv.Plotter()
-pl = draw_pixels(pl, alien, [-22.0, 22.0], 'green')
-pl = draw_pixels(pl, alien, [0.0, 22.0], 'green')
-pl = draw_pixels(pl, alien, [22.0, 22.0], 'green')
-pl = draw_pixels(pl, alien, [-22.0, 0.0], 'blue')
-pl = draw_pixels(pl, alien, [0.0, 0.0], 'blue')
-pl = draw_pixels(pl, alien, [22.0, 0.0], 'blue')
-pl = draw_pixels(pl, alien, [-22.0, -22.0], 'red')
-pl = draw_pixels(pl, alien, [0.0, -22.0], 'red')
-pl = draw_pixels(pl, alien, [22.0, -22.0], 'red')
+pl = draw_pixels(pl, pixels=alien, center=[-22.0, 22.0], color='green')
+pl = draw_pixels(pl, pixels=alien, center=[0.0, 22.0], color='green')
+pl = draw_pixels(pl, pixels=alien, center=[22.0, 22.0], color='green')
+pl = draw_pixels(pl, pixels=alien, center=[-22.0, 0.0], color='blue')
+pl = draw_pixels(pl, pixels=alien, center=[0.0, 0.0], color='blue')
+pl = draw_pixels(pl, pixels=alien, center=[22.0, 0.0], color='blue')
+pl = draw_pixels(pl, pixels=alien, center=[-22.0, -22.0], color='red')
+pl = draw_pixels(pl, pixels=alien, center=[0.0, -22.0], color='red')
+pl = draw_pixels(pl, pixels=alien, center=[22.0, -22.0], color='red')
 
-text = logo.text_3d('ALIEN MONSTERS', depth=10.0)
-text.points *= 4.0
-text.translate([-20.0, 24.0, 0.0], inplace=True)
+text = pv.Text3D('ALIEN MONSTERS', depth=40.0, width=56.8, center=(9.0, 26.0, 20.0))
 
 pl.add_mesh(text, color='yellow')
 pl.show(cpos='xy')

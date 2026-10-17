@@ -3,25 +3,32 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.misc import _resolve_line_style
+from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
-from . import _vtk
-from . import _vtk_gl
+from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
+from .mapper import _PolyDataMapper
 from .opts import PointSpriteShape
 from .opts import ShaderType
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import Self
 
-    from typing_extensions import Self
+    from pyvista import DataSet
+    from pyvista.core._typing_core import LineStyle
 
     from .mapper import _BaseMapper
 
@@ -97,6 +104,41 @@ _POINT_SPRITE_SHADERS: dict[str, str] = {
 }
 
 
+_DASH_VERTEX_DEC = """//VTK::PositionVC::Dec
+in float dashArcMC;
+out float dashArcVS;
+noperspective out float dashArc;
+"""
+
+_DASH_VERTEX_IMPL = """{
+  vec3 dashRow = vec3(MCDCMatrix[0].y, MCDCMatrix[1].y, MCDCMatrix[2].y);
+  float dashDepth = (MCDCMatrix * vec4(0.0, 0.0, 0.0, 1.0)).w;
+  float dashValue = dashArcMC * 0.5 * length(dashRow) / (dashDepth * dashInterval);
+  dashArcVS = dashValue;
+  dashArc = dashValue;
+}
+//VTK::CustomEnd::Impl
+"""
+
+_DASH_GEOMETRY_DEC = """//VTK::PositionVC::Dec
+in float dashArcVS[];
+noperspective out float dashArc;
+"""
+
+_DASH_GEOMETRY_IMPL = """dashArc = dashArcVS[i];
+//VTK::Color::Impl
+"""
+
+_DASH_FRAGMENT_DEC = """//VTK::PositionVC::Dec
+noperspective in float dashArc;
+"""
+
+_DASH_FRAGMENT_IMPL = """//VTK::Color::Impl
+if (((1 << int(mod(abs(dashArc), 16.0))) & dashPattern) == 0)
+  discard;
+"""
+
+
 class Actor(Prop3D, _vtk.vtkActor):
     """Wrap :vtk:`vtkActor`.
 
@@ -161,7 +203,12 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    def __init__(self, mapper=None, prop=None, name=None) -> None:
+    def __init__(
+        self,
+        mapper: _vtk.vtkMapper | _BaseMapper | None = None,
+        prop: Property | None = None,
+        name: str | None = None,
+    ) -> None:
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -172,12 +219,17 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.prop = prop
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
+        self._line_style: LineStyle | None = None
+        self._dash_source: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None = None
+        self._dash_input_dataset: DataSet | None = None
+        self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
         self._point_sprite_observer: int | None = None
+        self._camera_distortion_state: tuple[tuple[float, ...], tuple[float, float]] | None = None
 
     @property
-    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
+    def mapper(self) -> _BaseMapper | None:  # numpydoc ignore=RT01
         """Return or set the mapper of the actor.
 
         Examples
@@ -210,11 +262,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj) -> None:
-        self.SetMapper(obj)
+    def mapper(self, obj: _vtk.vtkMapper | _BaseMapper | None) -> None:
+        # VTK's stubs do not allow clearing the mapper with ``None``, but VTK does
+        self.SetMapper(obj)  # type: ignore[arg-type]
 
     @property
-    def prop(self):  # numpydoc ignore=RT01
+    def prop(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -229,14 +282,14 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> pl.show()
 
         """
-        return self.GetProperty()
+        return self.GetProperty()  # type: ignore[return-value]
 
     @prop.setter
     def prop(self, obj: Property) -> None:
         self.SetProperty(obj)
 
     @property
-    def texture(self):  # numpydoc ignore=RT01
+    def texture(self) -> _vtk.vtkTexture | None:  # numpydoc ignore=RT01
         """Return or set the actor texture.
 
         Notes
@@ -264,14 +317,16 @@ class Actor(Prop3D, _vtk.vtkActor):
           Dimensions:   256, 256
 
         """
-        return self.GetTexture()
+        # VTK returns ``None`` when the actor has no texture
+        texture: _vtk.vtkTexture | None = self.GetTexture()
+        return texture
 
     @texture.setter
-    def texture(self, obj) -> None:
+    def texture(self, obj: _vtk.vtkTexture) -> None:
         self.SetTexture(obj)
 
     @property
-    def memory_address(self):  # numpydoc ignore=RT01
+    def memory_address(self) -> str:  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
         return self.GetAddressAsString('')
 
@@ -295,7 +350,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value) -> None:
+    def pickable(self, value: bool) -> None:
         self.SetPickable(value)
 
     @property
@@ -418,7 +473,7 @@ class Actor(Prop3D, _vtk.vtkActor):
     def use_bounds(self, value: bool) -> None:
         self.SetUseBounds(value)
 
-    def plot(self, **kwargs) -> None:
+    def plot(self, **kwargs: Any) -> None:
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
@@ -446,8 +501,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         pl.add_actor(self)
         pl.show(**kwargs)
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Create a copy of this actor.
 
         Parameters
@@ -490,7 +544,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             new_actor.ShallowCopy(self)
         return new_actor
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of the actor."""
         mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
@@ -528,10 +582,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         -------
         pyvista.Property
             The object describing backfaces.
-
-        See Also
-        --------
-        :ref:`backface_prop_example`
 
         Examples
         --------
@@ -589,7 +639,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             or ``'geometry'``.
 
         original : str
-            The VTK shader tag to replace (e.g., ``'//VTK::Color::Impl'``).
+            The VTK shader tag to replace (for example, ``'//VTK::Color::Impl'``).
 
         replacement : str
             The GLSL replacement code.
@@ -636,7 +686,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             msg = f'Invalid shader_type {shader_type!r}. Must be one of: {valid}'
             raise ValueError(msg) from None
 
-        vtk_enum = getattr(_vtk_gl.vtkShader, shader_type.value.capitalize())
+        vtk_enum = getattr(_vtk.vtkShader, shader_type.value.capitalize())
         key = (shader_type, original, replace_first)
         registry = self._shader_replacements
 
@@ -704,7 +754,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             registry.clear()
         elif _feature_name in registry:
             for shader_type_val, original, replace_first in registry[_feature_name]:
-                vtk_enum = getattr(_vtk_gl.vtkShader, shader_type_val.value.capitalize())
+                vtk_enum = getattr(_vtk.vtkShader, shader_type_val.value.capitalize())
                 # vtkOpenGLShaderProperty at runtime; stubs only know vtkShaderProperty
                 shader_prop.ClearShaderReplacement(  # type: ignore[attr-defined]
                     vtk_enum,
@@ -712,6 +762,209 @@ class Actor(Prop3D, _vtk.vtkActor):
                     replace_first,
                 )
             del registry[_feature_name]
+
+    @property
+    def line_style(self) -> LineStyle | None:  # numpydoc ignore=RT01
+        """Return or set the dash style drawn along this actor's lines.
+
+        Unlike :func:`pyvista.PolyDataFilters.dash_lines`, which splits the line
+        cells into shorter cells, the dashes are produced by the fragment shader
+        and keep a constant size on screen as the camera zooms. The geometry is
+        unchanged and the dashes are not present in exported scenes.
+
+        Set to a style string to dash the lines, to ``''`` to hide them, or to
+        ``None`` to draw them solid. Accepts the same styles as
+        :func:`pyvista.PolyDataFilters.dash_lines`. Use :attr:`dash_interval`
+        to set the size of the interval pattern.
+
+        .. versionadded:: 0.50
+
+        Notes
+        -----
+        .. include:: /api/plotting/line_styles.rst
+
+        * Requires an actor from :func:`~pyvista.Plotter.add_mesh` with a
+          ``line_style`` other than ``'-'``.
+        * Requires a mesh of line cells. Polygons and strips are rejected.
+        * Edges drawn with ``show_edges=True`` are not dashed. Extract them with
+          :func:`~pyvista.DataObjectFilters.extract_all_edges` and add that as
+          its own mesh.
+        * Cells shorter on screen than ``line_width`` are drawn solid.
+        * Cell scalars restart the pattern at each cell.
+
+        Examples
+        --------
+        Dash the lines of a circle.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=200).extract_all_edges()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
+        >>> pl.show(cpos='xy')
+
+        """
+        return self._line_style
+
+    @line_style.setter
+    def line_style(self, value: LineStyle | None) -> None:
+        if value is None or value == '-':
+            self._disable_line_style()
+            return
+
+        bits = _resolve_line_style(value, name='line_style')
+
+        mapper = self.mapper
+        if not isinstance(mapper, _PolyDataMapper):
+            msg = (
+                'Dashed lines require a mesh added with add_mesh(..., line_style=...) '
+                "using a style other than '-'."
+            )
+            raise TypeError(msg)
+
+        dataset = mapper.dataset
+        if dataset is None:
+            msg = 'Actor must have a dataset to enable dashed lines.'
+            raise ValueError(msg)
+
+        if self._dash_source is None:
+            self._dash_input_dataset = mapper._input_dataset
+            pipeline, self._dash_source = self._build_dash_pipeline(mapper, dataset)
+            mapper.dataset = pipeline
+            mapper.MapDataArrayToVertexAttribute(
+                'dashArcMC',
+                'arc_length',
+                FieldAssociation.POINT.value,
+                -1,
+            )
+        self._line_style = value
+
+        try:
+            self._apply_dash_shader(bits)
+        except Exception:
+            self._disable_line_style()
+            raise
+
+    def _apply_dash_shader(self, bits: int) -> None:
+        """Replace the shader stages that discard the undrawn parts of a line."""
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::PositionVC::Dec',
+            _DASH_VERTEX_DEC,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::CustomEnd::Impl',
+            _DASH_VERTEX_IMPL,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'geometry',
+            '//VTK::PositionVC::Dec',
+            _DASH_GEOMETRY_DEC,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'geometry',
+            '//VTK::Color::Impl',
+            _DASH_GEOMETRY_IMPL,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::PositionVC::Dec',
+            _DASH_FRAGMENT_DEC,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::Color::Impl',
+            _DASH_FRAGMENT_IMPL,
+            _feature_name='line_style',
+        )
+        shader_property = self.GetShaderProperty()
+        shader_property.GetVertexCustomUniforms().SetUniformf('dashInterval', self._dash_interval)
+        shader_property.GetFragmentCustomUniforms().SetUniformi('dashPattern', bits)
+
+    @property
+    def dash_interval(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the on-screen length of one dash pattern interval.
+
+        The length is a fraction of the renderer's viewport height, so a subplot
+        dashes at the same rate as a full window of that height. A full pattern
+        repeats every sixteen intervals.
+
+        This property only affects lines with a dashed :attr:`line_style`.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Line(), line_style='--')
+        >>> actor.dash_interval = 0.01
+
+        """
+        return self._dash_interval
+
+    @dash_interval.setter
+    def dash_interval(self, value: float) -> None:
+        _validation.check_greater_than(value, 0, name='dash_interval')
+        value = float(value)
+        self._dash_interval = value
+        if self._line_style is not None:
+            self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
+
+    def _build_dash_pipeline(
+        self, mapper: _PolyDataMapper, dataset: DataSet
+    ) -> tuple[_vtk.vtkAlgorithm, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput]:
+        """Return an arc length algorithm for the actor's lines and the input it wraps."""
+        scalars_algo = mapper._active_scalars_algo
+        source: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput = (
+            mapper if scalars_algo is None else scalars_algo
+        ).GetInputConnection(0, 0)
+
+        surface = dataset
+        if not isinstance(dataset, pv.PolyData):
+            geometry = _vtk.vtkGeometryFilter()
+            set_algorithm_input(geometry, source)
+            geometry.Update()
+            source = geometry
+            surface = pv.wrap(geometry.GetOutput())
+
+        if surface.n_faces or surface.n_strips:
+            msg = (
+                'Dashed lines require a mesh of line cells. Extract the lines into their '
+                'own mesh first, for example with extract_all_edges.'
+            )
+            raise ValueError(msg)
+
+        upstream: _vtk.vtkAlgorithm
+        if mapper.scalar_map_mode == 'cell':
+            upstream = _vtk.vtkShrinkPolyData()
+            upstream.SetShrinkFactor(1.0)
+        else:
+            upstream = _vtk.vtkStripper()
+            upstream.SetJoinContiguousSegments(True)
+        set_algorithm_input(upstream, source)
+        arc_length = _vtk.vtkAppendArcLength()
+        set_algorithm_input(arc_length, upstream)
+        return arc_length, source
+
+    def _disable_line_style(self) -> None:
+        """Remove the dash shader and restore the mapper's original input."""
+        if self._line_style is None:
+            return
+        self.clear_shader_replacements(_feature_name='line_style')
+        mapper = self.mapper
+        if isinstance(mapper, _PolyDataMapper) and self._dash_source is not None:
+            mapper.RemoveVertexAttributeMapping('dashArcMC')
+            mapper.dataset = self._dash_source
+            mapper._input_dataset = self._dash_input_dataset
+        self._dash_source = None
+        self._dash_input_dataset = None
+        self._line_style = None
 
     def enable_maximum_intensity_projection(
         self,
@@ -755,10 +1008,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         ``opacity < 1`` unless depth peeling is enabled. See
         :func:`pyvista.Plotter.enable_depth_peeling`.
 
-        See Also
-        --------
-        :ref:`maximum_intensity_projection_example`
-
         References
         ----------
         Cowan, E.J., 2014. 'X-ray Plunge Projection' - Understanding
@@ -780,10 +1029,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.enable_maximum_intensity_projection()
 
         """
-        if pv.vtk_version_info < (9, 3):
-            msg = 'Maximum intensity projection requires VTK >= 9.3.'
-            raise RuntimeError(msg)
-
         if clim is not None:
             min_val, max_val = float(clim[0]), float(clim[1])
         else:
@@ -856,6 +1101,28 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         self.clear_shader_replacements(_feature_name='mip')
 
+    @property
+    def point_sprite_shape(self) -> str:  # numpydoc ignore=RT01
+        """Return the requested point shape, including ``'square'``.
+
+        The shape is retained when another representation or sphere rendering
+        makes it inactive.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> actor = pv.Actor()
+        >>> actor.set_point_sprite_shape('circle')
+        >>> actor.point_sprite_shape
+        'circle'
+
+        """
+        if _HAS_NATIVE_POINT_SHAPES:
+            return self.prop.point_shape
+        return self._point_sprite_shape or 'square'
+
     def set_point_sprite_shape(self, shape: PointSpriteShape | str) -> None:
         """Set a custom point sprite shape via fragment shader.
 
@@ -865,15 +1132,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         defined by a GLSL fragment shader. This uses the ``discard``
         instruction to clip fragments outside the desired shape boundary.
 
-        The chosen shape is **persisted on the actor** and is only
-        injected into the fragment shader while the actor's
-        :attr:`~pyvista.Property.style` is ``'points'``. When the style
-        is ``'surface'`` or ``'wireframe'`` the shader replacement is
-        transparently removed, because the underlying GLSL relies on
-        ``gl_PointCoord`` which is undefined for non-point primitives
-        and would otherwise corrupt the rendering. Switching
-        ``prop.style`` back to ``'points'`` later will re-install the
-        shader automatically.
+        With native point-shape support, the shape is stored on
+        :attr:`pyvista.Property.point_shape` and applies to point primitives
+        in every representation, including vertex cells in surfaces.
+        Sphere rendering takes precedence while enabled. Older backends use
+        a shader replacement active only in ``'points'`` representation.
+        The requested shape can be read from :attr:`point_sprite_shape`.
 
         Parameters
         ----------
@@ -926,6 +1190,9 @@ class Actor(Prop3D, _vtk.vtkActor):
             msg = f'Invalid point sprite shape {shape!r}. Must be one of: {valid}'
             raise ValueError(msg)
 
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.prop.point_shape = shape
+            return
         self._point_sprite_shape = shape.value if isinstance(shape, PointSpriteShape) else shape
         self._install_point_sprite_observer()
         self._sync_point_sprite_shader()
@@ -950,6 +1217,9 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.clear_point_sprite_shape()
 
         """
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.prop.point_shape = 'square'
+            return
         self._point_sprite_shape = None
         if self._point_sprite_observer is not None:
             self.prop.RemoveObserver(self._point_sprite_observer)
@@ -983,7 +1253,7 @@ class Actor(Prop3D, _vtk.vtkActor):
                 owner._sync_point_sprite_shader()
 
         self._point_sprite_observer = self.prop.AddObserver(
-            'ModifiedEvent',
+            _vtk.vtkCommand.ModifiedEvent,
             _on_property_modified,
         )
 
@@ -991,10 +1261,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         """Install, update, or remove the point sprite shader replacement.
 
         The replacement is only active while the representation is
-        ``'Points'`` — for any other representation the ``gl_PointCoord``
+        ``'Points'``—for any other representation the ``gl_PointCoord``
         built-in is undefined and would otherwise corrupt fragment output.
-        Tracks the currently-applied shape (rather than a boolean) so
-        that unrelated property modifications (color, opacity, ...) do
+        Tracks the currently applied shape (rather than a boolean) so
+        that unrelated property modifications (color, opacity, and so on) do
         not repeatedly rebuild the shader, while still honoring real
         shape changes and representation transitions.
         """

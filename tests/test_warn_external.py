@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pathlib
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
 
@@ -22,7 +22,7 @@ def test_warn_external(recwarn: pytest.WarningsRecorder):
         # With Python 3.12, we let Python figure out the stacklevel using the
         # `skip_file_prefixes` argument, which cannot exempt tests, so just confirm
         # the filename is not in the package.
-        basedir = pathlib.Path(__file__).parents[1]
+        basedir = Path(__file__).parents[1]
         assert not recwarn[0].filename.startswith(str(basedir / 'pyvista'))
 
     else:

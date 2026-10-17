@@ -1,6 +1,8 @@
 .. _what_is_a_mesh:
 
-What is a Mesh?
+.. autoopengraph_thumbnail:: 7
+
+What Is a Mesh?
 ===============
 In PyVista, a mesh is any spatially referenced information and usually
 consists of geometrical representations of a surface or volume in 3D
@@ -24,7 +26,7 @@ do not have to get bogged down in the nuances.
    underlying VTK data model, please see :ref:`pyvista_data_model`.
 
 
-What is a Point?
+What Is a Point?
 ----------------
 Points are the vertices of the mesh, also referred to as the Cartesian
 coordinates of the underlying structure. All PyVista datasets (meshes) have
@@ -104,7 +106,7 @@ Or this triangulated surface:
 
 
 
-What is a Cell?
+What Is a Cell?
 ---------------
 A cell is the geometry between points that defines the connectivity or
 topology of a mesh. In the examples above, cells are defined by the
@@ -138,13 +140,13 @@ points, a line between two points, or even a single point could be its
 own cell (but that's a special case).
 
 
-What are Attributes?
+What Are Attributes?
 --------------------
 Attributes are data values that live on either the points or cells of
 a mesh. In PyVista, we work with both point data and cell data and
 allow easy access to data dictionaries to hold arrays for attributes
 that live either on all points or on all cells of a mesh. These
-attributes can be accessed in a Dictionary-like attribute attached to
+attributes can be accessed in a dictionary-like attribute attached to
 any PyVista mesh accessible as one of the following:
 
 * :attr:`point_data <pyvista.DataSet.point_data>`

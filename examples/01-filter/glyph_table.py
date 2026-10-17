@@ -4,11 +4,11 @@
 Table of Glyphs
 ~~~~~~~~~~~~~~~
 
-``vtk`` supports tables of glyphs from which glyphs are looked
-up. This example demonstrates this functionality.
-"""
+``vtk`` supports tables of glyphs from which glyphs are looked up.
 
-from __future__ import annotations
+This example demonstrates this functionality.
+
+"""
 
 import numpy as np
 import pyvista as pv

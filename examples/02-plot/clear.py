@@ -4,14 +4,11 @@
 Clearing a Mesh or the Entire Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates how to remove elements from a scene using
-:meth:`~pyvista.Plotter.clear`.
+Remove elements from a scene using :meth:`~pyvista.Plotter.clear`.
 
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 
 # %%

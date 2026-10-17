@@ -4,6 +4,8 @@
 Plotter Lighting Systems
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+Compare the :class:`pyvista.Plotter` class's three default lighting systems.
+
 The :class:`pyvista.Plotter` class comes with three options for the default
 lighting system:
 
@@ -15,17 +17,16 @@ With meshes that don't have depth information encoded in their color the
 importance of an appropriate lighting setup becomes paramount for accurate
 visualization.
 
-Light kit
+Light Kit
 =========
 
 The default ``lighting='light kit'`` option recreates a lighting setup that
 corresponds to a :vtk:`vtkLightKit`. We can check what type of lights this
 lighting comprises:
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -49,7 +50,7 @@ pl.show()
 
 
 # %%
-# Three-lights illumination
+# Three-Lights Illumination
 # =========================
 #
 # Switching to three-lights illumination gives a different character to the
@@ -74,7 +75,7 @@ light_types
 
 
 # %%
-# Custom lighting
+# Custom Lighting
 # ===============
 #
 # We can introduce our own lighting from scratch by disabling any
@@ -91,7 +92,7 @@ pl.show()
 
 
 # %%
-# Custom lighting with shadows
+# Custom Lighting With Shadows
 # ============================
 #
 # Here, we ``enable_shadows`` to enhance the effect that the lighting

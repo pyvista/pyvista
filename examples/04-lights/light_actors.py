@@ -4,18 +4,18 @@
 Light Actors
 ~~~~~~~~~~~~
 
-Positional lights in PyVista have customizable beam shapes, see the
-:ref:`beam_shape_example` example. Spotlights are special in
-the sense that they are unidirectional lights with a finite position,
-so they can be visualized using a cone.
+Visualize the customizable beam shapes of positional lights.
+
+See the :ref:`beam_shape_example` example. Spotlights are special in the
+sense that they are unidirectional lights with a finite position, so they
+can be visualized using a cone.
 
 This is exactly the purpose of a :vtk:`vtkLightActor`, the
 functionality of which can be enabled for spotlights:
+
 """
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 from pyvista import examples

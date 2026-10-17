@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-import contextlib
+
+# A type in a base-class position; see "Import Conventions" in CONTRIBUTING.rst.
+from contextlib import AbstractContextManager  # noqa: ICN003
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
@@ -14,22 +16,25 @@ from typing import final
 from typing import get_args
 from typing import overload
 
-from pyvista.core import _vtk_core as _vtk
+import pyvista_validation as _validation
+
+import pyvista as pv
+from pyvista import _vtk
 from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
+class _StateManager(AbstractContextManager[None], ABC, Generic[_T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:
 
-    - Specify a `Literal` as the subclass' type argument. The literal's
+    - Specify a ``Literal`` as the subclass' type argument. The literal's
       arguments must specify all allowable options for the state variable.
     - Define a getter and setter for the state. Input validation is not
       required - the input is automatically validated when setting the state.
@@ -100,22 +105,20 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
     def __init__(self) -> None:
         """Initialize context manager."""
         self._valid_states = self._get_state_options_from_literal()
-        self._original_state: T | None = None
+        self._original_state: _T | None = None
 
     @property
     @abstractmethod
-    def _state(self) -> T:
+    def _state(self) -> _T:
         """Get the current global state."""
 
     @_state.setter
     @abstractmethod
-    def _state(self, state: T) -> None:
+    def _state(self, state: _T) -> None:
         """Set the global state."""
 
     @final
-    def _validate_state(self, state: T) -> T:
-        from pyvista import _validation  # noqa: PLC0415
-
+    def _validate_state(self, state: _T) -> _T:
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
 
@@ -127,14 +130,14 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: ANN001, ANN204
         """Exit context manager and restore original state."""
-        self._state = cast('T', self._original_state)
+        self._state = cast('_T', self._original_state)
         self._original_state = None  # Reset
 
     @overload
-    def __call__(self: Self, state: None) -> T: ...
+    def __call__(self: Self, state: None = None) -> _T: ...
     @overload
-    def __call__(self: Self, state: T) -> Self: ...
-    def __call__(self: Self, state: T | None = None) -> Self | T:
+    def __call__(self: Self, state: _T) -> Self: ...
+    def __call__(self: Self, state: _T | None = None) -> Self | _T:
         """Call the context manager."""
         if state is None:
             return self._state
@@ -157,7 +160,7 @@ _VerbosityOptions = Literal[
 ]
 
 
-class _VTKVerbosity(_StateManager[_VerbosityOptions]):
+class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
@@ -213,6 +216,9 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
     @property
     def _state(self) -> _VerbosityOptions:
         int_to_string: dict[int, _VerbosityOptions] = {
+            # -10 is returned when VTK is built with VTK_ENABLE_LOGGING=OFF
+            # (loguru's Verbosity_OFF sentinel); treat it the same as 'off'.
+            -10: 'off',
             -9: 'off',
             -2: 'error',
             -1: 'warning',
@@ -241,11 +247,11 @@ _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 
 
 class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
-    """Context manager to control access to VTK's pythonic snake_case API.
+    """Context manager to control access to VTK's pythonic ``snake_case`` API.
 
-    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
-    of `GetOutputPort`. These can easily be confused for PyVista attributes
-    which also use a snake_case convention. This class controls access to vtk's
+    VTK 9.4 introduced pythonic ``snake_case`` attributes, for example, ``output_port`` instead
+    of ``GetOutputPort``. These can easily be confused for PyVista attributes
+    which also use a ``snake_case`` convention. This class controls access to vtk's
     new interface.
 
     .. versionadded:: 0.45
@@ -253,29 +259,29 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     Parameters
     ----------
     state : 'allow' | 'warning' | 'error'
-        Allow or disallow the use of VTK's pythonic snake_case API with
+        Allow or disallow the use of VTK's pythonic ``snake_case`` API with
         PyVista-wrapped VTK classes.
 
-        - 'allow': Allow accessing VTK-defined snake_case attributes.
-        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+        - 'allow': Allow accessing VTK-defined ``snake_case`` attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined ``snake_case``
           attributes.
         - 'error': Raise a ``PyVistaAttributeError`` when accessing
-          VTK-defined snake_case attributes.
+          VTK-defined ``snake_case`` attributes.
 
     Examples
     --------
-    Get the current access state for VTK's snake_case api.
+    Get the current access state for VTK's ``snake_case`` API.
 
     >>> import pyvista as pv
     >>> pv.vtk_snake_case()
     'error'
 
-    The following will raise an error because the `information` property is defined
+    The following will raise an error because the ``information`` property is defined
     by :vtk:`vtkDataObject` and is not part of PyVista's API.
 
     >>> # pv.PolyData().information
 
-    Allow use of VTK's snake_case attributes. No warning or error is raised.
+    Allow use of VTK's ``snake_case`` attributes. No warning or error is raised.
 
     >>> _ = pv.vtk_snake_case('allow')
     >>> pv.PolyData().information
@@ -312,17 +318,17 @@ vtk_snake_case = _vtkSnakeCase()
 _AllowNewAttributesOptions = Literal['private', True, False]
 
 
-class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
+class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):  # numpydoc ignore=PR02
     """Context manager to control setting new attributes on PyVista classes.
 
     Python allows arbitrarily setting new attributes on objects at any time,
     but PyVista's classes do not always allow this. By default, setting a
     new attribute is only allowed when the attribute's name has a leading
-    underscore "``_``", i.e. it is a private attribute; attempting to
+    underscore "``_``", that is, it is a private attribute; attempting to
     set a new public attribute raises an ``AttributeError``.
 
     This context manager may be used to allow or disallow setting `any` new
-    attribute, public or private, either globally or within a context.
+    attribute (public or private), either globally or within a context.
 
     .. versionadded:: 0.47
 
@@ -352,8 +358,9 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
     -----
     Allowing new attributes by default outside ``__init__`` and/or without formally defining
     class properties was found to be a source of bugs for both developers and users of PyVista.
-    It's very easy to set the wrong attribute name (e.g. ``interpolate`` vs. ``interpolation``)
-    without any errors being generated, and users transitioning from older versions of PyVista
+    It's very easy to set the wrong attribute name (for example, ``interpolate`` vs.
+    ``interpolation``) without any errors being generated, and users transitioning
+    from older versions of PyVista
     would have code that sets attributes which were once valid, but have since been deprecated and
     removed. Attempting to set an attribute which is not already defined now raises an
     ``AttributeError`` to clearly signal that there is a potential problem with this line of code.
@@ -397,14 +404,10 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
 
     @property
     def _state(self) -> _AllowNewAttributesOptions:
-        from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-
-        return _ALLOW_NEW_ATTRIBUTES_MODE
+        return pv._ALLOW_NEW_ATTRIBUTES_MODE
 
     @_state.setter
     def _state(self, state: _AllowNewAttributesOptions) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         pv._ALLOW_NEW_ATTRIBUTES_MODE = state
 
 

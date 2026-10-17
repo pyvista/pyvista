@@ -3,9 +3,10 @@
 
 Saving Screenshots
 ~~~~~~~~~~~~~~~~~~
-"""
 
-from __future__ import annotations
+Save a screenshot of a plot without creating an interactive window.
+
+"""
 
 import matplotlib.pyplot as plt
 

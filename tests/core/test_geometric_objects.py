@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from itertools import permutations
+import itertools
 import re
+from typing import TYPE_CHECKING
+import warnings
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -9,6 +11,54 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from tests.conftest import _get_module_functions
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView
+    from types import FunctionType
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'geometric_obj_test_case' in metafunc.fixturenames:
+        functions = _generate_geometric_object_functions()
+        ids = [name for name, _ in functions]
+        metafunc.parametrize('geometric_obj_test_case', functions, ids=ids)
+
+
+def _generate_geometric_object_functions() -> ItemsView[str, FunctionType]:
+    """Generate a list of geometric or parametric object functions which have a direction."""
+    geo_functions = _get_module_functions(pv.core.geometric_objects)
+    para_functions = _get_module_functions(pv.core.parametric_objects)
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
+    return {name: func for name, func in functions.items() if name[0].isupper()}.items()
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_geometric_objects_points_dtype(geometric_obj_test_case, dtype):
+    """Every geometric and parametric object honors the global points dtype."""
+    name, func = geometric_obj_test_case
+
+    # Add required args if needed
+    kwargs = {}
+    if name == 'CircularArc':
+        kwargs['center'] = (0, 0, 0)
+        kwargs['pointa'] = (1, 0, 0)
+        kwargs['pointb'] = (0, 1, 0)
+    elif name == 'CircularArcFromNormal':
+        kwargs['center'] = (0, 0, 0)
+    elif name in ['KochanekSpline', 'Spline']:
+        kwargs['points'] = np.eye(3)
+    elif name == 'Text3D':
+        kwargs['string'] = 'Text3D'
+
+    pv.global_config.points_dtype = dtype
+    with warnings.catch_warnings():
+        # A few of these are built from VTK algorithms that only generate single
+        # precision; they warn under 'float64' but still come back float64
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        obj = func(**kwargs)
+    assert obj.points.dtype == np.dtype(dtype)
 
 
 @given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
@@ -45,6 +95,13 @@ def test_cylinder_structured():
     cyl = pv.CylinderStructured()
     assert np.any(cyl.points)
     assert np.any(cyl.n_cells)
+
+    match = 'must all be greater than 0.0'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[0.0, 1.0])
+    match = 'must be sorted in strict ascending order'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.CylinderStructured(radius=[1.0, 0.5])
 
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
@@ -106,16 +163,156 @@ def test_sphere_theta():
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
+def test_sphere_texture_coordinates():
+    sphere = pv.Sphere(texture_coordinates=False)
+    assert sphere.active_texture_coordinates is None
+    assert sphere.n_open_edges == 0
+
+    phi_resolution = 30
+    sphere = pv.Sphere(
+        texture_coordinates=True, tessellation='phi_theta', phi_resolution=phi_resolution
+    )
+    assert sphere.point_data.active_texture_coordinates_name == 'Texture Coordinates'
+    assert sphere.n_open_edges == (phi_resolution - 1) * 2
+
+    phi_resolution = 50
+    sphere = pv.Sphere(
+        texture_coordinates=True, tessellation='phi_theta', phi_resolution=phi_resolution
+    )
+    assert sphere.n_open_edges == (phi_resolution - 1) * 2
+
+    match = 'Texture coordinates are not supported for partial spheres'
+    with pytest.raises(ValueError, match=match):
+        _ = pv.Sphere(texture_coordinates=True, start_phi=1)
+    with pytest.raises(ValueError, match=match):
+        _ = pv.Sphere(texture_coordinates=True, start_theta=1)
+
+
+def test_sphere_tessellation():
+    sphere = pv.Sphere(tessellation='triangle')
+    assert sphere.distinct_cell_types == {pv.CellType.TRIANGLE}
+    assert sphere.n_cells == 1680
+    assert sphere.n_open_edges == 0
+
+    sphere = pv.Sphere(tessellation='phi_theta')
+    assert sphere.distinct_cell_types == {pv.CellType.TRIANGLE, pv.CellType.QUAD}
+    assert sphere.n_cells == 870
+    assert sphere.n_open_edges == 0
+
+
 def test_solid_sphere():
     sphere = pv.SolidSphere()
     assert isinstance(sphere, pv.UnstructuredGrid)
     assert np.any(sphere.points)
 
     # make sure cell creation gives positive volume.
-    for cell in sphere.cell:
-        assert cell.cast_to_unstructured_grid().volume > 0
+    volumes = sphere.compute_cell_sizes(length=False, area=False)['Volume']
+    assert np.all(volumes > 0)
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
+
+
+def test_structured_sphere():
+    sphere = pv.StructuredSphere()
+    assert isinstance(sphere, pv.StructuredGrid)
+    assert sphere.dimensions == (1, 30, 31)
+    assert sphere.points.dtype == np.float64
+    assert sphere.n_cells == 870
+    assert sphere.distinct_cell_types == {pv.CellType.QUAD}
+    assert np.allclose(np.linalg.norm(sphere.points, axis=1), 0.5)
+
+    assert sphere.point_data.keys() == []
+    assert sphere.cell_data.keys() == []
+
+
+def test_structured_sphere_resolution():
+    sphere = pv.StructuredSphere(theta_resolution=20, phi_resolution=10)
+    # The theta dimension has an extra point for the seam
+    assert sphere.dimensions == (1, 10, 21)
+
+
+def test_structured_sphere_radius_sequence():
+    radius = np.linspace(1.0, 2.0, 5)
+    sphere = pv.StructuredSphere(radius=radius, theta_resolution=100, phi_resolution=100)
+    assert sphere.dimensions == (5, 100, 101)
+    assert sphere.distinct_cell_types == {pv.CellType.HEXAHEDRON}
+
+    # Cells must not be inverted
+    expected = 4.0 / 3.0 * np.pi * (radius[-1] ** 3 - radius[0] ** 3)
+    assert sphere.volume == pytest.approx(expected, rel=1e-3)
+
+
+@pytest.mark.parametrize(
+    ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (30, 150, 90, 270)]
+)
+def test_structured_sphere_matches_solid_sphere(start_phi, end_phi, start_theta, end_theta):
+    # The docstring claims the two tessellate identically at the same resolutions
+    kwargs = dict(
+        theta_resolution=8,
+        phi_resolution=5,
+        start_phi=start_phi,
+        end_phi=end_phi,
+        start_theta=start_theta,
+        end_theta=end_theta,
+    )
+    structured = pv.StructuredSphere(radius=np.linspace(0.25, 0.5, 3), **kwargs)
+    solid = pv.SolidSphere(inner_radius=0.25, outer_radius=0.5, radius_resolution=3, **kwargs)
+    assert structured.n_cells == solid.n_cells
+    assert structured.volume == pytest.approx(solid.volume)
+
+
+def test_structured_sphere_angles():
+    sphere = pv.StructuredSphere(start_theta=90, end_theta=270, start_phi=30, end_phi=150)
+    assert sphere.dimensions == (1, 30, 31)
+    assert sphere.bounds.x_max == pytest.approx(0.0, abs=1e-8)
+    assert sphere.bounds.z_max == pytest.approx(0.5 * np.cos(np.deg2rad(30)))
+
+    # Shifting theta by a full turn rotates the sphere
+    shifted = pv.StructuredSphere(start_theta=180, end_theta=540)
+    expected = pv.StructuredSphere().rotate_z(180)
+    assert np.allclose(shifted.points, expected.points)
+
+
+def test_structured_sphere_center_direction():
+    center = (1.0, 2.0, 3.0)
+    sphere = pv.StructuredSphere(center=center, direction=(0.0, 1.0, 0.0))
+    assert np.allclose(sphere.center, center)
+    # North pole is along `direction`
+    assert np.allclose(sphere.points[0], np.array(center) + np.array([0.0, 0.5, 0.0]))
+
+
+def test_structured_sphere_seam():
+    sphere = pv.StructuredSphere()
+    seam = sphere.extract_feature_edges(
+        boundary_edges=True, non_manifold_edges=False, feature_edges=False, manifold_edges=False
+    )
+    # Seam is on the +x axis
+    expected = pv.BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.0, z_min=-0.5, z_max=0.5)
+    assert np.allclose(seam.bounds, expected, atol=1e-3)
+
+
+def test_structured_sphere_raises():
+    with pytest.raises(ValueError, match=re.escape('radius values must all be greater than 0.0')):
+        pv.StructuredSphere(radius=0.0)
+    with pytest.raises(ValueError, match='must be sorted in strict ascending order'):
+        pv.StructuredSphere(radius=[2.0, 1.0])
+    with pytest.raises(ValueError, match='start_phi values must all be greater than'):
+        pv.StructuredSphere(start_phi=-1)
+    with pytest.raises(ValueError, match='end_phi values must all be less than'):
+        pv.StructuredSphere(end_phi=181)
+    with pytest.raises(ValueError, match=r'end_phi \(0\) must be greater than start_phi \(0\)'):
+        pv.StructuredSphere(start_phi=0, end_phi=0)
+    match = r'end_theta \(400\) must be greater than start_theta \(0\) and within 360 degrees'
+    with pytest.raises(ValueError, match=match):
+        pv.StructuredSphere(start_theta=0, end_theta=400)
+    with pytest.raises(ValueError, match='theta_resolution values must all be greater than'):
+        pv.StructuredSphere(theta_resolution=0)
+    with pytest.raises(ValueError, match='phi_resolution values must all be greater than'):
+        pv.StructuredSphere(phi_resolution=1)
+    with pytest.raises(ValueError, match='theta_resolution must have integer-like values'):
+        pv.StructuredSphere(theta_resolution=2.5)
+    with pytest.raises(TypeError, match='start_theta must have real numbers'):
+        pv.StructuredSphere(start_theta='a')
 
 
 def test_solid_sphere_hollow():
@@ -130,13 +327,87 @@ def test_solid_sphere_hollow():
 
 
 def test_solid_sphere_generic():
-    sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
+    radius_resolution = 5
+    theta_resolution = 11
+    phi_resolution = 13
+    sphere = pv.SolidSphere(
+        radius_resolution=radius_resolution,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+    )
     sphere_seq = pv.SolidSphereGeneric(
-        radius=np.linspace(0, 0.5, 5),
-        theta=np.linspace(0, 360, 11),
-        phi=np.linspace(0, 180, 13),
+        radius=np.linspace(0, 0.5, radius_resolution),
+        theta=np.linspace(0, 360, theta_resolution + 1),
+        phi=np.linspace(0, 180, phi_resolution),
     )
     assert sphere == sphere_seq
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'n_points', 'cells', 'celltypes'),
+    [
+        (
+            dict(radius=[0.25, 0.5], theta=[0, 180, 360], phi=[45, 135]),
+            8,
+            [8, 0, 2, 3, 1, 4, 6, 7, 5, 8, 1, 3, 2, 0, 5, 7, 6, 4],
+            [pv.CellType.HEXAHEDRON] * 2,
+        ),
+        (
+            dict(radius=[0, 0.5], theta=[0, 180, 360], phi=[0, 60, 120, 180]),
+            7,
+            [
+                4,
+                0,
+                1,
+                3,
+                4,
+                4,
+                0,
+                1,
+                4,
+                3,
+                4,
+                0,
+                2,
+                6,
+                5,
+                4,
+                0,
+                2,
+                5,
+                6,
+                5,
+                3,
+                4,
+                6,
+                5,
+                0,
+                5,
+                4,
+                3,
+                5,
+                6,
+                0,
+            ],
+            [pv.CellType.TETRA] * 4 + [pv.CellType.PYRAMID] * 2,
+        ),
+        (
+            dict(radius=[0.25, 0.5], theta=[0, 120, 240, 360], phi=[0, 90]),
+            8,
+            [6, 0, 2, 3, 1, 5, 6, 6, 0, 3, 4, 1, 6, 7, 6, 0, 4, 2, 1, 7, 5],
+            [pv.CellType.WEDGE] * 3,
+        ),
+    ],
+)
+def test_solid_sphere_generic_cell_order(kwargs, n_points, cells, celltypes):
+    # Pin the exact point and cell ordering of the generic solid sphere
+    sphere = pv.SolidSphereGeneric(**kwargs)
+    if pv.vtk_version_info < (9, 7) and celltypes[0] == pv.CellType.WEDGE:
+        # Wedge points 1,2 and 4,5 are swapped for older VTK
+        cells = np.array(cells).reshape(-1, 7)[:, [0, 1, 3, 2, 4, 6, 5]].ravel().tolist()
+    assert sphere.n_points == n_points
+    assert sphere.cells.tolist() == cells
+    assert sphere.celltypes.tolist() == celltypes
 
 
 def test_solid_sphere_theta_start_end():
@@ -248,7 +519,7 @@ def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match='radius resolution must be 2 or more'):
         pv.SolidSphere(radius_resolution=1)
     with pytest.raises(ValueError, match='theta resolution must be 2 or more'):
-        pv.SolidSphere(theta_resolution=1)
+        pv.SolidSphere(theta_resolution=0)
     with pytest.raises(ValueError, match='phi resolution must be 2 or more'):
         pv.SolidSphere(phi_resolution=1)
 
@@ -493,14 +764,43 @@ def test_cube():
     assert np.allclose(np.abs(normals), expected)
 
 
-@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
-def test_cube_point_dtype(point_dtype):
-    if point_dtype in ['float32', 'float64']:
-        cube = pv.Cube(point_dtype=point_dtype)
-        assert cube.points.dtype == point_dtype
+@pytest.mark.parametrize(('points_dtype'), (['float32', 'float64', 'invalid']))
+def test_cube_points_dtype(points_dtype):
+    if points_dtype in ['float32', 'float64']:
+        cube = pv.Cube(points_dtype=points_dtype)
+        assert cube.points.dtype == points_dtype
     else:
-        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
-            _ = pv.Cube(point_dtype=point_dtype)
+        with pytest.raises(ValueError, match="Points dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cube(points_dtype=points_dtype)
+
+
+@pytest.mark.parametrize('source', [pv.Cube, pv.CubeSource, pv.CubeFacesSource])
+def test_point_dtype_deprecated(source):
+    match = r'`point_dtype` is deprecated\. Use `points_dtype` instead'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        source(point_dtype='float64')
+
+    # the message points at the global as well as the new name
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='pyvista.global_config.points_dtype'):
+        source(point_dtype='float64')
+
+    with pytest.raises(TypeError, match='not both'):
+        source(point_dtype='float64', points_dtype='float64')
+
+
+def test_point_dtype_deprecated_property():
+    src = pv.CubeSource(points_dtype='float64')
+    match = r'`point_dtype` is deprecated'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert src.point_dtype == 'float64'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        src.point_dtype = 'float32'
+    assert src.points_dtype == 'float32'
+
+
+def test_point_dtype_deprecation_expires():
+    # Deprecated v0.49, convert to error in v0.52, remove v0.53
+    assert pv.version_info < (0, 52), 'Convert the `point_dtype` deprecation into an error.'
 
 
 def test_cone():
@@ -705,17 +1005,32 @@ def test_rectangle(points):
     )
 
     # Test all possible orders of the points
-    for pt_tuples in permutations(rotated, 4):
+    for pt_tuples in itertools.permutations(rotated, 4):
         mesh = pv.Rectangle(list(pt_tuples[0:3]))
         assert mesh.n_points
         assert mesh.n_cells
         assert np.allclose(mesh.points, pt_tuples)
 
 
-def test_rectangle_not_orthognal_entries():
+@pytest.mark.parametrize(
+    ('pointc', 'match'),
+    [
+        pytest.param(
+            [1.0, 1.0, 1.0],
+            'The three points should defined orthogonal vectors',
+            id='not_orthogonal',
+        ),
+        pytest.param(
+            [3.0, 1.0, 1.0],
+            'Unable to build a rectangle with less than three different points',
+            id='two_identical',
+        ),
+    ],
+)
+def test_rectangle_invalid_points(pointc, match):
+    """Points that do not describe a rectangle are rejected with a specific message."""
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
-    pointc = [1.0, 1.0, 1.0]
 
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
@@ -724,26 +1039,7 @@ def test_rectangle_not_orthognal_entries():
         np.array([pointa, pointb, pointc]),
     )
 
-    with pytest.raises(ValueError, match='The three points should defined orthogonal vectors'):
-        pv.Rectangle(rotated)
-
-
-def test_rectangle_two_identical_points():
-    pointa = [3.0, 1.0, 1.0]
-    pointb = [4.0, 3.0, 1.0]
-    pointc = [3.0, 1.0, 1.0]
-
-    # Do a rotation to be in full 3D space with floating point coordinates
-    trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
-    rotated = pv.core.utilities.transformations.apply_transformation_to_points(
-        trans,
-        np.array([pointa, pointb, pointc]),
-    )
-
-    with pytest.raises(
-        ValueError,
-        match='Unable to build a rectangle with less than three different points',
-    ):
+    with pytest.raises(ValueError, match=match):
         pv.Rectangle(rotated)
 
 
@@ -801,7 +1097,7 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
     # verify type of solid
     assert solid_from_str.n_points == n_vertices
-    assert solid_from_str.n_faces_strict == n_faces
+    assert solid_from_str.n_faces == n_faces
 
 
 def test_platonic_invalids():
@@ -818,7 +1114,7 @@ def test_tetrahedron():
     center = (1, -2, 3)
     solid = pv.Tetrahedron(radius=radius, center=center)
     assert solid.n_points == 4
-    assert solid.n_faces_strict == 4
+    assert solid.n_faces == 4
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Tetrahedron(radius=2 * radius, center=center)
@@ -830,7 +1126,7 @@ def test_octahedron():
     center = (1, -2, 3)
     solid = pv.Octahedron(radius=radius, center=center)
     assert solid.n_points == 6
-    assert solid.n_faces_strict == 8
+    assert solid.n_faces == 8
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Octahedron(radius=2 * radius, center=center)
@@ -842,7 +1138,7 @@ def test_dodecahedron():
     center = (1, -2, 3)
     solid = pv.Dodecahedron(radius=radius, center=center)
     assert solid.n_points == 20
-    assert solid.n_faces_strict == 12
+    assert solid.n_faces == 12
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Dodecahedron(radius=2 * radius, center=center)
@@ -854,7 +1150,7 @@ def test_icosahedron():
     center = (1, -2, 3)
     solid = pv.Icosahedron(radius=radius, center=center)
     assert solid.n_points == 12
-    assert solid.n_faces_strict == 20
+    assert solid.n_faces == 20
     assert np.allclose(solid.center, center)
 
     doubled_solid = pv.Icosahedron(radius=2 * radius, center=center)
@@ -870,4 +1166,4 @@ def test_icosphere():
     assert np.allclose(np.linalg.norm(icosphere.points - icosphere.center, axis=1), radius)
 
     icosahedron = pv.Icosahedron()
-    assert icosahedron.n_faces_strict * 4**nsub == icosphere.n_faces_strict
+    assert icosahedron.n_faces * 4**nsub == icosphere.n_faces

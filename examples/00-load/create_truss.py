@@ -1,19 +1,17 @@
 """
 .. _create_truss_example:
 
-Plot Truss-like FEA Solution with Cylinders
+Plot Truss-Like FEA Solution With Cylinders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plot connections between points in 3D as cylinders, colored by scalars.
+
 Lines are created in a :class:`pyvista.PolyData` and then rendered as
 cylinders.
-
 
 """
 
 # sphinx_gallery_start_ignore
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 

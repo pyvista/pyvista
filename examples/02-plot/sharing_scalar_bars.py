@@ -2,16 +2,15 @@
 .. _sharing_scalar_bars_example:
 
 Sharing Scalar Bars
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
-Use :meth:`~pyvista.Plotter.subplot` and show to share scalar bars
-among plotted arrays or use a unique scalar bar for each plotted array.
+Share scalar bars among plotted arrays, or use a unique bar for each.
+
+Uses :meth:`~pyvista.Plotter.subplot` and ``show``.
 
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore

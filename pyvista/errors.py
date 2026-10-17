@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import importlib
 import inspect
+from typing import TYPE_CHECKING
 
 from pyvista._warn_external import warn_external
+
+if TYPE_CHECKING:
+    from typing import Any
 
 # Places to look for the utility
 _MODULES = [
@@ -14,7 +18,7 @@ _MODULES = [
 ]
 
 
-def _try_import(module, name):
+def _try_import(module: str, name: str) -> tuple[Any | None, str | None]:
     """Attempt to import a module."""
     _module = importlib.import_module(module)
     try:
@@ -25,7 +29,7 @@ def _try_import(module, name):
     return feature, import_path
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Fetch an attribute ``name`` from ``globals()`` and warn if it's from a deprecated module.
 
     Note that ``__getattr__()`` only gets called when ``name`` is missing

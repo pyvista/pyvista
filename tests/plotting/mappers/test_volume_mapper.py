@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 
 
 @pytest.fixture
@@ -15,12 +15,10 @@ def volume_mapper():
     return actor.mapper
 
 
-@pytest.mark.skip_check_gc
 def test_volume_mapper_dataset(volume_mapper):
     assert isinstance(volume_mapper.dataset, pv.ImageData)
 
 
-@pytest.mark.skip_check_gc
 def test_volume_mapper_blend_mode(volume_mapper):
     assert isinstance(volume_mapper.blend_mode, str)
 
@@ -34,5 +32,5 @@ def test_volume_mapper_blend_mode(volume_mapper):
     with pytest.raises(ValueError, match='Please choose either "additive"'):
         volume_mapper.blend_mode = 'not a mode'
 
-    with pytest.raises(TypeError, match='int or str'):
+    with pytest.raises(TypeError, match='blend_mode must be an instance of'):
         volume_mapper.blend_mode = 0.5

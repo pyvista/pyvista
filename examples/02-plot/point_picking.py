@@ -1,16 +1,14 @@
 """
 .. _point_picking_example:
 
-Picking points on a mesh
+Picking Points on a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~
-This example demonstrates how to pick points on meshes using
-:func:`enable_point_picking() <pyvista.Plotter.enable_point_picking>`.
+
+Pick points on a mesh using :func:`~pyvista.Plotter.enable_point_picking`.
 
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore
@@ -19,7 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Pick points on a sphere
+# Pick Points on a Sphere
 # +++++++++++++++++++++++
 #
 sphere = pv.Sphere()
@@ -30,7 +28,7 @@ pl.enable_point_picking()
 pl.show()
 
 # %%
-# Ignore the 3D window
+# Ignore the 3D Window
 # ++++++++++++++++++++
 #
 # In the above example, both points on the mesh and points in the 3d window can be
@@ -43,7 +41,7 @@ pl.enable_point_picking(pickable_window=False)  # Make the 3D window unpickable
 pl.show()
 
 # %%
-# Modify which actors are pickable
+# Modify Which Actors Are Pickable
 # ++++++++++++++++++++++++++++++++
 #
 # After enabling point picking, we can modify which actors are pickable.
@@ -60,7 +58,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Pick using the left-mouse button
+# Pick Using the Left-Mouse Button
 # ++++++++++++++++++++++++++++++++
 #
 sphere = pv.Sphere()

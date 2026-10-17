@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
 import pyvista as pv
-
-# A large number of tests here fail gc
-pytestmark = pytest.mark.skip_check_gc
+from pyvista.plotting.cube_axes_actor import _axis_label_values
 
 
 @pytest.fixture
@@ -96,6 +96,12 @@ def test_titles(cube_axes_actor):
     assert cube_axes_actor.z_title == 'z foo'
 
 
+@pytest.mark.parametrize('title', ['x_title', 'y_title', 'z_title'])
+def test_title_must_be_string(cube_axes_actor, title):
+    with pytest.raises(TypeError, match=rf'{title} must be an instance of .*str'):
+        setattr(cube_axes_actor, title, None)
+
+
 def test_axis_minor_tick_visibility(cube_axes_actor):
     assert isinstance(cube_axes_actor.x_axis_minor_tick_visibility, bool)
     cube_axes_actor.x_axis_minor_tick_visibility = False
@@ -110,43 +116,290 @@ def test_axis_minor_tick_visibility(cube_axes_actor):
     assert cube_axes_actor.z_axis_minor_tick_visibility is False
 
 
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 3, 0),
-    reason='title offset is a tuple of floats from vtk >= 9.3',
-)
-def test_title_offset(cube_axes_actor):
-    assert isinstance(cube_axes_actor.title_offset, float)
-    cube_axes_actor.title_offset = 0.01
-    assert cube_axes_actor.title_offset == 0.01
-
-    with pytest.warns(
-        UserWarning,
-        match=r'Setting title_offset with a sequence is only supported from vtk >= 9\.3. '
-        rf'Considering only the second value \(ie\. y-offset\) of {(y := 0.02)}',
-    ):
-        cube_axes_actor.title_offset = [0.01, y]
-    assert cube_axes_actor.title_offset == y
-
-
-@pytest.mark.needs_vtk_version(9, 3)
 def test_title_offset_sequence(cube_axes_actor):
     assert isinstance(cube_axes_actor.title_offset, tuple)
     cube_axes_actor.title_offset = (t := (0.01, 0.02))
     assert cube_axes_actor.title_offset == t
 
 
-@pytest.mark.needs_vtk_version(9, 3)
-def test_title_offset_float(cube_axes_actor):
-    with pytest.warns(
-        UserWarning,
-        match=r'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a '
-        r'sequence of \(x,y\) offsets. Setting the x offset to 0\.0',
-    ):
-        cube_axes_actor.title_offset = (t := 0.01)
-    assert cube_axes_actor.title_offset == (0.0, t)
-
-
 def test_label_offset(cube_axes_actor):
     assert isinstance(cube_axes_actor.label_offset, float)
     cube_axes_actor.label_offset = 0.01
     assert cube_axes_actor.label_offset == 0.01
+
+
+@pytest.fixture
+def camera():
+    return pv.Plotter().camera
+
+
+def test_color_default(camera):
+    actor = pv.CubeAxesActor(camera)
+    expected = pv.Color(pv.global_theme.font.color).float_rgb
+    assert actor.GetXAxesLinesProperty().GetColor() == expected
+    assert actor.GetYAxesLinesProperty().GetColor() == expected
+    assert actor.GetZAxesLinesProperty().GetColor() == expected
+    assert actor.GetTitleTextProperty(0).GetColor() == expected
+    assert actor.GetLabelTextProperty(0).GetColor() == expected
+
+
+def test_color(camera):
+    actor = pv.CubeAxesActor(camera, color='red', grid=True)
+    expected = pv.Color('red').float_rgb
+    assert actor.GetXAxesLinesProperty().GetColor() == expected
+    assert actor.GetXAxesGridlinesProperty().GetColor() == expected
+    assert actor.GetTitleTextProperty(2).GetColor() == expected
+
+
+@pytest.mark.parametrize(
+    ('grid', 'expected'),
+    [
+        (True, pv.CubeAxesActor.VTK_GRID_LINES_FURTHEST),
+        ('back', pv.CubeAxesActor.VTK_GRID_LINES_FURTHEST),
+        ('backface', pv.CubeAxesActor.VTK_GRID_LINES_FURTHEST),
+        ('front', pv.CubeAxesActor.VTK_GRID_LINES_CLOSEST),
+        ('frontface', pv.CubeAxesActor.VTK_GRID_LINES_CLOSEST),
+        ('all', pv.CubeAxesActor.VTK_GRID_LINES_ALL),
+        ('both', pv.CubeAxesActor.VTK_GRID_LINES_ALL),
+    ],
+)
+def test_grid(camera, grid, expected):
+    actor = pv.CubeAxesActor(camera, grid=grid)
+    assert actor.GetGridLineLocation() == expected
+    assert actor.GetDrawXGridlines()
+    assert actor.GetDrawYGridlines()
+    assert actor.GetDrawZGridlines()
+
+
+def test_grid_follows_axis_visibility(camera):
+    actor = pv.CubeAxesActor(camera, grid=True, y_axis_visibility=False)
+    assert actor.GetDrawXGridlines()
+    assert not actor.GetDrawYGridlines()
+
+
+def test_grid_none(camera):
+    actor = pv.CubeAxesActor(camera)
+    assert not actor.GetDrawXGridlines()
+
+
+def test_grid_raises(camera):
+    with pytest.raises(TypeError, match='`grid` must be a str'):
+        pv.CubeAxesActor(camera, grid=1.0)
+    with pytest.raises(ValueError, match='`grid` must be either'):
+        pv.CubeAxesActor(camera, grid='sideways')
+
+
+@pytest.mark.parametrize(
+    ('location', 'expected'),
+    [
+        ('all', pv.CubeAxesActor.VTK_FLY_STATIC_EDGES),
+        ('origin', pv.CubeAxesActor.VTK_FLY_STATIC_TRIAD),
+        ('outer', pv.CubeAxesActor.VTK_FLY_OUTER_EDGES),
+        ('default', pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD),
+        ('closest', pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD),
+        ('front', pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD),
+        ('furthest', pv.CubeAxesActor.VTK_FLY_FURTHEST_TRIAD),
+        ('back', pv.CubeAxesActor.VTK_FLY_FURTHEST_TRIAD),
+    ],
+)
+def test_location(camera, location, expected):
+    assert pv.CubeAxesActor(camera, location=location).GetFlyMode() == expected
+
+
+def test_location_default(camera):
+    assert pv.CubeAxesActor(camera).GetFlyMode() == pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD
+
+
+def test_location_raises(camera):
+    with pytest.raises(TypeError, match='location must be a string'):
+        pv.CubeAxesActor(camera, location=1)
+    with pytest.raises(ValueError, match='Value of location'):
+        pv.CubeAxesActor(camera, location='sideways')
+
+
+def test_font_2d_text(camera):
+    actor = pv.CubeAxesActor(
+        camera, font_size=42, font_family='times', bold=False, use_3d_text=False
+    )
+    prop = actor.GetTitleTextProperty(0)
+    assert prop.GetFontSize() == 42
+    assert prop.GetFontFamilyAsString() == 'Times'
+    assert not prop.GetBold()
+
+
+def test_font_3d_text(camera):
+    """3D text renders at a fixed high resolution and is scaled down by the screen size."""
+    actor = pv.CubeAxesActor(camera, font_size=42, use_3d_text=True)
+    assert actor.GetTitleTextProperty(0).GetFontSize() == 50
+    factor = 1.0 if pv.vtk_version_info < (9, 6, 0) else 50 / 12
+    assert actor.GetScreenSize() == pytest.approx(42 / 12 / factor * 10)
+
+
+def test_font_defaults(camera):
+    actor = pv.CubeAxesActor(camera, use_3d_text=False)
+    prop = actor.GetLabelTextProperty(1)
+    assert prop.GetFontSize() == pv.global_theme.font.size
+    assert prop.GetBold()
+
+
+def test_use_3d_text_default(camera):
+    expected = pv.vtk_version_info < (9, 6, 0)
+    assert bool(pv.CubeAxesActor(camera).GetUseTextActor3D()) is expected
+
+
+@pytest.mark.parametrize('use_3d_text', [True, False])
+def test_use_3d_text(camera, use_3d_text):
+    actor = pv.CubeAxesActor(camera, use_3d_text=use_3d_text)
+    assert bool(actor.GetUseTextActor3D()) is use_3d_text
+
+
+def test_use_2d_mode_init(camera):
+    assert pv.CubeAxesActor(camera, use_2d_mode=True).use_2d_mode is True
+    assert pv.CubeAxesActor(camera).use_2d_mode is False
+
+
+def test_bounds_init(camera):
+    bounds = (-1, 2, -3, 4, -5, 6)
+    actor = pv.CubeAxesActor(camera, bounds=bounds)
+    assert actor.bounds == bounds
+    assert actor.x_labels[0] == '-1.0'
+    assert actor.x_labels[-1] == '2.0'
+
+
+def test_padding(camera):
+    actor = pv.CubeAxesActor(camera, bounds=(0, 10, 0, 10, 0, 10), padding=0.1)
+    assert actor.bounds == (-1, 11, -1, 11, -1, 11)
+
+
+def test_padding_raises(camera):
+    with pytest.raises(ValueError, match='padding'):
+        pv.CubeAxesActor(camera, bounds=(0, 1, 0, 1, 0, 1), padding=1.5)
+
+
+def test_axes_ranges_init(camera):
+    actor = pv.CubeAxesActor(camera, bounds=(0, 1, 0, 1, 0, 1), axes_ranges=(0, 10, 0, 20, 0, 30))
+    assert actor.x_axis_range == (0, 10)
+    assert actor.y_axis_range == (0, 20)
+    assert actor.z_axis_range == (0, 30)
+    assert actor.z_labels[-1] == '30.0'
+
+
+def test_axes_ranges_init_raises(camera):
+    with pytest.raises(ValueError, match=r'has shape \(\) which is not allowed'):
+        pv.CubeAxesActor(camera, axes_ranges=1)
+    with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
+        pv.CubeAxesActor(camera, axes_ranges=[0, 1, 'a', 'b', 2, 3])
+    with pytest.raises(ValueError, match=r'has shape \(5,\) which is not allowed'):
+        pv.CubeAxesActor(camera, axes_ranges=[0, 1, 2, 3, 4])
+    with pytest.raises(ValueError, match=r'has shape \(6, 2\) which is not allowed'):
+        pv.CubeAxesActor(camera, axes_ranges=[[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+
+
+ARC = (-1.0, 1.0399938821792603)  # the circular arc gallery scene, tube radius included
+# a span a hair under a whole number of intervals, where VTK's own epsilon counts one more
+GAP = (0.0, 0.99999999999999989)
+
+
+@pytest.mark.parametrize(
+    ('bounds', 'n', 'expected'),
+    [
+        # VTK divides none of these into five, so the labels are spaced to a count it takes
+        ((-11.64, 11.64), 5, [-11.64, -3.88, 3.88, 11.64]),
+        ((-11.7236, 11.7236), 5, [-11.7236, -3.907867, 3.907867, 11.7236]),
+        # here its own ticks are the round ones, and there is room for all of them
+        (ARC, 5, [-1.0, -0.5, 0.0, 0.5, 1.0]),
+        # but not when fewer labels are wanted than it would draw
+        (ARC, 4, [-1.0, -0.320002, 0.359996, 1.039994]),
+        ((-10.0, 10.0), 9, [-10.0, -5.0, 0.0, 5.0, 10.0]),
+        ((-10.0, 10.0), 3, [-10.0, 0.0, 10.0]),
+        ((-0.5, 0.5), 5, [-0.5, -0.25, 0.0, 0.25, 0.5]),
+        # a count between the two spacings is used by neither, so it drops to VTK's ticks
+        (GAP, 10, [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]),
+        # a range given the other way round counts down
+        ((10.0, 0.0), 5, [10.0, 7.5, 5.0, 2.5, 0.0]),
+        ((11.64, -11.64), 5, [11.64, 3.88, -3.88, -11.64]),
+        # counting down onto VTK's own ticks
+        ((10.0, 0.0), 6, [10.0, 8.0, 6.0, 4.0, 2.0, 0.0]),
+        # a range that divides exactly, but not from a bound VTK's ticks start on
+        ((0.3, 20.3), 5, [0.3, 5.3, 10.3, 15.3, 20.3]),
+    ],
+)
+def test_axis_label_values(bounds, n, expected):
+    assert np.allclose(_axis_label_values(*bounds, n), expected)
+
+
+@pytest.mark.parametrize(
+    ('bounds', 'divisor'),
+    [
+        ((0.0, 1.5), 5.0),  # span / decade in [1, 2), VTK drops two decades
+        ((0.0, 2.5), 2.0),  # in [2, 4), one decade
+        ((0.0, 4.5), 1.0),  # in [4, 5), the rung the ladder changes on
+        ((0.0, 7.5), 1.0),  # in [5, 10), the decade itself
+    ],
+)
+def test_axis_label_values_tick_decade(bounds, divisor):
+    """Each rung of VTK's spacing ladder puts its labels on multiples of the spacing."""
+    values = _axis_label_values(*bounds, 20)
+    step = 10.0 ** math.floor(math.log10(bounds[1] - bounds[0])) / divisor
+    assert values[0] == bounds[0]
+    assert np.allclose(np.diff(values), step)
+
+
+@pytest.mark.parametrize('n', [0, 1])
+def test_axis_label_values_no_room(n):
+    assert len(_axis_label_values(-1.0, 1.0, n)) == n
+
+
+@pytest.mark.parametrize('bounds', [(0.0, 0.0), (-np.inf, np.inf), (0.0, 5e-324)])
+def test_axis_label_values_degenerate(bounds):
+    with np.errstate(invalid='ignore'):
+        assert len(_axis_label_values(*bounds, 5)) == 5
+
+
+@pytest.mark.parametrize('bounds', [(-0.5, 0.5), (0.0, 0.4), (0.0, 400.0)])
+def test_axis_label_values_span_decades(bounds):
+    """A span of exactly one, below one, and well above one all stay on their ticks."""
+    values = _axis_label_values(*bounds, 5)
+    assert values[0] == bounds[0]
+    assert np.allclose(np.diff(values), np.diff(values)[0])
+
+
+def test_axis_label_values_reversed_axes_ranges():
+    """A descending ``axes_ranges`` reaches the labels the same way round."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(axes_ranges=[10, 0, 0, 10, 0, 10], fmt='')
+    assert np.allclose(np.array(actor.x_labels, dtype=float), [10.0, 7.5, 5.0, 2.5, 0.0])
+    assert np.allclose(np.array(actor.y_labels, dtype=float), [0.0, 2.5, 5.0, 7.5, 10.0])
+
+
+def test_labels_evenly_spaced():
+    """Labels must sit on the ticks VTK draws them on.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/9033.
+    """
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=(-2.725, 1.075, -11.64, 11.64, 0.0, 1.0), fmt='')
+    assert np.allclose(np.array(actor.y_labels, dtype=float), [-11.64, -3.88, 3.88, 11.64])
+    assert np.allclose(
+        np.array(actor.x_labels, dtype=float), [-2.725, -1.775, -0.825, 0.125, 1.075]
+    )
+
+
+# The count VTK will space evenly for each of these ranges, for n = 2 through 15
+EVENLY_SPACED = {
+    (-11.64, 11.64): [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+    (-10.0, 10.0): [2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+    (0.1416, 7.4831): [2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+}
+
+
+@pytest.mark.parametrize('bounds', list(EVENLY_SPACED))
+@pytest.mark.parametrize('n', list(range(2, 16)))
+def test_n_labels_capped_at_what_vtk_spaces_evenly(bounds, n):
+    vmin, vmax = bounds
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=(0.0, 1.0, vmin, vmax, 0.0, 1.0), n_ylabels=n, fmt='')
+    values = np.array(actor.y_labels, dtype=float)
+    assert len(values) == EVENLY_SPACED[bounds][n - 2]
+    assert np.allclose(values, np.linspace(vmin, vmax, len(values)))

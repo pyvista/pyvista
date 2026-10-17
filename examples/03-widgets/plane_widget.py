@@ -4,20 +4,20 @@
 Plane Widget
 ~~~~~~~~~~~~
 
-The plane widget can be enabled and disabled by the
-:func:`pyvista.Plotter.add_plane_widget` and
-:func:`pyvista.Plotter.clear_plane_widgets` methods respectively.
-As with all widgets, you must provide a custom callback method to utilize that
-plane. Considering that planes are most commonly used for clipping and slicing
-meshes, we have included two helper methods for doing those tasks.
+Enable and disable the plane widget to clip or slice a mesh.
+
+Uses :func:`pyvista.Plotter.add_plane_widget` and
+:func:`pyvista.Plotter.clear_plane_widgets`. As with all widgets, you must
+provide a custom callback method to utilize that plane. Considering that
+planes are most commonly used for clipping and slicing meshes, we have
+included two helper methods for doing those tasks.
 
 Let's use a plane to clip a mesh:
+
 """
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -33,7 +33,7 @@ pl.show()
 
 # %%
 # After interacting with the scene, the clipped mesh is available as:
-pl.plane_clipped_meshes
+pl.widgets.plane_clipped_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this
@@ -48,7 +48,7 @@ pl.add_mesh_slice(vol)
 pl.show()
 # %%
 # After interacting with the scene, the slice is available as:
-pl.plane_sliced_meshes
+pl.widgets.plane_sliced_meshes
 
 # %%
 # And here is a screen capture of a user interacting with this

@@ -4,8 +4,11 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 from pyvista.plotting.mapper import DataSetMapper
+from pyvista.plotting.mapper import _PolyDataMapper
+from pyvista.plotting.utilities import algorithms
+from tests.plotting.conftest import get_actor_mapper_input
 
 
 @pytest.fixture
@@ -50,6 +53,28 @@ def test_bounds(dataset_mapper):
     assert dataset_mapper.bounds == (-126.0, 125.0, -127.0, 126.0, -127.0, 127.0)
 
 
+def test_center(dataset_mapper):
+    assert dataset_mapper.center == dataset_mapper.dataset.center
+
+
+@pytest.mark.parametrize(
+    'mapper_type',
+    [
+        pv.DataSetMapper,
+        pv.PointGaussianMapper,
+        pv.FixedPointVolumeRayCastMapper,
+        pv.CompositePolyDataMapper,
+    ],
+)
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [('bounds', (1.0, -1.0, 1.0, -1.0, 1.0, -1.0)), ('center', (0.0, 0.0, 0.0))],
+)
+def test_bounds_and_center_without_a_dataset(mapper_type, name, expected):
+    """Every mapper family reports the uninitialized sentinel, without asking VTK."""
+    assert getattr(mapper_type(), name) == expected
+
+
 def test_lookup_table(dataset_mapper):
     assert isinstance(dataset_mapper.lookup_table, _vtk.vtkLookupTable)
 
@@ -65,6 +90,12 @@ def test_interpolate_before_map(dataset_mapper):
     assert dataset_mapper.interpolate_before_map is True
 
 
+def test_static(dataset_mapper):
+    assert dataset_mapper.static is False
+    dataset_mapper.static = True
+    assert dataset_mapper.static is True
+
+
 def test_color_mode(dataset_mapper):
     assert isinstance(dataset_mapper.color_mode, str)
 
@@ -74,7 +105,7 @@ def test_color_mode(dataset_mapper):
     dataset_mapper.color_mode = 'map'
     assert dataset_mapper.color_mode == 'map'
 
-    with pytest.raises(ValueError, match='Color mode must be either'):
+    with pytest.raises(ValueError, match="Color mode 'invalid' is not valid"):
         dataset_mapper.color_mode = 'invalid'
 
 
@@ -96,7 +127,7 @@ def test_copy(dataset_mapper, sphere):
     dataset_mapper.interpolate_before_map = False
     dataset_mapper.scalar_range = (2, 5)
     map_cp = dataset_mapper.copy()
-    assert isinstance(map_cp, DataSetMapper)
+    assert isinstance(map_cp, type(dataset_mapper))
     assert map_cp is not dataset_mapper
     assert map_cp.scalar_range == dataset_mapper.scalar_range
     assert map_cp.dataset is dataset_mapper.dataset
@@ -112,9 +143,15 @@ def test_resolve(dataset_mapper, resolve):
 
 
 def test_invalid_resolve(dataset_mapper):
-    match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+    match = "Resolve 'invalid' is not valid"
     with pytest.raises(ValueError, match=match):
         dataset_mapper.resolve = 'invalid'
+
+
+def test_set_scalars_custom_opac_requires_opacity(sphere):
+    mapper = DataSetMapper(dataset=sphere)
+    with pytest.raises(ValueError, match='Custom opacity requires an opacity array'):
+        mapper.set_scalars(sphere.points[:, 0], 'x', custom_opac=True)
 
 
 def test_mapper_dataset_property_returns_original(sphere):
@@ -134,6 +171,142 @@ def test_mapper_set_scalars_does_not_mutate_mesh(sphere):
 
     # The original mesh's active scalars must NOT be changed
     assert sphere.active_scalars_name == 'data_a'
+
+
+def test_set_scalars_replaces_digitized_array():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(np.array(['CellA', 'CellA']), 'Data')
+    assert list(mesh.cell_data['Data-digitized']) == [0, 0]
+    mapper.set_scalars(np.array(['CellA', 'CellB']), 'Data')
+    assert list(mesh.cell_data['Data-digitized']) == [0, 1]
+    assert mapper.lookup_table.annotations == {0.0: 'CellA', 1.0: 'CellB'}
+    assert mapper.scalar_range == (-0.5, 1.5)
+
+
+def test_set_scalars_categories_true():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [8.0, 0.0, 2.0, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mesh.cell_data.keys() == ['labels']
+    assert mapper.scalar_range == (-1.0, 9.0)
+    assert sargs == {'tick_locations': [0.0, 2.0, 8.0], 'fmt': '%.0f'}
+    lut = mapper.lookup_table
+    assert len(np.unique(lut.values, axis=0)) == 4  # three categories and the NaN color
+    assert lut.annotations == {}
+    colors = {lut.map_value(value)[:3] for value in (0, 2, 8)}
+    assert len(colors) == 3
+    assert lut.map_value(4) == lut.nan_color.float_rgba
+    assert lut.map_value(np.nan) == lut.nan_color.float_rgba
+
+    sargs = {}
+    mapper.set_scalars(
+        mesh['labels'], 'labels', categories=True, annotations={2: 'two'}, scalar_bar_args=sargs
+    )
+    assert lut.annotations == {2.0: 'two'}
+    assert sargs['tick_locations'] == [0.0, 8.0]
+
+
+def test_set_scalars_categories_integer_dtype():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = np.array([-32768, 0, 1], dtype=np.int16)
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True)
+    assert mapper.scalar_range == (-32768.5, 1.5)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (-32768, 0, 1)}
+    assert len(colors) == 3
+
+
+def test_set_scalars_categories_short_cmap():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 1.0, 2.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    match = 'The colormap has 3 colors but the scalars have 4 categories.'
+    with pytest.raises(ValueError, match=match):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
+
+
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_mesh_clim_without_bounds(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == pytest.approx(sphere.get_data_range('data'))
+
+
+@pytest.mark.parametrize('clim', [[None, 1.0], [1.0, None], [None], [None, None, None]])
+def test_add_mesh_clim_partial_bounds_raises(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    with pytest.raises((TypeError, IndexError)):
+        pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+
+
+@pytest.mark.parametrize('clim', [np.float64(0.25), np.array([0.1, 0.2])])
+def test_add_mesh_clim_numpy(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    actor = pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+    expected = (-clim, clim) if np.ndim(clim) == 0 else tuple(clim)
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+
+
+def test_set_scalars_categories_keeps_clim():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 5.0, 10.0]
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, clim=(0, 100))
+    assert mapper.scalar_range == (0.0, 100.0)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (0, 5, 10)}
+    assert len(colors) == 3
+    assert mapper.lookup_table.map_value(20) == mapper.lookup_table.nan_color.float_rgba
+
+
+def test_set_scalars_categories_single_value():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [3.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mapper.scalar_range == (2.5, 3.5)
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 1
+    assert sargs['tick_locations'] == [3.0]
+
+
+def test_set_scalars_categories_all_nan():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [np.nan, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert 'tick_locations' not in sargs
+
+
+def test_set_scalars_categories_uneven_spacing():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.1, 0.33, 0.7]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert sargs['fmt'] == '%g'
+    lut = mapper.lookup_table
+    assert lut.n_values == 4096
+    assert mapper.scalar_range == pytest.approx((-0.015, 0.815))
+    colors = [lut.map_value(value)[:3] for value in (0.1, 0.33, 0.7)]
+    assert len(set(colors)) == 3
+    assert lut.map_value(0.2)[:3] == colors[0]
+    assert lut.map_value(0.5)[:3] == colors[1]
+
+
+def test_set_scalars_categories_thins_labels():
+    mesh = pv.ImageData(dimensions=(31, 2, 2))
+    mesh['labels'] = np.arange(30)
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 30
+    assert sargs['tick_locations'] == [float(v) for v in range(0, 30, 3)]
 
 
 def test_mapper_pipeline_output_active_scalars(sphere):
@@ -163,6 +336,39 @@ def test_mapper_array_name_setter_updates_pipeline(sphere):
     mapper.array_name = 'data_b'
     assert mapper.array_name == 'data_b'
     assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
+
+
+def test_mapper_array_name_initializes_point_scalars_pipeline(sphere):
+    """Setting ``array_name`` directly must activate point scalars."""
+    sphere['keep_active'] = sphere.points[:, 0]
+    sphere['data'] = sphere.points[:, 2]
+    sphere.set_active_scalars('keep_active')
+
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.array_name = 'data'
+
+    assert mapper._active_scalars_algo is not None
+    assert mapper._active_scalars_algo.preference == 'point'
+    assert mapper.array_name == 'data'
+    assert np.array_equal(mapper._mapped_scalars, sphere['data'])
+    assert sphere.active_scalars_name == 'keep_active'
+
+
+def test_mapper_array_name_initializes_cell_scalars_pipeline():
+    """Setting ``array_name`` directly must activate cell scalars."""
+    mesh = pv.Cube()
+    mesh.point_data['keep_active'] = mesh.points[:, 0]
+    mesh.cell_data['cell_data'] = np.arange(mesh.n_cells, dtype=float)
+    mesh.set_active_scalars('keep_active')
+
+    mapper = DataSetMapper(dataset=mesh)
+    mapper.array_name = 'cell_data'
+
+    assert mapper._active_scalars_algo is not None
+    assert mapper._active_scalars_algo.preference == 'cell'
+    assert mapper.array_name == 'cell_data'
+    assert np.array_equal(mapper._mapped_scalars, mesh.cell_data['cell_data'])
+    assert mesh.active_scalars_name == 'keep_active'
 
 
 def test_mapper_copy_preserves_scalars_config(sphere):
@@ -234,7 +440,7 @@ def test_mapped_scalars_fallback_without_algo(sphere):
     sphere.set_active_scalars('data')
 
     mapper = DataSetMapper(dataset=sphere)
-    # No set_scalars call — _active_scalars_algo remains None
+    # No set_scalars call: _active_scalars_algo remains None
     assert mapper._mapped_scalars is not None
     assert np.array_equal(mapper._mapped_scalars, sphere['data'])
     # Also verify the None-dataset edge case
@@ -269,7 +475,7 @@ def test_set_active_scalars_in_place_update(sphere):
     assert algo is not None
 
     mapper.set_active_scalars('data_b', preference='point')
-    # The same algorithm instance must be reused — not a new pipeline
+    # The same algorithm instance must be reused, not a new pipeline
     assert mapper._active_scalars_algo is algo
     assert algo.scalars_name == 'data_b'
     assert np.array_equal(mapper._mapped_scalars, sphere['data_b'])
@@ -286,7 +492,7 @@ def test_set_active_scalars_cell_preference():
 
     assert mapper._active_scalars_algo.preference == 'cell'
     assert np.array_equal(mapper._mapped_scalars, cell_array)
-    # Verify the array is *not* on point data — exercises the cell branch
+    # Verify the array is *not* on point data. Exercises the cell branch.
     assert 'c' not in mesh.point_data
 
 
@@ -322,7 +528,7 @@ def test_clear_active_scalars_after_algorithm_input():
 
     When the mapper was originally fed by a vtkAlgorithm (not a dataset),
     detaching the active-scalars algo must reconnect the mapper to that
-    upstream algorithm — not leave it dangling.
+    upstream algorithm, not leave it dangling.
     """
     source = _vtk.vtkSphereSource()
     source.SetRadius(2.0)
@@ -361,3 +567,298 @@ def test_as_rgba_uses_mapped_scalars(sphere):
     # Calling as_rgba again should be a no-op (already direct)
     mapper.as_rgba()
     assert mapper.color_mode == 'direct'
+
+
+def test_as_rgba_without_mapped_scalars(sphere):
+    """A mapper with nothing mapped has no RGBA array to build."""
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.color_mode = 'map'
+
+    mapper.as_rgba()
+
+    assert '__rgba__' not in sphere.point_data
+    assert mapper.color_mode == 'map'
+
+
+def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():
+    """Shared meshes keep distinct raw NumPy scalar arrays per subplot."""
+    n_row, n_col = 2, 2
+    pl = pv.Plotter(shape=(n_row, n_col))
+    mesh = pv.Sphere(radius=1.0, theta_resolution=80, phi_resolution=80)
+    original_point_arrays = set(mesh.point_data.keys())
+
+    actors = []
+    expected = []
+    for ii in range(n_row * n_col):
+        row, col = divmod(ii, n_col)
+        pl.subplot(row, col)
+        data = np.linalg.norm(mesh.points, axis=1) if ii == 3 else mesh.points[:, ii]
+        expected.append(np.asarray(data).copy())
+        actors.append(
+            pl.add_mesh(
+                mesh,
+                scalars=data,
+                smooth_shading=True,
+                show_scalar_bar=False,
+                ambient=0.2,
+                specular=0.3,
+                n_colors=9,
+                rng=(-1, 1.0),
+            )
+        )
+
+    names = []
+    for actor, array in zip(actors, expected, strict=True):
+        mapped = get_actor_mapper_input(actor)
+        names.append(mapped.point_data.active_scalars_name)
+        assert mapped.point_data.active_scalars_name is not None
+        np.testing.assert_allclose(
+            mapped.point_data[mapped.point_data.active_scalars_name],
+            array,
+        )
+
+    assert len(set(names)) == len(names)
+    assert mesh.point_data.active_scalars_name is None
+    assert 'Normals' in original_point_arrays or 'Normals' not in mesh.point_data
+    assert set(mesh.point_data.keys()) == original_point_arrays.union(names)
+
+    pl.close()
+
+
+def test_add_mesh_smooth_shading_with_algorithm_and_scalars_mapper_output():
+    mesh = pv.Wavelet()
+    mesh.point_data['z'] = mesh.points[:, 2].astype(float)
+    mesh.point_data['keep_active'] = mesh.points[:, 0].astype(float)
+    mesh.set_active_scalars('keep_active')
+
+    source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
+    surface = algorithms.callback_algorithm(
+        source,
+        lambda m: m.clip('x'),
+        output_type=pv.UnstructuredGrid,
+    )
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
+    )
+    mapped = get_actor_mapper_input(actor)
+    assert mapped.point_data.active_scalars_name == 'z'
+    assert mapped.point_data.active_normals_name == 'Normals'
+    assert mapped.point_data.active_normals is not None
+    assert mesh.active_scalars_name == 'keep_active'
+    assert 'Normals' not in mesh.point_data
+
+    mesh.point_data['z'][:] = 0
+    source.Modified()
+    mapped_after = get_actor_mapper_input(actor)
+    assert np.allclose(mapped_after.point_data['z'], 0.0)
+    assert mapped_after.point_data.active_scalars_name == 'z'
+    assert mapped_after.point_data.active_normals_name == 'Normals'
+
+    pl.close()
+
+
+def test_add_mesh_smooth_shading_with_algorithm_and_scalars_propagates_updates():
+    mesh = pv.Wavelet()
+    mesh.point_data['z'] = mesh.points[:, 2].astype(float)
+
+    source = algorithms.source_algorithm(lambda: mesh, output_type=type(mesh))
+    surface = algorithms.callback_algorithm(
+        source,
+        lambda m: m.clip('x'),
+        output_type=pv.UnstructuredGrid,
+    )
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        surface, scalars='z', smooth_shading=True, split_sharp_edges=True, show_scalar_bar=False
+    )
+
+    mesh.point_data['z'][:] = 0
+    source.Modified()
+
+    mapped = get_actor_mapper_input(actor)
+    assert np.allclose(mapped.point_data['z'], 0.0)
+    assert mapped.point_data.active_scalars_name == 'z'
+    assert mapped.point_data.active_normals_name == 'Normals'
+
+    pl.close()
+
+
+def test_add_mesh_smooth_shading_algorithm_raw_numpy_scalars_mapper_output():
+    cone = pv.Cone(resolution=90, capping=True).triangulate()
+    cone.clear_data()
+    cone.point_data['keep_active'] = np.linspace(-1.0, 1.0, cone.n_points, dtype=np.float32)
+    cone.set_active_scalars('keep_active')
+    source = algorithms.source_algorithm(lambda: cone, output_type=pv.PolyData)
+    raw_scalars = np.linspace(0.0, 1.0, cone.n_points, dtype=np.float32)
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        source,
+        scalars=raw_scalars,
+        smooth_shading=True,
+        split_sharp_edges=True,
+        show_scalar_bar=False,
+    )
+    mapped = get_actor_mapper_input(actor)
+    tracker = np.asarray(
+        mapped.point_data[algorithms.SmoothShadingAlgorithm.ORIGINAL_POINT_IDS_NAME]
+    )
+    assert mapped.point_data.active_scalars_name == pv.DEFAULT_SCALARS_NAME
+    assert mapped.point_data.active_normals_name == 'Normals'
+    assert np.allclose(mapped.point_data[pv.DEFAULT_SCALARS_NAME], raw_scalars[tracker])
+    assert cone.active_scalars_name == 'keep_active'
+    assert pv.DEFAULT_SCALARS_NAME not in cone.point_data
+    assert 'Normals' not in cone.point_data
+
+    pl.close()
+
+
+def test_add_mesh_raw_numpy_cell_scalars_mapper_output():
+    sphere = pv.Sphere()
+    sphere.cell_data['keep_active'] = -np.arange(sphere.n_cells, dtype=np.float32)
+    sphere.set_active_scalars('keep_active', preference='cell')
+    original_active_normals_name = sphere.point_data.active_normals_name
+    cell_scalars = np.arange(sphere.n_cells, dtype=np.float32)
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars=cell_scalars, show_scalar_bar=False)
+    mapped = get_actor_mapper_input(actor)
+    assert mapped.cell_data.active_scalars_name == pv.DEFAULT_SCALARS_NAME
+    assert np.allclose(mapped.cell_data[pv.DEFAULT_SCALARS_NAME], cell_scalars)
+    assert sphere.cell_data.active_scalars_name == 'keep_active'
+    assert sphere.point_data.active_normals_name == original_active_normals_name
+
+    pl.close()
+
+
+def test_add_mesh_smooth_shading_multi_component_cell_scalars_mapper_output():
+    sphere = pv.Sphere()
+    cell_vec = np.column_stack(
+        [
+            np.zeros(sphere.n_cells, dtype=np.float32),
+            np.linspace(-1.0, 1.0, sphere.n_cells, dtype=np.float32),
+            np.zeros(sphere.n_cells, dtype=np.float32),
+        ]
+    )
+    sphere.cell_data['keep_active'] = np.arange(sphere.n_cells, dtype=np.float32)
+    sphere.set_active_scalars('keep_active', preference='cell')
+    original_active_normals_name = sphere.point_data.active_normals_name
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        scalars=cell_vec,
+        component=1,
+        smooth_shading=True,
+        show_scalar_bar=False,
+    )
+    mapped = get_actor_mapper_input(actor)
+    derived_name = f'{pv.DEFAULT_SCALARS_NAME}-1'
+    assert mapped.cell_data.active_scalars_name == derived_name
+    assert mapped.point_data.active_normals_name == 'Normals'
+    assert np.allclose(mapped.cell_data[derived_name], cell_vec[:, 1])
+    assert sphere.cell_data.active_scalars_name == 'keep_active'
+    assert sphere.point_data.active_normals_name == original_active_normals_name
+
+    pl.close()
+
+
+def test_add_mesh_smooth_shading_multi_component_scalars_mapper_output():
+    mesh = pv.Sphere(theta_resolution=60, phi_resolution=60).cast_to_unstructured_grid()
+    mesh.clear_data()
+    mesh.point_data['vec'] = np.array(mesh.points, dtype=np.float32)
+    mesh.point_data['keep_active'] = mesh.points[:, 0].astype(np.float32)
+    mesh.set_active_scalars('keep_active')
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mesh, scalars='vec', component=1, smooth_shading=True, show_scalar_bar=False
+    )
+    actor.mapper.update()
+    mapped = actor.mapper.GetInputDataObject(0, 0)
+    point_data = mapped.GetPointData()
+    assert point_data.GetScalars().GetName() == 'vec-1'
+    assert point_data.GetNormals().GetName() == 'Normals'
+    assert np.allclose(
+        _vtk.vtk_to_numpy(point_data.GetArray('vec-1')),
+        _vtk.vtk_to_numpy(point_data.GetArray('vec'))[:, 1],
+    )
+    assert mesh.active_scalars_name == 'keep_active'
+    assert 'Normals' not in mesh.point_data
+
+    pl.close()
+    del point_data, mapped, actor, pl
+
+
+def test_active_scalars_algo_not_leaked_by_ghost_dict():
+    """A dead mapper wrapper must not pin its algorithm via VTK's ghost dict.
+
+    When the mapper's Python wrapper is destroyed while its C++ object is
+    still alive (here: the plotter is deleted before the actor), VTK stores
+    the wrapper's ``__dict__`` as a "ghost". If that dict held the
+    active-scalars algorithm, the algorithm's pipeline consumer references
+    would keep the mapper's C++ object (and thus the ghost) alive, closing a
+    Python<->C++ cycle that neither garbage collector can break. See the
+    ``_active_scalars_algo`` property, which exists to prevent exactly this.
+    """
+    import gc
+
+    pl = pv.Plotter(off_screen=True)
+    mesh = pv.Sphere()
+    mesh['data'] = mesh.points[:, 0]
+    actor = pl.add_mesh(mesh, scalars='data')
+    assert actor.mapper._active_scalars_algo is not None
+    pl.close()
+    # The leak was deallocation-order sensitive: plotter first, actor last.
+    del pl, mesh, actor
+    gc.collect()
+
+    def _is_algo(obj):
+        # The heap can contain dead weakref proxies, whose isinstance check
+        # raises ReferenceError (via ABC __instancecheck__)
+        try:
+            return isinstance(obj, algorithms.ActiveScalarsAlgorithm)
+        except ReferenceError:
+            return False
+
+    leaked = [obj for obj in gc.get_objects() if _is_algo(obj)]
+    assert leaked == []
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.Sphere(),
+        pv.Sphere().cast_to_unstructured_grid(),
+        pv.ImageData(dimensions=(5, 5, 5)),
+        pv.PointSet(np.zeros((4, 3))),
+    ],
+)
+def test_add_mesh_mapper_type(dataset):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(dataset)
+    assert type(actor.mapper) is DataSetMapper
+    pl.close()
+
+
+@pytest.mark.parametrize('dataset', [pv.Line(resolution=10), pv.PointSet(np.zeros((4, 3)))])
+def test_add_mesh_mapper_type_line_style(dataset):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(dataset, line_style='--')
+    assert type(actor.mapper) is _PolyDataMapper
+    pl.close()
+
+
+def test_add_mesh_mapper_type_from_algorithm():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(_vtk.vtkSphereSource())
+    assert type(actor.mapper) is DataSetMapper
+    pl.close()
+
+
+def test_polydata_mapper_dataset(sphere):
+    mapper = _PolyDataMapper(dataset=sphere)
+    assert mapper.dataset is sphere

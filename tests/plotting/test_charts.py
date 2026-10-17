@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import itertools
+from typing import get_args
 import weakref
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
+from pyvista.core.utilities.misc import _LINE_STYLE_PATTERNS
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
-
-pytestmark = pytest.mark.skip_check_gc  # A large number of tests here fail gc
 
 
 def vtk_array_to_tuple(arr):
@@ -253,6 +253,10 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
+@pytest.mark.expect_vtk_output(
+    'vtkMath::Jacobi: Error extracting eigenfunctions',
+    reason='VTK fails to extract eigenvectors while fitting the axis scale',
+)
 @pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
@@ -478,6 +482,12 @@ def test_chart_common(pl, chart_f, request):
     assert chart.title == title
     chart.legend_visible = False
     assert not chart.legend_visible
+
+    if isinstance(chart, pv.ChartMPL):
+        with pytest.raises(NotImplementedError, match='ChartMPL does not expose a VTK legend'):
+            _ = chart.legend
+    else:
+        assert chart.legend is chart.GetLegend()
 
 
 @pytest.mark.parametrize(
@@ -1132,12 +1142,6 @@ def test_iren_context_style(pl):
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.needs_vtk_version(
-    9,
-    3,
-    0,
-    reason='Chart interaction when using multiple renderers is bugged on older versions.',
-)
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts
     # in the bottom renderer.
@@ -1232,3 +1236,11 @@ def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy
     assert chart_2d.background_texture == t_puppy
+
+
+def test_line_style_tables_agree():
+    assert (
+        list(_LINE_STYLE_PATTERNS)
+        == list(get_args(pv.typing.LineStyle))
+        == list(charts.Pen.LINE_STYLES)
+    )

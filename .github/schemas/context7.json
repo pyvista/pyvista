@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://context7.com/schema/context7.json",
+  "title": "Context7 Configuration Schema",
+  "description": "Configuration file for Context7 project parsing and documentation generation",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference URL for validation",
+      "format": "uri"
+    },
+    "projectTitle": {
+      "type": "string",
+      "description": "The display name for your project in Context7. This overrides the default repository name.",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["Upstash Ratelimit", "Next.js", "React Query"]
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief description of what your library does. This helps coding agents understand the purpose of your project.",
+      "minLength": 10,
+      "maxLength": 200,
+      "examples": [
+        "Ratelimiting library based on Upstash Redis",
+        "The React Framework for Production",
+        "Powerful data synchronization for React"
+      ]
+    },
+    "branch": {
+      "type": "string",
+      "description": "The git branch to parse. If not provided, the default branch will be used.",
+      "minLength": 1,
+      "maxLength": 100,
+      "examples": ["main", "docs", "master"]
+    },
+    "folders": {
+      "type": "array",
+      "description": "Specific folder paths to include when parsing documentation. If empty, Context7 will scan the entire repository. Supports regex patterns and requires full paths.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255
+      },
+      "maxItems": 50,
+      "uniqueItems": true,
+      "default": [],
+      "examples": [
+        ["docs", "guides"],
+        ["documentation/**"],
+        ["api-reference", "tutorials/*"]
+      ]
+    },
+    "excludeFolders": {
+      "type": "array",
+      "description": "Folder paths to exclude from documentation parsing. Supports regex patterns and requires full paths.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255
+      },
+      "maxItems": 50,
+      "uniqueItems": true,
+      "default": [],
+      "examples": [
+        ["src", "build", "node_modules"],
+        ["**/test/**", "**/tests/**"],
+        ["legacy/*", "archive"]
+      ]
+    },
+    "excludeFiles": {
+      "type": "array",
+      "description": "Specific file names to exclude from documentation parsing. Only include the filename (not the path). Regex patterns are not supported.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "pattern": "^[^/\\\\]+$"
+      },
+      "maxItems": 100,
+      "uniqueItems": true,
+      "default": [],
+      "examples": [
+        ["CHANGELOG.md", "LICENSE"],
+        ["README-dev.md", "CONTRIBUTING.md"],
+        ["package.json", "tsconfig.json"]
+      ]
+    },
+    "rules": {
+      "type": "array",
+      "description": "Best practices or important guidelines that coding agents should follow when using your library. These appear as recommendations in the documentation context.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255
+      },
+      "maxItems": 50,
+      "default": [],
+      "examples": [
+        ["Always use TypeScript for better type safety"],
+        ["Use Upstash Redis as a database", "Use single region set up"],
+        [
+          "Import components from the main package",
+          "Follow the naming conventions"
+        ]
+      ]
+    },
+    "disallow": {
+      "type": "boolean",
+      "description": "Set to true to prevent this repository from being parsed by Context7.",
+      "default": false
+    },
+    "redirect": {
+      "type": "string",
+      "description": "Redirect this library to another Context7 library. Can be a full repository URL or a Context7 project path (e.g., \"/org/repo\").",
+      "minLength": 1,
+      "maxLength": 500,
+      "examples": ["/vercel/next.js", "https://github.com/vercel/next.js"]
+    },
+    "previousVersions": {
+      "type": "array",
+      "description": "Previous versions of your library that should also be available in Context7. Each entry can be a version tag string or an object specifying a tag or branch.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "A git tag for the version",
+            "minLength": 1,
+            "maxLength": 50,
+            "examples": ["v1.0.0", "2.0.0"]
+          },
+          {
+            "type": "object",
+            "description": "Version specified by tag or branch (exactly one must be provided)",
+            "properties": {
+              "tag": {
+                "type": "string",
+                "description": "The git tag for this version",
+                "minLength": 1,
+                "maxLength": 50,
+                "examples": ["v1.0.0", "2.0.0"]
+              },
+              "branch": {
+                "type": "string",
+                "description": "The git branch for this version",
+                "minLength": 1,
+                "maxLength": 50,
+                "examples": ["release-1.x", "v2-stable"]
+              }
+            },
+            "oneOf": [{ "required": ["tag"] }, { "required": ["branch"] }],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "maxItems": 20,
+      "default": []
+    },
+    "url": {
+      "type": "string",
+      "description": "Context7 library URL for ownership verification (e.g., https://context7.com/owner/repo). Used alongside public_key to claim library ownership.",
+      "format": "uri",
+      "minLength": 1,
+      "maxLength": 500,
+      "examples": ["https://context7.com/upstash/ratelimit"]
+    },
+    "public_key": {
+      "type": "string",
+      "description": "Team public key for ownership verification. Found in your team settings at context7.com/dashboard.",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  },
+  "dependencies": {
+    "url": ["public_key"],
+    "public_key": ["url"]
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "projectTitle": "Upstash Ratelimit",
+      "description": "Ratelimiting library based on Upstash Redis",
+      "folders": ["docs"],
+      "excludeFolders": ["src"],
+      "rules": ["Use Upstash Redis as a database", "Use single region set up"],
+      "previousVersions": [{ "tag": "v1.2.1" }, { "branch": "release-1.x" }]
+    }
+  ]
+}

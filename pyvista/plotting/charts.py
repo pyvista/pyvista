@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import wraps
+import functools
 import inspect
 import itertools
 import re
@@ -16,12 +16,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
-from . import _vtk
 from .colors import COLOR_SCHEMES
 from .colors import SCHEME_NAMES
 from .colors import Color
@@ -29,11 +29,15 @@ from .colors import _formatted_color_synonyms
 from .colors import _formatted_hex_colors
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core import LineStyle
+
     from ._typing import Chart
 
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):  # noqa: N801
+    """Metaclass which restores the signature of a wrapped VTK class."""
+
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
@@ -54,6 +58,8 @@ class _vtkWrapperMeta(type):  # noqa: N801
 
 
 class _vtkWrapper(DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
+    """Forward attribute access to a wrapped VTK object."""
+
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -126,7 +132,7 @@ class DocSubs:
     def _wrap_member(member):
         if callable(member):
 
-            @wraps(member)
+            @functools.wraps(member)
             def mem_sub(*args, **kwargs):
                 return member(*args, **kwargs)
 
@@ -142,7 +148,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """Doc subs wrapper.
 
     Only common attribute between methods and properties that we can
-    modify is __doc__, so use that to mark members that need doc
+    modify is ``__doc__``, so use that to mark members that need doc
     substitutions.
     Still, only methods can be marked for doc substitution (as for
     properties the docstring seems to be overwritten when specifying
@@ -188,12 +194,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     LINE_STYLES : dict
         Dictionary containing all allowed line styles as its keys.
 
-        .. include:: ../pen_line_styles.rst
+        .. include:: /api/plotting/line_styles.rst
 
     """
 
     LINE_STYLES: ClassVar[
-        dict[str, dict[str, int | str]]
+        dict[LineStyle, dict[str, int | str]]
     ] = {  # descr is used in the documentation, set to None to hide it from the docs.
         '': {'id': _vtk.vtkPen.NO_PEN, 'descr': 'Hidden'},
         '-': {'id': _vtk.vtkPen.SOLID_LINE, 'descr': 'Solid'},
@@ -283,13 +289,9 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     def style(self, val):
         if val is None:
             val = ''
-        try:
-            self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
-            self._line_style = val
-        except KeyError:
-            formatted_styles = '", "'.join(self.LINE_STYLES.keys())
-            msg = f'Invalid line style. Allowed line styles: "{formatted_styles}"'
-            raise ValueError(msg)
+        _check_line_style(val)
+        self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
+        self._line_style = val
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
@@ -368,7 +370,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self._texture = None
             self.SetTexture(None)
         else:
-            self._texture = pv.Texture(val)  # type: ignore[abstract]
+            self._texture = pv.Texture(val)
             self.SetTexture(self._texture.to_image())
 
     @property
@@ -471,8 +473,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
 
-    @_deprecate_positional_args
-    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002, FBT001, FBT002
+    def __init__(self, *, label='', range=None, grid: bool = True) -> None:  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -646,7 +647,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         """Set the axis' scaling behavior.
 
         Allowed behaviors are ``'auto'`` to automatically rescale the
-        axis to fit all visible datapoints in the plot, or ``'fixed'``
+        axis to fit all visible data points in the plot, or ``'fixed'``
         to use the user defined range.
 
         Examples
@@ -1112,13 +1113,48 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 @abstract_class
 class _CustomContextItem(_vtk.vtkPythonItem):
+    """Context item which paints through a Python subclass."""
+
     class ItemWrapper:
+        """Adapter passed to :vtk:`vtkPythonItem`."""
+
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
+            """Initialize the wrapped context item.
+
+            Parameters
+            ----------
+            item : _CustomContextItem
+                Wrapped item.
+
+            Returns
+            -------
+            bool
+                Always ``True``.
+
+
+            """
             return True
 
         def Paint(self, item, painter):  # noqa: N802
             # item is the _CustomContextItem subclass instance
+            """Paint the wrapped context item.
+
+            Parameters
+            ----------
+            item : _CustomContextItem
+                Item to paint.
+
+            painter : :vtk:`vtkContext2D`
+                Painter to draw with.
+
+            Returns
+            -------
+            bool
+                Whether painting succeeded.
+
+
+            """
             return item.paint(painter)
 
     def __init__(self) -> None:
@@ -1126,12 +1162,20 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, _) -> bool:
+    def paint(self, _) -> bool:  # numpydoc ignore=PR01
+        """Paint the context item."""
         return True
 
 
 class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
-    """Utility class for chart backgrounds."""
+    """Utility class for chart backgrounds.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart this background belongs to.
+
+    """
 
     def __init__(self, chart) -> None:
         super().__init__()
@@ -1146,6 +1190,20 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
     def paint(self, painter) -> bool:
+        """Paint the chart's background and border.
+
+        Parameters
+        ----------
+        painter : :vtk:`vtkContext2D`
+            Painter to draw with.
+
+        Returns
+        -------
+        bool
+            Always ``True``.
+
+
+        """
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
@@ -1158,7 +1216,22 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 
 @abstract_class
 class _Chart(DocSubs):
-    """Common interface for vtkChart, vtkChartBox, vtkChartPie, and ChartMPL instances."""
+    """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    size : sequence[float], default: (1, 1)
+        Size of the chart in normalized coordinates.
+
+    loc : sequence[float], default: (0, 0)
+        Location of the chart in normalized coordinates.
+
+    """
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
     # and 'chart_set_labels'.
@@ -1561,7 +1634,7 @@ class _Chart(DocSubs):
 
         Examples
         --------
-        Create a {chart_name} with title 'My Chart'.
+        Create a {chart_name} with title 'Example Chart'.
 
         .. pyvista-plot::
            :force_static:
@@ -1577,6 +1650,27 @@ class _Chart(DocSubs):
     @title.setter
     def title(self, val) -> None:
         self.SetTitle(val)  # type: ignore[attr-defined]
+
+    @property
+    @doc_subs
+    def legend(self):  # numpydoc ignore=RT01
+        """Return the chart's legend.
+
+        Examples
+        --------
+        Create a {chart_name} with custom labels and access its legend.
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> {chart_set_labels}
+           >>> legend = chart.legend
+           >>> chart.show()
+
+        """
+        return self.GetLegend()  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1607,11 +1701,11 @@ class _Chart(DocSubs):
     def legend_visible(self, val) -> None:
         self.SetShowLegend(val)  # type: ignore[attr-defined]
 
-    @_deprecate_positional_args
     @doc_subs
-    def show(  # noqa: PLR0917
-        self,
-        interactive: bool = True,  # noqa: FBT001, FBT002
+    def show(
+        self: Chart,
+        *,
+        interactive: bool = True,
         off_screen=None,
         full_screen=None,
         screenshot=None,
@@ -1662,7 +1756,7 @@ class _Chart(DocSubs):
         Returns
         -------
         np.ndarray
-            Numpy array of the last image when ``screenshot=True``
+            NumPy array of the last image when ``screenshot=True``
             is set. Optionally contains alpha values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
@@ -1701,7 +1795,19 @@ class _Chart(DocSubs):
 # Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
 @abstract_class
 class _Plot(DocSubs):
-    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
+    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart containing this plot.
+
+    """
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1937,7 +2043,18 @@ class _Plot(DocSubs):
 class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
-    Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
+    Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart containing this plot.
+
     """
 
     DEFAULT_COLOR_SCHEME = 'qual_accent'
@@ -1990,7 +2107,7 @@ class _MultiCompPlot(_Plot):
 
     @color_scheme.setter
     def color_scheme(self, val) -> None:
-        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])  # type: ignore[index]
+        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
@@ -2205,12 +2322,12 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
         'plot_init': 'chart.line([0, 1, 2], [2, 1, 3])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         chart,
         x,
         y,
+        *,
         color='b',
         width=1.0,
         style='-',
@@ -2379,12 +2496,12 @@ class ScatterPlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoi
         'plot_init': 'chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         chart,
         x,
         y,
+        *,
         color='b',
         size=10,
         style='o',
@@ -2611,8 +2728,7 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
         'plot_init': 'chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y1', 'y2'], n_allowed=4)
-    def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:  # noqa: PLR0917
+    def __init__(self, chart, x, y1, y2=None, *, color='b', label='') -> None:  # noqa: PLR0917
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
         self._table = pv.Table(
@@ -2818,12 +2934,12 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         'multiplot_init': 'chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         chart,
         x,
         y,
+        *,
         color=None,
         orientation='V',
         label=None,
@@ -3035,10 +3151,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         'multiplot_init': 'chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'ys'])
-    def __init__(  # noqa: PLR0917
-        self, chart, x, ys, colors=None, labels=None
-    ) -> None:
+    def __init__(self, chart, x, ys, *, colors=None, labels=None) -> None:
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
         if not isinstance(ys[0], (Sequence, np.ndarray)):
@@ -3165,11 +3278,6 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     grid : bool, default: True
         Show the background grid in the plot.
 
-    See Also
-    --------
-    :ref:`chart_basics_example`
-    :ref:`chart_overlays_example`
-
     Examples
     --------
     Plot a simple sine wave as a scatter and line plot.
@@ -3239,14 +3347,14 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         'chart_set_labels': 'plot.label = "My awesome plot"',
     }
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         size=(1, 1),
         loc=(0, 0),
         x_label='x',
         y_label='y',
-        grid: bool = True,  # noqa: FBT001, FBT002
+        grid: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
@@ -3375,7 +3483,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             Values to plot on the Y-axis.
 
         fmt : str, default: "-"
-            A format string, e.g. ``'ro'`` for red circles. See the Notes
+            A format string, for example, ``'ro'`` for red circles. See the Notes
             section for a full description of the format strings.
 
         Returns
@@ -3430,8 +3538,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             line_plot = self.line(x, y, color=color, style=line_style)
         return scatter_plot, line_plot
 
-    @_deprecate_positional_args(allowed=['x', 'y'])
-    def scatter(self, x, y, color='b', size=10, style='o', label=''):  # noqa: PLR0917
+    def scatter(self, x, y, *, color='b', size=10, style='o', label=''):
         """Add a scatter plot to this chart.
 
         Parameters
@@ -3477,8 +3584,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('scatter', x, y, color=color, size=size, style=style, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'y'])
-    def line(self, x, y, color='b', width=1.0, style='-', label=''):  # noqa: PLR0917
+    def line(self, x, y, *, color='b', width=1.0, style='-', label=''):
         """Add a line plot to this chart.
 
         Parameters
@@ -3524,10 +3630,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('line', x, y, color=color, width=width, style=style, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'y1', 'y2'])
-    def area(  # noqa: PLR0917
-        self, x, y1, y2=None, color='b', label=''
-    ):
+    def area(self, x, y1, y2=None, *, color='b', label=''):
         """Add an area plot to this chart.
 
         Parameters
@@ -3569,10 +3672,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('area', x, y1, y2, color=color, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'y'])
-    def bar(  # noqa: PLR0917
-        self, x, y, color=None, orientation='V', label=None
-    ):
+    def bar(self, x, y, *, color=None, orientation='V', label=None):
         """Add a bar plot to this chart.
 
         Parameters
@@ -3618,10 +3718,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('bar', x, y, color=color, orientation=orientation, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'ys'])
-    def stack(  # noqa: PLR0917
-        self, x, ys, colors=None, labels=None
-    ):
+    def stack(self, x, ys, *, colors=None, labels=None):
         """Add a stack plot to this chart.
 
         Parameters
@@ -3957,7 +4054,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     def hide_axes(self) -> None:
         """Hide the x- and y-axis of this chart.
 
-        This includes all labels, ticks and the grid.
+        This includes all labels, ticks, and the grid.
 
         Examples
         --------
@@ -3993,7 +4090,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         The chart containing this plot.
 
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4037,10 +4134,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         'multiplot_init': 'chart.plot',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'data'])
-    def __init__(  # noqa: PLR0917
-        self, chart, data, colors=None, labels=None
-    ) -> None:
+    def __init__(self, chart, data, *, colors=None, labels=None) -> None:
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pv.Table(
@@ -4098,12 +4192,12 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
     def update(self, data) -> None:
-        """Update the plot's underlying dataset(s).
+        """Update the plot's underlying datasets.
 
         Parameters
         ----------
         data : sequence[array_like]
-            The new dataset(s) used in this box plot.
+            The new datasets used in this box plot.
 
         Examples
         --------
@@ -4136,7 +4230,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     Parameters
     ----------
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4185,10 +4279,10 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         'chart_set_labels': 'chart.plot.label = "Data label"',
     }
 
-    @_deprecate_positional_args(allowed=['data'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         data,
+        *,
         colors=None,
         labels=None,
         size=None,
@@ -4250,12 +4344,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized boxplot chart centered in the middle of the
@@ -4282,12 +4370,6 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartBox geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------
@@ -4363,10 +4445,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         'multiplot_init': 'chart.plot',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'data'])
-    def __init__(  # noqa: PLR0917
-        self, chart, data, colors=None, labels=None
-    ) -> None:
+    def __init__(self, chart, data, *, colors=None, labels=None) -> None:
         """Initialize a new pie plot instance."""
         super().__init__(chart)
         self._table = pv.Table(data)
@@ -4482,10 +4561,10 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         'chart_set_labels': 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    @_deprecate_positional_args(allowed=['data'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         data,
+        *,
         colors=None,
         labels=None,
         size=None,
@@ -4542,12 +4621,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the size cannot be modified,
-        filling up the entire viewport by default.
-
         Examples
         --------
         Create a half-sized pie chart centered in the middle of the
@@ -4574,12 +4647,6 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
-
-        Notes
-        -----
-        Customisable ChartPie geometry is only supported in VTK v9.2
-        or newer. For older VTK versions, the location cannot be modified,
-        filling up the entire viewport by default.
 
         Examples
         --------
@@ -4628,10 +4695,6 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         the plotter is rendered. For static charts, setting this
         to ``False`` can improve performance.
 
-    See Also
-    --------
-    :ref:`chart_overlays_example`
-
     Examples
     --------
     Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
@@ -4669,13 +4732,13 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         'chart_set_labels': 'plots[0].label = "My awesome plot"',
     }
 
-    @_deprecate_positional_args(allowed=['figure'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         figure=None,
+        *,
         size=(1, 1),
         loc=(0, 0),
-        redraw_on_render: bool = True,  # noqa: FBT001, FBT002
+        redraw_on_render: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -4702,6 +4765,23 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         # See #1999 and #2031.
         if pv.BUILDING_GALLERY:  # pragma: no cover
             plt.close(self._fig)
+
+    @property
+    def legend(self):  # numpydoc ignore=RT01
+        """Access the legend of the underlying matplotlib axes.
+
+        Notes
+        -----
+        Unlike :class:`Chart2D`, :class:`ChartBox`, and :class:`ChartPie`,
+        the legend of a matplotlib-backed chart must be configured through
+        the matplotlib API on :attr:`figure`.
+
+        """
+        msg = (
+            'ChartMPL does not expose a VTK legend; configure the legend '
+            'through the underlying matplotlib figure instead (see `figure`).'
+        )
+        raise NotImplementedError(msg)
 
     @property
     def figure(self):  # numpydoc ignore=RT01
@@ -4777,7 +4857,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
-            img_data = pv.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
+            img_data = pv.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
     def _render_event(self, *_, plotter_render: bool = False, **__) -> None:
@@ -4818,7 +4898,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
 
         Examples
         --------
-        Create a matplotlib chart with title 'My Chart'.
+        Create a Matplotlib chart with title 'Example Chart'.
 
 
         .. pyvista-plot::
@@ -4936,10 +5016,6 @@ class Charts(_NoNewAttrMixin):
         *charts : Chart2D | Chart3D
             One or more chart objects to be added to the collection.
 
-        See Also
-        --------
-        :ref:`chart_overlays_example`
-
         """
         if self._scene is None:
             self._setup_scene()
@@ -4950,8 +5026,7 @@ class Charts(_NoNewAttrMixin):
             self._scene.AddItem(chart)  # type: ignore[union-attr]
             chart._interactive = False  # Charts are not interactive by default
 
-    @_deprecate_positional_args(allowed=['interactive'])
-    def set_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001, FBT002
+    def set_interaction(self, interactive, *, toggle: bool = False):
         """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``
@@ -4969,8 +5044,8 @@ class Charts(_NoNewAttrMixin):
               or indices.
 
         toggle : bool, default: False
-            Instead of enabling interaction with the provided chart(s), interaction
-            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            Instead of enabling interaction with the provided charts, interaction
+            with the provided charts is toggled. Only applicable when ``interactive``
             is not a boolean.
 
         Returns

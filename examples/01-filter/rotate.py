@@ -4,8 +4,9 @@
 Rotations
 ~~~~~~~~~
 
-Rotations of a mesh about its axes using
-:meth:`~pyvista.DataObjectFilters.rotate_x`,
+Rotate a mesh about its axes.
+
+Uses :meth:`~pyvista.DataObjectFilters.rotate_x`,
 :meth:`~pyvista.DataObjectFilters.rotate_y`, and
 :meth:`~pyvista.DataObjectFilters.rotate_z`.
 In this model, the x axis is from the left to right;
@@ -15,13 +16,11 @@ image. The camera location is the same in all four images.
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
 # %%
-# Define camera position and axes
+# Define Camera Position and Axes
 # +++++++++++++++++++++++++++++++
 #
 # Define camera position and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
@@ -54,7 +53,7 @@ pl.add_mesh(mesh)
 pl.show(cpos=cpos)
 
 # %%
-# Rotation about the x axis
+# Rotation About the X Axis
 # +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the x axis every 60 degrees.
@@ -72,7 +71,7 @@ for i in range(6):
 pl.show(cpos=cpos)
 
 # %%
-# Rotation about the y axis
+# Rotation About the Y Axis
 # +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the y axis every 60 degrees.
@@ -90,7 +89,7 @@ for i in range(6):
 pl.show(cpos=cpos)
 
 # %%
-# Rotation about the z axis
+# Rotation About the Z Axis
 # +++++++++++++++++++++++++
 #
 # Plot the mesh rotated about the z axis every 60 degrees.
@@ -108,7 +107,7 @@ for i in range(6):
 pl.show(cpos=cpos)
 
 # %%
-# Rotation about a custom vector
+# Rotation About a Custom Vector
 # ++++++++++++++++++++++++++++++
 #
 # Plot the mesh rotated about a custom vector every 60 degrees.

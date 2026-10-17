@@ -4,13 +4,15 @@ import re
 from typing import TYPE_CHECKING
 from typing import Literal
 from unittest.mock import ANY
+import warnings
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
@@ -93,10 +95,24 @@ def test_add_mesh_isovalue_raises():
 
     pl = pv.Plotter()
     sp = pv.Sphere()
-    sp.cell_data['foo'] = 1
+    sp.cell_data['foo'] = np.ones(sp.n_cells)
     match = re.escape('Contour filter only works on Point data. Array (foo) is in the Cell data.')
     with pytest.raises(TypeError, match=match):
         pl.add_mesh_isovalue(mesh=sp, scalars='foo')
+
+
+def test_add_mesh_isovalue_without_active_scalars_raises():
+    mesh = pv.Sphere()
+    mesh.point_data['foo'] = np.ones(mesh.n_points)
+    mesh.set_active_scalars(None)
+    assert mesh.n_arrays > 0
+    assert mesh.active_scalars_info.name is None
+
+    pl = pv.Plotter()
+    match = re.escape('No active scalars to contour. Set `scalars` explicitly.')
+    with pytest.raises(ValueError, match=match):
+        pl.add_mesh_isovalue(mesh=mesh)
+    pl.close()
 
 
 def test_add_mesh_isovalue_pointset_raises():
@@ -385,11 +401,129 @@ def test_widget_sphere():
     pl.close()
 
 
+def test_sphere_widget_returns_only_the_new_widgets():
+    pl = pv.Plotter()
+    nodes = np.array([[-1, -1, -1], [1, 1, 1]])
+    first = pl.add_sphere_widget(None, center=nodes)
+    second = pl.add_sphere_widget(None, center=nodes)
+
+    assert len(first) == 2
+    assert len(second) == 2
+    assert not set(map(id, first)) & set(map(id, second))
+    pl.close()
+
+
+def test_volume_clip_plane_adds_one_widget(uniform):
+    pl = pv.Plotter()
+    pl.add_volume_clip_plane(uniform)
+
+    assert len(pl.widgets.plane_widgets) == 1
+    pl.close()
+
+
+def test_sphere_widget_style_is_matched_exactly():
+    pl = pv.Plotter()
+    surface = pl.add_sphere_widget(None, style='surface')
+    wireframe = pl.add_sphere_widget(None, style='wireframe')
+
+    assert surface.GetSphereProperty().GetRepresentationAsString() == 'Surface'
+    assert wireframe.GetSphereProperty().GetRepresentationAsString() == 'Wireframe'
+
+    for style in ['wire', '']:
+        match = re.escape(f'style {style!r} is not valid.')
+        with pytest.raises(ValueError, match=match):
+            pl.add_sphere_widget(None, style=style)
+    pl.close()
+
+
+def test_sphere_widget_color_sequence_is_applied_per_widget():
+    nodes = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
+    pl = pv.Plotter()
+    sphere_widgets = pl.add_sphere_widget(None, center=nodes, color=['red', 'blue'])
+
+    colors = [widget.GetSphereProperty().GetColor() for widget in sphere_widgets]
+    assert colors == [pv.Color('red').float_rgb, pv.Color('blue').float_rgb]
+    pl.close()
+
+
+def test_sphere_widget_single_color_is_shared_by_every_widget():
+    nodes = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
+    yellow = pv.Color('yellow').float_rgb
+    pl = pv.Plotter()
+    sphere_widgets = pl.add_sphere_widget(None, center=nodes, color='yellow')
+    single = pl.add_sphere_widget(None, color='yellow')
+
+    colors = [widget.GetSphereProperty().GetColor() for widget in sphere_widgets]
+    assert colors == [yellow, yellow]
+    assert single.GetSphereProperty().GetColor() == yellow
+    pl.close()
+
+
+@pytest.mark.parametrize('color', [[255, 0, 0], [1.0, 0.0, 0.0], 'red'])
+def test_sphere_widget_single_color_is_not_split_across_widgets(color):
+    nodes = np.array([[-1.0, -1.0, -1.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    red = pv.Color('red').float_rgb
+    pl = pv.Plotter()
+
+    sphere_widgets = pl.add_sphere_widget(None, center=nodes, color=color)
+
+    assert [widget.GetSphereProperty().GetColor() for widget in sphere_widgets] == [red] * 3
+    pl.close()
+
+
+def test_sphere_widget_color_sequence_length_must_match():
+    nodes = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
+    pl = pv.Plotter()
+
+    with pytest.raises(ValueError, match='Invalid color'):
+        pl.add_sphere_widget(None, center=nodes, color=['red', 'green', 'blue'])
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing
     pl.add_mesh(uniform)
     pl.add_checkbox_button_widget(callback=func)
+    pl.close()
+
+
+def test_widget_checkbox_button_click_passes_the_new_state(uniform):
+    states = []
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    size = 50
+    position = (10.0, 10.0)
+    button = pl.add_checkbox_button_widget(
+        callback=states.append, value=False, size=size, position=position
+    )
+    pl.show(auto_close=False)
+
+    center = (int(position[0] + size / 2), int(position[1] + size / 2))
+    pl.iren._mouse_left_button_click(*center)
+    assert button.GetRepresentation().GetState() == 1
+    pl.iren._mouse_left_button_click(*center)
+    assert button.GetRepresentation().GetState() == 0
+
+    assert states == [True, False]
+    pl.close()
+
+
+def test_widget_checkbox_button_click_without_callback(uniform):
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    size = 50
+    position = (10.0, 10.0)
+    button = pl.add_checkbox_button_widget(None, value=False, size=size, position=position)
+    pl.show(auto_close=False)
+
+    center = (int(position[0] + size / 2), int(position[1] + size / 2))
+    with warnings.catch_warnings(record=True) as log:
+        warnings.simplefilter('always')
+        pl.iren._mouse_left_button_click(*center)
+
+    assert not [w for w in log if 'Encountered issue in callback' in str(w.message)]
+    assert button.GetRepresentation().GetState() == 1
     pl.close()
 
 
@@ -401,14 +535,26 @@ def test_widget_closed(uniform):
         pl.add_checkbox_button_widget(callback=lambda value: value)
 
 
+def test_close_with_widgets_does_not_render(uniform):
+    """Widget teardown during ``close`` must not trigger renders."""
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    pl.add_plane_widget(callback=lambda normal, origin: None)  # noqa: ARG005
+    pl.show(auto_close=False)
+    render_starts = []
+    pl.render_window.AddObserver('StartEvent', lambda *_: render_starts.append(1))
+    pl.close()
+    assert not render_starts
+
+
 def test_widget_radio_button(uniform):
     pl = pv.Plotter()
     func = lambda: None  # Does nothing
     pl.add_mesh(uniform)
     b = pl.add_radio_button_widget(callback=func, radio_button_group='group')
-    assert pl.radio_button_widget_dict['group'][0] == b
+    assert pl.widgets.radio_button_widget_dict['group'][0] == b
     pl.close()
-    assert 'group' not in pl.radio_button_widget_dict
+    assert 'group' not in pl.widgets.radio_button_widget_dict
 
 
 def test_widget_radio_button_click(uniform):
@@ -440,9 +586,9 @@ def test_widget_radio_button_with_title(uniform):
     func = lambda: None  # Does nothing
     pl.add_mesh(uniform)
     pl.add_radio_button_widget(callback=func, radio_button_group='group', title='my_button')
-    assert len(pl.radio_button_title_dict['group']) == 1
+    assert len(pl.widgets.radio_button_title_dict['group']) == 1
     pl.close()
-    assert 'group' not in pl.radio_button_title_dict
+    assert 'group' not in pl.widgets.radio_button_title_dict
 
 
 def test_widget_radio_button_multiple_on(uniform):
@@ -451,7 +597,7 @@ def test_widget_radio_button_multiple_on(uniform):
     pl.add_mesh(uniform)
     b1 = pl.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
     b2 = pl.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
-    assert len(pl.radio_button_widget_dict['group']) == 2
+    assert len(pl.widgets.radio_button_widget_dict['group']) == 2
     assert b1.GetRepresentation().GetState() == 0
     assert b2.GetRepresentation().GetState() == 1
     pl.close()
@@ -495,9 +641,9 @@ def test_widget_radio_button_plotter_closed(uniform):
 def test_add_camera_orientation_widget():
     pl = pv.Plotter()
     pl.add_camera_orientation_widget()
-    assert pl.camera_widgets
+    assert pl.widgets.camera_widgets
     pl.close()
-    assert not pl.camera_widgets
+    assert not pl.widgets.camera_widgets
 
 
 def test_plot_algorithm_widgets():
@@ -775,9 +921,9 @@ def test_affine_widget(sphere):
     assert np.allclose(widget.origin, origin)
 
     # test disable
-    assert pl._picker_in_use
+    assert pl.picking._picker_in_use
     widget.disable()
-    assert not pl._picker_in_use
+    assert not pl.picking._picker_in_use
 
     widget.remove()
     assert not widget._circles
@@ -814,7 +960,6 @@ def test_logo_widget():
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_camera3d_widget():
     sphere = pv.Sphere()
@@ -938,7 +1083,6 @@ def test_clear_logo_widget():
     pl.show(cpos='xy')
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_clear_camera3d_widget():
     mesh = pv.Cube()
@@ -950,7 +1094,7 @@ def test_clear_camera3d_widget():
 
 
 class TestEventParser:
-    """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
+    """Class to regroup tests for widgets that use the  ``_parse_interaction_event()`` function"""
 
     @pytest.fixture
     def plotter(self):
@@ -999,3 +1143,47 @@ class TestEventParser:
         # Assert
         mock.assert_called_with(e)
         getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)
+
+
+@pytest.mark.parametrize(
+    'attr',
+    [
+        'camera_widgets',
+        'box_widgets',
+        'box_clipped_meshes',
+        'plane_widgets',
+        'plane_clipped_meshes',
+        'plane_sliced_meshes',
+        'line_widgets',
+        'slider_widgets',
+        'threshold_meshes',
+        'isovalue_meshes',
+        'spline_widgets',
+        'spline_sliced_meshes',
+        'sphere_widgets',
+        'button_widgets',
+        'radio_button_widget_dict',
+        'radio_button_title_dict',
+        'distance_widgets',
+        'logo_widgets',
+        'camera3d_widgets',
+    ],
+)
+def test_deprecated_widget_state_forward(attr):
+    """Each deprecated state collection forwards to ``Plotter.widgets`` with a warning."""
+    pl = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match=attr):
+        value = getattr(pl, attr)
+    assert value is getattr(pl.widgets, attr)
+    pl.close()
+
+
+def test_clear_radio_button_widgets_forward(uniform):
+    """``Plotter.clear_radio_button_widgets`` forwards to the widgets component."""
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    pl.add_radio_button_widget(callback=lambda: None, radio_button_group='group')
+    assert pl.widgets.radio_button_widget_dict['group']
+    pl.clear_radio_button_widgets()
+    assert pl.widgets.radio_button_widget_dict == {}
+    pl.close()

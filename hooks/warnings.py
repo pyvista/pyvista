@@ -1,20 +1,26 @@
 """Enforce warnings style.
 
-Python script to enforce using the custom `warn_external` function instead of
-plain `warnings.warn`, to allow for dynamic stacklevel value.
+Python script to enforce using the custom ``warn_external`` function instead of
+plain ``warnings.warn``, to allow for dynamic stacklevel value.
 """
 
 from __future__ import annotations
 
-from inspect import Parameter
-from inspect import Signature
+import inspect
+from pathlib import Path
+import re
 import sys
 
 import libcst as cst
+from libcst.codemod import CodemodContext
 from libcst.codemod import VisitorBasedCodemodCommand
+from libcst.codemod import transform_module
 from libcst.codemod.visitors import AddImportsVisitor
 from libcst.codemod.visitors import RemoveImportsVisitor
 import libcst.matchers as m
+
+# Cheap pre-filter so files with no `warn(...)` call skip the CST parse entirely.
+_WARN_CALL_RE = re.compile(r'\bwarn\s*\(')
 
 
 def needs_replace(node: cst.Call) -> bool:  # noqa: D103
@@ -33,22 +39,24 @@ def get_args_kwargs(args: tuple[cst.Arg]) -> tuple[list[cst.Arg], dict[str, cst.
 # Need to manually build the `warnings.warn` signature because `inspect.signature`
 # is raising an error for some builtins https://github.com/python/cpython/issues/123473
 _WARN_PARAMS = [
-    Parameter(
+    inspect.Parameter(
         name='message',
-        kind=Parameter.POSITIONAL_OR_KEYWORD,
+        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
     ),
-    Parameter(name='category', kind=Parameter.POSITIONAL_OR_KEYWORD, default=None),
-    Parameter(name='stacklevel', kind=Parameter.POSITIONAL_OR_KEYWORD, default=1),
-    Parameter(name='source', kind=Parameter.POSITIONAL_OR_KEYWORD, default=None),
+    inspect.Parameter(name='category', kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+    inspect.Parameter(name='stacklevel', kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=1),
+    inspect.Parameter(name='source', kind=inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
 ]
 
 if sys.version_info[:2] >= (3, 12):
     _WARN_PARAMS.append(
-        Parameter(name='skip_file_prefixes', kind=Parameter.KEYWORD_ONLY, default=())
+        inspect.Parameter(
+            name='skip_file_prefixes', kind=inspect.Parameter.KEYWORD_ONLY, default=()
+        )
     )
 
 
-_WARN_SIGNATURE = Signature(parameters=_WARN_PARAMS)
+_WARN_SIGNATURE = inspect.Signature(parameters=_WARN_PARAMS)
 
 
 class ConvertWarningsToExternal(VisitorBasedCodemodCommand):
@@ -84,3 +92,21 @@ class ConvertWarningsToExternal(VisitorBasedCodemodCommand):
                 args=args,
             )
         return updated_node
+
+
+def main() -> int:
+    """Codemod each file passed on argv, skipping ones with no `warn(...)` call."""
+    for path in sys.argv[1:]:
+        source = Path(path).read_text(encoding='utf-8')
+        if not _WARN_CALL_RE.search(source):
+            continue  # cheap regex bail-out avoids a CST parse for most files
+        result = transform_module(ConvertWarningsToExternal(CodemodContext()), source)
+        if result.code != source:
+            print(f'Fixing {path}')  # noqa: T201
+            Path(path).write_text(result.code, encoding='utf-8')
+    # pre-commit detects modified files itself by diffing, not by our exit code
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

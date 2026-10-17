@@ -1,34 +1,56 @@
-"""Module managing picking events."""
+"""Module managing picking events.
+
+The plotter exposes the public picking API through the
+:class:`PickingComponent` plotter component, registered under
+``plotter.picking``. The component owns every picking observer, picked-
+result attribute, and per-pick representation actor, and centralizes
+teardown in ``__plotter_close__``.
+
+Top-level methods on :class:`pyvista.BasePlotter` such as
+``enable_point_picking``, ``disable_picking``, and ``picked_point``
+forward to the component for backward compatibility.
+"""
 
 from __future__ import annotations
 
-from functools import partial
-from functools import wraps
+import functools
 from typing import TYPE_CHECKING
+from typing import cast
 import weakref
 
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
-from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
 from .mapper import _mapper_get_data_set_input
-from .mapper import _mapper_has_data_set_input
+from .mapper import _prop_get_data_set_input
 from .opts import ElementType
 from .opts import PickerType
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable
+    from typing import TypeAlias
 
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.pointset import PolyData
+
+    from ._typing import ColorLike
+    from ._typing import StyleOptions
+    from .plotter import BasePlotter
+    from .render_window_interactor import InteractorStyleCaptureMixin
+    from .text import CornerAnnotation
+
+    # Pickers that resolve a dataset.
+    _DataSetPicker: TypeAlias = _vtk.vtkPicker | _vtk.vtkHardwarePicker
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',
@@ -42,19 +64,22 @@ PICKED_REPRESENTATION_NAMES = {
 }
 
 
-def _launch_pick_event(interactor, _event):
+def _launch_pick_event(interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
     """Create a Pick event based on coordinate or left-click."""
     click_x, click_y = interactor.GetEventPosition()
     click_z = 0
 
     picker = interactor.GetPicker()
-    renderer = interactor.GetInteractorStyle()._parent()._plotter.iren.get_poked_renderer()
-    picker.Pick(click_x, click_y, click_z, renderer)
+    style = cast('InteractorStyleCaptureMixin', interactor.GetInteractorStyle())
+    parent = style._parent()
+    if parent is None:  # pragma: no cover
+        return
+    picker.Pick(click_x, click_y, click_z, parent.get_poked_renderer())
 
 
-def _poked_context_callback(plotter, *args, **kwargs):
-    """Use _poked_context_callback in a poked renderer context."""
-    with plotter.iren.poked_subplot():
+def _poked_context_callback(plotter: BasePlotter, *args, **kwargs) -> None:
+    """Invoke a picking callback from within a poked renderer subplot context."""
+    with plotter._get_iren_not_none().poked_subplot():
         try_callback(*args, **kwargs)
 
 
@@ -70,7 +95,9 @@ class RectangleSelection(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, frustum, viewport):
+    def __init__(
+        self, frustum: _vtk.vtkPlanes, viewport: tuple[float, float, float, float]
+    ) -> None:
         self._frustum = frustum
         self._viewport = viewport
 
@@ -111,27 +138,35 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, mode: ElementType = ElementType.CELL, callback=None):
-        self._picker_ = None
+    def __init__(
+        self,
+        mode: ElementType | str | int = ElementType.CELL,
+        callback: Callable[..., None] | None = None,
+    ) -> None:
+        self._picker_: weakref.ref[_DataSetPicker] | None = None
         self.callback = callback
         self.mode = ElementType.from_any(mode)
 
     @property
-    def picker(self):  # numpydoc ignore=RT01
+    def picker(self) -> _DataSetPicker:  # numpydoc ignore=RT01
         """Get or set the picker instance."""
-        return self._picker_()  # type: ignore[misc]
+        picker = None if self._picker_ is None else self._picker_()
+        if picker is None:  # pragma: no cover
+            msg = 'No picker has been set on this handler.'
+            raise PyVistaPickingError(msg)
+        return picker
 
     @picker.setter
-    def picker(self, picker):
-        self._picker_ = weakref.ref(picker)  # type: ignore[assignment]
+    def picker(self, picker: _DataSetPicker) -> None:
+        self._picker_ = weakref.ref(picker)
 
-    def get_mesh(self):
+    def get_mesh(self) -> pv.DataSet | None:
         """Get the picked mesh.
 
         Returns
         -------
-        pyvista.DataSet
-            Picked mesh.
+        pyvista.DataSet | None
+            Picked mesh, or ``None`` when the pick missed every mesh.
 
         """
         ds = self.picker.GetDataSet()
@@ -139,22 +174,22 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             return pv.wrap(ds)
         return None
 
-    def get_cell(self, picked_point):
+    def get_cell(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
         """Get the picked cell of the picked mesh.
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the picked cell.
+        pyvista.UnstructuredGrid | None
+            UnstructuredGrid containing the picked cell, or ``None`` when no
+            cell contains the point.
 
         """
-        mesh = self.get_mesh()
-        # cell_id = self.picker.GetCellId()
+        mesh = self._get_mesh_not_none()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
         if cell_id < 0:
             return None  # TODO: this happens but shouldn't  # pragma: no cover
@@ -162,53 +197,62 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
 
-    def get_face(self, picked_point):
+    def get_face(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
         """Get the picked face of the picked cell.
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the picked face.
+        pyvista.UnstructuredGrid | None
+            UnstructuredGrid containing the picked face, or ``None`` when no
+            cell contains the point.
 
         """
-        cell = self.get_cell(picked_point).get_cell(0)
+        picked_cell = self.get_cell(picked_point)
+        if picked_cell is None:  # pragma: no cover
+            return None
+        cell = picked_cell.get_cell(0)
         if cell.n_faces > 1:
-            for face in cell.faces:
-                contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
-                if contains > -1:
+            face = None
+            for face_id, cell_face in enumerate(cell.faces):
+                grid = cell_face.cast_to_unstructured_grid()
+                if grid.find_containing_cell(picked_point) > -1:
+                    face = grid
+                    face.field_data['vtkOriginalFaceIds'] = np.array([face_id])
                     break
-            if contains < 0:
+            if face is None:
                 # this shouldn't happen
                 msg = 'Trouble aligning point with face.'
                 raise RuntimeError(msg)
-            face = face.cast_to_unstructured_grid()
-            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
 
         return face
 
-    def get_edge(self, picked_point):
+    def get_edge(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
         """Get the picked edge of the picked cell.
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the picked edge.
+        pyvista.UnstructuredGrid | None
+            UnstructuredGrid containing the picked edge, or ``None`` when no
+            cell contains the point.
 
         """
-        cell = self.get_cell(picked_point).get_cell(0)
+        picked_cell = self.get_cell(picked_point)
+        if picked_cell is None:  # pragma: no cover
+            return None
+        cell = picked_cell.get_cell(0)
         if cell.n_edges > 1:
             ei = (
                 cell.cast_to_unstructured_grid()
@@ -222,12 +266,12 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return edge
 
-    def get_point(self, picked_point: Sequence[float]) -> PolyData:
+    def get_point(self, picked_point: VectorLikeFloat) -> PolyData:
         """Get the picked point of the picked mesh.
 
         Parameters
         ----------
-        picked_point : sequence[float]
+        picked_point : VectorLikeFloat
             Coordinates of the picked point.
 
         Returns
@@ -236,67 +280,155 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             Picked mesh containing the point.
 
         """
-        mesh = self.get_mesh()
-        pid = mesh.find_closest_point(picked_point)
+        mesh = self._get_mesh_not_none()
+        pid = mesh.find_closest_point(np.asarray(picked_point))
         picked = mesh.extract_points(pid, adjacent_cells=False, include_cells=False)
         return picked.cast_to_poly_points()
 
-    def __call__(self, picked_point, picker):
+    def _get_mesh_not_none(self) -> pv.DataSet:
+        """Return the picked mesh, raising when the pick missed every mesh."""
+        mesh = self.get_mesh()
+        if mesh is None:  # pragma: no cover
+            msg = 'The pick did not hit a mesh.'
+            raise PyVistaPickingError(msg)
+        return mesh
+
+    def __call__(self, picked_point: VectorLikeFloat, picker: _DataSetPicker) -> None:
         """Perform the pick."""
         self.picker = picker
         mesh = self.get_mesh()
         if mesh is None:
             return  # No selected mesh (point not on surface of mesh)
 
+        picked: pv.DataSet | None
         if self.mode == ElementType.MESH:
             picked = mesh
         elif self.mode == ElementType.CELL:
             picked = self.get_cell(picked_point)
-            if picked is None:
-                return  # TODO: handle
         elif self.mode == ElementType.FACE:
             picked = self.get_face(picked_point)
         elif self.mode == ElementType.EDGE:
             picked = self.get_edge(picked_point)
-        elif self.mode == ElementType.POINT:
+        else:
             picked = self.get_point(picked_point)
+        if picked is None:
+            return  # TODO: handle
 
         if self.callback:
             try_callback(self.callback, picked)
 
 
-@abstract_class
-class PickingInterface:  # numpydoc ignore=PR01
-    """An internal class to hold core picking related features."""
+class PickingComponent(_NoNewAttrMixin):
+    """Plotter picking component.
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the picking interface."""
-        super().__init__(*args, **kwargs)
-        self._picking_left_clicking_observer = None
-        self._picking_right_clicking_observer = None
+    Owns every picking observer, picked-result attribute, and per-pick
+    representation actor for a single :class:`pyvista.BasePlotter`.
+    Constructed lazily on first access of ``plotter.picking`` and
+    registered for close-time teardown via ``__plotter_close__``.
+
+    The plotter exposes the public picking surface (``enable_*_picking``,
+    ``disable_picking``, ``picked_point`` and friends) as forwarding
+    shims that delegate here.
+
+    Parameters
+    ----------
+    plotter : pyvista.BasePlotter
+        Owning plotter. Stored as a strong reference; the component's
+        lifetime is bounded by the plotter's lifetime.
+
+    Attributes
+    ----------
+    picked_path : pyvista.PolyData | None
+        PolyLine accumulated by :meth:`enable_path_picking`.
+    picked_geodesic : pyvista.PolyData | None
+        Geodesic polyline accumulated by :meth:`enable_geodesic_picking`.
+    picked_horizon : pyvista.PolyData | None
+        Ribbon surface produced by :meth:`enable_horizon_picking`.
+
+    .. versionadded:: 0.48.0
+
+    """
+
+    def __init__(self, plotter: BasePlotter) -> None:
+        """Initialize the picking component."""
+        self._plotter = plotter
+        # Low-level picking state
+        self._picking_left_clicking_observer: int | None = None
+        self._picking_right_clicking_observer: int | None = None
         self._picker_in_use = False
-        self._picked_point = None
+        self._picked_point: NDArray[np.float64] | None = None
+        # Mesh-aware picking state
+        self._picked_actor: _vtk.vtkActor | None = None
+        self._picked_mesh: pv.DataSet | None = None
+        self._picked_cell: pv.UnstructuredGrid | pv.MultiBlock | None = None
+        self._picking_text: CornerAnnotation | None = None
+        self._picked_block_index: int | None = None
+        # Path / geodesic / horizon state
+        self.picked_path: pv.PolyData | None = None
+        self.picked_geodesic: pv.PolyData | None = None
+        self.picked_horizon: pv.PolyData | None = None
+        self._last_picked_idx: int | None = None
 
-    def _clear_picking_representations(self):
-        """Clear all picking representations."""
-        for name in PICKED_REPRESENTATION_NAMES.values():
-            self.remove_actor(name)  # type: ignore[attr-defined]
+    # =========================================================================
+    # Lifecycle
+    # =========================================================================
+
+    def _get_picked_mesh_not_none(self) -> pv.DataSet:
+        """Return the picked mesh, raising when nothing has been picked."""
+        if self._picked_mesh is None:  # pragma: no cover
+            msg = 'No mesh has been picked.'
+            raise PyVistaPickingError(msg)
+        return self._picked_mesh
+
+    def __plotter_close__(self) -> None:
+        """Release picking observers when the owning plotter closes."""
+        self.disable_picking()
+
+    def __plotter_deep_clean__(self) -> None:
+        """Release picking observers on deep clean."""
+        self.disable_picking()
+
+    # =========================================================================
+    # Picked-result properties
+    # =========================================================================
 
     @property
-    def picked_point(self):  # numpydoc ignore=RT01
-        """Return the picked point.
+    def picked_point(self) -> NDArray[np.float64] | None:  # numpydoc ignore=RT01
+        """Return the picked point."""
+        return self._picked_point
 
-        This returns the picked point after selecting a point.
+    @property
+    def picked_actor(self) -> _vtk.vtkActor | None:  # numpydoc ignore=RT01
+        """Return the picked actor."""
+        return self._picked_actor
+
+    @property
+    def picked_mesh(self) -> pv.DataSet | None:  # numpydoc ignore=RT01
+        """Return the picked mesh."""
+        return self._picked_mesh
+
+    @property
+    def picked_cells(self) -> pv.UnstructuredGrid | pv.MultiBlock | None:
+        r"""Return the cell-picked object.
 
         Returns
         -------
-        output : numpy.ndarray | None
-            Picked point if available.
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Picked object if available.
 
         """
-        return self._picked_point
+        return self._picked_cell
 
-    def get_pick_position(self):
+    @property
+    def picked_block_index(self) -> int | None:  # numpydoc ignore=RT01
+        """Return the picked block index."""
+        return self._picked_block_index
+
+    # =========================================================================
+    # Pick position helpers
+    # =========================================================================
+
+    def get_pick_position(self) -> tuple[int, int, int, int]:
         """Get the pick position or area.
 
         Returns
@@ -305,10 +437,10 @@ class PickingInterface:  # numpydoc ignore=PR01
             Picked position or area as ``(x0, y0, x1, y1)``.
 
         """
-        renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
+        renderer = self._plotter._get_iren_not_none().get_poked_renderer()
         return renderer.get_pick_position()
 
-    def pick_click_position(self):
+    def pick_click_position(self) -> tuple[float, float, float]:
         """Get corresponding click location in the 3D plot.
 
         Returns
@@ -317,13 +449,15 @@ class PickingInterface:  # numpydoc ignore=PR01
             Three item tuple with the 3D picked position.
 
         """
-        if self.click_position is None:  # type: ignore[attr-defined]
-            self.store_click_position()  # type: ignore[attr-defined]
-        renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined]
-        return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
+        plotter = self._plotter
+        if plotter.click_position is None:
+            plotter.store_click_position()
+        click_position = plotter.click_position or (0, 0)
+        iren = plotter._get_iren_not_none()
+        iren.picker.Pick(click_position[0], click_position[1], 0, iren.get_poked_renderer())
+        return iren.picker.GetPickPosition()
 
-    def pick_mouse_position(self):
+    def pick_mouse_position(self) -> tuple[float, float, float]:
         """Get corresponding mouse location in the 3D plot.
 
         Returns
@@ -332,23 +466,48 @@ class PickingInterface:  # numpydoc ignore=PR01
             Three item tuple with the 3D picked position.
 
         """
-        if self.mouse_position is None:  # type: ignore[attr-defined]
-            self.store_mouse_position()  # type: ignore[attr-defined]
-        renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined]
-        return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
+        plotter = self._plotter
+        if plotter.mouse_position is None:
+            plotter.store_mouse_position()
+        mouse_position = plotter.mouse_position or (0, 0)
+        iren = plotter._get_iren_not_none()
+        iren.picker.Pick(mouse_position[0], mouse_position[1], 0, iren.get_poked_renderer())
+        return iren.picker.GetPickPosition()
 
-    def _init_click_picking_callback(self, *, left_clicking=False):
+    # =========================================================================
+    # Internal helpers
+    # =========================================================================
+
+    def _clear_picking_representations(self) -> None:
+        """Clear all picking representations."""
+        for name in PICKED_REPRESENTATION_NAMES.values():
+            self._plotter.remove_actor(name)
+
+    def _init_click_picking_callback(self, *, left_clicking: bool = False) -> None:
         if left_clicking:
-            self._picking_left_clicking_observer = self.iren.add_observer(  # type: ignore[attr-defined]
+            self._picking_left_clicking_observer = self._plotter._get_iren_not_none().add_observer(
                 'LeftButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+                functools.partial(try_callback, _launch_pick_event),
             )
         else:
-            self._picking_right_clicking_observer = self.iren.add_observer(  # type: ignore[attr-defined]
-                'RightButtonPressEvent',
-                partial(try_callback, _launch_pick_event),
+            self._picking_right_clicking_observer = (
+                self._plotter._get_iren_not_none().add_observer(
+                    'RightButtonPressEvent',
+                    functools.partial(try_callback, _launch_pick_event),
+                )
             )
+
+    def _validate_picker_not_in_use(self) -> None:
+        if self._picker_in_use:
+            msg = (
+                'Picking is already enabled, please disable previous picking '
+                'with `disable_picking()`.'
+            )
+            raise PyVistaPickingError(msg)
+
+    # =========================================================================
+    # disable_picking
+    # =========================================================================
 
     def disable_picking(self) -> None:
         """Disable any active picking and remove observers.
@@ -367,42 +526,43 @@ class PickingInterface:  # numpydoc ignore=PR01
         >>> pl.disable_picking()
 
         """
-        # remove left and right clicking observer if available
-        if getattr(self, 'iren', None):
-            self.iren.remove_observer(self._picking_left_clicking_observer)  # type: ignore[attr-defined]
-            self.iren.remove_observer(self._picking_right_clicking_observer)  # type: ignore[attr-defined]
-            # Reset to default picker
-            self.iren.reset_picker()  # type: ignore[attr-defined]
+        iren = getattr(self._plotter, 'iren', None)
+        if iren is not None:
+            iren.remove_observer(self._picking_left_clicking_observer)
+            iren.remove_observer(self._picking_right_clicking_observer)
+            iren.reset_picker()
         self._picking_left_clicking_observer = None
         self._picking_right_clicking_observer = None
-
         self._picker_in_use = False
 
-    def _validate_picker_not_in_use(self):
-        if self._picker_in_use:
-            msg = (
-                'Picking is already enabled, please disable previous picking '
-                'with `disable_picking()`.'
-            )
-            raise PyVistaPickingError(msg)
+        # Remove picking-text actor from every renderer.
+        if self._picking_text is not None and hasattr(self._plotter, 'renderers'):
+            for renderer in self._plotter.renderers:
+                renderer.remove_actor(self._picking_text, render=False)
+        self._picking_text = None
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_point_picking(  # noqa: PLR0917
+    # =========================================================================
+    # Low-level picking entrypoints
+    # =========================================================================
+
+    def enable_point_picking(
         self,
-        callback=None,
-        tolerance=0.025,
-        left_clicking=False,  # noqa: FBT002
-        picker=PickerType.POINT,
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        color='pink',
-        point_size=10,
-        show_point=True,  # noqa: FBT002
-        use_picker=False,  # noqa: FBT002
-        pickable_window=False,  # noqa: FBT002
-        clear_on_no_selection=True,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        tolerance: float = 0.025,
+        left_clicking: bool = False,
+        picker: PickerType | str | int | None = PickerType.POINT,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        show_point: bool = True,
+        use_picker: bool = False,
+        pickable_window: bool = False,
+        clear_on_no_selection: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking at points under the cursor.
 
         Enable picking a point at the mouse location in the render
@@ -436,10 +596,10 @@ class PickingInterface:  # numpydoc ignore=PR01
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
+                  performant for large geometries.
                 * ``'cell'``: Uses :vtk:`vtkCellPicker`.
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
-                  points on the surface of the mesh.
+                  points on the surface of the mesh (default).
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         show_message : bool | str, default: True
@@ -482,13 +642,13 @@ class PickingInterface:  # numpydoc ignore=PR01
         >>> _ = pl.add_mesh(pv.Cube(), pickable=False)
         >>> pl.enable_point_picking(show_message='Pick a point')
 
-        See :ref:`point_picking_example` for a full example using this method.
 
         """
         self._validate_picker_not_in_use()
         if 'use_mesh' in kwargs:
             warn_external(
-                '`use_mesh` is deprecated. See `use_picker` instead.', PyVistaDeprecationWarning
+                '`use_mesh` is deprecated. See `use_picker` instead.',
+                PyVistaDeprecationWarning,
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -496,26 +656,29 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picker, _event):
+        def _end_pick_event(picker: _vtk.vtkAbstractPicker, _event: str) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if (
                 not pickable_window
                 and hasattr(picker, 'GetDataSet')
                 and picker.GetDataSet() is None
             ):
-                # Clear the selection
-                self._picked_point = None
+                component._picked_point = None
                 if clear_on_no_selection:
-                    with self_().iren.poked_subplot():  # type: ignore[union-attr]
-                        self_()._clear_picking_representations()  # type: ignore[union-attr]
+                    with plotter._get_iren_not_none().poked_subplot():
+                        component._clear_picking_representations()
                 return
-            with self_().iren.poked_subplot():  # type: ignore[union-attr]
+            with plotter._get_iren_not_none().poked_subplot():
                 point = np.array(picker.GetPickPosition())
-                point /= self_().scale  # type: ignore[union-attr] # HACK: handle scale
-                self_()._picked_point = point  # type: ignore[union-attr]
+                point /= plotter.scale  # HACK: handle scale
+                component._picked_point = point
                 if show_point:
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(  # type: ignore[union-attr]
-                        self_().picked_point,  # type: ignore[union-attr]
+                    plotter.add_mesh(
+                        point,
                         color=color,
                         point_size=point_size,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
@@ -525,48 +688,53 @@ class PickingInterface:  # numpydoc ignore=PR01
                     )
                 if callable(callback):
                     if use_picker:
-                        _poked_context_callback(self_(), callback, self.picked_point, picker)
+                        _poked_context_callback(plotter, callback, point, picker)
                     elif use_mesh:  # Lower priority
+                        # Only a picker that resolves a dataset and a point id
+                        # can serve this deprecated mode.
+                        point_picker = cast('_vtk.vtkPointPicker', picker)
                         _poked_context_callback(
-                            self_(),
+                            plotter,
                             callback,
-                            picker.GetDataSet(),
-                            picker.GetPointId(),
+                            point_picker.GetDataSet(),
+                            point_picker.GetPointId(),
                         )
                     else:
-                        _poked_context_callback(self_(), callback, self.picked_point)
+                        _poked_context_callback(plotter, callback, point)
 
-        if picker is not None:  # If None, that means use already set picker
-            self.iren.picker = picker  # type: ignore[attr-defined]
-        if hasattr(self.iren.picker, 'SetTolerance'):  # type: ignore[attr-defined]
-            self.iren.picker.SetTolerance(tolerance)  # type: ignore[attr-defined]
-        self.iren.add_pick_observer(_end_pick_event)  # type: ignore[attr-defined]
+        iren = self._plotter._get_iren_not_none()
+        if picker is not None:  # If None, use the already-set picker
+            iren.picker = picker
+        active_picker = iren.picker
+        if hasattr(active_picker, 'SetTolerance'):
+            active_picker.SetTolerance(tolerance)
+        iren.add_pick_observer(_end_pick_event)
         self._init_click_picking_callback(left_clicking=left_clicking)
         self._picker_in_use = True
 
-        # Now add text about cell-selection
         if show_message:
             if show_message is True:
                 show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick under the mouse'
-            self._picking_text = self.add_text(  # type: ignore[attr-defined]
+            self._picking_text = self._plotter.add_text(
                 str(show_message),
                 font_size=font_size,
                 name='_point_picking_message',
             )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_rectangle_picking(  # noqa: PLR0917
+    def enable_rectangle_picking(
         self,
-        callback=None,
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
-        style='wireframe',
-        color='pink',
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
+        style: StyleOptions = 'wireframe',
+        color: ColorLike = 'pink',
         **kwargs,
-    ):
+    ) -> None:
         """Enable rectangle based picking at cells.
 
         Press ``"r"`` to enable rectangle based selection. Press
@@ -625,13 +793,18 @@ class PickingInterface:  # numpydoc ignore=PR01
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_rectangle_picking()
 
+
         """
         self._validate_picker_not_in_use()
 
         self_ = weakref.ref(self)
 
-        def _end_pick_helper(picker, *_):
-            renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
+        def _end_pick_helper(picker: _vtk.vtkAreaPicker, *_) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
+            renderer = picker.GetRenderer()
             x0 = int(renderer.GetPickX1())
             x1 = int(renderer.GetPickX2())
             y0 = int(renderer.GetPickY1())
@@ -640,9 +813,9 @@ class PickingInterface:  # numpydoc ignore=PR01
             selection = RectangleSelection(frustum=picker.GetFrustum(), viewport=(x0, y0, x1, y1))
 
             if show_frustum:
-                with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(  # type: ignore[union-attr]
+                    plotter.add_mesh(
                         selection.frustum_mesh,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['frustum']),
                         style=style,
@@ -653,186 +826,58 @@ class PickingInterface:  # numpydoc ignore=PR01
                     )
 
             if callback is not None:
-                _poked_context_callback(self_(), callback, selection)
+                _poked_context_callback(plotter, callback, selection)
 
-        self.enable_rubber_band_style()  # type: ignore[attr-defined] # TODO: better handle?
-        self.iren.picker = 'rendered'  # type: ignore[attr-defined]
-        self.iren.add_pick_observer(_end_pick_helper)  # type: ignore[attr-defined]
+        self._plotter.enable_rubber_band_style()
+        self._plotter._get_iren_not_none().picker = 'rendered'
+        self._plotter._get_iren_not_none().add_pick_observer(_end_pick_helper)
         self._picker_in_use = True
 
-        # Now add text about cell-selection
         if show_message:
             if show_message is True:
                 show_message = 'Press R to toggle selection tool'
-            self._picking_text = self.add_text(  # type: ignore[attr-defined]
+            self._picking_text = self._plotter.add_text(
                 str(show_message),
                 font_size=font_size,
                 name='_rectangle_picking_message',
             )
 
         if start:
-            self.iren._style_class.StartSelect()  # type: ignore[attr-defined]
+            rubber_band_style = cast(
+                '_vtk.vtkInteractorStyleRubberBandPick',
+                self._plotter._get_iren_not_none().style,
+            )
+            rubber_band_style.StartSelect()
 
+    # =========================================================================
+    # Mesh-aware picking
+    # =========================================================================
 
-@abstract_class
-class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
-    """Internal class to contain picking utilities."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the picking methods."""
-        super().__init__(*args, **kwargs)
-        self._picked_actor = None
-        self._picked_mesh = None
-        self._picked_cell: None | pv.MultiBlock | pv.UnstructuredGrid = None
-        self._picking_text = None
-        self._picked_block_index = None
-
-    @property
-    def picked_actor(self):  # numpydoc ignore=RT01
-        """Return the picked mesh.
-
-        This returns the picked actor after selecting a mesh with
-        :func:`enable_surface_point_picking <pyvista.Plotter.enable_surface_point_picking>` or
-        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>`.
-
-        Returns
-        -------
-        output : pyvista.Actor | None
-            Picked actor if available.
-
-        """
-        return self._picked_actor
-
-    @property
-    def picked_mesh(self):  # numpydoc ignore=RT01
-        """Return the picked mesh.
-
-        This returns the picked mesh after selecting a mesh with
-        :func:`enable_surface_point_picking <pyvista.Plotter.enable_surface_point_picking>` or
-        :func:`enable_mesh_picking <pyvista.Plotter.enable_mesh_picking>`.
-
-        Returns
-        -------
-        output : pyvista.DataSet | None
-            Picked mesh if available.
-
-        """
-        return self._picked_mesh
-
-    @property
-    def picked_cell(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
-        r"""Return the cell-picked object.
-
-        This returns the object containing cells that were interactively picked with
-        :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
-        :func:`enable_rectangle_through_picking <pyvista.Plotter.enable_rectangle_through_picking>`
-        or
-        :func:`enable_rectangle_visible_picking <pyvista.Plotter.enable_rectangle_visible_picking>`.
-
-        Its value depends on the picking result:
-
-        * if no cells have been picked, returns :py:data:`None`
-        * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
-        * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
-          containing ``n`` ``pyvista.UnstructuredGrid``\s, with ``n`` being the number of picked actors.
-
-        Note that a cell data ``original_cell_ids`` is added to help identifying
-        cell ids picked from the original dataset.
-
-        .. deprecated:: 0.47
-            Use the :attr:`picked_cells <pyvista.Plotter.picked_cells>` attribute instead.
-
-        Returns
-        -------
-        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
-            Picked object if available.
-
-        """  # noqa: E501
-        # deprecated in 0.47, error in 0.48, remove in 0.49
-        warn_external(
-            category=PyVistaDeprecationWarning, message='Use the `picked_cells` attribute instead.'
-        )
-        return self._picked_cell
-
-    @property
-    def picked_cells(self) -> None | pv.UnstructuredGrid | pv.MultiBlock:
-        r"""Return the cell-picked object.
-
-        This returns the object containing cells that were interactively picked with
-        :func:`enable_cell_picking <pyvista.Plotter.enable_cell_picking>`,
-        :func:`enable_rectangle_through_picking <pyvista.Plotter.enable_rectangle_through_picking>`
-        or
-        :func:`enable_rectangle_visible_picking <pyvista.Plotter.enable_rectangle_visible_picking>`.
-
-        Its value depends on the picking result:
-
-        * if no cells have been picked, returns :py:data:`None`
-        * if all picked cells belong to a single actor, returns an :class:`UnstructuredGrid`
-        * if picked cells belong to multiple actors, returns a :class:`MultiBlock`
-          containing ``n`` ``pyvista.UnstructuredGrid``\s, with ``n`` being the number of picked actors.
-
-        Note that a cell data ``original_cell_ids`` is added to help identifying
-        cell ids picked from the original dataset.
-
-
-        Returns
-        -------
-        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
-            Picked object if available.
-
-        """  # noqa: E501
-        return self._picked_cell
-
-    @property
-    def picked_block_index(self):  # numpydoc ignore=RT01
-        """Return the picked block index.
-
-        This returns the picked block index after selecting a point with
-        :func:`enable_point_picking <pyvista.Plotter.enable_point_picking>`.
-
-        Returns
-        -------
-        output : int | None
-            Picked block if available. If ``-1``, then a non-composite dataset
-            was selected.
-
-        """
-        return self._picked_block_index
-
-    @wraps(PickingInterface.disable_picking)
-    def disable_picking(self) -> None:  # type: ignore[override]
-        """Disable picking."""
-        super().disable_picking()
-        # remove any picking text
-        if hasattr(self, 'renderers'):
-            for renderer in self.renderers:
-                renderer.remove_actor(self._picking_text, render=False)
-        self._picking_text = None
-
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_surface_point_picking(  # noqa: PLR0917
+    def enable_surface_point_picking(
         self,
-        callback=None,
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        color='pink',
-        show_point=True,  # noqa: FBT002
-        point_size=10,
-        tolerance=0.025,
-        pickable_window=False,  # noqa: FBT002
-        left_clicking=False,  # noqa: FBT002
-        picker=PickerType.CELL,
-        use_picker=False,  # noqa: FBT002
-        clear_on_no_selection=True,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        show_point: bool = True,
+        point_size: float = 10,
+        tolerance: float = 0.025,
+        pickable_window: bool = False,
+        left_clicking: bool = False,
+        picker: PickerType | str | int = PickerType.CELL,
+        use_picker: bool = False,
+        clear_on_no_selection: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking of a point on the surface of a mesh.
 
         Parameters
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            picked point is input as the first parameter to this callable.
 
         show_message : bool | str, default: True
             Show the message about how to use the mesh picking tool. If this
@@ -863,7 +908,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -873,8 +918,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -904,11 +949,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_surface_point_picking()
 
-        See :ref:`surface_point_picking_example` for a full example using this method.
 
         """
-        # only allow certain pickers to be used for surface picking
-        #  the picker class needs to have `GetDataSet()`
         picker = PickerType.from_any(picker)
         valid_pickers = [
             PickerType.POINT,
@@ -922,22 +964,26 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picked_point, picker):
-            if not pickable_window and picker.GetActor() is None:
-                self_()._picked_point = None  # type: ignore[union-attr]
-                self_()._picked_actor = None  # type: ignore[union-attr]
-                self_()._picked_mesh = None  # type: ignore[union-attr]
-                if clear_on_no_selection:
-                    with self_().iren.poked_subplot():  # type: ignore[union-attr]
-                        self_()._clear_picking_representations()  # type: ignore[union-attr]
+        def _end_pick_event(picked_point: VectorLikeFloat, picker: _DataSetPicker) -> None:
+            component = self_()
+            if component is None:
                 return
-            self_()._picked_actor = picker.GetActor()  # type: ignore[union-attr]
-            self_()._picked_mesh = picker.GetDataSet()  # type: ignore[union-attr]
+            plotter = component._plotter
+            if not pickable_window and picker.GetActor() is None:
+                component._picked_point = None
+                component._picked_actor = None
+                component._picked_mesh = None
+                if clear_on_no_selection:
+                    with plotter._get_iren_not_none().poked_subplot():
+                        component._clear_picking_representations()
+                return
+            component._picked_actor = picker.GetActor()
+            component._picked_mesh = cast('pv.DataSet | None', picker.GetDataSet())
 
             if show_point:
-                with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(  # type: ignore[union-attr]
+                    plotter.add_mesh(
                         picked_point,
                         color=color,
                         point_size=point_size,
@@ -948,9 +994,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     )
             if callable(callback):
                 if use_picker:
-                    _poked_context_callback(self_(), callback, picked_point, picker)
+                    _poked_context_callback(plotter, callback, picked_point, picker)
                 else:
-                    _poked_context_callback(self_(), callback, picked_point)
+                    _poked_context_callback(plotter, callback, picked_point)
 
         self.enable_point_picking(
             callback=_end_pick_event,
@@ -965,21 +1011,22 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_mesh_picking(  # noqa: PLR0917
+    def enable_mesh_picking(
         self,
-        callback=None,
-        show=True,  # noqa: FBT002
-        show_message=True,  # noqa: FBT002
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        font_size=18,
-        left_clicking=False,  # noqa: FBT002
-        use_actor=False,  # noqa: FBT002
-        picker=PickerType.CELL,
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show: bool = True,
+        show_message: bool | str = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        font_size: int = 18,
+        left_clicking: bool = False,
+        use_actor: bool = False,
+        picker: PickerType | str | int = PickerType.CELL,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking of a mesh.
 
         Parameters
@@ -1014,7 +1061,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -1028,8 +1075,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -1059,30 +1106,33 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_mesh_picking()
 
-        See :ref:`mesh_picking_example` for a full example using this method.
 
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):  # noqa: ARG001
+        def end_pick_call_back(*args) -> None:  # noqa: ARG001
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if callback:
                 if use_actor:
-                    _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
+                    _poked_context_callback(plotter, callback, component._picked_actor)
                 else:
-                    _poked_context_callback(self_(), callback, self_()._picked_mesh)  # type: ignore[union-attr]
+                    _poked_context_callback(plotter, callback, component._picked_mesh)
 
             if show:
                 # Select the renderer where the mesh is added.
-                active_renderer_index = self_().renderers._active_index  # type: ignore[union-attr]
-                loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]
-                self_().subplot(*loc)  # type: ignore[union-attr]
+                active_renderer_index = plotter.renderers._active_index
+                loc = plotter._get_iren_not_none().get_event_subplot_loc()
+                plotter.subplot(*np.atleast_1d(loc))
 
                 # Use try in case selection is empty or invalid
                 try:
-                    with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                    with plotter._get_iren_not_none().poked_subplot():
                         _kwargs = kwargs.copy()
-                        self_().add_mesh(  # type: ignore[union-attr]
-                            self_()._picked_mesh,  # type: ignore[union-attr]
+                        plotter.add_mesh(
+                            component._get_picked_mesh_not_none(),
                             name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['mesh']),
                             style=style,
                             color=color,
@@ -1092,16 +1142,15 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # noqa: BLE001  # pragma: no cover
-                    warn_external('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[arg-type]
+                    warn_external(f'Unable to show mesh when picking:\n\n{e}')
 
                 # Reset to the active renderer.
-                loc = self_().renderers.index_to_loc(active_renderer_index)  # type: ignore[union-attr]
-                self_().subplot(*loc)  # type: ignore[union-attr]
+                loc = plotter.renderers.index_to_loc(active_renderer_index)
+                plotter.subplot(*np.atleast_1d(loc))
 
                 # render here prior to running the callback
-                self_().render()  # type: ignore[union-attr]
+                plotter.render()
 
-        # add on-screen message about point-selection
         if show_message and show_message is True:
             show_message = 'Left-click' if left_clicking else 'Right-click'
             show_message += ' or press P to pick single dataset under the mouse pointer'
@@ -1117,20 +1166,21 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             pickable_window=False,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_rectangle_through_picking(  # noqa: PLR0917
+    def enable_rectangle_through_picking(
         self,
-        callback=None,
-        show=True,  # noqa: FBT002
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show: bool = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        show_message: bool | str = True,
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Enable rectangle based cell picking through the scene.
 
         Parameters
@@ -1170,23 +1220,27 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             All remaining keyword arguments are used to control how
             the selection frustum is interactively displayed.
 
+
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):
+        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if picked is None:
                 # Indicates invalid pick
-                with self_().iren.poked_subplot():  # type: ignore[union-attr]
-                    self_()._clear_picking_representations()  # type: ignore[union-attr]
+                with plotter._get_iren_not_none().poked_subplot():
+                    component._clear_picking_representations()
                 return
 
-            self._picked_cell = picked
+            component._picked_cell = picked
 
             if show:
-                # Use try in case selection is empty
-                with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(  # type: ignore[union-attr]
+                    plotter.add_mesh(
                         picked,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['through']),
                         style=style,
@@ -1198,30 +1252,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     )
 
             if callback is not None:
-                _poked_context_callback(self_(), callback, self_().picked_cells)  # type: ignore[union-attr]
+                _poked_context_callback(plotter, callback, component.picked_cells)
 
-        def through_pick_callback(selection: RectangleSelection):
+        def through_pick_callback(selection: RectangleSelection) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             picked = pv.MultiBlock()
-            renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
+            renderer = plotter._get_iren_not_none().get_poked_renderer()
             for actor in renderer.actors.values():
-                if (
-                    (mapper := actor.GetMapper())
-                    and _mapper_has_data_set_input(mapper)
-                    and actor.GetPickable()
-                ):
-                    input_mesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
-                    old_name, new_name = 'orig_extract_id', 'original_cell_ids'
-
-                    #  deprecated in 0.47, rename in v0.49
-                    warn_external(
-                        category=PyVistaDeprecationWarning,
-                        message=(
-                            f'The `{old_name}` cell data has been deprecated and will be renamed'
-                            f' to `{new_name} in a future version of PyVista.'
-                        ),
-                    )
-                    input_mesh.cell_data[old_name] = (ids := np.arange(input_mesh.n_cells))
-                    input_mesh.cell_data[new_name] = ids
+                dataset = _prop_get_data_set_input(actor)
+                if dataset is not None and actor.GetPickable():
+                    input_mesh = pv.wrap(dataset)
+                    input_mesh.cell_data['original_cell_ids'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
@@ -1231,13 +1275,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         picked.append(wrapped)
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
-                self_()._picked_cell = None  # type: ignore[union-attr]
+                component._picked_cell = None
             elif picked.n_blocks == 1:
-                self_()._picked_cell = picked[0]  # type: ignore[union-attr]
+                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
             else:
-                self_()._picked_cell = picked  # type: ignore[union-attr]
+                component._picked_cell = picked
 
-            finalize(self_()._picked_cell)  # type: ignore[union-attr]
+            finalize(component._picked_cell)
 
         self.enable_rectangle_picking(
             callback=through_pick_callback,
@@ -1249,20 +1293,21 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_rectangle_visible_picking(  # noqa: PLR0917
+    def enable_rectangle_visible_picking(
         self,
-        callback=None,
-        show=True,  # noqa: FBT002
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show: bool = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        show_message: bool | str = True,
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Enable rectangle based cell picking on visible surfaces.
 
         Parameters
@@ -1302,21 +1347,24 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             All remaining keyword arguments are used to control how
             the selection frustum is interactively displayed.
 
+
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):
+        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if picked is None:
-                # Indicates invalid pick
-                with self_().iren.poked_subplot():  # type: ignore[union-attr]
-                    self_()._clear_picking_representations()  # type: ignore[union-attr]
+                with plotter._get_iren_not_none().poked_subplot():
+                    component._clear_picking_representations()
                 return
 
             if show:
-                # Use try in case selection is empty
-                with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(  # type: ignore[union-attr]
+                    plotter.add_mesh(
                         picked,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['visible']),
                         style=style,
@@ -1328,36 +1376,36 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     )
 
             if callback is not None:
-                _poked_context_callback(self_(), callback, picked)
+                _poked_context_callback(plotter, callback, picked)
 
-        def visible_pick_callback(selection):
+        def visible_pick_callback(selection: RectangleSelection) -> None:  # noqa: ARG001
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             picked = pv.MultiBlock()
-            renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
+            renderer = plotter._get_iren_not_none().get_poked_renderer()
             x0, y0, x1, y1 = renderer.get_pick_position()
-            # x0, y0, x1, y1 = selection.viewport
             if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
                 selector = _vtk.vtkOpenGLHardwareSelector()
                 selector.SetFieldAssociation(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
                 selector.SetRenderer(renderer)
                 selector.SetArea(x0, y0, x1, y1)
-                selection = selector.Select()
+                hardware_selection = selector.Select()
 
-                for node in range(selection.GetNumberOfNodes()):
-                    selection_node = selection.GetNode(node)
+                for node in range(hardware_selection.GetNumberOfNodes()):
+                    selection_node = hardware_selection.GetNode(node)
                     if selection_node is None:  # pragma: no cover
-                        # No selection
                         continue
                     cids = pv.convert_array(selection_node.GetSelectionList())
                     actor = selection_node.GetProperties().Get(_vtk.vtkSelectionNode.PROP())
 
-                    # TODO: this is too hacky - find better way to avoid non-dataset actors
                     if not actor.GetMapper() or not hasattr(
                         actor.GetProperty(),
                         'GetRepresentation',
                     ):
                         continue
 
-                    # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warn_external(
                             'Display representations other than `surface` will result '
@@ -1369,21 +1417,23 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     tri_smesh = smesh.extract_surface(
                         algorithm=None, pass_pointid=False, pass_cellid=False
                     ).triangulate()
+                    # The hardware selector can report ids past the triangulated mesh
+                    cids = cids[cids < tri_smesh.n_cells]
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
-                # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
-                selection.UnRegister(selection)
+                # See https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
+                hardware_selection.UnRegister(hardware_selection)
 
             if len(picked) == 0 or picked.combine().n_cells < 1:
-                self_()._picked_cell = None  # type: ignore[union-attr]
+                component._picked_cell = None
             elif len(picked) == 1:
-                self_()._picked_cell = picked[0]  # type: ignore[union-attr]
+                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
             else:
-                self_()._picked_cell = picked  # type: ignore[union-attr]
+                component._picked_cell = picked
 
-            finalize(self_()._picked_cell)  # type: ignore[union-attr]
+            finalize(component._picked_cell)
 
         self.enable_rectangle_picking(
             callback=visible_pick_callback,
@@ -1395,29 +1445,30 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_cell_picking(  # noqa: PLR0917
+    def enable_cell_picking(
         self,
-        callback=None,
-        through=True,  # noqa: FBT002
-        show=True,  # noqa: FBT002
-        show_message=True,  # noqa: FBT002
-        style='wireframe',
-        line_width=5,
-        color='pink',
-        font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        through: bool = True,
+        show: bool = True,
+        show_message: bool | str = True,
+        style: StyleOptions = 'wireframe',
+        line_width: float = 5,
+        color: ColorLike = 'pink',
+        font_size: int = 18,
+        start: bool = False,
+        show_frustum: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking of cells with a rectangle selection tool.
 
         Press ``"r"`` to enable rectangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
         :attr:`picked_cells <pyvista.Plotter.picked_cells>` as:
 
-        * a :class:`MultiBlock` when multiple meshes have been picked,
-        * an :class:`UnstructuredGrid` if a single mesh have been picked.
+        * a :class:`pyvista.MultiBlock` when multiple meshes have been picked,
+        * an :class:`pyvista.UnstructuredGrid` if a single mesh have been picked.
 
         All meshes in the scene are available for picking by default.
         If you would like to only pick a single mesh in the scene,
@@ -1441,7 +1492,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         through : bool, default: True
             When ``True`` the picker will select all cells
             through the mesh(es). When ``False``, the picker will select
-            only visible cells on the selected surface(s).
+            only visible cells on the selected surfaces.
 
         show : bool, default: True
             Show the selection interactively.
@@ -1486,6 +1537,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         >>> _ = pl.add_mesh(cube)
         >>> _ = pl.enable_cell_picking()
 
+
         """
         if through:
             method = self.enable_rectangle_through_picking
@@ -1504,27 +1556,29 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_element_picking(  # noqa: PLR0917
+    def enable_element_picking(
         self,
-        callback=None,
-        mode='cell',
-        show=True,  # noqa: FBT002
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        tolerance=0.025,
-        pickable_window=False,  # noqa: FBT002
-        left_clicking=False,  # noqa: FBT002
-        picker=PickerType.CELL,
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        mode: ElementType | str | int = 'cell',
+        show: bool = True,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        tolerance: float = 0.025,
+        pickable_window: bool = False,
+        left_clicking: bool = False,
+        picker: PickerType | str | int = PickerType.CELL,
         **kwargs,
-    ):
+    ) -> None:
         """Select individual elements on a mesh.
 
         Parameters
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            picked element is input as the first parameter to this callable,
+            or the mesh when ``mode`` is ``"mesh"``.
 
         mode : str | ElementType, default: "cell"
             The picking mode. Either ``"mesh"``, ``"cell"``, ``"face"``,
@@ -1553,7 +1607,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         left_clicking : bool, default: False
             When ``True``, meshes can be picked by clicking the left
-            mousebutton.
+            mouse button.
 
             .. note::
                If enabled, left-clicking will **not** display the bounding box
@@ -1563,8 +1617,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             Choice of VTK picker class type:
 
                 * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
-                  performant for large geometries (default).
-                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                  performant for large geometries.
+                * ``'cell'``: Uses :vtk:`vtkCellPicker` (default).
                 * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
                 * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
@@ -1573,20 +1627,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
-        See Also
-        --------
-        :ref:`element_picking_example`
-
         """
         mode = ElementType.from_any(mode)
         self_ = weakref.ref(self)
 
-        def _end_handler(picked):
+        def _end_handler(picked: pv.DataSet) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if callback:
-                _poked_context_callback(self_(), callback, picked)
+                _poked_context_callback(plotter, callback, picked)
 
             if mode == ElementType.CELL:
-                self._picked_cell = picked
+                component._picked_cell = cast('pv.UnstructuredGrid', picked)
 
             if show:
                 if mode == ElementType.CELL:
@@ -1599,9 +1653,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 if mode in [ElementType.CELL, ElementType.FACE]:
                     picked = picked.extract_all_edges()
 
-                with self.iren.poked_subplot():  # type: ignore[attr-defined]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self.add_mesh(  # type: ignore[attr-defined]
+                    plotter.add_mesh(
                         picked,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['element']),
                         pickable=_kwargs.pop('pickable', False),
@@ -1626,7 +1680,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    def enable_block_picking(self, callback=None, side='left'):
+    def enable_block_picking(
+        self, callback: Callable[..., None] | None = None, side: str = 'left'
+    ) -> None:
         """Enable composite block picking.
 
         Use this picker to return the index of a DataSet when using composite
@@ -1666,19 +1722,25 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         >>> pl.enable_block_picking(callback=clear_color, side='right')
         >>> pl.show()
 
+
         """
-        # use a weak reference to enable garbage collection
         self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
-            """Get the picked block and pass it to the user callback."""
-            x, y = self.mouse_position  # type: ignore[attr-defined]
-            loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]
-            index = self_().renderers.loc_to_index(loc)  # type: ignore[union-attr]
-            renderer = self_().renderers[index]  # type: ignore[union-attr]
+        def get_picked_block(*args, **kwargs) -> None:  # noqa: ARG001  # numpydoc ignore=PR01
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
+            mouse_position = plotter.mouse_position
+            if mouse_position is None:  # pragma: no cover
+                return
+            x, y = mouse_position
+            loc = plotter._get_iren_not_none().get_event_subplot_loc()
+            index = plotter.renderers.loc_to_index(loc)
+            renderer = plotter.renderers[index]
 
             selector = _vtk.vtkOpenGLHardwareSelector()
             selector.SetRenderer(renderer)
@@ -1690,46 +1752,45 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 if node is None:  # pragma: no cover
                     continue
                 node_prop = node.GetProperties()
-                self._picked_block_index = node_prop.Get(sel_index)
+                component._picked_block_index = node_prop.Get(sel_index)
 
-                # Safely return the dataset as it's possible a non pyvista
-                # mapper was added
+                # Safely return the dataset (a non-pyvista mapper may have been added).
                 mapper = node_prop.Get(sel_prop).GetMapper()
                 if isinstance(mapper, CompositePolyDataMapper):
-                    dataset = mapper.block_attr.get_block(self._picked_block_index)
+                    dataset = mapper.block_attr.get_block(component._picked_block_index)
                 else:  # pragma: no cover
                     dataset = None
 
                 if callable(callback):
-                    _poked_context_callback(self_(), callback, self._picked_block_index, dataset)
+                    _poked_context_callback(
+                        plotter, callback, component._picked_block_index, dataset
+                    )
 
-        self.track_click_position(callback=get_picked_block, viewport=True, side=side)  # type: ignore[attr-defined]
+        self._plotter.track_click_position(callback=get_picked_block, viewport=True, side=side)
 
+    # =========================================================================
+    # Higher-level convenience pickers
+    # =========================================================================
 
-@abstract_class
-class PickingHelper(PickingMethods):
-    """Internal container class to contain picking helper methods."""
+    def fly_to_mouse_position(self, *, focus: bool = False) -> None:
+        """Focus on last stored mouse position.
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the picking methods."""
-        super().__init__(*args, **kwargs)
-        self.picked_path = None
-        self.picked_geodesic = None
-        self.picked_horizon = None
-        self._last_picked_idx: int | None = None
+        Parameters
+        ----------
+        focus : bool, default: False
+            Set the camera focal point to the picked point instead of flying to it.
 
-    @_deprecate_positional_args
-    def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
-        """Focus on last stored mouse position."""
-        if self.mouse_position is None:  # type: ignore[attr-defined]
-            self.store_mouse_position()  # type: ignore[attr-defined]
+        """
+        plotter = self._plotter
+        if plotter.mouse_position is None:
+            plotter.store_mouse_position()
         click_point = self.pick_mouse_position()
         if focus:
-            self.set_focus(click_point)  # type: ignore[attr-defined]
+            plotter.set_focus(click_point)
         else:
-            self.fly_to(click_point)  # type: ignore[attr-defined]
+            plotter.fly_to(click_point)
 
-    def enable_fly_to_right_click(self, callback=None):
+    def enable_fly_to_right_click(self, callback: Callable[..., None] | None = None) -> None:
         """Set the camera to track right click positions.
 
         A convenience method to track right click positions and fly to
@@ -1744,27 +1805,32 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        def _the_callback(*_):
-            click_point = self.pick_mouse_position()
-            self.fly_to(click_point)  # type: ignore[attr-defined]
+        def _the_callback(*_) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
+            click_point = component.pick_mouse_position()
+            plotter.fly_to(click_point)
             if callable(callback):
-                _poked_context_callback(self_(), callback, click_point)
+                _poked_context_callback(plotter, callback, click_point)
 
-        self.track_click_position(callback=_the_callback, side='right')  # type: ignore[attr-defined]
+        self._plotter.track_click_position(callback=_the_callback, side='right')
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_path_picking(  # noqa: PLR0917
+    def enable_path_picking(
         self,
-        callback=None,
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        color='pink',
-        point_size=10,
-        line_width=5,
-        show_path=True,  # noqa: FBT002
-        tolerance=0.025,
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        line_width: float = 5,
+        show_path: bool = True,
+        tolerance: float = 0.025,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking at paths.
 
         This is a convenience method for :func:`enable_point_picking
@@ -1810,27 +1876,32 @@ class PickingHelper(PickingMethods):
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
+
         """
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points):
+        def make_line_cells(n_points: int) -> NDArray[np.int_]:
             cells = np.arange(0, n_points, dtype=np.int_)
             return np.insert(cells, 0, n_points)
 
         the_points = []
 
-        def _the_callback(picked_point, picker):
+        def _the_callback(picked_point: VectorLikeFloat, picker: _vtk.vtkPicker) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if picker.GetDataSet() is None:
                 return
             the_points.append(picked_point)
-            self.picked_path = pv.PolyData(np.array(the_points))
-            self.picked_path.lines = make_line_cells(len(the_points))
+            component.picked_path = pv.PolyData(np.array(the_points))
+            component.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                with self.iren.poked_subplot():  # type: ignore[attr-defined]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self.add_mesh(  # type: ignore[attr-defined]
-                        self.picked_path,
+                    plotter.add_mesh(
+                        component.picked_path,
                         color=color,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
                         line_width=line_width,
@@ -1840,14 +1911,18 @@ class PickingHelper(PickingMethods):
                         **_kwargs,
                     )
             if callable(callback):
-                _poked_context_callback(self_(), callback, self.picked_path)
+                _poked_context_callback(plotter, callback, component.picked_path)
 
-        def _clear_path_event_watcher():
+        def _clear_path_event_watcher() -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             del the_points[:]
-            with self.iren.poked_subplot():  # type: ignore[attr-defined]
-                self._clear_picking_representations()
+            with plotter._get_iren_not_none().poked_subplot():
+                component._clear_picking_representations()
 
-        self.add_key_event('c', _clear_path_event_watcher)  # type: ignore[attr-defined]
+        self._plotter.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
             show_message = 'Press P to pick under the mouse\nPress C to clear'
 
@@ -1861,20 +1936,21 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_geodesic_picking(  # noqa: PLR0917
+    def enable_geodesic_picking(
         self,
-        callback=None,
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        color='pink',
-        point_size=10,
-        line_width=5,
-        tolerance=0.025,
-        show_path=True,  # noqa: FBT002
-        keep_order=True,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        line_width: float = 5,
+        tolerance: float = 0.025,
+        show_path: bool = True,
+        keep_order: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to
@@ -1933,6 +2009,7 @@ class PickingHelper(PickingMethods):
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
+
         """
         self_ = weakref.ref(self)
 
@@ -1940,38 +2017,45 @@ class PickingHelper(PickingMethods):
 
         self.picked_geodesic = pv.PolyData()
 
-        def _the_callback(picked_point, picker):
+        def _the_callback(picked_point: VectorLikeFloat, picker: _vtk.vtkPicker) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if picker.GetDataSet() is None:
                 return
             mesh = pv.wrap(picker.GetDataSet())
-            idx = mesh.find_closest_point(picked_point)
+            idx = mesh.find_closest_point(np.asarray(picked_point))
             point = mesh.points[idx]
-            if self._last_picked_idx is None:
-                self.picked_geodesic = pv.PolyData(point)
-                self.picked_geodesic['vtkOriginalPointIds'] = [idx]
+            if component._last_picked_idx is None:
+                component.picked_geodesic = pv.PolyData(point)
+                component.picked_geodesic['vtkOriginalPointIds'] = [idx]
             else:
                 surface = mesh.extract_surface(algorithm=None).triangulate()
                 locator = _vtk.vtkPointLocator()
                 locator.SetDataSet(surface)
                 locator.BuildLocator()
-                start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
+                start_idx = locator.FindClosestPoint(mesh.points[component._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
-                self.picked_geodesic += surface.geodesic(start_idx, end_idx, keep_order=keep_order)
+                if component.picked_geodesic is None:  # pragma: no cover
+                    return
+                component.picked_geodesic += surface.geodesic(
+                    start_idx, end_idx, keep_order=keep_order
+                )
                 if keep_order:
-                    # it makes sense to remove adjacent duplicate points
-                    self.picked_geodesic.clean(
+                    component.picked_geodesic.clean(
                         inplace=True,
                         lines_to_points=False,
                         polys_to_lines=False,
                         strips_to_polys=False,
                     )
-            self._last_picked_idx = idx
+            component._last_picked_idx = idx
 
             if show_path:
-                with self.iren.poked_subplot():  # type: ignore[attr-defined]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self.add_mesh(  # type: ignore[attr-defined]
-                        self.picked_geodesic,
+                    plotter.add_mesh(
+                        component.picked_geodesic,
                         color=color,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
                         line_width=line_width,
@@ -1981,15 +2065,19 @@ class PickingHelper(PickingMethods):
                         **_kwargs,
                     )
             if callable(callback):
-                _poked_context_callback(self_(), callback, self.picked_geodesic)
+                _poked_context_callback(plotter, callback, component.picked_geodesic)
 
-        def _clear_g_path_event_watcher():
-            self.picked_geodesic = pv.PolyData()
-            with self.iren.poked_subplot():  # type: ignore[attr-defined]
-                self._clear_picking_representations()
-            self._last_picked_idx = None
+        def _clear_g_path_event_watcher() -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
+            component.picked_geodesic = pv.PolyData()
+            with plotter._get_iren_not_none().poked_subplot():
+                component._clear_picking_representations()
+            component._last_picked_idx = None
 
-        self.add_key_event('c', _clear_g_path_event_watcher)  # type: ignore[attr-defined]
+        self._plotter.add_key_event('c', _clear_g_path_event_watcher)
         if show_message is True:
             show_message = 'Press P to pick under the mouse\nPress C to clear'
 
@@ -2003,22 +2091,23 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_horizon_picking(  # noqa: PLR0917
+    def enable_horizon_picking(
         self,
-        callback=None,
-        normal=(0.0, 0.0, 1.0),
-        width=None,
-        show_message=True,  # noqa: FBT002
-        font_size=18,
-        color='pink',
-        point_size=10,
-        line_width=5,
-        show_path=True,  # noqa: FBT002
-        opacity=0.75,
-        show_horizon=True,  # noqa: FBT002
+        /,
+        callback: Callable[..., None] | None = None,
+        *,
+        normal: VectorLikeFloat = (0.0, 0.0, 1.0),
+        width: float | None = None,
+        show_message: bool | str = True,
+        font_size: int = 18,
+        color: ColorLike = 'pink',
+        point_size: float = 10,
+        line_width: float = 5,
+        show_path: bool = True,
+        opacity: float = 0.75,
+        show_horizon: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Enable horizon picking.
 
         Helper for the ``enable_path_picking`` method to also show a
@@ -2032,7 +2121,7 @@ class PickingHelper(PickingMethods):
             entire picked path is passed as the only parameter to this
             callable.
 
-        normal : sequence[float], default: (0.0, 0.0, 1.0)
+        normal : VectorLikeFloat, default: (0.0, 0.0, 1.0)
             The normal to the horizon surface's projection plane.
 
         width : float, optional
@@ -2071,27 +2160,36 @@ class PickingHelper(PickingMethods):
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
+
         """
         self_ = weakref.ref(self)
 
-        def _clear_horizon_event_watcher():
-            self.picked_horizon = pv.PolyData()
-            with self.iren.poked_subplot():  # type: ignore[attr-defined]
-                self._clear_picking_representations()
+        def _clear_horizon_event_watcher() -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
+            component.picked_horizon = pv.PolyData()
+            with plotter._get_iren_not_none().poked_subplot():
+                component._clear_picking_representations()
 
-        self.add_key_event('c', _clear_horizon_event_watcher)  # type: ignore[attr-defined]
+        self._plotter.add_key_event('c', _clear_horizon_event_watcher)
 
-        def _the_callback(path):
+        def _the_callback(path: pv.PolyData) -> None:
+            component = self_()
+            if component is None:
+                return
+            plotter = component._plotter
             if path.n_points < 2:
                 _clear_horizon_event_watcher()
                 return
-            self.picked_horizon = path.ribbon(normal=normal, width=width)
+            component.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                with self.iren.poked_subplot():  # type: ignore[attr-defined]
+                with plotter._get_iren_not_none().poked_subplot():
                     _kwargs = kwargs.copy()
-                    self.add_mesh(  # type: ignore[attr-defined]
-                        self.picked_horizon,
+                    plotter.add_mesh(
+                        component.picked_horizon,
                         name=_kwargs.get('name', PICKED_REPRESENTATION_NAMES['horizon']),
                         color=color,
                         opacity=opacity,
@@ -2101,7 +2199,7 @@ class PickingHelper(PickingMethods):
                     )
 
             if callable(callback):
-                _poked_context_callback(self_(), callback, path)
+                _poked_context_callback(plotter, callback, path)
 
         self.enable_path_picking(
             callback=_the_callback,

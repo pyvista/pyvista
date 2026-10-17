@@ -4,14 +4,15 @@
 Crop Labeled ImageData
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Use :meth:`~pyvista.ImageDataFilters.crop` to crop labeled data such as segmented medical
-images.
+Use :meth:`~pyvista.ImageDataFilters.crop` to crop labeled medical image data.
 
 """
 
 # sphinx_gallery_thumbnail_number = 2
 
-from __future__ import annotations
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
 
 import pyvista as pv
 from pyvista import examples
@@ -89,3 +90,8 @@ cropped_skull.dimensions
 
 cropped_ct = ct.crop(mask=skull, keep_dimensions=True, fill_value=-1000)
 cropped_ct.dimensions
+
+# %%
+# The crop is measured in index space, so an image is trimmed on its own axes. See
+# :ref:`slice_oblique_anatomy_example` for cropping to a structure which runs across
+# them.

@@ -5,9 +5,9 @@ plot_logo(screenshot='pyvista_logo.png', window_size=(1920, 1080))
 plot_logo(screenshot='pyvista_logo_sm.png', window_size=(960, 400), off_screen=True)
 
 # different camera angle for square plot
-cpos = [(-0.3654543687422538, 1.1098808905156292, 9.073223697728247),
-        (2.553950615449191, 0.34145688392081264, 0.06127122762851659),
-        (0.019308531920309947, 0.996708840795678, -0.07873161547192065)]
+cpos = [(-0.3655, 1.11, 9.073),
+        (2.554, 0.3415, 0.06127),
+        (0.01931, 0.9967, -0.07873)]
 
 plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos,
           off_screen=True)
@@ -18,21 +18,31 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.features import _voxelize_legacy
+from pyvista._version import _is_deprecation_due
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
+
+if TYPE_CHECKING:
+    from pyvista.plotting._typing import CameraPositionOptions
+    from pyvista.plotting.plotter import _ShowReturnType
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
 LOGO_TITLE = 'PyVista'
 
 
-def atomize(grid, shift_fac=0.1, scale=0.9):
+def atomize(
+    grid: pv.UnstructuredGrid, shift_fac: float = 0.1, scale: float = 0.9
+) -> pv.UnstructuredGrid:
     """Break apart and shrink and/or scale the individual cells of a mesh.
 
     Parameters
@@ -62,8 +72,11 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
     return cells[0].merge(cells[1:])
 
 
-def text_3d(string, depth=0.5):
+def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     """Create 3D text from a given string.
+
+    .. deprecated:: 0.50
+        Use :func:`pyvista.Text3D` instead.
 
     Parameters
     ----------
@@ -75,33 +88,52 @@ def text_3d(string, depth=0.5):
 
     Returns
     -------
-    pyvista.DataSet
-        The 3D text in the form of a PyVista DataSet.
-
-    See Also
-    --------
-    :ref:`create_pixel_art_example`
+    pyvista.PolyData
+        The 3D text in the form of a PyVista PolyData mesh.
 
     """
-    from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
-
-    vec_text = vtkVectorText()
-    vec_text.SetText(string)
-
-    extrude = _vtk.vtkLinearExtrusionFilter()
-    extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion()
-    extrude.SetVector(0, 0, 1)
-    extrude.SetScaleFactor(depth)
-
-    tri_filter = _vtk.vtkTriangleFilter()
-    tri_filter.SetInputConnection(extrude.GetOutputPort())
-    tri_filter.Update()
-    return pv.wrap(tri_filter.GetOutput())
+    msg = '`pyvista.demos.logo.text_3d` is deprecated. Use `pyvista.Text3D` instead.'
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
+    return pv.Text3D(string, depth=depth, center=None)
 
 
-@_deprecate_positional_args
-def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
+def _voxelize(mesh: pv.PolyData, density: float) -> pv.UnstructuredGrid:
+    """Voxelize a closed surface into hexahedral cells spaced ``density`` apart.
+
+    This is a legacy voxelizer, preserved solely for generating PyVista's logo.
+    The :meth:`~pyvista.DataSetFilters.voxelize` filter is deliberately not used.
+    """
+    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+    x, y, z = np.meshgrid(
+        np.arange(x_min, x_max, density),
+        np.arange(y_min, y_max, density),
+        np.arange(z_min, z_max, density),
+        indexing='ij',
+    )
+    grid = pv.UnstructuredGrid(pv.StructuredGrid(x, y, z))
+    selection = grid.select_interior_points(mesh, method='cell_locator', locator_tolerance=0.0)
+    return grid.extract_points(selection['selected_points'])
+
+
+# fmt: off
+# ruff: disable[E501]
+@overload
+def logo_letters(*, merge: Literal[False] = False, depth: float = ...) -> dict[str, pv.PolyData]: ...
+@overload
+def logo_letters(*, merge: Literal[True], depth: float = ...) -> pv.PolyData: ...
+@overload
+def logo_letters(*, merge: bool = ..., depth: float = ...) -> pv.PolyData | dict[str, pv.PolyData]: ...
+# ruff: enable[E501]
+# fmt: on
+def logo_letters(
+    *, merge: bool = False, depth: float = 0.3
+) -> pv.PolyData | dict[str, pv.PolyData]:
     """Generate a mesh for each letter in "PyVista".
 
     Parameters
@@ -121,25 +153,26 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pv.PolyData() if merge else {}
+    merged = pv.PolyData()
+    letters: dict[str, pv.PolyData] = {}
 
     # spacing between letters
     space_factor = 0.9
     width = 0
     for letter in LOGO_TITLE:
-        mesh_letter = text_3d(letter, depth=depth)
+        mesh_letter = pv.Text3D(letter, depth=depth, center=None)
         this_letter_width = mesh_letter.points[:, 0].max()
         mesh_letter.translate([width * space_factor, 0, 0.0], inplace=True)
         width += this_letter_width
         if merge:
-            mesh_letters += mesh_letter
+            merged += mesh_letter
         else:
-            mesh_letters[letter] = mesh_letter  # type: ignore[index]
+            letters[letter] = mesh_letter
 
-    return mesh_letters
+    return merged if merge else letters
 
 
-def logo_voxel(density=0.03):
+def logo_voxel(density: float = 0.03) -> pv.UnstructuredGrid:
     """Create a voxelized PyVista logo.
 
     Parameters
@@ -153,10 +186,10 @@ def logo_voxel(density=0.03):
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return _voxelize_legacy(text_3d(LOGO_TITLE, depth=0.3), density=density)
+    return _voxelize(pv.Text3D(LOGO_TITLE, depth=0.3, center=None), density=density)
 
 
-def logo_basic():
+def logo_basic() -> pv.PolyData:
     """Create a basic pyvista logo.
 
     Returns
@@ -186,16 +219,16 @@ def logo_basic():
     return logo_letters(merge=True).compute_normals(split_vertices=True)
 
 
-@_deprecate_positional_args
-def plot_logo(  # noqa: PLR0917
-    window_size=None,
-    off_screen=None,
-    screenshot=None,
-    cpos=None,
-    just_return_plotter=False,  # noqa: FBT002
-    show_note=False,  # noqa: FBT002
-    **kwargs,
-):
+def plot_logo(
+    *,
+    window_size: list[int] | None = None,
+    off_screen: bool | None = None,
+    screenshot: str | Path | None = None,
+    cpos: CameraPositionOptions | None = None,
+    just_return_plotter: bool = False,
+    show_note: bool = False,
+    **kwargs: Any,
+) -> pv.Plotter | _ShowReturnType:
     """Plot the stylized PyVista logo.
 
     Parameters
@@ -244,7 +277,7 @@ def plot_logo(  # noqa: PLR0917
     pl.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'
-    v_grid = _voxelize_legacy(mesh_letters['V'], density=0.08)
+    v_grid = _voxelize(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
     v_grid_atom_surf = v_grid_atom.extract_surface(algorithm=None)
@@ -260,7 +293,7 @@ def plot_logo(  # noqa: PLR0917
     )
 
     # letter 'i'
-    i_grid = _voxelize_legacy(mesh_letters['i'], density=0.1)
+    i_grid = _voxelize(mesh_letters['i'], density=0.1)
 
     pl.add_mesh(
         i_grid.extract_surface(algorithm=None),
@@ -306,9 +339,7 @@ def plot_logo(  # noqa: PLR0917
     pl.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
-        text = text_3d('You can move me!', depth=0.1)
-        text.points *= 0.1
-        text.translate([4.0, -0.3, 0], inplace=True)
+        text = pv.Text3D('You can move me!', depth=0.01, width=1.35, center=(4.69, -0.25, 0.005))
         pl.add_mesh(text, color='black')
 
     # finalize plot and show it
@@ -325,7 +356,7 @@ def plot_logo(  # noqa: PLR0917
 
     if screenshot:  # pragma: no cover
         pl.show(cpos=cpos, auto_close=False)
-        pl.screenshot(screenshot, True)
+        pl.screenshot(screenshot, transparent_background=True)
         cpos_final = pl.camera_position
         pl.close()
         return cpos_final
@@ -333,7 +364,9 @@ def plot_logo(  # noqa: PLR0917
         return pl.show(cpos=cpos, **kwargs)
 
 
-def logo_atomized(density=0.05, scale=0.6, depth=0.05):
+def logo_atomized(
+    density: float = 0.05, scale: float = 0.6, depth: float = 0.05
+) -> pv.UnstructuredGrid:
     """Generate a voxelized pyvista logo with intra-cell spacing.
 
     Parameters
@@ -354,7 +387,7 @@ def logo_atomized(density=0.05, scale=0.6, depth=0.05):
     mesh_letters = logo_letters(depth=depth)
     grids = []
     for letter in mesh_letters.values():
-        grid = _voxelize_legacy(letter, density=density)
+        grid = _voxelize(letter, density=density)
         grids.append(atomize(grid, scale=scale))
 
     return grids[0].merge(grids[1:])

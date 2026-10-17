@@ -11,12 +11,11 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 from typing_extensions import TypeIs
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 
 from . import transformations
 from .fileio import from_meshio
@@ -26,6 +25,7 @@ from .fileio import is_trimesh_mesh
 
 if TYPE_CHECKING:
     import meshio
+    from numpy.typing import NDArray
     import trimesh
 
     from pyvista import DataObject
@@ -41,9 +41,12 @@ if TYPE_CHECKING:
     from pyvista import Table
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
-    from pyvista.wrappers import _WrappableVTKDataObjectType
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import WrappableType
+    from pyvista.core._typing_core import _NumericScalar
+    from pyvista.core._typing_core import _Scalar
+    from pyvista.core._typing_core import _VolumeArray
 
 _NORMALS = {
     'x': [1, 0, 0],
@@ -56,73 +59,132 @@ _NORMALS = {
 _NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
-def _warn_if_invalid_data(obj: DataObject):
-    if pv.vtk_version_info >= (9, 3, 0) and hasattr(obj, 'validate_mesh'):
-        obj.validate_mesh('data', action='warn')
+def _dataset_array_lengths_match(obj: DataSet) -> bool:
+    """Return ``True`` when every point/cell data array length matches the geometry.
+
+    Direct Python loop over the underlying VTK arrays. Used as a fast-path
+    short-circuit by :func:`_warn_if_invalid_data`: when this returns ``True``
+    the slow :meth:`~pyvista.DataObject.validate_mesh` machinery can be skipped
+    entirely. The check is the same one performed by
+    ``validate_mesh('data', ...)`` (its ``cell_data_wrong_length`` and
+    ``point_data_wrong_length`` fields), so skipping the slow path is
+    semantically equivalent for valid datasets.
+
+    As a secondary role this loop also auto-names any unnamed array to
+    ``Unnamed_<i>``. The old ``validate_mesh`` path triggered the same rename
+    implicitly by iterating :meth:`DataSetAttributes.keys`; downstream code
+    (notably :meth:`DataSetFilters.contour`) relies on that name being present
+    after :func:`wrap`. The rename is O(1) per array and cheap, so doing it
+    here keeps the fast path observationally equivalent to the old path.
+
+    See https://github.com/pyvista/pyvista/issues/8473 for the motivating
+    benchmarks.
+
+    """
+    n_points = obj.GetNumberOfPoints()
+    n_cells = obj.GetNumberOfCells()
+    ok = True
+    for attrs, expected in (
+        (obj.GetPointData(), n_points),
+        (obj.GetCellData(), n_cells),
+    ):
+        for i in range(attrs.GetNumberOfArrays()):
+            arr = attrs.GetAbstractArray(i)
+            if arr is None:
+                continue
+            if not arr.GetName():
+                arr.SetName(f'Unnamed_{i}')
+            if arr.GetNumberOfTuples() != expected:
+                ok = False
+    return ok
+
+
+def _composite_array_lengths_match(obj: MultiBlock[Any] | PartitionedDataSet) -> bool:
+    """Recursively apply :func:`_dataset_array_lengths_match` to every leaf DataSet."""
+    for i in range(len(obj)):
+        block = obj[i]
+        if block is None:
+            continue
+        if isinstance(block, pv.MultiBlock):
+            if not _composite_array_lengths_match(block):
+                return False
+        elif not _dataset_array_lengths_match(block):
+            return False
+    return True
+
+
+def _warn_if_invalid_data(obj: DataObject) -> None:
+    if not hasattr(obj, 'validate_mesh'):
+        return
+    # Fast path avoiding the slow validate_mesh machinery on the common valid case.
+    if isinstance(obj, pv.DataSet) and _dataset_array_lengths_match(obj):
+        return
+    if isinstance(obj, (pv.MultiBlock, pv.PartitionedDataSet)) and _composite_array_lengths_match(
+        obj,
+    ):
+        return
+    obj.validate_mesh('data', action='warn')
 
 
 # vtkDataSet overloads
 # Overload types should match the mappings in the `pyvista._wrappers` dict
 # Overloads should be ordered from narrow types (child class) to general types (parent class)
+# fmt: off
+# ruff: disable[E501]
 @overload
-def wrap(dataset: _vtk.vtkPolyData) -> PolyData: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _vtk.vtkPolyData, *, validate: bool | None = ...) -> PolyData: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkStructuredGrid) -> StructuredGrid: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _vtk.vtkStructuredGrid, *, validate: bool | None = ...) -> StructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkExplicitStructuredGrid) -> ExplicitStructuredGrid: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _vtk.vtkExplicitStructuredGrid, *, validate: bool | None = ...) -> ExplicitStructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkUnstructuredGrid) -> UnstructuredGrid: ...  # type: ignore[overload-overlap]
+def wrap(dataset: _vtk.vtkUnstructuredGrid, *, validate: bool | None = ...) -> UnstructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkPointSet) -> PointSet: ...
+def wrap(dataset: _vtk.vtkPointSet, *, validate: bool | None = ...) -> PointSet: ...
 @overload
-def wrap(dataset: _vtk.vtkRectilinearGrid) -> RectilinearGrid: ...
+def wrap(dataset: _vtk.vtkRectilinearGrid, *, validate: bool | None = ...) -> RectilinearGrid: ...
 @overload
-def wrap(dataset: _vtk.vtkStructuredPoints) -> ImageData: ...
+def wrap(dataset: _vtk.vtkStructuredPoints, *, validate: bool | None = ...) -> ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkImageData) -> ImageData: ...
+def wrap(dataset: _vtk.vtkImageData, *, validate: bool | None = ...) -> ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkMultiBlockDataSet) -> MultiBlock: ...
+def wrap(dataset: _vtk.vtkMultiBlockDataSet, *, validate: bool | None = ...) -> MultiBlock: ...
 @overload
-def wrap(dataset: _vtk.vtkTable) -> Table: ...
+def wrap(dataset: _vtk.vtkTable, *, validate: bool | None = ...) -> Table: ...
 @overload
-def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
-
-
+def wrap(dataset: _vtk.vtkPartitionedDataSet, *, validate: bool | None = ...) -> PartitionedDataSet: ...
 # General catch-all cases
 @overload
-def wrap(dataset: _vtk.vtkDataSet) -> DataSet: ...
+def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: ...
 @overload
-def wrap(dataset: _vtk.vtkDataObject) -> DataObject: ...
-
-
+def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
 # Misc overloads
 @overload
-def wrap(dataset: NumpyArray[float]) -> PolyData | ImageData: ...
+def wrap(dataset: _VolumeArray, *, validate: bool | None = ...) -> PolyData | ImageData: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(dataset: _vtk.vtkAbstractArray) -> pyvista_ndarray: ...
+def wrap(dataset: VectorLikeFloat | MatrixLikeFloat, *, validate: bool | None = ...) -> PolyData: ...
 @overload
-def wrap(dataset: None) -> None: ...
-
-
+def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
+@overload
+def wrap(dataset: None, *, validate: bool | None = ...) -> None: ...
 # Third-party meshes
 @overload
-def wrap(dataset: trimesh.Trimesh) -> PolyData: ...
+def wrap(dataset: trimesh.Trimesh, *, validate: bool | None = ...) -> PolyData: ...
 @overload
-def wrap(dataset: meshio.Mesh) -> UnstructuredGrid: ...
+def wrap(dataset: meshio.Mesh, *, validate: bool | None = ...) -> UnstructuredGrid: ...
+# ruff: enable[E501]
+# fmt: on
 def wrap(  # noqa: PLR0911
-    dataset: _WrappableVTKDataObjectType
-    | DataObject
-    | trimesh.Trimesh
-    | meshio.Mesh
-    | _vtk.vtkAbstractArray
-    | NumpyArray[float]
-    | None,
+    dataset: WrappableType,
+    *,
+    validate: bool | None = None,
 ) -> DataObject | pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
 
     * 2D :class:`numpy.ndarray` of XYZ vertices
+    * Sequence of XYZ vertices, or a single XYZ vertex
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     * 3D :class:`trimesh.Trimesh` mesh using :func:`~pyvista.from_trimesh`.
     * 3D :class:`meshio.Mesh` mesh using :func:`~pyvista.from_meshio`.
@@ -137,23 +199,41 @@ def wrap(  # noqa: PLR0911
         If wrapping a ``Trimesh`` object, any arrays are now wrapped directly
         (no copies).
 
+    .. versionchanged:: 0.50
+
+        Sequences of XYZ vertices are wrapped as :class:`~pyvista.PolyData`.
+
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
+    dataset : WrappableType
         Dataset to wrap.
+
+    validate : bool, optional
+        When ``True``, confirm that every point and cell data array on the
+        wrapped VTK dataset has a tuple count that matches the dataset's
+        point or cell count, and emit a :class:`~pyvista.InvalidMeshWarning`
+        on any mismatch. When ``False``, skip the check entirely. When
+        ``None`` (the default), honor
+        :attr:`pyvista.core.config.Config.validate_on_wrap` (which itself
+        defaults to ``True``).
+
+        Pass ``validate=False`` in hot loops where the caller already trusts
+        the input, or set
+        ``pyvista.global_config.validate_on_wrap = False`` to disable the
+        check globally. This only affects raw VTK dataset inputs;
+        ``meshio`` and ``trimesh`` paths perform their own checks
+        independently.
+
+        .. versionadded:: 0.48
 
     Returns
     -------
     pyvista.DataSet
         The PyVista wrapped dataset.
 
-    See Also
-    --------
-    :ref:`wrap_trimesh_example`
-
     Examples
     --------
-    Wrap a numpy array representing a random point cloud.
+    Wrap a NumPy array representing a random point cloud.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -219,14 +299,20 @@ def wrap(  # noqa: PLR0911
         # Return object if it is already wrapped
         return cast('DataObject', dataset)
 
+    if isinstance(dataset, (list, tuple)):
+        dataset = _validation.validate_arrayNx3(
+            dataset, dtype_out=float, name='Sequence of points'
+        )
+
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
     # directly wrap.
     if isinstance(dataset, (np.ndarray, pv.pyvista_ndarray)):
-        if dataset.ndim == 1 and dataset.shape[0] == 3:
-            return pv.PolyData(dataset)
-        if dataset.ndim == 2 and dataset.shape[1] == 3:
-            return pv.PolyData(dataset)
+        if (dataset.ndim == 1 and dataset.shape[0] == 3) or (
+            dataset.ndim == 2 and dataset.shape[1] == 3
+        ):
+            # `PolyData` raises for points that are not real numbers
+            return pv.PolyData(cast('NDArray[_Scalar]', dataset))
         elif dataset.ndim == 3:
             mesh = pv.ImageData(dimensions=dataset.shape)
             if isinstance(dataset, pv.pyvista_ndarray):
@@ -255,8 +341,9 @@ def wrap(  # noqa: PLR0911
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
         else:
-            # Warn if data arrays are invalid
-            _warn_if_invalid_data(wrapped_vtk)
+            should_validate = pv.global_config.validate_on_wrap if validate is None else validate
+            if should_validate:
+                _warn_if_invalid_data(wrapped_vtk)
             return wrapped_vtk
 
     # wrap meshio
@@ -289,15 +376,15 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDat
     return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
-def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
+def generate_plane(normal: VectorLikeFloat, origin: VectorLikeFloat) -> _vtk.vtkPlane:
     """Return a :vtk:`vtkPlane`.
 
     Parameters
     ----------
-    normal : sequence[float]
+    normal : VectorLikeFloat
         Three item sequence representing the normal of the plane.
 
-    origin : sequence[float]
+    origin : VectorLikeFloat
         Three item sequence representing the origin of the plane.
 
     Returns
@@ -317,14 +404,14 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
 def _validate_plane_origin_and_normal(  # noqa: PLR0917
     mesh: DataObject,
-    origin: VectorLike[float] | None,
-    normal: VectorLike[float] | _NormalsLiteral | None,
+    origin: VectorLikeFloat | None,
+    normal: VectorLikeFloat | _NormalsLiteral | None,
     plane: PolyData | None,
     default_normal: _NormalsLiteral,
-) -> tuple[NumpyArray[float], NumpyArray[float]]:
+) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
     def _get_origin_and_normal_from_plane(
         plane_: PolyData,
-    ) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
         _validation.check_instance(plane_, pv.PolyData, name='plane')
 
         if (dimensionality := plane_.dimensionality) != 2:
@@ -350,17 +437,32 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         # find center of data if origin not specified
         origin = mesh.center if origin is None else origin
         origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
+    if not np.any(normal_):
+        msg = '`normal` must be a non-zero vector.'
+        raise ValueError(msg)
     return origin_, normal_
 
 
-@_deprecate_positional_args(allowed=['points', 'angle'])
-def axis_rotation(  # noqa: PLR0917
-    points: NumpyArray[float],
+# fmt: off
+# ruff: disable[E501]
+@overload
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
+@overload
+def axis_rotation(points: NDArray[np.integer], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NDArray[np.float64]: ...
+@overload
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
+@overload
+def axis_rotation(points: NDArray[np.floating], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NDArray[np.float64] | None: ...
+# ruff: enable[E501]
+# fmt: on
+def axis_rotation(
+    points: NDArray[np.floating | np.integer],
     angle: float,
-    inplace: bool = False,  # noqa: FBT001, FBT002
-    deg: bool = True,  # noqa: FBT001, FBT002
-    axis='z',
-):
+    *,
+    inplace: bool = False,
+    deg: bool = True,
+    axis: str = 'z',
+) -> NDArray[np.float64] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -384,8 +486,8 @@ def axis_rotation(  # noqa: PLR0917
 
     Returns
     -------
-    numpy.ndarray
-        Rotated points.
+    numpy.ndarray | None
+        Rotated points as ``float64``, or ``None`` when ``inplace=True``.
 
     Examples
     --------
@@ -410,20 +512,30 @@ def axis_rotation(  # noqa: PLR0917
         raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
-    return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
+    if inplace:
+        transformations.apply_transformation_to_points(
+            rot_mat, cast('NDArray[np.floating]', points), inplace=True
+        )
+        return None
+    return cast(
+        'NDArray[np.float64]', transformations.apply_transformation_to_points(rot_mat, points)
+    )
 
 
-def is_inside_bounds(point, bounds):
+def is_inside_bounds(
+    point: float | VectorLikeFloat,
+    bounds: VectorLikeFloat,
+) -> bool:
     """Check if a point is inside a set of bounds.
 
     This is implemented through recursion so that this is N-dimensional.
 
     Parameters
     ----------
-    point : sequence[float]
-        Three item cartesian point (i.e. ``[x, y, z]``).
+    point : float | VectorLikeFloat
+        Three item Cartesian point (that is, ``[x, y, z]``).
 
-    bounds : sequence[float]
+    bounds : VectorLikeFloat
         Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     Returns
@@ -434,23 +546,24 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, Sequence)) and not isinstance(
-        point,
-        deque,
-    ):
-        if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            msg = 'Bounds mismatch point dimensionality'
-            raise ValueError(msg)
-        point = deque(point)
-        bounds = deque(bounds)
-        return is_inside_bounds(point, bounds)
-    if not isinstance(point, deque):
-        msg = f'Unknown input data type ({type(point)}).'
+    if not isinstance(point, (np.ndarray, Sequence)):
+        msg = f'Unknown input data type ({type(point)}).'  # type: ignore[unreachable]
         raise TypeError(msg)
+    if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
+        msg = 'Bounds mismatch point dimensionality'
+        raise ValueError(msg)
+    return _is_inside_bounds(deque(point), deque(bounds))
+
+
+def _is_inside_bounds(
+    point: deque[float | _NumericScalar],
+    bounds: deque[float | _NumericScalar],
+) -> bool:
+    """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:
         return True
     p = point.popleft()
     lower, upper = bounds.popleft(), bounds.popleft()
     if lower <= p <= upper:
-        return is_inside_bounds(point, bounds)
+        return _is_inside_bounds(point, bounds)
     return False

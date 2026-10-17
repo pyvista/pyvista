@@ -79,7 +79,7 @@ Using pip, you can set up your jupyter environment with:
 
 .. code-block:: bash
 
-    pip install 'jupyterlab>=3' ipywidgets 'pyvista[all,trame]'
+    pip install 'jupyterlab>=3' 'pyvista[jupyter]'
 
 
 Remote Jupyter Host
@@ -96,14 +96,14 @@ Jupyter Server Proxy
 `Jupyter Server Proxy <https://jupyter-server-proxy.readthedocs.io/en/latest/>`_
 lets you access the Trame server hosting the views of the PyVista plotters
 alongside your notebook, and provide authenticated web access to them directly
-through Jupyter.
+through Jupyter. ``pyvista[jupyter]`` installs it.
 
 To configure PyVista and Trame to work with ``jupyter-server-proxy`` in a remote
 environment, you will need to set some options on the global PyVista theme:
 
-* :py:attr:`pyvista.global_theme.trame.server_proxy_enabled
+* :attr:`pyvista.global_theme.trame.server_proxy_enabled
   <pyvista.plotting.themes._TrameConfig.server_proxy_enabled>`
-* :py:attr:`pyvista.global_theme.trame.server_proxy_prefix
+* :attr:`pyvista.global_theme.trame.server_proxy_prefix
   <pyvista.plotting.themes._TrameConfig.server_proxy_prefix>`
 
 The default for ``server_proxy_prefix`` is ``'/proxy/'`` and this should be sufficient
@@ -150,11 +150,11 @@ If using Jupyter Lab 3.x, make sure to install the version 1.x of the extension:
 Once the extension is installed, you can select whether PyVista will use it by
 setting the following flag to ``True`` or ``False``:
 
-* :py:attr:`pyvista.global_theme.trame.jupyter_extension_enabled
+* :attr:`pyvista.global_theme.trame.jupyter_extension_enabled
   <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
 
 
-Setting Remote Jupyter Host with an Environment Variable
+Setting Remote Jupyter Host With an Environment Variable
 ########################################################
 You can set the Remote Jupyter Host manually with the flags discussed above,
 but these need to be set every time the Jupyter kernel restarts. In some environments,
@@ -162,9 +162,9 @@ it may be more efficient to configure the Remote Jupyter Host with an environmen
 If set, the value for ``PYVISTA_TRAME_JUPYTER_MODE`` will determine the values of
 these two flags:
 
-* :py:attr:`pyvista.global_theme.trame.server_proxy_enabled
+* :attr:`pyvista.global_theme.trame.server_proxy_enabled
   <pyvista.plotting.themes._TrameConfig.server_proxy_enabled>`
-* :py:attr:`pyvista.global_theme.trame.jupyter_extension_enabled
+* :attr:`pyvista.global_theme.trame.jupyter_extension_enabled
   <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
 
 If set, the accepted values for ``PYVISTA_TRAME_JUPYTER_MODE`` include ``'extension'``, ``'proxy'``, and ``'native'``.
@@ -178,8 +178,8 @@ review the sections above for installation instructions.
    * - ``PYVISTA_TRAME_JUPYTER_MODE``
      - Description
      - Condition
-     - `server_proxy_enabled`
-     - `jupyter_extension_enabled`
+     - ``server_proxy_enabled``
+     - ``jupyter_extension_enabled``
 
    * - "extension"
      - Use Trame Jupyter Extension

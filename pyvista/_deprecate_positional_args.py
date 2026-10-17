@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from functools import wraps
+import functools
 import inspect
-from inspect import Parameter
-from inspect import Signature
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
 
 from typing_extensions import ParamSpec
 
-from pyvista._version import version_info
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -21,28 +21,24 @@ _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
 
 P = ParamSpec('P')
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def _deprecate_positional_args(
-    func: Callable[P, T],
-    *,
-    version: tuple[int, int] = ...,
-    allowed: list[str] | None = ...,
-    n_allowed: int = ...,
-) -> Callable[P, T]: ...
+def _deprecate_positional_args(func: Callable[P, _T], *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[P, _T]: ...
 @overload
+def _deprecate_positional_args(*, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[[Callable[P, _T]], Callable[P, _T]]: ...
+# ruff: enable[E501]
+# fmt: on
 def _deprecate_positional_args(
-    *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...
-) -> Callable[[Callable[P, T]], Callable[P, T]]: ...
-def _deprecate_positional_args(
-    func: Callable[..., T] | None = None,
+    func: Callable[..., _T] | None = None,
     *,
     version: tuple[int, int] = (0, 50),
     allowed: list[str] | None = None,
     n_allowed: int | None = None,
-) -> Callable[..., T] | Callable[[Callable[P, T]], Callable[P, T]]:
+) -> Callable[..., _T] | Callable[[Callable[P, _T]], Callable[P, _T]]:
     """Use a decorator to deprecate positional arguments.
 
     Parameters
@@ -62,7 +58,7 @@ def _deprecate_positional_args(
 
     """
 
-    def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
+    def _inner_deprecate_positional_args(f: Callable[P, _T]) -> Callable[P, _T]:
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
@@ -122,7 +118,7 @@ def _deprecate_positional_args(
 
             # Check that allowed args are not already kwonly
             for name in allowed:
-                if sig.parameters[name].kind == Parameter.KEYWORD_ONLY:
+                if sig.parameters[name].kind == inspect.Parameter.KEYWORD_ONLY:
                     msg = (
                         f'Parameter {name!r} in decorator {decorator_name!r} is already '
                         f'keyword-only\nand should be removed from the allowed list.'
@@ -133,8 +129,8 @@ def _deprecate_positional_args(
         n_positional = 0
         for name in param_names:
             if name not in ['cls', 'self'] and sig.parameters[name].kind in [
-                Parameter.POSITIONAL_ONLY,
-                Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
             ]:
                 n_positional += 1
         actual_n_allowed = len(allowed) if allowed else 0
@@ -147,7 +143,7 @@ def _deprecate_positional_args(
             raise RuntimeError(msg)
 
         # Raise error post-deprecation
-        if version_info >= version:
+        if _is_deprecation_due(version):
             # Construct expected positional args and signature
             new_parameters = []
             max_args_to_print = actual_n_allowed + 2
@@ -162,14 +158,16 @@ def _deprecate_positional_args(
                     current_kind = sig.parameters[name].kind
                     new_kind = (
                         current_kind
-                        if current_kind != Parameter.KEYWORD_ONLY
-                        else Parameter.KEYWORD_ONLY
+                        if current_kind != inspect.Parameter.KEYWORD_ONLY
+                        else inspect.Parameter.KEYWORD_ONLY
                     )
-                    new_parameters.append(Parameter(name, kind=new_kind))
+                    new_parameters.append(inspect.Parameter(name, kind=new_kind))
                 else:
-                    new_parameters.append(Parameter(name, kind=Parameter.KEYWORD_ONLY))
+                    new_parameters.append(
+                        inspect.Parameter(name, kind=inspect.Parameter.KEYWORD_ONLY)
+                    )
 
-            signature_string = f'{qualified_name()}{Signature(new_parameters)}'
+            signature_string = f'{qualified_name()}{inspect.Signature(new_parameters)}'
             if has_too_many_to_print:
                 # Replace ending bracket with ellipses
                 signature_string = f'{signature_string[:-1]}, ...)'
@@ -188,8 +186,19 @@ def _deprecate_positional_args(
             )
             raise RuntimeError(msg)
 
-        @wraps(f)
-        def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
+        # Leading parameters that may always be passed positionally
+        n_free_positional = 0
+        for name in param_names:
+            if name in ('self', 'cls') or (allowed and name in allowed):
+                n_free_positional += 1
+            else:
+                break
+
+        @functools.wraps(f)
+        def inner_f(*args: P.args, **kwargs: P.kwargs) -> _T:
+            # Optimization: nothing to check when every positional argument is an allowed one
+            if len(args) <= n_free_positional:
+                return f(*args, **kwargs)
             passed_positional_names = param_names[: len(args)]
 
             # Exclude allowed ones
@@ -214,31 +223,29 @@ def _deprecate_positional_args(
                     s = 's'
                     this = 'these'
 
-                if version_info < version:
-                    # Print warning
-                    version_str = '.'.join(map(str, version))
-                    arg_list = ', '.join(f'{a!r}' for a in offending_args)
-                    stack_level = 3
+                # Print warning
+                version_str = '.'.join(map(str, version))
+                arg_list = ', '.join(f'{a!r}' for a in offending_args)
+                stack_level = 3
 
-                    def call_site() -> str:
-                        # Get location where the function is called
-                        frame = inspect.stack()[stack_level]
-                        file = Path(frame.filename).as_posix()
-                        return f'{file}:{frame.lineno}'
+                def call_site() -> str:
+                    # Get location where the function is called
+                    # Optimization: ``inspect.stack()`` reads source lines for every frame
+                    frame = sys._getframe(stack_level)
+                    file = Path(frame.f_code.co_filename).as_posix()
+                    return f'{file}:{frame.f_lineno}'
 
-                    def warn_positional_args() -> None:
-                        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+                def warn_positional_args() -> None:
+                    msg = (
+                        f'\n{call_site()}: '
+                        f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
+                        f'to function {qualified_name()!r}.\n'
+                        f'From version {version_str}, passing {this} as{a}positional '
+                        f'argument{s} will result in a TypeError.'
+                    )
+                    warn_external(msg, PyVistaDeprecationWarning)
 
-                        msg = (
-                            f'\n{call_site()}: '
-                            f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
-                            f'to function {qualified_name()!r}.\n'
-                            f'From version {version_str}, passing {this} as{a}positional '
-                            f'argument{s} will result in a TypeError.'
-                        )
-                        warn_external(msg, PyVistaDeprecationWarning)
-
-                    warn_positional_args()
+                warn_positional_args()
 
             return f(*args, **kwargs)
 

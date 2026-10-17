@@ -1,11 +1,12 @@
 """
 .. _openfoam_example:
 
-Plot OpenFOAM data
+Plot OpenFOAM Data
 ~~~~~~~~~~~~~~~~~~
-"""
 
-from __future__ import annotations
+Read and plot data from a lid-driven cavity flow simulation.
+
+"""
 
 import pyvista as pv
 from pyvista import examples

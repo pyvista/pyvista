@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,6 +12,8 @@ from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
+from tests.conftest import _VTKSZ_SIZE_EXCEPTIONS_MB
+from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -60,7 +63,7 @@ def results_parser(monkeypatch: pytest.MonkeyPatch):
     It enables to get the test name (last part of the test path)
     as well as the status.
 
-    Results can be passed to the `RunResultsReport` class to better interact
+    Results can be passed to the ``RunResultsReport`` class to better interact
     with them.
     """
     monkeypatch.setenv('PYTEST_ADDOPTS', '-v')
@@ -75,15 +78,31 @@ def _load_current_config(
     pytestconfig: pytest.Config,
     pytester: pytest.Pytester,
 ):
-    with (pytestconfig.rootpath / 'pyproject.toml').open('r') as file:
+    # Explicit encoding: the locale default is ASCII on the CI runners.
+    with (pytestconfig.rootpath / 'pyproject.toml').open('r', encoding='utf-8') as file:
         toml = pytester.makepyprojecttoml(file.read())
 
-    with (pytestconfig.rootpath / 'tests/conftest.py').open('r') as file:
+    with (pytestconfig.rootpath / 'tests/conftest.py').open('r', encoding='utf-8') as file:
         conftest = pytester.makeconftest(file.read())
 
     yield
     toml.unlink()
     conftest.unlink()
+
+
+@pytest.mark.parametrize(
+    ('sources', 'raises'),
+    [(None, False), ([True], False), (['pyvista', 'tests'], False), (['pyvista.ext'], True)],
+)
+def test_dotted_cov_target_rejected(sources, raises):
+    from tests.conftest import pytest_configure
+
+    config = SimpleNamespace(option=SimpleNamespace(cov_source=sources))
+    if raises:
+        with pytest.raises(pytest.UsageError, match=r"not 'pyvista\.ext'\. Use plain --cov\."):
+            pytest_configure(config)
+    else:
+        pytest_configure(config)
 
 
 def test_warnings_turned_to_errors(
@@ -490,8 +509,10 @@ def test_skip_windows(
     results.stdout.re_match_lines(
         [
             r'.*Marker `skip_windows` called with incorrect arguments\.',
-            r".*Signature should be: @pytest\.mark\.skip_windows\(reason: str = 'Test fails on "
-            r"Windows'\)",
+            (
+                r'.*Signature should be: @pytest\.mark\.skip_windows'
+                r"\(reason: str = 'Test fails on Windows'\)"
+            ),
         ]
     )
 
@@ -643,3 +664,154 @@ def test_skip_mac(
         assert 'test_skipped_platform_machine' in report.skipped
     else:
         assert 'test_skipped_platform_machine' in report.passed
+
+
+def test_notebook_mode_is_pinned_off():
+    """``reset_global_state`` pins notebook mode, rather than leaving it detected.
+
+    Left at its default of ``None``, a plotter asks scooby whether it is running in an
+    ipykernel, so on a machine that answers yes an ordinary plotting test renders through
+    the trame jupyter backend and launches the process-lifetime ``pyvista-jupyter``
+    server. Whichever test does that first is then blamed for the ``vtkWebApplication``
+    it leaves behind (pyvista/pyvista#8929). Tests that want a notebook pass
+    ``notebook=True`` themselves.
+    """
+    assert pv.global_theme.notebook is False
+
+
+def test_flaky_test_retries_until_it_passes(capsys):
+    attempts = []
+
+    @flaky_test
+    def sometimes_fails():
+        attempts.append(None)
+        if len(attempts) < 3:
+            msg = 'not yet'
+            raise AssertionError(msg)
+
+    sometimes_fails()
+    assert len(attempts) == 3
+    assert capsys.readouterr().out.count('retrying...') == 2
+
+
+def test_flaky_test_reraises_after_the_last_attempt(capsys):
+    attempts = []
+
+    @flaky_test(times=2)
+    def always_fails():
+        attempts.append(None)
+        msg = 'nope'
+        raise AssertionError(msg)
+
+    with pytest.raises(AssertionError, match='nope'):
+        always_fails()
+
+    assert len(attempts) == 2
+    out = capsys.readouterr().out.splitlines()
+    assert out[0].endswith('retrying...')
+    assert out[-1] == (
+        'FLAKY TEST FAILED (Attempt 2 of 2) - tests.test_conftest::always_fails - AssertionError'
+    )
+
+
+def test_flaky_test_does_not_retry_an_unlisted_exception():
+    attempts = []
+
+    @flaky_test(exceptions=(ValueError,))
+    def raises_type_error():
+        attempts.append(None)
+        raise TypeError
+
+    with pytest.raises(TypeError):
+        raises_type_error()
+
+    assert len(attempts) == 1
+
+
+@pytest.mark.parametrize(
+    ('test_name', 'expected'),
+    [
+        ('sphx_glr_remove_cells_001', _VTKSZ_SIZE_EXCEPTIONS_MB['sphx_glr_remove_cells_001']),
+        (
+            'pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_04_00',
+            _VTKSZ_SIZE_EXCEPTIONS_MB['pyvista-DataSetFilters-voxelize_binary_mask_04_00'],
+        ),
+        ('sphx_glr_remove_cells_002', 5),
+        ('pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_00_00', 5),
+    ],
+)
+def test_vtksz_file_size_exceptions(request, test_name, expected):
+    """The size hook raises the limit only for the listed scenes, hash stripped."""
+    test_case = SimpleNamespace(test_name=test_name, max_vtksz_file_size=5)
+    request.config.hook.pytest_pyvista_max_vtksz_file_size_hook(
+        test_case=test_case, request=request
+    )
+    assert test_case.max_vtksz_file_size == expected
+
+
+def test_vtk_output_fails_the_test(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    from pyvista import _vtk
+
+    def _log_a_vtk_error():
+        _vtk.vtkMultiBlockDataSet().SetBlock(0, _vtk.vtkPartitionedDataSet())
+
+    def test_leaks():
+        _log_a_vtk_error()
+
+    @pytest.mark.expect_vtk_output('cannot be added as a block', reason='the probe logs it')
+    def test_expected():
+        _log_a_vtk_error()
+
+    @pytest.mark.expect_vtk_output('a message VTK never logs', reason='it logs another')
+    def test_other_message():
+        _log_a_vtk_error()
+
+    def test_silent():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(passed=4, errors=2)
+    results.stdout.fnmatch_lines(['*VTK logged 1 error(s) or warning(s)*'])
+
+    report = RunResultsReport(results_parser.parse(results=results))
+    assert report.error == ['test_leaks', 'test_other_message']
+
+    # A marked test reports its reason, and the unmarked one, having none, reports no
+    # clause at all rather than one trailing off after 'because'.
+    stdout = results.stdout.str()
+    assert 'expects VTK output because it logs another' in stdout
+    assert not re.search(r'expects VTK output because\s*$', stdout, flags=re.MULTILINE)
+
+
+def test_vtk_output_markers_need_a_reason(pytester: pytest.Pytester):
+    tests = """
+    import pytest
+
+    from pyvista import _vtk
+
+    @pytest.mark.skip_vtk_output_check
+    def test_bare_skip():
+        ...
+
+    @pytest.mark.expect_vtk_output('cannot be added as a block')
+    def test_bare_expect():
+        _vtk.vtkMultiBlockDataSet().SetBlock(0, _vtk.vtkPartitionedDataSet())
+
+    @pytest.mark.skip_vtk_output_check(reason='it says why')
+    def test_skip_with_reason():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(passed=1, errors=2)
+    results.stdout.fnmatch_lines(['*skip_vtk_output_check needs reason=*'])
+    results.stdout.fnmatch_lines(['*expect_vtk_output needs reason=*'])

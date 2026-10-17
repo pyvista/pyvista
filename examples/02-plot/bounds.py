@@ -4,14 +4,11 @@
 Plotting Bounds
 ~~~~~~~~~~~~~~~
 
-This example demonstrates to show bounds within a :class:`pyvista.Plotter`
-using :func:`show_grid() <pyvista.Plotter.show_grid>`
+Show bounds within a :class:`~pyvista.Plotter` using :func:`~pyvista.Plotter.show_grid`.
 
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 

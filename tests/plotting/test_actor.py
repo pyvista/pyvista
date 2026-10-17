@@ -6,9 +6,11 @@ from pytest_cases import parametrize
 import scipy
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
+from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
+from pyvista.plotting.mapper import _PolyDataMapper
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
@@ -69,6 +71,21 @@ def vol_actor():
     vol['scalars'] = 255 - vol.z * 25
     pl = pv.Plotter()
     return pl.add_volume(vol)
+
+
+def _make_actor_mapper_array_mesh(association: str):
+    if association == 'point':
+        mesh = pv.Wavelet()
+        mesh.point_data['data'] = mesh.points[:, 2]
+        expected = mesh.point_data['data']
+    else:
+        mesh = pv.Cube().triangulate()
+        mesh.cell_data['data'] = np.arange(mesh.n_cells, dtype=float)
+        expected = mesh.cell_data['data']
+
+    mesh.point_data['keep_active'] = mesh.points[:, 0]
+    mesh.set_active_scalars('keep_active')
+    return mesh, expected
 
 
 def test_actor_init_empty():
@@ -135,6 +152,127 @@ def test_actor_copy_deep(prop3d, prop_attr, actor, volume, include_mapper):
         assert obj.mapper.dataset is not None
     else:
         assert copied.mapper is None
+
+
+def test_actor_copy_deep_preserves_scalars_pipeline(sphere):
+    """Deep-copying an actor must keep the mapper's scalars pipeline live."""
+    sphere['data'] = sphere.points[:, 2]
+
+    actor = pv.Plotter().add_mesh(sphere, scalars='data')
+    assert actor.mapper._active_scalars_algo is not None
+
+    copied = actor.copy()
+    assert copied is not actor
+    assert copied.mapper is not actor.mapper
+
+    copied.mapper.update()
+    out = pv.wrap(copied.mapper.GetInputDataObject(0, 0))
+    assert out.active_scalars_name == 'data'
+    assert np.array_equal(copied.mapper._mapped_scalars, sphere['data'])
+
+
+@pytest.mark.parametrize('association', ['point', 'cell'])
+def test_actor_mapper_array_name_matches_active_scalars_rendering(association):
+    """Direct actor+mapper scalar selection should match set_active_scalars."""
+    mesh, expected = _make_actor_mapper_array_mesh(association)
+
+    def render_actor(*, use_array_name: bool):
+        mapper = pv.DataSetMapper(mesh)
+        actor = pv.Actor(mapper=mapper, prop=pv.Property())
+        if use_array_name:
+            actor.mapper.array_name = 'data'
+        else:
+            actor.mapper.set_active_scalars('data', association)
+        actor.mapper.scalar_range = (float(np.min(expected)), float(np.max(expected)))
+        actor.mapper.lookup_table.apply_cmap('plasma')
+
+        pl = pv.Plotter(off_screen=True, window_size=(300, 300))
+        pl.add_actor(actor)
+        pl.camera_position = 'xy'
+        pl.render()
+        image = pl.screenshot()
+        pl.close()
+        return actor.mapper, image
+
+    array_name_mapper, array_name_image = render_actor(use_array_name=True)
+    active_mapper, active_image = render_actor(use_array_name=False)
+
+    assert array_name_mapper._active_scalars_algo is not None
+    assert array_name_mapper._active_scalars_algo.preference == association
+    assert np.array_equal(array_name_mapper._mapped_scalars, expected)
+    assert array_name_mapper.lookup_table.cmap.name == 'plasma'
+    assert array_name_mapper.scalar_range == (float(np.min(expected)), float(np.max(expected)))
+    assert np.array_equal(active_mapper._mapped_scalars, expected)
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(array_name_image, active_image) < 1.0
+    assert mesh.active_scalars_name == 'keep_active'
+
+
+@pytest.mark.parametrize('association', ['point', 'cell'])
+def test_actor_mapper_array_name_defaults_follow_theme_and_data_range(association):
+    """Direct actor+mapper array selection should use theme cmap and data range."""
+    mesh, expected = _make_actor_mapper_array_mesh(association)
+    theme = pv.themes.Theme()
+    theme.cmap = 'plasma'
+
+    mapper = pv.DataSetMapper(mesh, theme=theme)
+    actor = pv.Actor(mapper=mapper, prop=pv.Property())
+    actor.mapper.array_name = 'data'
+
+    pl = pv.Plotter()
+    pl.add_actor(actor)
+    actor.mapper.update()
+
+    expected_range = (float(np.min(expected)), float(np.max(expected)))
+    assert actor.mapper._active_scalars_algo is not None
+    assert actor.mapper._active_scalars_algo.preference == association
+    assert actor.mapper.lookup_table.cmap.name == 'plasma'
+    assert actor.mapper.scalar_range == expected_range
+    assert actor.mapper.lookup_table.scalar_range == expected_range
+    assert np.array_equal(actor.mapper._mapped_scalars, expected)
+    assert mesh.active_scalars_name == 'keep_active'
+
+    pl.close()
+
+
+def test_actor_mapper_set_active_scalars_with_existing_normals_preserves_source_state():
+    """Direct actor shading should preserve source normals and active scalars."""
+    mesh = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    mesh['keep_active'] = mesh.points[:, 0]
+    mesh['data'] = mesh.points[:, 2]
+    mesh.set_active_scalars('keep_active')
+    original_normals = mesh.point_data['Normals'].copy()
+
+    mapper = pv.DataSetMapper(mesh)
+    actor = pv.Actor(mapper=mapper, prop=pv.Property())
+    actor.mapper.set_active_scalars('data', 'point')
+    actor.prop.interpolation = 'phong'
+
+    pl = pv.Plotter()
+    pl.add_actor(actor)
+    actor.mapper.update()
+    mapped = pv.wrap(actor.mapper.GetInputDataObject(0, 0)).copy(deep=True)
+
+    assert mapped.point_data.active_scalars_name == 'data'
+    assert mapped.point_data.active_normals_name == 'Normals'
+    assert np.array_equal(actor.mapper._mapped_scalars, mesh['data'])
+    assert actor.prop.interpolation == pv.opts.InterpolationType.PHONG
+    assert mesh.active_scalars_name == 'keep_active'
+    assert np.array_equal(mesh.point_data['Normals'], original_normals)
+
+    pl.close()
+
+
+def test_actor_mapper_array_name_preserves_explicit_scalar_range():
+    """Auto scalar-range initialization should not override an explicit range."""
+    mesh, _expected = _make_actor_mapper_array_mesh('point')
+
+    mapper = pv.DataSetMapper(mesh)
+    actor = pv.Actor(mapper=mapper, prop=pv.Property())
+    actor.mapper.scalar_range = (-1.0, 1.0)
+    actor.mapper.array_name = 'data'
+
+    assert actor.mapper.scalar_range == (-1.0, 1.0)
 
 
 @pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
@@ -451,7 +589,6 @@ def test_clear_all_shader_replacements(point_cloud_actor):
     assert shader_prop.GetNumberOfShaderReplacements() == 0
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_enable_disable_mip(point_cloud_actor):
     actor = point_cloud_actor
     shader_prop = actor.GetShaderProperty()
@@ -464,14 +601,12 @@ def test_enable_disable_mip(point_cloud_actor):
     assert shader_prop.GetNumberOfShaderReplacements() == 0
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_with_clim(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection(clim=(0.0, 1.0))
     assert 'mip' in actor._shader_replacements
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_no_scalars():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
@@ -482,7 +617,6 @@ def test_mip_no_scalars():
         actor.enable_maximum_intensity_projection()
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_opacity_warning(point_cloud_actor):
     actor = point_cloud_actor
     actor.prop.opacity = 0.5
@@ -491,7 +625,6 @@ def test_mip_opacity_warning(point_cloud_actor):
         actor.enable_maximum_intensity_projection()
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_idempotent(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection()
@@ -501,17 +634,9 @@ def test_mip_idempotent(point_cloud_actor):
     assert len(actor._shader_replacements['mip']) == 1
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_no_mapper():
     actor = pv.Actor()
     with pytest.raises(ValueError, match='mapper'):
-        actor.enable_maximum_intensity_projection()
-
-
-@pytest.mark.needs_vtk_version(less_than=(9, 3))
-def test_mip_vtk_version_error():
-    actor = pv.Actor()
-    with pytest.raises(RuntimeError, match=r'VTK >= 9\.3'):
         actor.enable_maximum_intensity_projection()
 
 
@@ -519,7 +644,8 @@ def test_mip_vtk_version_error():
     'shape',
     ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
 )
-def test_set_point_sprite_shape(shape):
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy point-sprite shader replacement')
+def test_set_point_sprite_shape_legacy_shader(shape):
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
     actor = pl.add_mesh(
@@ -529,15 +655,17 @@ def test_set_point_sprite_shape(shape):
         point_size=20,
     )
     actor.set_point_sprite_shape(shape)
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == shape
+    assert len(actor._shader_replacements['point_sprite']) == 1
 
 
 def test_clear_point_sprite_shape(point_cloud_actor):
     actor = point_cloud_actor
     actor.set_point_sprite_shape('circle')
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
     actor.clear_point_sprite_shape()
+    assert actor.point_sprite_shape == 'square'
     assert 'point_sprite' not in actor._shader_replacements
 
 
@@ -555,21 +683,22 @@ def test_add_mesh_point_shape():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
     actor = pl.add_mesh(cloud, style='points', point_shape='circle', point_size=20)
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
 
 def test_add_mesh_point_shape_enum():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
     actor = pl.add_mesh(cloud, style='points', point_shape=pv.PointSpriteShape.STAR, point_size=20)
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'star'
 
 
 def test_set_point_sprite_shape_enum(point_cloud_actor):
     point_cloud_actor.set_point_sprite_shape(pv.PointSpriteShape.HEXAGON)
-    assert 'point_sprite' in point_cloud_actor._shader_replacements
+    assert point_cloud_actor.point_sprite_shape == 'hexagon'
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader/sphere exclusion')
 def test_add_mesh_point_shape_disables_spheres():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
@@ -590,11 +719,12 @@ def test_theme_point_shape():
         pv.global_theme.point_shape = 'hexagon'
         pl = pv.Plotter()
         actor = pl.add_mesh(cloud, style='points')
-        assert 'point_sprite' in actor._shader_replacements
+        assert actor.point_sprite_shape == 'hexagon'
     finally:
         pv.global_theme.point_shape = None
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader/sphere exclusion')
 def test_theme_point_shape_disables_spheres():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     try:
@@ -615,18 +745,17 @@ def test_theme_point_shape_invalid():
         pv.global_theme.point_shape = 'pentagon'
 
 
-@pytest.mark.needs_vtk_version(9, 3)
 def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor = point_cloud_actor
     actor.enable_maximum_intensity_projection()
     actor.set_point_sprite_shape('circle')
 
     assert 'mip' in actor._shader_replacements
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
     actor.disable_maximum_intensity_projection()
     assert 'mip' not in actor._shader_replacements
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
     actor.enable_maximum_intensity_projection()
     assert 'mip' in actor._shader_replacements
@@ -634,3 +763,294 @@ def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor.clear_point_sprite_shape()
     assert 'point_sprite' not in actor._shader_replacements
     assert 'mip' in actor._shader_replacements
+
+
+def test_line_style_via_add_mesh():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
+    assert isinstance(actor.mapper, _PolyDataMapper)
+    assert actor.line_style == '--'
+    pl.close()
+
+
+@pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
+def test_line_style_draws_fewer_pixels(style):
+    def drawn(line_style):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 400))
+        pl.disable_anti_aliasing()
+        pl.add_mesh(
+            pv.Line((-1, 0, 0), (1, 0, 0), resolution=50),
+            color='black',
+            line_width=3,
+            line_style=line_style,
+        )
+        pl.background_color = 'white'
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        return int((image[..., 0] < 128).sum())
+
+    assert drawn(style) < drawn('-')
+
+
+def test_line_style_disable_restores_input():
+    mesh = pv.Line(resolution=20)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, line_style='--')
+    actor.line_style = None
+    assert actor.line_style is None
+    assert actor.mapper.dataset is mesh
+    pl.close()
+
+
+def test_line_style_solid_is_not_dashed():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='-')
+    assert actor.line_style is None
+    pl.close()
+
+
+def test_dash_interval():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
+    actor.dash_interval = 0.02
+    assert actor.dash_interval == 0.02
+    with pytest.raises(ValueError, match='greater than 0'):
+        actor.dash_interval = 0
+    pl.close()
+
+
+def test_line_style_requires_polydata_mapper():
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Line(resolution=20)))
+    with pytest.raises(TypeError, match='line_style'):
+        actor.line_style = '--'
+
+
+def test_line_style_invalid():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20))
+    with pytest.raises(ValueError, match='is not valid'):
+        actor.line_style = 'wrong'
+    pl.close()
+
+
+def test_line_style_foreshorten_with_distance():
+    pl = pv.Plotter(off_screen=True, window_size=(1200, 400))
+    pl.disable_anti_aliasing()
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 2), (1, 0, -2), resolution=20),
+        color='black',
+        line_width=2,
+        line_style='--',
+    )
+    actor.dash_interval = 0.01
+    pl.background_color = 'white'
+    pl.camera.position = (0, 0, 4)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.render()
+    image = pl.screenshot(return_img=True)
+    pl.close()
+
+    drawn = image[..., 0] < 128
+    row = drawn[drawn.sum(axis=1).argmax()]
+    (lit,) = np.nonzero(row)
+    dashes = np.array([len(run) for run in np.split(lit, np.nonzero(np.diff(lit) > 1)[0] + 1)])
+
+    dashes = dashes[1:-1]
+    third = len(dashes) // 3
+    assert third >= 2
+    assert dashes[:third].mean() > 2 * dashes[-third:].mean()
+
+
+def test_line_style_requires_dataset():
+    actor = pv.Actor(mapper=_PolyDataMapper())
+    with pytest.raises(ValueError, match='must have a dataset'):
+        actor.line_style = '--'
+
+
+def test_line_style_restores_the_actor_when_the_shader_fails(monkeypatch):
+    def boom(*_args):
+        msg = 'no shader'
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(pv.Actor, '_apply_dash_shader', boom)
+    actor = pv.Actor(mapper=_PolyDataMapper())
+    actor.mapper.dataset = pv.Line(resolution=10)
+    with pytest.raises(RuntimeError, match='no shader'):
+        actor.line_style = '--'
+    assert actor.line_style is None
+
+
+@pytest.mark.parametrize('style', ['--', ''])
+def test_line_style_rejects_faces(style):
+    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+    mesh.lines = np.array([2, 0, 8])
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='require a mesh of line cells'):
+        pl.add_mesh(mesh, line_style=style)
+    pl.close()
+
+
+def test_line_style_rejects_multiblock():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='not supported for `MultiBlock`'):
+        pl.add_mesh(pv.MultiBlock([pv.Line(resolution=10)]), line_style='--')
+    pl.close()
+
+
+def test_line_style_hidden():
+    pl = pv.Plotter(off_screen=True, window_size=(300, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=20),
+        color='black',
+        line_width=4,
+        line_style='',
+    )
+    pl.view_xy()
+    pl.render()
+    image = pl.screenshot(return_img=True)
+    pl.close()
+
+    assert actor.line_style == ''
+    assert not (image[..., 0] < 128).any()
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=40),
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=40).cast_to_unstructured_grid(),
+        pytest.param(
+            pv.ImageData(dimensions=(41, 1, 1), spacing=(0.05, 1, 1), origin=(-1, 0, 0)),
+            marks=pytest.mark.needs_vtk_version(
+                (9, 6, 0), reason='vtkDataSetMapper renders 1D ImageData as nothing'
+            ),
+        ),
+        pv.RectilinearGrid(np.linspace(-1, 1, 41)),
+    ],
+    ids=['polydata', 'unstructured', 'image', 'rectilinear'],
+)
+def test_line_style_dataset_types(dataset):
+    def drawn(line_style, *, disable=False):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+        pl.disable_anti_aliasing()
+        pl.background_color = 'white'
+        actor = pl.add_mesh(dataset, color='black', line_width=3, line_style=line_style)
+        if disable:
+            actor.line_style = None
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        return int((image[..., 0] < 128).sum())
+
+    solid = drawn('-')
+    assert solid > 0
+    assert 0 < drawn('--') < solid
+    assert drawn('') == 0
+    assert drawn('--', disable=True) == solid
+
+
+def test_line_style_rejects_points_gaussian():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='points_gaussian'):
+        pl.add_mesh(pv.Line(resolution=10), style='points_gaussian', line_style='--')
+    pl.close()
+
+
+def test_line_style_rejects_composite_actor():
+    pl = pv.Plotter()
+    actor, _ = pl.add_composite(pv.MultiBlock([pv.Line(resolution=10)]))
+    with pytest.raises(TypeError, match='line_style'):
+        actor.line_style = '--'
+    pl.close()
+
+
+def test_line_style_invalid_via_add_mesh():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match="line_style 'dashed' is not valid"):
+        pl.add_mesh(pv.Line(resolution=10), line_style='dashed')
+    assert not pl.actors
+    pl.close()
+
+
+def test_line_style_follows_an_algorithm_input():
+    source = _vtk.vtkLineSource()
+    source.SetPoint1(-1, 0, 0)
+    source.SetPoint2(1, 0, 0)
+    source.SetResolution(50)
+
+    pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(source, color='black', line_width=3, line_style='--')
+    pl.view_xy()
+
+    def drawn():
+        pl.render()
+        return int((pl.screenshot(return_img=True)[..., 0] < 128).sum())
+
+    before = drawn()
+    source.SetPoint2(0, 0, 0)
+    after = drawn()
+    actor.line_style = None
+    solid = drawn()
+    pl.close()
+    assert 0 < after < before
+    assert after < solid
+
+
+def test_line_style_keeps_cell_scalars():
+    points = np.zeros((5, 3))
+    points[:, 0] = np.linspace(-1, 1, 5)
+    segments = np.column_stack([np.full(4, 2), np.arange(4), np.arange(1, 5)])
+    edges = pv.PolyData(points, lines=segments.ravel())
+    edges.cell_data['c'] = np.arange(4)
+
+    def render(line_style):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+        pl.disable_anti_aliasing()
+        pl.background_color = 'white'
+        pl.add_mesh(edges, scalars='c', line_width=3, line_style=line_style, show_scalar_bar=False)
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        drawn = image[(image != 255).any(axis=-1)]
+        return len(np.unique(drawn, axis=0)), len(drawn)
+
+    solid_colors, solid_pixels = render('-')
+    dashed_colors, dashed_pixels = render('--')
+    assert solid_colors > 1
+    assert dashed_colors == solid_colors
+    assert 0 < dashed_pixels < solid_pixels
+
+
+def test_line_style_toggles_after_add():
+    pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=50),
+        color='black',
+        line_width=3,
+        line_style='--',
+    )
+    pl.view_xy()
+
+    def drawn(line_style):
+        actor.line_style = line_style
+        pl.render()
+        return int((pl.screenshot(return_img=True)[..., 0] < 128).sum())
+
+    dashed = drawn('--')
+    dotted = drawn(':')
+    solid = drawn(None)
+    assert 0 < dotted < dashed < solid
+    assert 0 < drawn('-..') < solid
+    assert drawn('-') == solid
+    pl.close()

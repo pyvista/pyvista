@@ -1,2 +1,3 @@
 *.ipynb linguist-detectable=false
 *.svg binary
+*.sh text eol=lf

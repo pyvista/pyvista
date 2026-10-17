@@ -4,35 +4,46 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from numpy.typing import NDArray
+
     from pyvista import PolyData
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _Integer
+    from pyvista.core._typing_core import _IntegerT
+    from pyvista.core._typing_core import _MatrixSequence
+    from pyvista.core._typing_core import _NumericArray
+    from pyvista.core._typing_core import _Real
+    from pyvista.core._typing_core import _ScalarT
 
 
-@_deprecate_positional_args(allowed=['points'])
-def vtk_points(  # noqa: PLR0917
-    points: VectorLike[float] | MatrixLike[float],
-    deep: bool = True,  # noqa: FBT001, FBT002
-    force_float: bool = False,  # noqa: FBT001, FBT002
-    allow_empty: bool = True,  # noqa: FBT001, FBT002
+def vtk_points(
+    points: VectorLikeFloat | MatrixLikeFloat,
+    *,
+    deep: bool = True,
+    force_float: bool = False,
+    allow_empty: bool = True,
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
+    """Convert a NumPy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------
-    points : numpy.ndarray or sequence
+    points : VectorLikeFloat | MatrixLikeFloat
         Points to convert.  Should be 1 or 2 dimensional.  Accepts a
         single point or several points.
 
@@ -85,19 +96,20 @@ def vtk_points(  # noqa: PLR0917
         points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points_, pv.pyvista_ndarray) and points_.VTKObject is not None:
+    # (only a vtkDataArray can back vtkPoints, string arrays cannot)
+    if (
+        not deep
+        and isinstance(points_, pv.pyvista_ndarray)
+        and isinstance(points_.VTKObject, _vtk.vtkDataArray)
+    ):
         vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        size = (
-            vtk_object.GetSize()
-            if pv.vtk_version_info < (9, 6, 99)  # < (9, 7, 0)
-            else vtk_object.GetCapacity()
-        )
+        size = vtk_object.GetSize() if pv.vtk_version_info < (9, 7) else vtk_object.GetCapacity()
         if size == points_.size:
             vtkpts = _vtk.vtkPoints()
-            vtkpts.SetData(points_.VTKObject)
+            vtkpts.SetData(vtk_object)
             return vtkpts
         else:
             deep = True
@@ -111,7 +123,7 @@ def vtk_points(  # noqa: PLR0917
     return vtkpts
 
 
-def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> PolyData:
+def line_segments_from_points(points: VectorLikeFloat | MatrixLikeFloat) -> PolyData:
     """Generate non-connected line segments from points.
 
     Assumes points are ordered as line segments and an even number of
@@ -119,7 +131,7 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLikeFloat | MatrixLikeFloat
         Points representing line segments. An even number must be
         given as every two vertices represent a single line
         segment. For example, two line segments would be represented
@@ -146,28 +158,23 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
         raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
-    n_lines = n_points // 2
-    lines = np.c_[
-        2 * np.ones(n_lines, np.int_),
-        np.arange(0, n_points - 1, step=2),
-        np.arange(1, n_points + 1, step=2),
-    ]
+    lines = cast('NDArray[np.signedinteger]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2))
     poly = pv.PolyData()
-    poly.points = points
-    poly.lines = lines
+    poly.points = cast('MatrixLikeFloat', points)
+    poly.lines = pv.CellArray.from_regular_cells(lines)
     return poly
 
 
-@_deprecate_positional_args(allowed=['points'])
 def lines_from_points(
-    points: VectorLike[float] | MatrixLike[float],
-    close: bool = False,  # noqa: FBT001, FBT002
+    points: VectorLikeFloat | MatrixLikeFloat,
+    *,
+    close: bool = False,
 ) -> PolyData:
     """Make a connected line set given an array of points.
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLikeFloat | MatrixLikeFloat
         Points representing the vertices of the connected
         segments. For example, two line segments would be represented
         as ``np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])``.
@@ -180,6 +187,15 @@ def lines_from_points(
     pyvista.PolyData
         PolyData with lines and cells.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     >>> import numpy as np
@@ -190,23 +206,35 @@ def lines_from_points(
 
     """
     poly = pv.PolyData()
-    poly.points = points
-    cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
-    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
-    cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
+    poly.points = cast('MatrixLikeFloat', points)
+    n_points = len(points)
+    point_ids = np.arange(n_points, dtype=pv.ID_TYPE)
+    cells = np.empty((n_points if close else n_points - 1, 2), dtype=pv.ID_TYPE)
+    cells[: n_points - 1, 0] = point_ids[:-1]
+    cells[: n_points - 1, 1] = point_ids[1:]
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
-    poly.lines = cells
+        cells[-1] = [n_points - 1, 0]
+    poly.lines = pv.CellArray.from_regular_cells(cells)
     return poly
 
 
-@_deprecate_positional_args(allowed=['points'])
-def fit_plane_to_points(  # noqa: PLR0917
-    points: MatrixLike[float],
-    return_meta: bool = False,  # noqa: FBT001, FBT002
+# fmt: off
+# ruff: disable[E501]
+@overload
+def fit_plane_to_points(points: MatrixLikeFloat, *, return_meta: Literal[False] = False, resolution: int = ..., init_normal: VectorLikeFloat | str | None = ...) -> PolyData: ...
+@overload
+def fit_plane_to_points(points: MatrixLikeFloat, *, return_meta: Literal[True], resolution: int = ..., init_normal: VectorLikeFloat | str | None = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...
+@overload
+def fit_plane_to_points(points: MatrixLikeFloat, *, return_meta: bool = ..., resolution: int = ..., init_normal: VectorLikeFloat | str | None = ...) -> PolyData | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]: ...
+# ruff: enable[E501]
+# fmt: on
+def fit_plane_to_points(
+    points: MatrixLikeFloat,
+    *,
+    return_meta: bool = False,
     resolution: int = 10,
-    init_normal: VectorLike[float] | None = None,
-) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
+    init_normal: VectorLikeFloat | str | None = None,
+) -> PolyData | tuple[PolyData, NDArray[np.floating], NDArray[np.floating]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -232,7 +260,7 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Parameters
     ----------
-    points : array_like[float]
+    points : MatrixLikeFloat
         Size ``[N x 3]`` sequence of points to fit a plane through.
 
     return_meta : bool, default: False
@@ -246,9 +274,9 @@ def fit_plane_to_points(  # noqa: PLR0917
 
         .. versionadded:: 0.45.0
 
-    init_normal : VectorLike[float] | str, optional
+    init_normal : VectorLikeFloat | str, optional
         Flip the normal of the plane such that it best aligns with this vector. Can be
-        a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
+        a vector or string specifying the axis by name (for example, ``'x'`` or ``'-x'``, etc.).
 
         .. versionadded:: 0.45.0
 
@@ -273,6 +301,8 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 2
+
     Fit a plane to a random point cloud.
 
     >>> import pyvista as pv
@@ -385,13 +415,23 @@ def fit_plane_to_points(  # noqa: PLR0917
     return plane
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def fit_line_to_points(points: MatrixLikeFloat, *, resolution: int = ..., init_direction: VectorLikeFloat | str | None = ..., return_meta: Literal[False] = False) -> PolyData: ...
+@overload
+def fit_line_to_points(points: MatrixLikeFloat, *, resolution: int = ..., init_direction: VectorLikeFloat | str | None = ..., return_meta: Literal[True]) -> tuple[PolyData, float, NDArray[np.float64]]: ...
+@overload
+def fit_line_to_points(points: MatrixLikeFloat, *, resolution: int = ..., init_direction: VectorLikeFloat | str | None = ..., return_meta: bool = ...) -> PolyData | tuple[PolyData, float, NDArray[np.float64]]: ...
+# ruff: enable[E501]
+# fmt: on
 def fit_line_to_points(
-    points: MatrixLike[float],
+    points: MatrixLikeFloat,
     *,
     resolution: int = 1,
-    init_direction: VectorLike[float] | None = None,
+    init_direction: VectorLikeFloat | str | None = None,
     return_meta: bool = False,
-) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
+) -> PolyData | tuple[PolyData, float, NDArray[np.float64]]:
     """Fit a line to points using its :func:`principal_axes`.
 
     The line is automatically sized and oriented to fit the extents of
@@ -401,15 +441,15 @@ def fit_line_to_points(
 
     Parameters
     ----------
-    points : MatrixLike[float]
+    points : MatrixLikeFloat
         Size ``[N x 3]`` array of points to fit a line through.
 
     resolution : int, default: 1
         Number of pieces to divide the line into.
 
-    init_direction : VectorLike[float], optional
+    init_direction : VectorLikeFloat | str, optional
         Flip the direction of the line's points such that it best aligns with this
-        vector. Can be a vector or string specifying the axis by name (e.g. ``'x'``
+        vector. Can be a vector or string specifying the axis by name (for example, ``'x'``
         or ``'-x'``, etc.).
 
     return_meta : bool, default: False
@@ -436,6 +476,8 @@ def fit_line_to_points(
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 2
+
     Download a point cloud. The points trace a path along topographical surface.
 
     >>> import pyvista as pv
@@ -522,7 +564,7 @@ def fit_line_to_points(
     return line_mesh
 
 
-def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData:
+def make_tri_mesh(points: NDArray[_Real], faces: NDArray[_Integer]) -> PolyData:
     """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
 
     Construct a mesh from an Nx3 array of points and an Mx3 array of
@@ -587,23 +629,20 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
     if faces.ndim != 2 or faces.shape[1] != 3:
         msg = 'Face array should have shape (M, 3).'
         raise ValueError(msg)
-    cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
-    cells[:, 0] = 3
-    cells[:, 1:] = faces
-    return pv.PolyData(points, cells)
+    return pv.PolyData.from_regular_faces(points, faces)
 
 
 def vector_poly_data(
-    orig: VectorLike[float] | MatrixLike[float], vec: VectorLike[float] | MatrixLike[float]
+    orig: VectorLikeFloat | MatrixLikeFloat, vec: VectorLikeFloat | MatrixLikeFloat
 ) -> PolyData:
-    """Create a pyvista.PolyData object composed of vectors.
+    """Create a :class:`pyvista.PolyData` object composed of vectors.
 
     Parameters
     ----------
-    orig : array_like[float]
+    orig : VectorLikeFloat | MatrixLikeFloat
         Array of vector origins.
 
-    vec : array_like[float]
+    vec : VectorLikeFloat | MatrixLikeFloat
         Array of vectors.
 
     Returns
@@ -635,31 +674,28 @@ def vector_poly_data(
 
     """
     # shape, dimension checking
-    if not isinstance(orig, np.ndarray):
-        orig = np.asarray(orig)
+    points: _NumericArray = np.asarray(orig)
+    vectors: _NumericArray = np.asarray(vec)
 
-    if not isinstance(vec, np.ndarray):
-        vec = np.asarray(vec)
-
-    if orig.ndim != 2:
-        orig = orig.reshape((-1, 3))
-    elif orig.shape[1] != 3:
+    if points.ndim != 2:
+        points = points.reshape((-1, 3))
+    elif points.shape[1] != 3:
         msg = 'orig array must be 3D'
         raise ValueError(msg)
 
-    if vec.ndim != 2:
-        vec = vec.reshape((-1, 3))
-    elif vec.shape[1] != 3:
+    if vectors.ndim != 2:
+        vectors = vectors.reshape((-1, 3))
+    elif vectors.shape[1] != 3:
         msg = 'vec array must be 3D'
         raise ValueError(msg)
 
     # Create vtk points and cells objects
     vpts = _vtk.vtkPoints()
-    vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
+    vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(points), deep=True))
 
-    npts = orig.shape[0]
+    npts = points.shape[0]
     vcells = pv.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),
+        np.arange(npts, dtype=pv.ID_TYPE).reshape((npts, 1)),  # type: ignore[arg-type]
     )
 
     # Create vtkPolyData object
@@ -669,14 +705,14 @@ def vector_poly_data(
 
     # Add vectors to polydata
     name = 'vectors'
-    vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
+    vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(vectors), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
 
     # Add magnitude of vectors to polydata
     name = 'mag'
-    scalars = (vec * vec).sum(1) ** 0.5
+    scalars = (vectors * vectors).sum(1) ** 0.5
     vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
@@ -685,27 +721,34 @@ def vector_poly_data(
     return pv.PolyData(pdata)
 
 
+# fmt: off
+# ruff: disable[E501]
+# `pyvista_ndarray` has no dtype parameter, so it is typed as floating before the dtype TypeVars
 @overload
-def principal_axes(points: MatrixLike[float]) -> NumpyArray[float]: ...
+def principal_axes(points: pyvista_ndarray, *, return_std: Literal[False] = False) -> NDArray[np.floating]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float],
-    *,
-    return_std: Literal[True] = True,
-) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(points: pyvista_ndarray, *, return_std: Literal[True]) -> tuple[NDArray[np.floating], NDArray[np.floating]]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float],
-    *,
-    return_std: Literal[False] = False,
-) -> NumpyArray[float]: ...
+def principal_axes(points: NDArray[_FloatingT], *, return_std: Literal[False] = False) -> NDArray[_FloatingT]: ...
 @overload
+def principal_axes(points: NDArray[_FloatingT], *, return_std: Literal[True]) -> tuple[NDArray[_FloatingT], NDArray[_FloatingT]]: ...
+@overload
+def principal_axes(points: NDArray[_IntegerT], *, return_std: Literal[False] = False) -> NDArray[np.float64]: ...
+@overload
+def principal_axes(points: NDArray[_IntegerT], *, return_std: Literal[True]) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+@overload
+def principal_axes(points: NDArray[_ScalarT], *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
+@overload
+def principal_axes(points: Sequence[Sequence[float]], *, return_std: Literal[False] = False) -> NDArray[np.float64]: ...
+@overload
+def principal_axes(points: Sequence[Sequence[float]], *, return_std: Literal[True]) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+@overload
+def principal_axes(points: Sequence[Sequence[float]] | _MatrixSequence, *, return_std: bool = ...) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]: ...
+# ruff: enable[E501]
+# fmt: on
 def principal_axes(
-    points: MatrixLike[float], *, return_std: bool = ...
-) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
-def principal_axes(
-    points: MatrixLike[float], *, return_std: bool = False
-) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]:
+    points: MatrixLikeFloat, *, return_std: bool = False
+) -> NDArray[np.floating] | tuple[NDArray[np.floating], NDArray[np.floating]]:
     """Compute the principal axes of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes
@@ -721,7 +764,7 @@ def principal_axes(
     the third axis which explains the smallest percentage of variance.
 
     The axes may be used to build an oriented bounding box or to align the points to
-    another set of axes (e.g. the world XYZ axes).
+    another set of axes (for example, the world XYZ axes).
 
     .. note::
         The computed axes are not unique, and the sign of each axis direction can be
@@ -744,7 +787,7 @@ def principal_axes(
 
     Parameters
     ----------
-    points : MatrixLike[float]
+    points : MatrixLikeFloat
         Nx3 array of points.
 
     return_std : bool, default: False
@@ -803,13 +846,13 @@ def principal_axes(
     >>> std  # doctest:+SKIP
     array([3.0149 , 1.5074 , 0.7035], dtype=float32)
 
-    Compare this to using :meth:`numpy.std` for the computation.
+    Compare this to using :func:`numpy.std` for the computation.
 
     >>> np.std(mesh.points, axis=0)
     pyvista_ndarray([3.0149572, 1.5074761, 0.7035699], dtype=float32)
 
     Since the points are axis-aligned, the two results agree in this case. In general,
-    however, these two methods differ in that :meth:`numpy.std` with `axis=0` computes
+    however, these two methods differ in that :func:`numpy.std` with `axis=0` computes
     the standard deviation along the `x-y-z` axes, whereas the standard deviation
     returned by :meth:`principal_axes` is computed along the principal axes.
 

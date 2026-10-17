@@ -1,13 +1,12 @@
 """
 .. _legend_example:
 
-Legends and glyphs
+Legends and Glyphs
 ~~~~~~~~~~~~~~~~~~
 
 Using custom legends and glyphs within PyVista.
-"""
 
-from __future__ import annotations
+"""
 
 import pyvista as pv
 from pyvista import examples
@@ -20,7 +19,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_thumbnail_number = 3
 
 # %%
-# Default legend for glyphs
+# Default Legend for Glyphs
 # +++++++++++++++++++++++++
 #
 # The method :func:`~pyvista.Plotter.add_legend` is able to retrieve and use
@@ -53,7 +52,7 @@ pl.add_legend()
 pl.show()
 
 # %%
-# Using custom legends
+# Using Custom Legends
 # ++++++++++++++++++++
 #
 # You can use specific labels with :func:`~pyvista.Plotter.add_legend`
@@ -81,7 +80,7 @@ pl.show()
 
 
 # %%
-# Using custom legend and glyphs
+# Using Custom Legend and Glyphs
 # ++++++++++++++++++++++++++++++
 #
 # You can use specific labels or glyphs even if they have been specified before.

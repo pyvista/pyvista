@@ -4,11 +4,9 @@
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
-Create a spline/polyline from a numpy array of XYZ vertices using
-:func:`pyvista.Spline`.
-"""
+Create a spline/polyline from a NumPy array of XYZ vertices using :func:`pyvista.Spline`.
 
-from __future__ import annotations
+"""
 
 import numpy as np
 
@@ -155,8 +153,8 @@ pl.show()
 # ++++++++++++++++++++
 #
 # Create a spline and see the effect of boundary constraint.
-# Boundary type can be 'finite_difference', 'clamped', 'second', 'scaled_second'
-# with the definition of the boundary types in :func:`pyvista.Spline`.
+# Boundary type can be ``'finite_difference'``, ``'clamped'``, ``'second'``,
+# ``'scaled_second'`` with the definition of the boundary types in :func:`pyvista.Spline`.
 #
 # To visualize the different splines, we label each one using integer ID scalars
 # and merge them into a single mesh.

@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyvista as pv
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-def cubemap(path='', prefix='', ext='.jpg'):
+    from pyvista import Texture
+
+
+def cubemap(path: str | Path = '', prefix: str = '', ext: str = '.jpg') -> Texture:
     """Construct a cubemap from 6 images from a directory.
 
     Each of the 6 images must be in the following format:
@@ -32,7 +38,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     Parameters
     ----------
-    path : str, default: ""
+    path : str | pathlib.Path, default: ""
         Directory containing the cubemap images.
 
     prefix : str, default: ""
@@ -45,11 +51,6 @@ def cubemap(path='', prefix='', ext='.jpg'):
     -------
     pyvista.Texture
         Texture with cubemap.
-
-    Notes
-    -----
-    Cubemap will appear flipped relative to the XY plane between VTK v9.1 and
-    VTK v9.2.
 
     Examples
     --------
@@ -64,7 +65,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
     return _cubemap_from_paths(image_paths)
 
 
-def cubemap_from_filenames(image_paths):
+def cubemap_from_filenames(image_paths: Sequence[str | Path]) -> Texture:
     """Construct a cubemap from 6 images.
 
     Images must be in the following order:
@@ -78,7 +79,7 @@ def cubemap_from_filenames(image_paths):
 
     Parameters
     ----------
-    image_paths : sequence[str]
+    image_paths : sequence[str | pathlib.Path]
         Paths of the individual cubemap images.
 
     Returns
@@ -98,7 +99,7 @@ def cubemap_from_filenames(image_paths):
     ...     '/home/user/_pz.jpg',
     ...     '/home/user/_nz.jpg',
     ... ]
-    >>> skybox = pv.cubemap(image_paths=image_paths)  # doctest:+SKIP
+    >>> skybox = pv.cubemap_from_filenames(image_paths)  # doctest:+SKIP
 
     """
     if len(image_paths) != 6:
@@ -108,17 +109,17 @@ def cubemap_from_filenames(image_paths):
     return _cubemap_from_paths(image_paths)
 
 
-def _cubemap_from_paths(image_paths):
+def _cubemap_from_paths(image_paths: Sequence[str | Path]) -> Texture:
     """Construct a cubemap from image paths."""
     for image_path in image_paths:
         if not Path(image_path).is_file():
-            file_str = '\n'.join(image_paths)
+            file_str = '\n'.join(str(path) for path in image_paths)
             msg = (
                 f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}'
             )
             raise FileNotFoundError(msg)
 
-    texture = pv.Texture()  # type: ignore[abstract]
+    texture = pv.Texture()
     texture.mipmap = True
     texture.interpolate = True
     texture.color_mode = 'direct'
@@ -127,6 +128,6 @@ def _cubemap_from_paths(image_paths):
     # add each image to the cubemap
     for i, fn in enumerate(image_paths):
         # Read and flip along y-axis
-        texture.SetInputDataObject(i, pv.read(fn)._flip_uniform(1))
+        texture.SetInputDataObject(i, pv.read(fn, cls=pv.ImageData)._flip_uniform(1))
 
     return texture

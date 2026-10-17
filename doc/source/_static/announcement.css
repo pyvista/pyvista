@@ -2,6 +2,7 @@
 .bd-header-announcement {
   background-color: var(--pst-color-danger) !important;
   color: var(--pst-color-background) !important;
+  padding: 0 !important;
 }
 
 /* Inner announcement content */
@@ -10,22 +11,24 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 0.5em;
+  gap: 0.4em;
   text-align: center;
-  padding: 0.5em;
+  padding: 0.2em 0.5em;
   background-color: var(--pst-color-danger);
   color: var(--pst-color-background);
+  font-size: 0.85em;
 }
 
 /* Button inside the banner */
 .pv-announcement-button {
   margin-left: 0;
-  padding: 0.3em 0.6em;
+  padding: 0.1em 0.5em;
   background-color: var(--pst-color-info);
   color: var(--pst-color-background) !important;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: 3px;
   white-space: nowrap;
+  font-size: 0.9em;
 }
 
 /* Button hover keeps consistent text color */

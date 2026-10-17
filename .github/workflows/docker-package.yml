@@ -7,77 +7,148 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-permissions:
-  packages: write
+permissions: {}
 
 jobs:
   build-and-publish:
-    name: Build and Publish Docker Image
-    runs-on: ubuntu-22.04
-    # For Pull Requests, only runs from `docker`
+    name: Build ${{ matrix.target }} image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # push the image to ghcr.io
+    # For pull requests, run on branches named `docker*` or when the
+    # `docker` label is applied. Never runs on forked PRs (needs secrets).
     if: github.event_name == 'push' ||
       ( github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'docker')
-      )
+      ( startsWith(github.event.pull_request.head.ref, 'docker') ||
+      contains(github.event.pull_request.labels.*.name, 'docker')
+      ))
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: jupyter
+            flavor: |
+              latest=auto
+          - target: slim
+            flavor: |
+              latest=auto
+              suffix=-slim,onlatest=true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Create PyVista package
-        run: |
-          pip install build
-          python -m build --sdist
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
 
       - name: Log into the Container registry
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ${{ env.REGISTRY }}
           username: token
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for the Jupyter Docker image
-        id: jupyter_meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Build and push the Jupyter Docker image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
-        with:
-          context: .
-          file: docker/jupyter.Dockerfile
-          push: ${{ github.actor != 'dependabot[bot]' }}
-          tags: ${{ steps.jupyter_meta.outputs.tags }}
-          labels: ${{ steps.jupyter_meta.outputs.labels }}
+          flavor: ${{ matrix.flavor }}
 
-      - name: Extract metadata for the Slim Docker image
-        id: slim_meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=auto
-            suffix=-slim,onlatest=true
-      - name: Build and push the Slim Docker image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
+      # Build locally first so the smoke test can exercise the image before
+      # anything is pushed to the registry.
+      - name: Build image (load into local daemon)
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         with:
           context: .
-          file: docker/slim.Dockerfile
-          push: ${{ github.actor != 'dependabot[bot]' }}
-          tags: ${{ steps.slim_meta.outputs.tags }}
-          labels: ${{ steps.slim_meta.outputs.labels }}
+          file: docker/Dockerfile
+          target: ${{ matrix.target }}
+          load: true
+          tags: pyvista-ci:${{ matrix.target }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+
+      # Exercise server-side off-screen rendering so we catch missing GL /
+      # EGL runtime libraries instead of shipping an image that can import
+      # pyvista but cannot actually render.
+      - name: Smoke test (render + GPUInfo)
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          docker run --rm "pyvista-ci:$TARGET" python -c "
+          import numpy as np
+          import pyvista as pv
+          print(pv.Report())
+          print('GPU info:')
+          print(pv.GPUInfo())
+          pl = pv.Plotter(off_screen=True)
+          pl.add_mesh(pv.Sphere(), color='red')
+          img = pl.screenshot(return_img=True)
+          assert img is not None and img.size > 0, 'empty screenshot'
+          assert np.any(img), 'screenshot is all zeros'
+          print('screenshot ok:', img.shape, 'non-zero px:', int(np.count_nonzero(img)))
+          "
+
+      # Binder and JupyterHub serve Jupyter under a per-user base URL and reach the
+      # trame iframe through jupyter-server-proxy beneath it. Check that PyVista builds
+      # that prefix and that the proxy route resolves instead of returning a 404.
+      - name: Smoke test (jupyter-server-proxy)
+        if: matrix.target == 'jupyter'
+        run: |
+          docker run -d --name pv-proxy -e JUPYTERHUB_SERVICE_PREFIX=/user/ci/ pyvista-ci:jupyter \
+            jupyter server --ServerApp.base_url=/user/ci/ --IdentityProvider.token=ci
+          trap 'docker logs pv-proxy; docker rm -f pv-proxy' EXIT
+          docker exec -d pv-proxy python -m http.server 9000
+          docker exec -i pv-proxy python - <<'EOF'
+          import time
+          import urllib.request
+
+          import pyvista as pv
+
+          prefix = pv.global_theme.trame.server_proxy_prefix
+          assert prefix == '/user/ci/proxy/', prefix
+          url = f'http://localhost:8888{prefix}9000/?token=ci'
+          for _ in range(60):
+              try:
+                  with urllib.request.urlopen(url, timeout=5) as response:
+                      body = response.read()
+                  break
+              except OSError as err:
+                  error = err
+                  time.sleep(1)
+          else:
+              raise SystemExit(f'{url} did not resolve: {error}')
+          assert b'Directory listing' in body, body[:200]
+          print('proxy ok:', url)
+          EOF
+
+      # Second build is a cache hit from the step above; this pushes the
+      # already-validated image to the registry under the real tags.
+      - name: Push image
+        if: github.actor != 'dependabot[bot]'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: ${{ matrix.target }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}

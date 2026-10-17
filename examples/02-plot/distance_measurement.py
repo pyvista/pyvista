@@ -1,14 +1,12 @@
 """
 .. _distance_measurement_example:
 
-Measuring distance
+Measuring Distance
 ~~~~~~~~~~~~~~~~~~
-This example demonstrates how to measure distance between two points.
-:func:`add_measurement_widget() <pyvista.Plotter.add_measurement_widget>`.
+
+Measure distance between two points using :func:`~pyvista.Plotter.add_measurement_widget`.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 
@@ -20,7 +18,7 @@ pl.add_mesh(cube)
 pl.add_mesh(cube2)
 
 
-def callback(a, b, distance):  # noqa: ARG001
+def callback(a, b, distance):
     pl.add_text(f'Distance: {distance:.2f}', name='dist')
 
 

@@ -3,10 +3,13 @@
 
 Clip Volume Widget
 ------------------
+
+Clip a structured dataset with the volume clip plane widget.
+
 If you have a structured dataset like a :class:`pyvista.ImageData` or
 :class:`pyvista.RectilinearGrid`, you can clip it using the
-:func:`pyvista.Plotter.add_volume_clip_plane` widget to better see the internal
-structure of the dataset.
+:func:`pyvista.Plotter.add_volume_clip_plane` widget to better see the
+internal structure of the dataset.
 
 .. image:: ../../images/gifs/volume-clip-plane-widget.gif
 
@@ -14,8 +17,6 @@ structure of the dataset.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 

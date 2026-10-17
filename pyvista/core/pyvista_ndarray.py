@@ -1,4 +1,4 @@
-"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+"""Contains ``pyvista_ndarray`` a NumPy ``ndarray`` type used in PyVista."""
 
 from __future__ import annotations
 
@@ -8,32 +8,37 @@ from typing import cast
 
 import numpy as np
 
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
-from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
-from .utilities.arrays import convert_array
+from .utilities.arrays import _vtk_array_to_numpy
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
+    from types import EllipsisType
     from typing import Any
+    from typing import Self
+    from typing import SupportsIndex
+    from typing import TypeAlias
 
-    import numpy.typing as npt
+    from numpy.typing import NDArray
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
+    from ._typing_core import _AnyArrayLike
+
+    _Index: TypeAlias = int | slice | EllipsisType | NDArray[np.integer[Any]] | NDArray[np.bool_]
 
 
-class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
-    """A ndarray which references the owning dataset and the underlying vtk array.
+class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ignore=PR02
+    """A ``ndarray`` which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
     Parameters
     ----------
-    array : ArrayLike or :vtk:`vtkAbstractArray`
+    array : numpy.ndarray | sequence | :vtk:`vtkAbstractArray`
         Array like.
 
     dataset : DataSet
@@ -60,16 +65,22 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
 
     """
 
+    # Metadata of an unassociated array; instances only store what differs
+    dataset: _vtk.vtkWeakReference | None = None
+    association: FieldAssociation = FieldAssociation.NONE
+    VTKObject: _vtk.vtkAbstractArray | None = None
+
     def __new__(  # noqa: PYI034
         cls: type[pyvista_ndarray],
-        array: ArrayLike[float] | _vtk.vtkAbstractArray,
+        array: _AnyArrayLike | _vtk.vtkAbstractArray,
         dataset: DataSet | _vtk.vtkDataSet | _vtk.VTKObjectWrapper | None = None,
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:
         """Allocate the array."""
+        # Optimization: write the instance dict directly, bypassing _NoNewAttrMixin.__setattr__
         if isinstance(array, _vtk.vtkAbstractArray):
-            obj = convert_array(array).view(cls)
-            obj.VTKObject = array
+            obj = _vtk_array_to_numpy(array).view(cls)
+            obj.__dict__['VTKObject'] = array
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         else:
@@ -79,34 +90,43 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
             )
             raise TypeError(msg)
 
-        obj.association = association
-        obj.dataset = _vtk.vtkWeakReference()
-        if isinstance(dataset, _vtk.VTKObjectWrapper):
-            obj.dataset.Set(dataset.VTKObject)
-        else:
-            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
+        if dataset is not None:
+            reference = _vtk.vtkWeakReference()
+            if isinstance(dataset, _vtk.VTKObjectWrapper):
+                reference.Set(dataset.VTKObject)
+            else:
+                reference.Set(cast('_vtk.vtkDataSet', dataset))
+            obj.__dict__['dataset'] = reference
+        if association is not FieldAssociation.NONE:
+            obj.__dict__['association'] = association
         return obj
 
-    def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
+    def __array_finalize__(self: pyvista_ndarray, obj: NDArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
-        # this is necessary to ensure that views/slices of pyvista_ndarray
-        # objects stay associated with those of their parents.
-        #
-        # the VTKArray class uses attributes called `DataSet` and `Association`
-        # to hold this data. I don't know why this class doesn't use the same
-        # convention, but here we just map those over to the appropriate
-        # attributes of this class
-        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
-        if np.shares_memory(self, obj):
-            self.dataset = getattr(obj, 'dataset', None)
-            self.association = getattr(obj, 'association', FieldAssociation.NONE)
-            self.VTKObject = getattr(obj, 'VTKObject', None)
-        else:
-            self.dataset = None
-            self.association = FieldAssociation.NONE
-            self.VTKObject = None
+        # Views and slices keep their parent's metadata; copies and ufunc results do not
+        if isinstance(obj, pyvista_ndarray):
+            dataset = obj.dataset
+            vtk_object = obj.VTKObject
+            association = obj.association
+            # Optimization: an unassociated parent leaves the class defaults in place
+            if (
+                dataset is not None
+                or vtk_object is not None
+                or association is not FieldAssociation.NONE
+            ) and np.may_share_memory(self, obj):
+                self.__dict__.update(
+                    dataset=dataset, association=association, VTKObject=vtk_object
+                )
+        elif obj is not None and type(obj) is not np.ndarray and np.may_share_memory(self, obj):
+            self.__dict__.update(
+                dataset=getattr(obj, 'dataset', None),
+                association=getattr(obj, 'association', FieldAssociation.NONE),
+                VTKObject=getattr(obj, 'VTKObject', None),
+            )
 
-    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:  # type: ignore[override]
+    def __setitem__(  # type: ignore[override]
+        self: pyvista_ndarray, key: _Index | tuple[_Index, ...], value: Any
+    ) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -114,16 +134,53 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
         object.
         """
         super().__setitem__(key, value)
-        if self.VTKObject is not None:
-            self.VTKObject.Modified()
+        vtk_object = self.VTKObject
+        if vtk_object is not None:
+            vtk_object.Modified()
 
         # the associated dataset should also be marked as modified
         dataset = self.dataset
-        if dataset is not None and dataset.Get():
-            dataset.Get().Modified()
+        if dataset is not None:
+            owner = dataset.Get()
+            if owner is not None:
+                owner.Modified()
+
+    def squeeze(self, axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None) -> Self:
+        """Remove axes of length one while retaining an array view.
+
+        .. versionchanged:: 0.50
+            Single-element inputs return zero-dimensional array views.
+
+        Parameters
+        ----------
+        axis : int or tuple[int, ...], optional
+            Axes to remove. By default, remove all axes of length one.
+            Selecting an axis of length greater than one raises a ``ValueError``.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            View of the array with the selected axes removed. If all axes are
+            removed, the result is a zero-dimensional array, not a scalar.
+            If the shape is unchanged, return this array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> array = pv.pyvista_ndarray([[1]])
+        >>> squeezed = array.squeeze()
+        >>> squeezed.shape
+        ()
+        >>> squeezed[...] = 2
+        >>> array
+        pyvista_ndarray([[2]])
+
+        """
+        shape = np.asarray(self).squeeze(axis=axis).shape
+        return self if shape == self.shape else cast('Self', self.reshape(shape))
 
     def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 

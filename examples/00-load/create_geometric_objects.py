@@ -5,10 +5,10 @@ Geometric Objects
 ~~~~~~~~~~~~~~~~~
 
 The "Hello, world!" of VTK.
-Uses objects from :ref:`geometry_api`.
-"""
 
-from __future__ import annotations
+Uses objects from :ref:`geometry_api`.
+
+"""
 
 import pyvista as pv
 

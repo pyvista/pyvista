@@ -4,11 +4,11 @@
 Ray Tracing
 ~~~~~~~~~~~
 
-Single line segment ray tracing for :class:`~pyvista.PolyData` objects
-using :meth:`~pyvista.PolyDataFilters.ray_trace`.
-"""
+Single line segment ray tracing for :class:`~pyvista.PolyData` objects.
 
-from __future__ import annotations
+Uses :meth:`~pyvista.PolyDataFilters.ray_trace`.
+
+"""
 
 import pyvista as pv
 

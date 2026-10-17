@@ -5,20 +5,19 @@
 ~~~~~~~~~~~~~~
 
 Integrate a vector field to generate streamlines on a 2D surface.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
 
 # %%
 # This example generates streamlines of flow around a cylinder in cross flow.
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
 # %%
 # The data is multiblock with the fluid data as the first block.
-# The data lies in the `xy` plane, i.e. `z=0`, with no `z` velocity.
+# The data lies in the `xy` plane, that is, `z=0`, with no `z` velocity.
 
 mesh = examples.download_cylinder_crossflow()
 fluid_mesh = mesh[0]

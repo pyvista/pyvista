@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import _vtk
+from pyvista import _vtk
+
 from .actor import Actor
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ class Follower(Actor, _vtk.vtkFollower):
     Parameters
     ----------
     mapper : pyvista.DataSetMapper, optional
-        DataSetMapper.
+        Mapper used to render the actor's mesh.
 
     prop : pyvista.Property, optional
         Property of the actor.

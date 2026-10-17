@@ -8,8 +8,6 @@ Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
 
-from __future__ import annotations
-
 from pyvista import examples
 
 # %%
@@ -27,7 +25,7 @@ image = examples.download_bird()
 
 # %%
 # When plotting images stored in :class:`pyvista.ImageData` objects, it is
-# important to specify using the `rgb` option when plotting to ensure that the
+# important to specify using the ``rgb`` option when plotting to ensure that the
 # image's true colors are used and not mapped.
 
 # True image colors

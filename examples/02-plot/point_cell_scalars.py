@@ -4,13 +4,9 @@
 Point Cell Scalars
 ~~~~~~~~~~~~~~~~~~
 
-This example demonstrates how to add point scalars for each individual cell to
-a dataset.
-
+This example demonstrates how to add point scalars for each individual cell to a dataset.
 
 """
-
-from __future__ import annotations
 
 import numpy as np
 from pyvista import examples

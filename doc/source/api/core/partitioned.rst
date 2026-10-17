@@ -4,7 +4,7 @@ Partitioned Datasets
 The :class:`pyvista.PartitionedDataSet` class is a partitioned dataset that encapsulates
 a dataset consisting of partitions. ``PartitionedDataSet`` behaves mostly like a list.
 
-List-like Features
+List-Like Features
 ------------------
 
 Create an empty partitioned dataset
@@ -34,7 +34,7 @@ Add some data to the collection.
    partitions.append(pv.Sphere())
    partitions.append(pv.Cube(center=(0, 0, -1)))
 
-``PartitionedDataSet`` is List-like so that individual partitions can be accessed via
+``PartitionedDataSet`` is list-like so that individual partitions can be accessed via
 indices.
 
 .. jupyter-execute::

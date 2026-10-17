@@ -3,6 +3,9 @@
 
 Wrapping Other Objects
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Wrap other object types using :func:`~pyvista.wrap`.
+
 You can :func:`~pyvista.wrap` several other object types using pyvista including:
 
 - ``numpy`` arrays
@@ -16,8 +19,6 @@ of more than one module.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 import trimesh
@@ -30,7 +31,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # %%
 # Wrap Point Arrays
 # -----------------
-# Wrap a point cloud composed of random points from numpy.
+# Wrap a point cloud composed of random points from NumPy.
 
 
 rng = np.random.default_rng(seed=0)

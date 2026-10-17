@@ -13,7 +13,7 @@ class NotAllTrianglesError(ValueError):
 
     """
 
-    def __init__(self, message='Mesh must consist of only triangles') -> None:
+    def __init__(self, message: str = 'Mesh must consist of only triangles') -> None:
         """Empty init."""
         ValueError.__init__(self, message)
 
@@ -28,7 +28,7 @@ class DeprecationError(RuntimeError):
 
     """
 
-    def __init__(self, message='This feature has been deprecated') -> None:
+    def __init__(self, message: str = 'This feature has been deprecated') -> None:
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -45,7 +45,7 @@ class VTKVersionError(RuntimeError):
 
     def __init__(
         self,
-        message='The requested feature is not supported by the installed VTK version.',
+        message: str = 'The requested feature is not supported by the installed VTK version.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         RuntimeError.__init__(self, message)
@@ -63,7 +63,7 @@ class PointSetNotSupported(TypeError):  # noqa: N818
 
     def __init__(
         self,
-        message='The requested operation is not supported for PointSets.',
+        message: str = 'The requested operation is not supported for PointSets.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
@@ -81,7 +81,7 @@ class PointSetCellOperationError(PointSetNotSupported):
 
     def __init__(
         self,
-        message='Cell operations are not supported. PointSets contain no cells.',
+        message: str = 'Cell operations are not supported. PointSets contain no cells.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
@@ -99,7 +99,9 @@ class PointSetDimensionReductionError(PointSetNotSupported):
 
     def __init__(
         self,
-        message='Slice and other dimension reducing filters are not supported on PointSets.',
+        message: str = (
+            'Slice and other dimension reducing filters are not supported on PointSets.'
+        ),
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
@@ -117,14 +119,14 @@ class PartitionedDataSetsNotSupported(TypeError):  # noqa: N818
 
     def __init__(
         self,
-        message='The requested operation is not supported for PartitionedDataSetss.',
+        message: str = 'The requested operation is not supported for PartitionedDataSetss.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
 
 
 class MissingDataError(ValueError):
-    """Exception when data is missing, e.g. no active scalars can be set.
+    """Exception when data is missing, for example, no active scalars can be set.
 
     Parameters
     ----------
@@ -133,13 +135,13 @@ class MissingDataError(ValueError):
 
     """
 
-    def __init__(self, message='No data available.') -> None:
+    def __init__(self, message: str = 'No data available.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
 
 class AmbiguousDataError(ValueError):
-    """Exception when data is ambiguous, e.g. multiple active scalars can be set.
+    """Exception when data is ambiguous, for example, multiple active scalars can be set.
 
     Parameters
     ----------
@@ -148,7 +150,7 @@ class AmbiguousDataError(ValueError):
 
     """
 
-    def __init__(self, message='Multiple data available.') -> None:
+    def __init__(self, message: str = 'Multiple data available.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -163,7 +165,7 @@ class CellSizeError(ValueError):
 
     """
 
-    def __init__(self, message='Cell array size is invalid.') -> None:
+    def __init__(self, message: str = 'Cell array size is invalid.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -180,7 +182,7 @@ class PyVistaPipelineError(RuntimeError):
 
     def __init__(
         self,
-        message='VTK pipeline issue detected by PyVista.',
+        message: str = 'VTK pipeline issue detected by PyVista.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         super().__init__(message)
@@ -198,7 +200,7 @@ class PyVistaAttributeError(AttributeError):
 
     def __init__(
         self,
-        message='The attribute is not part of the PyVista API',
+        message: str = 'The attribute is not part of the PyVista API',
     ) -> None:  # numpydoc ignore=PR01,RT01
         super().__init__(message)
 
@@ -215,7 +217,7 @@ class InvalidMeshError(ValueError):
 
     """
 
-    def __init__(self, message='Invalid mesh.') -> None:
+    def __init__(self, message: str = 'Invalid mesh.') -> None:
         super().__init__(message)
 
 
@@ -233,7 +235,7 @@ class VTKExecutionError(RuntimeError):
 
     def __init__(
         self,
-        message='VTK output message was detected by PyVista.',
+        message: str = 'VTK output message was detected by PyVista.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         super().__init__(message)
@@ -263,5 +265,35 @@ class InvalidMeshWarning(Warning):
     """Warning for invalid mesh properties.
 
     .. versionadded:: 0.47
+
+    """
+
+
+class PrecisionWarning(Warning):
+    """Warning that points could not be generated at the requested precision.
+
+    Raised when :attr:`pyvista.core.config.Config.points_dtype` asks for a wider
+    dtype than the VTK algorithm that ran can generate. The output points are cast
+    up so that the dtype is the one asked for, but the values they hold have the
+    precision the algorithm produced, and casting cannot bring back digits it
+    already discarded.
+
+    The message names whatever generated the points: the VTK class for a filter, the
+    PyVista class for a source, since a source is its own algorithm, and the library
+    for a hull computed outside VTK.
+
+    Being a warning rather than an error is what keeps the choice with the caller.
+    Escalate it where the fabricated precision is not acceptable::
+
+        warnings.filterwarnings('error', category=pv.PrecisionWarning)
+
+    or silence it where it is::
+
+        warnings.filterwarnings('ignore', category=pv.PrecisionWarning)
+
+    Either can be scoped to a block with :class:`warnings.catch_warnings`, or set
+    for a run from ``-W`` or a test runner's own configuration.
+
+    .. versionadded:: 0.49
 
     """

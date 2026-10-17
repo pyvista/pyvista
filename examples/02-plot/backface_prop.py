@@ -4,21 +4,22 @@
 Setting Backface Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default front and backface rendering uses the same properties. In certain
+By default front and backface rendering uses the same properties.
+
+In certain
 situations it can be useful to set different properties for backfaces than
 for frontfaces.
 
 One straightforward example is when a closed (or close enough) surface has a
 different color on the inside. Note that the notion of "inside" and "outside"
 depend on the orientation of the surface normals:
+
 """
 
 # sphinx_gallery_thumbnail_number = 1
 
 # sphinx_gallery_start_ignore
 # backface properties do not work in interactive
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
