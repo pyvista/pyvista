@@ -138,6 +138,7 @@ def _build(
     interactive: Annotated[
         bool,
         Parameter(
+            name=['--interactive', '-i'],
             negative='',
             help='Walk through the steps, confirming each one before any command runs.',
         ),

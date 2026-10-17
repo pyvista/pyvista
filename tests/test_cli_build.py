@@ -326,3 +326,5 @@ def test_cli_manylinux(mocker: MockerFixture, tmp_path: Path, monkeypatch: pytes
     assert captured[-1].manylinux.startswith('quay.io/pypa/manylinux_2_28_')
     main('build vtk --dry-run --manylinux --manylinux-image my/image')
     assert captured[-1].manylinux == 'my/image'
+    main('build vtk --dry-run -i')
+    assert captured[-1].interactive is True
