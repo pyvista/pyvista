@@ -92,7 +92,7 @@ def tox_on_install(  # noqa: PLR0917
 
     if of_type in 'package':
         _arguments: list[WheelPackage] = arguments
-        constraints_file_dep = f'-c {CONSTRAINTS_FILE}'
+        constraints_file_dep = f'--constraints={CONSTRAINTS_FILE}'
         for package in _arguments:
             getattr(package, 'deps', []).append(constraints_file_dep)
 

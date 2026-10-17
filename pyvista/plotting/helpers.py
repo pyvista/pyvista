@@ -234,7 +234,7 @@ def view_vectors(
     Returns
     -------
     vec : numpy.ndarray
-        ``[x, y, z]`` vector that points in the viewing direction.
+        ``[x, y, z]`` vector that points from the focal point toward the camera.
 
     viewup : numpy.ndarray
         ``[x, y, z]`` vector that points to the ``viewup`` direction.

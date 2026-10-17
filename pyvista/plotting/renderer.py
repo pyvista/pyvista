@@ -24,6 +24,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _load_css
 from pyvista.core.formatting_html import _metadata_html
@@ -3287,12 +3288,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         render: bool = True,
         bounds: VectorLikeFloat | None = None,
     ) -> None:
-        """Point the camera in the direction of the given vector.
+        """View the scene from the direction of the given vector.
+
+        The camera is placed along ``vector`` from the center of the scene
+        and looks back toward it, so it looks in the direction opposite to
+        ``vector``.
 
         Parameters
         ----------
         vector : VectorLikeFloat
-            Direction to point the camera in.
+            Vector pointing from the focal point to the camera position.
 
         viewup : VectorLikeFloat, optional
             Sequence describing the view up of the camera.
@@ -3304,6 +3309,30 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         bounds : VectorLikeFloat, optional
             Automatically set up the camera based on a specified bounding box
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        Examples
+        --------
+        View a sphere from the positive x-axis. The camera looks in the
+        negative x direction.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.view_vector([1, 0, 0])
+        >>> pl.camera.direction
+        (-1.0, 0.0, 0.0)
+
+        View a built-in mesh from the ``(1, 1, 1)`` direction. The camera is
+        placed along this vector and looks back toward the center of the mesh,
+        so the positive x, y, and z axes all point toward the viewer.
+
+        >>> from pyvista import examples
+        >>> airplane = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(airplane)
+        >>> pl.view_vector([1, 1, 1])
+        >>> pl.show_axes()
+        >>> pl.show()
 
         """
         focal_pt = self.center
@@ -4025,8 +4054,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
                 msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
                 raise VTKVersionError(msg)
             rotation_matrix = _validation.validate_rotation(
@@ -4664,8 +4691,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetLabelFactor(label_size_factor)
         if snap_labels:
             if vtk_version_info < (9, 4):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
                 msg = '`snap_labels` requires VTK >= 9.4. Try installing VTK v9.4.0 or newer.'
                 raise VTKVersionError(msg)
             ruler.SnapLabelsToGridOn()

@@ -486,9 +486,9 @@ def test_save(extension, binary, tmpdir, hexbeam):
         return
 
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    if extension == '.vtkhdf' and not binary:
+    if extension in pv.HDFWriter.extensions and not binary:
         with pytest.raises(
-            ValueError, match=r'.vtkhdf files can only be written in binary format'
+            ValueError, match=rf'\{extension} files can only be written in binary format'
         ):
             hexbeam.save(filename, binary=binary)
         return
@@ -1517,9 +1517,10 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
 
     if extension == '.vtk' and not is_identity_matrix:
         match = re.escape(
-            'The direction matrix for ImageData cannot be saved using the legacy `.vtk` format.'
+            'The direction matrix for ImageData cannot be saved using the '
+            'Legacy VTK `.vtk` format.'
             '\nSee https://gitlab.kitware.com/vtk/vtk/-/issues/19663 '
-            '\nUse the `.vti` extension instead (XML format).'
+            '\nUse the `.vti` extension instead (VTK ImageData format).'
         )
         with pytest.raises(ValueError, match=match):
             uniform.save(filename, binary=binary)

@@ -55,6 +55,7 @@ from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.jupyter.notebook import handle_plotter
 
 from ._plotting import _common_arg_parser
 from ._plotting import _reduce_multicomponent_scalars_on_mesh
@@ -81,6 +82,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
 from .mapper import _BaseMapper
 from .mapper import _category_range
+from .mapper import _default_scalar_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .mapper import _PolyDataMapper
@@ -3140,8 +3142,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
-            also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -3755,8 +3758,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
-            also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -4894,7 +4898,9 @@ class BasePlotter(_BoundsSizeMixin):
         clim : sequence[float] | float, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
-            ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
+            ``np.uint8``. A range that spans only floating-point rounding
+            becomes ``(max, max)``. ``rng`` is also an accepted alias for this
+            parameter.
 
             If the scalars datatype is ``np.uint8``, this parameter defaults to
             ``[0, 256]``.
@@ -5358,10 +5364,8 @@ class BasePlotter(_BoundsSizeMixin):
                 category_values = None
 
         # Set scalars range
-        min_, max_ = None, None
         if clim is None:
-            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-            clim = (min_, max_)
+            clim = _default_scalar_range(np.nanmin(scalars), np.nanmax(scalars), scalars.dtype)
         elif isinstance(clim, (float, int)):
             clim = (-clim, clim)
 
@@ -5771,6 +5775,7 @@ class BasePlotter(_BoundsSizeMixin):
         # Not using `render_window` property here to enforce clean up
         if self.ren_win is not None:
             self.ren_win.Finalize()
+            self.ren_win.RemoveAllObservers()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None
@@ -6455,7 +6460,9 @@ class BasePlotter(_BoundsSizeMixin):
             pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
         )
 
-        actor = Actor(mapper=DataSetMapper(lines_polydata))
+        mapper = DataSetMapper(lines_polydata)
+        mapper.scalar_visibility = False
+        actor = Actor(mapper=mapper)
         actor.prop.line_width = width
         actor.prop.show_edges = True
         actor.prop.edge_color = color
@@ -8955,8 +8962,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from pyvista.jupyter.notebook import handle_plotter  # noqa: PLC0415
-
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
@@ -9222,7 +9227,19 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Returns
         -------
         list[DataSet | MultiBlock]
-            List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
+            List of mesh objects such as :class:`pyvista.PolyData`,
+            :class:`pyvista.UnstructuredGrid`, etc.
+
+        Examples
+        --------
+        Add two meshes and inspect their point counts.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> _ = pl.add_mesh(pv.Line())
+        >>> [mesh.n_points for mesh in pl.meshes]
+        [8, 2]
 
         """
 
