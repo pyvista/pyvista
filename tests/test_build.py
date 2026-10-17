@@ -1105,3 +1105,14 @@ def test_compiler_cache_row(tmp_path: Path, mocker: MockerFixture):
         '/usr/bin/ccache',
         '[green]ok[/green]',
     )
+
+
+def test_ccache_basedir(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    builder = _builder(tmp_path, mocker, compiler_cache='ccache')
+    builder._activate_compiler_cache()
+    assert builder.env['CCACHE_BASEDIR'] == str(builder.config.build_dir.resolve())
+    assert builder.env['CCACHE_NOHASHDIR'] == '1'
+    builder = _builder(tmp_path, mocker, compiler_cache='ccache', source=tmp_path.parents[-1])
+    builder._activate_compiler_cache()
+    assert 'CCACHE_BASEDIR' not in builder.env
