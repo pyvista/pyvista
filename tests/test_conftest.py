@@ -90,6 +90,21 @@ def _load_current_config(
     conftest.unlink()
 
 
+@pytest.mark.parametrize(
+    ('sources', 'raises'),
+    [(None, False), ([True], False), (['pyvista', 'tests'], False), (['pyvista.ext'], True)],
+)
+def test_dotted_cov_target_rejected(sources, raises):
+    from tests.conftest import pytest_configure
+
+    config = SimpleNamespace(option=SimpleNamespace(cov_source=sources))
+    if raises:
+        with pytest.raises(pytest.UsageError, match=r"not 'pyvista\.ext'\. Use plain --cov\."):
+            pytest_configure(config)
+    else:
+        pytest_configure(config)
+
+
 def test_warnings_turned_to_errors(
     pytester: pytest.Pytester,
     results_parser: PytesterStdoutParser,
@@ -732,3 +747,71 @@ def test_vtksz_file_size_exceptions(request, test_name, expected):
         test_case=test_case, request=request
     )
     assert test_case.max_vtksz_file_size == expected
+
+
+def test_vtk_output_fails_the_test(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    from pyvista import _vtk
+
+    def _log_a_vtk_error():
+        _vtk.vtkMultiBlockDataSet().SetBlock(0, _vtk.vtkPartitionedDataSet())
+
+    def test_leaks():
+        _log_a_vtk_error()
+
+    @pytest.mark.expect_vtk_output('cannot be added as a block', reason='the probe logs it')
+    def test_expected():
+        _log_a_vtk_error()
+
+    @pytest.mark.expect_vtk_output('a message VTK never logs', reason='it logs another')
+    def test_other_message():
+        _log_a_vtk_error()
+
+    def test_silent():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(passed=4, errors=2)
+    results.stdout.fnmatch_lines(['*VTK logged 1 error(s) or warning(s)*'])
+
+    report = RunResultsReport(results_parser.parse(results=results))
+    assert report.error == ['test_leaks', 'test_other_message']
+
+    # A marked test reports its reason, and the unmarked one, having none, reports no
+    # clause at all rather than one trailing off after 'because'.
+    stdout = results.stdout.str()
+    assert 'expects VTK output because it logs another' in stdout
+    assert not re.search(r'expects VTK output because\s*$', stdout, flags=re.MULTILINE)
+
+
+def test_vtk_output_markers_need_a_reason(pytester: pytest.Pytester):
+    tests = """
+    import pytest
+
+    from pyvista import _vtk
+
+    @pytest.mark.skip_vtk_output_check
+    def test_bare_skip():
+        ...
+
+    @pytest.mark.expect_vtk_output('cannot be added as a block')
+    def test_bare_expect():
+        _vtk.vtkMultiBlockDataSet().SetBlock(0, _vtk.vtkPartitionedDataSet())
+
+    @pytest.mark.skip_vtk_output_check(reason='it says why')
+    def test_skip_with_reason():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(passed=1, errors=2)
+    results.stdout.fnmatch_lines(['*skip_vtk_output_check needs reason=*'])
+    results.stdout.fnmatch_lines(['*expect_vtk_output needs reason=*'])

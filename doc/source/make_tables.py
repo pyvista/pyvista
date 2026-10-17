@@ -10,6 +10,7 @@ from collections.abc import Sequence
 import colorsys
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
+from enum import StrEnum
 from enum import auto
 import importlib
 import inspect
@@ -27,6 +28,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+from typing import get_overloads
 
 import cmcrameri
 import cmocean
@@ -42,7 +44,6 @@ from sphinx.util.console import bold
 from sphinx.util.console import color_terminal
 from sphinx.util.console import darkgreen
 from sphinx.util.console import nocolor
-from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_INFO
@@ -50,10 +51,9 @@ from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
-from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
-from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from types import FunctionType
     from types import ModuleType
 
+    from pyvista.core.utilities._file_formats import _FileFormat
     from pyvista.plotting.colors import Color
 
 logger = logging.getLogger(__name__)
@@ -148,7 +149,7 @@ def _resolve_jobs(jobs: str) -> int:
 
 # Map readers to Plotter import methods
 READER_IMPORTERS: dict[type[pv.BaseReader], str] = {}
-for ext, reader in CLASS_READERS.items():
+for ext, reader in _CLASS_READERS.items():
     method = f'import_{ext.removeprefix(".")}'
     if hasattr(pv.Plotter, method):
         READER_IMPORTERS.setdefault(reader, method)
@@ -241,15 +242,6 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
-def _swap_extension_mapping(mapping: dict[str, type[Any]]) -> dict[type[Any], set[str]]:
-    # Convert extension->cls mapping into cls->extension mapping
-    class_extensions: dict[pv.BaseReader, set[str]] = {cls: set() for cls in set(mapping.values())}
-    for ext, cls in mapping.items():
-        class_extensions[cls].add(ext)
-    # Sort by the class name of the reader
-    return _sort_by_class_name(class_extensions)
-
-
 def _sort_by_class_name(mapping: dict[Any, Any]):
     return sorted(
         mapping.items(),
@@ -259,22 +251,13 @@ def _sort_by_class_name(mapping: dict[Any, Any]):
 
 def _reader_info_dict() -> dict[pv.BaseReader, tuple[set[str], set[str]]]:
     # Create dict for reader info: extension(s) and output type(s)
-    readers = set(CLASS_READERS.values()) | {reader for _, _, reader in _CLASS_READER_PATTERNS}
-    reader_info = {reader: (set(), set()) for reader in readers}
-
-    for reader, extensions in _swap_extension_mapping(CLASS_READERS):
-        reader_info[reader][0].update(extensions)
-
-    for display, _, reader in _CLASS_READER_PATTERNS:
-        reader_info[reader][0].add(display)
-
-    # Store output type(s)
-    for reader, types in _CLASS_READER_RETURN_TYPE.items():
-        _, ouput_types = reader_info[reader]
-        if isinstance(types, tuple):
-            ouput_types.update(types)
-        else:
-            ouput_types.add(types)
+    reader_info = {}
+    for reader in {*_CLASS_READERS.values(), *(reader for *_, reader in _CLASS_READER_PATTERNS)}:
+        fmt = reader._format
+        extensions = {*fmt.extensions, *(display for display, _ in fmt.patterns)}
+        types = _CLASS_READER_RETURN_TYPE[reader]
+        output_types = set(types) if isinstance(types, tuple) else {types}
+        reader_info[reader] = (extensions, output_types)
 
     # Sort by the class name of the reader
     return _sort_by_class_name(reader_info)
@@ -292,59 +275,25 @@ class FileFormatInfo:
 
 
 def _meshio_info_dict():
-    def get_format_name(io_class: type, extensions: set[str]) -> str:
-        # Clean up the names of both reader and writer classes
-        name = io_class.__name__.removeprefix('vtk').removesuffix('Reader').removesuffix('Writer')
-        if not name.startswith('VTKP'):
-            name = name.removeprefix('VTK')
-        # Remove terms from name
-        class_names = get_args(_mesh_types)
-        other_names = ['DataSet', 'Image', 'Data', 'Partitioned']
-        for class_name in [*class_names, *other_names]:
-            name = name.replace(class_name, '')
-        if name == '':
-            # Use a single extension as the format name
-            assert len(extensions) == 1, (
-                f'File format name could not be determined for {io_class.__name__}'
-            )
-            name = next(iter(extensions)).removeprefix('.').upper()
-
-        # Convert number in name to actual number, e.g. `ThreeDS` -> `3DS`
-        return name.replace('Three', '3')
-
-    meshio_info: dict[str, dict[str, FileFormatInfo]] = {}
+    meshio_info: dict[str, dict[_FileFormat, FileFormatInfo]] = {}
     reader_info = _reader_info_dict()
     for class_name in get_args(_mesh_types):
-        meshio_info[class_name]: dict[str, FileFormatInfo] = {}
-
-        # Store reader info first
-        for reader, (extensions, return_type) in reader_info:
-            return_types = [return_type] if isinstance(return_type, str) else return_type
-            if class_name in return_types:
+        formats: dict[_FileFormat, FileFormatInfo] = {}
+        for reader, (extensions, output_types) in reader_info:
+            if class_name in output_types:
                 # This reader may return this class, so include it
-                format_name = get_format_name(reader, extensions)
-                info = FileFormatInfo(name=format_name, extensions=extensions, readable=True)
-                meshio_info[class_name][format_name] = info
-
-        # Store writer info next
-        cls = getattr(pv, class_name)
-        writer_extensions = _swap_extension_mapping(cls._WRITERS)
-        for writer, extensions in writer_extensions:
-            # Check if the format was already added from the reader
-            format_name = get_format_name(writer, extensions)
-            if format_name in meshio_info[class_name].keys():
-                # Ensure reader and writer have compatible extensions
-                reader_extensions = meshio_info[class_name][format_name].extensions
-                msg = (
-                    f'Writable extensions {extensions} should be a subset of readable extensions'
-                    f' {reader_extensions} for file format {format_name!r}.'
+                formats[reader._format] = FileFormatInfo(
+                    name=reader.format_description, extensions=extensions, readable=True
                 )
-                assert extensions <= reader_extensions, msg
-
-                meshio_info[class_name][format_name].writeable = True
-            else:
-                info = FileFormatInfo(name=format_name, extensions=extensions, writeable=True)
-                meshio_info[class_name][format_name] = info
+        for writer in set(getattr(pv, class_name)._WRITERS.values()):
+            info = formats.setdefault(
+                writer._format,
+                FileFormatInfo(
+                    name=writer.format_description, extensions=set(writer._format.extensions)
+                ),
+            )
+            info.writeable = True
+        meshio_info[class_name] = formats
 
     return meshio_info
 
@@ -359,10 +308,11 @@ class ReadersTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: PyVista Readers
-        |   :widths: 33 33 33
+        |   :widths: 25 25 25 25
         |   :header-rows: 1
         |
         |   * - Reader
+        |     - File Format
         |     - File Extension(s)
         |     - Return Type(s)
         """,
@@ -370,6 +320,7 @@ class ReadersTable(DocTable):
     row_template = _aligned_dedent(
         """
         |   * - {}
+        |     - {}
         |     - {}
         |     - {}
         """,
@@ -390,7 +341,9 @@ class ReadersTable(DocTable):
         reader_fmt = f':class:`~pyvista.{reader.__name__}`'
         extensions_fmt = ', '.join([f'``{ext}``' for ext in sorted(extensions)])
         output_types_fmt = ', '.join(f':class:`~pyvista.{typ}`' for typ in sorted(output_types))
-        return cls.row_template.format(reader_fmt, extensions_fmt, output_types_fmt)
+        return cls.row_template.format(
+            reader_fmt, reader.format_description, extensions_fmt, output_types_fmt
+        )
 
 
 class MeshIOTable(DocTable):
@@ -427,7 +380,7 @@ class MeshIOTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return dict(sorted(MESHIO_INFO[cls.class_name].items())).values()
+        return sorted(MESHIO_INFO[cls.class_name].values(), key=lambda info: info.name.lower())
 
     @classmethod
     def get_header(cls, _):
@@ -2299,7 +2252,7 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
-        ) = DatasetCard._generate_dataset_properties(self.loader, self.module)
+        ) = DatasetCard._generate_dataset_properties(self.loader, self.module, self.function)
 
         # Get cross-references from docs
         cross_references = self._generate_cross_references(index_name, header_name)
@@ -2309,7 +2262,7 @@ class DatasetCard:
 
         # Assemble rst parts into main blocks used by the card
         header_block = self._create_header_block(index_name, header_name, module_badge)
-        search_text_block = self._create_search_text_block(header_name, func_name, func_doc)
+        search_text_block = self._create_search_text_block(header_name, func_name)
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
         dataset_props_block = self._create_dataset_props_block(
@@ -2346,7 +2299,7 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_dataset_properties(loader, module: ModuleType):
+    def _generate_dataset_properties(loader, module: ModuleType, function: FunctionType):
         # Get data from loader
         if isinstance(loader, _DOWNLOADABLE_TYPES):
             loader.download()
@@ -2358,7 +2311,7 @@ class DatasetCard:
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
         importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
         module_badge = DatasetPropsGenerator.generate_module_badge(module)
-        dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+        dataset_type = DatasetPropsGenerator.generate_dataset_type(function)
         celltype_field = DatasetPropsGenerator.generate_celltype_field(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
@@ -2510,6 +2463,10 @@ class DatasetCard:
         if field_values in [None, '']:
             return None
         value_lines = str(field_values).splitlines()
+        if value_lines[0].startswith('| '):
+            # a line block stays whole, indented to the template's value column
+            block = '\n      '.join(value_lines)
+            return cls.field_grid_template.format(field_name, block)
         first_value = value_lines.pop(0)
         field = cls.field_grid_template.format(field_name, first_value)
         if len(value_lines) >= 1:
@@ -2557,9 +2514,9 @@ class DatasetCard:
         )
 
     @classmethod
-    def _create_search_text_block(cls, header_name, func_name, func_doc):
+    def _create_search_text_block(cls, header_name, func_name):
         """Generate the hidden search-text span used by the gallery's search box."""
-        search_text = ' '.join([header_name, func_name, func_doc or '']).lower()
+        search_text = f'{header_name} {func_name}'.lower()
         return cls._format_and_indent_from_template(
             search_text,
             template=cls.search_text_template,
@@ -2773,12 +2730,9 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_dataset_type(loader: _DatasetLoader):
-        """Format dataset type(s) with doc references to dataset class(es)."""
-        return '\n'.join(
-            '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
-            for cls in loader.unique_dataset_types
-        )
+    def generate_dataset_type(function: FunctionType):
+        """Format the dataset type from the function's return annotation, linking each class."""
+        return _annotation_rst(_annotated_dataset_type(function))
 
     @staticmethod
     def generate_module_badge(module: ModuleType):
@@ -3136,14 +3090,124 @@ def _annotation_str(annotation: Any) -> str:
     return getattr(annotation, '__name__', str(annotation))
 
 
+def _split_union(annotation: str) -> list[str]:
+    """Split a return annotation on its top-level ``|``, ignoring any inside brackets."""
+    members, depth, start = [], 0, 0
+    for i, char in enumerate(annotation):
+        depth += {'[': 1, ']': -1}.get(char, 0)
+        if char == '|' and depth == 0:
+            members.append(annotation[start:i].strip())
+            start = i + 1
+    members.append(annotation[start:].strip())
+    return members
+
+
 def _union_members(annotation: str) -> set[str]:
     """Split a return annotation into its union members, so order does not matter."""
-    return {part.strip() for part in annotation.split('|')}
+    return set(_split_union(annotation))
+
+
+def _annotated_dataset_type(function: FunctionType) -> str:
+    """Return the dataset part of a function's return annotation, without path or texture types."""
+    annotation = _annotation_str(inspect.signature(function).return_annotation)
+    non_dataset = {'str', 'tuple[str, ...]', 'Texture'}
+    return ' | '.join(m for m in _split_union(annotation) if m not in non_dataset)
+
+
+_TypeNode = tuple[str, list['_TypeNode']]
+
+# widest Data Type line before a nested type is split over several lines
+_DATA_TYPE_WIDTH = 28
+
+
+def _parse_annotation(annotation: str) -> list[_TypeNode]:
+    """Parse the members of a union annotation into ``(name, members)`` nodes."""
+    tokens = re.findall(r'[\w.]+|[\[\]|]', annotation)
+    position = 0
+
+    def union() -> list[_TypeNode]:
+        """Parse ``|``-separated members up to a closing bracket or the end."""
+        nonlocal position
+        members = []
+        while position < len(tokens) and tokens[position] != ']':
+            if tokens[position] == '|':
+                position += 1
+                continue
+            name = tokens[position]
+            position += 1
+            args: list[_TypeNode] = []
+            if position < len(tokens) and tokens[position] == '[':
+                position += 1
+                args = union()
+                position += 1
+            members.append((name, args))
+        return members
+
+    return union()
+
+
+def _flat_type(node: _TypeNode) -> str:
+    """Render a type node on one line."""
+    name, args = node
+    return f'{name}[{" | ".join(map(_flat_type, args))}]' if args else name
+
+
+def _type_lines(node: _TypeNode, indent: int = 0, closers: int = 0) -> list[tuple[int, str]]:
+    """Lay out a type node as ``(indent, text)`` lines, splitting whatever is too wide.
+
+    ``closers`` counts the brackets of enclosing types that end on this node's last line.
+    """
+    flat = _flat_type(node)
+    name, args = node
+    if not args or indent + len(flat) + closers <= _DATA_TYPE_WIDTH:
+        return [(indent, flat)]
+    lines = [(indent, f'{name}[')]
+    for i, arg in enumerate(args):
+        last = i == len(args) - 1
+        prefix = '| ' if i else ''
+        arg_lines = _type_lines(arg, indent + 2 + len(prefix), closers + 1 if last else 0)
+        first_indent, first_text = arg_lines[0]
+        arg_lines[0] = (first_indent - len(prefix), f'{prefix}{first_text}')
+        lines.extend(arg_lines)
+    last_indent, last_text = lines[-1]
+    lines[-1] = (last_indent, f'{last_text}]')
+    return lines
+
+
+def _annotation_rst(annotation: str) -> str:
+    """Render an annotation as an RST line block, linking each class."""
+
+    def link(match: re.Match[str]) -> str:
+        """Return a class reference for a PyVista or NumPy class name, or a literal otherwise."""
+        name = match.group().removeprefix('pv.')
+        cls = getattr(pv, name, None) or getattr(np, name, None)
+        if not isinstance(cls, type):
+            return f'``{name}``'
+        return f':class:`~{_get_fullname(cls)}`'
+
+    lines: list[tuple[int, str]] = []
+    for i, node in enumerate(_parse_annotation(annotation)):
+        node_lines = _type_lines(node)
+        if i:
+            indent, text = node_lines[0]
+            node_lines[0] = (indent, f'| {text}')
+        lines.extend(node_lines)
+    rst_lines = []
+    for indent, text in lines:
+        rst = re.sub(r'[\w.]+', link, text)
+        # inline markup cannot end directly before '[', so separate them with an escaped space
+        rst_lines.append((indent, rst.replace('`[', '`\\ [')))
+    if len(rst_lines) == 1 or all(indent == 0 for indent, _ in rst_lines):
+        return ' '.join(text for _, text in rst_lines)
+    return '\n'.join('| ' + ' ' * indent + text for indent, text in rst_lines)
 
 
 def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
     """Return the dataset type an example loads and the type ``load=False`` gives back."""
-    dataset_type = type(card.loader.dataset).__name__
+    dataset = card.loader.dataset
+    dataset_type = (
+        dataset.inferred_type if isinstance(dataset, pv.MultiBlock) else type(dataset).__name__
+    )
     # `_download_dataset` collapses to a bare path only when there is one to return
     loadable = getattr(card.loader, 'loadable_paths', ())
     return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'

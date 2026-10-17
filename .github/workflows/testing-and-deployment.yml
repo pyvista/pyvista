@@ -72,7 +72,7 @@ jobs:
 
   macOS:
     # Job names are required status checks on main, so they have to keep
-    # rendering exactly as `MacOS Unit Testing (3.10)`.
+    # rendering exactly as `MacOS Unit Testing (3.11)`.
     name: MacOS Unit Testing (${{ matrix.python-version }})
     # The merge queue runs this suite against the exact tree that lands, and
     # nothing downstream of a push to `main` consumes its output, so it is only
@@ -89,7 +89,7 @@ jobs:
       fail-fast: false
       # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
       matrix:
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -149,7 +149,7 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          - python-version: "3.10"
+          - python-version: "3.11"
             vtk-version: "9.3.1"
             numpy-version: "latest"
           - python-version: "3.11"
@@ -322,7 +322,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -422,7 +422,7 @@ jobs:
           ls flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
 
       - name: Upload pyvista coverage to CodeCov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_package
           flags: package
@@ -430,7 +430,7 @@ jobs:
           use_oidc: true
 
       - name: Upload test coverage to CodeCov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_tests
           flags: tests
@@ -439,7 +439,7 @@ jobs:
 
       - name: Upload pyvista coverage from VTK dev to CodeCov
         if: needs.VTK-dev.result == 'success'
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_package_vtk_dev
           flags: package-vtk-dev
@@ -448,7 +448,7 @@ jobs:
 
       - name: Upload test coverage from VTK dev to CodeCov
         if: needs.VTK-dev.result == 'success'
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
         with:
           directory: flag_tests_vtk_dev
           flags: tests-vtk-dev

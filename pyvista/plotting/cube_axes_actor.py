@@ -23,11 +23,13 @@ from pyvista.plotting.tools import parse_font_family
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from pyvista.core._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.plotting._typing import ColorLike
 
 
-def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
+def _pad_bounds(bounds: VectorLikeFloat, *, padding: float) -> NDArray[np.float64]:
     """Cushion bounds by a percentage of their size along each axial direction."""
     _validation.check_number(padding, name='padding')
     _validation.check_range(padding, rng=(0.0, 1.0), strict_upper=True, name='padding')
@@ -43,7 +45,7 @@ def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
 _FLT_EPSILON = float(np.finfo(np.float32).eps)
 
 
-def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
+def _axis_label_values(vmin: float, vmax: float, n: int) -> NDArray[np.float64]:
     """Return up to ``n`` values to label, at coordinates VTK puts major ticks on.
 
     :vtk:`vtkCubeAxesActor` adopts a spacing of ``(vmax - vmin) / (n - 1)`` only while ``n``
@@ -328,8 +330,8 @@ class CubeAxesActor(
         bold: bool = True,
         use_3d_text: bool | None = None,
         use_2d_mode: bool = False,
-        bounds: VectorLike[float] | None = None,
-        axes_ranges: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
+        axes_ranges: VectorLikeFloat | None = None,
         padding: float = 0.0,
     ) -> None:
         """Initialize CubeAxesActor."""
@@ -541,7 +543,7 @@ class CubeAxesActor(
         return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self, bounds: VectorLike[float]) -> None:
+    def bounds(self, bounds: VectorLikeFloat) -> None:
         self.SetBounds(bounds)  # type: ignore[arg-type]
         self._update_labels()
         bnds = self.bounds
@@ -897,7 +899,7 @@ class CubeAxesActor(
             self.y_axis_range = ranges[2], ranges[3]
             self.z_axis_range = ranges[4], ranges[5]
 
-    def update_bounds(self, bounds: VectorLike[float]) -> None:
+    def update_bounds(self, bounds: VectorLikeFloat) -> None:
         """Update the bounds of this actor.
 
         The ``padding`` and ``axes_ranges`` given to the constructor are applied
@@ -905,7 +907,7 @@ class CubeAxesActor(
 
         Parameters
         ----------
-        bounds : sequence[float]
+        bounds : VectorLikeFloat
             Bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """

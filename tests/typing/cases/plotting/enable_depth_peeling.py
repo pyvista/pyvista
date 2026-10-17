@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from type_assert import assert_types
+from type_assert import skip_runtime
 
 import pyvista as pv
 
@@ -14,17 +15,6 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-SKIP_RUNTIME = (
-    dict.fromkeys(
-        [
-            'a_plotter().enable_depth_peeling()',
-            'a_plotter().enable_depth_peeling(number_of_peels=4)',
-        ],
-        'probing depth peeling renders, and the VTK 9.3 wheel renders only through a display',
-    )
-    if pv.vtk_version_info < (9, 4)
-    else {}
-)
-
-assert_types(a_plotter().enable_depth_peeling(), bool | None)
-assert_types(a_plotter().enable_depth_peeling(number_of_peels=4), bool | None)
+with skip_runtime(pv.vtk_version_info < (9, 4), reason='probing depth peeling renders, and the VTK 9.3 wheel renders only through a display'):
+    assert_types(a_plotter().enable_depth_peeling(), bool | None)
+    assert_types(a_plotter().enable_depth_peeling(number_of_peels=4), bool | None)

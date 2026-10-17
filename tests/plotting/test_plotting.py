@@ -1658,6 +1658,18 @@ def test_plot_clim(sphere):
     pl.show()
 
 
+def test_plot_near_constant_scalars():
+    sphere = pv.Sphere(theta_resolution=64, phi_resolution=64).triangulate()
+    blocks = pv.MultiBlock([sphere.translate((1.2, 0, 0)), sphere.translate((2.4, 0, 0))])
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='Normals', show_scalar_bar=False)
+    composite, _ = pl.add_composite(blocks, scalars='Normals', show_scalar_bar=False)
+    for mapper in (actor.mapper, composite.mapper):
+        low, high = mapper.scalar_range
+        assert low == high
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_invalid_n_arrays(sphere):
     pl = pv.Plotter()
@@ -1675,6 +1687,14 @@ def test_plot_arrows():
     cent = np.array([[0, 0, 0], [1, 0, 0]])
     direction = np.array([[1, 1, 1], [-1, -1, -1]])
     pv.plot_arrows(cent, direction)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('dtype', [complex, bool])
+def test_plot_arrows_rejects_non_real(dtype):
+    arrows = np.zeros((2, 3), dtype=dtype)
+    with pytest.raises(TypeError, match='Arrow arrays must be real numbers'):
+        pv.plot([arrows, arrows])
 
 
 def test_add_arrows():
@@ -2432,6 +2452,10 @@ def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
     assert actor2 in actors
 
 
+@pytest.mark.expect_vtk_output(
+    'Resetting view-up since view plane normal is parallel',
+    reason='the camera looks along its own view-up, which VTK resets',
+)
 def test_image_properties() -> None:
     mesh = examples.load_uniform()
     pl = pv.Plotter()
@@ -6919,14 +6943,6 @@ def test_no_empty_meshes():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Empty meshes'):
         pl.add_mesh(pv.PolyData())
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_voxelize_volume_removed():
-    with pytest.raises(
-        pv.core.errors.DeprecationError, match=r'`pyvista.voxelize_volume` is deprecated'
-    ):
-        pv.voxelize_volume(pv.Sphere(), density=0.15)
 
 
 def test_enable_custom_trackball_style():

@@ -30,7 +30,9 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _linear_to_srgb
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _srgb_to_linear
 
 try:
     from matplotlib import colormaps
@@ -47,7 +49,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import TypeAlias
 
-    from pyvista.core._typing_core import NumpyArray
+    from numpy.typing import NDArray
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -1687,11 +1689,11 @@ def _hex_to_channels(h: str) -> tuple[int, ...]:
 class Color(_NoNewAttrMixin):
     r"""Helper class to convert between different color representations used in PyVista.
 
-    Many pyvista methods accept :data:`ColorLike` parameters. This helper class
+    Many pyvista methods accept :data:`~pyvista.typing.ColorLike` parameters. This helper class
     is used to convert such parameters to the necessary format, used by
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
-    or ``float``) is considered a :data:`ColorLike` parameter and can be converted
+    or ``float``) is considered a :data:`~pyvista.typing.ColorLike` parameter and can be converted
     by this class.
 
     See :ref:`named_colors` for a list of supported colors.
@@ -1886,7 +1888,7 @@ class Color(_NoNewAttrMixin):
 
         # Check integers
         if isinstance(val, int) and 0 <= val <= 255:
-            return val  # type: ignore[return-value]
+            return val
         elif isinstance(val, np.uint8) or (
             arr is not None
             and np.issubdtype(arr.dtype, np.integer)
@@ -1898,7 +1900,9 @@ class Color(_NoNewAttrMixin):
             msg = f'Unsupported color channel value provided: {val}'
             raise ValueError(msg)
 
-    def _from_rgba(self, rgba: Sequence[_ColorChannel] | NumpyArray[Any]) -> None:
+    def _from_rgba(
+        self, rgba: Sequence[_ColorChannel] | NDArray[np.floating] | NDArray[np.integer]
+    ) -> None:
         """Construct color from an RGB(A) sequence."""
         arg = rgba
         if len(rgba) == 3:
@@ -2199,11 +2203,7 @@ class Color(_NoNewAttrMixin):
             A new ``Color`` instance with sRGB color values.
 
         """
-        rgba = np.array(self.float_rgba)
-        mask = rgba < 0.0031308
-        rgba[mask] *= 12.92
-        rgba[~mask] = 1.055 * rgba[~mask] ** (1 / 2.4) - 0.055
-        return Color(rgba)
+        return Color(_linear_to_srgb(np.array(self.float_rgba)))
 
     def srgb_to_linear(self) -> Color:
         """Convert from sRGB color values to linear color values.
@@ -2214,11 +2214,7 @@ class Color(_NoNewAttrMixin):
             A new ``Color`` instance with linear color values.
 
         """
-        rgba = np.array(self.float_rgba)
-        mask = rgba < 0.04045
-        rgba[mask] /= 12.92
-        rgba[~mask] = ((rgba[~mask] + 0.055) / 1.055) ** 2.4
-        return Color(rgba)
+        return Color(_srgb_to_linear(np.array(self.float_rgba)))
 
     @classmethod
     def from_dict(cls, dict_: dict[str, int | float | str]) -> Color:  # numpydoc ignore=RT01

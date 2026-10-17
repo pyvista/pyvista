@@ -475,14 +475,14 @@ GitHub Actions, and you can run Vale locally with:
 
 .. code-block:: bash
 
-   pip install vale 'docutils<0.22' 'sphinx-gallery<0.22.0'
+   pip install "vale==$(python3 doc/run_vale.py --print-vale-version).*" 'docutils<0.22' 'sphinx-gallery<0.22.0'
    python3 doc/run_vale.py
 
 If you are on Linux or macOS, ``make docstyle`` runs the same script.
 
 ``doc/run_vale.py`` extracts the ``.rst`` files described below, runs Vale over
-every path CI checks, and then confirms that the rule still rejects the
-headings in ``tests/doc/vale/headings_invalid.rst``. The path list lives in
+every path CI checks, and then confirms that the rules still reject the
+fixtures in ``tests/doc/vale/``. The path list lives in
 that script alone; the workflow reads it with ``--print-files``.
 
 Vale cannot parse prose written inside a Python file directly (for example,
@@ -790,8 +790,8 @@ fork that still has an old ``doc`` branch is rejected with ``directory file conf
 Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
 either use another prefix or delete the stale branch.
 
-Points dtype
-^^^^^^^^^^^^
+Points Data Type
+^^^^^^^^^^^^^^^^
 
 The ``points`` dtype of a filter's output is decided globally, by
 ``pyvista.global_config.points_dtype``, and enforced in ``_update_alg`` and
@@ -809,7 +809,7 @@ own for precision.
 - Sources have no input to preserve, so they subclass ``_Source``, which requests the
   precision in ``Update`` and casts in ``_update_and_wrap_output``. Return
   ``self._update_and_wrap_output()`` from a source's ``output`` property rather than
-  wrapping ``GetOutput()``, which is uncast.
+  wrapping ``GetOutput()``, which skips the cast.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The
@@ -957,7 +957,9 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista --cov tests
+            pytest --cov
+
+        ``--cov`` measures both ``pyvista`` and ``tests``.
 
     .. tab-item:: tox
         :sync: tox
@@ -980,7 +982,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista --cov tests
+            make coverage # pytest -v --cov
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
@@ -1097,7 +1099,7 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 Testing Against the ``cvista`` Backend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the
-default and is tested on every PR; cvista is tested at **integration cadence**—nightly, and on PRs carrying the
+default and is tested on every pull request; cvista is tested at **integration cadence**—nightly, and on pull requests carrying the
 ``integration-testing`` label:
 
 .. code-block:: shell
@@ -1370,6 +1372,27 @@ the typing tests.
 The checkers it drives are selectable with ``type_assert_checkers``, which
 defaults to Mypy and accepts more than one. Report anything wrong with the
 framework itself against that repository rather than this one.
+
+Documenting Type Aliases
+^^^^^^^^^^^^^^^^^^^^^^^^
+The documentation expands a type alias into its full value wherever it appears in a
+signature. To show and link an alias by name instead, which suits long unions:
+
+#. Export it from ``pyvista/typing/__init__.py`` and add it to that module's ``__all__``.
+#. Add its name to ``_DOCUMENTED_TYPES`` in ``doc/source/conf.py``.
+#. Document it in ``doc/source/api/core/typing.rst``.
+
+Docstrings can then refer to the alias by its bare name, for example
+``center : VectorLike[float]``, and the documentation build reports a broken link
+to it.
+
+A name that appears in a signature but has no documentation page, such as a private
+``TypeVar``, fails the documentation build. Add it to ``_UNDOCUMENTED_TYPES`` in
+``doc/source/conf.py``, keeping the list sorted.
+
+If the name belongs to another package whose documentation Sphinx links to, such as
+``Path`` from ``pathlib``, map it to its full name in ``_REFERENCE_NAMES`` instead, so
+it links rather than being ignored.
 
 Style Checking
 ~~~~~~~~~~~~~~
@@ -2016,9 +2039,9 @@ branch.
 
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-For PRs of branches coming from the main pyvista repository, the documentation
+For pull requests of branches coming from the main pyvista repository, the documentation
 is automatically deployed using `Netlify GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
-However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
+However, new contributors that submit pull requests from a fork can download a light-weight documentation CI artifact
 that contains a non-interactive subset of the documentation build. It typically weights
 500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
 ``Build Documentation`` CI job.
@@ -2033,7 +2056,7 @@ Based Development <https://trunkbaseddevelopment.com/>`_ approach.
 The main features of our branching model are:
 
 -  The ``main`` branch is the main development branch. All features,
-   patches, and other branches should be merged here. While all PRs
+   patches, and other branches should be merged here. While all pull requests
    should pass all applicable CI checks, this branch may be functionally
    unstable as changes might have introduced unintended side-effects or
    bugs that were not caught through unit testing.

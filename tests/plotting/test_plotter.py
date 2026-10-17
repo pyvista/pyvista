@@ -8,6 +8,7 @@ All other tests requiring rendering should to in
 from __future__ import annotations
 
 from dataclasses import dataclass
+import gc
 import os
 from pathlib import Path
 import re
@@ -16,6 +17,7 @@ import threading
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import weakref
 
 import numpy as np
 import pytest
@@ -423,7 +425,7 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
-    m.return_value = pv.PolyData(), _vtk.vtkAlgorithm()
+    m.return_value = pv.PolyData(), _vtk.vtkSphereSource()
 
     pl = pv.Plotter()
     match = re.escape(
@@ -533,6 +535,25 @@ def test_add_background_image_raises():
     )
     with pytest.raises(RuntimeError, match=match):
         pl.add_background_image(pv.examples.mapfile)
+
+
+@pytest.mark.parametrize('event', [_vtk.vtkCommand.StartEvent, _vtk.vtkCommand.RenderEvent])
+def test_close_releases_render_window_observers(event):
+    """Closing releases callbacks even while the caller retains the native window."""
+    pl = pv.Plotter()
+    window = pl.render_window
+    assert window is not None
+
+    def observe(*_args):
+        """Observe the retained window without owning the plotter."""
+
+    reference = weakref.ref(observe)
+    window.AddObserver(event, observe)
+    del observe
+    assert reference() is not None
+    pl.close()
+    gc.collect()
+    assert reference() is None
 
 
 def test_show_after_closed_raises():
@@ -775,6 +796,14 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
+@pytest.mark.parametrize('points', [[[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]], (1.0, 2.0, 3.0)])
+def test_add_points_sequence(points):
+    """Plot points given as a plain sequence."""
+    pl = pv.Plotter()
+    actor = pl.add_points(points)
+    assert np.array_equal(actor.mapper.dataset.points, np.atleast_2d(points))
+
+
 @pytest.mark.parametrize(('connected', 'n_lines'), [(False, 2), (True, 3)])
 def test_add_lines(connected, n_lines):
     pl = pv.Plotter()
@@ -782,6 +811,18 @@ def test_add_lines(connected, n_lines):
     actor = pl.add_lines(points, connected=connected)
     dataset = actor.mapper.dataset
     assert dataset.n_cells == n_lines
+
+
+def test_add_lines_scalar_visibility():
+    """Lines are drawn in a solid color, so the mapper must not color by scalars."""
+    pl = pv.Plotter()
+    points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
+    actor = pl.add_lines(points)
+    assert actor.mapper.scalar_visibility is False
+
+    # match a solid-color ``add_mesh`` actor
+    mesh_actor = pl.add_mesh(pv.Sphere(), color='r')
+    assert actor.mapper.scalar_visibility is mesh_actor.mapper.scalar_visibility
 
 
 def test_clear_actors(cube, sphere):
@@ -876,6 +917,110 @@ def test_plotter_add_volume_clim(uniform: pv.ImageData):
     pl = pv.Plotter()
     vol = pl.add_volume(uniform, clim=clim_val)
     assert vol.mapper.scalar_range == (-clim_val, clim_val)
+
+
+def _rounding_noise(value, dtype, n, ulps=2):
+    """Return ``n`` values within ``ulps`` units of rounding of ``value``."""
+    value = dtype(value)
+    steps = np.resize(np.arange(-ulps, ulps + 1), n)
+    return (value + steps * np.spacing(value)).astype(dtype)
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('value', [3.0, -3.0e5])
+def test_add_mesh_near_constant_scalars_range(dtype, value):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(value, dtype, mesh.n_points)
+    assert np.ptp(mesh['data']) > 0
+    actor = pv.Plotter().add_mesh(mesh, scalars='data')
+    expected = float(mesh['data'].max())
+    assert actor.mapper.scalar_range == (expected, expected)
+    assert actor.mapper.lookup_table.scalar_range == (expected, expected)
+
+    clim = (float(mesh['data'].min()), float(mesh['data'].max()))
+    actor = pv.Plotter().add_mesh(mesh, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == clim
+
+
+def test_mapper_array_name_near_constant_scalars_range():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points)
+    mapper = pv.DataSetMapper(mesh)
+    mapper.array_name = 'data'
+    expected = float(mesh['data'].max())
+    assert mapper.scalar_range == (expected, expected)
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_add_mesh_rounding_spread_above_threshold_range(dtype):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, dtype, mesh.n_points, ulps=3)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data')
+    assert actor.mapper.scalar_range == (float(mesh['data'].min()), float(mesh['data'].max()))
+
+
+def test_add_composite_near_constant_scalars_range():
+    angles = np.linspace(0, 2 * np.pi, 50)
+    vectors = np.column_stack([np.cos(angles), np.sin(angles), np.zeros_like(angles)])
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['vectors'] = vectors[:25].astype(np.float32)
+    other = mesh.copy()
+    other['vectors'] = vectors[25:].astype(np.float32)
+    blocks = pv.MultiBlock([mesh, other])
+    magnitudes = np.linalg.norm(np.vstack([mesh['vectors'], other['vectors']]), axis=1)
+    assert np.ptp(magnitudes) > 0
+
+    actor, _ = pv.Plotter().add_composite(blocks, scalars='vectors')
+    assert actor.mapper.scalar_range == (float(magnitudes.max()),) * 2
+
+    actor, _ = pv.Plotter().add_composite(blocks, scalars='vectors', below_color='red')
+    assert actor.mapper.scalar_range == (float(magnitudes.min()), float(magnitudes.max()))
+
+
+@pytest.mark.parametrize('reverse', [False, True])
+def test_add_composite_mixed_dtype_scalars_range(reverse):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = np.ones(mesh.n_points, dtype=np.float32)
+    other = mesh.copy()
+    other['data'] = 1.0 + np.linspace(0, 2e-7, other.n_points)
+    blocks = [mesh, other][::-1] if reverse else [mesh, other]
+    actor, _ = pv.Plotter().add_composite(pv.MultiBlock(blocks), scalars='data')
+    assert actor.mapper.scalar_range == (1.0, float(other['data'].max()))
+
+
+def test_add_mesh_near_constant_scalars_below_color():
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh.cell_data['data'] = _rounding_noise(3.0, np.float32, mesh.n_cells)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data', below_color='red')
+    expected = (float(mesh['data'].min()), float(mesh['data'].max()))
+    assert actor.mapper.scalar_range == expected
+    assert actor.mapper.lookup_table.map_value(expected[0]) != pv.Color('red').float_rgba
+
+    mapper = pv.DataSetMapper(mesh)
+    mapper.lookup_table.below_range_color = 'red'
+    mapper.array_name = 'data'
+    assert mapper.scalar_range == expected
+
+
+@pytest.mark.parametrize('ulps', [0, 2])
+def test_add_mesh_near_constant_scalars_custom_opacity(ulps):
+    mesh = pv.ImageData(dimensions=(5, 5, 1))
+    mesh['data'] = _rounding_noise(3.0, np.float32, mesh.n_points, ulps=ulps)
+    opacity = np.linspace(0.2, 1.0, mesh.n_points)
+    actor = pv.Plotter().add_mesh(mesh, scalars='data', opacity=opacity)
+    rgba = actor.mapper.dataset.point_data['__custom_rgba']
+    assert np.unique(rgba[:, :3], axis=0).shape[0] == 1
+    assert np.array_equal(rgba[:, 3], (opacity * 255).astype(np.uint8))
+
+
+def test_add_volume_near_constant_scalars_range(uniform: pv.ImageData):
+    scalars = _rounding_noise(2.0, np.float32, uniform.n_points)
+    vol = pv.Plotter().add_volume(uniform, scalars=scalars)
+    assert vol.mapper.scalar_range == (float(scalars.max()),) * 2
+
+    clim = (float(scalars.min()), float(scalars.max()))
+    vol = pv.Plotter().add_volume(uniform, scalars=scalars, clim=clim)
+    assert vol.mapper.scalar_range == clim
 
 
 def test_plotter_meshes(sphere, cube):

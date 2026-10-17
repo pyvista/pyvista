@@ -55,6 +55,7 @@ from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.jupyter.notebook import handle_plotter
 
 from ._plotting import _common_arg_parser
 from ._plotting import _reduce_multicomponent_scalars_on_mesh
@@ -81,6 +82,7 @@ from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
 from .mapper import _BaseMapper
 from .mapper import _category_range
+from .mapper import _default_scalar_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .mapper import _PolyDataMapper
@@ -124,6 +126,7 @@ if TYPE_CHECKING:
     import cycler
     import imageio
     from IPython.lib.display import IFrame
+    from numpy.typing import NDArray
     from PIL.Image import Image
     from trame_pyvista.jupyter import EmbeddableWidget
     from trame_pyvista.jupyter import Widget
@@ -135,10 +138,11 @@ if TYPE_CHECKING:
     from pyvista import Texture
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import LineStyle
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _Real
+    from pyvista.core._typing_core import _Scalar
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
@@ -165,13 +169,14 @@ if TYPE_CHECKING:
 
     _ShowReturnType: TypeAlias = (
         CameraPosition
-        | NumpyArray[np.uint8]
+        | NDArray[np.uint8]
         | EmbeddableWidget
         | Widget
         | IFrame
         | Image
         | tuple[
-            CameraPosition | EmbeddableWidget | Widget | NumpyArray[np.uint8] | IFrame | Image, ...
+            CameraPosition | EmbeddableWidget | Widget | NDArray[np.uint8] | IFrame | Image,
+            ...,
         ]
         | None
     )
@@ -258,7 +263,7 @@ log.addHandler(logging.StreamHandler())
 def _attach_raw_scalars_via_callback(  # noqa: PLR0917
     algo: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
     mesh: DataSet,
-    scalars: NumpyArray[float],
+    scalars: NDArray[Any],
     scalars_name: str,
     preference: PointLiteral | CellLiteral,
 ) -> tuple[_vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput, DataSet]:
@@ -356,7 +361,7 @@ def _warn_xserver() -> None:  # pragma: no cover
 
 
 def _validate_distortion_coefficients(
-    coefficients: VectorLike[float],
+    coefficients: VectorLikeFloat,
 ) -> tuple[float, float, float, float]:
     """Return the Brown-Conrady coefficients as a tuple of four floats.
 
@@ -544,7 +549,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._gif_filename: Path | None = None
         self.ren_win: _vtk.vtkRenderWindow | None = None
         # 3D location of the last click registered by ``left_button_down``
-        self.pickpoint: NumpyArray[float] | None = None
+        self.pickpoint: NDArray[np.float64] | None = None
 
         # snapshot the theme so later edits to the source theme do not reach this plotter
         self._theme = Theme._from_theme(
@@ -615,10 +620,10 @@ class BasePlotter(_BoundsSizeMixin):
         self.reset_key_events()
         log.debug('BasePlotter init stop')
 
-        self._image_depth_null: NumpyArray[bool] | None = None
+        self._image_depth_null: NDArray[np.bool_] | None = None
         self._window_size_unset = False
-        self.last_image_depth: NumpyArray[np.float32] | None = None
-        self.last_image: NumpyArray[np.uint8] | None = None
+        self.last_image_depth: NDArray[np.float32] | None = None
+        self.last_image: NDArray[np.uint8] | None = None
         self.last_vtksz: bytes | None = None
         self._has_background_layer = False
         if image_scale is None:
@@ -721,7 +726,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.Theme
+        pyvista.plotting.themes.Theme
             Theme of this plotter.
 
         Examples
@@ -1811,7 +1816,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderer.remove_blurring``."""
         return self.renderer.remove_blurring(*args, **kwargs)
 
-    def enable_camera_distortion(self, coefficients: VectorLike[float]) -> None:
+    def enable_camera_distortion(self, coefficients: VectorLikeFloat) -> None:
         """Render every actor through a distorted camera model.
 
         Brown-Conrady distortion is applied by a vertex shader replacement on
@@ -1830,7 +1835,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        coefficients : VectorLike[float]
+        coefficients : VectorLikeFloat
             Distortion coefficients ``(k1, k2, p1, p2)``. ``k1`` and ``k2``
             are the radial terms, negative for pincushion and positive for
             barrel; ``p1`` and ``p2`` are the tangential terms. Higher-order
@@ -2096,7 +2101,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(
         self, *args, **kwargs
-    ) -> list[VectorLike[float]]:  # numpydoc ignore=PR01,RT01
+    ) -> list[VectorLikeFloat]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
@@ -2429,7 +2434,7 @@ class BasePlotter(_BoundsSizeMixin):
                 self.window_size = size_before
 
     @property
-    def image_depth(self) -> NumpyArray[np.float32]:  # numpydoc ignore=RT01
+    def image_depth(self) -> NDArray[np.float32]:  # numpydoc ignore=RT01
         """Return a depth image representing current render window.
 
         Helper attribute for ``get_image_depth``.
@@ -2480,7 +2485,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.render_window.StereoUpdate()
 
     @property
-    def image(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
+    def image(self) -> NDArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
 
         .. versionchanged:: 0.50
@@ -3137,8 +3142,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
-            also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -3628,18 +3634,18 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_mesh(
         self,
-        mesh: MatrixLike[float] | PlottableType | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
+        mesh: PlottableType | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
         *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
-        scalars: str | NumpyArray[float] | None = None,
+        scalars: str | NDArray[Any] | None = None,
         clim: Sequence[float] | None = None,
         show_edges: bool | None = None,
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
         line_style: LineStyle | None = None,
-        opacity: float | OpacityOptions | str | VectorLike[float] | None = None,
+        opacity: float | OpacityOptions | str | VectorLikeFloat | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
@@ -3651,7 +3657,7 @@ class BasePlotter(_BoundsSizeMixin):
         show_scalar_bar: bool | None = None,
         multi_colors: bool = False,
         name: str | None = None,
-        texture: Texture | NumpyArray[float] | None = None,
+        texture: Texture | NDArray[_Scalar] | None = None,
         render_points_as_spheres: bool | None = None,
         point_shape: PointSpriteShape | str | None = None,
         render_lines_as_tubes: bool | None = None,
@@ -3752,8 +3758,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         clim : sequence[float], optional
             Two item color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
-            also an accepted alias for this.
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -3790,7 +3797,7 @@ class BasePlotter(_BoundsSizeMixin):
 
             .. versionadded:: 0.50
 
-        opacity : float | str | array_like
+        opacity : float | str | VectorLikeFloat
             Opacity of the mesh. If a single float value is given, it
             will be the global opacity of the mesh and uniformly applied
             everywhere, and must be in the range ``[0.0, 1.0]``, where
@@ -4283,7 +4290,7 @@ class BasePlotter(_BoundsSizeMixin):
                     corners_grid.cell_data[array] = mesh.cell_data[array][0]
 
                 # Combine meshes
-                not_hidden = not_hidden + corners_grid
+                not_hidden = not_hidden.merge(corners_grid)
                 association, name = mesh.active_scalars_info
                 try:
                     not_hidden.set_active_scalars(name, preference=association)
@@ -4795,7 +4802,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         actor: Actor,
         label: str,
-        scalars: str | NumpyArray[float] | None,
+        scalars: str | NDArray[Any] | None,
         color: Color,
     ) -> None:
         """Add a legend label based on an actor and its scalars."""
@@ -4819,21 +4826,21 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
+    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLikeFloat | None = ..., opacity: float | OpacityOptions | VectorLikeFloat = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
     @overload
-    def add_volume(self, volume: DataSet | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
+    def add_volume(self, volume: DataSet | NDArray[_Real], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLikeFloat | None = ..., opacity: float | OpacityOptions | VectorLikeFloat = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
     @overload
-    def add_volume(self, volume: DataSet | MultiBlock[Any] | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
+    def add_volume(self, volume: DataSet | MultiBlock[Any] | NDArray[_Real], *, scalars: str | NDArray[np.floating] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLikeFloat | None = ..., opacity: float | OpacityOptions | VectorLikeFloat = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
     # ruff: enable[E501]
     # fmt: on
     def add_volume(
         self,
-        volume: DataSet | MultiBlock[Any] | NumpyArray[float],
+        volume: DataSet | MultiBlock[Any] | NDArray[_Real],
         *,
-        scalars: str | NumpyArray[float] | None = None,
+        scalars: str | NDArray[np.floating] | None = None,
         clim: float | tuple[float, float] | None = None,
-        resolution: VectorLike[float] | None = None,
-        opacity: OpacityOptions | NumpyArray[float] = 'linear',
+        resolution: VectorLikeFloat | None = None,
+        opacity: float | OpacityOptions | VectorLikeFloat = 'linear',
         n_colors: int = 256,
         cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
@@ -4891,20 +4898,22 @@ class BasePlotter(_BoundsSizeMixin):
         clim : sequence[float] | float, optional
             Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
-            ``np.uint8``. ``rng`` is also an accepted alias for this parameter.
+            ``np.uint8``. A range that spans only floating-point rounding
+            becomes ``(max, max)``. ``rng`` is also an accepted alias for this
+            parameter.
 
             If the scalars datatype is ``np.uint8``, this parameter defaults to
             ``[0, 256]``.
 
             If a single value is given, the range ``[-clim, clim]`` is used.
 
-        resolution : list, optional
+        resolution : VectorLikeFloat, optional
             Block resolution. For example ``[1, 1, 1]``. Resolution must be
             non-negative. While VTK accepts negative spacing, this results in
             unexpected behavior. See:
             `pyvista #1967 <https://github.com/pyvista/pyvista/issues/1967>`_.
 
-        opacity : str | numpy.ndarray, optional
+        opacity : float | str | VectorLikeFloat, optional
             Opacity mapping for the scalars array.
 
             A string can also be specified to map the scalars range to a
@@ -5220,7 +5229,7 @@ class BasePlotter(_BoundsSizeMixin):
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 if resolution is None and isinstance(block, pv.ImageData):
-                    block_resolution: VectorLike[float] | None = block.spacing
+                    block_resolution: VectorLikeFloat | None = block.spacing
                 else:
                     block_resolution = resolution
                 color = next(cycler) if multi_colors else cmap
@@ -5307,7 +5316,7 @@ class BasePlotter(_BoundsSizeMixin):
             scalar_bar_args.setdefault('title', title)
         elif not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)  # type: ignore[unreachable]
-        scalars = cast('NumpyArray[float]', scalars)
+        scalars = cast('NDArray[np.floating]', scalars)
 
         if not np.issubdtype(scalars.dtype, np.number):
             msg = 'Non-numeric scalars are currently not supported for volume rendering.'
@@ -5355,10 +5364,8 @@ class BasePlotter(_BoundsSizeMixin):
                 category_values = None
 
         # Set scalars range
-        min_, max_ = None, None
         if clim is None:
-            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-            clim = (min_, max_)
+            clim = _default_scalar_range(np.nanmin(scalars), np.nanmax(scalars), scalars.dtype)
         elif isinstance(clim, (float, int)):
             clim = (-clim, clim)
 
@@ -5444,11 +5451,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_silhouette(
         self,
-        mesh: NumpyArray[float]
-        | DataSet
-        | MultiBlock[Any]
-        | _vtk.vtkAlgorithm
-        | _vtk.vtkAlgorithmOutput,
+        mesh: DataSet | MultiBlock[Any] | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
         *,
         color: ColorLike | None = None,
         line_width: float | None = None,
@@ -5772,6 +5775,7 @@ class BasePlotter(_BoundsSizeMixin):
         # Not using `render_window` property here to enforce clean up
         if self.ren_win is not None:
             self.ren_win.Finalize()
+            self.ren_win.RemoveAllObservers()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None
@@ -6286,7 +6290,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         fill_value: float | None = np.nan,
         reset_camera_clipping_range: bool = True,
-    ) -> NumpyArray[np.float32]:
+    ) -> NDArray[np.float32]:
         """Return a depth image representing current render window.
 
         .. versionchanged:: 0.50
@@ -6355,7 +6359,7 @@ class BasePlotter(_BoundsSizeMixin):
         ifilter.SetScale(self.image_scale)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
-        zbuff = cast('NumpyArray[np.float32]', run_image_filter(ifilter))[:, :, 0]
+        zbuff = cast('NDArray[np.float32]', run_image_filter(ifilter))[:, :, 0]
 
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
@@ -6376,7 +6380,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_lines(
         self,
-        lines: NumpyArray[float],
+        lines: NDArray[_Real],
         *,
         color: ColorLike = 'w',
         width: float = 5,
@@ -6456,7 +6460,9 @@ class BasePlotter(_BoundsSizeMixin):
             pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
         )
 
-        actor = Actor(mapper=DataSetMapper(lines_polydata))
+        mapper = DataSetMapper(lines_polydata)
+        mapper.scalar_visibility = False
+        actor = Actor(mapper=mapper)
         actor.prop.line_width = width
         actor.prop.show_edges = True
         actor.prop.edge_color = color
@@ -6482,7 +6488,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_point_labels(
         self,
-        points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
+        points: MatrixLikeFloat | VectorLikeFloat | DataSet | _vtk.vtkAlgorithm,
         labels: Sequence[str | int] | str,
         *,
         italic: bool = False,
@@ -6516,7 +6522,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        points : sequence | DataSet | :vtk:`vtkAlgorithm`
+        points : MatrixLikeFloat | VectorLikeFloat | DataSet | :vtk:`vtkAlgorithm`
             An ``n x 3`` sequence points or :class:`pyvista.DataSet` with
             points or mesh-producing algorithm.
 
@@ -6792,7 +6798,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_point_scalar_labels(
         self,
-        points: MatrixLike[float] | VectorLike[float] | DataSet,
+        points: MatrixLikeFloat | VectorLikeFloat | DataSet,
         labels: list[str | int] | str,
         *,
         fmt: str | None = None,
@@ -6805,7 +6811,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        points : sequence[float] | np.ndarray | DataSet
+        points : MatrixLikeFloat | VectorLikeFloat | DataSet
             An ``n x 3`` ``numpy.ndarray`` or PyVista dataset with points.
 
         labels : list | str
@@ -6869,7 +6875,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_points(
         self,
-        points: MatrixLike[float] | VectorLike[float] | DataSet,
+        points: MatrixLikeFloat | VectorLikeFloat | DataSet,
         style: Literal['points', 'points_gaussian'] = 'points',
         **kwargs,
     ) -> Actor:
@@ -6877,7 +6883,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        points : numpy.ndarray or pyvista.DataSet
+        points : MatrixLikeFloat | VectorLikeFloat | pyvista.DataSet
             Array of points or the points from a pyvista object.
 
         style : str, default: 'points'
@@ -6930,7 +6936,11 @@ class BasePlotter(_BoundsSizeMixin):
         return self.add_mesh(points, style=style, **kwargs)
 
     def add_arrows(
-        self, cent: NumpyArray[float], direction: NumpyArray[float], mag: float = 1.0, **kwargs
+        self,
+        cent: NDArray[_Real],
+        direction: NDArray[_Real],
+        mag: float = 1.0,
+        **kwargs,
     ) -> Actor:
         """Add arrows to the plotter.
 
@@ -6997,10 +7007,10 @@ class BasePlotter(_BoundsSizeMixin):
 
     @staticmethod
     def _save_image(
-        image: NumpyArray[np.uint8],
+        image: NDArray[np.uint8],
         filename: str | Path | BytesIO | bool | None,  # noqa: FBT001
         return_img: bool,  # noqa: FBT001
-    ) -> NumpyArray[np.uint8] | None:
+    ) -> NDArray[np.uint8] | None:
         """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
@@ -7117,11 +7127,11 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501, FBT001]
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NumpyArray[np.uint8]: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
     @overload
     def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NumpyArray[np.uint8] | None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
     # ruff: enable[E501, FBT001]
     # fmt: on
     def screenshot(
@@ -7133,7 +7143,7 @@ class BasePlotter(_BoundsSizeMixin):
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
         render: bool = True,
-    ) -> NumpyArray[np.uint8] | None:
+    ) -> NDArray[np.uint8] | None:
         """Take screenshot at current camera position.
 
         Parameters
@@ -7273,7 +7283,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         factor: float = 3.0,
         n_points: int = 20,
-        viewup: VectorLike[float] | None = None,
+        viewup: VectorLikeFloat | None = None,
         shift: float = 0.0,
     ) -> pv.PolyData:
         """Generate an orbital path around the data scene.
@@ -7286,7 +7296,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points : int, default: 20
             Number of points on the orbital path.
 
-        viewup : VectorLike[float], optional
+        viewup : VectorLikeFloat, optional
             The normal to the orbital plane.
 
         shift : float, default: 0.0
@@ -7353,9 +7363,9 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         path: pv.PolyData | None = None,
         *,
-        focus: VectorLike[float] | None = None,
+        focus: VectorLikeFloat | None = None,
         step: float = 0.5,
-        viewup: VectorLike[float] | None = None,
+        viewup: VectorLikeFloat | None = None,
         write_frames: bool = False,
         threaded: bool = False,
         progress_bar: bool = False,
@@ -7368,14 +7378,14 @@ class BasePlotter(_BoundsSizeMixin):
             Path of orbital points. The order in the points is the order of
             travel.
 
-        focus : VectorLike[float], optional
+        focus : VectorLikeFloat, optional
             The point of focus the camera. For example ``(0.0, 0.0, 0.0)``.
 
         step : float, default: 0.5
             The timestep between flying to each camera position. Ignored when
             ``plotter.off_screen = True``.
 
-        viewup : VectorLike[float], optional
+        viewup : VectorLikeFloat, optional
             The normal to the orbital plane.
 
         write_frames : bool, default: False
@@ -8952,8 +8962,6 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from pyvista.jupyter.notebook import handle_plotter  # noqa: PLC0415
-
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
 
@@ -9219,7 +9227,19 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Returns
         -------
         list[DataSet | MultiBlock]
-            List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
+            List of mesh objects such as :class:`pyvista.PolyData`,
+            :class:`pyvista.UnstructuredGrid`, etc.
+
+        Examples
+        --------
+        Add two meshes and inspect their point counts.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> _ = pl.add_mesh(pv.Line())
+        >>> [mesh.n_points for mesh in pl.meshes]
+        [8, 2]
 
         """
 

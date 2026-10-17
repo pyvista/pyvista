@@ -19,7 +19,7 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from ._property import Property
 
 if TYPE_CHECKING:
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
 
 class AxesActor(
@@ -194,7 +194,7 @@ class AxesActor(
         return self.GetTotalLength()
 
     @total_length.setter
-    def total_length(self, length: float | VectorLike[float]) -> None:
+    def total_length(self, length: float | VectorLikeFloat) -> None:
         self.SetTotalLength(
             *_validation.validate_array3(
                 length, broadcast=True, dtype_out=float, name='total_length'
@@ -204,6 +204,13 @@ class AxesActor(
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
+
+        Value must be in the range ``[0, 1]``.
+
+        .. versionchanged:: 0.50
+
+            Values outside ``[0, 1]`` now raise ``ValueError``. Previously they were
+            stored and clamped by VTK.
 
         Examples
         --------
@@ -222,16 +229,27 @@ class AxesActor(
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length: float | VectorLike[float]) -> None:
+    def shaft_length(self, length: float | VectorLikeFloat) -> None:
         self.SetNormalizedShaftLength(
             *_validation.validate_array3(
-                length, broadcast=True, dtype_out=float, name='shaft_length'
+                length,
+                broadcast=True,
+                dtype_out=float,
+                name='shaft_length',
+                must_be_in_range=[0, 1],
             )
         )
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
+
+        Value must be in the range ``[0, 1]``.
+
+        .. versionchanged:: 0.50
+
+            Values outside ``[0, 1]`` now raise ``ValueError``. Previously they were
+            stored and clamped by VTK.
 
         Examples
         --------
@@ -250,10 +268,14 @@ class AxesActor(
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length: float | VectorLike[float]) -> None:
+    def tip_length(self, length: float | VectorLikeFloat) -> None:
         self.SetNormalizedTipLength(
             *_validation.validate_array3(
-                length, broadcast=True, dtype_out=float, name='tip_length'
+                length,
+                broadcast=True,
+                dtype_out=float,
+                name='tip_length',
+                must_be_in_range=[0, 1],
             )
         )
 
@@ -278,7 +300,7 @@ class AxesActor(
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length: float | VectorLike[float]) -> None:
+    def label_position(self, length: float | VectorLikeFloat) -> None:
         self.SetNormalizedLabelPosition(
             *_validation.validate_array3(
                 length, broadcast=True, dtype_out=float, name='label_position'

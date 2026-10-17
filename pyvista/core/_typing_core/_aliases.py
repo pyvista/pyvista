@@ -1,4 +1,4 @@
-"""Core type aliases."""
+"""Type aliases for PyVista and VTK objects; NumPy-only aliases live in ``_array_types``."""
 
 from __future__ import annotations
 
@@ -8,16 +8,27 @@ from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
+from pyvista_validation.typing import MatrixLikeFloat
+from pyvista_validation.typing import MatrixLikeInt
+from pyvista_validation.typing import VectorLikeFloat
+from pyvista_validation.typing import VectorLikeInt
+
 from pyvista import _vtk
 
-from ._array_like import NumberType
-from ._array_like import _ArrayLike
-from ._array_like import _ArrayLike1D
-from ._array_like import _ArrayLike2D
+from ._array_types import _VolumeArray
 
-if TYPE_CHECKING or os.environ.get(
-    '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
-):  # pragma: no cover
+if TYPE_CHECKING:
+    import meshio
+    import trimesh
+
+    from pyvista import DataObject
+    from pyvista import DataSet
+    from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
+
+if TYPE_CHECKING:
+    from scipy.spatial.transform import Rotation
+elif os.environ.get('_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):  # pragma: no cover
     try:
         from scipy.spatial.transform import Rotation
     except ImportError:
@@ -25,24 +36,10 @@ if TYPE_CHECKING or os.environ.get(
 else:
     Rotation = None
 
-# NOTE:
-# Type aliases are automatically expanded in the documentation.
-# To document an alias as-is without expansion, the alias should be:
-#   (1) added to the "autodoc_type_aliases" dictionary in /doc/source/conf.py
-#   (2) added to /doc/core/typing.rst
-#   (3) added to the "numpydoc_validation" excludes in pyproject.toml
-#
-# Long or complex type aliases (e.g. a union of 4 or more base types) should
-# always be added to the dictionary and documented
-Number = Union[int, float]
-VectorLike = _ArrayLike1D[NumberType]
-MatrixLike = _ArrayLike2D[NumberType]
-ArrayLike = _ArrayLike[NumberType]
-
 if Rotation is not None:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3, Rotation]
 else:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
+    RotationLike = Union[MatrixLikeFloat, _vtk.vtkMatrix3x3]  # type: ignore[misc]
 TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
 
 
@@ -89,13 +86,26 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike = Union[MatrixLike[int], VectorLike[int]]
+CellsLike = Union[MatrixLikeInt, VectorLikeInt]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
-
-# Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
 
 LineStyle = Literal['', '-', '--', ':', '-.', '-..']
+
+# Objects that wrap to a DataSet, MultiBlock or PartitionedDataSet
+_MeshLike = Union[
+    _vtk.vtkDataSet,
+    _vtk.vtkMultiBlockDataSet,
+    _vtk.vtkPartitionedDataSet,
+    'DataSet',
+    'MultiBlock',
+    'PartitionedDataSet',
+    _VolumeArray,
+    VectorLikeFloat,
+    MatrixLikeFloat,
+    'trimesh.Trimesh',
+    'meshio.Mesh',
+]
+WrappableType = Union[_MeshLike, _vtk.vtkDataObject, 'DataObject', _vtk.vtkDataArray, None]

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from .plotter import BasePlotter
 
@@ -44,7 +44,7 @@ class BackgroundRenderer(Renderer):
         image_path: str | Path,
         *,
         scale: float = 1,
-        view_port: VectorLike[float] | None = None,
+        view_port: VectorLikeFloat | None = None,
     ) -> None:
         """Initialize BackgroundRenderer with an image."""
         # read the image first as we don't need to create a render if

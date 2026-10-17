@@ -18,20 +18,17 @@ from .utilities.misc import _NoNewAttrMixin
 if TYPE_CHECKING:
     from types import EllipsisType
     from typing import Any
+    from typing import Self
     from typing import SupportsIndex
     from typing import TypeAlias
 
-    import numpy.typing as npt
-    from typing_extensions import Self
+    from numpy.typing import NDArray
 
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
+    from ._typing_core import _AnyArrayLike
 
-    _Index: TypeAlias = (
-        int | slice | EllipsisType | NumpyArray[np.integer[Any]] | NumpyArray[np.bool_]
-    )
+    _Index: TypeAlias = int | slice | EllipsisType | NDArray[np.integer[Any]] | NDArray[np.bool_]
 
 
 class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ignore=PR02
@@ -41,7 +38,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
 
     Parameters
     ----------
-    array : ArrayLike or :vtk:`vtkAbstractArray`
+    array : numpy.ndarray | sequence | :vtk:`vtkAbstractArray`
         Array like.
 
     dataset : DataSet
@@ -75,7 +72,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
 
     def __new__(  # noqa: PYI034
         cls: type[pyvista_ndarray],
-        array: ArrayLike[float] | _vtk.vtkAbstractArray,
+        array: _AnyArrayLike | _vtk.vtkAbstractArray,
         dataset: DataSet | _vtk.vtkDataSet | _vtk.VTKObjectWrapper | None = None,
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:
@@ -104,7 +101,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
             obj.__dict__['association'] = association
         return obj
 
-    def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
+    def __array_finalize__(self: pyvista_ndarray, obj: NDArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
         # Views and slices keep their parent's metadata; copies and ufunc results do not
         if isinstance(obj, pyvista_ndarray):

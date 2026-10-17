@@ -11,16 +11,16 @@ from typing import TypeVar
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from typing import Any
+    from typing import Self
 
     from mypy.plugin import ClassDefContext
     from mypy.types import Instance
-    from typing_extensions import Self
 
 
-T = TypeVar('T', bound=type)
+_T = TypeVar('_T', bound=type)
 
 
-def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
+def promote_type(*types: type[Any]) -> Callable[[_T], _T]:  # noqa: ARG001
     """Duck-type type-promotion decorator used by the mypy plugin.
 
     Apply this decorator to a class to promote its type statically.

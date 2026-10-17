@@ -131,6 +131,11 @@ The plot directive has the following configuration options:
     ``pyvista_plot_skip_optional`` : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
+    ``pyvista_plot_force_static`` : bool, default: False
+        Whether to use static images instead of interactive scenes for all plots.
+
+        .. versionadded:: 0.50
+
     ``pyvista_plot_autocodelink`` : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
         targets. Requires the `sphinx-autocodelink
@@ -372,6 +377,7 @@ def setup(app: Sphinx) -> dict[str, Any]:
     app.add_config_value('pyvista_plot_cleanup', None, 'env')
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_force_static', default=False, rebuild='env')
     app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
     return {
         'parallel_read_safe': True,
@@ -592,10 +598,10 @@ def render_figures(
     include_source: bool = True,
     state: RSTState | None = None,
 ) -> list[tuple[str, list[ImageFile]]]:
-    """Run a pyplot script and save the images in *``output_dir``*.
+    """Run a pyplot script and save the images in ``output_dir``.
 
-    Save the images under *``output_dir``* with file names derived from
-    *``output_base``*. Closed plotters are ignored if they were never
+    Save the images under ``output_dir`` with file names derived from
+    ``output_base``. Closed plotters are ignored if they were never
     rendered.
 
     If ``env`` is given and ``include_source`` is true, also records the code's identifiers
@@ -746,7 +752,7 @@ def run(  # noqa: PLR0917
     config = env.config
     nofigs = 'nofigs' in options
     optional = 'optional' in options
-    force_static = 'force_static' in options
+    force_static = config.pyvista_plot_force_static or 'force_static' in options
     use_counter = config.pyvista_plot_use_counter
 
     default_fmt = 'png'

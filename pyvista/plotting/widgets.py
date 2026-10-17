@@ -15,7 +15,9 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_set import _set_threshold_limit
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -40,14 +42,15 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import TypeAlias
 
+    from numpy.typing import NDArray
+
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import RectilinearGrid
     from pyvista.core._typing_core import InteractionEventType
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.helpers import _NormalsLiteral
@@ -65,7 +68,7 @@ _SliderStyleOptions = Literal['classic', 'modern']
 _SphereStyleOptions = Literal['surface', 'wireframe']
 
 
-def _float_list(values: VectorLike[float]) -> list[float]:
+def _float_list(values: VectorLikeFloat) -> list[float]:
     """Return the values as a plain list of floats."""
     return [float(value) for value in values]
 
@@ -212,7 +215,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         callback: Callable[..., object] | None,
         *,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
         factor: float = 1.25,
         rotation_enabled: bool = True,
         color: ColorLike | None = None,
@@ -237,7 +240,7 @@ class WidgetComponent(_NoNewAttrMixin):
             single argument of the plane collection as a :vtk:`vtkPlanes`
             object.
 
-        bounds : tuple(float)
+        bounds : VectorLikeFloat
             Length 6 tuple of the bounding box where the widget is
             placed.
 
@@ -436,8 +439,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        from pyvista.core.filters import _get_output  # avoids circular import
-
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
@@ -500,9 +501,9 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         callback: Callable[..., object] | None,
         *,
-        normal: VectorLike[float] | _NormalsLiteral = 'x',
-        origin: VectorLike[float] | None = None,
-        bounds: VectorLike[float] | None = None,
+        normal: VectorLikeFloat | _NormalsLiteral = 'x',
+        origin: VectorLikeFloat | None = None,
+        bounds: VectorLikeFloat | None = None,
         factor: float = 1.25,
         color: ColorLike | None = None,
         assign_to_axis: str | int | None = None,
@@ -530,13 +531,13 @@ class WidgetComponent(_NoNewAttrMixin):
             two arguments, the normal and origin of the plane in that
             order.
 
-        normal : str or tuple(float)
+        normal : str | VectorLikeFloat
             The starting normal vector of the plane.
 
-        origin : tuple(float)
+        origin : VectorLikeFloat
             The starting coordinate of the center of the plane.
 
-        bounds : tuple(float)
+        bounds : VectorLikeFloat
             Length 6 tuple of the bounding box where the widget is placed.
 
         color : ColorLike, optional
@@ -755,7 +756,7 @@ class WidgetComponent(_NoNewAttrMixin):
         /,
         mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        normal: VectorLike[float] | _NormalsLiteral = 'x',
+        normal: VectorLikeFloat | _NormalsLiteral = 'x',
         invert: bool = False,
         widget_color: ColorLike | None = None,
         value: float = 0.0,
@@ -768,7 +769,7 @@ class WidgetComponent(_NoNewAttrMixin):
         normal_rotation: bool = True,
         crinkle: bool = False,
         interaction_event: InteractionEventType = 'end',
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         outline_opacity: bool | float | None = None,
         **kwargs: Any,
     ) -> Actor:
@@ -786,7 +787,7 @@ class WidgetComponent(_NoNewAttrMixin):
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
-        normal : str or tuple(float), optional
+        normal : str | VectorLikeFloat, optional
             The starting normal vector of the plane.
 
         invert : bool, optional
@@ -841,7 +842,7 @@ class WidgetComponent(_NoNewAttrMixin):
             .. versionchanged:: 0.38.0
                Now accepts either strings or :vtk:`vtkCommand.EventIds`.
 
-        origin : tuple(float), optional
+        origin : VectorLikeFloat, optional
             The starting coordinate of the center of the plane.
 
         outline_opacity : bool or float, optional
@@ -873,8 +874,6 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.widgets.plane_clipped_meshes  # doctest:+SKIP
 
         """
-        from pyvista.core.filters import _get_output  # avoids circular import
-
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
@@ -906,7 +905,7 @@ class WidgetComponent(_NoNewAttrMixin):
             plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(plane_normal: VectorLike[float], loc: VectorLike[float]) -> None:
+        def callback(plane_normal: VectorLikeFloat, loc: VectorLikeFloat) -> None:
             function = generate_plane(plane_normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
@@ -942,7 +941,7 @@ class WidgetComponent(_NoNewAttrMixin):
         /,
         volume: Volume | ImageData | RectilinearGrid,
         *,
-        normal: VectorLike[float] | _NormalsLiteral = 'x',
+        normal: VectorLikeFloat | _NormalsLiteral = 'x',
         invert: bool = False,  # noqa: ARG002
         widget_color: ColorLike | None = None,
         value: float = 0.0,  # noqa: ARG002
@@ -954,7 +953,7 @@ class WidgetComponent(_NoNewAttrMixin):
         implicit: bool = True,
         normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         outline_opacity: bool | float | None = None,
         **kwargs: Any,
     ) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget:
@@ -967,7 +966,7 @@ class WidgetComponent(_NoNewAttrMixin):
             :class:`pyvista.RectilinearGrid`, or the return value from
             :class:`pyvista.plotting.volume.Volume` from :func:`pyvista.Plotter.add_volume`.
 
-        normal : str or tuple(float), optional
+        normal : str | VectorLikeFloat, optional
             The starting normal vector of the plane.
 
         invert : bool, optional
@@ -1014,7 +1013,7 @@ class WidgetComponent(_NoNewAttrMixin):
         interaction_event : :vtk:`vtkCommand.EventIds`, optional
             The VTK interaction event to use for triggering the callback.
 
-        origin : tuple(float), optional
+        origin : VectorLikeFloat, optional
             The starting coordinate of the center of the plane.
 
         outline_opacity : bool or float, optional
@@ -1051,7 +1050,7 @@ class WidgetComponent(_NoNewAttrMixin):
         plane = _vtk.vtkPlane()
 
         def callback(
-            plane_normal: VectorLike[float], plane_origin: VectorLike[float]
+            plane_normal: VectorLikeFloat, plane_origin: VectorLikeFloat
         ) -> None:  # numpydoc ignore=PR01
             """Update the plane used to clip the volume."""
             plane.SetNormal(*plane_normal)
@@ -1083,7 +1082,7 @@ class WidgetComponent(_NoNewAttrMixin):
         /,
         mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        normal: VectorLike[float] | _NormalsLiteral = 'x',
+        normal: VectorLikeFloat | _NormalsLiteral = 'x',
         generate_triangles: bool = False,
         widget_color: ColorLike | None = None,
         assign_to_axis: str | int | None = None,
@@ -1094,7 +1093,7 @@ class WidgetComponent(_NoNewAttrMixin):
         implicit: bool = True,
         normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         outline_opacity: bool | float | None = None,
         **kwargs: Any,
     ) -> Actor:
@@ -1112,7 +1111,7 @@ class WidgetComponent(_NoNewAttrMixin):
             The input dataset to add to the scene and slice or algorithm that
             produces said mesh.
 
-        normal : str or tuple(float), optional
+        normal : str | VectorLikeFloat, optional
             The starting normal vector of the plane.
 
         generate_triangles : bool, optional
@@ -1158,7 +1157,7 @@ class WidgetComponent(_NoNewAttrMixin):
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
-        origin : tuple(float), optional
+        origin : VectorLikeFloat, optional
             The starting coordinate of the center of the plane.
 
         outline_opacity : bool or float, optional
@@ -1211,7 +1210,7 @@ class WidgetComponent(_NoNewAttrMixin):
         plane_sliced_mesh = pv.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
-        def callback(plane_normal: VectorLike[float], plane_origin: VectorLike[float]) -> None:
+        def callback(plane_normal: VectorLikeFloat, plane_origin: VectorLikeFloat) -> None:
             # create the plane for clipping
             plane = generate_plane(plane_normal, plane_origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
@@ -1328,7 +1327,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         callback: Callable[..., object] | None,
         *,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
         factor: float = 1.25,
         resolution: int = 100,
         color: ColorLike | None = None,
@@ -1351,7 +1350,7 @@ class WidgetComponent(_NoNewAttrMixin):
             (default) or if ``use_vertices=True``, then it can take
             two arguments of the coordinates of the line's end points.
 
-        bounds : tuple(float), optional
+        bounds : VectorLikeFloat, optional
             Length 6 tuple of the bounding box where the widget is
             placed.
 
@@ -1451,8 +1450,8 @@ class WidgetComponent(_NoNewAttrMixin):
         data: list[str],
         *,
         value: float | None = None,
-        pointa: VectorLike[float] = (0.4, 0.9),
-        pointb: VectorLike[float] = (0.9, 0.9),
+        pointa: VectorLikeFloat = (0.4, 0.9),
+        pointb: VectorLikeFloat = (0.9, 0.9),
         color: ColorLike | None = None,
         interaction_event: InteractionEventType = 'end',
         style: _SliderStyleOptions | None = None,
@@ -1475,11 +1474,11 @@ class WidgetComponent(_NoNewAttrMixin):
         value : float, optional
             The starting value of the slider.
 
-        pointa : tuple(float), optional
+        pointa : VectorLikeFloat, optional
             The relative coordinates of the left point of the slider on the
             display port.
 
-        pointb : tuple(float), optional
+        pointb : VectorLikeFloat, optional
             The relative coordinates of the right point of the slider on the
             display port.
 
@@ -1558,12 +1557,12 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_slider_widget(
         self,
         callback: Callable[..., object] | None,
-        rng: VectorLike[float],
+        rng: VectorLikeFloat,
         *,
         value: float | None = None,
         title: str | None = None,
-        pointa: VectorLike[float] = (0.4, 0.9),
-        pointb: VectorLike[float] = (0.9, 0.9),
+        pointa: VectorLikeFloat = (0.4, 0.9),
+        pointb: VectorLikeFloat = (0.9, 0.9),
         color: ColorLike | None = None,
         pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
@@ -1589,7 +1588,7 @@ class WidgetComponent(_NoNewAttrMixin):
             callable should take two parameters: the float value of the slider
             and the widget itself.
 
-        rng : tuple(float)
+        rng : VectorLikeFloat
             Length two tuple of the minimum and maximum ranges of the
             slider.
 
@@ -1599,11 +1598,11 @@ class WidgetComponent(_NoNewAttrMixin):
         title : str, optional
             The string label of the slider widget.
 
-        pointa : tuple(float), optional
+        pointa : VectorLikeFloat, optional
             The relative coordinates of the left point of the slider
             on the display port.
 
-        pointb : tuple(float), optional
+        pointb : VectorLikeFloat, optional
             The relative coordinates of the right point of the slider
             on the display port.
 
@@ -1688,7 +1687,7 @@ class WidgetComponent(_NoNewAttrMixin):
             fmt = pv.global_theme.font.fmt
 
         def normalize(
-            point: VectorLike[float], viewport: tuple[float, float, float, float]
+            point: VectorLikeFloat, viewport: tuple[float, float, float, float]
         ) -> tuple[float, float]:
             point_ = _float_list(point)
             return (
@@ -1777,8 +1776,8 @@ class WidgetComponent(_NoNewAttrMixin):
         widget_color: ColorLike | None = None,
         preference: PointLiteral | CellLiteral = 'cell',
         title: str | None = None,
-        pointa: VectorLike[float] = (0.4, 0.9),
-        pointb: VectorLike[float] = (0.9, 0.9),
+        pointa: VectorLikeFloat = (0.4, 0.9),
+        pointb: VectorLikeFloat = (0.9, 0.9),
         continuous: bool = False,
         all_scalars: bool = False,
         method: Literal['upper', 'lower'] = 'upper',
@@ -1825,11 +1824,11 @@ class WidgetComponent(_NoNewAttrMixin):
         title : str, optional
             The string label of the slider widget.
 
-        pointa : sequence, default: (0.4, 0.9)
+        pointa : VectorLikeFloat, default: (0.4, 0.9)
             The relative coordinates of the left point of the slider
             on the display port.
 
-        pointb : sequence, default: (0.9, 0.9)
+        pointb : VectorLikeFloat, default: (0.9, 0.9)
             The relative coordinates of the right point of the slider
             on the display port.
 
@@ -1864,9 +1863,6 @@ class WidgetComponent(_NoNewAttrMixin):
             VTK actor of the mesh.
 
         """
-        # avoid circular import
-        from pyvista.core.filters.data_set import _set_threshold_limit
-
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         if isinstance(mesh, pv.PointSet):
@@ -1943,8 +1939,8 @@ class WidgetComponent(_NoNewAttrMixin):
         compute_scalars: bool = True,
         preference: PointLiteral | CellLiteral = 'point',
         title: str | None = None,
-        pointa: VectorLike[float] = (0.4, 0.9),
-        pointb: VectorLike[float] = (0.9, 0.9),
+        pointa: VectorLikeFloat = (0.4, 0.9),
+        pointb: VectorLikeFloat = (0.9, 0.9),
         widget_color: ColorLike | None = None,
         **kwargs: Any,
     ) -> Actor:
@@ -1998,11 +1994,11 @@ class WidgetComponent(_NoNewAttrMixin):
         title : str, optional
             The string label of the slider widget.
 
-        pointa : sequence, optional
+        pointa : VectorLikeFloat, optional
             The relative coordinates of the left point of the slider
             on the display port.
 
-        pointb : sequence
+        pointb : VectorLikeFloat
             The relative coordinates of the right point of the slider
             on the display port.
 
@@ -2107,7 +2103,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         callback: Callable[..., object] | None,
         *,
-        bounds: VectorLike[float] | None = None,
+        bounds: VectorLikeFloat | None = None,
         factor: float = 1.25,
         n_handles: int = 5,
         resolution: int = 25,
@@ -2117,7 +2113,7 @@ class WidgetComponent(_NoNewAttrMixin):
         ribbon_opacity: float = 0.5,
         pass_widget: bool = False,
         closed: bool = False,
-        initial_points: MatrixLike[float] | None = None,
+        initial_points: MatrixLikeFloat | None = None,
         interaction_event: InteractionEventType = 'end',
     ) -> _vtk.vtkSplineWidget:
         """Create and add a spline widget to the scene.
@@ -2133,7 +2129,7 @@ class WidgetComponent(_NoNewAttrMixin):
             :class:`pyvista.PolyData` object to the callback function of the
             generated spline.
 
-        bounds : sequence[float], optional
+        bounds : VectorLikeFloat, optional
             Length 6 sequence of the bounding box where the widget is placed.
 
         factor : float, optional
@@ -2167,7 +2163,7 @@ class WidgetComponent(_NoNewAttrMixin):
         closed : bool, optional
             Make the spline a closed loop.
 
-        initial_points : sequence, optional
+        initial_points : MatrixLikeFloat, optional
             The points to initialize the widget placement. Must have
             same number of elements as ``n_handles``. If the first and
             last point are the same, this will be a closed loop
@@ -2262,7 +2258,7 @@ class WidgetComponent(_NoNewAttrMixin):
         show_ribbon: bool = False,
         ribbon_color: ColorLike | None = 'pink',
         ribbon_opacity: float = 0.5,
-        initial_points: MatrixLike[float] | None = None,
+        initial_points: MatrixLikeFloat | None = None,
         closed: bool = False,
         interaction_event: InteractionEventType = 'end',
         **kwargs: Any,
@@ -2315,7 +2311,7 @@ class WidgetComponent(_NoNewAttrMixin):
             Opacity of ribbon. Defaults to 1.0 and must be between
             ``[0, 1]``.
 
-        initial_points : sequence, optional
+        initial_points : MatrixLikeFloat, optional
             The points to initialize the widget placement. Must have same
             number of elements as ``n_handles``. If the first and last point
             are the same, this will be a closed loop spline.
@@ -2403,7 +2399,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Parameters
         ----------
-        callback : Callable[[VectorLike[float], VectorLike[float], float], object], optional
+        callback : Callable[[VectorLikeFloat, VectorLikeFloat, float], object], optional
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
             point and end point as Cartesian coordinate tuples
@@ -2471,7 +2467,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         callback: Callable[..., object] | None,
         *,
-        center: VectorLike[float] | MatrixLike[float] = (0, 0, 0),
+        center: VectorLikeFloat | MatrixLikeFloat = (0, 0, 0),
         radius: float = 0.5,
         theta_resolution: int = 30,
         phi_resolution: int = 30,
@@ -2497,7 +2493,7 @@ class WidgetComponent(_NoNewAttrMixin):
             multiple centers are passed in the ``center`` parameter, the
             callback must also accept an index of that widget.
 
-        center : sequence[float], optional
+        center : VectorLikeFloat | MatrixLikeFloat, optional
             The Cartesian coordinate of the sphere's center when placing it in
             the scene. If more than one location is passed, then that many
             widgets will be added and the callback will also be passed the
@@ -2622,15 +2618,15 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         actor: Actor,
         *,
-        origin: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
         start: bool = True,
         scale: float = 0.15,
         line_radius: float = 0.02,
         always_visible: bool = True,
         axes_colors: Sequence[ColorLike] | None = None,
-        axes: MatrixLike[float] | None = None,
-        release_callback: Callable[[NumpyArray[float]], None] | None = None,
-        interact_callback: Callable[[NumpyArray[float]], None] | None = None,
+        axes: MatrixLikeFloat | None = None,
+        release_callback: Callable[[NDArray[np.float64]], None] | None = None,
+        interact_callback: Callable[[NDArray[np.float64]], None] | None = None,
     ) -> AffineWidget3D:
         """Add a 3D affine transform widget.
 
@@ -2641,7 +2637,7 @@ class WidgetComponent(_NoNewAttrMixin):
         ----------
         actor : pyvista.Actor
             The actor to which the widget is attached to.
-        origin : sequence[float], optional
+        origin : VectorLikeFloat, optional
             Origin of the widget. Default is the origin of the main actor.
         start : bool, default: True
             If True, start the widget immediately.
@@ -2656,8 +2652,8 @@ class WidgetComponent(_NoNewAttrMixin):
             Uses the theme by default. Configure the individual axis colors by
             modifying either the theme with ``pyvista.global_theme.axes.x_color =
             <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
-        axes : numpy.ndarray, optional
-            ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default
+        axes : MatrixLikeFloat, optional
+            ``(3, 3)`` array defining the X, Y, and Z axes. By default
             this matches the default coordinate system.
         release_callback : callable, optional
             Call this method when releasing the left mouse button. It is passed
@@ -2717,7 +2713,7 @@ class WidgetComponent(_NoNewAttrMixin):
         callback: Callable[[bool], object] | None,
         *,
         value: bool = False,
-        position: VectorLike[float] = (10.0, 10.0),
+        position: VectorLikeFloat = (10.0, 10.0),
         size: int = 50,
         border_size: int = 5,
         color_on: ColorLike = 'blue',
@@ -2739,7 +2735,7 @@ class WidgetComponent(_NoNewAttrMixin):
         value : bool, default: False
             The default state of the button.
 
-        position : sequence[float], default: (10.0, 10.0)
+        position : VectorLikeFloat, default: (10.0, 10.0)
             The absolute coordinates of the bottom left point of the button.
 
         size : int, default: 50
@@ -2835,7 +2831,7 @@ class WidgetComponent(_NoNewAttrMixin):
         *,
         value: bool = False,
         title: str | None = None,
-        position: VectorLike[float] = (10.0, 10.0),
+        position: VectorLikeFloat = (10.0, 10.0),
         size: int = 50,
         border_size: int = 8,
         color_on: ColorLike = 'blue',
@@ -2867,7 +2863,7 @@ class WidgetComponent(_NoNewAttrMixin):
         title : str, optional
             String title to be displayed next to the radio button.
 
-        position : sequence[float], default: (10.0, 10.0)
+        position : VectorLikeFloat, default: (10.0, 10.0)
             The absolute coordinates of the bottom left point of the button.
 
         size : int, default: 50
@@ -3090,8 +3086,8 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         logo: ImageData | str | Path | None = None,
         *,
-        position: VectorLike[float] = (0.75, 0.8),
-        size: VectorLike[float] = (0.2, 0.2),
+        position: VectorLikeFloat = (0.75, 0.8),
+        size: VectorLikeFloat = (0.2, 0.2),
         opacity: float = 1.0,
     ) -> _vtk.vtkLogoWidget:
         """Add a logo widget to the top of the viewport.
@@ -3104,12 +3100,12 @@ class WidgetComponent(_NoNewAttrMixin):
             The logo to display. If a pathlike is passed, it is assumed to be a
             file path to an image.
 
-        position : tuple(float), optional
+        position : VectorLikeFloat, optional
             The position of the logo in the viewport. The first value is the
             horizontal position and the second value is the vertical position.
             Both values must be between 0 and 1.
 
-        size : tuple(float), optional
+        size : VectorLikeFloat, optional
             The size of the logo in the viewport. The first value is the
             horizontal size and the second value is the vertical size. Both
             values must be between 0 and 1.
@@ -3137,7 +3133,7 @@ class WidgetComponent(_NoNewAttrMixin):
             logo = pv.global_theme.logo_file
         if logo is None:
             # Fallback to PyVista logo
-            from pyvista import examples
+            from pyvista import examples  # noqa: PLC0415
 
             logo = examples.logofile
 

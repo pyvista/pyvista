@@ -261,6 +261,7 @@ class _FakeSphinxApp:
         self.directives = {}
         self.connected = {}
         self.config_values = {}
+        self.config_rebuilds = {}
         self.setup_extension_calls = []
 
     def add_directive(self, name, directive):
@@ -269,16 +270,56 @@ class _FakeSphinxApp:
     def connect(self, event, handler):
         self.connected.setdefault(event, []).append(handler)
 
-    def add_config_value(self, name, default, rebuild):  # noqa: ARG002 -- matches Sphinx's signature
+    def add_config_value(self, name, default, rebuild):
         self.config_values[name] = default
+        self.config_rebuilds[name] = rebuild
 
     def setup_extension(self, name):
         self.setup_extension_calls.append(name)
 
 
+@pytest.mark.parametrize(
+    ('config_value', 'options'),
+    [(True, {}), (False, {'force_static': None})],
+)
+def test_run_uses_force_static_config(monkeypatch, tmp_path, config_value, options):
+    captured = {}
+
+    def fake_render_figures(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(plot_directive, 'render_figures', fake_render_figures)
+
+    config = SimpleNamespace(
+        pyvista_plot_force_static=config_value,
+        pyvista_plot_use_counter=False,
+        pyvista_plot_include_source=True,
+        pyvista_plot_skip=False,
+        pyvista_plot_skip_optional=False,
+    )
+    app = SimpleNamespace(
+        builder=SimpleNamespace(outdir=tmp_path / 'html', srcdir=tmp_path / 'src'),
+        confdir=str(tmp_path),
+        doctreedir=tmp_path / 'doctrees',
+    )
+    env = SimpleNamespace(app=app, config=config)
+    document = SimpleNamespace(
+        settings=SimpleNamespace(env=env),
+        attributes={'source': str(tmp_path / 'src' / 'index.rst')},
+    )
+    state_machine = SimpleNamespace(document=document)
+
+    plot_directive.run([], [], dict(options), state_machine, SimpleNamespace(), 1)
+
+    assert captured['force_static'] is True
+
+
 def test_setup_depends_on_sphinx_autocodelink_when_available():
     app = _FakeSphinxApp()
     plot_directive.setup(app)
+    assert app.config_values['pyvista_plot_force_static'] is False
+    assert app.config_rebuilds['pyvista_plot_force_static'] == 'env'
     assert app.setup_extension_calls == ['sphinx_autocodelink']
 
 

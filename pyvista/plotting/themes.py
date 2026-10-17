@@ -43,9 +43,10 @@ from typing import ClassVar
 
 import pyvista_validation as _validation
 
-import pyvista  # noqa: TC001
+import pyvista
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
+from pyvista.jupyter import _validate_jupyter_backend
 
 from . import _property
 from .colors import Color
@@ -69,7 +70,7 @@ if TYPE_CHECKING:
 
     import cycler
 
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import VectorLikeFloat
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -102,7 +103,7 @@ def load_theme(filename: str | Path) -> Theme:
 
     Returns
     -------
-    pyvista.Theme
+    pyvista.plotting.themes.Theme
         The loaded theme.
 
     Examples
@@ -171,8 +172,6 @@ def set_plot_theme(theme: Theme | ThemeOptions | str) -> None:
     >>> pv.set_plot_theme('pyvista.plotting.themes:DarkTheme')
 
     """
-    import pyvista  # noqa: PLC0415
-
     pyvista.global_theme.load_theme(_resolve_theme_like(theme))
 
 
@@ -1703,7 +1702,7 @@ class _CameraConfig(_ConfigBase):
         return self._position
 
     @position.setter
-    def position(self, position: VectorLike[float]) -> None:
+    def position(self, position: VectorLikeFloat) -> None:
         self._position = _validate_vector(position, name='position')
 
     @property
@@ -1721,7 +1720,7 @@ class _CameraConfig(_ConfigBase):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, viewup: VectorLike[float]) -> None:
+    def viewup(self, viewup: VectorLikeFloat) -> None:
         self._viewup = _validate_viewup(viewup)
 
     @property
@@ -2288,8 +2287,6 @@ class Theme(_ConfigBase):
 
     @jupyter_backend.setter
     def jupyter_backend(self, backend: str | None) -> None:
-        from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
-
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
     @property

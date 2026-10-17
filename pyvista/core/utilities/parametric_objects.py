@@ -21,15 +21,15 @@ from .helpers import wrap
 
 if TYPE_CHECKING:
     from pyvista import PolyData
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeFloat
 
 _ParametrizeByOptions = Literal['length', 'index']
 _BoundaryConstraintOptions = Literal['finite_difference', 'clamped', 'second', 'scaled_second']
 
 
 def Spline(
-    points: VectorLike[float] | MatrixLike[float],
+    points: VectorLikeFloat | MatrixLikeFloat,
     n_points: int | None = None,
     *,
     closed: bool = False,
@@ -43,7 +43,7 @@ def Spline(
 
     Parameters
     ----------
-    points : numpy.ndarray
+    points : VectorLikeFloat | MatrixLikeFloat
         Array of points to build a spline out of. Array must be 3D and
         directionally ordered.
 
@@ -57,7 +57,7 @@ def Spline(
     parametrize_by : str, default: 'length'
         Parametrize spline by ``'length'`` or by point ``'index'``.
 
-    boundary_constraints : str | Sequence[str], optional, default: 'clamped'
+    boundary_constraints : str | Sequence[str], default: 'clamped'
         Derivative constraint type at both boundaries of the spline.
         Can be set by a single string or a sequence of length 2 (one for each left/right end).
         Each value must be one of:
@@ -196,28 +196,28 @@ def Spline(
 
 
 def KochanekSpline(
-    points: VectorLike[float] | MatrixLike[float],
+    points: VectorLikeFloat | MatrixLikeFloat,
     *,
-    tension: VectorLike[float] | None = None,
-    bias: VectorLike[float] | None = None,
-    continuity: VectorLike[float] | None = None,
+    tension: VectorLikeFloat | None = None,
+    bias: VectorLikeFloat | None = None,
+    continuity: VectorLikeFloat | None = None,
     n_points: int | None = None,
 ) -> PolyData:
     """Create a Kochanek spline from points.
 
     Parameters
     ----------
-    points : array_like[float]
+    points : VectorLikeFloat | MatrixLikeFloat
         Array of points to build a Kochanek spline out of.  Array must
         be 3D and directionally ordered.
 
-    tension : sequence[float], default: [0.0, 0.0, 0.0]
+    tension : VectorLikeFloat, default: [0.0, 0.0, 0.0]
         Changes the length of the tangent vector.
 
-    bias : sequence[float], default: [0.0, 0.0, 0.0]
+    bias : VectorLikeFloat, default: [0.0, 0.0, 0.0]
         Primarily changes the direction of the tangent vector.
 
-    continuity : sequence[float], default: [0.0, 0.0, 0.0]
+    continuity : VectorLikeFloat, default: [0.0, 0.0, 0.0]
         Changes the sharpness in change between tangents.
 
     n_points : int, optional

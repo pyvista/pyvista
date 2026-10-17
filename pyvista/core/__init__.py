@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from ._typing_core import *
+from typing import TYPE_CHECKING
+
+from pyvista.typing import _DEPRECATED_ALIASES
+from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
+from pyvista.typing import _get_deprecated_alias
+
+from ._typing_core import BoundsTuple as BoundsTuple
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
@@ -50,3 +56,12 @@ from .pointset import UnstructuredGrid as UnstructuredGrid
 from .pyvista_ndarray import pyvista_ndarray as pyvista_ndarray
 from .utilities import *
 from .wrappers import _wrappers as _wrappers
+
+if not TYPE_CHECKING:  # pragma: no branch
+
+    def __getattr__(name: str) -> object:
+        """Forward the type aliases that moved to ``pyvista.typing`` with a deprecation warning."""
+        if name in _MOVED_TO_TYPING_NAMESPACE[__name__] or name in _DEPRECATED_ALIASES:
+            return _get_deprecated_alias(__name__, name)
+        msg = f'module {__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)

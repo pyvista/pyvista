@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 from type_assert import assert_types
 
 import pyvista as pv
@@ -20,4 +22,5 @@ assert_types(with_arrays(rectilinear()).streamlines_from_source(pv.PolyData([[0.
 assert_types(with_arrays(structured()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
 assert_types(with_arrays(unstructured()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
 assert_types(with_arrays(explicit_structured()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
-assert_types(with_arrays(pointset()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), pv.PolyData)
+
+assert_types(pointset().streamlines_from_source(), Never)

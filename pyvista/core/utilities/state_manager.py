@@ -16,17 +16,20 @@ from typing import final
 from typing import get_args
 from typing import overload
 
+import pyvista_validation as _validation
+
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.core import _vtk_utilities
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
-class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
+class _StateManager(AbstractContextManager[None], ABC, Generic[_T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:
@@ -102,22 +105,20 @@ class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
     def __init__(self) -> None:
         """Initialize context manager."""
         self._valid_states = self._get_state_options_from_literal()
-        self._original_state: T | None = None
+        self._original_state: _T | None = None
 
     @property
     @abstractmethod
-    def _state(self) -> T:
+    def _state(self) -> _T:
         """Get the current global state."""
 
     @_state.setter
     @abstractmethod
-    def _state(self, state: T) -> None:
+    def _state(self, state: _T) -> None:
         """Set the global state."""
 
     @final
-    def _validate_state(self, state: T) -> T:
-        import pyvista_validation as _validation  # noqa: PLC0415
-
+    def _validate_state(self, state: _T) -> _T:
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
 
@@ -129,14 +130,14 @@ class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: ANN001, ANN204
         """Exit context manager and restore original state."""
-        self._state = cast('T', self._original_state)
+        self._state = cast('_T', self._original_state)
         self._original_state = None  # Reset
 
     @overload
-    def __call__(self: Self, state: None = None) -> T: ...
+    def __call__(self: Self, state: None = None) -> _T: ...
     @overload
-    def __call__(self: Self, state: T) -> Self: ...
-    def __call__(self: Self, state: T | None = None) -> Self | T:
+    def __call__(self: Self, state: _T) -> Self: ...
+    def __call__(self: Self, state: _T | None = None) -> Self | _T:
         """Call the context manager."""
         if state is None:
             return self._state
@@ -403,14 +404,10 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):  # numpydo
 
     @property
     def _state(self) -> _AllowNewAttributesOptions:
-        from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-
-        return _ALLOW_NEW_ATTRIBUTES_MODE
+        return pv._ALLOW_NEW_ATTRIBUTES_MODE
 
     @_state.setter
     def _state(self, state: _AllowNewAttributesOptions) -> None:
-        import pyvista as pv  # noqa: PLC0415
-
         pv._ALLOW_NEW_ATTRIBUTES_MODE = state
 
 

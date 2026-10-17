@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 from type_assert import assert_types
-from typing_extensions import Never
+from type_assert import skip_runtime
 
 import pyvista as pv
 from tests.typing.meshes import explicit_structured
@@ -14,16 +16,12 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'pointset().compute_boundary_mesh_quality()': 'a `PointSet` has no cells, so the call raises',
-}
-
-
-assert_types(poly().compute_boundary_mesh_quality(), pv.PolyData)
+with skip_runtime(reason='a `PolyData` surface has no 3D cells, so the call raises'):
+    assert_types(poly().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(image().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(rectilinear().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(structured().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(unstructured().compute_boundary_mesh_quality(), pv.PolyData)
 assert_types(explicit_structured().compute_boundary_mesh_quality(), pv.PolyData)
 
-assert_types(pointset().compute_boundary_mesh_quality(), Never)  # pragma: no cover
+assert_types(pointset().compute_boundary_mesh_quality(), Never)

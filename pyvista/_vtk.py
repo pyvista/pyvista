@@ -14,6 +14,8 @@ import importlib.util
 import os
 from typing import TYPE_CHECKING
 
+from pyvista.core.errors import VTKVersionError
+
 
 def _resolve_vtk_root() -> str:
     """Return the root package PyVista resolves VTK imports against.
@@ -264,6 +266,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLine',
         'vtkLocator',
         'vtkMultiBlockDataSet',
+        'vtkMultiPieceDataSet',
         'vtkNonMergingPointLocator',
         'vtkPartitionedDataSet',
         'vtkPentagonalPrism',
@@ -323,7 +326,12 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkMatrix3x3',
         'vtkMatrix4x4',
     ),
-    'vtkCommonTransforms': ('vtkTransform',),
+    'vtkCommonTransforms': (
+        'vtkAbstractTransform',
+        'vtkHomogeneousTransform',
+        'vtkThinPlateSplineTransform',
+        'vtkTransform',
+    ),
     'vtkDomainsChemistry': ('vtkProteinRibbonFilter',),
     'vtkFiltersCore': (
         'VTK_BEST_FITTING_PLANE',
@@ -602,6 +610,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageInterpolator',
         'vtkImageMirrorPad',
         'vtkImageResize',
+        'vtkImageReslice',
         'vtkImageSincInterpolator',
         'vtkImageThreshold',
         'vtkImageWrapPad',
@@ -969,8 +978,6 @@ def _import_vtkPythonItem() -> type[Any]:  # noqa: N802
 
             def __init__(self) -> None:  # pragma: no cover
                 """Raise version error on init."""
-                from pyvista.core.errors import VTKVersionError
-
                 msg = 'Chart backgrounds require the vtkPythonContext2D module'
                 raise VTKVersionError(msg)
 

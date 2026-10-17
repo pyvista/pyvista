@@ -15,29 +15,29 @@ from typing import Any
 from typing import Concatenate
 from typing import Literal
 from typing import ParamSpec
+from typing import Self
 from typing import TypeVar
 from typing import get_args
 import warnings
 
 import numpy as np
 import pyvista_validation as _validation
-from typing_extensions import Self
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core._aliases import LineStyle
+from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pyvista._typing_core import ArrayLike
-    from pyvista._typing_core import NumpyArray
-    from pyvista._typing_core import VectorLike
+    from numpy.typing import NDArray
+
+    from pyvista._typing_core import ArrayLikeFloat
+    from pyvista._typing_core import VectorLikeFloat
 
     _T = TypeVar('_T')
-
-T = TypeVar('T', bound='AnnotatedIntEnum')
 
 _SMPBackendOptions = Literal['stdthread', 'tbb', 'openmp', 'sequential']
 _SMP_BACKEND_NAMES: dict[str, str] = {
@@ -47,13 +47,15 @@ _SMP_BACKEND_NAMES: dict[str, str] = {
     'sequential': 'Sequential',
 }
 
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
 
-    class StrEnum(str, Enum):  # noqa: D101
-        def __str__(self) -> str:
-            return self.value
+def _srgb_to_linear(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Decode sRGB values in the range ``[0, 1]`` to linear values."""
+    return np.where(values < 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4)
+
+
+def _linear_to_srgb(values: NDArray[np.floating]) -> NDArray[np.floating]:
+    """Encode linear values in the range ``[0, 1]`` to sRGB values."""
+    return np.where(values < 0.0031308, values * 12.92, 1.055 * values ** (1 / 2.4) - 0.055)
 
 
 def assert_empty_kwargs(**kwargs) -> bool:
@@ -88,12 +90,12 @@ def assert_empty_kwargs(**kwargs) -> bool:
     raise TypeError(message)
 
 
-def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
+def check_valid_vector(point: VectorLikeFloat, name: str = '') -> None:
     """Check if a vector contains three components.
 
     Parameters
     ----------
-    point : VectorLike[float]
+    point : VectorLikeFloat
         Input vector to check. Must be an iterable with exactly three components.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
@@ -140,7 +142,7 @@ def _resolve_line_style(style: LineStyle, *, name: str = 'style') -> int:
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Decorate a class, overriding ``__new__``.
 
-    Preventing a class from being instantiated similar to abc.ABCMeta
+    Preventing a class from being instantiated similar to ``abc.ABCMeta``
     but does not require an abstract method.
 
     Parameters
@@ -590,8 +592,6 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                     if key in base.__dict__:
                         return
 
-                from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
                 msg = (
                     f'Attribute {key!r} does not exist and cannot be added to class '
                     f'{cls.__name__!r}\nUse `pyvista.set_new_attribute` '
@@ -653,8 +653,6 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     """
     if hasattr(obj, name):
-        from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
         msg = (
             f'Attribute {name!r} already exists. '
             '`set_new_attribute` can only be used for setting NEW attributes.'
@@ -664,8 +662,8 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
 
 def _reciprocal(
-    x: ArrayLike[float], tol: float = 1e-8, value_if_division_by_zero: float = 0.0
-) -> NumpyArray[float]:
+    x: ArrayLikeFloat, tol: float = 1e-8, value_if_division_by_zero: float = 0.0
+) -> NDArray[np.floating]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
     The reciprocal of elements with an absolute value less than a
@@ -673,7 +671,7 @@ def _reciprocal(
 
     Parameters
     ----------
-    x : array_like
+    x : ArrayLikeFloat
         Input array.
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.

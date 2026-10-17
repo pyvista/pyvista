@@ -45,13 +45,13 @@ if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any
     from typing import ClassVar
+    from typing import Self
 
-    from typing_extensions import Self
+    from numpy.typing import NDArray
 
     from pyvista import MultiBlock
 
-    from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
+    from ._typing_core import _AnyArrayLike
     from .utilities.arrays import CellLiteral
     from .utilities.arrays import FieldLiteral
     from .utilities.arrays import PointLiteral
@@ -182,7 +182,7 @@ class DataObject(
         filename: Path | str,
         *,
         binary: bool = True,
-        texture: NumpyArray[np.uint8] | str | None = None,
+        texture: NDArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
     ) -> None:
@@ -309,7 +309,7 @@ class DataObject(
                     file_ext,
                     target='built-in VTK writer',
                 )
-            if file_ext in ['.vtkhdf', '.case'] and binary is False:
+            if self._WRITERS[file_ext] in (pv.HDFWriter, pv.EnSightWriter) and not binary:
                 msg = f'{file_ext} files can only be written in binary format.'
                 raise ValueError(msg)
 
@@ -422,8 +422,8 @@ class DataObject(
             fmt += '</table>\n'
             fmt += '\n'
             if display:
-                from IPython.display import HTML
-                from IPython.display import display as _display
+                from IPython.display import HTML  # noqa: PLC0415
+                from IPython.display import display as _display  # noqa: PLC0415
 
                 _display(HTML(fmt))
                 return ''
@@ -545,7 +545,7 @@ class DataObject(
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
-    def add_field_data(self: Self, array: ArrayLike[Any], name: str, *, deep: bool = True) -> None:
+    def add_field_data(self: Self, array: _AnyArrayLike, name: str, *, deep: bool = True) -> None:
         """Add field data.
 
         .. deprecated:: 0.50
@@ -558,7 +558,7 @@ class DataObject(
 
         Parameters
         ----------
-        array : ArrayLike[Any]
+        array : numpy.ndarray | sequence
             Array of data to add to the dataset as a field array. Field data
             is not tied to the geometry, so numeric, boolean, and string data
             are all accepted.
@@ -800,7 +800,7 @@ class DataObject(
         return user_dict
 
     def _sync_user_dict(self: Self) -> None:
-        """Give this object its own user dict when it has one or shares another's."""
+        """Give this object its own user dict when it has one or shares another object's."""
         array = self.GetFieldData().GetAbstractArray(USER_DICT_KEY)
         if '_user_dict' in self.__dict__ or isinstance(array, _SerializedDictArray):
             self._config_user_dict()

@@ -37,8 +37,8 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _clip_input
+from pyvista.core.filters.data_object import _clip_output
 from pyvista.core.filters.data_object import _clipper
-from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _make_reference_volume
 from pyvista.core.filters.data_object import _remove_unused_points_post_clip
 from pyvista.core.filters.data_object import _validate_clip_inplace
@@ -58,6 +58,8 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from pyvista import Color
     from pyvista import DataSet
     from pyvista import ImageData
@@ -67,12 +69,17 @@ if TYPE_CHECKING:
     from pyvista import RectilinearGrid
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import MatrixLikeFloat
+    from pyvista.core._typing_core import VectorLikeBool
+    from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core._typing_core import _FloatingT
+    from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core._typing_core import _Real
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
+    from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.plotting._typing import ColorLike
@@ -89,7 +96,7 @@ _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
 _CONNECTIVITY_SCALARS = '__pyvista_connectivity_scalars'
 
 
-def _points_inside_surface(image: ImageData, surface: PolyData) -> NumpyArray[np.bool_]:
+def _points_inside_surface(image: ImageData, surface: PolyData) -> NDArray[np.bool_]:
     """Return which points of the image a closed surface encloses, from a stencil."""
     mask = surface.voxelize_binary_mask(reference_volume=image)
     return np.asarray(mask.point_data['mask']).astype(bool)
@@ -97,7 +104,7 @@ def _points_inside_surface(image: ImageData, surface: PolyData) -> NumpyArray[np
 
 def _signed_distance_near_surface(
     dataset: ImageData, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
-) -> NumpyArray[float] | None:
+) -> NDArray[np.float64] | None:
     """Build a signed distance field that is exact on the cells the surface cuts.
 
     Every point is classified inside (-1) or outside (1) the surface, and the points of
@@ -112,7 +119,7 @@ def _signed_distance_near_surface(
     is_exact = np.zeros(dataset.n_points, dtype=bool)
     points = dataset.points
 
-    def exact_distance(point_ids):
+    def exact_distance(point_ids: NDArray[np.signedinteger]) -> NDArray[np.float64]:
         values = _vtk.vtkDoubleArray()
         function.FunctionValue(pv.convert_array(points[point_ids]), values)
         return pv.convert_array(values)
@@ -141,7 +148,9 @@ def _signed_distance_near_surface(
     return None  # still disagreeing, so the caller evaluates the distance everywhere
 
 
-def _points_of_cells_containing(image: ImageData, points: NumpyArray[float]) -> NumpyArray[int]:
+def _points_of_cells_containing(
+    image: ImageData, points: NDArray[np.floating]
+) -> NDArray[np.signedinteger]:
     """Return the ids of the points of the image cells that contain the given points."""
     # Optimization: index arithmetic instead of a cell locator, which VTK 9.7 spends about
     # a second building for an image of a few million cells
@@ -159,8 +168,8 @@ def _points_of_cells_containing(image: ImageData, points: NumpyArray[float]) -> 
 
 
 def _points_of_cells_cut_by_sign(
-    dataset: ImageData, inside: NumpyArray[np.bool_]
-) -> NumpyArray[int]:
+    dataset: ImageData, inside: NDArray[np.bool_]
+) -> NDArray[np.signedinteger]:
     """Return the ids of the points of cells that have corners on both sides."""
     marked = dataset.copy(deep=False)
     marked.point_data[_CLIP_SURFACE_SCALARS] = inside.astype(np.float32)
@@ -182,14 +191,14 @@ def _points_of_cells_cut_by_sign(
 class _ExtractValuesInputs(NamedTuple):
     """Validated inputs shared by ``extract_values`` and ``select_values``."""
 
-    values: NumpyArray[float] | None
-    ranges: NumpyArray[float] | None
+    values: NDArray[_Real] | None
+    ranges: NDArray[_Real] | None
     value_names: list[str] | None
     range_names: list[str] | None
-    array: NumpyArray[float]
+    array: NDArray[Any]
     array_name: str
     association: FieldAssociation
-    component_logic: Callable[[NumpyArray[np.bool_]], NumpyArray[np.bool_]] | None
+    component_logic: Callable[[NDArray[np.bool_]], NDArray[np.bool_]] | None
 
 
 @abstract_class
@@ -201,9 +210,9 @@ class DataSetFilters(DataObjectFilters):
     @overload  # return_matrix=False
     def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_matrix=True
-    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # return_matrix not known
-    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def align(  # type: ignore[misc]
@@ -216,7 +225,7 @@ class DataSetFilters(DataObjectFilters):
         check_mean_distance: bool = True,
         start_by_matching_centroids: bool = True,
         return_matrix: bool = False,
-    ) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]:
+    ) -> _DataSetType | tuple[_DataSetType, NDArray[np.float64]]:
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
@@ -317,24 +326,24 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # return_matrix=False
-    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_matrix=True
-    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # return_matrix not known
-    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def align_xyz(  # type: ignore[misc]
         self: _DataSetType,
         *,
         centered: bool = True,
-        axis_0_direction: VectorLike[float] | str | None = None,
-        axis_1_direction: VectorLike[float] | str | None = None,
-        axis_2_direction: VectorLike[float] | str | None = None,
+        axis_0_direction: VectorLikeFloat | str | None = None,
+        axis_1_direction: VectorLikeFloat | str | None = None,
+        axis_2_direction: VectorLikeFloat | str | None = None,
         cell_centers: bool = False,
         merge_points: bool = False,
         return_matrix: bool = False,
-    ) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]:
+    ) -> _DataSetType | tuple[_DataSetType, NDArray[np.float64]]:
         """Align a dataset to the x-y-z axes.
 
         This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
@@ -357,19 +366,19 @@ class DataSetFilters(DataObjectFilters):
             Center the mesh at the origin. If ``False``, the aligned dataset has the
             same center as the input.
 
-        axis_0_direction : VectorLike[float] | str, optional
+        axis_0_direction : VectorLikeFloat | str, optional
             Approximate direction vector of this mesh's primary axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
             name (for example, ``'x'`` or ``'-x'``, etc.).
 
-        axis_1_direction : VectorLike[float] | str, optional
+        axis_1_direction : VectorLikeFloat | str, optional
             Approximate direction vector of this mesh's secondary axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
             name (for example, ``'x'`` or ``'-x'``, etc.).
 
-        axis_2_direction : VectorLike[float] | str, optional
+        axis_2_direction : VectorLikeFloat | str, optional
             Approximate direction vector of this mesh's third axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
@@ -514,8 +523,8 @@ class DataSetFilters(DataObjectFilters):
         """
 
         def _validate_vector(
-            vector: VectorLike[float] | str | None, name: str
-        ) -> NumpyArray[float] | None:
+            vector: VectorLikeFloat | str | None, name: str
+        ) -> NDArray[np.float64] | None:
             if vector is None:
                 vector_ = vector
             else:
@@ -681,29 +690,29 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PolyData, both=False
-    def clip_scalar(self: PolyData, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
+    def clip_scalar(self: PolyData, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # PolyData, both=True
-    def clip_scalar(self: PolyData, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    def clip_scalar(self: PolyData, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
     @overload  # PolyData, both not known
-    def clip_scalar(self: PolyData, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: bool = ...) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    def clip_scalar(self: PolyData, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: bool = ...) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
     @overload  # PointSet, both=False
-    def clip_scalar(self: PointSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> PointSet: ...  # type: ignore[misc]
+    def clip_scalar(self: PointSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> PointSet: ...  # type: ignore[misc]
     @overload  # PointSet, both=True
-    def clip_scalar(self: PointSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[PointSet, PointSet]: ...  # type: ignore[misc]
+    def clip_scalar(self: PointSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[PointSet, PointSet]: ...  # type: ignore[misc]
     @overload  # PointSet, both not known
-    def clip_scalar(self: PointSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: bool = ...) -> PointSet | tuple[PointSet, PointSet]: ...  # type: ignore[misc]
+    def clip_scalar(self: PointSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: bool = ...) -> PointSet | tuple[PointSet, PointSet]: ...  # type: ignore[misc]
     @overload  # UnstructuredGrid, both=False
-    def clip_scalar(self: UnstructuredGrid, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def clip_scalar(self: UnstructuredGrid, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # UnstructuredGrid, both=True
-    def clip_scalar(self: UnstructuredGrid, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    def clip_scalar(self: UnstructuredGrid, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
     @overload  # UnstructuredGrid, both not known
-    def clip_scalar(self: UnstructuredGrid, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: bool = ..., progress_bar: bool = ..., both: bool = ...) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    def clip_scalar(self: UnstructuredGrid, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: bool = ..., progress_bar: bool = ..., both: bool = ...) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
     @overload  # DataSet, both=False
-    def clip_scalar(self: DataSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: Literal[False] = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def clip_scalar(self: DataSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: Literal[False] = ..., progress_bar: bool = ..., both: Literal[False] = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # DataSet, both=True
-    def clip_scalar(self: DataSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: Literal[False] = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    def clip_scalar(self: DataSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: Literal[False] = ..., progress_bar: bool = ..., both: Literal[True] = ...) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
     @overload  # DataSet, both not known
-    def clip_scalar(self: DataSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLike[float] = ..., inplace: Literal[False] = ..., progress_bar: bool = ..., both: bool = ...) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    def clip_scalar(self: DataSet, *, scalars: str | None = ..., invert: bool = ..., value: float | VectorLikeFloat = ..., inplace: Literal[False] = ..., progress_bar: bool = ..., both: bool = ...) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def clip_scalar(  # type: ignore[misc]
@@ -711,16 +720,11 @@ class DataSetFilters(DataObjectFilters):
         *,
         scalars: str | None = None,
         invert: bool = True,
-        value: float | VectorLike[float] = 0.0,
+        value: float | VectorLikeFloat = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
         both: bool = False,
-    ) -> (
-        PolyData
-        | PointSet
-        | UnstructuredGrid
-        | tuple[PolyData | PointSet | UnstructuredGrid, PolyData | PointSet | UnstructuredGrid]
-    ):
+    ) -> _OutputDataSet | tuple[_OutputDataSet, _OutputDataSet]:
         """Clip a dataset by a scalar.
 
         .. versionchanged:: 0.49
@@ -738,7 +742,7 @@ class DataSetFilters(DataObjectFilters):
             only the mesh below ``value`` will be kept.  When
             ``False``, only values above ``value`` will be kept.
 
-        value : float | VectorLike[float], default: 0.0
+        value : float | VectorLikeFloat, default: 0.0
             Set the clipping value. Can also be set as a range of values.
             The range produces an output similar to an isovolume filter of ParaView.
 
@@ -834,10 +838,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0: PolyData | PointSet | UnstructuredGrid = _remove_unused_points_post_clip(
-            _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
-            self,
-        )
+        result0 = _remove_unused_points_post_clip(_clip_output(_get_output(alg), self), self)
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
@@ -845,11 +846,8 @@ class DataSetFilters(DataObjectFilters):
             inplace_target.copy_from(result0, deep=False)
             result0 = inplace_target
         if both:
-            result1: PolyData | PointSet | UnstructuredGrid = _remove_unused_points_post_clip(
-                _keep_array_structure(
-                    _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
-                ),
-                self,
+            result1 = _remove_unused_points_post_clip(
+                _clip_output(_get_output(alg, oport=1), self), self
             )
             return result0, result1
         return result0
@@ -873,7 +871,7 @@ class DataSetFilters(DataObjectFilters):
         compute_distance: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         .. versionchanged:: 0.49
@@ -994,16 +992,16 @@ class DataSetFilters(DataObjectFilters):
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
                 clipped.set_active_scalars(info.name, preference=info.association)
-        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
+        return _clip_output(clipped, self)
 
     def threshold(  # type: ignore[misc]
         self: _DataSetType,
-        value: float | VectorLike[float] | None = None,
+        value: float | VectorLikeFloat | None = None,
         *,
         scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
-        preference: Literal['point', 'cell'] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
         all_scalars: bool = False,
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
@@ -1035,7 +1033,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        value : float | sequence[float], optional
+        value : float | VectorLikeFloat, optional
             Single value or ``(min, max)`` to be used for the data threshold. If
             a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
@@ -1213,7 +1211,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
-        preference: Literal['point', 'cell'] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ) -> UnstructuredGrid:
@@ -1306,7 +1304,7 @@ class DataSetFilters(DataObjectFilters):
         tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
-        def _check_percent(percent):
+        def _check_percent(percent: float) -> float:
             """Make sure percent is between 0 and 1 or fix if between 0 and 100."""
             if percent >= 1:
                 percent = float(percent) / 100.0
@@ -1318,12 +1316,13 @@ class DataSetFilters(DataObjectFilters):
                 raise ValueError(msg)
             return percent
 
-        def _get_val(percent, dmin, dmax):
+        def _get_val(percent: float, dmin: float, dmax: float) -> float:
             """Get the value from a percentage of a range."""
             percent = _check_percent(percent)
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
+        value: float | list[float]
         if isinstance(percent, (np.ndarray, Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
@@ -1348,16 +1347,16 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet
-    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
-    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def remove_nan_cells(  # type: ignore[misc]
         self: _DataSetType,
         *,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         progress_bar: bool = False,
@@ -1566,7 +1565,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         radius: float = 0.1,
-        dimensions: VectorLike[int] = (50, 50, 50),
+        dimensions: VectorLikeInt = (50, 50, 50),
         progress_bar: bool = False,
     ) -> ImageData:
         """Splat points into a volume using a Gaussian distribution.
@@ -1585,7 +1584,7 @@ class DataSetFilters(DataObjectFilters):
             the sampling volume. This determines the "width" of the splatter in
             terms of the distribution. Smaller numbers greatly reduce execution time.
 
-        dimensions : VectorLike[int], default: (50, 50, 50)
+        dimensions : VectorLikeInt, default: (50, 50, 50)
             Sampling dimensions of the structured point set. Higher values produce better
             results but are much slower. This is the :attr:`~pyvista.Grid.dimensions`
             of the returned :class:`~pyvista.ImageData`.
@@ -1640,7 +1639,7 @@ class DataSetFilters(DataObjectFilters):
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        extent: VectorLike[float] | None = None,
+        extent: VectorLikeFloat | None = None,
         progress_bar: bool = False,
     ) -> PolyData:
         """Extract the outer surface of a volume or structured grid dataset.
@@ -1654,7 +1653,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        extent : VectorLike[float], optional
+        extent : VectorLikeFloat, optional
             Specify a ``(x_min, x_max, y_min, y_max, z_min, z_max)`` bounding box to
             clip data.
 
@@ -1707,7 +1706,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         pass_pointid: bool,
         pass_cellid: bool,
-        extent: VectorLike[float] | None,
+        extent: VectorLikeFloat | None,
         nonlinear_subdivision: int,
         progress_bar: bool,
         message: str = 'Extracting Geometry',
@@ -1718,7 +1717,9 @@ class DataSetFilters(DataObjectFilters):
         alg.SetPassThroughPointIds(pass_pointid)
         alg.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
         if extent is not None:
-            extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
+            extent_ = _validation.validate_arrayN(
+                extent, must_have_length=6, dtype_out=float, to_list=True
+            )
             alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar=progress_bar, message=message)
@@ -1727,13 +1728,13 @@ class DataSetFilters(DataObjectFilters):
     def contour(  # type: ignore[misc]
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
-        scalars: str | NumpyArray[float] | None = None,
+        scalars: str | VectorLikeFloat | None = None,
         *,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
-        rng: VectorLike[float] | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        rng: VectorLikeFloat | None = None,
+        preference: PointLiteral | CellLiteral = 'point',
         method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
         progress_bar: bool = False,
     ) -> PolyData:
@@ -1749,7 +1750,7 @@ class DataSetFilters(DataObjectFilters):
             Number of isosurfaces to compute across valid data range or a
             sequence of float values to explicitly use as the isosurfaces.
 
-        scalars : str | array_like[float], optional
+        scalars : str | VectorLikeFloat, optional
             Name or array of scalars to threshold on. If this is an array, the
             output of this filter will save them as ``"Contour Data"``.
             Defaults to currently active scalars.
@@ -1763,7 +1764,7 @@ class DataSetFilters(DataObjectFilters):
         compute_scalars : bool, default: True
             Preserves the scalar values that are being contoured.
 
-        rng : sequence[float], optional
+        rng : VectorLikeFloat, optional
             If an integer number of isosurfaces is specified, this is
             the range over which to generate contours. Default is the
             scalars array's full data range.
@@ -1910,9 +1911,9 @@ class DataSetFilters(DataObjectFilters):
     def texture_map_to_plane(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        origin: VectorLike[float] | None = None,
-        point_u: VectorLike[float] | None = None,
-        point_v: VectorLike[float] | None = None,
+        origin: VectorLikeFloat | None = None,
+        point_u: VectorLikeFloat | None = None,
+        point_v: VectorLikeFloat | None = None,
         inplace: bool = False,
         name: str = 'Texture Coordinates',
         use_bounds: bool = False,
@@ -1926,15 +1927,15 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        origin : sequence[float], optional
+        origin : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             bottom left corner of the plane.
 
-        point_u : sequence[float], optional
+        point_u : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             bottom right corner of the plane.
 
-        point_v : sequence[float], optional
+        point_v : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             top left corner of the plane.
 
@@ -1999,7 +2000,7 @@ class DataSetFilters(DataObjectFilters):
     def texture_map_to_sphere(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        center: VectorLike[float] | None = None,
+        center: VectorLikeFloat | None = None,
         prevent_seam: bool = True,
         inplace: bool = False,
         name: str = 'Texture Coordinates',
@@ -2013,7 +2014,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[float], optional
+        center : VectorLikeFloat, optional
             Length 3 iterable of floats defining the XYZ coordinates of the
             center of the sphere. If ``None``, this will be automatically
             calculated.
@@ -2074,11 +2075,11 @@ class DataSetFilters(DataObjectFilters):
         scale: bool | str = True,
         factor: float = 1.0,
         geom: _vtk.vtkDataSet | DataSet | Sequence[_vtk.vtkDataSet | DataSet] | None = None,
-        indices: VectorLike[int] | None = None,
+        indices: VectorLikeInt | None = None,
         tolerance: float | None = None,
         absolute: bool = False,
         clamping: bool = False,
-        rng: VectorLike[float] | None = None,
+        rng: VectorLikeFloat | None = None,
         color_mode: Literal['scale', 'scalar', 'vector'] = 'scale',
         progress_bar: bool = False,
     ) -> PolyData:
@@ -2121,7 +2122,7 @@ class DataSetFilters(DataObjectFilters):
                 from ``(1, 0, 0)`` to the direction of the ``orient`` vector at
                 each point.
 
-        indices : sequence[float], optional
+        indices : VectorLikeInt, optional
             Specifies the index of each glyph in the table for lookup in case
             ``geom`` is a sequence. If given, must be the same length as
             ``geom``. If missing, a default value of ``range(len(geom))`` is
@@ -2140,11 +2141,11 @@ class DataSetFilters(DataObjectFilters):
         clamping : bool, default: False
             Turn on/off clamping of "scalar" values to range.
 
-        rng : sequence[float], optional
+        rng : VectorLikeFloat, optional
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
-        color_mode : str, optional, default: ``'scale'``
+        color_mode : str, default: ``'scale'``
             If ``'scale'`` , color the glyphs by scale.
             If ``'scalar'`` , color the glyphs by scalar.
             If ``'vector'`` , color the glyphs by vector.
@@ -2220,7 +2221,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms, strict=True):
-                alg.SetSourceData(index, subgeom)
+                alg.SetSourceData(int(index), subgeom)
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -2353,11 +2354,11 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     @overload
-    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., *, scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501
     @overload
-    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., *, scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501
     @overload
-    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., *, scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501
+    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLikeFloat | None = ..., *, scalar_range: VectorLikeFloat | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLikeInt | None = ..., point_ids: int | VectorLikeInt | VectorLikeBool | None = ..., cell_ids: int | VectorLikeInt | VectorLikeBool | None = ..., closest_point: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501
     # fmt: on
     def connectivity(  # type: ignore[misc]
         self: _DataSetType,
@@ -2369,22 +2370,20 @@ class DataSetFilters(DataObjectFilters):
             'point_seed',
             'closest',
         ] = 'all',
-        variable_input: (
-            float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None
-        ) = None,
+        variable_input: float | VectorLikeFloat | None = None,
         *,
-        scalar_range: VectorLike[float] | None = None,
+        scalar_range: VectorLikeFloat | None = None,
         scalars: str | None = None,
         label_regions: bool = True,
         region_assignment_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
-        region_ids: int | VectorLike[int] | None = None,
-        point_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
-        cell_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
-        closest_point: VectorLike[float] | None = None,
+        region_ids: int | VectorLikeInt | None = None,
+        point_ids: int | VectorLikeInt | VectorLikeBool | None = None,
+        cell_ids: int | VectorLikeInt | VectorLikeBool | None = None,
+        closest_point: VectorLikeFloat | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-        **kwargs,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+        **kwargs: Any,
+    ) -> _OutputDataSet:
         """Find and label connected regions.
 
         This filter extracts cell regions based on a specified connectivity
@@ -2432,7 +2431,7 @@ class DataSetFilters(DataObjectFilters):
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
-        variable_input : float | VectorLike[float] | VectorLike[bool], optional
+        variable_input : float | VectorLikeFloat, optional
             The convenience parameter used for specifying any required input
             values for some values of ``extraction_mode``. Setting
             ``variable_input`` is equivalent to setting:
@@ -2444,7 +2443,7 @@ class DataSetFilters(DataObjectFilters):
 
             It has no effect if the mode is ``'all'`` or ``'largest'``.
 
-        scalar_range : sequence[float], optional
+        scalar_range : VectorLikeFloat, optional
             Scalar range in the form ``[min, max]``. If set, the connectivity is
             restricted to cells with at least one point with scalar values in
             the specified range. The ``'largest'``, ``'cell_seed'`` and
@@ -2485,19 +2484,19 @@ class DataSetFilters(DataObjectFilters):
                 The default value ``"descending"`` differs from ParaView's, which
                 is set to ``"unspecified"`` (verified for 5.11 and 6.0 versions).
 
-        region_ids : int | VectorLike[int], optional
+        region_ids : int | VectorLikeInt, optional
             Region ids to extract. Ids with no matching region contribute no cells.
             Only used if ``extraction_mode`` is ``specified``.
 
-        point_ids : int | VectorLike[int] | VectorLike[bool], optional
+        point_ids : int | VectorLikeInt | VectorLikeBool, optional
             Point ids to use as seeds. A boolean mask sized to the number of points
             is also supported. Only used if ``extraction_mode`` is ``point_seed``.
 
-        cell_ids : int | VectorLike[int] | VectorLike[bool], optional
+        cell_ids : int | VectorLikeInt | VectorLikeBool, optional
             Cell ids to use as seeds. A boolean mask sized to the number of cells is
             also supported. Only used if ``extraction_mode`` is ``cell_seed``.
 
-        closest_point : sequence[float], optional
+        closest_point : VectorLikeFloat, optional
             Point coordinates in ``(x, y, z)``. Only used if
             ``extraction_mode`` is ``closest``.
 
@@ -2611,7 +2610,7 @@ class DataSetFilters(DataObjectFilters):
             )
             extraction_mode = 'largest'
 
-        def _extract_and_cast(mesh, **extract_kwargs):
+        def _extract_and_cast(mesh: _DataSetType, **extract_kwargs: Any) -> _DataSetType:
             """Extract a subset of a mesh and cast the result back to the mesh's type."""
             extracted = DataSetFilters.extract_values(
                 mesh,
@@ -2637,14 +2636,12 @@ class DataSetFilters(DataObjectFilters):
             )
             raise ValueError(msg)
 
-        region_ids_: NumpyArray[int] = np.empty(0, dtype=int)
-        seed_ids: NumpyArray[int] = np.empty(0, dtype=int)
-        closest_point_: NumpyArray[float] = np.zeros(3, dtype=float)
+        region_ids_: NDArray[np.signedinteger] = np.empty(0, dtype=int)
+        seed_ids: NDArray[np.signedinteger] = np.empty(0, dtype=int)
+        closest_point_: NDArray[np.floating] = np.zeros(3, dtype=float)
         if extraction_mode in required_input:
             input_name, given_input = required_input[extraction_mode]
-            input_value: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = (
-                given_input
-            )
+            input_value: float | VectorLikeFloat | None = given_input
             if input_value is None:
                 if variable_input is None:
                     msg = (
@@ -2656,7 +2653,7 @@ class DataSetFilters(DataObjectFilters):
             if extraction_mode == 'specified':
                 region_ids_ = np.unique(
                     _validation.validate_arrayN(
-                        cast('VectorLike[int]', input_value),
+                        cast('VectorLikeInt', input_value),
                         must_be_integer=True,
                         must_be_nonnegative=True,
                         dtype_out=int,
@@ -2665,7 +2662,7 @@ class DataSetFilters(DataObjectFilters):
                 )
             elif extraction_mode == 'closest':
                 closest_point_ = _validation.validate_array3(
-                    cast('VectorLike[float]', input_value),
+                    cast('VectorLikeFloat', input_value),
                     dtype_out=float,
                     name='closest_point',
                 )
@@ -2677,7 +2674,7 @@ class DataSetFilters(DataObjectFilters):
                 )
                 seed_ids = np.flatnonzero(
                     _validate_extraction_ids(
-                        cast('VectorLike[int]', input_value),
+                        cast('VectorLikeInt', input_value),
                         n_items=n_items,
                         name=items,
                         invert=False,
@@ -2727,7 +2724,7 @@ class DataSetFilters(DataObjectFilters):
                 # The filter's own scalar connectivity is unreliable for these modes
                 scalars_name = input_mesh.active_scalars_name
                 input_mesh = _extract_and_cast(input_mesh, ranges=scalar_range)
-                if scalars_name in input_mesh.point_data:
+                if scalars_name is not None and scalars_name in input_mesh.point_data:
                     input_mesh.set_active_scalars(scalars_name, preference='point')
 
         alg = _vtk.vtkConnectivityFilter()
@@ -2848,7 +2845,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
@@ -2958,9 +2955,9 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # ImageData or RectilinearGrid
-    def warp_by_scalar(self: ImageData | RectilinearGrid, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> StructuredGrid: ...  # type: ignore[misc]
+    def warp_by_scalar(self: ImageData | RectilinearGrid, scalars: str | None = ..., *, factor: float = ..., normal: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> StructuredGrid: ...  # type: ignore[misc]
     @overload  # every other dataset
-    def warp_by_scalar(self: _DataSetType, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> _DataSetType: ...  # type: ignore[misc]
+    def warp_by_scalar(self: _DataSetType, scalars: str | None = ..., *, factor: float = ..., normal: VectorLikeFloat | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> _DataSetType: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def warp_by_scalar(  # type: ignore[misc]
@@ -2968,10 +2965,10 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         *,
         factor: float = 1.0,
-        normal: VectorLike[float] | None = None,
+        normal: VectorLikeFloat | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> StructuredGrid | _DataSetType:
         """Warp the dataset's points by a point data scalars array's values.
 
@@ -2987,7 +2984,7 @@ class DataSetFilters(DataObjectFilters):
             A scaling factor to increase the scaling effect. Alias
             ``scale_factor`` also accepted - if present, overrides ``factor``.
 
-        normal : sequence, optional
+        normal : VectorLikeFloat, optional
             User specified normal. If given, data normals will be
             ignored and the given normal will be used to project the
             warp.
@@ -3242,7 +3239,7 @@ class DataSetFilters(DataObjectFilters):
         inside_out: bool = False,
         check_surface: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Mark points as to whether they are inside a closed surface.
 
         This evaluates all the input points to determine whether they are in an
@@ -3353,7 +3350,7 @@ class DataSetFilters(DataObjectFilters):
         inside_out: bool,
         tolerance: float,
         progress_bar: bool,
-    ) -> NumpyArray[np.uint8]:
+    ) -> NDArray[np.uint8]:
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
         alg.SetSurfaceData(surface)
@@ -3684,26 +3681,26 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # return_source=False
-    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLike[float] | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLike[float] | None = ..., return_source: Literal[False] = ..., pointa: VectorLike[float] | None = ..., pointb: VectorLike[float] | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]
+    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLikeFloat | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLikeFloat | None = ..., return_source: Literal[False] = ..., pointa: VectorLikeFloat | None = ..., pointb: VectorLikeFloat | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]
     @overload  # return_source=True
-    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLike[float] | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLike[float] | None = ..., return_source: Literal[True] = ..., pointa: VectorLike[float] | None = ..., pointb: VectorLike[float] | None = ..., progress_bar: bool = ..., **kwargs) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLikeFloat | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLikeFloat | None = ..., return_source: Literal[True] = ..., pointa: VectorLikeFloat | None = ..., pointb: VectorLikeFloat | None = ..., progress_bar: bool = ..., **kwargs) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
     @overload  # return_source not known
-    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLike[float] | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLike[float] | None = ..., return_source: bool = ..., pointa: VectorLike[float] | None = ..., pointb: VectorLike[float] | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLikeFloat | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLikeFloat | None = ..., return_source: bool = ..., pointa: VectorLikeFloat | None = ..., pointb: VectorLikeFloat | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def streamlines(  # type: ignore[misc]
         self: _DataSetType,
         vectors: str | None = None,
         *,
-        source_center: VectorLike[float] | None = None,
+        source_center: VectorLikeFloat | None = None,
         source_radius: float | None = None,
         n_points: int = 100,
-        start_position: VectorLike[float] | None = None,
+        start_position: VectorLikeFloat | None = None,
         return_source: bool = False,
-        pointa: VectorLike[float] | None = None,
-        pointb: VectorLike[float] | None = None,
+        pointa: VectorLikeFloat | None = None,
+        pointb: VectorLikeFloat | None = None,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> PolyData | tuple[PolyData, PolyData]:
         """Integrate a vector field to generate streamlines.
 
@@ -3727,7 +3724,7 @@ class DataSetFilters(DataObjectFilters):
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        source_center : sequence[float], optional
+        source_center : VectorLikeFloat, optional
             Length 3 tuple of floats defining the center of the source
             particles. Defaults to the center of the dataset.
 
@@ -3738,7 +3735,7 @@ class DataSetFilters(DataObjectFilters):
         n_points : int, default: 100
             Number of particles present in source sphere or line.
 
-        start_position : sequence[float], optional
+        start_position : VectorLikeFloat, optional
             A single point.  This will override the sphere point source.
 
         return_source : bool, default: False
@@ -4028,7 +4025,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         vectors: str | None = None,
         *,
-        start_position: VectorLike[float] | None = None,
+        start_position: VectorLikeFloat | None = None,
         integrator_type: Literal[2, 4] = 2,
         step_length: float = 0.5,
         step_unit: Literal['cl', 'l'] = 'cl',
@@ -4055,7 +4052,7 @@ class DataSetFilters(DataObjectFilters):
         vectors : str, optional
             The string name of the active vector field to integrate across.
 
-        start_position : sequence[float], optional
+        start_position : VectorLikeFloat, optional
             The seed point for generating evenly spaced streamlines.
             If not supplied, a random position in the dataset is chosen.
 
@@ -4260,8 +4257,8 @@ class DataSetFilters(DataObjectFilters):
 
     def sample_over_line(  # type: ignore[misc]
         self: _DataSetType,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         *,
         resolution: int | None = None,
         tolerance: float | None = None,
@@ -4271,10 +4268,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4324,8 +4321,8 @@ class DataSetFilters(DataObjectFilters):
 
     def plot_over_line(  # type: ignore[misc]
         self: _DataSetType,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
         *,
         resolution: int | None = None,
         scalars: str | None = None,
@@ -4347,10 +4344,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4406,7 +4403,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Get variable of interest
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        values: NumpyArray[float] = sampled.get_array(scalars_)
+        values: NDArray[Any] = sampled.get_array(scalars_)
         distance = sampled['Distance']
         if component is not None:
             try:
@@ -4450,7 +4447,7 @@ class DataSetFilters(DataObjectFilters):
 
     def sample_over_multiple_lines(  # type: ignore[misc]
         self: _DataSetType,
-        points: MatrixLike[float],
+        points: MatrixLikeFloat,
         *,
         tolerance: float | None = None,
         progress_bar: bool = False,
@@ -4459,7 +4456,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        points : array_like[float]
+        points : MatrixLikeFloat
             List of points defining multiple lines.
 
         tolerance : float, optional
@@ -4510,9 +4507,9 @@ class DataSetFilters(DataObjectFilters):
     def sample_over_circular_arc(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
-        center: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
+        center: VectorLikeFloat,
         resolution: int | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
@@ -4521,13 +4518,13 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4592,10 +4589,10 @@ class DataSetFilters(DataObjectFilters):
     def sample_over_circular_arc_normal(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        center: VectorLike[float],
+        center: VectorLikeFloat,
         resolution: int | None = None,
-        normal: VectorLike[float] | None = None,
-        polar: VectorLike[float] | None = None,
+        normal: VectorLikeFloat | None = None,
+        polar: VectorLikeFloat | None = None,
         angle: float | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
@@ -4607,7 +4604,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4615,11 +4612,11 @@ class DataSetFilters(DataObjectFilters):
             number of cells in the input mesh. Must be a positive
             integer.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
-        polar : sequence[float], optional
+        polar : VectorLikeFloat, optional
             Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
@@ -4680,9 +4677,9 @@ class DataSetFilters(DataObjectFilters):
     def plot_over_circular_arc(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        pointa: VectorLike[float],
-        pointb: VectorLike[float],
-        center: VectorLike[float],
+        pointa: VectorLikeFloat,
+        pointb: VectorLikeFloat,
+        center: VectorLikeFloat,
         resolution: int | None = None,
         scalars: str | None = None,
         title: str | None = None,
@@ -4702,13 +4699,13 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        pointa : sequence[float]
+        pointa : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        pointb : sequence[float]
+        pointb : VectorLikeFloat
             Location in ``[x, y, z]``.
 
-        center : sequence[float]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4809,10 +4806,10 @@ class DataSetFilters(DataObjectFilters):
     def plot_over_circular_arc_normal(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        center: VectorLike[float],
+        center: VectorLikeFloat,
         resolution: int | None = None,
-        normal: VectorLike[float] | None = None,
-        polar: VectorLike[float] | None = None,
+        normal: VectorLikeFloat | None = None,
+        polar: VectorLikeFloat | None = None,
         angle: float | None = None,
         scalars: str | None = None,
         title: str | None = None,
@@ -4832,7 +4829,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        center : sequence[int]
+        center : VectorLikeFloat
             Location in ``[x, y, z]``.
 
         resolution : int, optional
@@ -4840,11 +4837,11 @@ class DataSetFilters(DataObjectFilters):
             number of cells in the input mesh. Must be a positive
             integer.
 
-        normal : sequence[float], optional
+        normal : VectorLikeFloat, optional
             The normal vector to the plane of the arc.  By default it
             points in the positive Z direction.
 
-        polar : sequence[float], optional
+        polar : VectorLikeFloat, optional
             Starting point of the arc in polar coordinates.  By
             default it is the unit vector in the positive x direction.
 
@@ -4946,7 +4943,7 @@ class DataSetFilters(DataObjectFilters):
 
     def extract_cells(  # type: ignore[misc]
         self: _DataSetType,
-        ind: int | VectorLike[int] | VectorLike[bool],
+        ind: int | VectorLikeInt | VectorLikeBool,
         *,
         invert: bool = False,
         pass_cell_ids: bool = True,
@@ -4969,7 +4966,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        ind : int | VectorLike[int] | VectorLike[bool]
+        ind : int | VectorLikeInt | VectorLikeBool
             Cell indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of cells.
 
@@ -5048,14 +5045,14 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet
-    def extract_points(self: PointSet, ind: int | VectorLike[int] | VectorLike[bool], *, adjacent_cells: bool = ..., include_cells: bool | None = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ..., invert: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    def extract_points(self: PointSet, ind: int | VectorLikeInt | VectorLikeBool, *, adjacent_cells: bool = ..., include_cells: bool | None = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ..., invert: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
-    def extract_points(self: DataSet, ind: int | VectorLike[int] | VectorLike[bool], *, adjacent_cells: bool = ..., include_cells: bool | None = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ..., invert: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def extract_points(self: DataSet, ind: int | VectorLikeInt | VectorLikeBool, *, adjacent_cells: bool = ..., include_cells: bool | None = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ..., invert: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def extract_points(  # type: ignore[misc]
         self: _DataSetType,
-        ind: int | VectorLike[int] | VectorLike[bool],
+        ind: int | VectorLikeInt | VectorLikeBool,
         *,
         adjacent_cells: bool = True,
         include_cells: bool | None = None,
@@ -5081,7 +5078,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        ind : int | VectorLike[int] | VectorLike[bool]
+        ind : int | VectorLikeInt | VectorLikeBool
             Point indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of points.
 
@@ -5177,14 +5174,14 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PolyData
-    def remove_cells(self: PolyData, ind: int | VectorLike[int] | VectorLike[bool], *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    def remove_cells(self: PolyData, ind: int | VectorLikeInt | VectorLikeBool, *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
-    def remove_cells(self: DataSet, ind: int | VectorLike[int] | VectorLike[bool], *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def remove_cells(self: DataSet, ind: int | VectorLikeInt | VectorLikeBool, *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def remove_cells(  # type: ignore[misc]
         self: _DataSetType,
-        ind: int | VectorLike[int] | VectorLike[bool],
+        ind: int | VectorLikeInt | VectorLikeBool,
         *,
         inplace: bool = False,
         invert: bool = False,
@@ -5216,7 +5213,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        ind : int | VectorLike[int] | VectorLike[bool]
+        ind : int | VectorLikeInt | VectorLikeBool
             Cell indices to remove. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of cells.
 
@@ -5282,16 +5279,16 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PolyData
-    def remove_points(self: PolyData, ind: int | VectorLike[int] | VectorLike[bool], mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    def remove_points(self: PolyData, ind: int | VectorLikeInt | VectorLikeBool, mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet
-    def remove_points(self: PointSet, ind: int | VectorLike[int] | VectorLike[bool], mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    def remove_points(self: PointSet, ind: int | VectorLikeInt | VectorLikeBool, mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
-    def remove_points(self: DataSet, ind: int | VectorLike[int] | VectorLike[bool], mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def remove_points(self: DataSet, ind: int | VectorLikeInt | VectorLikeBool, mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def remove_points(  # type: ignore[misc]
         self: _DataSetType,
-        ind: int | VectorLike[int] | VectorLike[bool],
+        ind: int | VectorLikeInt | VectorLikeBool,
         mode: Literal['any', 'all'] = 'any',
         *,
         invert: bool = False,
@@ -5299,7 +5296,7 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_ids: bool = True,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         r"""Remove points and their cells from a mesh.
 
         Cells are removed according to ``mode``, and only points used by a remaining
@@ -5323,7 +5320,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        ind : int | VectorLike[int] | VectorLike[bool]
+        ind : int | VectorLikeInt | VectorLikeBool
             Point indices to remove. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of points.
 
@@ -5404,22 +5401,20 @@ class DataSetFilters(DataObjectFilters):
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
-        values: (
-            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        )
+        values: (float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str])
         | None = None,
         *,
         ranges: (
-            VectorLike[float]
-            | MatrixLike[float]
-            | dict[str, VectorLike[float]]
+            VectorLikeFloat
+            | MatrixLikeFloat
+            | dict[str, VectorLikeFloat]
             | dict[tuple[float, float], str]
         )
         | None = None,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
-        **kwargs,
+        **kwargs: Any,
     ) -> MultiBlock:
         """Split mesh into separate sub-meshes using point or cell data.
 
@@ -5436,7 +5431,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        values : float | ArrayLike[float] | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5448,7 +5443,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : array_like | dict, optional
+        ranges : VectorLikeFloat | MatrixLikeFloat | dict, optional
             Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -5571,35 +5566,33 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet, split=False
-    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    def extract_values(self: PointSet, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet, split=True
-    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    def extract_values(self: PointSet, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet, split not known
-    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet | MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    def extract_values(self: PointSet, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet | MultiBlock: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet, split=False
-    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def extract_values(self: DataSet, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # DataSet, split=True
-    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def extract_values(self: DataSet, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # DataSet, split not known
-    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid | MultiBlock: ...  # type: ignore[misc]
+    def extract_values(self: DataSet, values: float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLikeFloat | MatrixLikeFloat | dict[str, VectorLikeFloat] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def extract_values(  # type: ignore[misc]
         self: _DataSetType,
-        values: (
-            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        )
+        values: (float | VectorLikeFloat | MatrixLikeFloat | dict[str, float] | dict[float, str])
         | None = None,
         *,
         ranges: (
-            VectorLike[float]
-            | MatrixLike[float]
-            | dict[str, VectorLike[float]]
+            VectorLikeFloat
+            | MatrixLikeFloat
+            | dict[str, VectorLikeFloat]
             | dict[tuple[float, float], str]
         )
         | None = None,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
@@ -5647,7 +5640,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        values : float | ArrayLike[float] | dict, optional
+        values : float | VectorLikeFloat | MatrixLikeFloat | dict, optional
             Values to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5659,7 +5652,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : ArrayLike[float] | dict, optional
+        ranges : VectorLikeFloat | MatrixLikeFloat | dict, optional
             Ranges of values to extract. Can be a single range (that is, a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -5818,7 +5811,7 @@ class DataSetFilters(DataObjectFilters):
         ...     values=18, ranges=[[0, 8], [29, 40]], split=True
         ... )
         >>> extracted
-        MultiBlock (...)
+        MultiBlock[UnstructuredGrid] (...)
           N Blocks:   3
           X Bounds:   0.000e+00, 1.000e+00
           Y Bounds:   0.000e+00, 1.000e+00
@@ -5888,13 +5881,14 @@ class DataSetFilters(DataObjectFilters):
             split=split,
         )
         if not isinstance(validated, _ExtractValuesInputs):
-            return validated  # empty input
+            # Empty input, returned as the `mesh_type` that was requested
+            return cast('UnstructuredGrid | MultiBlock', validated)
 
         # Set default for include cells
         if include_cells is None:
             include_cells = self.n_cells > 0
 
-        kwargs = dict(
+        kwargs: dict[str, Any] = dict(
             values=validated.values,
             ranges=validated.ranges,
             array=validated.array,
@@ -5916,27 +5910,31 @@ class DataSetFilters(DataObjectFilters):
                 **kwargs,
             )
 
-        return self._extract_values(**kwargs)
+        return cast('PointSet | UnstructuredGrid', self._extract_values(**kwargs))
 
     def _validate_extract_values(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        values,
-        ranges,
-        scalars,
-        preference,
-        component_mode,
-        split,
-        mesh_type=None,
-    ):
-        def _validate_scalar_array(scalars_, preference_):
+        values: Any,
+        ranges: Any,
+        scalars: str | None,
+        preference: PointLiteral | CellLiteral,
+        component_mode: Literal['any', 'all', 'multi'] | int,
+        split: bool,
+        mesh_type: type[DataSet] | None = None,
+    ) -> _ExtractValuesInputs | DataSet | MultiBlock:
+        def _validate_scalar_array(
+            scalars_: str | None, preference_: PointLiteral | CellLiteral
+        ) -> tuple[pyvista_ndarray, str, FieldAssociation]:
             # Get the scalar array and field association to use for extraction
             scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
             array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, scalars_, association_
 
-        def _validate_component_mode(array_, component_mode_):
+        def _validate_component_mode(
+            array_: NDArray[Any], component_mode_: Any
+        ) -> tuple[NDArray[Any], int, Callable[..., Any] | None]:
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
             if isinstance(component_mode_, (int, np.integer)) or (
@@ -5971,7 +5969,7 @@ class DataSetFilters(DataObjectFilters):
                 raise ValueError(msg)
             return array_, num_components, component_logic_function
 
-        def _get_inputs_from_dict(input_):
+        def _get_inputs_from_dict(input_: Any) -> tuple[list[str] | None, Any]:
             # Get extraction values from dict if applicable.
             # If dict, also validate names/labels mapped to the values
             if not isinstance(input_, dict):
@@ -5987,8 +5985,13 @@ class DataSetFilters(DataObjectFilters):
                     raise TypeError(msg)
 
         def _validate_values_and_ranges(
-            array_, *, values_, ranges_, num_components_, component_mode_
-        ):
+            array_: NDArray[Any],
+            *,
+            values_: Any,
+            ranges_: Any,
+            num_components_: int,
+            component_mode_: Any,
+        ) -> tuple[Any, Any]:
             # Make sure we have input values to extract
             is_multi_mode = component_mode_ == 'multi'
             if values_ is None:
@@ -6074,8 +6077,10 @@ class DataSetFilters(DataObjectFilters):
                 return pv.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
             return out
 
-        array, array_name, association = _validate_scalar_array(scalars, preference)
-        array, num_components, component_logic = _validate_component_mode(array, component_mode)
+        scalar_array, array_name, association = _validate_scalar_array(scalars, preference)
+        array, num_components, component_logic = _validate_component_mode(
+            scalar_array, component_mode
+        )
         value_names, values = _get_inputs_from_dict(values)
         range_names, ranges = _get_inputs_from_dict(ranges)
         valid_values, valid_ranges = _validate_values_and_ranges(
@@ -6100,37 +6105,37 @@ class DataSetFilters(DataObjectFilters):
     def _split_values(  # type:ignore[misc]
         self: _DataSetType,
         *,
-        method,
-        values,
-        ranges,
-        value_names,
-        range_names,
-        **kwargs,
-    ):
+        method: Callable[..., DataSet],
+        values: Any,
+        ranges: Any,
+        value_names: list[str] | None,
+        range_names: list[str] | None,
+        **kwargs: Any,
+    ) -> MultiBlock:
         # Split values and ranges separately and combine into single multiblock
         multi = pv.MultiBlock()
         if values is not None:
-            value_names = value_names or [None] * len(values)
-            for name, val in zip(value_names, values, strict=True):
+            names: Sequence[str | None] = value_names or [None] * len(values)
+            for name, val in zip(names, values, strict=True):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
-            range_names = range_names or [None] * len(ranges)
-            for name, rng in zip(range_names, ranges, strict=True):
+            names = range_names or [None] * len(ranges)
+            for name, rng in zip(names, ranges, strict=True):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
     def _apply_component_logic_to_array(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        values,
-        ranges,
-        array,
-        component_logic,
-        invert,
-    ):
+        values: Any,
+        ranges: Any,
+        array: NDArray[Any],
+        component_logic: Callable[..., Any] | None,
+        invert: bool,
+    ) -> NDArray[np.bool_]:
         """Build the selection mask from validated values and ranges."""
 
-        def _update_id_mask(logic_) -> None:
+        def _update_id_mask(logic_: NDArray[np.bool_]) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
             # Optimization: accumulate in place, since assigning ``True`` through a boolean
@@ -6163,18 +6168,18 @@ class DataSetFilters(DataObjectFilters):
     def _extract_values(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        values,
-        ranges,
-        array,
-        component_logic,
-        invert,
-        association,
-        adjacent_cells,
-        include_cells,
-        progress_bar,
-        pass_point_ids,
-        pass_cell_ids,
-    ):
+        values: Any,
+        ranges: Any,
+        array: NDArray[Any],
+        component_logic: Callable[..., Any] | None,
+        invert: bool,
+        association: FieldAssociation,
+        adjacent_cells: bool,
+        include_cells: bool,
+        progress_bar: bool,
+        pass_point_ids: bool,
+        pass_cell_ids: bool,
+    ) -> DataSet:
         id_mask = self._apply_component_logic_to_array(
             values=values,
             ranges=ranges,
@@ -6211,7 +6216,7 @@ class DataSetFilters(DataObjectFilters):
         nonlinear_subdivision: int = 1,
         progress_bar: bool = False,
         message: str = 'Extracting Surface',
-    ):
+    ) -> PolyData:
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(self)
         surf_filter.SetPassThroughPointIds(pass_pointid)
@@ -6264,7 +6269,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         progress_bar: bool = False,
-    ) -> NumpyArray[np.integer]:
+    ) -> NDArray[np.signedinteger]:
         """Return the surface indices of a grid.
 
         .. versionchanged:: 0.47
@@ -6398,7 +6403,7 @@ class DataSetFilters(DataObjectFilters):
         tolerance: float = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | PointSet | UnstructuredGrid:
+    ) -> _OutputDataSet:
         """Merge duplicate points in this mesh.
 
         .. versionadded:: 0.45
@@ -6626,15 +6631,29 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
         return merged
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet with a composite, whose blocks decide
+    def __add__(self: PointSet, dataset: MultiBlock) -> PointSet | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # PointSet with point clouds
+    def __add__(self: PointSet, dataset: PointSet | Sequence[PointSet]) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet with anything else
+    def __add__(self: PointSet, dataset: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet]) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def __add__(self: DataSet, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet]) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def __add__(  # type: ignore[misc]
-        self: _DataSetType, dataset
-    ):
-        """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
+        self: _DataSetType,
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+    ) -> PointSet | UnstructuredGrid:
+        """Combine this mesh with another into a point set or unstructured grid."""
         return DataSetFilters.merge(self, dataset)
 
     def __iadd__(  # type: ignore[misc]
-        self: _DataSetType, dataset
-    ):
+        self: _DataSetType,
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+    ) -> _DataSetType:
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
@@ -6643,7 +6662,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         try:
-            merged = DataSetFilters.merge(self, dataset, inplace=True)
+            DataSetFilters.merge(self, dataset, inplace=True)
         except TypeError:
             msg = (
                 'In-place merge only possible if the target mesh '
@@ -6651,12 +6670,17 @@ class DataSetFilters(DataObjectFilters):
                 'instead, which returns a new UnstructuredGrid.'
             )
             raise TypeError(msg) from None
-        return merged
+        return self
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
     ) -> PolyData:
         """Compute metrics on the boundary faces of a mesh.
+
+        .. versionchanged:: 0.50
+
+            Input without 3D cells now raises ``ValueError``. Previously an empty
+            :class:`~pyvista.PolyData` was returned.
 
         The metrics that can be computed on the boundary faces of the mesh and are:
 
@@ -6673,6 +6697,11 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.PolyData
             Boundary faces of the 3D cells, with the computed metrics in ``cell_data``.
+
+        Raises
+        ------
+        ValueError
+            If the input has no 3D cells.
 
         Examples
         --------
@@ -6694,6 +6723,12 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        if (dimensionality := self.max_cell_dimensionality) < 3:
+            msg = (
+                'Boundary faces are only defined for 3D cells, but the input has none. '
+                f'Its highest cell dimension is {dimensionality}.'
+            )
+            raise ValueError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(
             self.cast_to_unstructured_grid() if isinstance(self, pv.PolyData) else self
@@ -6710,7 +6745,7 @@ class DataSetFilters(DataObjectFilters):
         vorticity: bool | str = False,
         qcriterion: bool | str = False,
         faster: bool = False,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
     ) -> _DataSetType:
         """Compute derivative-based quantities of point/cell scalar field.
@@ -7118,32 +7153,32 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # as_composite=True, return_meta=False
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLikeFloat | str | None = ..., axis_1_direction: VectorLikeFloat | str | None = ..., axis_2_direction: VectorLikeFloat | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]] | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def oriented_bounding_box(  # type: ignore[misc]
         self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
-        axis_0_direction: VectorLike[float] | str | None = None,
-        axis_1_direction: VectorLike[float] | str | None = None,
-        axis_2_direction: VectorLike[float] | str | None = None,
+        axis_0_direction: VectorLikeFloat | str | None = None,
+        axis_1_direction: VectorLikeFloat | str | None = None,
+        axis_2_direction: VectorLikeFloat | str | None = None,
         frame_width: float = 0.1,
         return_meta: bool = False,
         as_composite: bool = True,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]
         | PolyData
-        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]
     ):
         """Return an oriented bounding box (OBB) for this dataset.
 
@@ -7173,19 +7208,19 @@ class DataSetFilters(DataObjectFilters):
             for each side of the frame). Use ``frame_width`` to control the size of the
             frame.
 
-        axis_0_direction : VectorLike[float] | str, optional
+        axis_0_direction : VectorLikeFloat | str, optional
             Approximate direction vector of this mesh's primary axis. If set, the first
             axis in the returned ``axes`` metadata is flipped such that it best aligns
             with the specified vector. Can be a vector or string specifying the axis by
             name (for example, ``'x'`` or ``'-x'``, etc.).
 
-        axis_1_direction : VectorLike[float] | str, optional
+        axis_1_direction : VectorLikeFloat | str, optional
             Approximate direction vector of this mesh's secondary axis. If set, the second
             axis in the returned ``axes`` metadata is flipped such that it best aligns
             with the specified vector. Can be a vector or string specifying the axis by
             name (for example, ``'x'`` or ``'-x'``, etc.).
 
-        axis_2_direction : VectorLike[float] | str, optional
+        axis_2_direction : VectorLikeFloat | str, optional
             Approximate direction vector of this mesh's third axis. If set, the third
             axis in the returned ``axes`` metadata is flipped such that it best aligns
             with the specified vector. Can be a vector or string specifying the axis by
@@ -7316,15 +7351,15 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # as_composite=True, return_meta=False
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # as_composite=True, return_meta=True
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=False
     def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # as_composite=False, return_meta=True
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     @overload  # flags not known
-    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock[PolyData] | PolyData | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]] | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def bounding_box(  # type: ignore[misc]
@@ -7336,10 +7371,10 @@ class DataSetFilters(DataObjectFilters):
         return_meta: bool = False,
         as_composite: bool = True,
     ) -> (
-        MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]
         | PolyData
-        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]
     ):
         """Return a bounding box for this dataset.
 
@@ -7492,15 +7527,20 @@ class DataSetFilters(DataObjectFilters):
     def _bounding_box(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        matrix: NumpyArray[float] | None,
-        inverse_matrix: NumpyArray[float] | None,
+        matrix: NDArray[np.float64] | None,
+        inverse_matrix: NDArray[np.float64] | None,
         box_style: Literal['frame', 'outline', 'face'],
         oriented: bool,
         frame_width: float,
         return_meta: bool,
         as_composite: bool,
+    ) -> (
+        MultiBlock[PolyData]
+        | tuple[MultiBlock[PolyData], NDArray[np.floating], NDArray[np.float64]]
+        | PolyData
+        | tuple[PolyData, NDArray[np.floating], NDArray[np.float64]]
     ):
-        def _multiblock_to_polydata(multiblock):
+        def _multiblock_to_polydata(multiblock: MultiBlock[PolyData]) -> PolyData:
             return multiblock.combine(merge_points=False).extract_surface(
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
@@ -7516,10 +7556,9 @@ class DataSetFilters(DataObjectFilters):
 
         # Modify box
         for face in box:
-            face = cast('pv.PolyData', face)
             if box_style == 'outline':
                 face.copy_from(pv.lines_from_points(face.points))
-            if oriented:
+            if inverse_matrix is not None:
                 face.transform(inverse_matrix, inplace=True)
 
         # Get output
@@ -7529,9 +7568,9 @@ class DataSetFilters(DataObjectFilters):
                 axes = np.eye(3)
                 point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
             else:
-                matrix = cast('NumpyArray[float]', matrix)
-                inverse_matrix = cast('NumpyArray[float]', inverse_matrix)
-                axes = matrix[:3, :3]  # type: ignore[assignment]
+                matrix = cast('NDArray[np.float64]', matrix)
+                inverse_matrix = cast('NDArray[np.float64]', inverse_matrix)
+                axes = matrix[:3, :3]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box
@@ -7566,7 +7605,7 @@ class DataSetFilters(DataObjectFilters):
                 point_id = box_poly.find_closest_point(point)
                 point = box_poly.points[point_id]
 
-            return alg_output, point, axes
+            return alg_output, point, axes  # type: ignore[return-value]
         return alg_output
 
     def explode(  # type: ignore[misc]
@@ -7651,7 +7690,7 @@ class DataSetFilters(DataObjectFilters):
 
     def extract_cells_by_type(  # type: ignore[misc]
         self: _DataSetType,
-        cell_types: int | VectorLike[int],
+        cell_types: int | VectorLikeInt,
         *,
         progress_bar: bool = False,
     ) -> _DataSetType:
@@ -7674,7 +7713,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        cell_types :  int | VectorLike[int]
+        cell_types :  int | VectorLikeInt
             The cell types to extract. Must be a single or list of integer cell
             types. See :class:`pyvista.CellType`.
 
@@ -7736,7 +7775,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         scalars: str | None = None,
         *,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
@@ -7828,7 +7867,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         sort: bool = False,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
@@ -7956,11 +7995,11 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # return_dict=False
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_dict=True
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
     @overload  # return_dict not known
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: PointLiteral | CellLiteral = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def color_labels(  # type: ignore[misc]
@@ -7975,7 +8014,7 @@ class DataSetFilters(DataObjectFilters):
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
         negative_indexing: bool = False,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
         output_scalars: str | None = None,
         return_dict: bool = False,
         inplace: bool = False,
@@ -8269,7 +8308,18 @@ class DataSetFilters(DataObjectFilters):
                 )
                 raise ValueError(msg)
 
-        def _is_index_like(array_, n_colors_):
+        def _float_colors_to_int(
+            color_array_: NDArray[np.floating], n_components_: int
+        ) -> list[tuple[int, ...]]:
+            """Convert float colors in [0, 1] to int tuples, rounding like ``Color``."""
+            ints = np.rint(255 * color_array_.astype(float)).astype(int)
+            if n_components_ == 3:
+                ints = ints[:, :3]
+            elif ints.shape[1] == 3:
+                ints = np.column_stack([ints, np.full(len(ints), 255)])
+            return [tuple(row) for row in ints.tolist()]
+
+        def _is_index_like(array_: NDArray[Any], n_colors_: int) -> NDArray[np.bool_]:
             """Return which values can be used to index ``n_colors_`` colors."""
             min_value = -n_colors_ if negative_indexing else 0
             return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ < n_colors_)
@@ -8362,6 +8412,13 @@ class DataSetFilters(DataObjectFilters):
                             cmap_colors if n_channels == 4 else [[*c, 1.0] for c in cmap_colors]
                         )
                         _is_rgb_sequence = True
+                    elif (
+                        n_channels in (3, 4)
+                        and np.all(color_array >= 0.0)
+                        and np.all(color_array <= 1.0)
+                    ):
+                        color_rgb_sequence = _float_colors_to_int(color_array, num_components)
+                        _is_rgb_sequence = True
                     else:
                         # The colors may be an array, which is not a valid color sequence
                         colors = color_array.tolist()
@@ -8448,11 +8505,11 @@ class DataSetFilters(DataObjectFilters):
         background_value: int | float = 0,  # noqa: PYI041
         foreground_value: int | float = 1,  # noqa: PYI041
         reference_volume: ImageData | None = None,
-        dimensions: VectorLike[int] | None = None,
-        spacing: float | VectorLike[float] | None = None,
+        dimensions: VectorLikeInt | None = None,
+        spacing: float | VectorLikeFloat | None = None,
         target_n_points: int | None = None,
         max_n_points: int | None = None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         progress_bar: bool = False,
@@ -8537,12 +8594,12 @@ class DataSetFilters(DataObjectFilters):
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
-        dimensions : VectorLike[int], optional
+        dimensions : VectorLikeInt, optional
             Dimensions of the generated mask image. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
 
-        spacing : float | VectorLike[float], optional
+        spacing : float | VectorLikeFloat, optional
             Approximate spacing to use for the generated mask image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
@@ -8571,7 +8628,7 @@ class DataSetFilters(DataObjectFilters):
 
             .. versionadded:: 0.50
 
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+        rounding_func : Callable[VectorLikeFloat, VectorLikeInt], optional
             Control how the dimensions are rounded to integers based on the provided or
             calculated ``spacing``. Should accept a length-3 vector containing the
             dimension values along the three directions and return a length-3 vector.
@@ -8608,7 +8665,7 @@ class DataSetFilters(DataObjectFilters):
         -------
         ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
-            has ``dtype`` :class:`numpy.uint8` if the foreground and background values are
+            has ``dtype`` :obj:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
 
         See Also
@@ -8826,7 +8883,7 @@ class DataSetFilters(DataObjectFilters):
             )
 
         # Use uint8 dtype if possible
-        scalars_dtype: type[np.uint8 | float | int]
+        scalars_dtype: type[np.uint8 | np.int_ | np.float64]
         if all(
             isinstance(val, (int, np.integer)) and val < 256 and val >= 0
             for val in (background_value, foreground_value)
@@ -8855,15 +8912,15 @@ class DataSetFilters(DataObjectFilters):
         background_value: float = 0.0,
         foreground_value: float = 1.0,
         reference_volume: ImageData | None,
-        dimensions: VectorLike[int] | None,
-        spacing: float | VectorLike[float] | None,
+        dimensions: VectorLikeInt | None,
+        spacing: float | VectorLikeFloat | None,
         target_n_points: int | None,
         max_n_points: int | None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+        rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None,
         cell_length_percentile: float | None,
         cell_length_sample_size: int | None,
         progress_bar: bool,
-    ):
+    ) -> ImageData:
         if dimensions is not None:
             dimensions_ = _validation.validate_array3(
                 dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
@@ -8907,11 +8964,11 @@ class DataSetFilters(DataObjectFilters):
         background_value: int | float = 0,  # noqa: PYI041
         foreground_value: int | float = 1,  # noqa: PYI041
         reference_volume: ImageData | None = None,
-        dimensions: VectorLike[int] | None = None,
-        spacing: float | VectorLike[float] | None = None,
+        dimensions: VectorLikeInt | None = None,
+        spacing: float | VectorLikeFloat | None = None,
         target_n_points: int | None = None,
         max_n_points: int | None = None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         progress_bar: bool = False,
@@ -8973,7 +9030,7 @@ class DataSetFilters(DataObjectFilters):
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
-        dimensions : VectorLike[int], optional
+        dimensions : VectorLikeInt, optional
             Dimensions of the generated rectilinear grid. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
@@ -8983,7 +9040,7 @@ class DataSetFilters(DataObjectFilters):
                 Dimensions is the number of points along each axis, not cells. Set
                 dimensions to ``N+1`` instead for ``N`` cells along each axis.
 
-        spacing : float | VectorLike[float], optional
+        spacing : float | VectorLikeFloat, optional
             Approximate spacing to use for the generated grid. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
@@ -9018,7 +9075,7 @@ class DataSetFilters(DataObjectFilters):
 
             .. versionadded:: 0.50
 
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+        rounding_func : Callable[VectorLikeFloat, VectorLikeInt], optional
             Control how the dimensions are rounded to integers based on the provided or
             calculated ``spacing``. Should accept a length-3 vector containing the
             dimension values along the three directions and return a length-3 vector.
@@ -9135,9 +9192,9 @@ class DataSetFilters(DataObjectFilters):
         self: DataSet,
         *,
         reference_volume: ImageData | None = None,
-        dimensions: VectorLike[int] | None = None,
-        spacing: float | VectorLike[float] | None = None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        dimensions: VectorLikeInt | None = None,
+        spacing: float | VectorLikeFloat | None = None,
+        rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         progress_bar: bool = False,
@@ -9186,7 +9243,7 @@ class DataSetFilters(DataObjectFilters):
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
 
-        dimensions : VectorLike[int], optional
+        dimensions : VectorLikeInt, optional
             Dimensions of the voxelized mesh. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
@@ -9196,12 +9253,12 @@ class DataSetFilters(DataObjectFilters):
                 Dimensions is the number of points along each axis, not cells. Set
                 dimensions to ``N+1`` instead for ``N`` cells along each axis.
 
-        spacing : float | VectorLike[float], optional
+        spacing : float | VectorLikeFloat, optional
             Approximate spacing to use for the generated mesh. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
 
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+        rounding_func : Callable[VectorLikeFloat, VectorLikeInt], optional
             Control how the dimensions are rounded to integers based on the provided or
             calculated ``spacing``. Should accept a length-3 vector containing the
             dimension values along the three directions and return a length-3 vector.
@@ -9327,14 +9384,14 @@ def _voxelize_surface(mesh: DataSet) -> PolyData:
 def _stencil_binary_mask(
     surface: PolyData,
     *,
-    extent: VectorLike[int],
-    spacing: VectorLike[float],
-    origin: VectorLike[float],
+    extent: VectorLikeInt,
+    spacing: VectorLikeFloat,
+    origin: VectorLikeFloat,
     dtype: type,
     foreground_value: float,
     background_value: float,
     progress_bar: bool,
-) -> NumpyArray[Any]:
+) -> NDArray[Any]:
     """Rasterize a triangle surface into a flat binary mask, one slab of z-slices at a time."""
     faces = surface.regular_faces
     z = surface.points[:, 2][faces]
@@ -9395,13 +9452,13 @@ def _rebuild_point_region_ids(mesh: DataSet) -> None:
 
 
 def _validate_extraction_ids(
-    ind: int | VectorLike[int] | VectorLike[bool],
+    ind: int | VectorLikeInt | VectorLikeBool,
     *,
     n_items: int,
     name: str,
     invert: bool,
     ids_name: str = 'indices',
-) -> NumpyArray[bool]:
+) -> NDArray[np.bool_]:
     """Return a boolean selection mask from integer ids or a boolean mask."""
     ids = _validation.validate_array(
         ind,
@@ -9472,7 +9529,7 @@ def _cast_extraction(
     output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
 ) -> DataSet:
     """Cast an extracted mesh to the input type and keep its original id arrays."""
-    output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
+    output = _cast_output_to_match_input_type(output, input_mesh)
     return _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
 
 
@@ -9488,7 +9545,13 @@ def _finish_extraction(
     return output
 
 
-def _set_threshold_limit(alg, *, value, method, invert):
+def _set_threshold_limit(
+    alg: _vtk.vtkThreshold,
+    *,
+    value: float | VectorLikeFloat,
+    method: str,
+    invert: bool,
+) -> None:
     """Set ``vtkThreshold`` limits and function.
 
     Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
@@ -9520,8 +9583,8 @@ def _set_threshold_limit(alg, *, value, method, invert):
     # Set values and function
     if isinstance(value, (np.ndarray, Sequence)):
         alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
-        alg.SetLowerThreshold(value[0])
-        alg.SetUpperThreshold(value[1])
+        alg.SetLowerThreshold(float(value[0]))
+        alg.SetUpperThreshold(float(value[1]))
     # Single value
     elif method.lower() == 'lower':
         alg.SetLowerThreshold(value)
@@ -9534,7 +9597,7 @@ def _set_threshold_limit(alg, *, value, method, invert):
         raise ValueError(msg)
 
 
-def _swap_axes(vectors, values):
+def _swap_axes(vectors: NDArray[_FloatingT], values: VectorLikeFloat) -> NDArray[_FloatingT]:
     """Swap axes vectors based on their respective values.
 
     The vector with the larger component along its projected axis is selected to precede
@@ -9547,7 +9610,7 @@ def _swap_axes(vectors, values):
     module-level function for testing purposes.
     """
 
-    def _swap(axis_a, axis_b) -> None:
+    def _swap(axis_a: int, axis_b: int) -> None:
         axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
             vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]

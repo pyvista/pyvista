@@ -53,6 +53,28 @@ def test_bounds(dataset_mapper):
     assert dataset_mapper.bounds == (-126.0, 125.0, -127.0, 126.0, -127.0, 127.0)
 
 
+def test_center(dataset_mapper):
+    assert dataset_mapper.center == dataset_mapper.dataset.center
+
+
+@pytest.mark.parametrize(
+    'mapper_type',
+    [
+        pv.DataSetMapper,
+        pv.PointGaussianMapper,
+        pv.FixedPointVolumeRayCastMapper,
+        pv.CompositePolyDataMapper,
+    ],
+)
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [('bounds', (1.0, -1.0, 1.0, -1.0, 1.0, -1.0)), ('center', (0.0, 0.0, 0.0))],
+)
+def test_bounds_and_center_without_a_dataset(mapper_type, name, expected):
+    """Every mapper family reports the uninitialized sentinel, without asking VTK."""
+    assert getattr(mapper_type(), name) == expected
+
+
 def test_lookup_table(dataset_mapper):
     assert isinstance(dataset_mapper.lookup_table, _vtk.vtkLookupTable)
 

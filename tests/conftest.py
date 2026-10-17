@@ -22,6 +22,9 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+
+# Reuse the doctest fixture for unit tests
+from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.utilities.accessor_registry import (
@@ -120,6 +123,16 @@ PILLOW_VERSION_INFO = VersionInfo(
     minor=int(PIL.__version__.split('.')[1]),
     micro=int(PIL.__version__.split('.')[2]),
 )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Reject a dotted module as a ``--cov`` target."""
+    sources = getattr(config.option, 'cov_source', None) or []
+    dotted = [s for s in sources if s is not True and '.' in s]
+    if dotted:
+        msg = f'--cov takes a package or directory, not {dotted[0]!r}. Use plain --cov.'
+        raise pytest.UsageError(msg)
+
 
 faulthandler.enable()
 
@@ -584,6 +597,7 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/add_floor.py',
         'typing/cases/plotting/add_legend.py',
         'typing/cases/plotting/add_legend_scale.py',
+        'typing/cases/plotting/add_mesh.py',
         'typing/cases/plotting/add_north_arrow_widget.py',
         'typing/cases/plotting/add_orientation_widget.py',
         'typing/cases/plotting/add_ruler.py',

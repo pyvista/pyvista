@@ -486,9 +486,9 @@ def test_save(extension, binary, tmpdir, hexbeam):
         return
 
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    if extension == '.vtkhdf' and not binary:
+    if extension in pv.HDFWriter.extensions and not binary:
         with pytest.raises(
-            ValueError, match=r'.vtkhdf files can only be written in binary format'
+            ValueError, match=rf'\{extension} files can only be written in binary format'
         ):
             hexbeam.save(filename, binary=binary)
         return
@@ -1517,9 +1517,10 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
 
     if extension == '.vtk' and not is_identity_matrix:
         match = re.escape(
-            'The direction matrix for ImageData cannot be saved using the legacy `.vtk` format.'
+            'The direction matrix for ImageData cannot be saved using the '
+            'Legacy VTK `.vtk` format.'
             '\nSee https://gitlab.kitware.com/vtk/vtk/-/issues/19663 '
-            '\nUse the `.vti` extension instead (XML format).'
+            '\nUse the `.vti` extension instead (VTK ImageData format).'
         )
         with pytest.raises(ValueError, match=match):
             uniform.save(filename, binary=binary)
@@ -1972,6 +1973,24 @@ def test_explicit_structured_grid_cell_coords():
     assert isinstance(coords, np.ndarray)
     assert np.issubdtype(coords.dtype, np.integer)
     assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
+
+
+def test_explicit_structured_grid_cell_id_rejects_floats():
+    grid = examples.load_explicit_structured()
+    with pytest.raises(TypeError, match='Cell coordinates must be integers, got dtype float64'):
+        grid.cell_id((3.0, 4.0, 0.0))
+
+
+def test_explicit_structured_grid_cell_coords_rejects_floats():
+    grid = examples.load_explicit_structured()
+    with pytest.raises(TypeError, match='Cell IDs must be integers, got dtype float64'):
+        grid.cell_coords((19.0, 31.0))
+
+
+def test_explicit_structured_grid_cell_lookups_accept_bools():
+    grid = examples.load_explicit_structured()
+    assert grid.cell_id(np.array([True, False, True])) == grid.cell_id((1, 0, 1))
+    assert np.array_equal(grid.cell_coords(np.array([True, False])), grid.cell_coords((1, 0)))
 
 
 def test_explicit_structured_grid_neighbors():

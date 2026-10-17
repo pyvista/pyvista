@@ -75,6 +75,15 @@ def algorithm_to_mesh_handler(
             output = mesh_or_algo
         else:
             algo = mesh_or_algo
+            # GetOutputPort has no status to check, so VTK only logs an error for a port
+            # the algorithm does not have and hands back a null port.
+            n_ports = algo.GetNumberOfOutputPorts()
+            if not 0 <= port < n_ports:
+                msg = (
+                    f'Port {port} is out of range for {algo.GetClassName()}, '
+                    f'which has {n_ports} output port(s).'
+                )
+                raise PyVistaPipelineError(msg)
             output = algo.GetOutputPort(port)
         algo.Update()  # NOTE: this could be expensive... but we need it to get the mesh
         #                      for legacy implementation. This can be refactored.
@@ -599,7 +608,7 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
             if isinstance(wrapped, pv.PolyData):
                 surface = wrapped.copy(deep=False)
                 surface.point_data[self.ORIGINAL_POINT_IDS_NAME] = np.arange(
-                    surface.n_points, dtype=pv.ID_TYPE
+                    surface.n_points, dtype=np.dtype(pv.ID_TYPE)
                 )
             else:
                 surface = wrapped.extract_surface(

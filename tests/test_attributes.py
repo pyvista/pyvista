@@ -441,6 +441,10 @@ def test_dir_snake_case_visible_when_allowed(sphere):
         assert 'information' in listing
 
 
+@pytest.mark.skip_vtk_output_check(
+    reason='every reader class is constructed on a dummy path, so the messages follow '
+    'whichever readers the VTK build ships',
+)
 def test_pyvista_class_no_new_attributes(pyvista_class):
     def skip_test_for_some_classes():
         if pyvista_class in (

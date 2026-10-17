@@ -24,10 +24,6 @@ A user-defined Foo class is defined that extends the functionality of
 
 from __future__ import annotations
 
-from typing import TypeVar
-
-from pyvista import _vtk
-
 from .composite import MultiBlock
 from .grid import ImageData
 from .grid import RectilinearGrid
@@ -53,18 +49,3 @@ _wrappers = {
     'vtkPartitionedDataSet': PartitionedDataSet,
     # 'vtkParametricSpline': pyvista.Spline,
 }
-
-_WrappableVTKDataObjectType = TypeVar(  # noqa: PYI018
-    '_WrappableVTKDataObjectType',
-    _vtk.vtkExplicitStructuredGrid,
-    _vtk.vtkUnstructuredGrid,
-    _vtk.vtkRectilinearGrid,
-    _vtk.vtkStructuredGrid,
-    _vtk.vtkPolyData,
-    _vtk.vtkImageData,
-    _vtk.vtkStructuredPoints,
-    _vtk.vtkMultiBlockDataSet,
-    _vtk.vtkTable,
-    _vtk.vtkPoints,
-    _vtk.vtkPartitionedDataSet,
-)

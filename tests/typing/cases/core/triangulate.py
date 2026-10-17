@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 from type_assert import assert_types
-from typing_extensions import Never
 
 import pyvista as pv
 from tests.typing.meshes import explicit_structured
@@ -18,11 +19,6 @@ from tests.typing.meshes import poly
 from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
-
-SKIP_RUNTIME = {
-    'pointset().triangulate()': 'a `PointSet` has no cells, so the call raises',
-}
-
 
 # A surface stays a surface; every other dataset is broken into linear cells
 assert_types(poly().triangulate(), pv.PolyData)
@@ -42,4 +38,4 @@ assert_types(multiblock_optional_poly().triangulate(), pv.MultiBlock[pv.PolyData
 assert_types(multiblock_optional_image().triangulate(), pv.MultiBlock[pv.UnstructuredGrid | None])
 
 
-assert_types(pointset().triangulate(), Never)  # pragma: no cover
+assert_types(pointset().triangulate(), Never)
