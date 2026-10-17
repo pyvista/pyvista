@@ -21,6 +21,7 @@ from rich.prompt import Prompt as _RichPrompt
 from rich.table import Table
 from rich.text import Text
 
+from . import manylinux as _manylinux
 from . import tools as _tools
 from .manifest import MANIFEST_FILENAME
 from .manifest import ManifestError
@@ -115,6 +116,7 @@ class BuildConfig:
     install: bool = False
     interactive: bool = False
     dry_run: bool = False
+    manylinux: str | None = None
     os_name: str = field(default_factory=_tools.host_os)
 
     @property
@@ -365,6 +367,8 @@ class Builder:
 
         """
         self.console.print(f'[bold green]Building backend: {self.config.backend}[/bold green]')
+        if self.config.manylinux:
+            return self.build_in_manylinux()
         self.say(
             'This walks through eight steps: source, tools, build options, configure, build, '
             'wheel, repair, and install. Each step explains what it will do and asks before '
@@ -1286,6 +1290,119 @@ class Builder:
             self.say(f'Not installed. To install later:\n  [cyan]{shlex.join(cmd)}[/cyan]')
             return
         self.run(cmd)
+
+    def build_in_manylinux(self) -> Path | None:
+        """Run the build inside a manylinux container, then install on the host.
+
+        Returns
+        -------
+        Path or None
+            The repaired wheel, or ``None`` on a dry run.
+
+        """
+        cfg = self.config
+        image = cfg.manylinux or _manylinux.default_image()
+        self.say(
+            f'The build runs inside the [bold]{image}[/bold] container through Docker, so '
+            'the wheel is portable across Linux machines. The container installs the '
+            f'build dependencies and PyVista, then runs the eight steps with '
+            f'[bold]{cfg.build_dir}[/bold] mounted as its build tree.'
+        )
+        docker = _tools.Tool('docker', ('docker',), instructions=_manylinux.DOCKER_INSTRUCTIONS)
+        if not _tools.detect(docker, self.env):
+            msg = f'docker was not found on PATH. {docker.instructions}'
+            raise BuildError(msg)
+        if not cfg.dry_run:
+            probe = subprocess.run([str(docker.path), 'info'], capture_output=True, check=False)
+            if probe.returncode != 0:
+                msg = 'Docker is installed but its daemon is not running or not reachable.'
+                raise BuildError(msg)
+        source_tree = cfg.src_dir if (cfg.src_dir / '.git').exists() else None
+        try:
+            packages = find_manifest(cfg.backend, source_tree).manylinux_packages
+        except ManifestError as err:
+            raise BuildError(str(err)) from None
+        pv_source = _manylinux.pyvista_source()
+        mounts: dict[str, Path] = {_manylinux.WORK: cfg.build_dir}
+        if cfg.source is not None:
+            mounts[_manylinux.SOURCE] = cfg.source
+        if cfg.cache_dir is not None:
+            mounts[_manylinux.CACHE] = cfg.cache_dir
+        if pv_source is not None:
+            mounts[_manylinux.PYVISTA] = pv_source
+        owner = _manylinux.file_owner()
+        script = _manylinux.container_script(
+            python=_manylinux.container_python(),
+            packages=packages,
+            pyvista=_manylinux.pyvista_requirement(pv_source),
+            build_args=self.container_args(),
+            ccache=cfg.compiler_cache != 'none',
+            owner=owner,
+            paths=[m for m in mounts if m != _manylinux.PYVISTA],
+        )
+        cmd = _manylinux.docker_command(
+            image, mounts=mounts, script=script, interactive=cfg.prompting, env=self.env
+        )
+        if not self.confirm('Run the build in the container? (n stops)'):
+            msg = 'Stopped before the container build.'
+            raise BuildError(msg)
+        if not cfg.dry_run:
+            for folder in mounts.values():
+                folder.mkdir(parents=True, exist_ok=True)
+        self.run(cmd)
+        if not cfg.dry_run:
+            self.wheel = self._newest_wheel(cfg.wheelhouse)
+        self.phase_install()
+        self.summary()
+        return self.wheel
+
+    def container_args(self) -> list[str]:
+        """Return the ``pyvista build`` arguments that rerun this configuration in a container.
+
+        Returns
+        -------
+        list[str]
+            Arguments after ``pyvista build``, with host paths mapped to the mounts.
+
+        """
+        cfg = self.config
+        args = [cfg.backend, '--build-dir', _manylinux.WORK, '--no-install']
+        if cfg.source is not None:
+            args += ['--source', _manylinux.SOURCE]
+        if cfg.cache_dir is not None:
+            args += ['--cache-dir', _manylinux.CACHE]
+        if cfg.url is not None:
+            args += ['--url', cfg.url]
+        if cfg.ref is not None:
+            args += ['--ref', cfg.ref]
+        if cfg.with_:
+            args += ['--with', ','.join(cfg.with_)]
+        if cfg.without:
+            args += ['--without', ','.join(cfg.without)]
+        if cfg.all_:
+            args.append('--all')
+        if cfg.minimal:
+            args.append('--minimal')
+        args += ['--build-type', cfg.build_type]
+        if cfg.jobs is not None:
+            args += ['--jobs', str(cfg.jobs)]
+        for define in cfg.defines:
+            args += ['-D', define]
+        for option in cfg.options:
+            args += ['--opt', option]
+        for flag, on in (
+            ('--clean', cfg.clean),
+            ('--reconfigure', cfg.reconfigure),
+            ('--update', cfg.update),
+            ('--no-repair', not cfg.repair),
+            ('--interactive', cfg.prompting),
+        ):
+            if on:
+                args.append(flag)
+        args += ['--compiler-cache', cfg.compiler_cache]
+        if cfg.version_suffix is not None:
+            args += ['--version-suffix', cfg.version_suffix]
+        return args
 
     def summary(self) -> None:
         """Print where things ended up."""
