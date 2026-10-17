@@ -647,7 +647,7 @@ class Builder:
 
         """
         cfg = self.config
-        cmd = ['cmake', '-S', str(cfg.src_dir), '-B', str(cfg.cmake_dir), '-GNinja']
+        cmd = ['cmake', '-Wno-dev', '-S', str(cfg.src_dir), '-B', str(cfg.cmake_dir), '-GNinja']
         init_cache = self.manifest.init_cache.get(cfg.os_name)
         if init_cache:
             cmd += ['-C', str(cfg.src_dir / init_cache)]
