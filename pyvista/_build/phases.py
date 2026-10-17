@@ -33,6 +33,7 @@ from .registry import known_backends
 from .registry import shipped_manifest
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Mapping
     from collections.abc import Sequence
 
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
 
 STATE_FILENAME = '.pyvista-build.json'
 BUILD_TYPES = ('Release', 'RelWithDebInfo', 'Debug')
+COMPILER_CACHES = ('auto', 'ccache', 'sccache', 'none')
 _TAG_LIKE = re.compile(r'v?\d+\.\d+')
 _join = subprocess.list2cmdline if os.name == 'nt' else shlex.join
 _NOISY_BUILD_LINE = re.compile(
@@ -634,29 +636,47 @@ class Builder:
             )
             return
         self.say(
-            'Answer with flags to change the selection, for example '
-            '[bold]--without web --opt smp=TBB[/bold], or [bold]n[/bold] to go through the '
-            'groups one by one.'
+            'To change the selection, answer with flags, for example '
+            '[bold]--without web --opt smp=TBB[/bold].'
+        )
+        self._ask_until_yes(
+            'Build with these? [y / n = choose one by one / '
+            '--with --without --all --minimal --opt]',
+            apply=self._apply_selection_flags,
+            resolve=self._resolve_selection,
+            show=self._print_selection,
+            walk=self._adjust_selection,
+        )
+
+    def _ask_until_yes(
+        self,
+        question: str,
+        *,
+        apply: Callable[[str], None],
+        resolve: Callable[[], None],
+        show: Callable[[], None],
+        walk: Callable[[], None],
+    ) -> None:
+        """Ask until yes: ``n`` walks through the settings one by one, flags change them."""
+        self.say(
+            '[dim]Enter or y continues, n asks about each setting in turn, '
+            'and flags change settings directly. Ctrl-C stops.[/dim]'
         )
         while True:
-            answer = Prompt.ask(
-                'Build with these? [y/n, or --with/--without/--all/--minimal/--opt]',
-                default='y',
-                console=self.console,
-            ).strip()
+            answer = Prompt.ask(question, default='y', console=self.console).strip()
             if answer.lower() in ('y', 'yes'):
                 return
             if answer.lower() in ('n', 'no'):
-                self._adjust_selection()
-                self._print_selection()
-                return
+                walk()
+                show()
+                continue
             try:
-                self._apply_selection_flags(answer)
-                self._resolve_selection()
+                apply(answer)
+                resolve()
             except BuildError as err:
                 self.say(f'[red]{err}[/red]')
                 continue
-            self._print_selection()
+            show()
 
     def _resolve_selection(self) -> None:
         """Resolve the groups and options from the configuration."""
@@ -674,46 +694,71 @@ class Builder:
         except ManifestError as err:
             raise BuildError(str(err)) from None
 
-    def _apply_selection_flags(self, text: str) -> None:
-        """Apply selection flags typed at the prompt to the configuration."""
-        cfg = self.config
+    @staticmethod
+    def _parse_flags(text: str, switches: set[str], valued: set[str]) -> list[tuple[str, str]]:
+        """Split a prompt answer into ``(flag, value)`` pairs.
+
+        Parameters
+        ----------
+        text : str
+            Answer typed at the prompt.
+
+        switches : set[str]
+            Flags that take no value.
+
+        valued : set[str]
+            Flags that take one value, inline after ``=`` or as the next word.
+
+        Returns
+        -------
+        list[tuple[str, str]]
+            Flags in order, switches with an empty value.
+
+        """
         try:
             words = shlex.split(text)
         except ValueError as err:
             msg = f'Cannot parse {text!r}: {err}'
             raise BuildError(msg) from None
+        pairs: list[tuple[str, str]] = []
         i = 0
         while i < len(words):
             flag, _, inline = words[i].partition('=')
-            if flag == '--all':
-                cfg.all_, cfg.minimal = True, False
-            elif flag == '--minimal':
-                cfg.all_, cfg.minimal = False, True
-            elif flag in ('--with', '--without', '--opt'):
+            if flag in switches:
+                pairs.append((flag, ''))
+            elif flag in valued:
                 if not inline:
                     i += 1
                     if i == len(words):
                         msg = f'{flag} needs a value.'
                         raise BuildError(msg)
                     inline = words[i]
-                names = [n for n in inline.split(',') if n]
-                if flag == '--with':
-                    cfg.with_ += [n for n in names if n not in cfg.with_]
-                    cfg.without = [n for n in cfg.without if n not in names]
-                elif flag == '--without':
-                    cfg.without += [n for n in names if n not in cfg.without]
-                    cfg.with_ = [n for n in cfg.with_ if n not in names]
-                else:
-                    cfg.options = [
-                        o for o in cfg.options if o.partition('=')[0] != inline.partition('=')[0]
-                    ] + [inline]
+                pairs.append((flag, inline))
             else:
-                msg = (
-                    f'Unknown flag {words[i]!r}. Use --with, --without, --all, --minimal '
-                    'or --opt NAME=VALUE.'
-                )
+                msg = f'Unknown flag {words[i]!r}. Use {", ".join(sorted(switches | valued))}.'
                 raise BuildError(msg)
             i += 1
+        return pairs
+
+    def _apply_selection_flags(self, text: str) -> None:
+        """Apply selection flags typed at the prompt to the configuration."""
+        cfg = self.config
+        pairs = self._parse_flags(text, {'--all', '--minimal'}, {'--with', '--without', '--opt'})
+        for flag, value in pairs:
+            names = [n for n in value.split(',') if n]
+            if flag == '--all':
+                cfg.all_, cfg.minimal = True, False
+            elif flag == '--minimal':
+                cfg.all_, cfg.minimal = False, True
+            elif flag == '--with':
+                cfg.with_ += [n for n in names if n not in cfg.with_]
+                cfg.without = [n for n in cfg.without if n not in names]
+            elif flag == '--without':
+                cfg.without += [n for n in names if n not in cfg.without]
+                cfg.with_ = [n for n in cfg.with_ if n not in names]
+            else:
+                key = value.partition('=')[0]
+                cfg.options = [o for o in cfg.options if o.partition('=')[0] != key] + [value]
 
     def _print_selection(self) -> None:
         """Print the group and option table."""
@@ -888,15 +933,22 @@ class Builder:
                 msg = 'Keeping the old configuration; run again without changing the options.'
                 raise BuildError(msg)
         self._print_configure_settings()
-        if not self.confirm('Run cmake with these?'):
-            if not cfg.interactive:
-                msg = 'Stopped before configure.'
-                raise BuildError(msg)
-            self._adjust_configure_settings()
-            self._print_configure_settings()
-            if not self.confirm('Run cmake?'):
-                msg = 'Stopped before configure.'
-                raise BuildError(msg)
+        if cfg.interactive:
+            self.say(
+                'To change a setting, answer with its flag, for example '
+                '[bold]--build-type Debug -D VTK_ENABLE_LOGGING=OFF[/bold].'
+            )
+            self._ask_until_yes(
+                'Run cmake with these? [y / n = choose one by one / '
+                '--build-type --compiler-cache --version-suffix -D]',
+                apply=self._apply_configure_flags,
+                resolve=lambda: None,
+                show=self._print_configure_settings,
+                walk=self._walk_configure_settings,
+            )
+        elif not self.confirm('Run cmake with these?'):
+            msg = 'Stopped before configure.'
+            raise BuildError(msg)
         self.run(self.configure_command(), env=self.configure_env())
         if not cfg.dry_run:
             state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -919,27 +971,54 @@ class Builder:
         table.add_row('Extra cache entries', ' '.join(cfg.defines) or '(none)', '-D KEY=VALUE')
         self.console.print(table)
 
-    def _adjust_configure_settings(self) -> None:
-        """Ask for the build type, version suffix and extra cache entries."""
+    def _walk_configure_settings(self) -> None:
+        """Ask for each configure setting in turn."""
         cfg = self.config
         cfg.build_type = Prompt.ask(
-            'Build type',
-            default=cfg.build_type,
-            choices=list(BUILD_TYPES),
+            'Build type', default=cfg.build_type, choices=list(BUILD_TYPES), console=self.console
+        )
+        cache = Prompt.ask(
+            'Compiler cache',
+            default=cfg.compiler_cache,
+            choices=list(COMPILER_CACHES),
             console=self.console,
         )
-        suffix = Prompt.ask(
+        if cache != cfg.compiler_cache:
+            self._apply_configure_flags(f'--compiler-cache {cache}')
+        cfg.version_suffix = Prompt.ask(
             'Version suffix (empty for a release version)',
             default=self.version_suffix() or '',
             console=self.console,
         )
-        cfg.version_suffix = suffix or ''
         raw = Prompt.ask(
-            'Extra cache entries, KEY=VALUE separated by spaces',
+            'Extra CMake cache entries, KEY=VALUE separated by spaces',
             default=' '.join(cfg.defines),
             console=self.console,
         )
         cfg.defines = raw.split()
+
+    def _apply_configure_flags(self, text: str) -> None:
+        """Apply configure flags typed at the prompt to the configuration."""
+        cfg = self.config
+        valued = {'--build-type', '--version-suffix', '--compiler-cache', '-D', '--define'}
+        for flag, value in self._parse_flags(text, set(), valued):
+            if flag == '--build-type':
+                if value not in BUILD_TYPES:
+                    msg = f'--build-type must be one of {", ".join(BUILD_TYPES)}.'
+                    raise BuildError(msg)
+                cfg.build_type = value
+            elif flag == '--version-suffix':
+                cfg.version_suffix = value
+            elif flag == '--compiler-cache':
+                if value not in COMPILER_CACHES:
+                    msg = f'--compiler-cache must be one of {", ".join(COMPILER_CACHES)}.'
+                    raise BuildError(msg)
+                cfg.compiler_cache = value
+                self.launcher = None
+                self._activate_compiler_cache()
+            else:
+                key = value.partition('=')[0]
+                cfg.defines = [d for d in cfg.defines if d.partition('=')[0] != key] + [value]
 
     def phase_build(self) -> None:
         """Compile with ninja through cmake."""

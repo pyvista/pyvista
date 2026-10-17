@@ -41,8 +41,8 @@ The Steps
 3. **Build options.** The modules to build are organized into named
    groups (``rendering``, ``io``, ``web``, ``headless-egl``, ...), each
    with a one-line description. The default set matches the stock wheel
-   plus what PyVista's CI enables. Answer no at this step to go through
-   the groups one by one, or pick them on the command line:
+   plus what PyVista's CI enables. At the prompt, ``n`` asks about each
+   group in turn, and the command-line flags work there as well:
 
    .. code-block:: bash
 
@@ -51,8 +51,11 @@ The Steps
        pyvista build vtk --all
        pyvista build vtk --opt smp=TBB
 
-4. **Configure** runs ``cmake``. Every command is printed in full before
-   it runs.
+4. **Configure** shows the build type, compiler cache, version suffix
+   and extra CMake cache entries. ``n`` asks about each in turn, and
+   ``--build-type``, ``--compiler-cache``, ``--version-suffix`` and
+   ``-D`` change one directly. Then ``cmake`` runs. Every command is
+   printed in full before it runs.
 5. **Build** runs ``ninja`` and logs the full output to ``build.log``.
 6. **Wheel** runs ``setup.py bdist_wheel`` in the build tree.
 7. **Repair** copies VTK's shared libraries into the wheel so it installs
