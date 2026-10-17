@@ -1024,3 +1024,62 @@ def test_build_in_manylinux_dry_run(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(builder, 'confirm', return_value=False)
     with pytest.raises(BuildError, match='Stopped before the container build'):
         builder.build()
+
+
+def test_manylinux_without_checkout_or_uid(tmp_path: Path, mocker: MockerFixture):
+    fake = tmp_path / 'site-packages' / 'pyvista' / '__init__.py'
+    mocker.patch.object(manylinux.pv, '__file__', str(fake))
+    assert manylinux.pyvista_source() is None
+    mocker.patch.object(manylinux.os, 'getuid', None, create=True)
+    assert manylinux.file_owner() is None
+
+
+def test_msvc_environment_skips_lines_without_value(mocker: MockerFixture, tmp_path: Path):
+    mocker.patch.object(
+        tools.subprocess,
+        'run',
+        return_value=subprocess.CompletedProcess('', 0, stdout='banner\nINCLUDE=C:\\inc\n'),
+    )
+    env = tools.msvc_environment(tmp_path / 'vcvarsall.bat', env={})
+    assert env == {'INCLUDE': 'C:\\inc'}
+
+
+def test_windows_declined_msvc_and_nasm(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=tmp_path / 'vcvarsall.bat')
+    activated = mocker.patch.object(tools, 'msvc_environment')
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    builder._activate_msvc(tools.required_tools('windows', builder.manifest.tools, repair=False))
+    assert not activated.called
+    script = builder.config.src_dir / '.gitlab' / 'ci' / 'download_nasm.cmake'
+    script.parent.mkdir(parents=True)
+    script.write_text('')
+    run = mocker.patch.object(builder, 'run')
+    path = builder.env.get('PATH')
+    builder._activate_nasm()
+    assert not run.called
+    assert builder.env.get('PATH') == path
+
+
+def test_build_in_manylinux_forwarded_args(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(manylinux, 'pyvista_source', return_value=None)
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    cfg = _config(tmp_path, dry_run=False, manylinux='img', url='https://x/vtk.git', ref='v1')
+    builder = Builder(cfg, Console(quiet=True))
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'phase_install')
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-1-cp314-cp314-manylinux_2_28_x86_64.whl').write_text('')
+    builder.build()
+    cmd = run.call_args.args[0]
+    assert not any(part.endswith(':/pyvista') for part in cmd)
+    assert '--url https://x/vtk.git --ref v1' in cmd[-1]
+    cfg.all_ = True
+    assert '--all' in builder.container_args()
+    cfg.all_, cfg.minimal = False, True
+    assert '--minimal' in builder.container_args()
+    mocker.patch.object(phases, 'find_manifest', side_effect=ManifestError('bad manifest'))
+    with pytest.raises(BuildError, match='bad manifest'):
+        builder.build()
