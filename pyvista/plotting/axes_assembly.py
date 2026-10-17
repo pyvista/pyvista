@@ -40,7 +40,7 @@ from pyvista.plotting.text import TextProperty
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    import sys
+    from typing import Unpack
 
     from numpy.typing import NDArray
 
@@ -53,11 +53,6 @@ if TYPE_CHECKING:
     from pyvista.core.pointset import PolyData
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.camera import Camera
-
-    if sys.version_info >= (3, 11):
-        from typing import Unpack
-    else:
-        from typing_extensions import Unpack
 
 ScaleModeOptions = Literal['default', 'anti_distortion']
 
