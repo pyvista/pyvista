@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.prompt import Confirm
+from rich.prompt import Prompt
 from rich.table import Table
 
 from . import tools as _tools
@@ -730,14 +731,14 @@ class Builder:
         """Compile with ninja through cmake."""
         cfg = self.config
         self.step('5/8 Build')
-        jobs = cfg.jobs or os.cpu_count() or 1
+        cores = os.cpu_count() or 1
+        jobs = cfg.jobs or cores
+        flag = ' (--jobs)' if cfg.jobs else ''
         self.say(
-            f'Compiling with [bold]{jobs}[/bold] jobs. '
+            f'{cores} CPU cores detected; compiling with [bold]{jobs}[/bold] jobs{flag}. '
             'A full VTK build takes tens of minutes to hours.'
         )
-        if not self.confirm('Start the build?'):
-            msg = 'Stopped before building.'
-            raise BuildError(msg)
+        jobs = self._ask_jobs(jobs)
         self.run(
             ['cmake', '--build', str(cfg.cmake_dir), '--parallel', str(jobs)],
             log=cfg.build_dir / 'build.log',
@@ -745,6 +746,44 @@ class Builder:
         if self.launcher is not None:
             self.run([self.launcher.name, '--show-stats'], fatal=False)
         self.hooks('post_build')
+
+    def _ask_jobs(self, jobs: int) -> int:
+        """Confirm the build, taking a number as the job count instead of a yes.
+
+        Parameters
+        ----------
+        jobs : int
+            Proposed job count.
+
+        Returns
+        -------
+        int
+            Job count to build with.
+
+        """
+        if not self.config.interactive:
+            if not self.confirm('Start the build?'):
+                msg = 'Stopped before building.'
+                raise BuildError(msg)
+            return jobs
+        while True:
+            answer = (
+                Prompt.ask(
+                    'Start the build? [y/n, or a number of jobs]',
+                    default='y',
+                    console=self.console,
+                )
+                .strip()
+                .lower()
+            )
+            if answer in ('y', 'yes'):
+                return jobs
+            if answer in ('n', 'no'):
+                msg = 'Stopped before building.'
+                raise BuildError(msg)
+            if answer.isdigit() and int(answer) > 0:
+                return int(answer)
+            self.say('[red]Answer y, n or a positive number.[/red]')
 
     def wheel_env(self) -> dict[str, str]:
         """Return the extra environment for ``bdist_wheel``.
