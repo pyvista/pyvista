@@ -43,8 +43,9 @@ from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid

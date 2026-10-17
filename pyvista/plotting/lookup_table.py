@@ -23,8 +23,9 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat

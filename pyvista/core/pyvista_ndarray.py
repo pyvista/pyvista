@@ -18,11 +18,11 @@ from .utilities.misc import _NoNewAttrMixin
 if TYPE_CHECKING:
     from types import EllipsisType
     from typing import Any
+    from typing import Self
     from typing import SupportsIndex
     from typing import TypeAlias
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataSet
 
