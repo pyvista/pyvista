@@ -10,6 +10,7 @@ from collections.abc import Sequence
 import colorsys
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
+from enum import StrEnum
 from enum import auto
 import importlib
 import inspect
@@ -27,6 +28,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+from typing import get_overloads
 
 import cmcrameri
 import cmocean
@@ -42,7 +44,6 @@ from sphinx.util.console import bold
 from sphinx.util.console import color_terminal
 from sphinx.util.console import darkgreen
 from sphinx.util.console import nocolor
-from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_INFO
@@ -50,7 +51,6 @@ from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
-from pyvista.core.utilities.misc import StrEnum
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import _CLASS_READERS
