@@ -155,10 +155,9 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
                 self.DeepCopy(vtk_cell)
             else:
                 self.ShallowCopy(vtk_cell)
-                # vtkGenericCell.ShallowCopy shares the point coordinates but leaves
-                # the point ids of the internal cell untouched, so a shallow copy
-                # would report every point id as zero.  Set them here to keep the
-                # reference-counted sharing that vtkCell.ShallowCopy defines.
+                # vtkGenericCell.ShallowCopy updates the internal cell's PointIds
+                # pointer but leaves the outer vtkGenericCell.PointIds pointer stale.
+                # Call SetPointIds to synchronize both pointers.
                 # See https://github.com/pyvista/pyvista/issues/4723
                 self.SetPointIds(vtk_cell.GetPointIds())
 
@@ -644,12 +643,15 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         True
 
         """
+        if self is other:
+            return True
         if not isinstance(other, Cell):
             return False
         return (
             self.type == other.type
             and self.point_ids == other.point_ids
             and np.array_equal(self.points, other.points, equal_nan=True)
+            and (self.type != CellType.POLYHEDRON or self.faces == other.faces)
         )
 
     # Cells are mutable, so they are not hashable.
