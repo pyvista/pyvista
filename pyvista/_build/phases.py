@@ -394,15 +394,30 @@ class Builder:
                 f'[bold]{cfg.src_dir}[/bold] (blob-less partial clone: history without '
                 'file contents until needed).'
             )
-            if not self.confirm('Clone it now?'):
-                msg = 'Nothing to build without a source checkout.'
-                raise BuildError(msg)
+            self.say(
+                f'A fork or branch of {cfg.backend} can be given instead (--url, --ref, '
+                f'--source); another backend is a separate run, e.g. `pyvista build '
+                f'{self._other_backend()}`.'
+            )
+            source = self._ask_source()
+            if source is not None:
+                self.say(f'Using the existing checkout at [bold]{source}[/bold].')
+                cfg.source = source
+                self._existing_checkout(source)
+                self._load_manifest(shipped)
+                return
+            url, ref = cfg.url or url, cfg.ref or ref
             self.git('clone', '--filter=blob:none', url, str(cfg.src_dir))
             if ref is None and not cfg.dry_run:
                 ref = find_manifest(cfg.backend, cfg.src_dir).default_ref
             if ref is not None:
                 self.git('-c', 'advice.detachedHead=false', 'checkout', ref, cwd=cfg.src_dir)
 
+        self._load_manifest(shipped)
+
+    def _load_manifest(self, shipped: Path | None) -> None:
+        """Load the manifest from the checkout, falling back to the shipped one."""
+        cfg = self.config
         if cfg.dry_run and not (cfg.src_dir / MANIFEST_FILENAME).is_file() and shipped is None:
             msg = (
                 f'--dry-run needs an existing checkout for {cfg.backend!r}: its '
@@ -412,6 +427,58 @@ class Builder:
         source = cfg.src_dir if cfg.src_dir.exists() else None
         self._manifest = find_manifest(cfg.backend, source)
         self.say(f'Manifest: [bold]{self.manifest.path}[/bold]')
+
+    def _other_backend(self) -> str:
+        """Return a known backend other than the one being built, for examples."""
+        others = [name for name in BACKENDS if name != self.config.backend]
+        return others[0] if others else 'cvista'
+
+    def _ask_source(self) -> Path | None:
+        """Confirm the clone, taking a git URL or a local checkout instead of a yes.
+
+        Returns
+        -------
+        Path or None
+            An existing checkout to use instead of cloning, else ``None``.
+
+        """
+        cfg = self.config
+        if not cfg.interactive:
+            if not self.confirm('Clone it now?'):
+                msg = 'Nothing to build without a source checkout.'
+                raise BuildError(msg)
+            return None
+        while True:
+            answer = Prompt.ask(
+                'Clone it now? [y/n, or a git URL or local checkout to use instead]',
+                default='y',
+                console=self.console,
+            ).strip()
+            if answer.lower() in ('y', 'yes'):
+                return None
+            if answer.lower() in ('n', 'no'):
+                msg = 'Nothing to build without a source checkout.'
+                raise BuildError(msg)
+            path = Path(answer).expanduser()
+            if (path / '.git').exists():
+                return path.resolve()
+            if path.exists() or ('://' not in answer and not answer.startswith('git@')):
+                self.say(f'[red]{answer} is neither a git checkout nor a git URL.[/red]')
+                continue
+            cfg.url = answer
+            cfg.ref = Prompt.ask(
+                'Tag, branch or commit to check out',
+                default=cfg.ref or self._default_ref(),
+                console=self.console,
+            )
+            self.say(f'Cloning [bold]{cfg.url}[/bold] at [bold]{cfg.ref}[/bold] instead.')
+            return None
+
+    def _default_ref(self) -> str:
+        """Return the shipped manifest's default ref, or ``'master'`` without one."""
+        if shipped_manifest(self.config.backend) is None:
+            return 'master'
+        return find_manifest(self.config.backend, None).default_ref
 
     def _existing_checkout(self, src: Path) -> None:
         """Apply ``--update`` / ``--ref`` to a checkout that already exists."""

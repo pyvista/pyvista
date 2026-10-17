@@ -134,7 +134,7 @@ def test_interactive_adjust_configure(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(
         phases.Confirm, 'ask', side_effect=lambda q, **_: not q.startswith('Run cmake with')
     )
-    answers = iter(['Debug', '', 'X=1 Y=2'])
+    answers = iter(['y', 'Debug', '', 'X=1 Y=2'])
     mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
     console = Console(record=True, width=200, force_terminal=False)
     builder = Builder(_config(tmp_path, dry_run=False, version_suffix='dev0+gabc'), console)
@@ -150,3 +150,31 @@ def test_interactive_adjust_configure(tmp_path: Path, mocker: MockerFixture):
     out = console.export_text()
     assert 'dev0+gabc' in out
     assert '(release)' in out
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_source_prompt(tmp_path: Path, mocker: MockerFixture):
+    """The clone prompt takes a fork URL, a local checkout, or a plain yes or no."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(_config(tmp_path, dry_run=False), console)
+    git = mocker.patch.object(builder, 'git', return_value='')
+    answers = iter(['nonsense', 'https://example.com/me/vtk.git', 'mybranch'])
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
+    builder.phase_source()
+    assert 'neither a git checkout nor a git URL' in console.export_text()
+    assert git.call_args_list[0].args[2] == 'https://example.com/me/vtk.git'
+    assert git.call_args_list[1].args[-1] == 'mybranch'
+
+    fork = tmp_path / 'fork'
+    (fork / '.git').mkdir(parents=True)
+    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    mocker.patch.object(phases.Prompt, 'ask', return_value=str(fork))
+    builder.phase_source()
+    assert builder.config.source == fork.resolve()
+    assert builder.manifest.name == 'vtk'
+
+    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    mocker.patch.object(phases.Prompt, 'ask', return_value='n')
+    with pytest.raises(phases.BuildError, match='Nothing to build'):
+        builder.phase_source()
