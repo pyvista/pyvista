@@ -258,3 +258,45 @@ def test_interactive_selection_flags(tmp_path: Path, mocker: MockerFixture):
     assert builder.groups == ['io', 'web']
     assert builder.option_values['smp'] == 'Sequential'
     assert builder.config.without == ['serialization']
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_reuse_prompt(tmp_path: Path, mocker: MockerFixture):
+    """An existing checkout in the build tree is confirmed, replaced, or swapped for another."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    cfg = _config(tmp_path, dry_run=False, interactive=True)
+    (cfg.src_dir / '.git').mkdir(parents=True)
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(cfg, console)
+    git = mocker.patch.object(builder, 'git', return_value='')
+    mocker.patch.object(phases.Prompt, 'ask', return_value='y')
+    builder.phase_source()
+    assert 'Reusing the checkout' in console.export_text()
+    assert not git.called
+
+    fork = tmp_path / 'fork'
+    (fork / '.git').mkdir(parents=True)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
+    mocker.patch.object(phases.Prompt, 'ask', return_value=str(fork))
+    builder.phase_source()
+    assert builder.config.source == fork.resolve()
+
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
+    git = mocker.patch.object(builder, 'git', return_value='')
+    mocker.patch.object(
+        phases.Prompt, 'ask', side_effect=['https://example.com/me/vtk.git', 'dev']
+    )
+    mocker.patch.object(phases.Confirm, 'ask', return_value=False)
+    with pytest.raises(phases.BuildError, match='Keeping the existing checkout'):
+        builder.phase_source()
+    assert (cfg.src_dir / '.git').exists()
+
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
+    git = mocker.patch.object(builder, 'git', return_value='')
+    mocker.patch.object(
+        phases.Prompt, 'ask', side_effect=['https://example.com/me/vtk.git', 'dev']
+    )
+    mocker.patch.object(phases.Confirm, 'ask', return_value=True)
+    builder.phase_source()
+    assert git.call_args_list[0].args[2] == 'https://example.com/me/vtk.git'
+    assert git.call_args_list[1].args[-1] == 'dev'

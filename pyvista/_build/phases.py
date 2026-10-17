@@ -372,13 +372,14 @@ class Builder:
         url = cfg.url or BACKENDS.get(cfg.backend)
         if url is None and shipped is not None:
             url = find_manifest(cfg.backend, None).url
+        replacing = False
         if cfg.source is not None:
             if not (cfg.source / '.git').exists():
                 msg = f'--source {cfg.source} is not a git checkout.'
                 raise BuildError(msg)
             self.say(f'Using the existing checkout at [bold]{cfg.source}[/bold].')
             self._existing_checkout(cfg.source)
-        elif (cfg.src_dir / '.git').exists():
+        elif (cfg.src_dir / '.git').exists() and not (replacing := self._replace_checkout()):
             self.say(f'Reusing the checkout at [bold]{cfg.src_dir}[/bold]; local edits are kept.')
             self._existing_checkout(cfg.src_dir)
         else:
@@ -391,22 +392,26 @@ class Builder:
             ref = cfg.ref
             if ref is None and shipped is not None:
                 ref = find_manifest(cfg.backend, None).default_ref
-            self.say(
-                f'The source will be cloned from [bold]{url}[/bold] into '
-                f'[bold]{cfg.src_dir}[/bold] (blob-less partial clone: history without '
-                'file contents until needed).'
-            )
-            self.say(
-                f'A fork or branch of {cfg.backend} can be given instead (--url, --ref, --source).'
-            )
-            source = self._ask_source()
-            if source is not None:
-                self.say(f'Using the existing checkout at [bold]{source}[/bold].')
-                cfg.source = source
-                self._existing_checkout(source)
-                self._load_manifest(shipped)
-                return
+            if not replacing:
+                self.say(
+                    f'The source will be cloned from [bold]{url}[/bold] into '
+                    f'[bold]{cfg.src_dir}[/bold] (blob-less partial clone: history without '
+                    'file contents until needed).'
+                )
+                self.say(
+                    f'A fork or branch of {cfg.backend} can be given instead '
+                    '(--url, --ref, --source).'
+                )
+                source = self._ask_source('Clone it now?')
+                if source is not None:
+                    self.say(f'Using the existing checkout at [bold]{source}[/bold].')
+                    cfg.source = source
+                    self._existing_checkout(source)
+                    self._load_manifest(shipped)
+                    return
             url, ref = cfg.url or url, cfg.ref or ref
+            if cfg.src_dir.exists() and not cfg.dry_run:
+                shutil.rmtree(cfg.src_dir)
             self.git('clone', '--filter=blob:none', url, str(cfg.src_dir))
             if ref is None and not cfg.dry_run:
                 ref = find_manifest(cfg.backend, cfg.src_dir).default_ref
@@ -428,24 +433,58 @@ class Builder:
         self._manifest = find_manifest(cfg.backend, source)
         self.say(f'Manifest: [bold]{self.manifest.path}[/bold]')
 
-    def _ask_source(self) -> Path | None:
-        """Confirm the clone, taking a git URL or a local checkout instead of a yes.
+    def _replace_checkout(self) -> bool:
+        """Ask whether to keep the checkout in the build tree or replace it.
 
         Returns
         -------
-        Path or None
-            An existing checkout to use instead of cloning, else ``None``.
+        bool
+            ``True`` when a fork is to be cloned in its place.
 
         """
         cfg = self.config
         if not cfg.prompting:
-            if not self.confirm('Clone it now?'):
+            return False
+        self.say(
+            f'A checkout already exists at [bold]{cfg.src_dir}[/bold]. Answer with a git '
+            'URL to delete it and clone a fork there instead, or with a local checkout '
+            'to build that one.'
+        )
+        source = self._ask_source('Reuse it?')
+        if source is not None:
+            cfg.source = source
+            return False
+        if cfg.url is None:
+            return False
+        self.say(f'[yellow]{cfg.src_dir} will be deleted and cloned again.[/yellow]')
+        if not self.confirm('Delete it?', default=False):
+            msg = 'Keeping the existing checkout. Run again to build it, or pass --build-dir.'
+            raise BuildError(msg)
+        return True
+
+    def _ask_source(self, question: str) -> Path | None:
+        """Ask ``question``, taking a git URL or a local checkout instead of a yes.
+
+        Parameters
+        ----------
+        question : str
+            Question to ask. Yes keeps the current plan.
+
+        Returns
+        -------
+        Path or None
+            An existing checkout to use instead, else ``None``.
+
+        """
+        cfg = self.config
+        if not cfg.prompting:
+            if not self.confirm(question):
                 msg = 'Nothing to build without a source checkout.'
                 raise BuildError(msg)
             return None
         while True:
             answer = Prompt.ask(
-                'Clone it now? [y/n, or a git URL or local checkout to use instead]',
+                f'{question} [y/n, or a git URL or local checkout to use instead]',
                 default='y',
                 console=self.console,
             ).strip()
