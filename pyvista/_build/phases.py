@@ -626,6 +626,41 @@ class Builder:
         """Show the groups and options, letting the user adjust them interactively."""
         cfg = self.config
         self.step('3/8 Build options')
+        self._resolve_selection()
+        self._print_selection()
+        if not cfg.interactive:
+            self.say(
+                'Change the selection with --with/--without/--all/--minimal and --opt NAME=VALUE.'
+            )
+            return
+        self.say(
+            'Answer with flags to change the selection, for example '
+            '[bold]--without web --opt smp=TBB[/bold], or [bold]n[/bold] to go through the '
+            'groups one by one.'
+        )
+        while True:
+            answer = Prompt.ask(
+                'Build with these? [y/n, or --with/--without/--all/--minimal/--opt]',
+                default='y',
+                console=self.console,
+            ).strip()
+            if answer.lower() in ('y', 'yes'):
+                return
+            if answer.lower() in ('n', 'no'):
+                self._adjust_selection()
+                self._print_selection()
+                return
+            try:
+                self._apply_selection_flags(answer)
+                self._resolve_selection()
+            except BuildError as err:
+                self.say(f'[red]{err}[/red]')
+                continue
+            self._print_selection()
+
+    def _resolve_selection(self) -> None:
+        """Resolve the groups and options from the configuration."""
+        cfg = self.config
         try:
             self.groups = resolve_groups(
                 self.manifest,
@@ -638,13 +673,47 @@ class Builder:
             self.option_values = resolve_options(self.manifest, cfg.options)
         except ManifestError as err:
             raise BuildError(str(err)) from None
-        self._print_selection()
-        self.say(
-            'Change the selection with --with/--without/--all/--minimal and --opt NAME=VALUE.'
-        )
-        if cfg.interactive and not self.confirm('Build with these?'):
-            self._adjust_selection()
-            self._print_selection()
+
+    def _apply_selection_flags(self, text: str) -> None:
+        """Apply selection flags typed at the prompt to the configuration."""
+        cfg = self.config
+        try:
+            words = shlex.split(text)
+        except ValueError as err:
+            msg = f'Cannot parse {text!r}: {err}'
+            raise BuildError(msg) from None
+        i = 0
+        while i < len(words):
+            flag, _, inline = words[i].partition('=')
+            if flag == '--all':
+                cfg.all_, cfg.minimal = True, False
+            elif flag == '--minimal':
+                cfg.all_, cfg.minimal = False, True
+            elif flag in ('--with', '--without', '--opt'):
+                if not inline:
+                    i += 1
+                    if i == len(words):
+                        msg = f'{flag} needs a value.'
+                        raise BuildError(msg)
+                    inline = words[i]
+                names = [n for n in inline.split(',') if n]
+                if flag == '--with':
+                    cfg.with_ += [n for n in names if n not in cfg.with_]
+                    cfg.without = [n for n in cfg.without if n not in names]
+                elif flag == '--without':
+                    cfg.without += [n for n in names if n not in cfg.without]
+                    cfg.with_ = [n for n in cfg.with_ if n not in names]
+                else:
+                    cfg.options = [
+                        o for o in cfg.options if o.partition('=')[0] != inline.partition('=')[0]
+                    ] + [inline]
+            else:
+                msg = (
+                    f'Unknown flag {words[i]!r}. Use --with, --without, --all, --minimal '
+                    'or --opt NAME=VALUE.'
+                )
+                raise BuildError(msg)
+            i += 1
 
     def _print_selection(self) -> None:
         """Print the group and option table."""
