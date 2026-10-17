@@ -316,7 +316,7 @@ _dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pv.Po
 
 
 def load_globe_texture() -> Texture:
-    """Load a pyvista.Texture that can be applied to the globe source.
+    """Load a :class:`pyvista.Texture` that can be applied to the globe source.
 
     Returns
     -------
