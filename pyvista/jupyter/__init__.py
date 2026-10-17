@@ -20,8 +20,12 @@ from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 from pyvista.core.utilities._registry_helpers import handler_source
 
-JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
+_TrameServerBackendOptions = Literal['client', 'server', 'trame']  # served in an iframe
+_TrameBackendOptions = Literal[_TrameServerBackendOptions, 'html']
+JupyterBackendOptions = Literal['static', _TrameBackendOptions, 'none']
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
+_TRAME_BACKENDS = get_args(_TrameBackendOptions)
+_TRAME_SERVER_BACKENDS = get_args(_TrameServerBackendOptions)
 
 JUPYTER_BACKEND_ENTRY_POINT_GROUP = 'pyvista.jupyter_backends'
 
@@ -244,9 +248,9 @@ def _validate_jupyter_backend(
         raise ImportError(msg)
 
     if _is_jupyter_backend(backend):
-        if backend in ['server', 'client', 'trame', 'html']:
+        if backend in _TRAME_BACKENDS:
             if _get_custom_backend_handler(backend) is None:  # pragma: no cover
-                msg = 'Please install trame dependencies: pip install trame-pyvista'
+                msg = 'Please install trame dependencies: pip install pyvista[jupyter]'
                 raise ImportError(msg)
         return backend
 

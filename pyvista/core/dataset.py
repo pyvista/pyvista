@@ -58,11 +58,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+    from typing import Self
 
     from numpy.typing import NDArray
     import pandas
     import pyarrow
-    from typing_extensions import Self
 
     from pyvista import Cell
     from pyvista import CellType
@@ -1926,7 +1926,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and of the point, cell and
+        This will produce a deep copy of the points and of the point, cell, and
         field data of the original mesh.
 
         Examples
@@ -1965,7 +1965,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and of the point, cell and
+        This will produce a deep copy of the points and of the point, cell, and
         field data of the original mesh.
 
         Examples
@@ -2637,7 +2637,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Returns
         -------
         pyvista.Cell
-            The i-th pyvista.Cell.
+            The i-th :class:`pyvista.Cell`.
 
         Notes
         -----

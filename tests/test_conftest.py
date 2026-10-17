@@ -90,6 +90,21 @@ def _load_current_config(
     conftest.unlink()
 
 
+@pytest.mark.parametrize(
+    ('sources', 'raises'),
+    [(None, False), ([True], False), (['pyvista', 'tests'], False), (['pyvista.ext'], True)],
+)
+def test_dotted_cov_target_rejected(sources, raises):
+    from tests.conftest import pytest_configure
+
+    config = SimpleNamespace(option=SimpleNamespace(cov_source=sources))
+    if raises:
+        with pytest.raises(pytest.UsageError, match=r"not 'pyvista\.ext'\. Use plain --cov\."):
+            pytest_configure(config)
+    else:
+        pytest_configure(config)
+
+
 def test_warnings_turned_to_errors(
     pytester: pytest.Pytester,
     results_parser: PytesterStdoutParser,

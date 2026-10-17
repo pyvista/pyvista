@@ -26,7 +26,7 @@ New examples should be added as python scripts to:
 ``examples/<index>-<directory-name>/<some_example>.py``
 
 .. note::
-   Avoid creating new directories unless absolutely necessary.If you *must*
+   Avoid creating new directories unless absolutely necessary. If you *must*
    create a new folder, make sure to add a ``README.txt`` containing a
    reference, a title and a single sentence description of the folder.
    Otherwise the new folder will be ignored by Sphinx.
