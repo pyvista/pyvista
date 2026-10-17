@@ -209,6 +209,9 @@ def required_tools(os_name: str, tool_specs: Mapping[str, str], *, repair: bool)
     return tools
 
 
+PYTHON_BUILD_PACKAGES = ('setuptools', 'wheel')
+
+
 def python_build_packages() -> list[str]:
     """Return the packages ``setup.py bdist_wheel`` needs that are not importable.
 
@@ -218,7 +221,7 @@ def python_build_packages() -> list[str]:
         Missing package names among ``setuptools`` and ``wheel``.
 
     """
-    return [name for name in ('setuptools', 'wheel') if importlib.util.find_spec(name) is None]
+    return [name for name in PYTHON_BUILD_PACKAGES if importlib.util.find_spec(name) is None]
 
 
 def compiler_cache_tool(

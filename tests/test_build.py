@@ -300,6 +300,8 @@ def test_pip_tools_offered(tmp_path: Path, mocker: MockerFixture):
     Builder(_config(tmp_path), console).build()
     out = console.export_text()
     assert 'Missing Python packages: cmake>=3.22, auditwheel, wheel' in out
+    assert re.search(r'wheel \(python\)\s+│ -\s+│ missing', out)
+    assert re.search(r'setuptools \(python\)\s+│ .*│ ok', out)
     assert f'$ {phases._join(["pip", "install", "cmake>=3.22", "auditwheel", "wheel"])}' in out
 
 

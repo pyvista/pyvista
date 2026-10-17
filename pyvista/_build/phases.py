@@ -454,13 +454,19 @@ class Builder:
                 status = '[red]missing[/red]'
                 blocking.append(tool)
             table.add_row(tool.label, found, status)
+        missing_packages = _tools.python_build_packages()
+        for name in _tools.PYTHON_BUILD_PACKAGES:
+            if name in missing_packages:
+                table.add_row(f'{name} (python)', '-', '[yellow]missing[/yellow]')
+            else:
+                table.add_row(f'{name} (python)', sys.prefix, '[green]ok[/green]')
         self.console.print(table)
         if blocking:
             lines = [f'{t.name}: {t.instructions}' for t in blocking]
             msg = 'Install these and run again:\n  ' + '\n  '.join(lines)
             raise BuildError(msg)
 
-        specs = [f'{t.pip}{t.spec}' for t in missing_pip] + _tools.python_build_packages()
+        specs = [f'{t.pip}{t.spec}' for t in missing_pip] + missing_packages
         if specs:
             cmd = _tools.pip_install_command(*specs)
             if cmd is None:
