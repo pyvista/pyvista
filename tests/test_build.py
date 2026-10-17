@@ -916,6 +916,7 @@ def test_manylinux_helpers(tmp_path: Path, mocker: MockerFixture):
         paths=['/work', '/cache'],
     )
     assert 'dnf install -y --setopt=install_weak_deps=False a-devel b' in script
+    assert "git config --global --add safe.directory '*'" in script
     assert 'yum install -y a-devel b' in script
     assert 'ccache-4.14-linux-x86_64-musl-static' in script
     assert manylinux.CCACHE_SHA256 in script
