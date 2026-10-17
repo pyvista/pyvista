@@ -171,7 +171,7 @@ jobs:
           MANYLINUX: ${{ runner.os == 'Linux' && '--manylinux' || '' }}
         run: |
           python -m pyvista build vtk $MANYLINUX \
-            --source vtk-src --build-dir vtk-build --cache-dir compiler-cache --no-install \
+            --source vtk-src --build-dir vtk-build --cache-dir compiler-cache --no-install --opt smp=Sequential \
             --version-suffix "dev0+g${VTK_NIGHTLY_SHA:0:8}"
 
       - name: Show the full build log
