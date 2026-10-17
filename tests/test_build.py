@@ -496,7 +496,7 @@ def test_msvc_environment(mocker: MockerFixture, tmp_path: Path):
 
 def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
     """Return a builder on the shipped VTK manifest with the source phase done."""
-    cfg = _config(tmp_path, dry_run=False, yes=True, **kwargs)
+    cfg = _config(tmp_path, dry_run=False, **kwargs)
     builder = Builder(cfg, Console(record=True, width=4000, force_terminal=False))
     builder._manifest = find_manifest('vtk', None)
     builder.groups = resolve_groups(builder.manifest, cfg.os_name)
@@ -626,7 +626,7 @@ def test_compiler_cache_auto_missing(tmp_path: Path, mocker: MockerFixture):
 
 
 def test_git_version_suffix(tmp_path: Path, mocker: MockerFixture):
-    cfg = _config(tmp_path, dry_run=False, yes=True)
+    cfg = _config(tmp_path, dry_run=False)
     (cfg.src_dir / '.git').mkdir(parents=True)
     builder = Builder(cfg, Console(quiet=True))
     builder._manifest = find_manifest('vtk', None)
@@ -784,11 +784,11 @@ def test_option_coerce_and_schema_errors():
 @pytest.mark.usefixtures('no_tools')
 def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
     console = Console(record=True, width=200, force_terminal=False)
-    Builder(_config(tmp_path), console).build()
+    Builder(_config(tmp_path, interactive=True), console).build()
     out = console.export_text()
     assert 'eight steps' in out
     assert out.index('Proceed?') < out.index('1/8 Source')
-    builder = Builder(_config(tmp_path, dry_run=False, yes=True), Console(quiet=True))
+    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
     mocker.patch.object(builder, 'confirm', return_value=False)
     with pytest.raises(BuildError, match='Stopped before the first step'):
         builder.build()
@@ -797,14 +797,21 @@ def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
 def test_confirm_asks_on_a_terminal(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     ask = mocker.patch.object(phases.Confirm, 'ask', return_value=False)
-    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), console)
     assert builder.confirm('Go?') is False
     assert ask.call_args.args[0] == 'Go?'
+    builder = Builder(_config(tmp_path, dry_run=False), console)
+    assert builder.confirm('Go?') is True
+    assert console.export_text() == ''
+    builder = Builder(_config(tmp_path, interactive=True), console)
+    assert builder.confirm('Go?') is True
+    assert 'Go? -> yes (dry run)' in console.export_text()
 
 
 @pytest.mark.usefixtures('no_tools')
 def test_clone_declined(tmp_path: Path, mocker: MockerFixture):
-    builder = Builder(_config(tmp_path, dry_run=False, yes=True), Console(quiet=True))
+    builder = Builder(_config(tmp_path, dry_run=False), Console(quiet=True))
     mocker.patch.object(builder, 'confirm', return_value=False)
     with pytest.raises(BuildError, match='Nothing to build without a source checkout'):
         builder.phase_source()
@@ -831,7 +838,7 @@ def test_version_command_output(tmp_path: Path, mocker: MockerFixture):
         'version_command = "{python} version.py"\n'
     )
     builder = Builder(
-        _config(tmp_path, backend='demo', source=src, dry_run=False, yes=True), Console(quiet=True)
+        _config(tmp_path, backend='demo', source=src, dry_run=False), Console(quiet=True)
     )
     builder._manifest = find_manifest('demo', src)
     mocker.patch.object(
@@ -850,7 +857,7 @@ def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     mocker.patch.object(phases.os, 'cpu_count', return_value=8)
     builder = _builder(tmp_path, mocker)
-    builder.config.yes = False
+    builder.config.interactive = True
     run = mocker.patch.object(builder, 'run')
     mocker.patch.object(builder, 'hooks')
     mocker.patch.object(phases.Prompt, 'ask', side_effect=['x', '0', '4'])

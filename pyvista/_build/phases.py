@@ -78,7 +78,7 @@ class BuildConfig:
     version_suffix: str | None = None
     repair: bool = True
     install: bool = False
-    yes: bool = False
+    interactive: bool = False
     dry_run: bool = False
     os_name: str = field(default_factory=_tools.host_os)
 
@@ -108,9 +108,9 @@ class BuildConfig:
         return self.cache_dir if self.cache_dir is not None else self.build_dir / 'compiler-cache'
 
     @property
-    def interactive(self) -> bool:  # numpydoc ignore=RT01
-        """Whether to ask questions."""
-        return not (self.yes or self.dry_run) and sys.stdin.isatty()
+    def prompting(self) -> bool:  # numpydoc ignore=RT01
+        """Whether to ask questions: interactive, on a terminal, and not a dry run."""
+        return self.interactive and not self.dry_run and sys.stdin.isatty()
 
 
 class Builder:
@@ -177,7 +177,7 @@ class Builder:
             Question to ask.
 
         default : bool, default: True
-            Answer taken on Enter, ``--yes`` or ``--dry-run``.
+            Answer taken on Enter, and without ``--interactive`` or under ``--dry-run``.
 
         Returns
         -------
@@ -185,11 +185,11 @@ class Builder:
             The answer.
 
         """
-        if not self.config.interactive:
-            why = '--dry-run' if self.config.dry_run else '--yes'
-            self.say(f'[dim]{question} -> {"yes" if default else "no"} ({why})[/dim]')
-            return default
-        return Confirm.ask(question, default=default, console=self.console)
+        if self.config.prompting:
+            return Confirm.ask(question, default=default, console=self.console)
+        if self.config.interactive:
+            self.say(f'[dim]{question} -> {"yes" if default else "no"} (dry run)[/dim]')
+        return default
 
     def run(
         self,
@@ -1054,7 +1054,7 @@ class Builder:
             Job count to build with.
 
         """
-        if not self.config.interactive:
+        if not self.config.prompting:
             if not self.confirm('Start the build?'):
                 msg = 'Stopped before building.'
                 raise BuildError(msg)
