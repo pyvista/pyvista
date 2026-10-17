@@ -62,6 +62,13 @@ Install the wheel into the current environment when the build finishes:
 
     pyvista build vtk --install
 
+Build a portable Linux wheel inside a manylinux container (needs Docker, see
+:ref:`building_vtk`):
+
+.. code-block:: bash
+
+    pyvista build vtk --manylinux
+
 Print the commands a build would run without running any of them. With
 ``--interactive`` each question is shown with the answer it would take, which
 is the quickest way to see what the eight steps do:

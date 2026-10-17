@@ -310,3 +310,19 @@ def test_prompts_print_brackets_verbatim():
     assert str(prompt.make_prompt('y')).endswith('(y): ')
     confirm = phases.Confirm('Delete it? [careful]', console=console)
     assert '[careful]' in str(confirm.make_prompt(False))
+
+
+def test_cli_manylinux(mocker: MockerFixture, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    captured: list[BuildConfig] = []
+
+    def fake_build(self):
+        captured.append(self.config)
+
+    mocker.patch.object(Builder, 'build', fake_build)
+    main('build vtk --dry-run')
+    assert captured[-1].manylinux is None
+    main('build vtk --dry-run --manylinux')
+    assert captured[-1].manylinux.startswith('quay.io/pypa/manylinux_2_28_')
+    main('build vtk --dry-run --manylinux --manylinux-image my/image')
+    assert captured[-1].manylinux == 'my/image'
