@@ -5,6 +5,7 @@ import itertools
 import re
 import sys
 from types import GeneratorType
+import warnings
 
 import numpy as np
 import pytest
@@ -346,7 +347,9 @@ def test_cell_no_field_data():
 
 @pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_copy_generic(cell):
+    n_faces = cell.n_faces
     cell = cell.copy()
+    assert cell.n_faces == n_faces
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
     assert cell_copy.point_ids == cell.point_ids
@@ -377,7 +380,7 @@ def test_cell_copy():
     assert cell_copy == cell
 
 
-def test_cell_eq_compares_point_ids():
+def test_cell_eq_compares_point_ids(monkeypatch):
     points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
     cell = pv.PolyData(points, faces=[3, 0, 1, 2]).get_cell(0)
 
@@ -396,6 +399,12 @@ def test_cell_eq_compares_point_ids():
 
     poly = example_cells.Polyhedron().get_cell(0)
     assert poly == poly.copy(deep=True)
+    assert poly == poly.copy(deep=False)
+    with warnings.catch_warnings(), monkeypatch.context() as m:
+        warnings.simplefilter('ignore', DeprecationWarning)
+        m.setattr(pv.core.cell, '_SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS', False)
+        assert cell == cell.copy(deep=True)
+        assert poly == poly.copy(deep=True)
     flipped_faces = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     flipped = pv.UnstructuredGrid(
         [len(flipped_faces), *flipped_faces], [pv.CellType.POLYHEDRON], poly.points.copy()

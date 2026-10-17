@@ -12,6 +12,7 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
@@ -151,15 +152,36 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
             else:
                 self.SetCellType(cell_type)
 
+            # Before VTK 9.7, vtkGenericCell.DeepCopy/ShallowCopy forwards the outer
+            # vtkGenericCell directly to the internal cell, so vtkPolyhedron's
+            # SafeDownCast fails and drops the faces. Unwrap vtkGenericCell first.
+            source_cell = (
+                vtk_cell.GetRepresentativeCell()
+                if isinstance(vtk_cell, _vtk.vtkGenericCell)
+                else vtk_cell
+            )
             if deep:
-                self.DeepCopy(vtk_cell)
+                self.DeepCopy(source_cell)
             else:
-                self.ShallowCopy(vtk_cell)
+                self.ShallowCopy(source_cell)
                 # vtkGenericCell.ShallowCopy updates the internal cell's PointIds
                 # pointer but leaves the outer vtkGenericCell.PointIds pointer stale.
                 # Call SetPointIds to synchronize both pointers.
                 # See https://github.com/pyvista/pyvista/issues/4723
-                self.SetPointIds(vtk_cell.GetPointIds())
+                self.SetPointIds(source_cell.GetPointIds())
+            if not _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS and isinstance(
+                source_cell, _vtk.vtkPolyhedron
+            ):
+                # VTK < 9.4 does not override DeepCopy or ShallowCopy on vtkPolyhedron.
+                n_faces = source_cell.GetNumberOfFaces()
+                face_stream = [n_faces]
+                for i in range(n_faces):
+                    face_pts = source_cell.GetFace(i).GetPointIds()
+                    n_pts = face_pts.GetNumberOfIds()
+                    face_stream.append(n_pts)
+                    face_stream.extend(face_pts.GetId(j) for j in range(n_pts))
+                cast('_vtk.vtkPolyhedron', self.GetRepresentativeCell()).SetFaces(face_stream)
+                self.Initialize()
 
     @property
     def type(self: Self) -> CellType:
