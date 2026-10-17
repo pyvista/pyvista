@@ -113,7 +113,6 @@ jobs:
           path: vtk-commit-range.md
 
       - name: Setup Python
-        if: runner.os != 'Linux'
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
@@ -123,9 +122,9 @@ jobs:
         run: brew install ccache
 
       - name: Install PyVista
-        if: runner.os != 'Linux'
         shell: bash
-        run: python -m pip install --upgrade pip .
+        # Editable so that `--manylinux` installs this checkout inside the container too.
+        run: python -m pip install --upgrade pip -e .
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
@@ -165,35 +164,15 @@ jobs:
         if: runner.os == 'Windows'
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
 
-      - name: Start manylinux container (Linux)
-        if: runner.os == 'Linux'
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-        run: |
-          # The steps below run through $RUN_IN, which stays empty on macOS and Windows.
-          py="cp${PYTHON_VERSION//./}"
-          docker run --detach --name manylinux \
-            --volume "$GITHUB_WORKSPACE:/work" --workdir /work \
-            --env CCACHE_MAXSIZE --env VTK_NIGHTLY_SHA \
-            --env PYTHON="/opt/python/${py}-${py}/bin/python" \
-            quay.io/pypa/manylinux_2_28_x86_64 sleep infinity
-          docker exec manylinux bash -euxo pipefail -c '
-            dnf install -y --setopt=install_weak_deps=False libX11-devel libXcursor-devel mesa-libGL-devel
-            "$PYTHON" -m pip install --upgrade pip
-            "$PYTHON" -m pip install --only-binary :all: /work
-            curl -sSfL -o /tmp/ccache.tar.xz https://github.com/ccache/ccache/releases/download/v4.14/ccache-4.14-linux-x86_64-musl-static.tar.xz
-            echo "888eaf9697919d6eba77be797e9d9c9e40e734d11d67d25a79b075c3f79f6c77  /tmp/ccache.tar.xz" | sha256sum --check
-            tar -xJf /tmp/ccache.tar.xz -C /usr/local/bin --strip-components=1 ccache-4.14-linux-x86_64-musl-static/ccache
-          '
-          echo "RUN_IN=docker exec manylinux" >> "$GITHUB_ENV"
-
       - name: Build VTK wheel
         shell: bash
-        # NASM on Windows and the pip-installable tools are fetched by the command itself.
+        # --manylinux (Linux) builds inside the manylinux_2_28 container; the command fetches its own tools.
+        env:
+          MANYLINUX: ${{ runner.os == 'Linux' && '--manylinux' || '' }}
         run: |
-          $RUN_IN bash -c '"${PYTHON:-python}" -m pyvista build vtk \
+          python -m pyvista build vtk $MANYLINUX \
             --source vtk-src --build-dir vtk-build --cache-dir compiler-cache --no-install \
-            --version-suffix "dev0+g${VTK_NIGHTLY_SHA:0:8}"'
+            --version-suffix "dev0+g${VTK_NIGHTLY_SHA:0:8}"
 
       - name: Show the full build log
         if: failure()
