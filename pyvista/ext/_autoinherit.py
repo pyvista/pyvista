@@ -211,7 +211,7 @@ def own_members(  # numpydoc ignore=RT01
 
 @functools.cache
 def _summary_document() -> Any:  # numpydoc ignore=RT01
-    """Return the bare docutils settings that ``extract_summary`` takes."""
+    """Return the bare ``docutils`` settings that ``extract_summary`` takes."""
     return get_default_settings(Parser)
 
 
