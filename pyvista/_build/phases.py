@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from .manifest import Manifest
 
 STATE_FILENAME = '.pyvista-build.json'
+BUILD_TYPES = ('Release', 'RelWithDebInfo', 'Debug')
 _TAG_LIKE = re.compile(r'v?\d+\.\d+')
 _join = subprocess.list2cmdline if os.name == 'nt' else shlex.join
 _NOISY_BUILD_LINE = re.compile(
@@ -744,17 +745,59 @@ class Builder:
             if not self.confirm('Reconfigure with the new options?'):
                 msg = 'Keeping the old configuration; run again without changing the options.'
                 raise BuildError(msg)
-        self.say(
-            f'Build type [bold]{cfg.build_type}[/bold], build tree [bold]{cfg.cmake_dir}[/bold].'
-        )
-        if not self.confirm('Run cmake?'):
-            msg = 'Stopped before configure.'
-            raise BuildError(msg)
+        self._print_configure_settings()
+        if not self.confirm('Run cmake with these?'):
+            if not cfg.interactive:
+                msg = 'Stopped before configure.'
+                raise BuildError(msg)
+            self._adjust_configure_settings()
+            self._print_configure_settings()
+            if not self.confirm('Run cmake?'):
+                msg = 'Stopped before configure.'
+                raise BuildError(msg)
         self.run(self.configure_command(), env=self.configure_env())
         if not cfg.dry_run:
             state_file.parent.mkdir(parents=True, exist_ok=True)
             state_file.write_text(json.dumps(self._state(), indent=2))
         self.hooks('post_configure')
+
+    def _print_configure_settings(self) -> None:
+        """Print the settings the cmake command is assembled from."""
+        cfg = self.config
+        table = Table(show_header=True, header_style='bold purple')
+        table.add_column('Setting')
+        table.add_column('Value')
+        table.add_column('Flag')
+        launcher = self.launcher.name if self.launcher is not None else 'none'
+        table.add_row('Build type', cfg.build_type, '--build-type')
+        table.add_row('Build tree', str(cfg.cmake_dir), '--build-dir')
+        table.add_row('Python', str(self.python), '')
+        table.add_row('Compiler cache', launcher, '--compiler-cache')
+        table.add_row('Version suffix', self.version_suffix() or '(release)', '--version-suffix')
+        table.add_row('Extra cache entries', ' '.join(cfg.defines) or '(none)', '-D KEY=VALUE')
+        self.console.print(table)
+
+    def _adjust_configure_settings(self) -> None:
+        """Ask for the build type, version suffix and extra cache entries."""
+        cfg = self.config
+        cfg.build_type = Prompt.ask(
+            'Build type',
+            default=cfg.build_type,
+            choices=list(BUILD_TYPES),
+            console=self.console,
+        )
+        suffix = Prompt.ask(
+            'Version suffix (empty for a release version)',
+            default=self.version_suffix() or '',
+            console=self.console,
+        )
+        cfg.version_suffix = suffix or ''
+        raw = Prompt.ask(
+            'Extra cache entries, KEY=VALUE separated by spaces',
+            default=' '.join(cfg.defines),
+            console=self.console,
+        )
+        cfg.defines = raw.split()
 
     def phase_build(self) -> None:
         """Compile with ninja through cmake."""

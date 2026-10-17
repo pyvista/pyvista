@@ -125,3 +125,28 @@ def test_cli_interrupt(mocker: MockerFixture, tmp_path: Path, capsys: pytest.Cap
     captured = capsys.readouterr()
     assert 'Stopped.' in captured.out
     assert 'PyVista build stopped' not in captured.err
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_adjust_configure(tmp_path: Path, mocker: MockerFixture):
+    """Declining the configure settings asks for the build type, suffix and entries."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    mocker.patch.object(
+        phases.Confirm, 'ask', side_effect=lambda q, **_: not q.startswith('Run cmake with')
+    )
+    answers = iter(['Debug', '', 'X=1 Y=2'])
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(_config(tmp_path, dry_run=False, version_suffix='dev0+gabc'), console)
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_source()
+    builder.phase_tools()
+    builder.phase_groups()
+    builder.phase_configure()
+    cmd = run.call_args.args[0]
+    assert '-DCMAKE_BUILD_TYPE=Debug' in cmd
+    assert '-DVTK_VERSION_SUFFIX=' in cmd
+    assert cmd[-2:] == ['-DX=1', '-DY=2']
+    out = console.export_text()
+    assert 'dev0+gabc' in out
+    assert '(release)' in out
