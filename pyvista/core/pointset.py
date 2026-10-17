@@ -24,7 +24,6 @@ from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 
@@ -53,13 +52,14 @@ from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import _CompressionOptions
+from .utilities.fileio import _map_extensions
 from .utilities.fileio import get_ext
 from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+from .utilities.writer import _HDF_WRITERS
 from .utilities.writer import BaseWriter
 from .utilities.writer import EnSightWriter
-from .utilities.writer import HDFWriter
 from .utilities.writer import HoudiniPolyDataWriter
 from .utilities.writer import IVWriter
 from .utilities.writer import OBJWriter
@@ -119,9 +119,7 @@ class _PointSetBase(DataSet):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
-        '.xyz': SimplePointsWriter,
-    }
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(SimplePointsWriter)
 
     def center_of_mass(self, *, scalars_weight: bool = False) -> NDArray[np.float64]:
         """Return the coordinates for the center of mass of the mesh.
@@ -831,17 +829,16 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
-        '.ply': PLYWriter,
-        '.vtp': XMLPolyDataWriter,
-        '.stl': STLWriter,
-        '.vtk': PolyDataWriter,
-        '.geo': HoudiniPolyDataWriter,
-        '.obj': OBJWriter,
-        '.iv': IVWriter,
-    }
-    if vtk_version_info >= (9, 4):
-        _WRITERS.update({'.vtkhdf': HDFWriter})
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
+        HoudiniPolyDataWriter,
+        IVWriter,
+        OBJWriter,
+        PLYWriter,
+        PolyDataWriter,
+        STLWriter,
+        XMLPolyDataWriter,
+        *_HDF_WRITERS,
+    )
 
     def __init__(
         self,
@@ -2726,13 +2723,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
-        '.vtu': XMLUnstructuredGridWriter,
-        '.vtk': UnstructuredGridWriter,
-        '.case': EnSightWriter,
-    }
-    if vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = HDFWriter
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
+        EnSightWriter, UnstructuredGridWriter, XMLUnstructuredGridWriter, *_HDF_WRITERS
+    )
 
     def __init__(
         self,
@@ -3962,10 +3955,9 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[StructuredGridWriter | XMLStructuredGridWriter]]] = {
-        '.vtk': StructuredGridWriter,
-        '.vts': XMLStructuredGridWriter,
-    }  # type: ignore[assignment]
+    _WRITERS: ClassVar[dict[str, type[StructuredGridWriter | XMLStructuredGridWriter]]] = (
+        _map_extensions(StructuredGridWriter, XMLStructuredGridWriter)  # type: ignore[assignment]
+    )
 
     def __init__(
         self,
@@ -4382,10 +4374,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {
-        '.vtu': XMLUnstructuredGridWriter,
-        '.vtk': UnstructuredGridWriter,
-    }
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
+        UnstructuredGridWriter, XMLUnstructuredGridWriter
+    )
 
     def __init__(
         self, *args, deep: bool = False, validate: bool | _NestedMeshValidationFields = False

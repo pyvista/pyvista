@@ -95,7 +95,7 @@ if TYPE_CHECKING:
 def _rectilinear_transform_components(
     transform: Transform,
 ) -> _RectilinearComponents:
-    """Return the translation, scale and axis order of a transform a grid can represent."""
+    """Return the translation, scale, and axis order of a transform a grid can represent."""
     # Follow similar decomposition performed by ImageData.index_to_physical_matrix
     T, R, N, S, K = transform.decompose()
 
@@ -177,7 +177,7 @@ def _convert_transform_input_to_float(
 
 
 def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) -> None:
-    """Copy the point, cell and field arrays the transform filter produced."""
+    """Copy the point, cell, and field arrays the transform filter produced."""
     output.point_data.update(filtered.point_data, copy=copy)
     output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
@@ -198,7 +198,7 @@ def _transform_rectilinear_axes(
     dataset: RectilinearGrid,
     components: _RectilinearComponents,
 ) -> None:
-    """Set a grid's axes to another's, permuted, scaled and translated."""
+    """Set a grid's axes to another grid's, permuted, scaled, and translated."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
     translation, scale, axes = components
     coordinates = (dataset.x, dataset.y, dataset.z)
@@ -2097,7 +2097,7 @@ class DataObjectFilters:
         .. warning::
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
             :class:`~pyvista.RectilinearGrid`, and :class:`~pyvista.RectilinearGrid` only
-            supports rotations which map each axis onto a coordinate axis, i.e. multiples
+            supports rotations which map each axis onto a coordinate axis, that is, multiples
             of 90 degrees. If an unsupported transformation is present, a ``ValueError``
             is raised. To fully support these transformations, the input should be cast to
             :class:`~pyvista.StructuredGrid` `before` applying this filter.
