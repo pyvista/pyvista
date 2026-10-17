@@ -4,336 +4,234 @@ Building VTK
 ============
 Kitware provides Python wheels for VTK at `PyPI VTK
 <https://pypi.org/project/vtk/>`_, but there are situations where you
-may need to build VTK from source (for example, a new release of Python, EGL
-rendering, additional features, etc). As ``pyvista`` does not provide
-``vtk``, you will have to either build it manually or install the default
-wheel from PyPI.
+may need to build VTK from source: a new release of Python, EGL or
+OSMesa rendering, modules the stock wheel leaves out, a VTK branch with
+a fix you need, or a backend such as `cvista
+<https://github.com/pyvista/cvista>`_.
 
-Reference the official directions for `Building VTK
-<https://docs.vtk.org/en/latest/build_instructions/index.html>`_.
-The following directions assume you want to build a Python wheel non-standard
-situations like EGL.
-
-
-Building Wheels
-~~~~~~~~~~~~~~~
-Building VTK from source is fairly straightforward. Using the default build
-settings, build a Python wheel of VTK using ``ninja`` using the following
-script. This script uses system python3, but you can use any modern Python
-version. For some additional useful options, see the `conda-forge recipe
-<https://github.com/conda-forge/vtk-feedstock/blob/main/recipe/build-base.sh>`__.
-Most of the ones below are designed to reduce the build time and resulting
-wheel size.
-
-.. note::
-   We have also published some convenient CMake configurations files that you
-   can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`_. These configurations cover the build variants described here
-   and make the process of reproducibly building VTK wheel variants more
-   straightforward.
+PyVista ships a command that does this for you:
 
 .. code-block:: bash
 
-    #!/bin/bash
+    pyvista build vtk
 
-    # Install build dependencies
+.. versionadded:: 0.50
 
-    # Linux/Debian
-    sudo add-apt-repository -y ppa:deadsnakes/ppa  # if on Ubuntu 20.04 or 18.04, building 3.10 for example
-    sudo apt update
-    sudo apt install -y ninja-build cmake libgl1-mesa-dev python3-dev git
-    sudo apt install -y python3.10-dev python3.10-distutils  # if using deadsnakes + Python 3.10
-    # If on 18.04, you'll need a newer cmake. You can follow VTK's instructions @ https://apt.kitware.com
+It works on Linux, macOS, and Windows and follows the official `Building
+VTK <https://docs.vtk.org/en/latest/build_instructions/index.html>`_
+instructions, with the options PyVista's own CI uses. By default it
+builds with those defaults straight through, printing every command as
+it runs. Add ``--interactive`` to walk through the build one step at a
+time: each step shows its settings, says what it is about to do and
+where, and waits for a yes. Press Enter to accept the default, answer
+``n`` to go through the settings one by one, or type the same flags the
+command line takes to change one in place.
 
-    # Linux/CentOS
-    sudo yum install epel-release
-    sudo yum install ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
+.. code-block:: bash
 
-    git clone https://gitlab.kitware.com/vtk/vtk.git
-    mkdir vtk/build
-    cd vtk/build
-    git checkout v9.6.0  # optional to select a version, but recommended
+    pyvista build vtk --interactive
 
-    export PYBIN=/usr/bin/python3.10  # select your version of choice
-    cmake -GNinja \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DVTK_BUILD_TESTING=OFF \
-          -DVTK_BUILD_DOCUMENTATION=OFF \
-          -DVTK_BUILD_EXAMPLES=OFF \
-          -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
-          -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
-          -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
-          -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
-          -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
-          -DVTK_WHEEL_BUILD=ON \
-          -DVTK_PYTHON_VERSION=3 \
-          -DVTK_WRAP_PYTHON=ON \
-          -DVTK_OPENGL_HAS_EGL=False \
-          -DPython3_EXECUTABLE=$PYBIN ../
-    ninja
+The command reference with more examples is at :ref:`cli_build`. The
+result is a wheel, so the build selects itself through the usual
+mechanism once installed: see :envvar:`PYVISTA_VTK_BACKEND` and
+:ref:`the backend section of the installation guide <vtk_backend_install>`.
 
-    # build wheel in dist
-    $PYBIN -m pip install wheel
-    $PYBIN setup.py bdist_wheel
-    $PYBIN -m pip install dist/vtk-*.whl  # optionally install it
+The Steps
+~~~~~~~~~
+1. **Source.** VTK is cloned into ``./vtk-build/src`` at the release tag
+   PyVista supports. Use ``--ref`` for another tag, branch or commit, and
+   ``--build-dir`` to put everything somewhere else. An existing checkout
+   is reused as is, local edits included.
+2. **Tools.** ``git``, ``cmake``, ``ninja``, a C++ compiler and the wheel
+   repair tool are checked (see :ref:`build_tooling` for what each one
+   does). ``cmake``, ``ninja`` and the repair tool can be installed into
+   the current environment with ``pip`` after you confirm; a missing
+   compiler stops with instructions for your operating system. On
+   Windows, Visual Studio's build environment is imported automatically
+   and NASM is downloaded with VTK's own script. A compiler cache
+   (``ccache`` or ``sccache``) is used when one is on ``PATH``, so a
+   second build after editing the source is fast.
+3. **Build options.** The modules to build are organized into named
+   groups (``rendering``, ``io``, ``web``, ``headless-egl``, ...), each
+   with a one-line description. The default set matches the stock wheel
+   plus what PyVista's CI enables. At the prompt, ``n`` asks about each
+   group in turn, and the command-line flags work there as well:
+
+   .. code-block:: bash
+
+       pyvista build vtk --without web,matplotlib
+       pyvista build vtk --minimal --with rendering
+       pyvista build vtk --all
+       pyvista build vtk --opt smp=TBB
+
+4. **Configure** shows the build type, compiler cache, version suffix
+   and extra CMake cache entries. ``n`` asks about each in turn, and
+   ``--build-type``, ``--compiler-cache``, ``--version-suffix`` and
+   ``-D`` change one directly. Then ``cmake`` runs. Every command is
+   printed in full before it runs.
+5. **Build** runs ``ninja`` and logs the full output to ``build.log``.
+6. **Wheel** runs ``setup.py bdist_wheel`` in the build tree.
+7. **Repair** copies VTK's shared libraries into the wheel so it installs
+   anywhere, not only next to the build tree. Skip it with
+   ``--no-repair``.
+8. **Install** offers to install the wheel into the current environment.
+   ``--install`` says yes up front; otherwise the wheel's path and the
+   ``pip`` command are printed.
+
+Scripted Use
+~~~~~~~~~~~~
+Without ``--interactive`` nothing is asked, so the command is ready for
+CI and scripts as is. ``--dry-run`` prints the commands without running
+anything, and with ``--interactive`` it also prints each question with
+the answer it would take. Optional steps keep their own switches, so
+``--no-repair`` skips the repair step and ``--install`` installs the
+wheel at the end.
+
+.. code-block:: bash
+
+    pyvista build vtk --ref master --build-type RelWithDebInfo --jobs 8
+    pyvista build vtk --interactive --dry-run
+
+Developer Loop
+~~~~~~~~~~~~~~
+The build tree is kept between runs. Edit files under ``vtk-build/src``
+and run ``pyvista build vtk`` again: configure is skipped unless the
+options changed, ``ninja`` rebuilds what the edit touched and a new
+wheel is written. ``--reconfigure`` forces ``cmake`` to run again,
+``--clean`` deletes the build tree first, ``--update`` fetches and
+checks out ``--ref``, and ``-D KEY=VALUE`` passes any CMake cache
+entry straight through:
+
+.. code-block:: bash
+
+    pyvista build vtk --build-type Debug -D VTK_ENABLE_LOGGING=OFF
+
+Other Backends
+~~~~~~~~~~~~~~
+The same command builds any VTK backend whose source tree carries a
+``pyvista-build.toml`` manifest. That file declares the groups and
+options the backend offers, its tool requirements, per-platform CMake
+init caches and the extra commands it needs; stock VTK's manifest ships
+with PyVista. `cvista <https://github.com/pyvista/cvista>`_, the
+community fork described in :ref:`vtk_backend_install`, is known by
+name, and a fork is reachable by URL:
+
+.. code-block:: bash
+
+    pyvista build cvista
+    pyvista build myfork --url https://github.com/me/vtk.git
+
+A backend built this way is selected like any other installed one:
+automatically for ``cvista``, or explicitly through
+:envvar:`PYVISTA_VTK_BACKEND`.
 
 .. _gpu_off_screen:
 
-
 Off-Screen Plotting GPU Support
-+++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 VTK supports rendering with EGL, enabling rapid off-screen rendering
 using GPU hardware acceleration without installing a virtual
-framebuffer. The default VTK wheels are not built with this feature,
-but you can build VTK for off-screen plotting using GPU support by
-modifying the above ``cmake`` command with:
+framebuffer. The default VTK wheels are not built with this feature. On
+Linux, build a wheel with it enabled with:
 
 .. code-block:: bash
 
-   #!/bin/bash
-
-   # install build dependencies (Linux/Debian)
-   apt-get update
-   apt-get install -y ninja-build cmake libegl1-mesa-dev python3-dev
-
-   # build using EGL
-   git clone https://github.com/Kitware/VTK
-   mkdir VTK/build
-   cd VTK/build \
-   git checkout v9.6.0
-   cd /VTK/build
-   cmake -GNinja \
-     -DCMAKE_BUILD_TYPE=Release \
-     -DVTK_BUILD_TESTING=OFF \
-     -DVTK_BUILD_DOCUMENTATION=OFF \
-     -DVTK_BUILD_EXAMPLES=OFF \
-     -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
-     -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
-     -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
-     -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
-     -DVTK_WHEEL_BUILD=ON \
-     -DVTK_PYTHON_VERSION=3 \
-     -DVTK_WRAP_PYTHON=ON \
-     -DVTK_OPENGL_HAS_EGL:BOOL=ON \
-     -DVTK_USE_X:BOOL=OFF \
-     -DVTK_USE_COCOA:BOOL=OFF \
-     -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS:BOOL=ON \
-     -DPython3_EXECUTABLE=/usr/bin/python3 ../
-   ninja
-
-   # build the python wheel
-   python3 -m pip install wheel \
-   python3 setup.py bdist_wheel \
-   pip install dist/vtk-*.whl
+    sudo apt install libegl1-mesa-dev  # or: dnf install mesa-libEGL-devel
+    pyvista build vtk --with headless-egl
 
 This disables any plotting using the X server, so be prepared to use
 this module only on a headless display where you either intend to save
 static images or stream the render window to another computer with a
-display (e.g using ``pyvista.set_jupyter_backend('server')`` and
-jupyterlab). In other words, this wheel will make VTK unusable outside
-of an off-screen environment, so only plan on installing it on a
-headless system without an X server.
+display (for example, using ``pyvista.set_jupyter_backend('server')`` and
+JupyterLab). In other words, this wheel will make VTK unusable outside
+of an off-screen environment. ``--with headless-osmesa`` builds the
+software-rendering equivalent instead.
 
-
-Building OSMesa
-+++++++++++++++
-OSMesa provides higher visualization performance on CPU based hosts. Use this
-instead of ``xvfb``:
-
-.. code-block:: bash
-
-   sudo apt-get install libosmesa6-dev cmake ninja-build
-
-   git clone https://github.com/Kitware/VTK.git
-   cd VTK
-   git checkout v9.6.0
-   mkdir build
-   cd build
-
-   PYBIN=/usr/bin/python
-   cmake -GNinja \
-         -DCMAKE_BUILD_TYPE=Release \
-         -DVTK_BUILD_TESTING=OFF \
-         -DVTK_BUILD_DOCUMENTATION=OFF \
-         -DVTK_BUILD_EXAMPLES=OFF \
-         -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
-         -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
-         -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
-         -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
-         -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
-         -DVTK_WHEEL_BUILD=ON \
-         -DVTK_PYTHON_VERSION=3 \
-         -DVTK_WRAP_PYTHON=ON \
-         -DVTK_OPENGL_HAS_EGL=False \
-         -DVTK_OPENGL_HAS_OSMESA=True \
-         -DVTK_USE_COCOA=FALSE \
-         -DVTK_USE_X=FALSE \
-         -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS=True \
-         -DPython3_EXECUTABLE=$PYBIN ../
-   ninja
-   $PYBIN setup.py bdist_wheel
-
-Wheels will be generated in the ``dist`` directory.
-
-
-Building ManyLinux Wheels
-+++++++++++++++++++++++++
-The above directions are great for building a local build of VTK, but
-these wheels are difficult to share outside your local install given
-issues with ABI compatibility due to the version of Linux they were
-built on. You can work around this by building your wheels using a
-`manylinux <https://github.com/pypa/manylinux>`_ docker image.
-
-To do this, create a ``build_wheels.sh`` with the following contents in the
-``git clone`` d ``vtk`` directory, and give it executable permissions
-(``chmod +x build_wheels.sh``):
+Portable Linux Wheels
+~~~~~~~~~~~~~~~~~~~~~
+A wheel built on Linux is tagged for the ``glibc`` of the machine that
+built it and may not install elsewhere. To share one, build it inside a
+`manylinux <https://github.com/pypa/manylinux>`_ container, as PyVista's
+own CI does. ``--manylinux`` does that through `Docker
+<https://docs.docker.com/get-docker/>`_, which must be installed and
+running:
 
 .. code-block:: bash
 
-    #!/bin/bash
-    # builds python wheels on docker container and tests installation
+    pyvista build vtk --manylinux
 
-    set -e -x
+The container image matches your machine's architecture
+(``manylinux_2_28_x86_64`` or ``manylinux_2_28_aarch64``) and carries
+the same Python version as the one running the command. Inside it the
+command installs VTK's build dependencies, PyVista, and ``ccache``, then
+runs the eight steps with ``./vtk-build`` mounted as the build tree, so
+the repaired wheel lands in ``vtk-build/wheelhouse`` and the compiler
+cache is kept between runs. Files written by the container are handed
+back to your user. Pass another image with ``--manylinux-image``, and
+note that a build tree configured inside the container cannot be
+continued outside it. The install step runs on the host afterwards.
 
-    # build based on python version from args
-    PYTHON_VERSION="$1"
-    case $PYTHON_VERSION in
-    3.9)
-      PYBIN="/opt/python/cp39-cp39/bin/python"
-      ;;
-    3.10)
-      PYBIN="/opt/python/cp310-cp310/bin/python"
-      ;;
-    3.11)
-      PYBIN="/opt/python/cp311-cp311/bin/python"
-      ;;
-    esac
+.. _build_tooling:
 
-    yum install -y ninja-build cmake mesa-libGL-devel mesa-libGLU-devel
+Tooling
+~~~~~~~
+What the command looks for and offers to install:
 
-    rm -rf /io/build
-    mkdir /io/build -p
-    cd /io/build
+- `git <https://git-scm.com/>`_ clones the source and checks out the
+  requested tag, branch or commit. It is the one tool the command never
+  installs for you.
+- `CMake <https://cmake.org/>`_ configures the build: it reads VTK's
+  ``CMakeLists.txt`` and the options chosen, finds the compiler and
+  Python, and writes the build files. Installed with ``pip`` when
+  missing.
+- `Ninja <https://ninja-build.org/>`_ is the build tool that CMake
+  generates files for; it runs the compiler across all cores and only
+  rebuilds what changed. Installed with ``pip`` when missing.
+- **A C++ compiler**: GCC or Clang on Linux, Xcode's command-line tools
+  on macOS, Visual Studio with the C++ workload on Windows. Never
+  installed by the command; a missing one stops with the instructions
+  for your operating system.
+- `ccache <https://ccache.dev/>`_ and `sccache
+  <https://github.com/mozilla/sccache>`_ are compiler caches: they store
+  each object file keyed by its inputs, so rebuilding after an edit or a
+  reconfigure only recompiles what changed. ``ccache`` is the usual
+  choice on Linux and macOS; ``sccache`` is the one that supports MSVC
+  on Windows. ``--compiler-cache auto`` uses whichever is on ``PATH``.
+- **Wheel repair tools** copy the shared libraries a wheel depends on
+  into the wheel itself and set the platform tag, so it installs on a
+  machine without the build tree: `auditwheel
+  <https://github.com/pypa/auditwheel>`_ on Linux, `delocate
+  <https://github.com/matthew-brett/delocate>`_ on macOS and `delvewheel
+  <https://github.com/adang1345/delvewheel>`_ on Windows. Installed with
+  ``pip`` when missing.
+- `NASM <https://www.nasm.us/>`_ is the assembler that VTK's bundled
+  libjpeg-turbo uses for its SIMD code paths. Needed on Windows only;
+  the command offers to download it with VTK's own script.
+- `setuptools <https://setuptools.pypa.io/>`_ and `wheel
+  <https://wheel.readthedocs.io/>`_ are the Python packages that
+  ``setup.py bdist_wheel`` needs to package the build tree. Installed
+  with ``pip`` when missing.
+- `Docker <https://docs.docker.com/get-docker/>`_ runs the manylinux
+  container for ``--manylinux``. Never installed by the command.
 
-    cmake -GNinja \
+Building by Hand
+~~~~~~~~~~~~~~~~
+``pyvista build vtk --dry-run`` prints the exact ``cmake`` and
+``setup.py`` commands, which is the quickest way to get a starting point
+for a manual build. The essential configuration is:
+
+.. code-block:: bash
+
+    git clone https://gitlab.kitware.com/vtk/vtk.git
+    cmake -S vtk -B vtk/build -GNinja \
           -DCMAKE_BUILD_TYPE=Release \
+          -DVTK_WHEEL_BUILD=ON \
+          -DVTK_WRAP_PYTHON=ON \
           -DVTK_BUILD_TESTING=OFF \
           -DVTK_BUILD_DOCUMENTATION=OFF \
           -DVTK_BUILD_EXAMPLES=OFF \
-          -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
-          -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
-          -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
-          -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
-          -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
-          -DVTK_WHEEL_BUILD=ON \
-          -DVTK_PYTHON_VERSION=3 \
-          -DVTK_WRAP_PYTHON=ON \
-          -DVTK_OPENGL_HAS_EGL=False \
-          -DPython3_EXECUTABLE=$PYBIN ../
-    ninja-build
+          -DPython3_EXECUTABLE=$(which python)
+    cmake --build vtk/build --parallel
+    cd vtk/build && python setup.py bdist_wheel
 
-    # build wheel in dist
-    rm -rf dist
-    $PYBIN -m pip install wheel
-    $PYBIN setup.py bdist_wheel
-
-    # cleanup wheel
-    rm -rf wheelhouse
-    auditwheel repair dist/*.whl
-
-This script can then be called with:
-
-.. code-block:: bash
-
-    export PYTHON_VERSION=3.10
-    docker run --cpus 4.5 -e \
-           --rm -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 \
-           /io/build_wheels.sh $PYTHON_VERSION
-
-You should end up with a ``build/wheelhouse/vtk-*.whl``.
-
-.. note::
-   To build the EGL version of the wheel, follow the directions in the
-   previous section. Add ``mesa-libEGL-devel`` to the installation
-   dependencies.
-
-
-Building Python VTK Wheel on Raspberry Pi (64-bit)
-++++++++++++++++++++++++++++++++++++++++++++++++++
-While it's possible to build on 32-bit Raspberry Pi (ARMv7), there are
-several issues that crop up when building wheels for the 32-bit
-version (see `manylinux issue 84
-<https://github.com/pypa/manylinux/issues/84>`_). Should you attempt
-to build on 32-bit, try building the wheel using `dockcross
-<https://github.com/dockcross/dockcross>`_ as you may run into memory
-limitations otherwise (especially with only 1 GB RAM).
-
-Building the ``aarch64`` manylinux wheel can be done via docker with
-the ``quay.io/pypa/manylinux2014_aarch64`` image. Run the following:
-
-.. code-block:: bash
-
-    PYTHON_VERSION=3.9
-    rm -rf build
-    docker run -e \
-           --rm -v `pwd`:/io quay.io/pypa/manylinux2014_aarch64 \
-           /io/build_wheels.sh $PYTHON_VERSION
-
-Where ``build_wheels.sh`` is:
-
-.. code-block:: bash
-
-    #!/bin/bash
-    # builds python wheels on docker container and tests installation
-
-    set -e -x
-
-    # build based on python version from args
-    PYTHON_VERSION="$1"
-    case $PYTHON_VERSION in
-    3.9)
-      PYBIN="/opt/python/cp39-cp39/bin/python"
-      ;;
-    3.10)
-      PYBIN="/opt/python/cp310-cp310/bin/python"
-      ;;
-    3.11)
-      PYBIN="/opt/python/cp311-cp311/bin/python"
-      ;;
-    esac
-
-    /bin/bash
-    yum install epel-release
-    yum install ninja-build
-    yum install mesa-libEGL-devel  # only needed when building EGL
-
-    mkdir /io/build -p
-    cd /io/build
-
-    cmake -GNinja \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DVTK_BUILD_TESTING=OFF \
-          -DVTK_BUILD_DOCUMENTATION=OFF \
-          -DVTK_BUILD_EXAMPLES=OFF \
-          -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
-          -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
-          -DVTK_MODULE_ENABLE_VTK_WebCore:STRING=YES \
-          -DVTK_MODULE_ENABLE_VTK_WebGLExporter:STRING=YES \
-          -DVTK_MODULE_ENABLE_VTK_WebPython:STRING=YES \
-          -DVTK_WHEEL_BUILD=ON \
-          -DVTK_PYTHON_VERSION=3 \
-          -DVTK_WRAP_PYTHON=ON \
-          -DVTK_OPENGL_HAS_EGL=False \
-          -DPython3_EXECUTABLE=$PYBIN ../
-    ninja-build
-
-    # build wheel
-    rm -rf dist
-    $PYBIN setup.py bdist_wheel
-
-    # cleanup wheel
-    rm -rf wheelhouse
-    auditwheel repair dist/*.whl
-    cp wheelhouse/vtk*.whl /io/wheels
-
-Be sure to either enable or disable ``DVTK_OPENGL_HAS_EGL`` depending
-on if you want ``EGL`` enabled for your wheel.
+The wheel is written to ``vtk/build/dist``.

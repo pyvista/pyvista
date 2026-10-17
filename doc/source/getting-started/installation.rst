@@ -177,6 +177,8 @@ The following are a list of optional dependencies and their purpose:
 
 .. _vtk_backend:
 
+.. _vtk_backend_install:
+
 VTK Backend
 ~~~~~~~~~~~
 
@@ -248,6 +250,14 @@ PyVista is imported, since the backend is resolved at import time::
 
     PYVISTA_VTK_BACKEND=vtkmodules   # force stock VTK, even if cvista is installed
     PYVISTA_VTK_BACKEND=cvista       # force the fork
+
+Either backend can also be built from source with one command, for a newer
+Python, a different branch, or a module the published wheel leaves out::
+
+    pyvista build vtk
+    pyvista build cvista
+
+See :ref:`building_vtk` and the :ref:`command reference <cli_build>`.
 
 .. note::
 
