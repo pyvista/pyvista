@@ -1658,6 +1658,18 @@ def test_plot_clim(sphere):
     pl.show()
 
 
+def test_plot_near_constant_scalars():
+    sphere = pv.Sphere(theta_resolution=64, phi_resolution=64).triangulate()
+    blocks = pv.MultiBlock([sphere.translate((1.2, 0, 0)), sphere.translate((2.4, 0, 0))])
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='Normals', show_scalar_bar=False)
+    composite, _ = pl.add_composite(blocks, scalars='Normals', show_scalar_bar=False)
+    for mapper in (actor.mapper, composite.mapper):
+        low, high = mapper.scalar_range
+        assert low == high
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_invalid_n_arrays(sphere):
     pl = pv.Plotter()

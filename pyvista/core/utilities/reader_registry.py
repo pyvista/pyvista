@@ -28,7 +28,7 @@ from pyvista.core.utilities._optional_formats import _installed_extensions
 from pyvista.core.utilities._optional_formats import _missing_message
 from pyvista.core.utilities._optional_formats import _source
 from pyvista.core.utilities._registry_helpers import handler_source
-from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _CLASS_READERS
 from pyvista.core.utilities.reader import BaseReader
 
 if TYPE_CHECKING:
@@ -428,7 +428,7 @@ def _register(
 ) -> None:
     """Register a handler or reader class in the extension registry."""
     key = _normalize_ext(key)
-    if not override and key in CLASS_READERS:
+    if not override and key in _CLASS_READERS:
         msg = (
             f'Cannot register custom reader for "{key}": '
             f'collides with built-in VTK reader. '
@@ -474,7 +474,7 @@ def _get_ext_handler(ext: str) -> ReaderHandler | None:
 def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
     """Look up a registered reader class, importing the plugin lazily.
 
-    Consulted by :func:`pyvista.get_reader` ahead of ``CLASS_READERS``, so an
+    Consulted by :func:`pyvista.get_reader` ahead of ``_CLASS_READERS``, so an
     override wins on that path as well as on :func:`pyvista.read`.
     """
     ext = _normalize_ext(ext)
@@ -568,7 +568,7 @@ def _entry_point_package(ep: EntryPoint) -> str:
 
 def _undeclared_override_message(ext: str, ep: EntryPoint) -> str:
     """Build the error raised when a plugin shadows a built-in by accident."""
-    builtin = CLASS_READERS[ext].__name__
+    builtin = _CLASS_READERS[ext].__name__
     return (
         f'The package "{_entry_point_package(ep)}" declares a "{ext}" reader in the '
         f'"{READER_GROUP}" entry-point group, but PyVista already reads "{ext}" with '
@@ -609,7 +609,7 @@ def _resolve_pending_reader(ext: str) -> bool:
     if not eps:
         return False
     winner = eps[0]
-    if ext in CLASS_READERS and ext not in _override_ext_readers:
+    if ext in _CLASS_READERS and ext not in _override_ext_readers:
         # Before the pop, so the entry survives and the second read raises
         # too rather than falling through to the built-in.
         raise ValueError(_undeclared_override_message(ext, winner))
