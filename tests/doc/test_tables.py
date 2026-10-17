@@ -40,13 +40,6 @@ def matplotlib_named_cmaps():
     'dev' in mpl.__version__, reason='Only run documentation tests for matplotlib releases.'
 )
 def test_colormap_table_matplotlib(matplotlib_named_cmaps):
-    if (
-        'berlin' not in matplotlib_named_cmaps
-        or 'vanimo' not in matplotlib_named_cmaps
-        or 'managua' not in matplotlib_named_cmaps
-        or 'okabe_ito' not in matplotlib_named_cmaps
-    ):
-        pytest.xfail('Older Matplotlib is missing a few colormaps.')
     documented_cmaps = [
         info.name for info in make_tables._COLORMAP_INFO if info.package == 'matplotlib'
     ]
