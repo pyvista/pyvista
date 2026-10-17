@@ -28,9 +28,10 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import DTypeLike
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataObject
     from pyvista import DataSet

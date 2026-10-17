@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 from type_assert import assert_types
-from typing_extensions import Never
 
 import pyvista as pv
 from tests.typing.meshes import explicit_structured

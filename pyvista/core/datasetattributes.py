@@ -27,11 +27,11 @@ _T = TypeVar('_T')
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
+    from typing import Self
 
     from numpy.typing import NDArray
     import pandas
     import pyarrow
-    from typing_extensions import Self
 
     from pyvista import DataSet
 

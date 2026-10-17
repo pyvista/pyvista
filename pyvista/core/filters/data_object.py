@@ -60,9 +60,9 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes

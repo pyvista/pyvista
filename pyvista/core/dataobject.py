@@ -45,9 +45,9 @@ if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any
     from typing import ClassVar
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import MultiBlock
 
