@@ -611,6 +611,7 @@ class Builder:
                 table.add_row(f'{name} (python)', '-', '[yellow]missing[/yellow]')
             else:
                 table.add_row(f'{name} (python)', sys.prefix, '[green]ok[/green]')
+        table.add_row(*self._compiler_cache_row())
         self.console.print(table)
         if blocking:
             lines = [f'{t.name}: {t.instructions}' for t in blocking]
@@ -682,6 +683,21 @@ class Builder:
                 env={'CMAKE_CONFIGURATION': 'windows'},
             )
             self.env['PATH'] = f'{target}{os.pathsep}{self.env.get("PATH", "")}'
+
+    def _compiler_cache_row(self) -> tuple[str, str, str]:
+        """Return the tools-table row for the ``--compiler-cache`` choice."""
+        choice = self.config.compiler_cache
+        if choice == 'none':
+            return 'compiler cache', '-', '[dim]off (--compiler-cache none)[/dim]'
+        tool = _tools.compiler_cache_tool(choice, self.config.os_name, self.env)
+        if tool is None:
+            label = 'ccache/sccache' if choice == 'auto' else choice
+            status = (
+                '[yellow]missing, optional[/yellow]' if choice == 'auto' else '[red]missing[/red]'
+            )
+            return f'{label} (compiler cache)', '-', status
+        found = f'{tool.path} ({tool.version})' if tool.version else (tool.path or '-')
+        return f'{tool.name} (compiler cache)', found, '[green]ok[/green]'
 
     def _activate_compiler_cache(self) -> None:
         """Pick the compiler launcher and point it at the cache directory."""
