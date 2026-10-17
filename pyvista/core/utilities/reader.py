@@ -1605,7 +1605,7 @@ class Plot3DFunctionEnum(IntEnum):
 
 
 class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
-    """Reader for the PLOT3D format.
+    """Reader for the PLOT3D format (``.xyz``).
 
     Wraps :vtk:`vtkMultiBlockPLOT3DReader`.
 
