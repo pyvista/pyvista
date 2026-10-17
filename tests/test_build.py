@@ -206,7 +206,7 @@ def no_tools(mocker: MockerFixture):
 @pytest.mark.usefixtures('no_tools')
 @pytest.mark.parametrize('os_name', OS_NAMES)
 def test_dry_run_commands(tmp_path: Path, os_name):
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     builder = Builder(_config(tmp_path, os_name=os_name, defines=['FOO=1'], ref='v9.7.0'), console)
     assert builder.build() is None
     out = console.export_text()
@@ -228,7 +228,7 @@ def test_dry_run_commands(tmp_path: Path, os_name):
 
 @pytest.mark.usefixtures('no_tools')
 def test_dry_run_flags(tmp_path: Path):
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     cfg = _config(
         tmp_path,
         minimal=True,
@@ -252,7 +252,7 @@ def test_dry_run_flags(tmp_path: Path):
 
 @pytest.mark.usefixtures('no_tools')
 def test_dry_run_dev_suffix(tmp_path: Path):
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path, ref='main'), console).build()
     assert '-DVTK_VERSION_SUFFIX=dev0+g<sha>' in console.export_text()
 
@@ -293,7 +293,7 @@ def test_pip_tools_offered(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(
         tools, 'pip_install_command', side_effect=lambda *s, args=(): ['pip', 'install', *args, *s]
     )
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path), console).build()
     out = console.export_text()
     assert 'Missing Python packages: cmake>=3.22, auditwheel, wheel' in out
@@ -309,7 +309,7 @@ def test_too_old_tool(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(
         tools, 'pip_install_command', side_effect=lambda *s, **_: ['pip', 'install', *s]
     )
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path), console).build()
     out = console.export_text()
     assert 'too old' in out
@@ -357,7 +357,7 @@ def test_state_change_prompts_reconfigure(tmp_path: Path, mocker: MockerFixture)
     mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
     mocker.patch.object(tools, 'executable_version', return_value='99.0')
     mocker.patch.object(tools, 'python_build_packages', return_value=[])
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path), console).build()
     assert 'differ from the last configure' in console.export_text()
 
@@ -677,7 +677,7 @@ def test_option_coerce_and_schema_errors():
 
 @pytest.mark.usefixtures('no_tools')
 def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path, interactive=True), console).build()
     out = console.export_text()
     assert 'eight steps' in out
@@ -691,7 +691,7 @@ def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
 def test_confirm_asks_on_a_terminal(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     ask = mocker.patch.object(phases.Confirm, 'ask', return_value=False)
-    console = Console(record=True, width=200, force_terminal=False)
+    console = Console(record=True, width=4000, force_terminal=False)
     builder = Builder(_config(tmp_path, dry_run=False, interactive=True), console)
     assert builder.confirm('Go?') is False
     assert ask.call_args.args[0] == 'Go?'
