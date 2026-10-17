@@ -65,16 +65,22 @@ def test_interactive_adjust_selection(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
 
     def answer(question, **_):
-        if question.startswith('Build with these'):
-            return False
         if question.startswith('Enable'):
             return 'web' in question
         return True
 
+    walked: list[bool] = []
+
+    def prompt(question, default='', **_):
+        if question.startswith('Build with these'):
+            walked.append(True)
+            return 'y' if len(walked) > 1 else 'n'
+        return default
+
     mocker.patch.object(phases.Confirm, 'ask', side_effect=answer)
-    mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda _prompt, default='', **_: default)
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=prompt)
     console = Console(record=True, width=200, force_terminal=False)
-    cfg = _config(tmp_path, dry_run=False, ref='v9.7.0')
+    cfg = _config(tmp_path, dry_run=False, interactive=True, ref='v9.7.0')
     builder = Builder(cfg, console)
     mocker.patch.object(builder, 'run')
     mocker.patch.object(builder, 'version_suffix', return_value=None)
@@ -102,13 +108,22 @@ def test_interactive_required_and_conflicting_groups(tmp_path: Path, mocker: Moc
 
     def answer(question, **_):
         asked.append(question)
-        return not question.startswith('Build with these')
+        return True
 
     mocker.patch.object(phases.Confirm, 'ask', side_effect=answer)
+    walked: list[bool] = []
+
+    def prompt(question, default='', **_):
+        if question.startswith('Build with these'):
+            walked.append(True)
+            return 'y' if len(walked) > 1 else 'n'
+        return default
+
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=prompt)
     mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
     mocker.patch.object(tools, 'executable_version', return_value='99.0')
     mocker.patch.object(tools, 'python_build_packages', return_value=[])
-    cfg = _config(tmp_path, backend='demo', source=src, dry_run=False)
+    cfg = _config(tmp_path, backend='demo', source=src, dry_run=False, interactive=True)
     builder = Builder(cfg, Console(quiet=True))
     builder.phase_source()
     builder.phase_tools()
@@ -125,3 +140,121 @@ def test_cli_interrupt(mocker: MockerFixture, tmp_path: Path, capsys: pytest.Cap
     captured = capsys.readouterr()
     assert 'Stopped.' in captured.out
     assert 'PyVista build stopped' not in captured.err
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_configure_flags(tmp_path: Path, mocker: MockerFixture):
+    """Flags typed at the configure prompt change the cmake command in place."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    answers = iter(
+        [
+            'y',
+            'y',
+            '--build-type Fast',
+            '--compiler-cache turbo',
+            '--build-type Debug --version-suffix "" -D X=1 --define X=2 -D Y=3',
+            '--compiler-cache none',
+            '',
+        ]
+    )
+    mocker.patch.object(
+        phases.Prompt, 'ask', side_effect=lambda *_, default='', **__: next(answers) or default
+    )
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(
+        _config(tmp_path, dry_run=False, interactive=True, version_suffix='dev0+gabc'), console
+    )
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_source()
+    builder.phase_tools()
+    builder.phase_groups()
+    builder.phase_configure()
+    cmd = run.call_args.args[0]
+    assert '-DCMAKE_BUILD_TYPE=Debug' in cmd
+    assert '-DVTK_VERSION_SUFFIX=' in cmd
+    assert cmd[-2:] == ['-DX=2', '-DY=3']
+    assert not any('COMPILER_LAUNCHER' in c for c in cmd)
+    out = console.export_text()
+    assert '--build-type must be one of' in out
+    assert '--compiler-cache must be one of' in out
+    assert 'dev0+gabc' in out
+    assert '(release)' in out
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_configure_walk(tmp_path: Path, mocker: MockerFixture):
+    """Answering n at the configure prompt asks for each setting in turn."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    answers = iter(['y', 'y', 'n', 'RelWithDebInfo', 'none', 'dev0+gfeed', 'A=1 B=2', 'y'])
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_source()
+    builder.phase_tools()
+    builder.phase_groups()
+    builder.phase_configure()
+    cmd = run.call_args.args[0]
+    assert '-DCMAKE_BUILD_TYPE=RelWithDebInfo' in cmd
+    assert '-DVTK_VERSION_SUFFIX=dev0+gfeed' in cmd
+    assert cmd[-2:] == ['-DA=1', '-DB=2']
+    assert builder.launcher is None
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_source_prompt(tmp_path: Path, mocker: MockerFixture):
+    """The clone prompt takes a fork URL, a local checkout, or a plain yes or no."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), console)
+    git = mocker.patch.object(builder, 'git', return_value='')
+    answers = iter(['nonsense', 'https://example.com/me/vtk.git', 'mybranch'])
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=lambda *_, **__: next(answers))
+    builder.phase_source()
+    assert 'neither a git checkout nor a git URL' in console.export_text()
+    assert git.call_args_list[0].args[2] == 'https://example.com/me/vtk.git'
+    assert git.call_args_list[1].args[-1] == 'mybranch'
+
+    fork = tmp_path / 'fork'
+    (fork / '.git').mkdir(parents=True)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
+    mocker.patch.object(phases.Prompt, 'ask', return_value=str(fork))
+    builder.phase_source()
+    assert builder.config.source == fork.resolve()
+    assert builder.manifest.name == 'vtk'
+
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True), Console(quiet=True))
+    mocker.patch.object(phases.Prompt, 'ask', return_value='n')
+    with pytest.raises(phases.BuildError, match='Nothing to build'):
+        builder.phase_source()
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_interactive_selection_flags(tmp_path: Path, mocker: MockerFixture):
+    """Flags typed at the groups prompt change the selection in place."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    answers = iter(
+        [
+            'y',
+            '--bogus',
+            '--without',
+            '--without serialization,web --opt smp=TBB',
+            '--with web --opt smp=Sequential',
+            '--minimal --with=io',
+            '',
+        ]
+    )
+    mocker.patch.object(
+        phases.Prompt, 'ask', side_effect=lambda *_, default='', **__: next(answers) or default
+    )
+    console = Console(record=True, width=200, force_terminal=False)
+    builder = Builder(_config(tmp_path, dry_run=False, interactive=True, ref='v9.7.0'), console)
+    mocker.patch.object(builder, 'run')
+    builder.phase_source()
+    builder.phase_tools()
+    builder.phase_groups()
+    out = console.export_text()
+    assert "Unknown flag '--bogus'" in out
+    assert '--without needs a value' in out
+    assert builder.groups == ['io', 'web']
+    assert builder.option_values['smp'] == 'Sequential'
+    assert builder.config.without == ['serialization']
