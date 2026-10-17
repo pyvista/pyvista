@@ -292,6 +292,8 @@ class Report(scooby.Report):
             'pillow',
             'typing-extensions',
             'cyclopts',
+            'rich',
+            'packaging',
             'pyvista-validation',
         ]
 

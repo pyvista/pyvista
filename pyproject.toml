@@ -10,7 +10,6 @@ classifiers = [
   'Operating System :: MacOS',
   'Operating System :: Microsoft :: Windows',
   'Operating System :: POSIX',
-  'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
@@ -21,10 +20,12 @@ dependencies = [
   'cyclopts>=4.0.0',
   'matplotlib>=3.0.1',
   'numpy>=1.22.0',
+  'packaging',
   'pillow',
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'pyvista-validation==0.5.4', # Exact pin: the validation API is still unstable
+  'rich',
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
@@ -38,7 +39,7 @@ keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
 readme = 'README.md'
-requires-python = '>=3.10'
+requires-python = '>=3.11'
 
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,io-override,jupyter]']
@@ -222,6 +223,7 @@ include = ['pyvista', 'pyvista.*']
 
 [tool.setuptools.package-data]
 pyvista = ['py.typed']
+'pyvista._build.manifests' = ['*.toml']
 'pyvista.core.static' = ['*.css', '*.svg', 'mesh_icons/*.svg']
 'pyvista.examples' = [
   '2k_earth_daymap.jpg',

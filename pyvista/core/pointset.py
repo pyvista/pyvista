@@ -75,9 +75,9 @@ from .utilities.writer import XMLUnstructuredGridWriter
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista.core._typing_core import _Real
 
