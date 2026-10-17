@@ -33,8 +33,8 @@ jobs:
 
       - name: Get pyvista/data commit
         run: |
-          commit="$(git ls-remote https://github.com/pyvista/data refs/heads/fix/inverted-example-cells | awk '{ print $1 }')"
-          [ -n "$commit" ] || { echo "::error::could not resolve pyvista/data fix/inverted-example-cells"; exit 1; }
+          commit="$(git ls-remote https://github.com/pyvista/data HEAD | awk '{ print $1 }')"
+          [ -n "$commit" ] || { echo "::error::could not resolve pyvista/data HEAD"; exit 1; }
           echo "VTK_DATA_COMMIT=$commit" >> "$GITHUB_ENV"
 
       - name: Restore pyvista/data cache
@@ -52,7 +52,6 @@ jobs:
         with:
           persist-credentials: false
           repository: pyvista/data
-          ref: fix/inverted-example-cells # temporary: pyvista/data#74
           path: ${{ env.CACHE_FOLDER_NAME }}
 
       - name: Remove git metadata
