@@ -128,15 +128,17 @@ jobs:
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
-      - name: Find the newest compiler cache uploaded from main
+      - name: Find the newest compiler cache from this branch or main
         id: find-compiler-cache
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          # Newest first. Only runs on main upload one, but filter anyway.
-          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=10" \
-            --jq '[.artifacts[] | select((.expired | not) and .workflow_run.head_branch == "main")][0].workflow_run.id // empty')"; then
+          # Newest first: this branch's own upload, else main's.
+          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=50" \
+            --jq '[.artifacts[] | select(.expired | not)] as $a
+              | ([$a[] | select(.workflow_run.head_branch == env.BRANCH)] + [$a[] | select(.workflow_run.head_branch == "main")])[0].workflow_run.id // empty')"; then
             echo "::warning::Could not list the compiler cache artifacts; building cold"
             run_id=""
           fi
@@ -180,8 +182,7 @@ jobs:
         run: cat vtk-build/build.log
 
       - name: Upload compiler cache
-        # Never from a pull request: the nightly restores whichever upload is newest.
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: compiler-cache-${{ runner.os }}
