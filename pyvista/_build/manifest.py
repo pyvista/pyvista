@@ -134,6 +134,7 @@ class Manifest:
     groups: dict[str, Group]
     options: dict[str, Option]
     hooks: dict[str, tuple[str, ...]]
+    manylinux_packages: tuple[str, ...] = ()
     path: Path | None = field(default=None, compare=False)
 
     def groups_for(self, os_name: str) -> list[Group]:
@@ -265,6 +266,10 @@ def parse_manifest(data: dict[str, Any], path: Path | None = None) -> Manifest:
             msg = f'[groups.{group.name}]: conflicts with unknown group(s) {sorted(missing)}.'
             raise ManifestError(msg)
     options = {name: _parse_option(name, t) for name, t in data.get('options', {}).items()}
+    manylinux = data.get('manylinux', {})
+    if not isinstance(manylinux, dict):
+        msg = '[manylinux] must be a table.'
+        raise ManifestError(msg)
     hooks_table = data.get('hooks', {})
     unknown_hooks = set(hooks_table) - set(HOOK_NAMES)
     if unknown_hooks:
@@ -283,6 +288,7 @@ def parse_manifest(data: dict[str, Any], path: Path | None = None) -> Manifest:
         groups=groups,
         options=options,
         hooks={name: _str_list(hooks_table, name, where='[hooks]') for name in HOOK_NAMES},
+        manylinux_packages=_str_list(manylinux, 'packages', where='[manylinux]'),
         path=path,
     )
 

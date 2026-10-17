@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import importlib.util
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
@@ -221,3 +222,145 @@ def python_build_packages() -> list[str]:
 
     """
     return [name for name in PYTHON_BUILD_PACKAGES if importlib.util.find_spec(name) is None]
+
+
+def compiler_cache_tool(
+    choice: str, os_name: str, env: Mapping[str, str] | None = None
+) -> Tool | None:
+    """Resolve the ``--compiler-cache`` choice to a launcher found on ``PATH``.
+
+    Parameters
+    ----------
+    choice : str
+        ``'auto'``, ``'ccache'``, ``'sccache'`` or ``'none'``.
+
+    os_name : str
+        Operating system name; ``auto`` prefers ``sccache`` on Windows.
+
+    env : Mapping[str, str], optional
+        Environment whose ``PATH`` to search.
+
+    Returns
+    -------
+    Tool | None
+        Detected launcher, or ``None`` when none is available.
+
+    """
+    if choice == 'none':
+        return None
+    order: tuple[str, ...] = (choice,)
+    if choice == 'auto':
+        order = ('sccache', 'ccache') if os_name == 'windows' else ('ccache', 'sccache')
+    for name in order:
+        tool = Tool(name, (name,))
+        if detect(tool, env):
+            return tool
+    return None
+
+
+def compiler_cache_instructions(os_name: str) -> str:
+    """Return how to install a compiler cache.
+
+    Parameters
+    ----------
+    os_name : str
+        Operating system name.
+
+    Returns
+    -------
+    str
+        Installation instructions.
+
+    """
+    if os_name == 'macos':
+        return 'brew install ccache'
+    if os_name == 'windows':
+        return 'pip install sccache   (or: choco install sccache)'
+    return 'apt install ccache   (or: dnf install ccache)'
+
+
+def vswhere_path() -> Path | None:
+    """Return the path to ``vswhere.exe`` when Visual Studio's installer is present.
+
+    Returns
+    -------
+    Path | None
+        Path to ``vswhere.exe``, or ``None``.
+
+    """
+    base = os.environ.get('PROGRAMFILES(X86)') or os.environ.get('PROGRAMFILES')
+    if not base:
+        return None
+    path = Path(base) / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+    return path if path.is_file() else None
+
+
+def find_vcvarsall() -> Path | None:
+    """Locate ``vcvarsall.bat`` through ``vswhere``.
+
+    Returns
+    -------
+    Path | None
+        Path to ``vcvarsall.bat``, or ``None`` when no suitable Visual Studio is installed.
+
+    """
+    vswhere = vswhere_path()
+    if vswhere is None:
+        return None
+    out = subprocess.run(
+        [
+            str(vswhere),
+            '-latest',
+            '-products',
+            '*',
+            '-requires',
+            'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+            '-property',
+            'installationPath',
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if not out:
+        return None
+    path = Path(out) / 'VC' / 'Auxiliary' / 'Build' / 'vcvarsall.bat'
+    return path if path.is_file() else None
+
+
+def msvc_environment(
+    vcvarsall: Path, arch: str = 'x64', env: Mapping[str, str] | None = None
+) -> dict[str, str]:
+    """Return the environment after running ``vcvarsall.bat``.
+
+    Parameters
+    ----------
+    vcvarsall : Path
+        ``vcvarsall.bat`` to run.
+
+    arch : str, default: 'x64'
+        Target architecture argument.
+
+    env : Mapping[str, str], optional
+        Environment to run it in and extend. Defaults to the process environment.
+
+    Returns
+    -------
+    dict[str, str]
+        ``env`` plus the additions from Visual Studio.
+
+    """
+    base = dict(env if env is not None else os.environ)
+    out = subprocess.run(  # noqa: S602
+        f'"{vcvarsall}" {arch} >nul && set',
+        shell=True,
+        env=base,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    for line in out.splitlines():
+        key, sep, value = line.partition('=')
+        if sep:
+            base[key] = value
+    return base

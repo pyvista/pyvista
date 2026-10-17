@@ -15,6 +15,7 @@ from pyvista._build import Builder
 from pyvista._build import BuildError
 from pyvista._build import ManifestError
 from pyvista._build import load_manifest
+from pyvista._build import manylinux
 from pyvista._build import phases
 from pyvista._build import tools
 from pyvista._build.manifest import Option
@@ -223,7 +224,8 @@ def test_dry_run_commands(tmp_path: Path, os_name):
     assert repairer[os_name] in out
     assert 'setup.py bdist_wheel' in out
     assert '--force-reinstall' in out  # printed as the install hint
-    assert 'COMPILER_LAUNCHER' not in out
+    launcher = 'sccache' if os_name == 'windows' else 'ccache'
+    assert f'-DCMAKE_CXX_COMPILER_LAUNCHER={launcher}' in out
 
 
 @pytest.mark.usefixtures('no_tools')
@@ -232,6 +234,7 @@ def test_dry_run_flags(tmp_path: Path):
     cfg = _config(
         tmp_path,
         minimal=True,
+        compiler_cache='none',
         repair=False,
         build_type='Debug',
         jobs=3,
@@ -241,6 +244,7 @@ def test_dry_run_flags(tmp_path: Path):
     )
     Builder(cfg, console).build()
     out = console.export_text()
+    assert 'Compiler cache: off' in out
     assert 'COMPILER_LAUNCHER' not in out
     assert '-DCMAKE_BUILD_TYPE=Debug' in out
     assert '--parallel 3' in out
@@ -317,6 +321,13 @@ def test_too_old_tool(tmp_path: Path, mocker: MockerFixture):
 
 
 @pytest.mark.usefixtures('no_tools')
+def test_explicit_cache_missing(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools, 'compiler_cache_tool', return_value=None)
+    with pytest.raises(BuildError, match='sccache was not found'):
+        Builder(_config(tmp_path, compiler_cache='sccache'), Console(quiet=True)).build()
+
+
+@pytest.mark.usefixtures('no_tools')
 def test_hooks_and_init_cache(tmp_path: Path):
     src = tmp_path / 'src'
     (src / '.git').mkdir(parents=True)
@@ -369,6 +380,21 @@ def test_pip_install_command(mocker: MockerFixture):
     mocker.patch.object(tools.importlib.util, 'find_spec', return_value=None)
     mocker.patch.object(tools.shutil, 'which', return_value=None)
     assert tools.pip_install_command('cmake') is None
+
+
+@pytest.mark.parametrize(
+    ('choice', 'os_name', 'expected'),
+    [
+        ('auto', 'linux', 'ccache'),
+        ('auto', 'windows', 'sccache'),
+        ('sccache', 'macos', 'sccache'),
+        ('none', 'linux', None),
+    ],
+)
+def test_compiler_cache_tool(mocker: MockerFixture, choice, os_name, expected):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    tool = tools.compiler_cache_tool(choice, os_name)
+    assert (tool.name if tool else None) == expected
 
 
 def test_env_options_and_version_command(tmp_path: Path, mocker: MockerFixture):
@@ -450,6 +476,23 @@ def test_hook_expansion_keeps_windows_paths(tmp_path: Path, mocker: MockerFixtur
     builder._manifest = demo
     parts = builder._expand('{python} prune.py {build_dir}')
     assert parts == ['C:\\Python\\python.exe', 'prune.py', str(builder.config.cmake_dir)]
+
+
+def test_msvc_environment(mocker: MockerFixture, tmp_path: Path):
+    run = mocker.patch.object(
+        tools.subprocess,
+        'run',
+        return_value=subprocess.CompletedProcess(
+            '', 0, stdout='INCLUDE=C:\\inc\nPATH=C:\\vc;old\n'
+        ),
+    )
+    vcvarsall = tmp_path / 'vcvarsall.bat'
+    before = {'PATH': 'old', 'KEEP': '1'}
+    env = tools.msvc_environment(vcvarsall, env=before)
+    assert env == {'PATH': 'C:\\vc;old', 'KEEP': '1', 'INCLUDE': 'C:\\inc'}
+    assert before == {'PATH': 'old', 'KEEP': '1'}
+    assert run.call_args.args[0] == f'"{vcvarsall}" x64 >nul && set'
+    assert run.call_args.kwargs['shell'] is True
 
 
 def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
@@ -540,6 +583,47 @@ def test_tools_pip_paths(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(builder, 'run')
     with pytest.raises(BuildError, match='Still not usable after install: ninja'):
         builder.phase_tools()
+
+
+def test_windows_msvc_and_nasm(tmp_path: Path, mocker: MockerFixture):
+    present = {'git', 'cmake', 'ninja', 'delvewheel'}
+
+    def which(name, path=None, **_):
+        if name == 'cl':
+            return 'C:/vs/cl' if path and 'C:/vs' in path else None
+        return f'C:/t/{name}' if name in present else None
+
+    mocker.patch.object(tools.shutil, 'which', side_effect=which)
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=None)
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
+    with pytest.raises(BuildError, match='msvc'):
+        builder.phase_tools()
+    vcvarsall = tmp_path / 'vcvarsall.bat'
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=vcvarsall)
+    activated = mocker.patch.object(
+        tools, 'msvc_environment', return_value={'PATH': 'C:/vs;C:/t', 'INCLUDE': 'x'}
+    )
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
+    builder.phase_tools()
+    activated.assert_called_once()
+    assert builder.env['INCLUDE'] == 'x'
+    assert 'nasm not found; assembler-optimised' in builder.console.export_text()
+    script = builder.config.src_dir / '.gitlab' / 'ci' / 'download_nasm.cmake'
+    script.parent.mkdir(parents=True)
+    script.write_text('')
+    run = mocker.patch.object(builder, 'run')
+    builder._activate_nasm()
+    assert run.call_args.args[0] == ['cmake', '-P', str(script)]
+    assert builder.env['PATH'].startswith(str(builder.config.src_dir / '.gitlab' / 'nasm'))
+
+
+def test_compiler_cache_auto_missing(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    mocker.patch.object(tools, 'compiler_cache_tool', return_value=None)
+    builder._activate_compiler_cache()
+    assert 'No ccache/sccache on PATH' in builder.console.export_text()
 
 
 def test_git_version_suffix(tmp_path: Path, mocker: MockerFixture):
@@ -644,6 +728,7 @@ def test_tool_helpers(mocker: MockerFixture):
     )
     assert tools.executable_version('x') is None
     for os_name in OS_NAMES:
+        assert tools.compiler_cache_instructions(os_name)
         assert tools.compiler_instructions(os_name)
     tool = tools.Tool('t', ('t',), spec='>=1')
     mocker.patch.object(tools.shutil, 'which', return_value='/usr/bin/t')
@@ -652,6 +737,28 @@ def test_tool_helpers(mocker: MockerFixture):
     mocker.patch.object(tools, 'executable_version', return_value='not.a.version')
     assert tools.detect(tool)
     assert isinstance(tools.python_build_packages(), list)
+
+
+def test_vswhere(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.dict(tools.os.environ, {'PROGRAMFILES(X86)': '', 'PROGRAMFILES': ''})
+    assert tools.vswhere_path() is None
+    assert tools.find_vcvarsall() is None
+    mocker.patch.dict(tools.os.environ, {'PROGRAMFILES(X86)': str(tmp_path)})
+    assert tools.vswhere_path() is None
+    vswhere = tmp_path / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+    vswhere.parent.mkdir(parents=True)
+    vswhere.write_text('')
+    assert tools.vswhere_path() == vswhere
+    run = mocker.patch.object(
+        tools.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout='')
+    )
+    assert tools.find_vcvarsall() is None
+    install = tmp_path / 'VS'
+    vcvarsall = install / 'VC' / 'Auxiliary' / 'Build' / 'vcvarsall.bat'
+    vcvarsall.parent.mkdir(parents=True)
+    vcvarsall.write_text('')
+    run.return_value = subprocess.CompletedProcess([], 0, stdout=f'{install}\n')
+    assert tools.find_vcvarsall() == vcvarsall
 
 
 def test_option_coerce_and_schema_errors():
@@ -741,6 +848,12 @@ def test_version_command_output(tmp_path: Path, mocker: MockerFixture):
     assert builder.version_suffix() == '5'
 
 
+def test_compiler_cache_tool_missing(mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    assert tools.compiler_cache_tool('sccache', 'linux') is None
+    assert tools.compiler_cache_tool('auto', 'linux') is None
+
+
 def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     mocker.patch.object(phases.os, 'cpu_count', return_value=8)
@@ -758,3 +871,156 @@ def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.Prompt, 'ask', return_value='n')
     with pytest.raises(BuildError, match='Stopped before building'):
         builder.phase_build()
+
+
+def test_manifest_manylinux_packages(tmp_path: Path):
+    path = tmp_path / 'pyvista-build.toml'
+    path.write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\nimport_name = "demo"\ndefault_ref = "v1"\n'
+        '[manylinux]\npackages = ["libX11-devel"]\n'
+    )
+    assert load_manifest(path).manylinux_packages == ('libX11-devel',)
+    path.write_text(
+        'manifest_version = 1\nmanylinux = 1\n'
+        '[backend]\nname = "demo"\nimport_name = "demo"\ndefault_ref = "v1"\n'
+    )
+    with pytest.raises(ManifestError, match=r'\[manylinux\] must be a table'):
+        load_manifest(path)
+    assert find_manifest('vtk', None).manylinux_packages == (
+        'libX11-devel',
+        'libXcursor-devel',
+        'mesa-libGL-devel',
+    )
+
+
+def test_manylinux_helpers(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(manylinux.platform, 'machine', return_value='arm64')
+    assert manylinux.default_image().endswith('_aarch64')
+    mocker.patch.object(manylinux.platform, 'machine', return_value='AMD64')
+    assert manylinux.default_image().endswith('_x86_64')
+    tag = f'cp{sys.version_info.major}{sys.version_info.minor}'
+    assert manylinux.container_python() == f'/opt/python/{tag}-{tag}/bin/python'
+    assert manylinux.pyvista_requirement(tmp_path) == manylinux.PYVISTA
+    mocker.patch.object(manylinux.pv, '__version__', '0.50.0')
+    assert manylinux.pyvista_requirement(None) == 'pyvista==0.50.0'
+    mocker.patch.object(manylinux.pv, '__version__', '0.51.dev0')
+    assert manylinux.pyvista_requirement(None) == 'pyvista'
+    script = manylinux.container_script(
+        python='/opt/py',
+        packages=['a-devel', 'b'],
+        pyvista='/pyvista',
+        build_args=['vtk', '--build-dir', '/work'],
+        ccache=True,
+        owner='1000:1000',
+        paths=['/work', '/cache'],
+    )
+    assert 'dnf install -y --setopt=install_weak_deps=False a-devel b' in script
+    assert "git config --global --add safe.directory '*'" in script
+    assert 'yum install -y a-devel b' in script
+    assert 'ccache-4.14-linux-x86_64-musl-static' in script
+    assert manylinux.CCACHE_SHA256 in script
+    assert '"$PY" -m pip install --quiet --only-binary :all: /pyvista' in script
+    assert '"$PY" -m pyvista build vtk --build-dir /work' in script
+    assert script.endswith('chown -R 1000:1000 /work /cache')
+    script = manylinux.container_script(
+        python='/opt/py',
+        packages=[],
+        pyvista='pyvista',
+        build_args=['vtk'],
+        ccache=False,
+        owner=None,
+        paths=['/work'],
+    )
+    assert 'dnf' not in script
+    assert 'ccache' not in script
+    assert 'chown' not in script
+    cmd = manylinux.docker_command(
+        'img',
+        mounts={'/work': tmp_path / 'build', '/src': tmp_path / 'src'},
+        script='true',
+        interactive=True,
+        env={'CCACHE_MAXSIZE': '1G', 'PATH': '/bin', 'SCCACHE_DIR': '/x'},
+    )
+    assert cmd[:4] == ['docker', 'run', '--rm', '-i']
+    assert '-t' in cmd
+    assert cmd[cmd.index('--volume') + 1] == f'{tmp_path / "build"}:/work'
+    assert f'{tmp_path / "src"}:/src' in cmd
+    assert cmd.count('--env') == 2
+    assert 'PATH' not in cmd
+    assert cmd[-4:] == ['img', 'bash', '-c', 'true']
+    assert manylinux.file_owner() is None or ':' in manylinux.file_owner()
+
+
+def test_build_in_manylinux(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(manylinux, 'pyvista_source', return_value=tmp_path / 'pv')
+    mocker.patch.object(manylinux, 'file_owner', return_value='7:7')
+    mocker.patch.object(manylinux.platform, 'machine', return_value='x86_64')
+    cfg = _config(
+        tmp_path,
+        dry_run=False,
+        manylinux='img',
+        source=tmp_path / 'src',
+        cache_dir=tmp_path / 'cc',
+        with_=['web'],
+        without=['io'],
+        jobs=4,
+        defines=['X=1'],
+        options=['smp=TBB'],
+        repair=False,
+        version_suffix='dev0+gabc',
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(cfg, console)
+    probe = mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    run = mocker.patch.object(builder, 'run')
+    install = mocker.patch.object(builder, 'phase_install')
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_28_x86_64.whl').write_text('')
+    assert builder.build() == cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_28_x86_64.whl'
+    assert probe.call_args.args[0] == ['/usr/bin/docker', 'info']
+    cmd = run.call_args.args[0]
+    assert cmd[:4] == ['docker', 'run', '--rm', '-i']
+    assert f'{tmp_path / "vtk-build"}:/work' in cmd
+    assert f'{tmp_path / "src"}:/src' in cmd
+    assert f'{tmp_path / "cc"}:/cache' in cmd
+    assert f'{tmp_path / "pv"}:/pyvista' in cmd
+    assert cmd[cmd.index('bash') - 1] == 'img'
+    script = cmd[-1]
+    assert 'libX11-devel' in script
+    assert (
+        'pyvista build vtk --build-dir /work --no-install --source /src --cache-dir /cache '
+        '--with web --without io --build-type Release --jobs 4 -D X=1 --opt smp=TBB '
+        '--no-repair --compiler-cache auto --version-suffix dev0+gabc' in script
+    )
+    assert 'chown -R 7:7 /work /src /cache' in script
+    assert install.called
+    assert 'Done' in console.export_text()
+
+    builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 1))
+    with pytest.raises(BuildError, match='daemon is not running'):
+        builder.build()
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    with pytest.raises(BuildError, match='docker was not found'):
+        builder.build()
+
+
+def test_build_in_manylinux_dry_run(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    probe = mocker.patch.object(subprocess, 'run')
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(_config(tmp_path, manylinux=None, interactive=True), console)
+    builder.config.manylinux = 'img'
+    mocker.patch.object(builder, 'run')
+    assert builder.build() is None
+    assert not probe.called
+    out = console.export_text()
+    assert 'Run the build in the container? (n stops) -> yes (dry run)' in out
+    assert not (tmp_path / 'vtk-build').exists()
+    builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Stopped before the container build'):
+        builder.build()
