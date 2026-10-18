@@ -220,15 +220,15 @@ def compare_images(
         a render window, or :vtk:`vtkImageData`.
 
     threshold : int, default: 1
-        Threshold tolerance for pixel differences.  This should be
+        Threshold tolerance for pixel differences. This should be
         greater than 0, otherwise it will always return an error, even
         on identical images.
 
     use_vtk : bool, default: True
         When disabled, computes the mean pixel error over the entire
-        image using NumPy.  The difference between pixel is calculated
+        image using NumPy. The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
-        of pixels.  This is faster than using
+        of pixels. This is faster than using
         :vtk:`vtkImageDifference` but potentially less accurate.
 
     Returns
