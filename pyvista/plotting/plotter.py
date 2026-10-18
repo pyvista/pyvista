@@ -3009,7 +3009,22 @@ class BasePlotter(_BoundsSizeMixin):
             self.render_window.StereoRenderOff()
 
     def hide_axes_all(self) -> None:
-        """Hide the axes orientation widget in all renderers."""
+        """Hide the axes orientation widget in all renderers.
+
+        Examples
+        --------
+        Hide the axes orientation widget in every renderer of a two-panel plot.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.show_axes_all()
+        >>> pl.hide_axes_all()
+        >>> pl.close()
+
+        """
         for renderer in self.renderers:
             renderer.hide_axes()
 
