@@ -455,7 +455,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         preference : str, optional
             When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'row'`` or
+            to search for in the dataset. Must be either ``'row'`` or
             ``'field'``.
 
         Returns

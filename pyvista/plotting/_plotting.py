@@ -283,7 +283,7 @@ def _remap_scalars_through_topology_change(  # noqa: PLR0917
         Pre-pipeline scalars array.
 
     original_scalar_name : str | None
-        If set, the array is resolved by name on ``mesh``.  When
+        If set, the array is resolved by name on ``mesh``. When
         ``None`` (raw NumPy + upstream ``vtkAlgorithm`` input), the
         ``vtkOriginalPointIds`` tracker is used to remap point-length
         scalars.
@@ -362,7 +362,7 @@ def process_opacity(
         When ``mesh.n_points == mesh.n_cells``, this parameter
         sets how the scalars will be mapped to the mesh. If
         ``'point'``, causes the scalars will be associated with
-        the mesh points.  Can be either ``'point'`` or
+        the mesh points. Can be either ``'point'`` or
         ``'cell'``.
 
     n_colors : int

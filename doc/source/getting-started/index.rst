@@ -145,7 +145,7 @@ through a range of examples and tutorials.
       :class-title: pyvista-card-title
 
       Using PyVista in your research? Please consider citing or acknowledging
-      us.  We have a `JOSS Publication`_!
+      us. We have a `JOSS Publication`_.
 
       .. image:: ../images/user-generated/joss.png
          :target: https://joss.theoj.org/papers/10.21105/joss.01450
