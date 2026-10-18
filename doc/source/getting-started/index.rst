@@ -99,20 +99,6 @@ through a range of examples and tutorials.
       Probably the best way for you to get used to PyVista is to visit our
       dedicated `tutorial <https://tutorial.pyvista.org/tutorial.html>`_.
 
-..
-   This code is used in the plot in the card.
-
-.. pyvista-plot::
-   :include-source: False
-   :context:
-
-   >>> bunny_cpos = [
-   ...     (0.14826, 0.275729, 0.4215911),
-   ...     (-0.01684, 0.110154, -0.0015369),
-   ...     (-0.15446, 0.939031, -0.3071841),
-   ... ]
-
-
 .. grid:: 2
 
    .. grid-item-card:: Why PyVista?
@@ -123,20 +109,14 @@ through a range of examples and tutorials.
       Learn more about why we created PyVista as an interface to the
       Visualization Toolkit (VTK).
 
-      .. code-block:: python
-
-          import pyvista as pv
-
-          mesh = pv.read('bunny.stl')
-          mesh.plot()
-
       .. pyvista-plot::
-         :include-source: False
-         :context:
 
+         import pyvista as pv
          from pyvista import examples
-         mesh = examples.download_bunny()
-         mesh.plot(cpos=bunny_cpos)
+
+         filename = examples.download_bunny(load=False)
+         mesh = pv.read(filename)
+         mesh.plot(cpos='xy')
 
 
    .. grid-item-card:: Authors & Citation
