@@ -4253,19 +4253,24 @@ class BasePlotter(_BoundsSizeMixin):
         ...     show_scalar_bar=False,
         ... )
 
-        Plot spheres using ``'points_gaussian'`` style and scale them by radius.
+        Plot spheres using ``'points_gaussian'`` style and scale them by radius
+        with the mapper's :attr:`~pyvista.plotting.mapper.PointGaussianMapper.scale_array`.
 
-        >>> N_SPHERES = 1_000_000
+        >>> N_SPHERES = 10_000
         >>> rng = np.random.default_rng(seed=0)
         >>> pos = rng.random((N_SPHERES, 3))
-        >>> rad = rng.random(N_SPHERES) * 0.01
+        >>> rad = rng.random(N_SPHERES) * 0.02
         >>> pdata = pv.PolyData(pos)
         >>> pdata['radius'] = rad
-        >>> pdata.plot(
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(
+        ...     pdata,
         ...     style='points_gaussian',
         ...     emissive=False,
         ...     render_points_as_spheres=True,
         ... )
+        >>> actor.mapper.scale_array = 'radius'
+        >>> pl.show()
 
         """
         if (
