@@ -1,6 +1,6 @@
 """Color module supporting plotting module.
 
-Used code from matplotlib.colors.  Thanks for your work.
+Used code from matplotlib.colors. Thanks for your work.
 """
 
 # Necessary for autodoc_type_aliases to recognize the type aliases used in the signatures

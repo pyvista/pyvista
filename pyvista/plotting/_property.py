@@ -76,13 +76,13 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.color`
         Used to make the entire mesh have a single solid color.
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
 
     style : str, default: 'surface'
-        Visualization style of the mesh.  One of the following:
+        Visualization style of the mesh. One of the following:
         ``style='surface'``, ``style='wireframe'``, ``style='points'``.
         Note that ``'wireframe'`` only shows a wireframe of the outer
         geometry.
@@ -132,7 +132,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         concentrates it into a small, sharp spot.
 
     show_edges : bool, default: :attr:`pyvista.plotting.themes.Theme.show_edges`
-        Shows the edges.  Does not apply to a wireframe representation.
+        Shows the edges. Does not apply to a wireframe representation.
 
     edge_color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.edge_color`
         The solid color to give the edges when ``show_edges=True``.
@@ -146,14 +146,14 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     render_lines_as_tubes : bool, \
         default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
 
-        Show lines as thick tubes rather than flat lines.  Control
+        Show lines as thick tubes rather than flat lines. Control
         the width with ``line_width``.
 
     lighting : bool, default: :attr:`pyvista.plotting.themes.Theme.lighting`
         Enable or disable view direction lighting.
 
     line_width : float, default: :attr:`pyvista.plotting.themes.Theme.line_width`
-        Thickness of lines.  Only valid for wireframe and surface
+        Thickness of lines. Only valid for wireframe and surface
         representations, expressed in screen units. Must be in the range
         ``[0.0, inf)``.
 
@@ -444,7 +444,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
@@ -836,24 +836,27 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
-        Get the default metallic value and visualize it.
+        Get the default metallic value.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
-        >>> prop.interpolation = 'pbr'  # required
         >>> prop.metallic
         0.0
-        >>> prop.plot()
 
-        Visualize metallic at ``0.5``.
+        Visualize metallic at ``0.0``, ``0.5``, and ``1.0`` from left to right
+        with physically based rendering.
 
-        >>> prop.metallic = 0.5
-        >>> prop.plot()
-
-        Visualize metallic at ``1.0``.
-
-        >>> prop.metallic = 1.0
-        >>> prop.plot()
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> for i, metallic in enumerate([0.0, 0.5, 1.0]):
+        ...     actor = pl.add_mesh(mesh.translate((0.35 * i, 0, 0)))
+        ...     actor.prop.interpolation = 'pbr'  # required
+        ...     actor.prop.metallic = metallic
+        >>> pl.set_environment_texture(examples.download_sky_box_cube_map())
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
         return self.GetMetallic()
@@ -884,22 +887,21 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.roughness
         0.5
 
-        Visualize default roughness with metallic of ``0.5`` and physically based
-        rendering.
+        Visualize roughness at ``0.0``, ``0.5``, and ``1.0`` from left to right
+        with metallic of ``0.5`` and physically based rendering.
 
-        >>> prop.interpolation = 'pbr'
-        >>> prop.metallic = 0.5
-        >>> prop.plot()
-
-        Visualize roughness at ``0.1``.
-
-        >>> prop.roughness = 0.0
-        >>> prop.plot()
-
-        Visualize roughness at ``1.0``.
-
-        >>> prop.roughness = 1.0
-        >>> prop.plot()
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> pl = pv.Plotter()
+        >>> for i, roughness in enumerate([0.0, 0.5, 1.0]):
+        ...     actor = pl.add_mesh(mesh.translate((0.35 * i, 0, 0)))
+        ...     actor.prop.interpolation = 'pbr'
+        ...     actor.prop.metallic = 0.5
+        ...     actor.prop.roughness = roughness
+        >>> pl.set_environment_texture(examples.download_sky_box_cube_map())
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.zoom('tight')
+        >>> pl.show()
 
         """
         return self.GetRoughness()
@@ -1191,7 +1193,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def ambient_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the ambient color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.
@@ -1224,7 +1226,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def specular_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the specular color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``.
 
@@ -1263,7 +1265,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def diffuse_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the diffuse color of this property.
 
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``.
 

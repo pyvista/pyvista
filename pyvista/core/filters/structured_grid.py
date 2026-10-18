@@ -105,9 +105,9 @@ class StructuredGridFilters(DataSetFilters):
     ) -> pv.StructuredGrid:
         """Concatenate a structured grid to this grid.
 
-        Joins structured grids into a single structured grid.  Grids
+        Joins structured grids into a single structured grid. Grids
         must be of compatible dimension, and must be coincident along
-        the seam. Grids must have the same point and cell data.  Field
+        the seam. Grids must have the same point and cell data. Field
         data is ignored. The output keeps this grid's offset.
 
         Parameters
