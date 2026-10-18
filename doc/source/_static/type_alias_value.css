@@ -1,0 +1,9 @@
+/* Type alias values on the typing page: preformatted, linked text without a code-block box */
+pre.type-alias-value {
+  background: transparent;
+  font-size: inherit;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
