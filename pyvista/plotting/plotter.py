@@ -5763,6 +5763,36 @@ class BasePlotter(_BoundsSizeMixin):
             is int unlink the selected view's camera or if ``views``
             is a tuple or a list, unlink the given views cameras.
 
+        See Also
+        --------
+        link_views
+
+        Examples
+        --------
+        Link two subplots so they share a camera.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> left_camera = pl.camera
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> pl.link_views()
+        >>> pl.camera is left_camera
+        True
+
+        Unlink the right subplot to adjust its camera independently.
+
+        >>> pl.unlink_views(1)
+        >>> pl.camera is left_camera
+        False
+        >>> left_camera.view_angle = 30.0
+        >>> pl.camera.view_angle = 15.0
+        >>> left_camera.view_angle
+        30.0
+        >>> pl.camera.view_angle
+        15.0
+
         """
         if views is None:
             for renderer in self.renderers:
