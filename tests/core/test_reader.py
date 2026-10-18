@@ -117,6 +117,7 @@ _EXPECTED_CLASS_READERS = {
     '.vtu': pv.XMLUnstructuredGridReader,
     '.wrl': pv.VRMLReader,
     '.xdmf': pv.XdmfReader,
+    '.xyz': pv.MultiBlockPlot3DReader,
 }
 
 
