@@ -569,6 +569,29 @@ def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
         assert type(arr) is pv.pyvista_ndarray
 
 
+@pytest.mark.parametrize('method', ['values', 'items'])
+def test_values_items_look_up_arrays_by_index(monkeypatch, method):
+    mesh = pv.PolyData()
+    for i in range(5):
+        mesh.field_data[f'arr{i}'] = [i]
+    dsa = mesh.field_data
+    expected = [(f'arr{i}', [i]) for i in range(5)]
+    keys = []
+    get_array = pv.DataSetAttributes.get_array
+
+    def spy(self, key):
+        """Record the key before delegating."""
+        keys.append(key)
+        return get_array(self, key)
+
+    monkeypatch.setattr(pv.DataSetAttributes, 'get_array', spy)
+    result = getattr(dsa, method)()
+    assert keys == list(range(5))
+    if method == 'values':
+        result = list(zip(dsa.keys(), result, strict=True))
+    assert [(name, arr.tolist()) for name, arr in result] == expected
+
+
 def test_value_should_exist(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     assert any(np.array_equal(sample_array, arr) for arr in dsa.values()), 'Array not in values.'
