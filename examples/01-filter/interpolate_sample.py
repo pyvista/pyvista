@@ -13,7 +13,7 @@ of the enclosing cell from the target mesh.
 
 If the target mesh is a point cloud, that is, there is no connectivity in the cell
 structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
-preferred.  If interpolation is desired within the cells of the target mesh, then
+preferred. If interpolation is desired within the cells of the target mesh, then
 :func:`pyvista.DataObjectFilters.sample` is typically desired.
 
 Here the two methods are compared and contrasted using a simple example of
@@ -55,7 +55,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Now estimate data on a regular grid from the point data.  Note
+# Now estimate data on a regular grid from the point data. Note
 # that the distance parameter ``radius`` determines how far away to
 # look for point cloud data.
 
@@ -158,7 +158,7 @@ pl.show()
 
 # %%
 # Instead of sampling onto a point cloud, :func:`pyvista.DataObjectFilters.sample`
-# can sample using other mesh types.  For example, sampling onto a rotated subset
+# can sample using other mesh types. For example, sampling onto a rotated subset
 # of the grid.
 #
 # Make subset (0.7, 0.7, 0) units in dimension and then rotate by 45 degrees around

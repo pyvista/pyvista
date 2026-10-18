@@ -11,7 +11,13 @@ from pathlib import Path
 import re
 import shutil
 import sys
+from types import UnionType
 from typing import TYPE_CHECKING
+from typing import ForwardRef
+from typing import Literal
+from typing import Union
+from typing import Unpack
+from typing import get_args
 from typing import get_origin
 import warnings
 
@@ -141,6 +147,7 @@ extensions = [
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext._autoclassproperty',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
     'pyvista.ext._embed_py_file',
@@ -1119,6 +1126,158 @@ def drop_type_alias_docstring(  # noqa: PLR0917
         lines.clear()
 
 
+# Widest line that fits the content column at a 1280 px window without scrolling
+_TYPE_ALIAS_LINE_LENGTH = 68
+
+# A cross-reference role, whose displayed text is its title
+_TYPE_REFERENCE = re.compile(r':py:\w+:`([^`<]*?)(?: <[^`]*>)?`')
+
+
+def _display_width(text: str) -> int:
+    """Return the width of reStructuredText as rendered, without roles and escapes."""
+    text = _TYPE_REFERENCE.sub(r'\1', text).replace('\\ ', '')
+    return len(re.sub(r'\\(.)', r'\1', text))
+
+
+def _escape(text: str) -> str:
+    """Escape the characters reStructuredText would read as inline markup."""
+    return re.sub(r'([\\`*_|])', r'\\\1', text)
+
+
+def _type_reference(obj: object, aliases: dict[object, str]) -> str:
+    """Return a cross-reference to a type, titled with its short name and ``np.`` for NumPy."""
+    if obj is None or obj is type(None):
+        return ':py:obj:`None`'
+    if isinstance(obj, ForwardRef):
+        name = obj.__forward_arg__
+        if name in aliases.values():
+            return f':py:data:`{name} <pyvista.typing.{name}>`'
+        return f':py:class:`{name}`'
+    module = getattr(obj, '__module__', '') or ''
+    qualname = getattr(obj, '__qualname__', None) or obj.__name__
+    if module == 'builtins':
+        return f':py:class:`{qualname}`'
+    target = f'{module}.{qualname}'
+    if module == 'numpy':
+        title = f'np.{obj.__name__}'
+    elif module.startswith('vtkmodules.'):
+        # Show and link the owning class of a nested VTK enum, as in ``vtkCommand.EventIds``
+        title = '.'.join([*module.split('.')[2:], qualname])
+        target = target if qualname.startswith('vtk') else module
+    else:
+        title = qualname
+    return f':py:class:`{title} <{target}>`'
+
+
+def _collapse_aliases(members: tuple, aliases: dict[object, str]) -> list:
+    """Replace the union members that make up a documented alias with its name."""
+    members = list(members)
+    for alias, name in aliases.items():
+        alias_members = get_args(alias)
+        if get_origin(alias) not in (Union, UnionType) or len(alias_members) >= len(members):
+            continue
+        if all(member in members for member in alias_members):
+            first = min(members.index(member) for member in alias_members)
+            members = [member for member in members if member not in alias_members]
+            members.insert(first, ForwardRef(name))
+    return members
+
+
+def _format_type(  # noqa: PLR0911
+    obj: object, *, indent: int = 0, lead: int = 0, aliases: dict[object, str] | None = None
+) -> str:
+    """Format a type expression as linked reStructuredText, in a ``ruff format`` style layout."""
+    aliases = aliases or {}
+    if obj in aliases:
+        return f':py:data:`{aliases[obj]} <pyvista.typing.{aliases[obj]}>`'
+    origin, args = get_origin(obj), get_args(obj)
+    if obj is Ellipsis:
+        return '...'
+    if origin is None:
+        return _type_reference(obj, aliases)
+    if origin is Unpack:
+        # An escaped space separates inline markup that touches other text
+        return f'\\*\\ {_format_type(args[0], indent=indent, lead=lead + 1, aliases=aliases)}'
+    if origin in (Union, UnionType):
+        args = _collapse_aliases(args, aliases)
+        flat = ' \\| '.join(_format_type(arg, aliases=aliases) for arg in args)
+        if indent + lead + _display_width(flat) <= _TYPE_ALIAS_LINE_LENGTH:
+            return flat
+        members = [
+            _format_type(arg, indent=indent, lead=2 * bool(i), aliases=aliases)
+            for i, arg in enumerate(args)
+        ]
+        return f'\n{" " * indent}\\| '.join(members)
+    if origin is Literal:
+        name = ':py:data:`Literal <typing.Literal>`'
+        items = [_escape(repr(arg)) for arg in args]
+    else:
+        name = _type_reference(origin, aliases)
+        items = [_format_type(arg, aliases=aliases) for arg in args]
+    flat_args = ', '.join(items)
+    width = _display_width(name) + _display_width(flat_args) + 2
+    if indent + lead + width <= _TYPE_ALIAS_LINE_LENGTH:
+        return f'{name}\\ [{flat_args}]'
+    pad = ' ' * (indent + 4)
+    if origin is not Literal:
+        items = [_format_type(arg, indent=indent + 4, aliases=aliases) for arg in args]
+    if len(args) == 1:
+        inner = items[0]
+    elif indent + 4 + _display_width(flat_args) <= _TYPE_ALIAS_LINE_LENGTH:
+        inner = flat_args
+    else:
+        inner = f',\n{pad}'.join(items) + ','
+    return f'{name}\\ [\n{pad}{inner}\n{" " * indent}]'
+
+
+def show_type_alias_value(  # noqa: PLR0917
+    app: Sphinx,  # noqa: ARG001
+    what: str,
+    name: str,
+    obj: object,
+    options: dict,  # noqa: ARG001
+    lines: list[str],
+) -> None:
+    """Show the value of a type alias as a linked, preformatted block."""
+    if what != 'data' or get_origin(obj) not in (Literal, Union, UnionType):
+        return
+    # Name the other documented aliases it contains, largest first
+    documented = {getattr(pv.typing, alias): alias for alias in _DOCUMENTED_TYPES}
+    aliases = {
+        alias: alias_name
+        for alias, alias_name in sorted(
+            documented.items(), key=lambda item: -len(get_args(item[0]))
+        )
+        if alias_name != name.rpartition('.')[2]
+    }
+    lines.extend(
+        [
+            '',
+            '.. parsed-literal::',
+            '   :class: type-alias-value',
+            '',
+            *(f'   {line}' for line in _format_type(obj, aliases=aliases).splitlines()),
+        ]
+    )
+
+
+def drop_type_alias_signature(app: Sphinx, doctree: Element) -> None:  # noqa: ARG001
+    """Drop the signature and alias line of a type alias shown by its value block."""
+    for block in list(doctree.findall(nodes.literal_block)):
+        if 'type-alias-value' not in block['classes']:
+            continue
+        content = block.parent
+        if not isinstance(content, addnodes.desc_content):
+            continue
+        desc = content.parent
+        for signature in [n for n in desc.children if isinstance(n, addnodes.desc_signature)]:
+            block['ids'].extend(signature['ids'])
+            desc.remove(signature)
+        for paragraph in [n for n in content.children if isinstance(n, nodes.paragraph)]:
+            if paragraph.astext().startswith('alias of '):
+                content.remove(paragraph)
+
+
 def restrict_trimesh_inventory(app: Sphinx) -> None:
     """Drop non-``trimesh`` names from trimesh's inventory so they link to their own docs."""
     inventories = InventoryAdapter(app.env)
@@ -1199,6 +1358,8 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('env-updated', forget_tag_page_toctrees)
     # priority < 500 so this sees the docstring before numpydoc rewrites it
     app.connect('autodoc-process-docstring', drop_type_alias_docstring, priority=400)
+    # priority > 500 so numpydoc does not reflow the code block
+    app.connect('autodoc-process-docstring', show_type_alias_value, priority=501)
     app.connect('missing-reference', resolve_python_reference)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
@@ -1208,6 +1369,8 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     # before priority 400 so hoist_docstring_sections below sees the promoted sections
     app.connect('doctree-read', promote_seealso_admonitions, priority=300)
     app.connect('doctree-read', hoist_docstring_sections, priority=400)
+    # priority < 500 so the dropped signatures leave no entry in the page contents
+    app.connect('doctree-read', drop_type_alias_signature, priority=450)
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
@@ -1218,6 +1381,7 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
     app.add_css_file('dataset_gallery_filter.css')
+    app.add_css_file('type_alias_value.css')
     app.add_js_file('redirect_fragments.js')
     app.add_js_file('notfound.js')
     app.add_js_file('dataset_gallery_filter.js')

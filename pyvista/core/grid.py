@@ -230,7 +230,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     deep : bool, optional
         Whether to deep copy a :vtk:`vtkRectilinearGrid` object.
-        Default is ``False``.  Keyword only.
+        Default is ``False``. Keyword only.
 
     validate : bool | MeshValidationFields | sequence[MeshValidationFields], default: False
         Validate the mesh using :meth:`~pyvista.DataObjectFilters.validate_mesh` after
@@ -642,7 +642,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     Parameters
     ----------
     uinput : str | :vtk:`vtkImageData` | ImageData, optional
-        Filename or dataset to initialize the uniform grid from.  If
+        Filename or dataset to initialize the uniform grid from. If
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
