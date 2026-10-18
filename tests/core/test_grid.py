@@ -639,6 +639,95 @@ def test_linear_copy_surf_elem():
     assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
+_LINEAR_EQUIVALENTS = {
+    cells.QuadraticEdge: CellType.LINE,
+    cells.CubicLine: CellType.LINE,
+    cells.LagrangeCurve: CellType.LINE,
+    cells.BezierCurve: CellType.LINE,
+    cells.QuadraticTriangle: CellType.TRIANGLE,
+    cells.BiQuadraticTriangle: CellType.TRIANGLE,
+    cells.LagrangeTriangle: CellType.TRIANGLE,
+    cells.BezierTriangle: CellType.TRIANGLE,
+    cells.QuadraticQuadrilateral: CellType.QUAD,
+    cells.QuadraticLinearQuadrilateral: CellType.QUAD,
+    cells.BiQuadraticQuadrilateral: CellType.QUAD,
+    cells.LagrangeQuadrilateral: CellType.QUAD,
+    cells.BezierQuadrilateral: CellType.QUAD,
+    cells.QuadraticPolygon: CellType.POLYGON,
+    cells.QuadraticTetrahedron: CellType.TETRA,
+    cells.LagrangeTetrahedron: CellType.TETRA,
+    cells.BezierTetrahedron: CellType.TETRA,
+    cells.QuadraticPyramid: CellType.PYRAMID,
+    cells.TriQuadraticPyramid: CellType.PYRAMID,
+    cells.QuadraticWedge: CellType.WEDGE,
+    cells.QuadraticLinearWedge: CellType.WEDGE,
+    cells.BiQuadraticQuadraticWedge: CellType.WEDGE,
+    cells.LagrangeWedge: CellType.WEDGE,
+    cells.BezierWedge: CellType.WEDGE,
+    cells.QuadraticHexahedron: CellType.HEXAHEDRON,
+    cells.TriQuadraticHexahedron: CellType.HEXAHEDRON,
+    cells.BiQuadraticQuadraticHexahedron: CellType.HEXAHEDRON,
+    cells.LagrangeHexahedron: CellType.HEXAHEDRON,
+    cells.BezierHexahedron: CellType.HEXAHEDRON,
+}
+
+
+@pytest.mark.parametrize(
+    ('make_cell', 'linear_type'),
+    _LINEAR_EQUIVALENTS.items(),
+    ids=[make_cell.__name__ for make_cell in _LINEAR_EQUIVALENTS],
+)
+def test_linear_copy_keeps_corner_points(make_cell, linear_type):
+    grid = make_cell()
+    cell = grid.get_cell(0)
+    lgrid = grid.linear_copy()
+
+    linear_cell = lgrid.get_cell(0)
+    assert linear_cell.type == linear_type
+    n_corners = cell.n_points // 2 if linear_type == CellType.POLYGON else linear_type.n_points
+    assert linear_cell.point_ids == cell.point_ids[:n_corners]
+    assert lgrid.validate_mesh('wrong_number_of_points').is_valid
+    assert lgrid.n_points == grid.n_points
+
+
+def test_linear_copy_mixed_cells():
+    expected = {
+        CellType.QUADRATIC_TETRA: (CellType.TETRA, 4),
+        CellType.QUADRATIC_POLYGON: (CellType.POLYGON, 4),
+        CellType.HEXAHEDRON: (CellType.HEXAHEDRON, 8),
+        CellType.BIQUADRATIC_QUAD: (CellType.QUAD, 4),
+    }
+    parts = [
+        cells.QuadraticTetrahedron(),
+        cells.QuadraticPolygon(),
+        cells.Hexahedron(),
+        cells.BiQuadraticQuadrilateral(),
+    ]
+    grid = pv.merge(parts, merge_points=False)
+    grid.cell_data['ids'] = np.arange(grid.n_cells)
+    lgrid = grid.linear_copy()
+
+    assert lgrid.n_cells == len(expected)
+    for i, cell_type in enumerate(grid.celltypes):
+        linear_type, n_corners = expected[cell_type]
+        assert lgrid.get_cell(i).type == linear_type
+        assert lgrid.get_cell(i).point_ids == grid.get_cell(i).point_ids[:n_corners]
+    assert lgrid.validate_mesh('wrong_number_of_points').is_valid
+    assert np.array_equal(lgrid.cell_data['ids'], grid.cell_data['ids'])
+
+
+@pytest.mark.needs_vtk_version(9, 5, reason='Older vtk drops the polyhedron cells')
+def test_linear_copy_keeps_polyhedron():
+    grid = pv.merge([cells.QuadraticTetrahedron(), cells.Polyhedron()], merge_points=False)
+    lgrid = grid.linear_copy()
+
+    assert lgrid.celltypes.tolist() == [CellType.TETRA, CellType.POLYHEDRON]
+    assert lgrid.get_cell(0).point_ids == grid.get_cell(0).point_ids[:4]
+    assert lgrid.get_cell(1).point_ids == grid.get_cell(1).point_ids
+    faces = [face.point_ids for face in grid.get_cell(1).faces]
+    assert [face.point_ids for face in lgrid.get_cell(1).faces] == faces
+
+
 @pytest.mark.parametrize('invert', [True, False])
 def test_extract_cells(hexbeam, invert):
     ind = [1, 2, 3]

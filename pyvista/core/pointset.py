@@ -2658,6 +2658,40 @@ def _require_polyhedron_face_cell_arrays(name: str) -> None:
         raise VTKVersionError(msg)
 
 
+# Nonlinear cell types and the linear cell type spanned by their corner points
+_LINEAR_CELL_TYPES: dict[int, CellType] = {
+    CellType.QUADRATIC_EDGE: CellType.LINE,
+    CellType.CUBIC_LINE: CellType.LINE,
+    CellType.LAGRANGE_CURVE: CellType.LINE,
+    CellType.BEZIER_CURVE: CellType.LINE,
+    CellType.QUADRATIC_TRIANGLE: CellType.TRIANGLE,
+    CellType.BIQUADRATIC_TRIANGLE: CellType.TRIANGLE,
+    CellType.LAGRANGE_TRIANGLE: CellType.TRIANGLE,
+    CellType.BEZIER_TRIANGLE: CellType.TRIANGLE,
+    CellType.QUADRATIC_QUAD: CellType.QUAD,
+    CellType.QUADRATIC_LINEAR_QUAD: CellType.QUAD,
+    CellType.BIQUADRATIC_QUAD: CellType.QUAD,
+    CellType.LAGRANGE_QUADRILATERAL: CellType.QUAD,
+    CellType.BEZIER_QUADRILATERAL: CellType.QUAD,
+    CellType.QUADRATIC_POLYGON: CellType.POLYGON,
+    CellType.QUADRATIC_TETRA: CellType.TETRA,
+    CellType.LAGRANGE_TETRAHEDRON: CellType.TETRA,
+    CellType.BEZIER_TETRAHEDRON: CellType.TETRA,
+    CellType.QUADRATIC_PYRAMID: CellType.PYRAMID,
+    CellType.TRIQUADRATIC_PYRAMID: CellType.PYRAMID,
+    CellType.QUADRATIC_WEDGE: CellType.WEDGE,
+    CellType.QUADRATIC_LINEAR_WEDGE: CellType.WEDGE,
+    CellType.BIQUADRATIC_QUADRATIC_WEDGE: CellType.WEDGE,
+    CellType.LAGRANGE_WEDGE: CellType.WEDGE,
+    CellType.BEZIER_WEDGE: CellType.WEDGE,
+    CellType.QUADRATIC_HEXAHEDRON: CellType.HEXAHEDRON,
+    CellType.TRIQUADRATIC_HEXAHEDRON: CellType.HEXAHEDRON,
+    CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON: CellType.HEXAHEDRON,
+    CellType.LAGRANGE_HEXAHEDRON: CellType.HEXAHEDRON,
+    CellType.BEZIER_HEXAHEDRON: CellType.HEXAHEDRON,
+}
+
+
 class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
@@ -3662,14 +3696,30 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def linear_copy(self, *, deep: bool = False) -> UnstructuredGrid:
         """Return a copy of the unstructured grid containing only linear cells.
 
-        Converts the following cell types to their linear equivalents.
+        Each nonlinear cell below becomes the linear cell through its corner
+        points. Its other points stay in the grid, unused by the new cell.
 
-        - :attr:`~pyvista.CellType.QUADRATIC_TRIANGLE`   --> :attr:`~pyvista.CellType.TRIANGLE`
-        - :attr:`~pyvista.CellType.QUADRATIC_QUAD`       --> :attr:`~pyvista.CellType.QUAD`
-        - :attr:`~pyvista.CellType.QUADRATIC_TETRA`      --> :attr:`~pyvista.CellType.TETRA`
-        - :attr:`~pyvista.CellType.QUADRATIC_PYRAMID`    --> :attr:`~pyvista.CellType.PYRAMID`
-        - :attr:`~pyvista.CellType.QUADRATIC_WEDGE`      --> :attr:`~pyvista.CellType.WEDGE`
-        - :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` --> :attr:`~pyvista.CellType.HEXAHEDRON`
+        - :attr:`~pyvista.CellType.LINE`: ``QUADRATIC_EDGE``, ``CUBIC_LINE``,
+          ``LAGRANGE_CURVE``, ``BEZIER_CURVE``
+        - :attr:`~pyvista.CellType.TRIANGLE`: ``QUADRATIC_TRIANGLE``,
+          ``BIQUADRATIC_TRIANGLE``, ``LAGRANGE_TRIANGLE``, ``BEZIER_TRIANGLE``
+        - :attr:`~pyvista.CellType.QUAD`: ``QUADRATIC_QUAD``, ``QUADRATIC_LINEAR_QUAD``,
+          ``BIQUADRATIC_QUAD``, ``LAGRANGE_QUADRILATERAL``, ``BEZIER_QUADRILATERAL``
+        - :attr:`~pyvista.CellType.POLYGON`: ``QUADRATIC_POLYGON``
+        - :attr:`~pyvista.CellType.TETRA`: ``QUADRATIC_TETRA``,
+          ``LAGRANGE_TETRAHEDRON``, ``BEZIER_TETRAHEDRON``
+        - :attr:`~pyvista.CellType.PYRAMID`: ``QUADRATIC_PYRAMID``,
+          ``TRIQUADRATIC_PYRAMID``
+        - :attr:`~pyvista.CellType.WEDGE`: ``QUADRATIC_WEDGE``, ``QUADRATIC_LINEAR_WEDGE``,
+          ``BIQUADRATIC_QUADRATIC_WEDGE``, ``LAGRANGE_WEDGE``, ``BEZIER_WEDGE``
+        - :attr:`~pyvista.CellType.HEXAHEDRON`: ``QUADRATIC_HEXAHEDRON``,
+          ``TRIQUADRATIC_HEXAHEDRON``, ``BIQUADRATIC_QUADRATIC_HEXAHEDRON``,
+          ``LAGRANGE_HEXAHEDRON``, ``BEZIER_HEXAHEDRON``
+
+        .. versionchanged:: 0.50
+
+            All of the cell types above are converted, and each converted
+            cell keeps only its corner points.
 
         Parameters
         ----------
@@ -3686,23 +3736,32 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """
         lgrid = self.copy(deep=deep)
 
-        # grab the vtk object
-        vtk_cell_type = _vtk.numpy_to_vtk(self._get_cell_types_array(), deep=True)
-        celltype = _vtk.vtk_to_numpy(vtk_cell_type)
-        celltype[celltype == CellType.QUADRATIC_TETRA] = CellType.TETRA
-        celltype[celltype == CellType.QUADRATIC_PYRAMID] = CellType.PYRAMID
-        celltype[celltype == CellType.QUADRATIC_WEDGE] = CellType.WEDGE
-        celltype[celltype == CellType.QUADRATIC_HEXAHEDRON] = CellType.HEXAHEDRON
+        celltypes = self.celltypes
+        cell_array = self._get_cells()
+        offsets = _get_offset_array(cell_array)
+        connectivity = _get_connectivity_array(cell_array)
+        sizes = np.diff(offsets)
 
-        # track quad mask for later
-        quad_quad_mask = celltype == CellType.QUADRATIC_QUAD
-        celltype[quad_quad_mask] = CellType.QUAD
+        linear_types = celltypes.copy()
+        linear_sizes = sizes.copy()
+        for cell_type in np.unique(celltypes):
+            linear_type = _LINEAR_CELL_TYPES.get(int(cell_type))
+            if linear_type is None:
+                continue
+            mask = celltypes == cell_type
+            linear_types[mask] = linear_type
+            if linear_type == CellType.POLYGON:
+                linear_sizes[mask] = sizes[mask] // 2
+            else:
+                linear_sizes[mask] = linear_type.n_points
 
-        quad_tri_mask = celltype == CellType.QUADRATIC_TRIANGLE
-        celltype[quad_tri_mask] = CellType.TRIANGLE
+        # VTK lists the corner points of a nonlinear cell before its other points
+        position = np.arange(connectivity.size) - np.repeat(offsets[:-1], sizes)
+        corners = position < np.repeat(linear_sizes, sizes)
+        linear_offsets = np.concatenate(([0], np.cumsum(linear_sizes)))
+        cells = CellArray.from_arrays(linear_offsets, connectivity[corners], deep=True)
 
-        cells = _vtk.vtkCellArray()
-        cells.DeepCopy(self._get_cells())
+        vtk_cell_type = _vtk.numpy_to_vtk(linear_types, deep=True)
         if pv.vtk_version_info >= (9, 5):
             face_locations = self.GetPolyhedronFaceLocations()
             faces = self.GetPolyhedronFaces()
@@ -3710,30 +3769,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         else:
             vtk_offset = self.GetCellLocationsArray()
             lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
-
-        # fixing bug with display of quad cells.
-        # Cache the cell_connectivity array once as each access wraps the
-        # underlying vtkCellArray's connectivity buffer with vtk_to_numpy,
-        # so reading it 4-7 times in the loop redundantly allocates wrappers.
-        if np.any(quad_quad_mask) or np.any(quad_tri_mask):
-            lgrid_cells = lgrid._get_cells()
-            cell_offsets = _get_offset_array(lgrid_cells)
-            cell_conn = _get_connectivity_array(lgrid_cells)
-
-        if np.any(quad_quad_mask):
-            quad_offset = cell_offsets[:-1][quad_quad_mask]
-            base_point = cell_conn[quad_offset]
-            cell_conn[quad_offset + 4] = base_point
-            cell_conn[quad_offset + 5] = base_point
-            cell_conn[quad_offset + 6] = base_point
-            cell_conn[quad_offset + 7] = base_point
-
-        if np.any(quad_tri_mask):
-            tri_offset = cell_offsets[:-1][quad_tri_mask]
-            base_point = cell_conn[tri_offset]
-            cell_conn[tri_offset + 3] = base_point
-            cell_conn[tri_offset + 4] = base_point
-            cell_conn[tri_offset + 5] = base_point
 
         return lgrid
 
