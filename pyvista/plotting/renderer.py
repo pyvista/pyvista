@@ -24,6 +24,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _load_css
 from pyvista.core.formatting_html import _metadata_html
@@ -833,7 +834,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         number_of_peels : int, optional
             The maximum number of peeling layers. Initial value is 4
             and is set in the ``pyvista.global_theme``. A special value of
-            0 means no maximum limit.  It has to be a positive value.
+            0 means no maximum limit. It has to be a positive value.
 
         occlusion_ratio : float, optional
             The threshold under which the depth peeling algorithm
@@ -1189,7 +1190,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             it has not been set and no existing actor was replaced.
 
         name : str, optional
-            Name to assign to the actor.  Defaults to the memory address.
+            Name to assign to the actor. Defaults to the memory address.
 
         culling : str | bool, default: False
             Does not render faces that are culled. This can be helpful for
@@ -1377,13 +1378,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The mesh or actor to use as the marker.
 
         interactive : bool, optional
-            Control if the orientation widget is interactive.  By
+            Control if the orientation widget is interactive. By
             default uses the value from
             :attr:`pyvista.global_theme.interactive
             <pyvista.plotting.themes.Theme.interactive>`.
 
         color : ColorLike, optional
-            The color of the actor.  This only applies if ``actor`` is
+            The color of the actor. This only applies if ``actor`` is
             a :class:`pyvista.DataSet`.
 
         opacity : int | float, default: 1.0
@@ -1475,13 +1476,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Color of the labels.
 
         x_color : ColorLike, optional
-            Color used for the x-axis arrow.  Defaults to theme axes parameters.
+            Color used for the x-axis arrow. Defaults to theme axes parameters.
 
         y_color : ColorLike, optional
-            Color used for the y-axis arrow.  Defaults to theme axes parameters.
+            Color used for the y-axis arrow. Defaults to theme axes parameters.
 
         z_color : ColorLike, optional
-            Color used for the z-axis arrow.  Defaults to theme axes parameters.
+            Color used for the z-axis arrow. Defaults to theme axes parameters.
 
         xlabel : str, default: "X"
             Text used for the x-axis.
@@ -1595,7 +1596,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Parameters
         ----------
         interactive : bool, optional
-            Control if the orientation widget is interactive.  By
+            Control if the orientation widget is interactive. By
             default uses the value from
             :attr:`pyvista.global_theme.interactive
             <pyvista.plotting.themes.Theme.interactive>`.
@@ -1764,15 +1765,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Text used for the z-axis.
 
         x_face_color : ColorLike, optional
-            Color used for the x-axis arrow.  Defaults to theme axes
+            Color used for the x-axis arrow. Defaults to theme axes
             parameters.
 
         y_face_color : ColorLike, optional
-            Color used for the y-axis arrow.  Defaults to theme axes
+            Color used for the y-axis arrow. Defaults to theme axes
             parameters.
 
         z_face_color : ColorLike, optional
-            Color used for the z-axis arrow.  Defaults to theme axes
+            Color used for the z-axis arrow. Defaults to theme axes
             parameters.
 
         label_color : ColorLike, optional
@@ -2016,16 +2017,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             <pyvista.plotting.themes._Font.size>`.
 
         font_family : str, optional
-            Font family.  Must be either ``'courier'``, ``'times'``,
+            Font family. Must be either ``'courier'``, ``'times'``,
             or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
             <pyvista.plotting.themes._Font.family>`.
 
         color : ColorLike, optional
-            Color of all labels and axis titles.  Defaults to
+            Color of all labels and axis titles. Defaults to
             :attr:`pyvista.global_theme.font.color
             <pyvista.plotting.themes._Font.color>`.
 
-            Either a string, RGB list, or hex color string.  For
+            Either a string, RGB list, or hex color string. For
             example:
 
             * ``color='white'``
@@ -2034,13 +2035,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             * ``color='#FFFFFF'``
 
         xtitle : str, default: "X Axis"
-            Title of the x-axis.  Default ``"X Axis"``.
+            Title of the x-axis. Default ``"X Axis"``.
 
         ytitle : str, default: "Y Axis"
-            Title of the y-axis.  Default ``"Y Axis"``.
+            Title of the y-axis. Default ``"Y Axis"``.
 
         ztitle : str, default: "Z Axis"
-            Title of the z-axis.  Default ``"Z Axis"``.
+            Title of the z-axis. Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
             At most this many labels for the x-axis. Where VTK's own tick
@@ -2356,8 +2357,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Parameters
         ----------
         color : ColorLike, default: "grey"
-            Color of all labels and axis titles.  Default white.
-            Either a string, rgb sequence, or hex color string.  For
+            Color of all labels and axis titles. Default white.
+            Either a string, rgb sequence, or hex color string. For
             example:
 
             * ``color='white'``
@@ -2376,7 +2377,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Opacity of mesh. Should be between 0 and 1.
 
         render_lines_as_tubes : bool, default: False
-            Show lines as thick tubes rather than flat lines.  Control
+            Show lines as thick tubes rather than flat lines. Control
             the width with ``line_width``.
 
         lighting : bool, optional
@@ -2490,7 +2491,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The face at which to place the plane. Options are
             (``'-z'``, ``'-y'``, ``'-x'``, ``'+z'``, ``'+y'``, and
             ``'+z'``). Where the ``-/+`` sign indicates on which side of
-            the axis the plane will lie.  For example, ``'-z'`` would
+            the axis the plane will lie. For example, ``'-z'`` would
             generate a floor on the XY-plane and the bottom of the
             scene (minimum z).
 
@@ -2501,7 +2502,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Number of points on the plane in the ``j`` direction.
 
         color : ColorLike, optional
-            Color of all labels and axis titles.  Default gray.
+            Color of all labels and axis titles. Default gray.
             Either a string, rgb list, or hex color string.
 
         line_width : int, optional
@@ -2515,7 +2516,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Flag on whether to show the mesh edges for tiling.
 
         line_width : float, default: False
-            Thickness of lines.  Only valid for wireframe and surface
+            Thickness of lines. Only valid for wireframe and surface
             representations.
 
         lighting : bool, optional
@@ -3000,13 +3001,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Resets camera so all actors can be seen.
 
         render : bool, optional
-            Render upon actor removal.  Set this to ``False`` to stop
+            Render upon actor removal. Set this to ``False`` to stop
             the render window from rendering when an actor is removed.
 
         Returns
         -------
         bool
-            ``True`` when actor removed.  ``False`` when actor has not
+            ``True`` when actor removed. ``False`` when actor has not
             been removed.
 
         Examples
@@ -3084,15 +3085,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Parameters
         ----------
         xscale : float, optional
-            Scaling in the x direction.  Default is ``None``, which
+            Scaling in the x direction. Default is ``None``, which
             does not change existing scaling.
 
         yscale : float, optional
-            Scaling in the y direction.  Default is ``None``, which
+            Scaling in the y direction. Default is ``None``, which
             does not change existing scaling.
 
         zscale : float, optional
-            Scaling in the z direction.  Default is ``None``, which
+            Scaling in the z direction. Default is ``None``, which
             does not change existing scaling.
 
         reset_camera : bool, default: True
@@ -3105,7 +3106,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Examples
         --------
         Set the scale in the z direction to be 2 times that of
-        nominal.  Leave the other axes unscaled.
+        nominal. Leave the other axes unscaled.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
@@ -3204,7 +3205,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Examples
         --------
         Add a mesh and place the camera position too close to the
-        mesh.  Then reset the camera and show the mesh.
+        mesh. Then reset the camera and show the mesh.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
@@ -3323,7 +3324,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         View a built-in mesh from the ``(1, 1, 1)`` direction. The camera is
         placed along this vector and looks back toward the center of the mesh,
-        so the positive x, y and z axes all point toward the viewer.
+        so the positive x, y, and z axes all point toward the viewer.
 
         >>> from pyvista import examples
         >>> airplane = examples.load_airplane()
@@ -3825,8 +3826,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Parameters
         ----------
         color : ColorLike, optional
-            Either a string, rgb list, or hex color string.  Defaults
-            to theme default.  For example:
+            Either a string, rgb list, or hex color string. Defaults
+            to theme default. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -4053,8 +4054,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
                 msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
                 raise VTKVersionError(msg)
             rotation_matrix = _validation.validate_rotation(
@@ -4295,7 +4294,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
             list, or a matplotlib color string (for example, ``'w'`` or ``'white'``
-            for a white color).  If None, legend background is
+            for a white color). If None, legend background is
             disabled.
 
         border : bool, default: False
@@ -4303,17 +4302,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Default False.
 
         size : sequence[float], default: (0.2, 0.2)
-            Two float sequence, each float between 0 and 1.  For example
+            Two float sequence, each float between 0 and 1. For example
             ``(0.1, 0.1)`` would make the legend 10% the size of the
             entire figure window.
 
         name : str, optional
             The name for the added actor so that it can be easily
-            updated.  If an actor of this name already exists in the
+            updated. If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
         loc : str, default: "upper right"
-            Location string.  One of the following:
+            Location string. One of the following:
 
             * ``'upper right'``
             * ``'upper left'``
@@ -4339,12 +4338,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Passing ``"none"`` removes the legend face.  A custom face can be
-            created using :class:`pyvista.PolyData`.  This will be rendered
+            Passing ``"none"`` removes the legend face. A custom face can be
+            created using :class:`pyvista.PolyData`. This will be rendered
             from the XY plane.
 
         font_family : str, optional
-            Font family.  Must be either ``'courier'``, ``'times'``,
+            Font family. Must be either ``'courier'``, ``'times'``,
             or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
             <pyvista.plotting.themes._Font.family>`.
 
@@ -4492,7 +4491,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Parameters
         ----------
         render : bool, default: True
-            Render upon actor removal.  Set this to ``False`` to stop
+            Render upon actor removal. Set this to ``False`` to stop
             the render window from rendering when a the legend is removed.
 
         Examples
@@ -4692,8 +4691,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetLabelFactor(label_size_factor)
         if snap_labels:
             if vtk_version_info < (9, 4):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
-
                 msg = '`snap_labels` requires VTK >= 9.4. Try installing VTK v9.4.0 or newer.'
                 raise VTKVersionError(msg)
             ruler.SnapLabelsToGridOn()

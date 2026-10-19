@@ -13,6 +13,8 @@ from typing import Any
 
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
+from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
+from pyvista.typing import _get_deprecated_alias
 
 # Bound so the submodule is also reachable as ``pyvista._typing``
 from . import _typing as _typing
@@ -141,9 +143,6 @@ global_theme: _GlobalTheme = _GlobalTheme()
 
 def __getattr__(name: str) -> Any:
     """Forward the deprecated attributes of this module with a warning."""
-    from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE  # noqa: PLC0415
-    from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415
-
     if name in _MOVED_TO_TYPING_NAMESPACE[__name__]:
         return _get_deprecated_alias(__name__, name)
     return _colors_getattr(name)

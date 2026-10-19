@@ -47,13 +47,13 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     position : sequence[float], optional
         The position of the light. The interpretation of the position
         depends on the type of the light and whether the light has a
-        transformation matrix.  See also the :py:attr:`position`
+        transformation matrix. See also the :py:attr:`position`
         property.
 
     focal_point : sequence[float], optional
         The focal point of the light. The interpretation of the focal
         point depends on the type of the light and whether the light
-        has a transformation matrix.  See also the
+        has a transformation matrix. See also the
         :py:attr:`focal_point` property.
 
     color : ColorLike, optional
@@ -558,8 +558,8 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         as a spotlight.
 
         Attenuation and cone angles are only used for positional
-        lights.  The :py:attr:`exponent` property is only used for
-        spotlights.  Positional lights with a cone angle of at least
+        lights. The :py:attr:`exponent` property is only used for
+        spotlights. Positional lights with a cone angle of at least
         90 degrees don't show angular dependence of their beams, but
         they display attenuation.
 
@@ -630,7 +630,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Plot three planes lit by three spotlights with exponents of 1,
-        2, and 5.  The one with the lowest exponent has the broadest
+        2, and 5. The one with the lowest exponent has the broadest
         beam.
 
         >>> import pyvista as pv
@@ -666,7 +666,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
 
         Regarding the angular distribution of the light, the cone
         angle merely truncates the beam, the shape of which is defined
-        by the :py:attr:`exponent`.  If the cone angle is at least 90
+        by the :py:attr:`exponent`. If the cone angle is at least 90
         degrees then there is no angular dependence.
 
         If the light's cone angle is increased to 90 degrees or above,
@@ -675,7 +675,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Plot three planes lit by three spotlights with varying cone
-        angles.  Use a large exponent to cause a visible angular
+        angles. Use a large exponent to cause a visible angular
         variation of the intensity of the beams.
 
         >>> import pyvista as pv
@@ -717,7 +717,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         Examples
         --------
         Plot three cubes lit by two lights with different attenuation
-        profiles.  The blue light has slower linear attenuation, the
+        profiles. The blue light has slower linear attenuation, the
         green one has quadratic attenuation that makes it decay
         faster. Note that there are no shadow effects included so each
         box gets lit by both lights.
@@ -1082,8 +1082,8 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         arbitrary relative position to the camera. Camera lights are
         defined in a coordinate space where the camera is located at
         (0, 0, 1), looking towards (0, 0, 0) at a distance of 1, with
-        up being (0, 1, 0).  Camera lights use the transformation
-        matrix to establish this space.  Calling this method will
+        up being (0, 1, 0). Camera lights use the transformation
+        matrix to establish this space. Calling this method will
         reset the light's transformation matrix.
 
         Examples

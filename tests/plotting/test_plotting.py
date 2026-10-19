@@ -1658,6 +1658,18 @@ def test_plot_clim(sphere):
     pl.show()
 
 
+def test_plot_near_constant_scalars():
+    sphere = pv.Sphere(theta_resolution=64, phi_resolution=64).triangulate()
+    blocks = pv.MultiBlock([sphere.translate((1.2, 0, 0)), sphere.translate((2.4, 0, 0))])
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='Normals', show_scalar_bar=False)
+    composite, _ = pl.add_composite(blocks, scalars='Normals', show_scalar_bar=False)
+    for mapper in (actor.mapper, composite.mapper):
+        low, high = mapper.scalar_range
+        assert low == high
+    pl.show()
+
+
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_invalid_n_arrays(sphere):
     pl = pv.Plotter()
@@ -1796,6 +1808,154 @@ def test_screenshot_scaled():
     with pytest.raises(ValueError):  # noqa: PT011
         pl.image_scale = 0.5
 
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('opacity', [1.0, 0.5])
+@pytest.mark.parametrize('anti_aliasing', ['msaa', 'ssaa'])
+@pytest.mark.parametrize('background', ['white', (40, 160, 90)])
+def test_screenshot_transparent_background_alpha(opacity, anti_aliasing, background):
+    color = np.array([200, 50, 120])
+    pl = pv.Plotter(window_size=(200, 200))
+    pl.background_color = background
+    pl.add_mesh(pv.Disc(c_res=60, inner=0), color=color / 255, lighting=False, opacity=opacity)
+    pl.camera_position = [(0.3, 0.2, 3), (0, 0, 0), (0, 1, 0)]
+    pl.enable_anti_aliasing(anti_aliasing, multi_samples=8)
+    opaque = pl.screenshot(transparent_background=False)
+
+    blended = pl.screenshot(transparent_background=True).astype(int)
+    straight = pl.screenshot(transparent_background='straight').astype(int)
+    premultiplied = pl.screenshot(transparent_background='premultiplied').astype(int)
+    # The background is restored and rendered, up to edge noise between renders
+    restored = pl.screenshot(transparent_background=False, render=False)
+    assert np.abs(restored.astype(int) - opaque).mean() < 1
+    pl.close()
+
+    alpha = straight[..., 3]
+    # Some drivers cover edge pixels with a different sample from the front and back buffers
+    assert np.abs(blended[..., 3] - alpha).max() <= 255 / 8
+    assert np.array_equal(premultiplied[..., 3], alpha)
+    assert np.all(straight[alpha == 0] == 0)
+    assert np.all(premultiplied[alpha == 0] == 0)
+
+    partial = (alpha > 0) & (alpha < 255)
+    assert partial.any()
+    # The background color is blended into partially transparent pixels unless removed
+    assert np.abs(blended[partial, :3].mean(axis=0) - color).max() > 20
+    assert np.allclose(straight[partial, :3].mean(axis=0), color, atol=5)
+    visible = alpha >= 64
+    assert np.abs(straight[visible, :3] - color).max() <= 12
+    expected = straight[..., :3] * alpha[..., None] / 255
+    assert np.abs(premultiplied[..., :3] - expected).max() <= 1
+
+
+@pytest.mark.skip_egl(reason='OSMesa/EGL builds of VTK use SSAA instead of FXAA.')
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_transparent_background_alpha_fxaa():
+    # FXAA does not smooth alpha, so it is not applied to the capture
+    color = np.array([200, 50, 120])
+    pl = pv.Plotter(window_size=(200, 200))
+    pl.add_mesh(pv.Disc(c_res=60, inner=0), color=color / 255, lighting=False, opacity=0.5)
+    pl.enable_anti_aliasing('fxaa')
+    straight = pl.screenshot(transparent_background='straight').astype(int)
+    assert pl.renderer.GetUseFXAA()
+    pl.close()
+
+    visible = straight[..., 3] > 0
+    assert np.abs(straight[visible, :3] - color).max() <= 2
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_transparent_background_alpha_restores_state(mocker):
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.background_color = 'red'
+    pl.renderer.SetTexturedBackground(True)
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+    pl.screenshot(transparent_background='straight')
+    assert not interactor.GetEnableRender()
+    assert pl.renderer.GetTexturedBackground()
+    assert pl.render_window.GetSwapBuffers()
+    pl.render_window.SwapBuffersOff()
+    pl.screenshot(transparent_background='straight')
+    assert not pl.render_window.GetSwapBuffers()
+    pl.render_window.SwapBuffersOn()
+
+    mocker.patch.object(pv.Plotter, '_read_image', side_effect=RuntimeError('read failed'))
+    with pytest.raises(RuntimeError, match='read failed'):
+        pl.screenshot(transparent_background='premultiplied')
+    assert pl.background_color == 'red'
+    assert pl.renderer.GetTexturedBackground()
+    assert not interactor.GetEnableRender()
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_transparent_background_alpha_gradient_and_scale():
+    pl = pv.Plotter(shape=(1, 2), window_size=(40, 20))
+    pl.add_mesh(pv.Sphere(), lighting=False)
+    pl.subplot(0, 1)
+    pl.add_mesh(pv.Cube(), lighting=False)
+    plain = pl.screenshot(transparent_background='straight', scale=2)
+    pl.subplot(0, 0)
+    pl.set_background('white', top='blue')
+    opaque = pl.screenshot(transparent_background=False)
+
+    # The gradient is removed along with the background color
+    straight = pl.screenshot(transparent_background='straight', scale=2)
+    assert straight.shape == (40, 80, 4)
+    assert np.array_equal(straight, plain)
+    assert np.array_equal(pl.screenshot(transparent_background=False, render=False), opaque)
+    assert pl.background_color == 'white'
+    assert pl.renderer.GetGradientBackground()
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_transparent_background_from_theme():
+    theme = pv.themes.Theme()
+    theme.transparent_background = 'premultiplied'
+    pl = pv.Plotter(theme=theme)
+    pl.add_mesh(pv.Sphere())
+    image = pl.screenshot()
+    assert image.shape[-1] == 4
+    assert np.all(image[image[..., 3] == 0] == 0)
+
+    match = re.escape("(True, False, 'straight', 'premultiplied')")
+    with pytest.raises(ValueError, match=match):
+        pl.screenshot(transparent_background='associated')
+    pl.close()
+    with pytest.raises(ValueError, match=match):
+        theme.transparent_background = 'associated'
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_transparent_background_alpha_image_and_write_frame(mocker):
+    pl = pv.Plotter(window_size=(100, 100))
+    pl.add_mesh(pv.Plane(), color=(200, 50, 120), lighting=False, opacity=0.5)
+    pl.view_xy()
+    straight = pl.screenshot(transparent_background='straight').astype(int)
+    # The image keeps the option of the last screenshot
+    assert np.array_equal(pl.image, straight)
+
+    writer = mocker.Mock()
+    mocker.patch.object(pv.Plotter, '_get_mwriter_not_none', return_value=writer)
+
+    def written_frame(**kwargs):
+        pl.write_frame(**kwargs)
+        return writer.append_data.call_args.args[0].astype(int)
+
+    assert np.array_equal(written_frame(), straight)
+    premultiplied = written_frame(transparent_background='premultiplied')
+    expected = straight[..., :3] * straight[..., 3:] / 255
+    assert np.abs(premultiplied[..., :3] - expected).max() <= 1
+    assert written_frame(transparent_background=False).shape[-1] == 3
+
+    match = re.escape("(True, False, 'straight', 'premultiplied')")
+    with pytest.raises(ValueError, match=match):
+        pl.write_frame(transparent_background='associated')
     pl.close()
 
 
