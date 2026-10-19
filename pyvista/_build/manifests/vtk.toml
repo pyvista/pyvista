@@ -1,0 +1,72 @@
+manifest_version = 1
+
+[backend]
+name = "vtk"
+url = "https://gitlab.kitware.com/vtk/vtk.git"
+
+[tools]
+cmake = ">=3.22"
+ninja = ">=1.11"
+
+[cmake]
+common = [
+  "VTK_BUILD_DOCUMENTATION=OFF",
+  "VTK_BUILD_EXAMPLES=OFF",
+  "VTK_BUILD_TESTING=OFF",
+  "VTK_DISPATCH_SOA_ARRAYS=ON",
+  "VTK_USE_PCH=OFF", # a precompiled header defeats the compiler cache
+  "VTK_WHEEL_BUILD=ON",
+  "VTK_WRAP_PYTHON=ON",
+]
+macos = ["CMAKE_OSX_DEPLOYMENT_TARGET=11.0"]
+
+[groups.rendering]
+cmake = ["VTK_GROUP_ENABLE_Rendering=WANT"]
+cmake_off = ["VTK_GROUP_ENABLE_Rendering=NO", "VTK_GROUP_ENABLE_Views=NO"]
+default = true
+help = "OpenGL rendering, widgets, charts and text"
+
+[groups.io]
+cmake = [
+  "VTK_MODULE_ENABLE_VTK_IOImport=WANT",
+  "VTK_MODULE_ENABLE_VTK_IOParallelExodus=WANT",
+  "VTK_MODULE_ENABLE_VTK_IOXdmf2=WANT",
+]
+default = true
+help = "Extra readers and writers (scene import, Exodus, Xdmf2)"
+
+[groups.web]
+cmake = [
+  "VTK_MODULE_ENABLE_VTK_WebCore=WANT",
+  "VTK_MODULE_ENABLE_VTK_WebGLExporter=WANT",
+  "VTK_MODULE_ENABLE_VTK_WebPython=WANT",
+]
+default = true
+help = "Web export modules used by trame and the Jupyter backends"
+
+[groups.matplotlib]
+cmake = ["VTK_MODULE_ENABLE_VTK_RenderingMatplotlib=WANT"]
+default = true
+help = "Matplotlib-rendered math text and labels"
+
+[groups.parallel]
+cmake = ["VTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=WANT"]
+default = true
+help = "DIY2-based parallel filters (e.g. redistribution, ghost cells)"
+
+[groups.serialization]
+cmake = ["VTK_BUILD_PYI_FILES=ON", "VTK_WRAP_SERIALIZATION=ON"]
+default = true
+help = "Object serialization and .pyi stub files"
+
+[groups.headless]
+cmake = ["VTK_OPENGL_HAS_EGL=ON", "VTK_USE_X=OFF"]
+default = false
+help = "No X: render through EGL or OSMesa, chosen at run time (Linux)"
+os = ["linux"]
+
+[options.smp]
+choices = ["OpenMP", "STDThread", "Sequential", "TBB"]
+cmake = "VTK_SMP_IMPLEMENTATION_TYPE={value}"
+default = "Sequential" # VTK's own default, as in the PyPI wheels
+help = "Threading backend for SMP-enabled filters"
