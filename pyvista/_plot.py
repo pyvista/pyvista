@@ -296,8 +296,7 @@ def plot(  # noqa: ANN202
 
         * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
-        * [Window height x Window width x 4] if the theme sets
-          ``transparent_background=True``.
+        * [Window height x Window width x 4] otherwise.
 
     widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.

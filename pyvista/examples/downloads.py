@@ -98,6 +98,8 @@ _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
+# VTK 9.7 corrected the wedge point ordering; the `_v2` wedge datasets follow it
+_WEDGE_V2 = pv.vtk_version_info >= (9, 7)
 
 
 def _warn_invalid_dir_not_used(path: Path, env_var: str) -> None:
@@ -3368,7 +3370,7 @@ def download_structured_grid_two(*, load: bool = True) -> StructuredGrid | str:
     return _download_dataset(_dataset_structured_grid_two, load=load)
 
 
-_dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStructGrid.vtk')
+_dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStructGrid_v2.vtk')
 
 
 @overload
@@ -5826,7 +5828,9 @@ def download_notch_stress(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader(
+    'notch_stress_fixed_v2.vtk' if _WEDGE_V2 else 'notch_stress_fixed.vtk'
+)
 
 
 @overload
@@ -5870,7 +5874,9 @@ def download_notch_displacement(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_notch_displacement, load=load)
 
 
-_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp.vtu')
+_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader(
+    'notch_disp_v2.vtu' if _WEDGE_V2 else 'notch_disp.vtu'
+)
 
 
 @overload
@@ -6512,7 +6518,7 @@ def download_pump_bracket(*, load: bool = True) -> UnstructuredGrid | str:
 
 
 _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
-    'fea/pump_bracket/pump_bracket.zip',
+    'fea/pump_bracket/pump_bracket_v2.zip',
     target_file='pump_bracket.vtk',
 )
 
@@ -6607,12 +6613,13 @@ def download_electronics_cooling(
 def _electronics_cooling_files_func() -> tuple[
     _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
 ]:
+    zip_name = 'datasets_v2.zip' if _WEDGE_V2 else 'datasets.zip'
     _structure = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets.zip',
+        f'fvm/cooling_electronics/{zip_name}',
         target_file='structure.vtp',
     )
     _air = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets.zip',
+        f'fvm/cooling_electronics/{zip_name}',
         target_file='air.vtu',
     )
     return _structure, _air
@@ -8361,7 +8368,9 @@ def download_aero_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_aero_bracket, load=load)
 
 
-_dataset_aero_bracket = _SingleFileDownloadableDatasetLoader('fea/aero_bracket/aero_bracket.vtu')
+_dataset_aero_bracket = _SingleFileDownloadableDatasetLoader(
+    'fea/aero_bracket/aero_bracket_v2.vtu'
+)
 
 
 @overload
@@ -8644,7 +8653,7 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[ImageData | MultiBlock[ImageData]]: ...
+def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[MultiBlock[ImageData] | ImageData]: ...
 @overload
 def download_whole_body_ct_male(*, load: Literal[False], high_resolution: bool = False) -> str: ...
 # ruff: enable[E501]
@@ -8653,7 +8662,7 @@ def download_whole_body_ct_male(
     *,
     load: bool = True,
     high_resolution: bool = False,
-) -> MultiBlock[ImageData | MultiBlock[ImageData]] | str:
+) -> MultiBlock[MultiBlock[ImageData] | ImageData] | str:
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -8985,7 +8994,7 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 # fmt: off
 # ruff: disable[E501]
 @overload
-def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[ImageData | MultiBlock[ImageData]]: ...
+def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock[MultiBlock[ImageData] | ImageData]: ...
 @overload
 def download_whole_body_ct_female(*, load: Literal[False], high_resolution: bool = False) -> str: ...
 # ruff: enable[E501]
@@ -8994,7 +9003,7 @@ def download_whole_body_ct_female(
     *,
     load: bool = True,
     high_resolution: bool = False,
-) -> MultiBlock[ImageData | MultiBlock[ImageData]] | str:
+) -> MultiBlock[MultiBlock[ImageData] | ImageData] | str:
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,

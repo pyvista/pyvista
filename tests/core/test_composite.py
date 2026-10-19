@@ -1727,6 +1727,10 @@ def test_block_types(multiblock_all_with_nested_and_none):
             [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
             'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
         ),
+        (
+            [pv.ImageData(), pv.MultiBlock([pv.ImageData()])],
+            'MultiBlock[MultiBlock[ImageData] | ImageData]',
+        ),
     ],
 )
 def test_inferred_type(blocks, expected):
@@ -1789,7 +1793,7 @@ _WIDE = [
                     pv.PointSet(),
                 ]
             ),
-            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
+            'MultiBlock[MultiBlock[PolyData] | ExplicitStructuredGrid | ...]',
         ),
     ],
 )
