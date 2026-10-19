@@ -958,6 +958,12 @@ def test_get_file_or_folder_size_self_reference(tmp_path):
     assert _get_file_or_folder_size(str(path)) == path.stat().st_size
 
 
+def test_get_file_or_folder_size_malformed_index(tmp_path):
+    path = tmp_path / 'broken.vtm'
+    path.write_text('<VTKFile><DataSet file="a.vtp"')
+    assert _get_file_or_folder_size(str(path)) == path.stat().st_size
+
+
 def test_get_file_or_folder_size_skips_missing_reference(tmp_path):
     path = tmp_path / 'series.pvd'
     path.write_text('<VTKFile><Collection><DataSet file="missing.vtp"/></Collection></VTKFile>')
