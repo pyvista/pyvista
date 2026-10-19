@@ -5540,6 +5540,16 @@ def test_property_pbr(verify_image_cache):
     prop.plot()
 
 
+def test_tight_airplane():
+    """Render the complete airplane with a tight camera."""
+    mesh = examples.load_airplane().rotate_z(-90).rotate_y(180)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.camera.tight(adjust_render_window=False)
+    assert pl.camera.parallel_projection
+    pl.show()
+
+
 def test_tight_square(noise_2d):
     noise_2d.plot(
         window_size=[800, 200],
