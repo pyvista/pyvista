@@ -292,6 +292,7 @@ class Report(scooby.Report):
             'pillow',
             'typing-extensions',
             'cyclopts',
+            'packaging',
             'pyvista-validation',
         ]
 
