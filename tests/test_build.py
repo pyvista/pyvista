@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 from typing import TYPE_CHECKING
+import zipfile
 
 import pytest
 from rich.console import Console
@@ -793,6 +794,44 @@ def test_disabled_groups_unset_their_keys(tmp_path: Path, mocker: MockerFixture,
     builder.groups = [*builder.groups, 'headless']
     cmd = builder.configure_command()
     assert not any(a.startswith('-U') for a in cmd)
+
+
+def _write_wheel(path: Path, data: bytes, year: int = 2020) -> None:
+    """Write a one-file wheel whose file carries the given timestamp."""
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr(zipfile.ZipInfo('vtkmodules/lib.so', (year, 1, 1, 0, 0, 0)), data)
+
+
+def test_repair_skips_a_wheel_it_already_repaired(tmp_path: Path, mocker: MockerFixture):
+    """Only a wheel with different contents, or a missing result, runs the repair again."""
+    builder = _builder(tmp_path, mocker, repair=True)
+    cfg = builder.config
+    cfg.dist_dir.mkdir(parents=True)
+    cfg.wheelhouse.mkdir(parents=True)
+    built = cfg.dist_dir / 'vtk-9.7.0-cp314-cp314-linux_x86_64.whl'
+    repaired = cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_39_x86_64.whl'
+    run = mocker.patch.object(
+        builder, 'run', side_effect=lambda *_, **__: _write_wheel(repaired, b'x')
+    )
+
+    def repair(data: bytes, year: int = 2020) -> None:
+        _write_wheel(built, data, year)
+        builder.wheel = built
+        builder.phase_repair()
+        assert builder.wheel == repaired
+
+    repair(b'one')
+    repair(b'one', year=2021)
+    assert run.call_count == 1
+    assert 'was repaired from this same wheel' in builder.console.export_text()
+    repair(b'two')
+    assert run.call_count == 2
+    repaired.unlink()
+    repair(b'two')
+    assert run.call_count == 3
+    (cfg.wheelhouse / phases._REPAIR_STAMP).write_text('[]')
+    repair(b'two')
+    assert run.call_count == 4
 
 
 @pytest.mark.usefixtures('no_tools')

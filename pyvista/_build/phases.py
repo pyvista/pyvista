@@ -6,6 +6,7 @@ from collections import deque
 import contextlib
 from dataclasses import dataclass
 from dataclasses import field
+import hashlib
 from io import TextIOWrapper
 import json
 import os
@@ -21,6 +22,7 @@ import threading
 import time
 from typing import TYPE_CHECKING
 from typing import cast
+import zipfile
 
 from rich.console import Console
 from rich.highlighter import Highlighter
@@ -110,6 +112,7 @@ _NOISY_BUILD_LINE = re.compile(
     r': warning C\d+:|: note:|^\s+(with|\[|\])\s*$|^\s+[A-Za-z_][A-Za-z0-9_]*='
 )
 _TAIL_LINES = 40
+_REPAIR_STAMP = '.pyvista-repair.json'
 _TICK_SECONDS = 1.0
 
 
@@ -124,6 +127,25 @@ def _short_name(cmd: Sequence[str]) -> str:
 def _lf(line: str) -> str:
     """Return a line with its Windows line ending turned into a plain newline."""
     return line[:-2] + '\n' if line.endswith('\r\n') else line
+
+
+def _wheel_fingerprint(wheel: Path, cmd: Sequence[str]) -> str:
+    """Return a hash of the repair command and each file's name, checksum, and size in a wheel."""
+    with zipfile.ZipFile(wheel) as archive:
+        entries = sorted((i.filename, i.CRC, i.file_size) for i in archive.infolist())
+    return hashlib.sha256(json.dumps([entries, list(cmd)]).encode()).hexdigest()
+
+
+def _repaired_wheel(stamp: Path, fingerprint: str) -> Path | None:
+    """Return the wheel an earlier repair made from the same input, if it is still there."""
+    try:
+        record = json.loads(stamp.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(record, dict) or record.get('fingerprint') != fingerprint:
+        return None
+    wheel = stamp.parent / str(record.get('wheel', ''))
+    return wheel if wheel.is_file() else None
 
 
 def _duration(seconds: float) -> str:
@@ -1335,12 +1357,27 @@ class Builder:
             )
         wheel = self.wheel or cfg.dist_dir / f'{cfg.backend}-*.whl'
         cmd, env = self.repair_command(wheel)
+        stamp = cfg.wheelhouse / _REPAIR_STAMP
+        fingerprint = None
+        if self.wheel is not None and not cfg.dry_run:
+            fingerprint = _wheel_fingerprint(self.wheel, cmd)
+            repaired = _repaired_wheel(stamp, fingerprint)
+            if repaired is not None:
+                self.say(
+                    f'Skipped: [bold]{escape(str(repaired))}[/bold] was repaired from '
+                    'this same wheel.'
+                )
+                self.wheel = repaired
+                return
         if not self.confirm('Repair the wheel?'):
             self.say('Skipped.')
             return
         self.run(cmd, env=env)
         if not cfg.dry_run:
             self.wheel = self._newest_wheel(cfg.wheelhouse)
+            if fingerprint is not None and self.wheel is not None:
+                record = {'fingerprint': fingerprint, 'wheel': self.wheel.name}
+                stamp.write_text(json.dumps(record), encoding='utf-8')
 
     def install_command(self, wheel: Path) -> list[str] | None:
         """Assemble the command that installs a wheel into this interpreter.

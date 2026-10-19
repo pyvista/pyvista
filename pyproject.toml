@@ -582,6 +582,7 @@ banned-from = [
   'warnings',
   'weakref',
   'xml',
+  'zipfile',
 ]
 
 [tool.ruff.lint.flake8-import-conventions.aliases]
