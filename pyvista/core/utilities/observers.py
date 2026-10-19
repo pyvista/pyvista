@@ -11,6 +11,7 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import NamedTuple
 from typing import NoReturn
 
@@ -31,6 +32,29 @@ if TYPE_CHECKING:
 
     from pyvista._vtk import vtkObject
     from pyvista.core.utilities.reader import BaseVTKReader
+
+
+class _Sentinel:
+    """A default which stands for something other than a value a caller can give.
+
+    Prints as the name it is given, so that a signature shows what it stands for
+    rather than the address of an object.
+
+    Parameters
+    ----------
+    name : str
+        Name shown when the sentinel is printed.
+
+    """
+
+    def __init__(self, name: str) -> None:
+        self._name = name
+
+    def __repr__(self) -> str:
+        return self._name
+
+
+_DEFAULT_OUTPUT: Any = _Sentinel('default')
 
 
 def set_error_output_file(
