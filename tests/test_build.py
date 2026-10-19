@@ -834,6 +834,98 @@ def test_repair_skips_a_wheel_it_already_repaired(tmp_path: Path, mocker: Mocker
     assert run.call_count == 4
 
 
+def test_wheel_hides_only_the_known_setuptools_warnings(tmp_path: Path, mocker: MockerFixture):
+    """The filters drop two exact warnings, keep any other, and step aside for --verbose."""
+    builder = _builder(tmp_path, mocker)
+    builder.env['PYTHONWARNINGS'] = 'error::ResourceWarning'
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, '_newest_wheel')
+    builder.phase_wheel()
+    filters = run.call_args.kwargs['env']['PYTHONWARNINGS']
+    assert filters.split(',') == ['error::ResourceWarning', *phases._SETUPTOOLS_WARNINGS]
+    builder.config.verbose = True
+    builder.phase_wheel()
+    assert 'PYTHONWARNINGS' not in run.call_args.kwargs['env']
+
+    emit = (
+        'import warnings\n'
+        'for text, module in [\n'
+        "    ('License classifiers are deprecated.', 'setuptools.dist'),\n"
+        "    ('setup.py install is deprecated.', 'distutils.cmd'),\n"
+        "    ('setup.py install is deprecated.', 'setuptools._distutils.cmd'),\n"
+        "    ('License classifiers are deprecated.', 'mypackage'),\n"
+        "    ('Another setuptools warning.', 'setuptools.dist'),\n"
+        ']:\n'
+        "    warnings.warn_explicit(text, UserWarning, module + '.py', 1, module)\n"
+    )
+    result = subprocess.run(
+        [sys.executable, '-c', emit],
+        env={**os.environ, 'PYTHONWARNINGS': ','.join(phases._SETUPTOOLS_WARNINGS)},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    shown = [line for line in result.stderr.splitlines() if 'UserWarning' in line]
+    assert shown == [
+        'mypackage.py:1: UserWarning: License classifiers are deprecated.',
+        'setuptools.dist.py:1: UserWarning: Another setuptools warning.',
+    ]
+
+
+def test_build_wheel_repair_install_paths(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(
+        tools, 'pip_install_command', side_effect=lambda *s, args=(): ['pip', 'install', *args, *s]
+    )
+    builder = _builder(tmp_path, mocker, repair=True)
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    with pytest.raises(BuildError, match='Stopped before building'):
+        builder.phase_build()
+    with pytest.raises(BuildError, match='Stopped before packaging'):
+        builder.phase_wheel()
+    builder.phase_repair()
+    assert 'Skipped.' in builder.console.export_text()
+    builder.phase_install()
+    assert 'Not installed' in builder.console.export_text()
+    with pytest.raises(BuildError, match='No wheel found'):
+        builder._newest_wheel(tmp_path)
+
+    builder = _builder(tmp_path, mocker, install=True, repair=True)
+    run = mocker.patch.object(builder, 'run')
+    cfg = builder.config
+    cfg.dist_dir.mkdir(parents=True)
+    _write_wheel(cfg.dist_dir / 'vtk-9.7.0-cp314-cp314-linux_x86_64.whl', b'')
+    builder.phase_wheel()
+    env = {**builder.wheel_env(), 'PYTHONWARNINGS': ','.join(phases._SETUPTOOLS_WARNINGS)}
+    assert run.call_args_list[0] == mocker.call(
+        [builder.python, 'setup.py', 'bdist_wheel'], cwd=cfg.cmake_dir, env=env
+    )
+    assert builder.wheel is not None
+    assert builder.wheel.name.startswith('vtk-9.7.0')
+    built = builder.wheel
+    cfg.wheelhouse.mkdir(parents=True)
+    _write_wheel(cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_39_x86_64.whl', b'')
+    builder.phase_repair()
+    assert 'manylinux' in builder.wheel.name
+    cmd, env = builder.repair_command(built)
+    assert run.call_args_list[-1] == mocker.call(cmd, env=env)
+    builder.phase_install()
+    install, check = run.call_args_list[-2:]
+    assert install == mocker.call(
+        ['pip', 'install', '--no-deps', '--force-reinstall', str(builder.wheel)]
+    )
+    assert check == mocker.call([builder.python, '-c', 'import vtk'])
+    builder.summary()
+    out = builder.console.export_text()
+    assert 'Wheel:' in out
+    assert 'run the same command again' in out
+    builder.config.clean = True
+    builder.summary()
+    assert 'the same command without --clean again' in builder.console.export_text()
+    mocker.patch.object(tools, 'pip_install_command', return_value=None)
+    builder.phase_install()
+    assert 'install the wheel yourself' in builder.console.export_text()
+
+
 @pytest.mark.usefixtures('no_tools')
 def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
     console = Console(record=True, width=4000, force_terminal=False)

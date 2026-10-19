@@ -113,6 +113,12 @@ _NOISY_BUILD_LINE = re.compile(
 )
 _TAIL_LINES = 40
 _REPAIR_STAMP = '.pyvista-repair.json'
+# One message from one module each; setuptools loads its distutils under either name.
+_SETUPTOOLS_WARNINGS = (
+    'ignore:License classifiers are deprecated::setuptools.dist',
+    'ignore:setup.py install is deprecated::distutils.cmd',
+    'ignore:setup.py install is deprecated::setuptools._distutils.cmd',
+)
 _TICK_SECONDS = 1.0
 
 
@@ -1285,7 +1291,11 @@ class Builder:
         if not self.confirm('Build the wheel?'):
             msg = 'Stopped before packaging.'
             raise BuildError(msg)
-        self.run([self.python, 'setup.py', 'bdist_wheel'], cwd=cfg.cmake_dir, env=self.wheel_env())
+        env = self.wheel_env()
+        if not cfg.verbose:
+            given = self.env.get('PYTHONWARNINGS', '')
+            env['PYTHONWARNINGS'] = ','.join(filter(None, (given, *_SETUPTOOLS_WARNINGS)))
+        self.run([self.python, 'setup.py', 'bdist_wheel'], cwd=cfg.cmake_dir, env=env)
         self.hooks('post_wheel')
         self.wheel = self._newest_wheel(cfg.dist_dir)
 
