@@ -949,6 +949,164 @@ def test_decimate_pro(sphere):
         mesh.decimate_pro(0.5)
 
 
+@pytest.fixture
+def fine_sphere():
+    mesh = pv.Sphere(theta_resolution=200, phi_resolution=200, center=(1.0, 2.0, 3.0))
+    mesh.point_data['point_ids'] = np.arange(mesh.n_points)
+    mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
+    return mesh
+
+
+@pytest.mark.parametrize(('target', 'rtol'), [(500, 0.2), (2000, 0.05), (20000, 0.05)])
+def test_decimate_binned_target_points(fine_sphere, target, rtol):
+    mesh = fine_sphere.decimate_binned(target)
+    assert mesh.n_points == pytest.approx(target, rel=rtol)
+    assert mesh.is_all_triangles
+    assert mesh.n_points == np.unique(mesh.faces.reshape(-1, 4)[:, 1:]).size
+
+
+def test_decimate_binned_keeps_data(fine_sphere):
+    fine_sphere.points = fine_sphere.points.astype(np.float64)
+    mesh = fine_sphere.decimate_binned(2000)
+    point_ids = mesh.point_data['point_ids']
+    cell_ids = mesh.cell_data['cell_ids']
+    assert point_ids.dtype == cell_ids.dtype == np.int_
+    assert np.unique(point_ids).size == mesh.n_points
+    assert np.unique(cell_ids).size == mesh.n_cells
+    assert mesh.points.dtype == np.float64
+    assert np.array_equal(mesh.points, fine_sphere.points[point_ids])
+    shift = mesh.cell_centers().points - fine_sphere.cell_centers().points[cell_ids]
+    bin_size = mesh.length / np.sqrt(mesh.n_points)
+    assert np.linalg.norm(shift, axis=1).max() < 2 * bin_size
+    assert np.array_equal(mesh['Normals'], fine_sphere['Normals'][point_ids])
+
+
+@pytest.mark.parametrize('point_generation', ['bin_points', 'bin_centers', 'bin_averages'])
+def test_decimate_binned_array_types(fine_sphere, point_generation):
+    fine_sphere.point_data['labels'] = np.arange(fine_sphere.n_points).astype(str)
+    fine_sphere.point_data['mask'] = np.arange(fine_sphere.n_points) % 2 == 0
+    fine_sphere.cell_data['labels'] = np.arange(fine_sphere.n_cells).astype(str)
+    fine_sphere.cell_data['mask'] = np.arange(fine_sphere.n_cells) % 2 == 0
+    fine_sphere.field_data['note'] = ['kept']
+    fine_sphere.point_data.active_scalars_name = 'point_ids'
+    fine_sphere.cell_data.active_scalars_name = 'cell_ids'
+
+    mesh = fine_sphere.decimate_binned(divisions=20, point_generation=point_generation)
+    cell_ids = mesh.cell_data['cell_ids']
+    assert np.array_equal(mesh.cell_data['labels'], cell_ids.astype(str))
+    assert np.array_equal(mesh.cell_data['mask'], cell_ids % 2 == 0)
+    assert mesh.cell_data.active_scalars_name == 'cell_ids'
+    assert mesh.point_data.active_scalars_name == 'point_ids'
+    assert mesh.point_data.active_normals_name == 'Normals'
+    assert mesh.field_data['note'] == ['kept']
+    assert fine_sphere.point_data['mask'].dtype == np.bool_
+
+    if point_generation == 'bin_averages':
+        assert 'labels' not in mesh.point_data
+        assert 'mask' not in mesh.point_data
+        assert mesh.point_data['point_ids'].dtype == np.float64
+    else:
+        point_ids = mesh.point_data['point_ids']
+        assert np.array_equal(mesh.point_data['labels'], point_ids.astype(str))
+        assert np.array_equal(mesh.point_data['mask'], point_ids % 2 == 0)
+
+
+def test_decimate_binned_point_generation(fine_sphere):
+    divisions = 10
+    centers = fine_sphere.decimate_binned(divisions=divisions, point_generation='bin_centers')
+    lower = np.array(fine_sphere.bounds)[::2]
+    spacing = np.ptp(np.reshape(fine_sphere.bounds, (3, 2)), axis=1) / divisions
+    offsets = (centers.points - lower) / spacing - 0.5
+    assert np.allclose(offsets, np.round(offsets), atol=1e-4)
+
+    averages = fine_sphere.decimate_binned(divisions=divisions, point_generation='bin_averages')
+    assert averages.n_points == centers.n_points
+    assert not np.isin(averages.points, fine_sphere.points).all(axis=1).any()
+    ids = averages.point_data['point_ids']
+    assert not np.array_equal(ids, np.round(ids))
+
+
+def test_decimate_binned_divisions(fine_sphere):
+    ellipsoid = fine_sphere.scale((4.0, 2.0, 1.0))
+    scalar = ellipsoid.decimate_binned(divisions=20)
+    assert scalar == ellipsoid.decimate_binned(divisions=(20, 10, 5))
+    assert scalar != ellipsoid.decimate_binned(divisions=(20, 20, 20))
+    assert scalar.n_points < ellipsoid.n_points
+
+    single_bin = fine_sphere.decimate_binned(divisions=1)
+    assert single_bin.n_cells == 0
+
+
+def test_decimate_binned_flat():
+    plane = pv.Plane(i_resolution=300, j_resolution=300).triangulate()
+    mesh = plane.decimate_binned(5000)
+    assert mesh.n_points == pytest.approx(5000, rel=0.05)
+    assert np.allclose(mesh.points[:, 2], 0.0)
+
+    mesh = plane.decimate_binned(divisions=10)
+    assert mesh.n_points == 10 * 10
+
+
+def test_decimate_binned_coincident_points():
+    points = np.zeros((3, 3))
+    mesh = pv.PolyData(points, faces=[3, 0, 1, 2]).decimate_binned(100)
+    assert mesh.n_cells == 0
+
+
+@pytest.mark.parametrize('kwargs', [{'target_points': 2000}, {'divisions': 30}])
+def test_decimate_binned_inplace(fine_sphere, kwargs):
+    expected = fine_sphere.decimate_binned(**kwargs)
+    output = fine_sphere.decimate_binned(**kwargs, inplace=True)
+    assert output is fine_sphere
+    assert fine_sphere == expected
+
+
+@pytest.mark.parametrize('kwargs', [{'target_points': 2000}, {'divisions': 30}])
+def test_decimate_binned_progress_bar(fine_sphere, kwargs):
+    with patch('pyvista.core.filters.poly_data._update_alg') as update_alg:
+        update_alg.side_effect = lambda alg, **_: alg.Update()
+        fine_sphere.decimate_binned(**kwargs, progress_bar=True)
+    assert update_alg.call_count >= 1
+    assert all(call.kwargs['progress_bar'] for call in update_alg.call_args_list)
+
+
+def test_decimate_binned_unset_active_scalars(fine_sphere):
+    fine_sphere.point_data.active_scalars_name = None
+    fine_sphere.cell_data.active_scalars_name = None
+    for point_generation in ('bin_points', 'bin_averages'):
+        mesh = fine_sphere.decimate_binned(divisions=20, point_generation=point_generation)
+        assert mesh.point_data.active_scalars_name is None
+        assert mesh.cell_data.active_scalars_name is None
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'error', 'match'),
+    [
+        ({}, ValueError, 'exactly one'),
+        ({'target_points': 100, 'divisions': 10}, ValueError, 'exactly one'),
+        ({'target_points': 0}, ValueError, 'target_points'),
+        ({'target_points': 10.5}, TypeError, 'target_points'),
+        ({'divisions': 0}, ValueError, 'divisions'),
+        ({'divisions': (10, 0, 10)}, ValueError, 'divisions'),
+        ({'divisions': (10, 10)}, ValueError, 'divisions'),
+        ({'divisions': 2.5}, TypeError, 'divisions'),
+        ({'divisions': 10, 'point_generation': 'input_points'}, ValueError, 'point_generation'),
+    ],
+)
+def test_decimate_binned_raises(fine_sphere, kwargs, error, match):
+    with pytest.raises(error, match=match):
+        fine_sphere.decimate_binned(**kwargs)
+
+
+def test_decimate_binned_not_all_triangles(sphere):
+    with pytest.raises(NotAllTrianglesError):
+        pv.Cylinder().decimate_binned(100)
+    sphere.strips = [5, 0, 1, 2, 3, 4]
+    assert sphere.is_all_triangles
+    with pytest.raises(NotAllTrianglesError):
+        sphere.decimate_binned(100)
+
+
 def test_compute_normals(sphere):
     sphere_normals = sphere
     sphere_normals.compute_normals(inplace=True)

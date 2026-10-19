@@ -21,6 +21,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import _copy_active_attributes
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -66,6 +67,16 @@ _ExtrusionOptions = Literal['boundary_edges', 'all_edges']
 _CappingOptions = Literal[
     'intersection', 'minimum_distance', 'maximum_distance', 'average_distance'
 ]
+_BinnedPointGenerationOptions = Literal['bin_points', 'bin_centers', 'bin_averages']
+_MAX_BINNED_DIVISIONS = 1024
+
+
+def _gather_attributes(
+    source: DataSetAttributes, target: DataSetAttributes, ids: NDArray[np.int_]
+) -> None:
+    """Copy the arrays of ``source`` at ``ids`` into ``target``."""
+    for name, array in source.items():
+        target[name] = array[ids]
 
 
 @abstract_class
@@ -1281,6 +1292,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         decimate
             Another option for triangular meshes.
+        decimate_binned
+            Much faster option for large triangular meshes.
         decimate_polyline
             For use with polylines.
 
@@ -1973,6 +1986,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         decimate_pro
             Another option for triangular meshes.
+        decimate_binned
+            Much faster option for large triangular meshes.
         decimate_polyline
             For use with polylines.
 
@@ -2053,6 +2068,205 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
         mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)
+            return self
+
+        return mesh
+
+    def decimate_binned(  # type: ignore[misc]
+        self: PolyData,
+        target_points: int | None = None,
+        *,
+        divisions: int | VectorLikeInt | None = None,
+        point_generation: _BinnedPointGenerationOptions = 'bin_points',
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> PolyData:
+        """Reduce the number of triangles by merging points that share a spatial bin.
+
+        The bounds of the mesh are split into a regular grid of bins, every bin
+        collapses to a single point, and a triangle survives only when its three
+        points land in three different bins. This uses :vtk:`vtkBinnedDecimation`,
+        which is threaded and typically orders of magnitude faster than
+        :meth:`decimate` and :meth:`decimate_pro` on large meshes, at the cost of
+        not preserving topology. It suits previews and level-of-detail rendering
+        of very large surfaces.
+
+        Give exactly one of ``target_points`` or ``divisions``.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        target_points : int, optional
+            Approximate number of points in the output. The bin grid is sized
+            by a coarse probe followed by up to two refinements, which brings
+            large targets within about 5 percent. Small targets land further
+            off, since each bin then covers a large part of the surface. Bins
+            are kept cubic and the longest axis is limited to 1024 divisions.
+
+        divisions : int | VectorLike[int], optional
+            Number of bins along each axis. A single integer applies to the
+            longest axis of the bounds and the other axes get proportionally
+            fewer, with at least one per axis. Three integers set each axis
+            explicitly.
+
+        point_generation : str, default: 'bin_points'
+            How the point of each bin is chosen.
+
+            - ``'bin_points'``: keep one of the input points in the bin along
+              with its point data.
+            - ``'bin_averages'``: average the points in the bin and their point
+              data. Smoother, and slightly slower. Integer point arrays become
+              floating point and non-numeric point arrays are dropped.
+            - ``'bin_centers'``: place the point at the center of the bin,
+              giving a voxelized look, with the point data of one input point.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated mesh.
+
+        See Also
+        --------
+        decimate
+            Quadric decimation, slower and closer to the input.
+        decimate_pro
+            Topology-aware decimation of triangular meshes.
+
+        Notes
+        -----
+        The filter allocates one integer per bin, so memory grows with the
+        product of the divisions rather than with the size of the mesh: about
+        4 GB for a cube-shaped mesh at 1024 divisions per axis.
+
+        Points created by ``'bin_centers'`` and ``'bin_averages'`` are single
+        precision.
+
+        Examples
+        --------
+        Decimate a sphere to roughly 2000 points and plot it.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=200, phi_resolution=200)
+        >>> decimated = sphere.decimate_binned(2000)
+        >>> decimated.plot(show_edges=True, line_width=2)
+
+        Use an explicit bin grid, averaging the points in each bin.
+
+        >>> decimated = sphere.decimate_binned(
+        ...     divisions=20, point_generation='bin_averages'
+        ... )
+
+        """
+        if not self.is_all_triangles or self.n_strips:
+            msg = 'Input mesh for decimation must be all triangles.'
+            raise NotAllTrianglesError(msg)
+        _validation.check_contains(
+            get_args(_BinnedPointGenerationOptions),
+            must_contain=point_generation,
+            name='point_generation',
+        )
+        if (target_points is None) == (divisions is None):
+            msg = 'Specify exactly one of `target_points` or `divisions`.'
+            raise ValueError(msg)
+
+        sizes = np.ptp(np.reshape(self.bounds, (3, 2)), axis=1)
+        averaging = point_generation == 'bin_averages'
+
+        # VTK converts integer arrays to float32 and fails on string arrays, so
+        # only float64 ids go through the filter and the data is gathered after
+        source = pv.PolyData()
+        source.SetPoints(self.GetPoints())
+        source.SetPolys(self.GetPolys())
+        source.cell_data['vtkOriginalCellIds'] = np.arange(self.n_cells, dtype=float)
+        if averaging:
+            for name, array in self.point_data.items():
+                if np.issubdtype(array.dtype, np.floating):
+                    source.point_data[name] = array
+                elif np.issubdtype(array.dtype, np.number):
+                    source.point_data[name] = array.astype(float)
+        else:
+            source.point_data['vtkOriginalPointIds'] = np.arange(self.n_points, dtype=float)
+
+        def _per_axis(longest: float) -> NDArray[np.int_]:
+            """Return the divisions per axis for cubic bins."""
+            scaled = np.round(longest * sizes / max(sizes.max(), np.finfo(float).tiny))
+            return np.maximum(scaled, 1).astype(int)
+
+        def _binned(divs: VectorLikeInt, *, progress_bar: bool) -> PolyData:
+            """Run the binned decimation with the given divisions per axis."""
+            alg = _vtk.vtkBinnedDecimation()
+            alg.SetInputData(source)
+            alg.SetPointGenerationMode(getattr(alg, point_generation.upper()))
+            alg.ProducePointDataOn()
+            alg.ProduceCellDataOn()
+            alg.AutoAdjustNumberOfDivisionsOff()
+            alg.SetNumberOfDivisions(*(int(d) for d in divs))
+            _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
+            return _get_output(alg)
+
+        if divisions is not None:
+            if np.ndim(divisions) == 0:
+                longest = _validation.validate_number(
+                    cast('int', divisions),
+                    must_have_dtype=int,
+                    must_be_in_range=[1, np.inf],
+                    name='divisions',
+                )
+                divs = _per_axis(longest)
+            else:
+                divs = _validation.validate_array3(
+                    divisions,
+                    must_have_dtype=int,
+                    must_be_in_range=[1, np.inf],
+                    dtype_out=int,
+                    name='divisions',
+                )
+            mesh = _binned(divs, progress_bar=progress_bar)
+        else:
+            target = _validation.validate_number(
+                cast('int', target_points),
+                must_have_dtype=int,
+                must_be_in_range=[1, np.inf],
+                name='target_points',
+            )
+            probe = 50.0
+            mesh = best = _binned(_per_axis(probe), progress_bar=progress_bar)
+            for _ in range(2):
+                if abs(mesh.n_points - target) <= 0.05 * target or probe >= _MAX_BINNED_DIVISIONS:
+                    break
+                # Surface point counts grow with the square of the divisions
+                probe = min(probe * np.sqrt(target / max(mesh.n_points, 1)), _MAX_BINNED_DIVISIONS)
+                mesh = _binned(_per_axis(probe), progress_bar=progress_bar)
+                if abs(mesh.n_points - target) < abs(best.n_points - target):
+                    best = mesh
+            mesh = best
+
+        cell_ids = mesh.cell_data.pop('vtkOriginalCellIds').astype(int)
+        _gather_attributes(self.cell_data, mesh.cell_data, cell_ids)
+        if not averaging:
+            point_ids = mesh.point_data.pop('vtkOriginalPointIds').astype(int)
+            _gather_attributes(self.point_data, mesh.point_data, point_ids)
+            if point_generation == 'bin_points':
+                mesh.points = self.points[point_ids]
+        for attributes_in, attributes_out in (
+            (self.point_data, mesh.point_data),
+            (self.cell_data, mesh.cell_data),
+        ):
+            active = attributes_in.active_scalars_name
+            if active is None or active in attributes_out:
+                attributes_out.active_scalars_name = active
+        _copy_active_attributes(self, mesh)
+        mesh.field_data.update(self.field_data)
+
         if inplace:
             self.copy_from(mesh, deep=False)
             return self

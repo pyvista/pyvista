@@ -338,6 +338,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkAppendArcLength',
         'vtkAppendFilter',
         'vtkAppendPolyData',
+        'vtkBinnedDecimation',
         'vtkCellCenters',
         'vtkCellDataToPointData',
         'vtkCenterOfMass',
