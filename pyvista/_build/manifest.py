@@ -21,7 +21,16 @@ MANIFEST_VERSION = 1
 OS_NAMES = ('linux', 'macos', 'windows')
 HOOK_NAMES = ('post_configure', 'post_build', 'post_wheel')
 PLACEHOLDERS = ('python', 'src_dir', 'build_dir', 'dist_dir', 'wheelhouse')
-TOP_LEVEL_KEYS = ('manifest_version', 'backend', 'tools', 'cmake', 'groups', 'options', 'hooks')
+TOP_LEVEL_KEYS = (
+    'manifest_version',
+    'backend',
+    'tools',
+    'cmake',
+    'groups',
+    'options',
+    'hooks',
+    'manylinux',
+)
 _CMAKE_ENTRY = re.compile(r'[A-Za-z_][A-Za-z0-9_.+-]*(:[A-Za-z]+)?=')
 
 
@@ -142,6 +151,7 @@ class Manifest:
     groups: dict[str, Group]
     options: dict[str, Option]
     hooks: dict[str, tuple[str, ...]]
+    manylinux_packages: tuple[str, ...] = ()
     path: Path | None = field(default=None, compare=False)
 
     def groups_for(self, os_name: str) -> list[Group]:
@@ -394,6 +404,8 @@ def parse_manifest(data: dict[str, Any], path: Path | None = None) -> Manifest:
         name: _parse_option(name, t)
         for name, t in _table(data, 'options', where='manifest').items()
     }
+    manylinux = _table(data, 'manylinux', where='manifest')
+    _check_keys(manylinux, ('packages',), where='[manylinux]')
     hooks_table = _table(data, 'hooks', where='manifest')
     unknown_hooks = set(hooks_table) - set(HOOK_NAMES)
     if unknown_hooks:
@@ -416,6 +428,7 @@ def parse_manifest(data: dict[str, Any], path: Path | None = None) -> Manifest:
         groups=groups,
         options=options,
         hooks=hooks,
+        manylinux_packages=_str_list(manylinux, 'packages', where='[manylinux]'),
         path=path,
     )
 

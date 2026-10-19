@@ -6,7 +6,9 @@ from dataclasses import replace
 from io import StringIO
 import json
 import os
+from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -16,9 +18,14 @@ import zipfile
 import pytest
 from rich.console import Console
 
+import pyvista as pv
 from pyvista._build import BuildConfig
 from pyvista._build import Builder
 from pyvista._build import BuildError
+from pyvista._build import ManifestError
+from pyvista._build import __main__ as build_main
+from pyvista._build import load_manifest
+from pyvista._build import manylinux
 from pyvista._build import phases
 from pyvista._build import tools
 from pyvista._build.manifest import OS_NAMES
@@ -31,8 +38,6 @@ from pyvista._build.registry import find_manifest
 from tests.test_build_manifest import MINIMAL_MANIFEST
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from pytest_mock import MockerFixture
 
 
@@ -1246,6 +1251,320 @@ def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
         builder.phase_build()
 
 
+def test_manifest_manylinux_packages(tmp_path: Path):
+    path = tmp_path / 'pyvista-build.toml'
+    path.write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\ndefault_ref = "v1"\n'
+        '[manylinux]\npackages = ["libX11-devel"]\n'
+    )
+    assert load_manifest(path).manylinux_packages == ('libX11-devel',)
+    path.write_text(
+        'manifest_version = 1\nmanylinux = 1\n[backend]\nname = "demo"\ndefault_ref = "v1"\n'
+    )
+    with pytest.raises(ManifestError, match="'manylinux' must be a table"):
+        load_manifest(path)
+    assert find_manifest('vtk', None).manylinux_packages == (
+        'libX11-devel',
+        'libXcursor-devel',
+        'mesa-libGL-devel',
+    )
+
+
+def test_manylinux_helpers(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(manylinux.platform, 'machine', return_value='arm64')
+    assert manylinux.default_image().endswith('_aarch64')
+    mocker.patch.object(manylinux.platform, 'machine', return_value='AMD64')
+    assert manylinux.default_image().endswith('_x86_64')
+    tag = f'cp{sys.version_info.major}{sys.version_info.minor}'
+    mocker.patch.object(manylinux.sys, 'abiflags', '', create=True)
+    assert manylinux.container_python() == f'/opt/python/{tag}-{tag}/bin/python'
+    mocker.patch.object(manylinux.sys, 'abiflags', 't', create=True)
+    assert manylinux.container_python() == f'/opt/python/{tag}-{tag}t/bin/python'
+    assert manylinux.pyvista_package() == Path(pv.__file__).resolve().parent
+    requirements = manylinux.pyvista_requirements()
+    assert any(r.startswith('vtk') for r in requirements)
+    assert not any('extra' in r for r in requirements)
+    mocker.patch.object(
+        manylinux,
+        'requires',
+        return_value=['numpy>=1', 'cmocean; extra == "colormaps"', 'x; sys_platform == "darwin"'],
+    )
+    assert manylinux.pyvista_requirements() == ['numpy>=1', 'x; sys_platform == "darwin"']
+    script = manylinux.container_script(
+        python='/opt/py',
+        packages=['a-devel', 'b'],
+        requirements=['numpy>=1', 'x; sys_platform == "darwin"'],
+        config='{"backend": "vtk"}',
+        ccache=True,
+        owner='1000:1000',
+        paths=['/work', '/cache'],
+    )
+    lines = script.splitlines()
+    assert lines[:2] == [
+        'set -euo pipefail',
+        "trap 'chown -R 1000:1000 /work /cache || true' EXIT",
+    ]
+    assert 'dnf install -y --setopt=install_weak_deps=False a-devel b' in script
+    assert "git config --global --add safe.directory '*'" in script
+    assert 'export PIP_CACHE_DIR=/work/pip-cache' in lines
+    assert 'yum install -y a-devel b' in script
+    assert 'ccache-4.14-linux-$ARCH-musl-static' in script
+    for arch, sha in manylinux.CCACHE_SHA256.items():
+        assert f'{arch}) SHA={sha};;' in script
+    assert 'echo "$SHA  /tmp/ccache.tar.xz" | sha256sum --check --quiet' in lines
+    assert """--only-binary :all: 'numpy>=1' 'x; sys_platform == "darwin"'""" in script
+    assert lines[-1] == (
+        """PYTHONPATH=/opt/pyvista-host "$PY" -m pyvista._build '{"backend": "vtk"}'"""
+    )
+    script = manylinux.container_script(
+        python='/opt/py',
+        packages=[],
+        requirements=[],
+        config='{}',
+        ccache=False,
+        owner=None,
+        paths=['/work'],
+    )
+    assert 'dnf' not in script
+    assert 'ccache' not in script
+    assert 'chown' not in script
+    cmd = manylinux.docker_command(
+        'img',
+        mounts={
+            '/work': tmp_path / 'build',
+            '/src': tmp_path / 'src',
+            '/opt/pyvista-host/pyvista': tmp_path / 'pv',
+        },
+        script='true',
+        interactive=True,
+        env={'CCACHE_MAXSIZE': '1G', 'CCACHE_DIR': '/h', 'PATH': '/bin', 'SCCACHE_DIR': '/x'},
+    )
+    assert cmd[:5] == ['docker', 'run', '--rm', '--init', '-i']
+    assert '-t' in cmd
+    assert cmd[cmd.index('--volume') + 1] == f'{tmp_path / "build"}:/work'
+    assert f'{tmp_path / "src"}:/src' in cmd
+    assert f'{tmp_path / "pv"}:/opt/pyvista-host/pyvista:ro' in cmd
+    assert cmd[cmd.index('--env') : cmd.index('--env') + 2] == ['--env', 'CCACHE_MAXSIZE']
+    assert cmd.count('--env') == 1
+    assert cmd[-4:] == ['img', 'bash', '-c', 'true']
+    mocker.patch.object(manylinux.os, 'getuid', return_value=501, create=True)
+    mocker.patch.object(manylinux.os, 'getgid', return_value=20, create=True)
+    assert manylinux.file_owner() == '501:20'
+
+
+def test_build_in_manylinux(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(phases.time, 'time', return_value=1000.0)
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(manylinux, 'pyvista_package', return_value=tmp_path / 'pv')
+    mocker.patch.object(manylinux, 'pyvista_requirements', return_value=['numpy'])
+    mocker.patch.object(manylinux, 'file_owner', return_value='7:7')
+    mocker.patch.object(tools, 'pip_install_command', return_value=['pip', 'install'])
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    cfg = _config(
+        tmp_path,
+        dry_run=False,
+        manylinux='img',
+        source=src,
+        compiler_cache='auto',
+        cache_dir=tmp_path / 'cc',
+        with_=['web'],
+        without=['io'],
+        jobs=4,
+        defines=['X=1'],
+        options=['smp=TBB'],
+        repair=False,
+        version_suffix='dev0+gabc',
+        install=True,
+        yes=True,
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(cfg, console)
+    probe = mocker.patch.object(
+        subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout='')
+    )
+    run = mocker.patch.object(builder, 'run')
+    install = mocker.patch.object(builder, 'phase_install')
+    cfg.dist_dir.mkdir(parents=True)
+    stale = cfg.dist_dir / 'vtk-9.6.0-cp314-cp314-linux_x86_64.whl'
+    stale.write_text('')
+    os.utime(stale, (500.0, 500.0))
+    with pytest.raises(BuildError, match='No new wheel found'):
+        builder.build()
+    console.export_text(clear=True)
+    wheel = cfg.dist_dir / 'vtk-9.7.0-cp314-cp314-linux_x86_64.whl'
+    wheel.write_text('')
+    os.utime(wheel, (1500.0, 1500.0))
+    assert builder.build() == wheel
+    assert probe.call_args.args[0] == ['/usr/bin/docker', 'info']
+    cmd = run.call_args.args[0]
+    assert run.call_args.kwargs == {'passthrough': True}
+    assert cmd[:5] == ['docker', 'run', '--rm', '--init', '-i']
+    assert f'{tmp_path / "vtk-build"}:/work' in cmd
+    assert f'{src}:/src' in cmd
+    assert f'{tmp_path / "cc"}:/cache' in cmd
+    assert f'{tmp_path / "pv"}:/opt/pyvista-host/pyvista:ro' in cmd
+    assert cmd[cmd.index('bash') - 1] == 'img'
+    script = cmd[-1]
+    assert 'libX11-devel' in script
+    assert 'dnf install -y -q' in script
+    assert "trap 'chown -R 7:7 /work /src /cache || true' EXIT" in script
+    config = builder.container_config()
+    assert shlex.quote(json.dumps(config)) in script
+    assert config == {
+        'backend': 'vtk',
+        'build_dir': '/work',
+        'source': '/src',
+        'with_': ['web'],
+        'without': ['io'],
+        'minimal': False,
+        'build_type': 'Release',
+        'jobs': 4,
+        'defines': ['X=1'],
+        'options': ['smp=TBB'],
+        'clean': False,
+        'reconfigure': False,
+        'version_suffix': 'dev0+gabc',
+        'repair': False,
+        'install': False,
+        'yes': True,
+        'interactive': False,
+        'verbose': False,
+        'in_container': True,
+        'os_name': 'linux',
+        'compiler_cache': 'auto',
+        'cache_dir': '/cache',
+    }
+    assert install.called
+    out = console.export_text()
+    assert f'  • the vtk wheel into {sys.prefix}, once it is built' in out
+    plan = out.index('The build runs these eight steps:')
+    assert plan < out.index('Build tree and wheel go in') < out.index('2/8 Source')
+    assert f'6. Wheel: package the wheel with setup.py bdist_wheel into {cfg.dist_dir}' in out
+    assert out.count('The build runs these eight steps:') == 1
+    assert 'Done' in out
+
+    cfg = _config(
+        tmp_path,
+        dry_run=False,
+        yes=True,
+        manylinux='img',
+        source=src,
+        os_name='macos',
+        compiler_cache='ccache',
+    )
+    builder = Builder(cfg, Console(record=True, width=4000, force_terminal=False))
+    run = mocker.patch.object(builder, 'run')
+    install = mocker.patch.object(builder, 'phase_install')
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-9.7.0-cp314-cp314-manylinux_2_28_x86_64.whl').write_text('')
+    builder.build()
+    assert f'{cfg.build_dir / "compiler-cache"}:/cache' in run.call_args.args[0]
+    assert not install.called
+    assert 'not installed on this macos host' in builder.console.export_text()
+    builder.config.compiler_cache = 'sccache'
+    with pytest.raises(BuildError, match='builds use ccache'):
+        builder.build()
+    builder = Builder(
+        _config(tmp_path, dry_run=False, yes=True, manylinux='img', source=src, install=True),
+        Console(quiet=True),
+    )
+    mocker.patch.object(tools, 'pip_install_command', return_value=None)
+    with pytest.raises(BuildError, match='--install needs pip or uv'):
+        builder.build()
+
+    builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 1))
+    with pytest.raises(BuildError, match=r'daemon is not running or not reachable\.$'):
+        builder.build()
+    denied = 'permission denied while trying to connect to the Docker daemon socket'
+    mocker.patch.object(
+        subprocess, 'run', return_value=subprocess.CompletedProcess([], 1, stderr=f'{denied}\n')
+    )
+    with pytest.raises(BuildError, match=f'not reachable\\.\n{denied}$'):
+        builder.build()
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    with pytest.raises(BuildError, match='docker was not found'):
+        builder.build()
+
+
+def test_build_in_manylinux_dry_run(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    probe = mocker.patch.object(subprocess, 'run')
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(_config(tmp_path, manylinux=None, interactive=True), console)
+    builder.config.manylinux = 'img'
+    mocker.patch.object(builder, 'run')
+    assert builder.build() is None
+    assert not probe.called
+    out = console.export_text()
+    assert 'Run the build in the container? (n stops) -> yes (dry run)' in out
+    assert not (tmp_path / 'vtk-build').exists()
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
+    mocker.patch.object(builder, 'phase_source', side_effect=AssertionError)
+    with pytest.raises(BuildError, match='Pass --yes'):
+        builder.build()
+    builder = Builder(
+        _config(tmp_path, dry_run=False, yes=True, manylinux='img'), Console(quiet=True)
+    )
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'confirm', side_effect=lambda q, **_: 'container' not in q)
+    with pytest.raises(BuildError, match='Stopped before the container build'):
+        builder.build()
+    assert all(c.args[0][0] == 'git' for c in run.call_args_list)
+
+
+def test_main_builds_a_json_config(tmp_path: Path, mocker: MockerFixture):
+    builder = mocker.patch.object(build_main, 'Builder')
+    config = {'backend': 'vtk', 'build_dir': str(tmp_path), 'source': '/src', 'cache_dir': None}
+    assert build_main.main([json.dumps({**config, 'yes': True})]) == 0
+    cfg = builder.call_args.args[0]
+    assert (cfg.build_dir, cfg.source, cfg.cache_dir, cfg.yes) == (
+        tmp_path,
+        Path('/src'),
+        None,
+        True,
+    )
+    builder.return_value.build.side_effect = BuildError('no compiler')
+    assert build_main.main([json.dumps(config)]) == 1
+
+
+def test_container_config_round_trips(tmp_path: Path, mocker: MockerFixture):
+    """The host's container configuration builds a valid :class:`BuildConfig` in the container."""
+    host = _builder(tmp_path, mocker, manylinux='img', compiler_cache='ccache', minimal=True)
+    builder = mocker.patch.object(build_main, 'Builder')
+    assert build_main.main([json.dumps(host.container_config())]) == 0
+    cfg = builder.call_args.args[0]
+    assert cfg.in_container
+    assert (cfg.build_dir, cfg.source, cfg.cache_dir) == (
+        Path(manylinux.WORK),
+        Path(manylinux.SOURCE),
+        Path(manylinux.CACHE),
+    )
+    assert cfg.minimal
+    assert cfg.os_name == 'linux'
+
+
+def test_manylinux_plan_describes_the_container(tmp_path: Path):
+    """On a macOS host, the start summary describes the Linux build in the container."""
+    cfg = _config(tmp_path, os_name='macos', manylinux='img', install=True, repair=True)
+    steps = dict(Builder(cfg, Console(quiet=True)).plan())
+    assert 'inside the container' in steps['Tools']
+    assert 'delocate' not in steps['Tools']
+    assert 'auditwheel' in steps['Repair']
+    assert 'the container sees' in steps['Build']
+    assert steps['Install'].endswith('not installed on this macos host')
+
+
+def test_manylinux_without_uid(mocker: MockerFixture):
+    mocker.patch.object(manylinux, 'requires', return_value=None)
+    assert manylinux.pyvista_requirements() == []
+    mocker.patch.object(manylinux.os, 'getuid', None, create=True)
+    assert manylinux.file_owner() is None
+
+
 def test_msvc_environment_skips_lines_without_value(mocker: MockerFixture, tmp_path: Path):
     mocker.patch.object(
         tools.subprocess,
@@ -1266,6 +1585,41 @@ def test_windows_declined_msvc(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(builder, 'confirm', return_value=False)
     builder._activate_msvc(tools.required_tools('windows', builder.manifest.tools, repair=False))
     assert not activated.called
+
+
+def test_build_in_manylinux_forwarded_args(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(phases.time, 'time', return_value=0.0)
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    cfg = _config(
+        tmp_path,
+        dry_run=False,
+        yes=True,
+        manylinux='img',
+        url='https://x/vtk.git',
+        ref='v1',
+        minimal=True,
+        repair=True,
+    )
+    builder = Builder(cfg, Console(quiet=True))
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'phase_install')
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-1-cp314-cp314-manylinux_2_28_x86_64.whl').write_text('')
+    builder.build()
+    commands = [c.args[0] for c in run.call_args_list]
+    assert commands[0][-2:] == ['https://x/vtk.git', str(cfg.src_dir)]
+    assert commands[1][-2:] == ['checkout', 'v1']
+    assert commands[2][0] == 'docker'
+    assert not any(part.endswith(':/cache') for part in commands[2])
+    config = builder.container_config()
+    assert 'url' not in config
+    assert 'ref' not in config
+    assert config['minimal'] is True
+    assert config['cache_dir'] is None
+    mocker.patch.object(phases, 'find_manifest', side_effect=ManifestError('bad manifest'))
+    with pytest.raises(BuildError, match='bad manifest'):
+        builder.build()
 
 
 def test_compiler_cache_row(tmp_path: Path, mocker: MockerFixture):
@@ -1526,6 +1880,61 @@ def test_narration_escapes_paths(tmp_path: Path):
     cfg = _config(tmp_path, build_dir=tmp_path / 'b[x]')
     Builder(cfg, console).summary()
     assert 'b[x]' in console.export_text()
+
+
+def test_container_build_leaves_start_and_install_to_the_host(
+    tmp_path: Path, mocker: MockerFixture
+):
+    """Inside the container the build skips the plan, the start question, install and summary."""
+    builder = Builder(_config(tmp_path, in_container=True), Console(quiet=True))
+    calls = {
+        name: mocker.patch.object(builder, name)
+        for name in (
+            'print_plan',
+            'confirm_start',
+            'phase_source',
+            'recheck_tools',
+            'phase_tools',
+            'phase_groups',
+            'phase_configure',
+            'phase_build',
+            'phase_wheel',
+            'phase_repair',
+            'phase_install',
+            'summary',
+        )
+    }
+    builder.build()
+    assert not calls['print_plan'].called
+    assert not calls['confirm_start'].called
+    assert not calls['phase_install'].called
+    assert not calls['summary'].called
+    assert calls['phase_repair'].called
+
+
+def test_container_config_takes_the_host_version_suffix(tmp_path: Path, mocker: MockerFixture):
+    """The host computes the version suffix, so the container never runs git on the checkout."""
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    builder = Builder(_config(tmp_path, manylinux='img', source=src), Console(quiet=True))
+    builder._manifest = find_manifest('vtk', None)
+    git = mocker.patch.object(builder, '_git_version_suffix', return_value='dev0+g1234abcd')
+    config = builder.container_config()
+    assert config['version_suffix'] == 'dev0+g1234abcd'
+    assert config['in_container'] is True
+    assert git.call_count == 1
+    git.return_value = None
+    assert builder.container_config()['version_suffix'] == ''
+
+
+def test_stale_wheel_is_not_taken(tmp_path: Path):
+    """A wheel older than the container run is not the build's wheel."""
+    cfg = _config(tmp_path, dry_run=False)
+    cfg.wheelhouse.mkdir(parents=True)
+    (cfg.wheelhouse / 'vtk-1-cp3-cp3-linux_x86_64.whl').write_text('')
+    builder = Builder(cfg, Console(quiet=True))
+    with pytest.raises(BuildError, match='No new wheel found'):
+        builder._newest_wheel(cfg.wheelhouse, since=10**12)
 
 
 def test_ccache_basedir_across_drives(tmp_path: Path, mocker: MockerFixture):

@@ -33,6 +33,7 @@ from rich.style import Style
 from rich.table import Table
 from rich.text import Text
 
+from . import manylinux as _manylinux
 from . import tools as _tools
 from .manifest import MANIFEST_FILENAME
 from .manifest import ManifestError
@@ -238,6 +239,8 @@ class BuildConfig:
     interactive: bool = False
     dry_run: bool = False
     verbose: bool = False
+    manylinux: str | None = None
+    in_container: bool = False
     os_name: str = field(default_factory=_tools.host_os)
 
     @property
@@ -431,6 +434,8 @@ class Builder:
         """
         cfg = self.config
         self._check_source()
+        container = bool(cfg.manylinux) and not cfg.in_container
+        os_name = 'linux' if container else cfg.os_name
         manifest = self._planned_manifest()
         if (cfg.src_dir / '.git').exists():
             source = f'reuse the checkout at {cfg.src_dir}'
@@ -447,23 +452,28 @@ class Builder:
             ref = cfg.ref or (manifest.default_ref if manifest else None) or 'the default branch'
             source = f'clone {url} at {ref} into {cfg.src_dir}'
         tools = _tools.required_tools(
-            cfg.os_name, manifest.tools if manifest else {}, repair=cfg.repair
+            os_name, manifest.tools if manifest else {}, repair=cfg.repair
         )
         names = ', '.join([t.label for t in tools] + list(_tools.PYTHON_BUILD_PACKAGES))
-        specs = [f'{t.pip}{t.spec}' for t in tools if t.pip and not _tools.detect(t, self.env)]
-        specs += _tools.python_build_packages()
-        self._planned_installs = self.install_plan(specs)
-        if specs:
-            tools_text = f'check {names}. Install the missing {", ".join(specs)} into {sys.prefix}'
+        if container:
+            tools_text = f'check {names} inside the container, installing anything missing there'
+            self._planned_installs = self.install_plan([])
         else:
-            tools_text = f'check {names}. Nothing to install'
+            specs = [f'{t.pip}{t.spec}' for t in tools if t.pip and not _tools.detect(t, self.env)]
+            specs += _tools.python_build_packages()
+            self._planned_installs = self.install_plan(specs)
+            tools_text = f'check {names}. ' + (
+                f'Install the missing {", ".join(specs)} into {sys.prefix}'
+                if specs
+                else 'Nothing to install'
+            )
         if manifest is None:
             options_text = "the default module groups and options from the checkout's manifest"
         else:
             try:
                 groups = resolve_groups(
                     manifest,
-                    cfg.os_name,
+                    os_name,
                     with_=cfg.with_,
                     without=cfg.without,
                     minimal=cfg.minimal,
@@ -477,16 +487,21 @@ class Builder:
         configure = f'cmake, {cfg.build_type} build with Ninja, into {cfg.cmake_dir}'
         if cfg.defines:
             configure += ', plus ' + ' '.join(f'-D{d}' for d in cfg.defines)
-        cache = {'auto': 'ccache or sccache, whichever is on PATH'}
+        cache = {'auto': 'ccache' if container else 'ccache or sccache, whichever is on PATH'}
         configure += f'. Compiler cache: {cache.get(cfg.compiler_cache, cfg.compiler_cache)}'
-        jobs, cores, _ = self._jobs()
-        limit = ' (one per 2 GB of memory)' if not cfg.jobs and jobs < cores else ''
-        build = (
-            f'compile with {jobs} parallel jobs{limit}, logging to {cfg.build_dir / "build.log"}'
-        )
+        log = cfg.build_dir / 'build.log'
+        if container and not cfg.jobs:
+            build = (
+                'compile with one job per CPU core the container sees, at most one per 2 GB '
+                f'of its memory, logging to {log}'
+            )
+        else:
+            jobs, cores, _ = self._jobs()
+            limit = ' (one per 2 GB of memory)' if not cfg.jobs and jobs < cores else ''
+            build = f'compile with {jobs} parallel jobs{limit}, logging to {log}'
         wheel = f'package the wheel with setup.py bdist_wheel into {cfg.dist_dir}'
         if cfg.repair:
-            repairer = _tools.REPAIRERS[cfg.os_name]
+            repairer = _tools.REPAIRERS[os_name]
             repair = (
                 f'bundle the libraries the wheel links against with {repairer}, '
                 f'into {cfg.wheelhouse}, so it installs on other machines. '
@@ -494,7 +509,12 @@ class Builder:
             )
         else:
             repair = 'skipped (--no-repair), so the wheel may only work on this machine'
-        if cfg.install:
+        if cfg.install and container and cfg.os_name != 'linux':
+            install = (
+                f'skipped: the wheel targets Linux, so it is not installed on this '
+                f'{cfg.os_name} host'
+            )
+        elif cfg.install:
             install = f'install the wheel into {sys.prefix}'
         else:
             install = 'skipped. The install command is printed at the end, or pass --install'
@@ -748,6 +768,23 @@ class Builder:
         }
         return [part.format(**fields) for part in shlex.split(template)]
 
+    def print_plan(self) -> None:
+        """Print the eight steps, each in full unless every step asks before it runs."""
+        steps = self.plan()
+        if self.config.prompting:
+            self.say(
+                'Eight steps: tools, source, build options, configure, build, wheel, repair, '
+                'and install.'
+            )
+            self.say(
+                'Each step explains what it will do and asks before running any command; '
+                'Enter takes the default.'
+            )
+            return
+        self.say('The build runs these eight steps:')
+        for number, (name, text) in enumerate(steps, start=1):
+            self.say(f'  {number}. [bold]{name}[/bold]: {escape(text)}')
+
     def build(self) -> Path | None:
         """Run every phase.
 
@@ -760,21 +797,11 @@ class Builder:
         self.console.print(
             f'[bold green]Building backend: {escape(self.config.backend)}[/bold green]'
         )
-        steps = self.plan()
-        if self.config.prompting:
-            self.say(
-                'Eight steps: tools, source, build options, configure, build, wheel, repair, '
-                'and install.'
-            )
-            self.say(
-                'Each step explains what it will do and asks before running any command; '
-                'Enter takes the default.'
-            )
-        else:
-            self.say('The build runs these eight steps:')
-            for number, (name, text) in enumerate(steps, start=1):
-                self.say(f'  {number}. [bold]{name}[/bold]: {escape(text)}')
-        self.confirm_start()
+        if self.config.manylinux:
+            return self.build_in_manylinux()
+        if not self.config.in_container:
+            self.print_plan()
+            self.confirm_start()
         self.phase_tools()
         self.phase_source()
         self.recheck_tools()
@@ -783,8 +810,9 @@ class Builder:
         self.phase_build()
         self.phase_wheel()
         self.phase_repair()
-        self.phase_install()
-        self.summary()
+        if not self.config.in_container:
+            self.phase_install()
+            self.summary()
         return self.wheel
 
     def phase_source(self) -> None:
@@ -939,9 +967,8 @@ class Builder:
                 f'Install {", ".join(specs)} into {sys.prefix} and run again (no pip or uv found).'
             )
             raise BuildError(msg)
-        if cfg.install and _tools.pip_install_command() is None:
-            msg = '--install needs pip or uv in this environment.'
-            raise BuildError(msg)
+        if cfg.install:
+            self._check_installer()
         self.confirm_installs(self.install_plan(specs))
         if cmd is not None:
             self.run(cmd)
@@ -951,6 +978,12 @@ class Builder:
                     msg = f'Still not usable after install: {", ".join(bad)}.'
                     raise BuildError(msg)
         self._activate_compiler_cache()
+
+    def _check_installer(self) -> None:
+        """Raise when ``--install`` has no pip or uv to install the wheel with."""
+        if _tools.pip_install_command() is None:
+            msg = '--install needs pip or uv in this environment.'
+            raise BuildError(msg)
 
     def _activate_msvc(self, tools: list[_tools.Tool]) -> None:
         """On Windows, import the MSVC environment when ``cl`` is not already on PATH."""
@@ -1409,13 +1442,15 @@ class Builder:
         self.hooks('post_wheel')
         self.wheel = self._newest_wheel(cfg.dist_dir)
 
-    def _newest_wheel(self, folder: Path) -> Path | None:
-        """Return the most recently written wheel in a folder."""
+    def _newest_wheel(self, folder: Path, *, since: float | None = None) -> Path | None:
+        """Return the most recently written wheel in a folder, optionally newer than ``since``."""
         wheels = sorted(folder.glob('*.whl'), key=lambda p: p.stat().st_mtime)
+        if since is not None:
+            wheels = [w for w in wheels if w.stat().st_mtime >= since]
         if not wheels:
             if self.config.dry_run:
                 return None
-            msg = f'No wheel found in {folder}.'
+            msg = f'No new wheel found in {folder}.' if since else f'No wheel found in {folder}.'
             raise BuildError(msg)
         return wheels[-1]
 
@@ -1534,6 +1569,125 @@ class Builder:
             return
         self.run(cmd)
         self.run([self.python, '-c', f'import {self.manifest.import_name}'])
+
+    def build_in_manylinux(self) -> Path | None:
+        """Run the build inside a manylinux container, then install on the host.
+
+        Returns
+        -------
+        Path or None
+            The repaired wheel, or ``None`` on a dry run.
+
+        """
+        cfg = self.config
+        image = cfg.manylinux or _manylinux.default_image()
+        if cfg.compiler_cache == 'sccache':
+            msg = '--manylinux builds use ccache; pass --compiler-cache ccache, auto or none.'
+            raise BuildError(msg)
+        self.say(
+            f'The build runs inside the [bold]{image}[/bold] container through Docker, so '
+            'the wheel is portable across Linux machines. The source is prepared here, then '
+            'the container installs the build dependencies and runs the remaining steps with '
+            f'[bold]{cfg.build_dir}[/bold] mounted as its build tree.'
+        )
+        docker = _tools.Tool('docker', ('docker',), instructions=_manylinux.DOCKER_INSTRUCTIONS)
+        if not _tools.detect(docker, self.env):
+            msg = f'docker was not found on PATH. {docker.instructions}'
+            raise BuildError(msg)
+        if not cfg.dry_run:
+            probe = subprocess.run(
+                [str(docker.path), 'info'], capture_output=True, text=True, check=False
+            )
+            if probe.returncode != 0:
+                msg = 'Docker is installed but its daemon is not running or not reachable.'
+                detail = (probe.stderr or '').strip()
+                if detail:
+                    msg += f'\n{detail}'
+                raise BuildError(msg)
+        self.print_plan()
+        self.confirm_start()
+        self.phase_source()
+        if cfg.install and cfg.os_name == 'linux':
+            self._check_installer()
+            self.confirm_installs(self.install_plan([]))
+        mounts: dict[str, Path] = {_manylinux.WORK: cfg.build_dir, _manylinux.SOURCE: cfg.src_dir}
+        if cfg.compiler_cache != 'none':
+            cache_dir = self.compiler_cache_dir('CCACHE_DIR')
+            mounts[_manylinux.CACHE] = cache_dir or cfg.build_dir / 'compiler-cache'
+        package_mount = f'{_manylinux.PYVISTA_ROOT}/pyvista'
+        script = _manylinux.container_script(
+            python=_manylinux.container_python(),
+            packages=self.manifest.manylinux_packages,
+            requirements=_manylinux.pyvista_requirements(),
+            config=json.dumps(self.container_config()),
+            ccache=cfg.compiler_cache != 'none',
+            owner=_manylinux.file_owner(),
+            paths=list(mounts),
+            quiet=not cfg.verbose,
+        )
+        mounts[package_mount] = _manylinux.pyvista_package()
+        cmd = _manylinux.docker_command(
+            image, mounts=mounts, script=script, interactive=cfg.prompting, env=self.env
+        )
+        if not self.confirm('Run the build in the container? (n stops)'):
+            msg = 'Stopped before the container build.'
+            raise BuildError(msg)
+        if not cfg.dry_run:
+            for inside, folder in mounts.items():
+                if inside != package_mount:
+                    folder.mkdir(parents=True, exist_ok=True)
+        started = time.time()
+        self.run(cmd, passthrough=True)
+        if not cfg.dry_run:
+            folder = cfg.wheelhouse if cfg.repair else cfg.dist_dir
+            self.wheel = self._newest_wheel(folder, since=started)
+        if cfg.os_name == 'linux':
+            self.phase_install()
+        else:
+            self.say(
+                f'The wheel targets Linux, so it is not installed on this {cfg.os_name} host.'
+            )
+        self.summary()
+        return self.wheel
+
+    def container_config(self) -> dict[str, object]:
+        """Return the container's build configuration, with host paths mapped to the mounts.
+
+        The version suffix is computed here, so the container never reads the checkout's git
+        metadata, which may point at host paths it cannot see.
+
+        Returns
+        -------
+        dict[str, object]
+            :class:`BuildConfig` fields for ``python -m pyvista._build``.
+
+        """
+        cfg = self.config
+        cache = cfg.compiler_cache != 'none'
+        return {
+            'backend': cfg.backend,
+            'build_dir': _manylinux.WORK,
+            'source': _manylinux.SOURCE,
+            'with_': cfg.with_,
+            'without': cfg.without,
+            'minimal': cfg.minimal,
+            'build_type': cfg.build_type,
+            'jobs': cfg.jobs,
+            'defines': cfg.defines,
+            'options': cfg.options,
+            'clean': cfg.clean,
+            'reconfigure': cfg.reconfigure,
+            'version_suffix': self.version_suffix() or '',
+            'repair': cfg.repair,
+            'install': False,
+            'yes': True,
+            'interactive': cfg.prompting,
+            'verbose': cfg.verbose,
+            'in_container': True,
+            'os_name': 'linux',
+            'compiler_cache': cfg.compiler_cache,
+            'cache_dir': _manylinux.CACHE if cache else None,
+        }
 
     def summary(self) -> None:
         """Print where things ended up."""
