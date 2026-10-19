@@ -984,6 +984,14 @@ def test_decimate_binned_target_points_shapes(shape):
     assert decimated.n_points == pytest.approx(10_000, rel=0.1)
 
 
+def test_decimate_binned_empty_probe():
+    small = pv.Sphere(radius=0.05, theta_resolution=100, phi_resolution=100)
+    mesh = small + small.translate((10.0, 10.0, 10.0))
+    assert mesh.decimate_binned(divisions=50).n_points == 0
+    decimated = mesh.decimate_binned(300)
+    assert decimated.n_points == pytest.approx(300, rel=0.1)
+
+
 def test_decimate_binned_bin_limit(fine_sphere, monkeypatch):
     monkeypatch.setattr('pyvista.core.filters.poly_data._MAX_BINS', 1000)
     divisions = []

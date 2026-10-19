@@ -48,12 +48,11 @@ filters = {
 results = {}
 for name, run in filters.items():
     start = time.perf_counter()
-    result = run()
-    elapsed = time.perf_counter() - start
-    results[f'{name} ({elapsed:.3f} s)'] = result
+    results[name] = run()
+    print(f'{name}: {time.perf_counter() - start:.3f} s')
 
 # %%
-# Plot the results side by side, with the time each filter took in its label.
+# Plot the results side by side.
 
 # sphinx_gallery_start_ignore
 # labels are missing in interactive plots
