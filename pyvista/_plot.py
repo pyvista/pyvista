@@ -149,16 +149,16 @@ def plot(  # noqa: ANN202
 
 
     off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving
-        screenshots without a window popping up.  Defaults to the
+        Plots off screen when ``True``. Helpful for saving
+        screenshots without a window popping up. Defaults to the
         global setting ``pyvista.OFF_SCREEN``.
 
     full_screen : bool, default: :attr:`pyvista.plotting.themes.Theme.full_screen`
-        Opens window in full screen.  When enabled, ignores
+        Opens window in full screen. When enabled, ignores
         ``window_size``.
 
     screenshot : str | bool, optional
-        Saves screenshot to file when enabled.  See:
+        Saves screenshot to file when enabled. See:
         :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
         Default ``False``.
 
@@ -185,7 +185,7 @@ def plot(  # noqa: ANN202
 
     notebook : bool, default: :attr:`pyvista.plotting.themes.Theme.notebook`
         When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.
+        notebook. Assumes a jupyter console is active.
 
     background : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.background`
         Color of the background.
@@ -219,7 +219,7 @@ def plot(  # noqa: ANN202
 
     return_cpos : bool, default: False
         Return the last camera position from the render window
-        when enabled.  Defaults to value in theme settings.
+        when enabled. Defaults to value in theme settings.
 
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
@@ -241,8 +241,8 @@ def plot(  # noqa: ANN202
         Defaults to :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
 
     zoom : float | str, optional
-        Camera zoom.  Either ``'tight'`` or a float. A value greater than 1
-        is a zoom-in, a value less than 1 is a zoom-out.  Must be greater
+        Camera zoom. Either ``'tight'`` or a float. A value greater than 1
+        is a zoom-in, a value less than 1 is a zoom-out. Must be greater
         than 0.
 
     border : bool, optional
@@ -252,7 +252,7 @@ def plot(  # noqa: ANN202
         Color of the border. Defaults to
         :attr:`pyvista.global_theme.border_color
         <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
-        rgb list, or hex color string.  For example:
+        rgb list, or hex color string. For example:
 
         * ``color='white'``
         * ``color='w'``
@@ -285,7 +285,7 @@ def plot(  # noqa: ANN202
     cpos : list
         List of camera position, focal point, and view up.
         Returned only when ``return_cpos=True`` or set in the
-        default global or plot theme.  Not returned when in a
+        default global or plot theme. Not returned when in a
         jupyter notebook and ``return_viewer=True``.
 
     image : np.ndarray
@@ -296,8 +296,7 @@ def plot(  # noqa: ANN202
 
         * [Window height x Window width x 3] if the theme sets
           ``transparent_background=False``.
-        * [Window height x Window width x 4] if the theme sets
-          ``transparent_background=True``.
+        * [Window height x Window width x 4] otherwise.
 
     widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.

@@ -760,8 +760,88 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
+@pytest.fixture
+def affine_widget():
+    """Create an affine widget for behavioral interaction tests."""
+    pl = pv.Plotter(window_size=(400, 400))
+    actor = pl.add_mesh(pv.Cube())
+    return pl, pl.add_affine_transform_widget(actor)
+
+
+@pytest.mark.parametrize('style', ['zoom_style', 'terrain_style', 'trackball_style', None])
+@pytest.mark.parametrize('finish', ['release', 'disable', 'remove'])
+def test_affine_widget_restores_interactor_style(affine_widget, style, finish):
+    """Ending a drag restores the style selected after the widget was created."""
+    pl, widget = affine_widget
+    pl.iren.style = style
+    original_style = pl.iren.get_interactor_style()
+    widget._selected_actor = widget._arrows[0]
+    widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+    assert pl.iren.get_interactor_style() is not original_style
+    transform = np.eye(4)
+    transform[0, 3] = 2
+    widget._main_actor.user_matrix = transform
+    actions = {
+        'release': lambda: widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent'),
+        'disable': widget.disable,
+        'remove': widget.remove,
+    }
+
+    actions[finish]()
+
+    assert pl.iren.get_interactor_style() is original_style
+    assert not widget._pressing_down
+    assert np.array_equal(widget._cached_matrix, transform)
+
+
+@pytest.mark.parametrize('hovered', [False, True])
+def test_affine_widget_release_without_drag_preserves_style(affine_widget, hovered):
+    """A release without a widget drag leaves the interactor style untouched."""
+    pl, widget = affine_widget
+    pl.enable_zoom_style()
+    original_style = pl.iren.get_interactor_style()
+    widget._selected_actor = widget._arrows[0] if hovered else None
+
+    widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent')
+
+    assert pl.iren.get_interactor_style() is original_style
+
+
+def test_affine_widget_repeated_drags_preserve_current_style(affine_widget):
+    """Each drag captures the current style, even with repeated press events."""
+    pl, widget = affine_widget
+    widget._selected_actor = widget._arrows[0]
+    for style in ['zoom_style', 'terrain_style']:
+        pl.iren.style = style
+        original_style = pl.iren.get_interactor_style()
+
+        widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+        widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+        widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent')
+
+        assert pl.iren.get_interactor_style() is original_style
+
+
+def test_affine_widget_restores_custom_style_observers(affine_widget):
+    """Restoring a custom style retains its instance and registered observers."""
+    pl, widget = affine_widget
+    style = _vtk.vtkInteractorStyleJoystickCamera()
+    calls = []
+    style.AddObserver('UserEvent', lambda *_: calls.append('called'))
+    pl.iren.style = style
+    widget._selected_actor = widget._arrows[0]
+
+    widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+    widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent')
+
+    assert pl.iren.get_interactor_style() is style
+    style.InvokeEvent('UserEvent')
+    assert calls == ['called']
+
+
 @flaky_test
-def test_affine_widget(sphere):
+@pytest.mark.parametrize('style', ['trackball_style', 'zoom_style', 'terrain_style'])
+def test_affine_widget(sphere, style):
     interact_calls = []
     release_calls = []
 
@@ -789,6 +869,8 @@ def test_affine_widget(sphere):
         interact_callback=interact_callback,
         release_callback=release_callback,
     )
+    pl.iren.style = style
+    original_style = pl.iren.get_interactor_style()
     pl.show(auto_close=False)
 
     assert not widget._selected_actor
@@ -821,6 +903,7 @@ def test_affine_widget(sphere):
         trans_val = actor.user_matrix[idx, 3]
         assert (trans_val < 0) if direction == 'neg' else (trans_val > 0)
         assert not widget._pressing_down
+        assert pl.iren.get_interactor_style() is original_style
         widget._reset()
         assert np.allclose(widget._cached_matrix, np.eye(4))
 
@@ -869,6 +952,7 @@ def test_affine_widget(sphere):
         assert np.count_nonzero(np.isclose(euler_angles, 0)) == len(euler_angles) - 1
         pl.iren._mouse_left_button_release()
         assert not widget._pressing_down
+        assert pl.iren.get_interactor_style() is original_style
         widget._reset()
         assert np.allclose(widget._cached_matrix, np.eye(4))
 
