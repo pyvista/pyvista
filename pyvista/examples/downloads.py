@@ -193,7 +193,7 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 
 
 def _gltf_loader(name: str) -> _SingleFileDownloadableDatasetLoader:
-    """Return a dataset loader for a glTF file hosted by the Khronos Group."""
+    """Return a dataset loader for a glTF sample model hosted outside pyvista/data."""
     paths: dict[str, str] = {
         'sheen_chair': 'SheenChair/glTF-Binary/SheenChair.glb',
     }
