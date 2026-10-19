@@ -81,16 +81,23 @@ def _bin_to_target(
     *,
     progress_bar: bool,
 ) -> PolyData:
-    """Return the binned mesh closest to ``target`` points from a few grid sizes."""
+    """Return the binned mesh closest to ``target`` points from a few grid sizes.
+
+    The search adjusts the edge length of cubic bins rather than the number of
+    divisions, so every axis is resolved at the same scale.
+    """
+    # Axes with no extent always get a single division
     spanned = sizes[sizes > 0]
     if spanned.size == 0:
         return binned(np.ones(3, dtype=int), progress_bar=progress_bar)
-    # Cubic bins sized from the spanned volume keep bins across thin parts
+    # First guess: _PROBE_BINS cubic bins filling the volume of the spanned axes
     edge = float((np.prod(spanned) / _PROBE_BINS) ** (1 / spanned.size))
     best: PolyData | None = None
+    # Edge length and point count of the previous pass, to measure the growth rate
     last: tuple[float, int] | None = None
     for _ in range(_MAX_BIN_PASSES):
         divisions = np.maximum(np.round(sizes / edge), 1)
+        # Memory is one integer per bin, so shrink every divided axis evenly to fit
         excess = np.prod(divisions) / _MAX_BINS
         capped = excess > 1
         if capped:
@@ -100,30 +107,25 @@ def _bin_to_target(
         n_points = mesh.n_points
         if best is None or abs(n_points - target) < abs(best.n_points - target):
             best = mesh
+        # Stop when close enough, or when the grid can get no finer or no coarser
         if (
             abs(n_points - target) <= 0.05 * target
             or (capped and n_points < target)
             or (n_points > target and (divisions == 1).all())
         ):
             break
+        # Every triangle collapsed, so there is no count to scale from yet
         if n_points == 0:
             edge /= 4
             continue
-        # Sheets gain points with the square of the divisions, nested surfaces faster
+        # Points grow as edge ** -exponent: about 2 for a sheet, up to 3 for nested shells
         exponent = 2.0
         if last is not None and last[1] not in (0, n_points) and last[0] != edge:
             exponent = float(np.clip(np.log(n_points / last[1]) / np.log(last[0] / edge), 1, 3))
         last = (edge, n_points)
+        # Scale the edge so the next pass predicts the target
         edge *= (n_points / target) ** (1 / exponent)
     return cast('PolyData', best)
-
-
-def _gather_attributes(
-    source: DataSetAttributes, target: DataSetAttributes, ids: NDArray[np.int_]
-) -> None:
-    """Copy the arrays of ``source`` at ``ids`` into ``target``."""
-    for name, array in source.items():
-        target[name] = array[ids]
 
 
 @abstract_class
@@ -2312,10 +2314,14 @@ class PolyDataFilters(DataSetFilters):
                 warn_external(msg)
 
         cell_ids = mesh.cell_data.pop('vtkOriginalCellIds').astype(int)
-        _gather_attributes(self.cell_data, mesh.cell_data, cell_ids)
+        mesh.cell_data.update(
+            {name: array[cell_ids] for name, array in self.cell_data.items()}, copy=False
+        )
         if not averaging:
             point_ids = mesh.point_data.pop('vtkOriginalPointIds').astype(int)
-            _gather_attributes(self.point_data, mesh.point_data, point_ids)
+            mesh.point_data.update(
+                {name: array[point_ids] for name, array in self.point_data.items()}, copy=False
+            )
             if point_generation == 'bin_points':
                 mesh.points = self.points[point_ids]
         for attributes_in, attributes_out in (
