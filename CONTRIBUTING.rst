@@ -1099,6 +1099,10 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
     The PR either needs a new commit, for example updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
 
+The same build is available locally. ``pyvista build vtk --ref master`` clones VTK, configures it much like CI
+does, and writes a wheel. Run it again after editing the checkout under ``vtk-build/src`` for an incremental rebuild.
+``pyvista build cvista`` does the same for the fork. See :ref:`building_vtk` for the options.
+
 Testing Against the ``cvista`` Backend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the

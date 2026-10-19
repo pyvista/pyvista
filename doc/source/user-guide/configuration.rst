@@ -225,8 +225,11 @@ VTK
 .. envvar:: PYVISTA_VTK_BACKEND
 
    Which VTK build PyVista imports: ``vtk`` or ``vtkmodules`` for
-   stock VTK, or the package name of an alternative build. Query the
-   active backend with :func:`pyvista.vtk_backend`.
+   stock VTK, or the package name of an alternative build such as
+   ``cvista``. Query the active backend with :func:`pyvista.vtk_backend`.
+   See :ref:`vtk_backend` for installing a backend and
+   :ref:`building_vtk` for building one from source with
+   ``pyvista build``.
 
 Example Data
 ~~~~~~~~~~~~
