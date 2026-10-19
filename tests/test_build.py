@@ -6,6 +6,7 @@ from dataclasses import replace
 from io import StringIO
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -84,6 +85,227 @@ def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
 def _path_style(path: str) -> str:
     """Return the style a narrated POSIX path gets, unlinked where it has no file URI."""
     return 'magenta' if os.name == 'nt' else f'magenta link file://{path}'
+
+
+@pytest.mark.usefixtures('no_tools')
+@pytest.mark.parametrize('os_name', OS_NAMES)
+def test_dry_run_commands(tmp_path: Path, os_name):
+    console = Console(record=True, width=4000, force_terminal=False)
+    cfg = _config(
+        tmp_path,
+        os_name=os_name,
+        defines=['FOO=1', 'VTK_WRAP_PYTHON=OFF'],
+        ref='v9.7.0',
+        repair=True,
+        verbose=True,
+    )
+    builder = Builder(cfg, console)
+    assert builder.build() is None
+    out = console.export_text()
+    assert out.startswith('Building backend: vtk')
+    assert 'git clone --progress --filter=blob:none https://gitlab.kitware.com/vtk/vtk.git' in out
+    assert 'checkout v9.7.0' in out
+    assert '-DFOO=1' in out
+    assert '-DVTK_VERSION_SUFFIX= ' in out
+    configure = next(line for line in out.splitlines() if ' -GNinja' in line)
+    assert configure.index('-DVTK_WRAP_PYTHON=OFF') > configure.index('-DVTK_WRAP_PYTHON=ON')
+    assert ('_PYTHON_HOST_PLATFORM=macosx-11.0-' in configure) == (os_name == 'macos')
+    repairer = {
+        'linux': 'auditwheel repair',
+        'macos': 'delocate-wheel',
+        'windows': 'delvewheel repair',
+    }
+    assert repairer[os_name] in out
+    assert 'setup.py bdist_wheel' in out
+    hint = next(line for line in out.splitlines() if '--force-reinstall' in line)
+    assert str(cfg.wheelhouse) in hint
+    assert 'COMPILER_LAUNCHER' not in out
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_dry_run_flags(tmp_path: Path):
+    console = Console(record=True, width=4000, force_terminal=False)
+    cfg = _config(
+        tmp_path,
+        minimal=True,
+        build_type='Debug',
+        jobs=3,
+        ref='main',
+        version_suffix='',
+        options=['smp=TBB'],
+        repair=False,
+    )
+    Builder(cfg, console).build()
+    out = console.export_text()
+    assert 'COMPILER_LAUNCHER' not in out
+    assert '-DCMAKE_BUILD_TYPE=Debug' in out
+    assert '--parallel 3' in out
+    assert '-DVTK_GROUP_ENABLE_Rendering=NO' in out
+    assert '-DVTK_SMP_IMPLEMENTATION_TYPE=TBB' in out
+    assert '-DVTK_VERSION_SUFFIX= ' in out
+    assert 'Skipped (--no-repair).' in out
+    hint = next(line for line in out.splitlines() if '--force-reinstall' in line)
+    assert str(cfg.dist_dir) in hint
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_dry_run_dev_suffix(tmp_path: Path):
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path, ref='main'), console).build()
+    assert '-DVTK_VERSION_SUFFIX=dev0+g<sha>' in console.export_text()
+
+
+def test_unknown_backend(tmp_path: Path):
+    with pytest.raises(BuildError, match='Unknown backend'):
+        Builder(_config(tmp_path, backend='nope'), Console(quiet=True)).build()
+
+
+def test_missing_git(tmp_path: Path, mocker: MockerFixture):
+    """A missing git stops at the tools step, before anything is cloned."""
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    builder = Builder(_config(tmp_path), Console(quiet=True))
+    source = mocker.spy(builder, 'phase_source')
+    with pytest.raises(BuildError, match='git: Install git'):
+        builder.build()
+    assert not source.called
+    with pytest.raises(BuildError, match='git was not found'):
+        builder.phase_source()
+
+
+def test_blocking_tool(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(
+        tools.shutil,
+        'which',
+        side_effect=lambda name, **_: (
+            None if name in ('c++', 'clang++', 'g++') else f'/usr/bin/{name}'
+        ),
+    )
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    with pytest.raises(BuildError, match='build-essential'):
+        Builder(_config(tmp_path), Console(quiet=True)).build()
+
+
+def test_pip_tools_offered(tmp_path: Path, mocker: MockerFixture):
+    missing = {'cmake', 'auditwheel'}
+    mocker.patch.object(
+        tools.shutil,
+        'which',
+        side_effect=lambda name, **_: None if name in missing else f'/usr/bin/{name}',
+    )
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=['wheel'])
+    mocker.patch.object(
+        tools, 'pip_install_command', side_effect=lambda *s, args=(): ['pip', 'install', *args, *s]
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path, repair=True), console).build()
+    out = console.export_text()
+    bullets = [f'  • {spec} into {sys.prefix}' for spec in ('cmake>=3.22', 'auditwheel', 'wheel')]
+    assert '\n'.join(['The build installs:', *bullets]) in out
+    assert re.search(r'wheel \(python\)\s+│ -\s+│ missing', out)
+    assert re.search(r'setuptools \(python\)\s+│ .*│ ok', out)
+    assert f'$ {phases._join(["pip", "install", "cmake>=3.22", "auditwheel", "wheel"])}' in out
+
+
+def test_too_old_tool(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(tools, 'executable_version', return_value='3.10')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    mocker.patch.object(
+        tools, 'pip_install_command', side_effect=lambda *s, **_: ['pip', 'install', *s]
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path), console).build()
+    out = console.export_text()
+    assert 'wrong version' in out
+    assert f'$ {phases._join(["pip", "install", "cmake>=3.22"])}' in out
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_hooks_and_init_cache(tmp_path: Path):
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    (src / 'pyvista-build.toml').write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\ndefault_ref = "v1"\n'
+        '[cmake]\ninit_cache = { linux = "ci/linux.cmake" }\n'
+        '[hooks]\npost_build = ["{python} prune.py {build_dir}"]\n'
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path, backend='demo', source=src, version_suffix=''), console).build()
+    out = console.export_text()
+    assert f'-C {src / "ci" / "linux.cmake"}' in out
+    assert f'prune.py {tmp_path / "vtk-build" / "build"} (in {src})' in out
+    assert 'git clone' not in out
+
+
+def test_existing_checkout_dirty(tmp_path: Path, mocker: MockerFixture):
+    src = tmp_path / 'vtk-build' / 'src'
+    (src / '.git').mkdir(parents=True)
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(subprocess, 'run', side_effect=_fake_git('a' * 40))
+    with pytest.raises(BuildError, match='local changes'):
+        Builder(_config(tmp_path, ref='v9.7.0'), Console(quiet=True)).build()
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_existing_checkout_at_ref_keeps_edits(tmp_path: Path, mocker: MockerFixture):
+    src = tmp_path / 'vtk-build' / 'src'
+    (src / '.git').mkdir(parents=True)
+    run = mocker.patch.object(subprocess, 'run', side_effect=_fake_git('b' * 40))
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path, ref='v9.7.0'), console).build()
+    assert not any(c.args[0][1] == 'status' for c in run.call_args_list)
+    assert 'checkout v9.7.0' not in console.export_text()
+
+
+def test_state_change_prompts_reconfigure(tmp_path: Path, mocker: MockerFixture):
+    cmake_dir = tmp_path / 'vtk-build' / 'build'
+    cmake_dir.mkdir(parents=True)
+    (cmake_dir / 'CMakeCache.txt').write_text('')
+    (cmake_dir / '.pyvista-build.json').write_text('{"groups": []}')
+    src = tmp_path / 'vtk-build' / 'src'
+    (src / '.git').mkdir(parents=True)
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path, version_suffix=''), console).build()
+    assert 'differs from the one this tree was set up with' in console.export_text()
+
+
+def test_env_options_and_version_command(tmp_path: Path, mocker: MockerFixture):
+    src = tmp_path / 'src'
+    (src / '.git').mkdir(parents=True)
+    (src / 'pyvista-build.toml').write_text(
+        'manifest_version = 1\n'
+        '[backend]\nname = "demo"\ndefault_ref = "v1"\n'
+        'version_command = "{python} version.py"\n'
+        '[options.lto]\nhelp = "LTO"\ndefault = false\nenv = "DEMO_LTO"\n'
+        '[options.abi3]\nhelp = "abi3"\ndefault = true\ncmake = "DEMO_ABI3={value}"\n'
+        '[hooks]\npost_configure = ["{python} check.py"]\n'
+    )
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    console = Console(record=True, width=4000, force_terminal=False)
+    cfg = _config(tmp_path, backend='demo', source=src, options=['lto=1'], verbose=True)
+    Builder(cfg, console).build()
+    out = console.export_text()
+    assert '$ DEMO_LTO=1 cmake' in out
+    assert re.search(r'\$ DEMO_LTO=1 \S+ check\.py', out)
+    assert '-DDEMO_ABI3=ON' in out
+    assert '-DDEMO_LTO' not in out
+    assert '-DVTK_VERSION_SUFFIX=<version_command>' in out
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_dry_run_needs_checkout_without_shipped_manifest(tmp_path: Path):
+    cfg = _config(tmp_path, backend='demo', url='https://example.invalid/demo.git')
+    console = Console(record=True, width=4000, force_terminal=False)
+    with pytest.raises(BuildError, match=re.escape('Pass --source <checkout> to dry-run it')):
+        Builder(cfg, console).build()
+    assert '1/8 Tools' not in console.export_text()
 
 
 @pytest.mark.usefixtures('no_tools')
@@ -221,6 +443,15 @@ def test_run_prints_the_environment_only_when_verbose(tmp_path: Path, verbose):
     builder.run(['cmake', '--build', 'b'], env={'ARCHFLAGS': '-arch arm64'})
     shown = "$ ARCHFLAGS='-arch arm64' cmake --build b" if verbose else '$ cmake --build b'
     assert console.export_text() == f'{shown}\n'
+
+
+def test_source_not_a_checkout(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, source=tmp_path / 'plain', yes=True)
+    (tmp_path / 'plain').mkdir()
+    first = mocker.patch.object(builder, 'phase_tools')
+    with pytest.raises(BuildError, match='not a git checkout'):
+        builder.build()
+    first.assert_not_called()
 
 
 def test_existing_checkout_update_and_ref(tmp_path: Path, mocker: MockerFixture):
@@ -460,6 +691,48 @@ def test_disabled_groups_unset_their_keys(tmp_path: Path, mocker: MockerFixture,
     assert not any(a.startswith('-U') for a in cmd)
 
 
+@pytest.mark.usefixtures('no_tools')
+def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
+    console = Console(record=True, width=4000, force_terminal=False)
+    Builder(_config(tmp_path, interactive=True), console).build()
+    out = console.export_text()
+    assert out.splitlines()[1] == 'The build runs these eight steps:'
+    assert 'asks before running' not in out
+    assert out.index('Proceed?') < out.index('1/8 Tools') < out.index('2/8 Source')
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    mocker.patch.object(phases.Confirm, 'ask', return_value=False)
+    builder = Builder(_config(tmp_path, interactive=True, dry_run=False), console)
+    with pytest.raises(BuildError, match='Stopped before the first step'):
+        builder.build()
+    assert 'asks before running any command; Enter takes the default' in console.export_text()
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'tty', 'answer', 'error'),
+    [
+        ({'yes': True}, False, None, None),
+        ({'dry_run': True}, False, None, None),
+        ({}, False, None, 'Pass --yes'),
+        ({'interactive': True}, False, None, 'Pass --yes'),
+        ({}, True, True, None),
+        ({}, True, False, 'Stopped before the first step'),
+        ({'yes': True, 'interactive': True}, True, None, None),
+    ],
+)
+def test_confirm_start(tmp_path: Path, mocker: MockerFixture, kwargs, tty, answer, error):
+    """Every run asks once before the first step unless ``--yes`` or ``--dry-run`` is given."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=tty)
+    ask = mocker.patch.object(phases.Confirm, 'ask', return_value=answer)
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(_config(tmp_path, **{'dry_run': False, **kwargs}), console)
+    first = mocker.patch.object(builder, 'phase_tools', side_effect=RuntimeError('started'))
+    with pytest.raises(BuildError if error else RuntimeError, match=error or 'started'):
+        builder.build()
+    assert ask.call_count == (answer is not None)
+    assert first.called == (error is None)
+    assert f'go in {tmp_path / "vtk-build"}' in console.export_text()
+
+
 def test_confirm_asks_on_a_terminal(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     ask = mocker.patch.object(phases.Confirm, 'ask', return_value=False)
@@ -598,6 +871,58 @@ def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
         builder.phase_build()
 
 
+def test_plan(tmp_path: Path):
+    """The start summary says what every step does with the given settings."""
+    cfg = _config(
+        tmp_path,
+        repair=True,
+        install=True,
+        jobs=3,
+        defines=['X=1'],
+        without=['web'],
+        ref='v9.7.0',
+    )
+    plan = dict(Builder(cfg, Console(quiet=True)).plan())
+    assert list(plan) == [
+        'Tools',
+        'Source',
+        'Build options',
+        'Configure',
+        'Build',
+        'Wheel',
+        'Repair',
+        'Install',
+    ]
+    assert (
+        plan['Source']
+        == f'clone https://gitlab.kitware.com/vtk/vtk.git at v9.7.0 into {cfg.src_dir}'
+    )
+    assert 'auditwheel' in plan['Tools']
+    assert 'auditwheel' in plan['Repair']
+    assert 'rendering' in plan['Build options']
+    assert 'web' not in plan['Build options']
+    assert plan['Configure'].endswith(', plus -DX=1')
+    assert plan['Build'].startswith('compile with 3 parallel jobs')
+    assert plan['Install'] == f'install the wheel into {sys.prefix}'
+    with pytest.raises(BuildError, match='nope'):
+        Builder(_config(tmp_path, with_=['nope']), Console(quiet=True)).plan()
+
+    (cfg.src_dir / '.git').mkdir(parents=True)
+    (cfg.src_dir / 'pyvista-build.toml').write_text('manifest_version = 99\n')
+    plan = dict(
+        Builder(
+            _config(tmp_path, backend='demo', ref='main', repair=False), Console(quiet=True)
+        ).plan()
+    )
+    assert plan['Source'] == (
+        f'reuse the checkout at {cfg.src_dir}, checked out at main'
+        ' (local edits stop it unless it is already there)'
+    )
+    assert "checkout's manifest" in plan['Build options']
+    assert plan['Repair'].startswith('skipped (--no-repair)')
+    assert plan['Install'].startswith('skipped')
+
+
 def test_paths_link_only_on_a_real_terminal(tmp_path: Path):
     """Forced color into a pipe, as in a docs build, gets colors but no hyperlinks."""
 
@@ -686,6 +1011,47 @@ def test_update_follows_the_remote_branch(
     assert git('rev-parse', 'HEAD', cwd=tmp_path / 'src') == tagged
 
 
+def test_plan_rejects_unknown_backend(tmp_path: Path, mocker: MockerFixture):
+    """The start summary fails on a backend with no URL before asking to proceed."""
+    builder = Builder(_config(tmp_path, backend='nosuch'), Console(quiet=True))
+    with pytest.raises(BuildError, match='Unknown backend'):
+        builder.plan()
+    mocker.patch.object(tools, 'detect', return_value=True)
+    with pytest.raises(BuildError, match='Unknown backend'):
+        builder.phase_source()
+
+
+def test_plan_wording_under_yes_and_source(tmp_path: Path, mocker: MockerFixture):
+    """``--yes`` and ``--source`` change what the summary promises."""
+    console = Console(record=True, width=4000, force_terminal=False)
+    (tmp_path / 'elsewhere' / '.git').mkdir(parents=True)
+    builder = Builder(_config(tmp_path, yes=True, source=tmp_path / 'elsewhere'), console)
+    mocker.patch.object(builder, 'phase_tools', side_effect=RuntimeError('started'))
+    with pytest.raises(RuntimeError):
+        builder.build()
+    assert 'Build tree and wheel go in' in console.export_text()
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_start_covers_the_planned_installs(tmp_path: Path, mocker: MockerFixture):
+    """Starting approves the installs the plan lists, and nothing else."""
+    builder = Builder(_config(tmp_path, dry_run=False), Console(record=True, width=4000))
+    assert builder.plan()[0][1].endswith('. Nothing to install')
+    mocker.patch.object(tools, 'python_build_packages', return_value=['wheel'])
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    ask = mocker.patch.object(phases.Confirm, 'ask', return_value=True)
+    assert builder.plan()[0][1].endswith(f'. Install the missing wheel into {sys.prefix}')
+    builder.confirm_start()
+    builder.confirm_installs(builder.install_plan(['wheel']))
+    assert ask.call_count == 1
+    ask.return_value = False
+    with pytest.raises(BuildError, match='Nothing was installed'):
+        builder.confirm_installs(builder.install_plan(['wheel', 'ninja']))
+    builder.config.interactive = True
+    with pytest.raises(BuildError, match='Nothing was installed'):
+        builder.confirm_installs(builder.install_plan(['wheel']))
+
+
 def test_wheel_env_takes_the_define(tmp_path: Path, mocker: MockerFixture):
     """A ``-D CMAKE_OSX_DEPLOYMENT_TARGET`` sets the wheel's platform tag."""
     builder = _builder(
@@ -700,6 +1066,25 @@ def test_narration_escapes_paths(tmp_path: Path):
     cfg = _config(tmp_path, build_dir=tmp_path / 'b[x]')
     Builder(cfg, console).summary()
     assert 'b[x]' in console.export_text()
+
+
+def test_default_jobs_follow_memory(tmp_path: Path, mocker: MockerFixture):
+    """The build step and the plan report a job count limited by memory."""
+    gib = 2**30
+    mocker.patch.object(phases.os, 'cpu_count', return_value=16)
+    mocker.patch.object(tools, 'physical_memory', return_value=8 * gib)
+    builder = _builder(tmp_path, mocker)
+    mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'hooks')
+    builder.config.yes = True
+    builder.phase_build()
+    out = builder.console.export_text()
+    assert '16 CPU cores and 8 GB of memory detected; compiling with 4 jobs, one per 2 GB' in out
+    assert dict(builder.plan())['Build'].startswith(
+        'compile with 4 parallel jobs (one per 2 GB of memory)'
+    )
+    builder.config.jobs = 6
+    assert dict(builder.plan())['Build'].startswith('compile with 6 parallel jobs, logging')
 
 
 def test_recheck_tools_after_clone(tmp_path: Path, mocker: MockerFixture):
@@ -767,6 +1152,19 @@ def test_patchelf_offered_on_linux(tmp_path: Path, mocker: MockerFixture):
     builder.phase_tools()
     assert run.call_args.args[0] == ['pip', 'install', 'patchelf']
     assert f'  • patchelf into {sys.prefix}' in builder.console.export_text()
+
+
+def test_prompting_checks_the_selection_first(tmp_path: Path, mocker: MockerFixture):
+    """An unknown ``--with`` group stops an interactive build before the first question."""
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    ask = mocker.patch.object(phases.Confirm, 'ask', return_value=True)
+    cfg = _config(tmp_path, interactive=True, dry_run=False, with_=['nope'])
+    builder = Builder(cfg, Console(quiet=True))
+    tools_phase = mocker.spy(builder, 'phase_tools')
+    with pytest.raises(BuildError, match='Unknown group'):
+        builder.build()
+    assert not ask.called
+    assert not tools_phase.called
 
 
 def test_failed_post_configure_hook_reruns_configure(tmp_path: Path, mocker: MockerFixture):

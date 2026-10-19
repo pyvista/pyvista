@@ -350,6 +350,114 @@ class Builder:
             )
             raise BuildError(msg)
 
+    def plan(self) -> list[tuple[str, str]]:
+        """Describe what each step will do, before any of them runs.
+
+        Returns
+        -------
+        list[tuple[str, str]]
+            Step name and description, in order.
+
+        """
+        cfg = self.config
+        self._check_source()
+        manifest = self._planned_manifest()
+        if (cfg.src_dir / '.git').exists():
+            source = f'reuse the checkout at {cfg.src_dir}'
+            if cfg.ref:
+                source += (
+                    f', checked out at {cfg.ref} (local edits stop it unless it is already there)'
+                )
+            else:
+                source += ', local edits kept'
+        else:
+            url = cfg.url or BACKENDS.get(cfg.backend) or (manifest.url if manifest else None)
+            if url is None:
+                raise BuildError(self._unknown_backend())
+            ref = cfg.ref or (manifest.default_ref if manifest else None) or 'the default branch'
+            source = f'clone {url} at {ref} into {cfg.src_dir}'
+        tools = _tools.required_tools(
+            cfg.os_name, manifest.tools if manifest else {}, repair=cfg.repair
+        )
+        names = ', '.join([t.label for t in tools] + list(_tools.PYTHON_BUILD_PACKAGES))
+        specs = [f'{t.pip}{t.spec}' for t in tools if t.pip and not _tools.detect(t, self.env)]
+        specs += _tools.python_build_packages()
+        self._planned_installs = self.install_plan(specs)
+        if specs:
+            tools_text = f'check {names}. Install the missing {", ".join(specs)} into {sys.prefix}'
+        else:
+            tools_text = f'check {names}. Nothing to install'
+        if manifest is None:
+            options_text = "the default module groups and options from the checkout's manifest"
+        else:
+            try:
+                groups = resolve_groups(
+                    manifest,
+                    cfg.os_name,
+                    with_=cfg.with_,
+                    without=cfg.without,
+                    minimal=cfg.minimal,
+                )
+                values = resolve_options(manifest, cfg.options)
+            except ManifestError as err:
+                raise BuildError(str(err)) from None
+            options_text = f'module groups {", ".join(groups) or "(none)"}'
+            if values:
+                options_text += '. Options ' + ', '.join(f'{k}={v}' for k, v in values.items())
+        configure = f'cmake, {cfg.build_type} build with Ninja, into {cfg.cmake_dir}'
+        if cfg.defines:
+            configure += ', plus ' + ' '.join(f'-D{d}' for d in cfg.defines)
+        jobs, cores, _ = self._jobs()
+        limit = ' (one per 2 GB of memory)' if not cfg.jobs and jobs < cores else ''
+        build = (
+            f'compile with {jobs} parallel jobs{limit}, logging to {cfg.build_dir / "build.log"}'
+        )
+        wheel = f'package the wheel with setup.py bdist_wheel into {cfg.dist_dir}'
+        if cfg.repair:
+            repairer = _tools.REPAIRERS[cfg.os_name]
+            repair = (
+                f'bundle the libraries the wheel links against with {repairer}, '
+                f'into {cfg.wheelhouse}, so it installs on other machines. '
+                '--no-repair skips it'
+            )
+        else:
+            repair = 'skipped (--no-repair), so the wheel may only work on this machine'
+        if cfg.install:
+            install = f'install the wheel into {sys.prefix}'
+        else:
+            install = 'skipped. The install command is printed at the end, or pass --install'
+        return [
+            ('Tools', tools_text),
+            ('Source', source),
+            ('Build options', options_text),
+            ('Configure', configure),
+            ('Build', build),
+            ('Wheel', wheel),
+            ('Repair', repair),
+            ('Install', install),
+        ]
+
+    def confirm_start(self) -> None:
+        """Say where the build goes and ask before the first step; ``--yes`` answers yes."""
+        cfg = self.config
+        where = 'Build tree and wheel go' if cfg.source else 'Source, build tree and wheel go'
+        self.say(
+            f'{where} in [bold]{escape(str(cfg.build_dir))}[/bold]. '
+            'Compiling takes from minutes to over an hour and needs several GB of disk.'
+        )
+        if cfg.yes or cfg.dry_run:
+            if cfg.interactive:
+                why = '--yes' if cfg.yes else 'dry run'
+                self.say(f'[dim]Proceed? -> yes ({why})[/dim]')
+            return
+        if not sys.stdin.isatty():
+            msg = 'Pass --yes to build without a terminal.'
+            raise BuildError(msg)
+        if not Confirm.ask('Proceed?', default=True, console=self.console):
+            msg = 'Stopped before the first step.'
+            raise BuildError(msg)
+        self._approved_installs = set(self._planned_installs)
+
     def run(
         self,
         cmd: Sequence[str],
@@ -487,6 +595,45 @@ class Builder:
             'wheelhouse': cfg.wheelhouse,
         }
         return [part.format(**fields) for part in shlex.split(template)]
+
+    def build(self) -> Path | None:
+        """Run every phase.
+
+        Returns
+        -------
+        Path | None
+            The final wheel, or ``None`` on a dry run.
+
+        """
+        self.console.print(
+            f'[bold green]Building backend: {escape(self.config.backend)}[/bold green]'
+        )
+        steps = self.plan()
+        if self.config.prompting:
+            self.say(
+                'Eight steps: tools, source, build options, configure, build, wheel, repair, '
+                'and install.'
+            )
+            self.say(
+                'Each step explains what it will do and asks before running any command; '
+                'Enter takes the default.'
+            )
+        else:
+            self.say('The build runs these eight steps:')
+            for number, (name, text) in enumerate(steps, start=1):
+                self.say(f'  {number}. [bold]{name}[/bold]: {escape(text)}')
+        self.confirm_start()
+        self.phase_tools()
+        self.phase_source()
+        self.recheck_tools()
+        self.phase_groups()
+        self.phase_configure()
+        self.phase_build()
+        self.phase_wheel()
+        self.phase_repair()
+        self.phase_install()
+        self.summary()
+        return self.wheel
 
     def phase_source(self) -> None:
         """Clone or reuse the checkout, then load its manifest."""
