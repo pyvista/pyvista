@@ -10,6 +10,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core._vtk_utilities import _COINCIDENT_OFFSET_UNITS_ARE_DEPTH_STEPS
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
@@ -298,13 +299,16 @@ class AffineWidget3D(_NoNewAttrMixin):
             actor.user_matrix = matrix
 
         if always_visible:
+            # Draw the widget almost a third of the depth range in front of the scene.
+            depth_steps = 2**24 if _COINCIDENT_OFFSET_UNITS_ARE_DEPTH_STEPS else 65000
+            units = -20000 * depth_steps / 65000
             for actor in self._arrows + self._circles:
                 mapper = actor.mapper
                 if mapper is None:  # pragma: no cover
                     msg = 'The widget actor was added without a mapper.'
                     raise RuntimeError(msg)
                 mapper.SetResolveCoincidentTopologyToPolygonOffset()
-                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
+                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, units)
 
     def _get_world_coord_rot(
         self, interactor: _vtk.vtkRenderWindowInteractor
