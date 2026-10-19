@@ -782,9 +782,9 @@ def test_volume_empty():
 def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
 
-    if extension == '.vtkhdf' and not binary:
+    if extension in pv.HDFWriter.extensions and not binary:
         with pytest.raises(
-            ValueError, match=r'.vtkhdf files can only be written in binary format'
+            ValueError, match=rf'\{extension} files can only be written in binary format'
         ):
             sphere.save(filename, binary=binary)
         return

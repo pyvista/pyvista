@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import itertools
 from pathlib import Path
 import re
@@ -8,7 +9,7 @@ import warnings
 
 
 def warn_external(message: str, category: type[Warning] | None = None) -> None:
-    """``warnings.warn`` wrapper that sets *``stacklevel``* to "outside PyVista".
+    """``warnings.warn`` wrapper that sets ``stacklevel`` to "outside PyVista".
 
     Taken and modified from Matplotlib
     https://github.com/matplotlib/matplotlib/blob/db83efff4d7d3849f8bffbd1f6cdfc43d74c9aea/lib/matplotlib/_api/__init__.py#L395
@@ -28,7 +29,7 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
         basedir = Path(__file__).parents[1]
         kwargs['skip_file_prefixes'] = (str(basedir / 'pyvista'),)
     else:
-        frame = sys._getframe()
+        frame = inspect.currentframe()
         for stacklevel in itertools.count(1):
             if frame is None:
                 # when called in embedded context may hit frame is None

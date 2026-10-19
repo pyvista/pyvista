@@ -40,6 +40,7 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import get_args
 
 import pyvista_validation as _validation
 
@@ -49,6 +50,7 @@ from pyvista.core.config import _ConfigBase
 from pyvista.jupyter import _validate_jupyter_backend
 
 from . import _property
+from ._typing import _TransparentBackgroundOptions
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -76,6 +78,15 @@ if TYPE_CHECKING:
     from ._typing import ColormapOptions
     from ._typing import ThemeOptions
     from ._typing import TrameModeOptions
+
+
+def _validate_transparent_background(transparent_background: object) -> None:
+    """Raise if ``transparent_background`` is not one of its options."""
+    _validation.check_contains(
+        get_args(_TransparentBackgroundOptions),
+        must_contain=transparent_background,
+        name='transparent_background',
+    )
 
 
 def _set_plot_theme_from_env() -> None:
@@ -744,7 +755,7 @@ class _ColorbarConfig(_ConfigBase):
 
         The padding is the space between the title and the tick labels, as a
         multiple of the size the labels are drawn at, or of the size they ask
-        for on a box that sizes the text itself.  A title turned alongside the
+        for on a box that sizes the text itself. A title turned alongside the
         bar is padded off the bar by a multiple of its own size.
 
         Examples
@@ -763,7 +774,7 @@ class _ColorbarConfig(_ConfigBase):
     def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the distance between stacked colorbars.
 
-        The distance is a fraction of the viewport.  ``None`` spaces them as
+        The distance is a fraction of the viewport. ``None`` spaces them as
         tightly as their titles and tick labels allow.
 
         Examples
@@ -1012,7 +1023,7 @@ class _Font(_ConfigBase):
 
     Examples
     --------
-    Set the default font family to ``'arial'``.  Must be either
+    Set the default font family to ``'arial'``. Must be either
     ``'arial'``, ``'courier'``, or ``'times'``.
 
     >>> import pyvista as pv
@@ -1113,7 +1124,7 @@ class _Font(_ConfigBase):
 
         A scalar bar draws its title at this size; a box drawn around a
         horizontal bar that is too narrow for it, or given too small a height,
-        shrinks it to fit.  Where this and :attr:`label_size` are both ``None``,
+        shrinks it to fit. Where this and :attr:`label_size` are both ``None``,
         every size is fitted to the bar the text is drawn on.
 
         Examples
@@ -1135,9 +1146,9 @@ class _Font(_ConfigBase):
     def label_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        The largest size a scalar bar draws its labels at.  They are drawn
+        The largest size a scalar bar draws its labels at. They are drawn
         smaller where the bar leaves them too little room to stay clear of
-        each other.  Where this and :attr:`title_size` are both ``None``, every
+        each other. Where this and :attr:`title_size` are both ``None``, every
         size is fitted to the bar the text is drawn on.
 
         Examples
@@ -1982,7 +1993,7 @@ class Theme(_ConfigBase):
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
         self._point_shape: str | None = None
-        self._transparent_background = False
+        self._transparent_background: _TransparentBackgroundOptions = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
@@ -2235,11 +2246,11 @@ class Theme(_ConfigBase):
     ) -> str | None:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
-        Jupyter backend to use when plotting.  Must be one of the
+        Jupyter backend to use when plotting. Must be one of the
         following:
 
         * ``'static'`` : Display a single static image within the
-          Jupyterlab environment.  Still requires that a virtual
+          Jupyterlab environment. Still requires that a virtual
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
@@ -2263,7 +2274,7 @@ class Theme(_ConfigBase):
         * ``'html'``: The ``'client'`` backend, but able to be embedded.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
-          instead display using dedicated VTK render windows.  This
+          instead display using dedicated VTK render windows. This
           will generate nothing on headless servers even with a
           virtual framebuffer.
 
@@ -2451,7 +2462,7 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Set the default font family to ``'arial'``.  Must be either
+        Set the default font family to ``'arial'``. Must be either
         ``'arial'``, ``'courier'``, or ``'times'``.
 
         >>> import pyvista as pv
@@ -2495,7 +2506,7 @@ class Theme(_ConfigBase):
         Only applicable when displaying ``scalars``.
 
         You can also specify a list of colors to override an existing
-        colormap with a custom one.  For example, to create a three
+        colormap with a custom one. For example, to create a three
         color colormap you might specify ``['green', 'red', 'blue']``
 
         Examples
@@ -2520,7 +2531,7 @@ class Theme(_ConfigBase):
         Used for meshes without ``scalars``.
 
         When setting, the value must be either a string, rgb list,
-        or hex color string.  For example:
+        or hex color string. For example:
 
         * ``color='white'``
         * ``color='w'``
@@ -2979,8 +2990,19 @@ class Theme(_ConfigBase):
         self._render_lines_as_tubes = bool(render_lines_as_tubes)
 
     @property
-    def transparent_background(self) -> bool:  # numpydoc ignore=RT01
+    def transparent_background(self) -> _TransparentBackgroundOptions:  # numpydoc ignore=RT01
         """Return or set whether the background is transparent by default.
+
+        Accepts the same values as the ``transparent_background`` parameter of
+        :meth:`pyvista.Plotter.screenshot`. With ``'straight'`` and ``'premultiplied'``,
+        every screenshot, :attr:`pyvista.Plotter.image`, and movie frame renders the
+        scene again over a black background.
+
+        .. versionadded:: 0.50
+            The ``'straight'`` and ``'premultiplied'`` options.
+
+        .. versionchanged:: 0.50
+            Other values raise a :class:`ValueError`.
 
         Examples
         --------
@@ -2989,11 +3011,18 @@ class Theme(_ConfigBase):
         >>> import pyvista as pv
         >>> pv.global_theme.transparent_background = True
 
+        Remove the background color from the edges of transparent screenshots.
+
+        >>> pv.global_theme.transparent_background = 'straight'
+
         """
         return self._transparent_background
 
     @transparent_background.setter
-    def transparent_background(self, transparent_background: bool) -> None:
+    def transparent_background(
+        self, transparent_background: _TransparentBackgroundOptions
+    ) -> None:
+        _validate_transparent_background(transparent_background)
         self._transparent_background = transparent_background
 
     @property
@@ -3455,7 +3484,7 @@ class Theme(_ConfigBase):
         Parameters
         ----------
         filename : str
-            Path to save the theme to.  Should end in ``'.json'``.
+            Path to save the theme to. Should end in ``'.json'``.
 
         Examples
         --------
@@ -3796,7 +3825,7 @@ class _DocumentBuildTheme(DocumentTheme):
 class _TestingTheme(Theme):
     """Low resolution testing theme for ``pytest``.
 
-    Necessary for image regression.  Xvfb doesn't support
+    Necessary for image regression. Xvfb doesn't support
     multi-sampling, it's disabled for consistency between desktops and
     remote testing.
 

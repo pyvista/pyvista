@@ -59,6 +59,8 @@ _MAX_CATEGORY_TABLE_SIZE = 65536
 _CATEGORY_BAND_TABLE_SIZE = 4096
 # Table entries per category, so a volume's transfer function resolves each band
 _CATEGORY_ENTRIES_PER_VALUE = 8
+# Units in the last place a data range may span and still count as constant
+_NEAR_CONSTANT_ULPS = 4
 
 _ColorModeOptions = Literal['direct', 'map']
 _ScalarMapModeOptions = Literal['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
@@ -85,6 +87,50 @@ def _category_range(values: NDArray[np.floating]) -> tuple[float, float]:
     if step is None:
         step = np.diff(values).min()
     return float(values[0] - step / 2), float(values[-1] + step / 2)
+
+
+def _default_scalar_range(
+    low: float | np.number[Any] | np.bool_,
+    high: float | np.number[Any] | np.bool_,
+    dtype: np.dtype[Any],
+    *,
+    below_range_color: bool = False,
+) -> tuple[float, float]:
+    """Return the default scalar range of data spanning ``low`` to ``high``.
+
+    Parameters
+    ----------
+    low : float
+        Minimum of the data.
+
+    high : float
+        Maximum of the data.
+
+    dtype : numpy.dtype
+        Data type the data is stored in.
+
+    below_range_color : bool, default: False
+        Whether values below the range are drawn in a separate color.
+
+    Returns
+    -------
+    tuple[float, float]
+        ``(high, high)`` when ``dtype`` is floating, both bounds are finite,
+        ``below_range_color`` is ``False`` and the bounds are at most
+        ``_NEAR_CONSTANT_ULPS`` units in the last place apart. Otherwise
+        ``(low, high)``.
+
+    """
+    low, high = float(low), float(high)
+    if (
+        not below_range_color
+        and np.issubdtype(dtype, np.floating)
+        and np.isfinite([low, high]).all()
+    ):
+        ulp = np.spacing(np.abs(np.array([low, high], dtype=dtype)).max())
+        if high - low <= _NEAR_CONSTANT_ULPS * ulp:
+            return high, high
+    return low, high
 
 
 def _clim_has_no_bounds(clim: float | VectorLikeFloat | None) -> bool:
@@ -325,7 +371,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
         """Return or set the interpolation of scalars before mapping.
 
-        Enabling makes for a smoother scalars display.  When ``False``,
+        Enabling makes for a smoother scalars display. When ``False``,
         OpenGL will interpolate the mapped colors which can result in
         showing colors that are not present in the color map.
 
@@ -528,7 +574,9 @@ class _BaseDataSetMapper(_BaseMapper):
     still derived from the mapped array (``True``) or has been pinned by
     the caller (``False``). It starts ``True``. Setting ``scalar_range``
     directly, or calling :meth:`set_scalars` with an explicit ``clim``,
-    flips it to ``False`` via ``_set_scalar_range``. While ``True``,
+    flips it to ``False`` via ``_set_scalar_range``. Activating direct colors
+    (:meth:`as_rgba`, an opacity array, ``rgb``) pins it too, since those arrays
+    hold colors, not data. While ``True``,
     the range auto-refreshes from the mapped array in
     ``_maybe_set_default_scalar_range``, which is called from
     :meth:`set_active_scalars` and the ``dataset`` setter. Once
@@ -707,7 +755,7 @@ class _BaseDataSetMapper(_BaseMapper):
 
         When an :class:`ActiveScalarsAlgorithm` is managing the active
         scalars, the dataset's own ``active_scalars`` may point to a
-        different array.  This property always returns the correct array.
+        different array. This property always returns the correct array.
         """
         if self.dataset is None:
             return None
@@ -749,7 +797,12 @@ class _BaseDataSetMapper(_BaseMapper):
         elif np.issubdtype(array.dtype, np.number):
             if np.isnan(array).all():
                 return
-            clim = (float(np.nanmin(array)), float(np.nanmax(array)))
+            clim = _default_scalar_range(
+                np.nanmin(array),
+                np.nanmax(array),
+                array.dtype,
+                below_range_color=self.lookup_table.below_range_color is not None,
+            )
         else:
             return
 
@@ -779,6 +832,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 # Nothing is mapped, so there is no RGBA array to build
                 return
             self.dataset.point_data.pop('__rgba__', None)
+            self.dataset.cell_data.pop('__rgba__', None)
             self._configure_scalars_mode(
                 scalars=self.lookup_table(scalars),
                 scalars_name='__rgba__',
@@ -878,12 +932,12 @@ class _BaseDataSetMapper(_BaseMapper):
         """
         new_mapper = cast('_BaseDataSetMapper', super().copy())
         new_mapper._input_dataset = self._input_dataset
-        new_mapper._use_default_scalar_range = self._use_default_scalar_range
         if self._active_scalars_algo is not None:
             new_mapper.set_active_scalars(
                 self._active_scalars_algo.scalars_name,
                 self._active_scalars_algo.preference,
             )
+        new_mapper._set_scalar_range(self.scalar_range, use_default=self._use_default_scalar_range)
         return new_mapper
 
     def _configure_scalars_mode(
@@ -918,6 +972,7 @@ class _BaseDataSetMapper(_BaseMapper):
             Replace an existing array named ``scalars_name`` with ``scalars``.
 
         """
+        scalar_range = self.scalar_range
         dataset = self.dataset
         if dataset is not None:
             if scalars.shape[0] == dataset.n_points and scalars.shape[0] == dataset.n_cells:
@@ -953,6 +1008,9 @@ class _BaseDataSetMapper(_BaseMapper):
                 raise_not_matching(scalars, dataset)
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
+            if direct_scalars_color_mode:
+                # A direct color array holds colors, so keep the range of the data
+                self._set_scalar_range(scalar_range, use_default=False)
 
     def set_scalars(
         self,
@@ -999,13 +1057,13 @@ class _BaseDataSetMapper(_BaseMapper):
         rgb : bool, default: False
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
-            accepted alias for this.  Opacity (the A) is optional.  If
+            accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgba"`` is passed, the default
-            becomes ``True``.  This can be overridden by setting this
+            becomes ``True``. This can be overridden by setting this
             parameter to ``False``.
 
         component : int, optional
-            Set component of vector valued scalars to plot.  Must be
+            Set component of vector valued scalars to plot. Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
@@ -1043,14 +1101,14 @@ class _BaseDataSetMapper(_BaseMapper):
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only applicable
+            ``scalars``. See available Matplotlib colormaps. Only applicable
             for when displaying ``scalars``.
             ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one.  For example, to create a three color
+            colormap with a custom one. For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this
@@ -1077,9 +1135,10 @@ class _BaseDataSetMapper(_BaseMapper):
                 spreading the colormap evenly over the scalar range.
 
         clim : VectorLikeFloat | float, optional
-            Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``(-1, 2)``. A single value
-            ``c`` is the range ``(-c, c)``.
+            Color bar range for scalars. Defaults to minimum and
+            maximum of scalars array, or ``(max, max)`` when they differ only
+            by floating-point rounding and ``below_color`` is not set.
+            Example: ``(-1, 2)``. A single value ``c`` is the range ``(-c, c)``.
 
         """
         if _clim_has_no_bounds(clim):
@@ -1156,7 +1215,14 @@ class _BaseDataSetMapper(_BaseMapper):
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
-            scalar_range = (float(np.nanmin(scalars)), float(np.nanmax(scalars)))
+            # Collapse rounding noise to one value unless a below-range color is shown
+            scalar_range = _default_scalar_range(
+                np.nanmin(scalars),
+                np.nanmax(scalars),
+                scalars.dtype,
+                below_range_color=bool(below_color)
+                or self.lookup_table.below_range_color is not None,
+            )
         elif isinstance(clim, (int, float)):
             scalar_range = (-float(clim), float(clim))
         else:
@@ -1198,7 +1264,10 @@ class _BaseDataSetMapper(_BaseMapper):
                     raise ValueError(msg)
                 # need to round the colors here since we're
                 # directly displaying the colors
-                hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                if scalar_range[0] != scalar_range[1]:
+                    hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                else:
+                    hue = np.zeros(scalars.shape)
                 rounded = np.round(hue * n_colors) / n_colors
                 rgba: NDArray[np.floating] = get_cmap_safe(cmap)(rounded) * 255
                 rgba[:, -1] *= opacity
