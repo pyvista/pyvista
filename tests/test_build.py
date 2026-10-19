@@ -19,6 +19,7 @@ from pyvista._build import Builder
 from pyvista._build import BuildError
 from pyvista._build import phases
 from pyvista._build import tools
+from pyvista._build.manifest import OS_NAMES
 from pyvista._build.manifest import cmake_unset
 from pyvista._build.manifest import parse_manifest
 from pyvista._build.manifest import resolve_groups
@@ -529,6 +530,53 @@ def test_newest_wheel_by_mtime(tmp_path: Path):
     assert builder._newest_wheel(tmp_path / 'empty') is None
 
 
+@pytest.mark.parametrize('os_name', OS_NAMES)
+def test_wheel_env_and_repair_command(tmp_path: Path, mocker: MockerFixture, os_name):
+    mocker.patch.object(phases.platform, 'machine', return_value='arm64')
+    builder = _builder(tmp_path, mocker, os_name=os_name)
+    cfg = builder.config
+    wheel = tmp_path / 'vtk.whl'
+    cmd, env = builder.repair_command(wheel)
+    out = str(cfg.wheelhouse)
+    expected = {
+        'linux': (['auditwheel', 'repair', str(wheel), '-w', out], {}),
+        'windows': (
+            [
+                'delvewheel',
+                'repair',
+                '--add-path',
+                str(cfg.cmake_dir / 'bin'),
+                '-w',
+                out,
+                str(wheel),
+            ],
+            {},
+        ),
+        'macos': (
+            ['delocate-wheel', '--require-archs', 'arm64', '-w', out, str(wheel)],
+            {'DYLD_LIBRARY_PATH': str(cfg.cmake_dir / 'lib')},
+        ),
+    }
+    assert (cmd, env) == expected[os_name]
+    if os_name == 'macos':
+        lib = cfg.cmake_dir / 'lib' / 'vtk' / 'libvtksys-9.7.dylib'
+        lib.parent.mkdir(parents=True)
+        lib.write_bytes(b'')
+        assert builder.repair_command(wheel)[1] == {'DYLD_LIBRARY_PATH': str(lib.parent)}
+        cfg.verbose = True
+        assert builder.repair_command(wheel)[0][-2:] == ['-v', str(wheel)]
+    wheel_env = {'_PYTHON_HOST_PLATFORM': 'macosx-11.0-arm64', 'ARCHFLAGS': '-arch arm64'}
+    assert builder.wheel_env() == (wheel_env if os_name == 'macos' else {})
+    names = [t.name for t in tools.required_tools(os_name, {}, repair=True)]
+    compiler = 'msvc' if os_name == 'windows' else 'c++ compiler'
+    repairer = {'linux': 'auditwheel', 'macos': 'delocate-wheel', 'windows': 'delvewheel'}
+    patchelf = ['patchelf'] if os_name == 'linux' else []
+    assert names == ['git', 'cmake', 'ninja', compiler, repairer[os_name], *patchelf]
+    assert repairer[os_name] not in [
+        t.name for t in tools.required_tools(os_name, {}, repair=False)
+    ]
+
+
 def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     mocker.patch.object(phases.os, 'cpu_count', return_value=8)
@@ -644,6 +692,14 @@ def test_wheel_env_takes_the_define(tmp_path: Path, mocker: MockerFixture):
         tmp_path, mocker, os_name='macos', defines=['CMAKE_OSX_DEPLOYMENT_TARGET:STRING=12.0']
     )
     assert builder.wheel_env()['_PYTHON_HOST_PLATFORM'].startswith('macosx-12.0-')
+
+
+def test_narration_escapes_paths(tmp_path: Path):
+    """Brackets in a path are printed, not read as markup."""
+    console = Console(record=True, width=4000, force_terminal=False)
+    cfg = _config(tmp_path, build_dir=tmp_path / 'b[x]')
+    Builder(cfg, console).summary()
+    assert 'b[x]' in console.export_text()
 
 
 def test_recheck_tools_after_clone(tmp_path: Path, mocker: MockerFixture):

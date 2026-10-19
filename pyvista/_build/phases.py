@@ -1010,3 +1010,114 @@ class Builder:
             msg = f'No wheel found in {folder}.'
             raise BuildError(msg)
         return wheels[-1]
+
+    def repair_command(self, wheel: Path) -> tuple[list[str], dict[str, str]]:
+        """Assemble the repair command for this operating system.
+
+        Parameters
+        ----------
+        wheel : Path
+            Wheel to repair.
+
+        Returns
+        -------
+        list[str]
+            Command and arguments.
+
+        dict[str, str]
+            Extra environment for the command.
+
+        """
+        cfg = self.config
+        out = str(cfg.wheelhouse)
+        if cfg.os_name == 'linux':
+            return ['auditwheel', 'repair', str(wheel), '-w', out], {}
+        if cfg.os_name == 'windows':
+            bin_dir = str(cfg.cmake_dir / 'bin')
+            return ['delvewheel', 'repair', '--add-path', bin_dir, '-w', out, str(wheel)], {}
+        dylibs = cfg.cmake_dir.rglob('libvtksys*.dylib')
+        libdir = next((p.parent for p in dylibs), cfg.cmake_dir / 'lib')
+        arch = platform.machine()
+        return (
+            [
+                'delocate-wheel',
+                '--require-archs',
+                arch,
+                '-w',
+                out,
+                *(['-v'] if self.config.verbose else []),
+                str(wheel),
+            ],
+            {'DYLD_LIBRARY_PATH': str(libdir)},
+        )
+
+    def phase_repair(self) -> None:
+        """Bundle the shared libraries into the wheel."""
+        cfg = self.config
+        self.step('7/8 Repair')
+        if not cfg.repair:
+            self.say('Skipped (--no-repair).')
+            return
+        self.say(
+            'Repairing bundles the libraries the wheel links against from outside it, '
+            'so it installs on other machines.'
+        )
+        if cfg.os_name == 'linux':
+            self.say(
+                "[dim]On Linux the wheel is tagged for this machine's glibc; portable manylinux "
+                'wheels need a manylinux container.[/dim]'
+            )
+        wheel = self.wheel or cfg.dist_dir / f'{cfg.backend}-*.whl'
+        cmd, env = self.repair_command(wheel)
+        if not self.confirm('Repair the wheel?'):
+            self.say('Skipped.')
+            return
+        self.run(cmd, env=env)
+        if not cfg.dry_run:
+            self.wheel = self._newest_wheel(cfg.wheelhouse)
+
+    def install_command(self, wheel: Path) -> list[str] | None:
+        """Assemble the command that installs a wheel into this interpreter.
+
+        Parameters
+        ----------
+        wheel : Path
+            Wheel to install.
+
+        Returns
+        -------
+        list[str] | None
+            Command, or ``None`` when neither pip nor uv is available.
+
+        """
+        return _tools.pip_install_command(str(wheel), args=('--no-deps', '--force-reinstall'))
+
+    def phase_install(self) -> None:
+        """Install the wheel into the current environment when asked."""
+        cfg = self.config
+        self.step('8/8 Install')
+        wheel = self.wheel or (cfg.wheelhouse if cfg.repair else cfg.dist_dir) / (
+            f'{cfg.backend}-*.whl'
+        )
+        cmd = self.install_command(wheel)
+        if cmd is None:
+            self.say(f'No pip or uv found; install the wheel yourself: {escape(str(wheel))}')
+            return
+        wanted = cfg.install or self.confirm(
+            f'Install {wheel.name} into {sys.prefix}?', default=False
+        )
+        if not wanted:
+            self.say(f'Not installed. To install later:\n  [cyan]{escape(_join(cmd))}[/cyan]')
+            return
+        self.run(cmd)
+        self.run([self.python, '-c', f'import {self.manifest.import_name}'])
+
+    def summary(self) -> None:
+        """Print where things ended up."""
+        cfg = self.config
+        self.console.rule('[bold green]Done')
+        if self.wheel is not None:
+            self.say(f'Wheel: [bold]{escape(str(self.wheel))}[/bold]')
+        self.say(f'Source: {escape(str(cfg.src_dir))}\nBuild tree: {escape(str(cfg.cmake_dir))}')
+        again = 'the same command without --clean' if cfg.clean else 'the same command'
+        self.say(f'Edit the source and run {again} again for an incremental rebuild.')
