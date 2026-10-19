@@ -103,6 +103,7 @@ from .text import TextProperty
 from .texture import numpy_to_texture
 from .theme_registry import _resolve_theme_like
 from .themes import Theme
+from .themes import _validate_transparent_background
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -114,7 +115,7 @@ from .utilities.algorithms import set_algorithm_input
 from .utilities.algorithms import smooth_shading_algorithm
 from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
-from .utilities.regression import image_from_window
+from .utilities.regression import _read_window
 from .utilities.regression import run_image_filter
 from .utilities.sphinx_gallery import _gallery_force_static
 from .volume import Volume
@@ -162,6 +163,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting._typing import ThemeOptions
+    from pyvista.plotting._typing import _TransparentBackgroundOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
@@ -412,6 +414,17 @@ def _projection_terms(renderer: Renderer) -> tuple[tuple[float, float], tuple[fl
     if renderer.camera.parallel_projection:
         return (x_scale / y_scale, 1.0), (matrix.GetElement(0, 3), matrix.GetElement(1, 3))
     return (x_scale, y_scale), (-matrix.GetElement(0, 2), -matrix.GetElement(1, 2))
+
+
+def _unpremultiply_alpha(image: NDArray[np.uint8]) -> NDArray[np.uint8]:
+    """Divide the colors of an RGBA image by alpha, undoing a multiplication by alpha."""
+    alpha = image[..., 3:].astype(float)
+    rgb = np.divide(
+        image[..., :3] * 255.0, alpha, out=np.zeros(image[..., :3].shape), where=alpha > 0
+    )
+    straight = image.copy()
+    straight[..., :3] = np.clip(np.rint(rgb), 0, 255)
+    return straight
 
 
 @abstract_class
@@ -2519,6 +2532,15 @@ class BasePlotter(_BoundsSizeMixin):
     def image(self) -> NDArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
 
+        The image has an alpha channel when the plotter has a transparent background,
+        which is set by the theme and by :meth:`screenshot`. With the ``'straight'`` and
+        ``'premultiplied'`` options, reading the image renders the scene again over a
+        black background; see :meth:`screenshot`.
+
+        .. versionadded:: 0.50
+            Support for the ``'straight'`` and ``'premultiplied'`` transparent
+            backgrounds.
+
         .. versionchanged:: 0.50
             A :class:`RuntimeError` is raised instead of an
             :class:`AttributeError` when the plotter has not been rendered.
@@ -2542,6 +2564,19 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._check_rendered()
         self._check_has_ren_win()
+        return self._image_with_background(self.image_transparent_background)
+
+    def _image_with_background(
+        self, transparent_background: _TransparentBackgroundOptions
+    ) -> NDArray[np.uint8]:
+        """Read the render window with a ``transparent_background`` option."""
+        if transparent_background in ('straight', 'premultiplied'):
+            image = self._image_over_black()
+            return _unpremultiply_alpha(image) if transparent_background == 'straight' else image
+        return self._read_image(ignore_alpha=not transparent_background)
+
+    def _read_image(self, *, ignore_alpha: bool, front_buffer: bool = True) -> NDArray[np.uint8]:
+        """Read the render window at the image scale."""
         render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         # A modified title property makes VTK rescale the title for the tile scale
@@ -2549,11 +2584,54 @@ class BasePlotter(_BoundsSizeMixin):
             for bar in self.scalar_bars.values():
                 bar.GetTitleTextProperty().Modified()
 
-        return image_from_window(
+        return _read_window(
             render_window,
             scale=self.image_scale,
-            ignore_alpha=not self.image_transparent_background,
+            ignore_alpha=ignore_alpha,
+            front_buffer=front_buffer,
         )
+
+    def _image_over_black(self) -> NDArray[np.uint8]:
+        """Read the scene rendered over black as RGBA, with colors multiplied by alpha."""
+        render_window = cast('_vtk.vtkRenderWindow', self.render_window)
+        interactor = render_window.GetInteractor()
+        render_enabled = interactor.GetEnableRender()
+        swap_buffers = render_window.GetSwapBuffers()
+        interactor.EnableRenderOn()
+        renderers = list(self.renderers)
+        states = [
+            (
+                renderer.GetBackground(),
+                renderer.GetGradientBackground(),
+                renderer.GetTexturedBackground(),
+                renderer.GetUseFXAA(),
+            )
+            for renderer in renderers
+        ]
+        try:
+            for renderer in renderers:
+                renderer.SetBackground(0.0, 0.0, 0.0)
+                renderer.SetGradientBackground(False)
+                renderer.SetTexturedBackground(False)
+                # FXAA smooths colors but not alpha, so it would blend the edges with black
+                renderer.SetUseFXAA(False)
+            # Keep the black render off the screen
+            render_window.SwapBuffersOff()
+            render_window.Render()
+            # The back buffer averages multisamples in the same color space that translucent
+            # surfaces are blended in, so every partially transparent color is multiplied by alpha
+            image = self._read_image(ignore_alpha=False, front_buffer=False)
+        finally:
+            for renderer, (color, gradient, textured, fxaa) in zip(renderers, states, strict=True):
+                renderer.SetBackground(color)
+                renderer.SetGradientBackground(gradient)
+                renderer.SetTexturedBackground(textured)
+                renderer.SetUseFXAA(fxaa)
+            render_window.SetSwapBuffers(swap_buffers)
+            render_window.Render()
+            interactor.SetEnableRender(render_enabled)
+        image[image[..., 3] == 0, :3] = 0
+        return image
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
@@ -6343,8 +6421,20 @@ class BasePlotter(_BoundsSizeMixin):
 
         self.mwriter = get_writer(filename, **kwargs)
 
-    def write_frame(self) -> None:
+    def write_frame(
+        self, *, transparent_background: _TransparentBackgroundOptions | None = None
+    ) -> None:
         """Write a single frame to the movie file.
+
+        Parameters
+        ----------
+        transparent_background : bool | 'straight' | 'premultiplied', optional
+            Whether the frame has a transparent background, with the same options as
+            :meth:`screenshot`. ``'straight'`` and ``'premultiplied'`` render the scene
+            again over a black background. Defaults to the plotter's transparent
+            background, which is set by the theme and by :meth:`screenshot`.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -6361,9 +6451,12 @@ class BasePlotter(_BoundsSizeMixin):
             self._on_first_render_request()
             self.render()
 
+        if transparent_background is None:
+            transparent_background = self.image_transparent_background
+        _validate_transparent_background(transparent_background)
         mwriter = self._get_mwriter_not_none()
         self.update()
-        mwriter.append_data(self.image)
+        mwriter.append_data(self._image_with_background(transparent_background))
 
     def get_image_depth(
         self,
@@ -7207,18 +7300,18 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501, FBT001]
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
     # ruff: enable[E501, FBT001]
     # fmt: on
     def screenshot(
         self,
         filename: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
         *,
-        transparent_background: bool | None = None,
+        transparent_background: _TransparentBackgroundOptions | None = None,
         return_img: bool = True,
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
@@ -7231,9 +7324,32 @@ class BasePlotter(_BoundsSizeMixin):
         filename : str | Path | io.BytesIO, optional
             Location to write image to. If ``None``, no image is written.
 
-        transparent_background : bool, optional
+        transparent_background : bool | 'straight' | 'premultiplied', optional
             Whether to make the background transparent. The default is
             looked up on the plotter's theme.
+
+            - ``False`` returns an opaque RGB image.
+            - ``True`` returns an RGBA image with a transparent background. Anti-aliased
+              edges and translucent surfaces keep the color of the background they were
+              blended with.
+            - ``'straight'`` returns an RGBA image with straight (unassociated) alpha and
+              the background color removed, which is what image viewers, web browsers,
+              PNG files, and ``PIL`` expect. Use it for images that are saved or shown.
+            - ``'premultiplied'`` returns an RGBA image whose colors are already multiplied
+              by alpha (associated alpha) and contain no background color. Use it for
+              compositing software and formats that expect colors multiplied by alpha,
+              or to filter the image further without halos.
+
+            ``'straight'`` and ``'premultiplied'`` render the scene once more over a black
+            background and then restore the background. Fully transparent pixels are
+            ``(0, 0, 0, 0)``. FXAA anti-aliasing is not applied, since it does not smooth
+            the alpha channel.
+
+            .. versionadded:: 0.50
+                The ``'straight'`` and ``'premultiplied'`` options.
+
+            .. versionchanged:: 0.50
+                Other values raise a :class:`ValueError`.
 
         return_img : bool, default: True
             If ``True``, a :class:`numpy.ndarray` of the image will be
@@ -7262,8 +7378,7 @@ class BasePlotter(_BoundsSizeMixin):
 
             * [Window height x Window width x 3] if
               ``transparent_background`` is set to ``False``.
-            * [Window height x Window width x 4] if
-              ``transparent_background`` is set to ``True``.
+            * [Window height x Window width x 4] otherwise.
 
         None
             If ``return_img`` is ``False``.
@@ -7280,11 +7395,57 @@ class BasePlotter(_BoundsSizeMixin):
         >>> actor = pl.add_mesh(sphere)
         >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
 
+        Take a screenshot with a transparent background and remove the background color
+        from the anti-aliased edges of the sphere, which makes the image suitable for
+        placing over any background.
+
+        >>> image = pl.screenshot(transparent_background='straight')  # doctest:+SKIP
+
+        .. pyvista-plot::
+            :force_static:
+
+            Take a screenshot of an opaque sphere and a translucent cube with each
+            ``transparent_background`` option.
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter(off_screen=True, window_size=[150, 150])
+            >>> sphere = pv.Sphere(center=(-0.3, 0, 0))
+            >>> _ = pl.add_mesh(sphere, color='navy', lighting=False)
+            >>> cube = pv.Cube(center=(0.3, 0, 0))
+            >>> _ = pl.add_mesh(cube, color='crimson', opacity=0.5, lighting=False)
+            >>> pl.view_xy()
+            >>> images = {
+            ...     str(option): pv.Texture(
+            ...         pl.screenshot(transparent_background=option)
+            ...     ).to_image()
+            ...     for option in [False, True, 'straight', 'premultiplied']
+            ... }
+
+            Compare the images over a black background. With ``True``, the white
+            background color shows as a light halo around the sphere and lightens the
+            cube. ``'straight'`` has neither. ``'premultiplied'`` is for software that
+            expects colors multiplied by alpha, and looks darker when shown as straight
+            alpha.
+
+            >>> pv.plot_compare(
+            ...     images,
+            ...     rgba=True,
+            ...     background='black',
+            ...     label_kwargs={'color': 'darkorange'},
+            ...     border_color='gray',
+            ...     border_width=6,
+            ...     lighting=False,
+            ...     show_axes=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ... )
+
         """
         with self.window_size_context(window_size):
             # configure image filter
             if transparent_background is None:
                 transparent_background = self._theme.transparent_background
+            _validate_transparent_background(transparent_background)
             self.image_transparent_background = transparent_background
 
             # This if statement allows you to save screenshots of closed plotters
@@ -8948,8 +9109,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
-              ``transparent_background=True``.
+            * [Window height x Window width x 4] otherwise.
 
         widget : Widget | EmbeddableWidget | IFrame | Image
             IPython widget when ``return_viewer=True``.
