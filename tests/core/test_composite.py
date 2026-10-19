@@ -725,6 +725,15 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
 
 
 @pytest.mark.parametrize('recursive', [True, False])
+def test_multi_block_shallow_copy_self(recursive, multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    keys, blocks = multi.keys(), list(multi)
+    multi.shallow_copy(multi, recursive=recursive)
+    assert multi.keys() == keys
+    assert all(a is b for a, b in zip(multi, blocks, strict=True))
+
+
+@pytest.mark.parametrize('recursive', [True, False])
 def test_multi_block_shallow_copy_deeply_nested(recursive, monkeypatch):
     depth = 20
     root = level = MultiBlock()
