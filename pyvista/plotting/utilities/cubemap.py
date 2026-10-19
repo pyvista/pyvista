@@ -45,7 +45,7 @@ def cubemap(path: str | Path = '', prefix: str = '', ext: str = '.jpg') -> Textu
         Prefix to the filename.
 
     ext : str, default: ".jpg"
-        The filename extension.  For example ``'.jpg'``.
+        The filename extension. For example ``'.jpg'``.
 
     Returns
     -------

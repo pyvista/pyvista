@@ -13,10 +13,10 @@ from typing import Generic
 from typing import Literal
 from typing import cast
 
-from typing_extensions import TypeVar
-
 # `typing.overload` registers with `get_overloads` only from 3.11
-from typing_extensions import overload
+from typing import overload
+
+from typing_extensions import TypeVar
 
 import pyvista as pv
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
@@ -729,9 +729,9 @@ def get_example(name: Literal['washington_bust'], *, download: bool = ...) -> Ex
 @overload
 def get_example(name: Literal['wavy'], *, download: bool = ...) -> Example[pv.MultiBlock[pv.StructuredGrid], tuple[pv.PVDReader]]: ...
 @overload
-def get_example(name: Literal['whole_body_ct_female'], *, download: bool = ...) -> Example[pv.MultiBlock[pv.ImageData | pv.MultiBlock[pv.ImageData]], tuple[pv.XMLMultiBlockDataReader]]: ...
+def get_example(name: Literal['whole_body_ct_female'], *, download: bool = ...) -> Example[pv.MultiBlock[pv.MultiBlock[pv.ImageData] | pv.ImageData], tuple[pv.XMLMultiBlockDataReader]]: ...
 @overload
-def get_example(name: Literal['whole_body_ct_male'], *, download: bool = ...) -> Example[pv.MultiBlock[pv.ImageData | pv.MultiBlock[pv.ImageData]], tuple[pv.XMLMultiBlockDataReader]]: ...
+def get_example(name: Literal['whole_body_ct_male'], *, download: bool = ...) -> Example[pv.MultiBlock[pv.MultiBlock[pv.ImageData] | pv.ImageData], tuple[pv.XMLMultiBlockDataReader]]: ...
 @overload
 def get_example(name: Literal['woman'], *, download: bool = ...) -> Example[pv.PolyData, tuple[pv.STLReader]]: ...
 @overload

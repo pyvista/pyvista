@@ -23,8 +23,9 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
@@ -868,8 +869,8 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         opacity : float | VectorLikeFloat | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-            ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
-            reverse that mapping.  This can also be a custom array or list of
+            ``'sigmoid_3-10'``. Append an ``'_r'`` to any of those names to
+            reverse that mapping. This can also be a custom array or list of
             values that will be interpolated across the ``n_color`` range for
             user defined mappings. Values must be between 0 and 1.
 

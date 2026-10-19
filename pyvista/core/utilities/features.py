@@ -426,7 +426,7 @@ def sample_function(
     Parameters
     ----------
     function : :vtk:`vtkImplicitFunction`
-        Implicit function to evaluate.  For example, the function
+        Implicit function to evaluate. For example, the function
         generated from :func:`~pyvista.perlin_noise`.
 
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
@@ -442,7 +442,7 @@ def sample_function(
         Enable or disable the computation of normals.
 
     output_type : numpy.dtype, default: numpy.double
-        Set the output scalar type.  One of the following:
+        Set the output scalar type. One of the following:
 
         - ``np.float64``
         - ``np.float32``

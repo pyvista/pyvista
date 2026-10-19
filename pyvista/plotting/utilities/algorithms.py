@@ -219,11 +219,11 @@ class SourceAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgori
     Parameters
     ----------
     generator : callable
-        ``generator() -> dataset``.  Called each time the pipeline requests
+        ``generator() -> dataset``. Called each time the pipeline requests
         data.
 
     output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
-        Output type.  Accepts a VTK class name string (e.g.
+        Output type. Accepts a VTK class name string (e.g.
         ``'vtkPolyData'``) or a PyVista :class:`~pyvista.DataSet` subclass
         (for example, :class:`pyvista.PolyData`).
 
@@ -289,7 +289,7 @@ class CallbackFilterAlgorithm(PreserveTypeAlgorithmBase):
     Parameters
     ----------
     callback : callable
-        ``callback(dataset) -> dataset``.  Called on each
+        ``callback(dataset) -> dataset``. Called on each
         :meth:`RequestData` invocation with the wrapped input.
 
     output_type : str | type[pyvista.DataSet] | None, default: ``None``
@@ -409,8 +409,8 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
     preference : str, default: 'point'
         When ``mesh.n_points == mesh.n_cells`` and setting
         scalars, this parameter sets how the scalars will be
-        mapped to the mesh.  The default, ``'point'``, causes the
-        scalars to be associated with the mesh points.  Can be
+        mapped to the mesh. The default, ``'point'``, causes the
+        scalars to be associated with the mesh points. Can be
         either ``'point'`` or ``'cell'``.
 
     """
@@ -866,7 +866,7 @@ def source_algorithm(
         ``generator() -> dataset``.
 
     output_type : str | type[pyvista.DataSet], default: :class:`pyvista.UnstructuredGrid`
-        Output type.  Accepts a VTK class name string or a PyVista
+        Output type. Accepts a VTK class name string or a PyVista
         :class:`~pyvista.DataSet` subclass.
 
     Returns
@@ -895,8 +895,8 @@ def callback_algorithm(
         ``callback(dataset) -> dataset``.
 
     output_type : str | type[pyvista.DataSet] | None, default: ``None``
-        Fixed output type.  Accepts a VTK class name string or a PyVista
-        :class:`~pyvista.DataSet` subclass.  When ``None``, the output
+        Fixed output type. Accepts a VTK class name string or a PyVista
+        :class:`~pyvista.DataSet` subclass. When ``None``, the output
         type matches the input type.
 
     Returns
