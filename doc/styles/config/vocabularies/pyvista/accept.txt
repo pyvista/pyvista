@@ -181,6 +181,7 @@ Voxelize
 Wasserthal
 Witold
 XWayland
+Xcode
 Xvfb
 Zenodo
 accessor
@@ -188,6 +189,7 @@ accessors
 arXiv
 arrays
 ascii
+auditwheel
 autodoc
 autoenum
 autofix
@@ -204,6 +206,7 @@ boolean
 boxplot
 boxplots
 bugfix
+ccache
 circumsphere
 cmcrameri
 cmocean
@@ -237,6 +240,8 @@ dataframe
 dataset's
 datatypes
 deleters
+delocate
+delvewheel
 dereferenced
 deserialization
 dev
@@ -425,6 +430,7 @@ rst
 rtree
 scalar
 scapula
+sccache
 scipy
 scooby
 setuptools
