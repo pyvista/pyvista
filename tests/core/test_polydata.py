@@ -1630,6 +1630,48 @@ def test_is_all_triangles():
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
 
+    mesh.strips = [4, 0, 1, 2, 3]
+    assert not mesh.is_all_triangles
+    assert mesh.triangulate().is_all_triangles
+
+
+@pytest.mark.parametrize(
+    'run',
+    [
+        lambda mesh: mesh.decimate(0.5),
+        lambda mesh: mesh.decimate_pro(0.5),
+        lambda mesh: mesh.decimate_binned(100),
+        lambda mesh: mesh.subdivide(1),
+        lambda mesh: mesh.subdivide_adaptive(),
+        lambda mesh: mesh.geodesic(0, 10),
+        lambda mesh: mesh.multi_ray_trace([[0.0, 0.0, 0.0]], [[1.0, 0.0, 0.0]]),
+        lambda mesh: mesh.boolean_union(pv.Sphere(center=(0.3, 0.0, 0.0))),
+    ],
+    ids=[
+        'decimate',
+        'decimate_pro',
+        'decimate_binned',
+        'subdivide',
+        'subdivide_adaptive',
+        'geodesic',
+        'multi_ray_trace',
+        'boolean_union',
+    ],
+)
+def test_triangle_filters_reject_strips(run):
+    mesh = _with_strip(pv.Sphere())
+    with pytest.raises(NotAllTrianglesError, match='must be all triangles'):
+        run(mesh)
+
+
+def test_remove_points_tuple_rejects_strips():
+    mesh = _with_strip(pv.Sphere())
+    with (
+        pytest.warns(pv.PyVistaDeprecationWarning),
+        pytest.raises(NotAllTrianglesError, match='must be all triangles'),
+    ):
+        mesh.remove_points([0])
+
 
 def test_extrude():
     arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])

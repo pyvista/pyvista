@@ -128,6 +128,16 @@ def _bin_to_target(
     return cast('PolyData', best)
 
 
+def _check_all_triangles(*meshes: PolyData, operation: str) -> None:
+    """Raise :class:`~pyvista.NotAllTrianglesError` unless every mesh is all triangles."""
+    if not all(mesh.is_all_triangles for mesh in meshes):
+        msg = (
+            f'Input mesh for {operation} must be all triangles. Use `triangulate()` for '
+            'polygons and strips, and remove lines and vertices.'
+        )
+        raise NotAllTrianglesError(msg)
+
+
 @abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
@@ -199,9 +209,7 @@ class PolyDataFilters(DataSetFilters):
                 'Unable to perform boolean operations on an identical surface.'
             )
             raise ValueError(msg)
-        if not self.is_all_triangles or not other_mesh.is_all_triangles:
-            msg = 'Make sure both the input and output are triangulated.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, other_mesh, operation='boolean operations')
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
         if btype == 'union':
@@ -1360,9 +1368,7 @@ class PolyDataFilters(DataSetFilters):
         >>> decimated.plot(show_edges=True, line_width=2)
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for decimation must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='decimation')
 
         alg = _vtk.vtkDecimatePro()
         alg.SetInputData(self)
@@ -1782,9 +1788,7 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True, line_width=3)
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for subdivision must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='subdivision')
 
         subdivision = subfilter.lower()
         if subdivision == 'linear':
@@ -1894,9 +1898,7 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True)
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for subdivision must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='subdivision')
 
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
@@ -2070,9 +2072,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for decimation must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='decimation')
 
         has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
@@ -2227,12 +2227,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         # VTK returns an empty mesh for any other cell, rather than an error
-        if not self.is_all_triangles or self.n_strips:
-            msg = (
-                'Input mesh for decimation must be all triangles. Use `triangulate()` for '
-                'polygons and strips, and remove lines and vertices.'
-            )
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='decimation')
         _validation.check_contains(
             get_args(_BinnedPointGenerationOptions),
             must_contain=point_generation,
@@ -2885,9 +2880,7 @@ class PolyDataFilters(DataSetFilters):
         if not (0 <= start_vertex < self.n_points and 0 <= end_vertex < self.n_points):
             msg = 'Invalid point indices.'
             raise IndexError(msg)
-        if not self.is_all_triangles:
-            msg = 'Input mesh for geodesic path must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='geodesic path')
 
         dijkstra = _vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(self)
@@ -3147,9 +3140,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for multi_ray_trace must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='multi_ray_trace')
 
         try:
             import trimesh  # noqa: PLC0415
@@ -3504,8 +3495,7 @@ class PolyDataFilters(DataSetFilters):
             remove_mask = np.zeros(self.n_points, np.bool_)
             remove_mask[remove_array] = True
 
-        if not self.is_all_triangles:
-            raise NotAllTrianglesError
+        _check_all_triangles(self, operation='remove_points')
 
         f = self.regular_faces
         vmask = remove_mask.take(f)
