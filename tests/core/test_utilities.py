@@ -44,6 +44,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
+from pyvista.core.utilities import _file_formats
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import features
 from pyvista.core.utilities import fileio
@@ -74,6 +75,7 @@ from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import _CompressionOptions
+from pyvista.core.utilities.fileio import _map_extensions
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -710,6 +712,12 @@ def test_assert_empty_kwargs():
         assert_empty_kwargs(**kwargs)
 
 
+def test_assert_empty_kwargs_no_frame(mocker: MockerFixture):
+    mocker.patch('inspect.currentframe', return_value=None)
+    with pytest.raises(TypeError, match='for `function`'):
+        assert_empty_kwargs(foo=6)
+
+
 def test_convert_id_list():
     ids = np.array([4, 5, 8])
     id_list = _vtk.vtkIdList()
@@ -1297,6 +1305,12 @@ def test_linkcode_resolve():
         'py', {'module': 'pyvista', 'fullname': 'pyvista.CellType.dimension_map'}
     )
     assert 'celltype.py' in link
+
+    # test class property (e.g. BaseReader.extensions, evaluated by a plain getattr)
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.BaseReader.extensions'}
+    )
+    assert 'fileio.py' in link
 
     # test wrapped function
     link = linkcode_resolve(
@@ -3419,6 +3433,15 @@ def test_deprecate_positional_args_call_site_and_extra_args():
         foo(True, True, True)
 
 
+def test_deprecate_positional_args_call_site_no_frame(mocker: MockerFixture):
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    mocker.patch('inspect.currentframe', return_value=None)
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=r'\n<unknown>: Arguments'):
+        foo(True, True)
+
+
 def test_deprecate_positional_args_post_deprecation():
     match = (
         r'Positional arguments are no longer allowed in '
@@ -3674,6 +3697,145 @@ def test_fileio_extensions(cls):
         # These classes are not associated with any extensions
         pytest.xfail()
     assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
+
+
+FILE_FORMATS = [
+    fmt for fmt in vars(_file_formats).values() if isinstance(fmt, _file_formats._FileFormat)
+]
+
+
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_format(cls):
+    assert cls._format in FILE_FORMATS
+    assert cls.format_description == cls._format.description
+
+
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_extensions_match_format(cls):
+    if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
+        pytest.xfail('Needs vtk 9.4')
+    if cls is pv.OpenFOAMReader:
+        # The format is registered to its parallel subclass
+        assert cls.extensions == ()
+        return
+    assert set(cls.extensions) == set(cls._format.extensions)
+    assert cls.extension_patterns == tuple(pattern for _, pattern in cls._format.patterns)
+
+
+@pytest.mark.parametrize('cls', [*READER_CLASSES, *WRITER_CLASSES])
+def test_fileio_docstring_names_format(cls):
+    summary = cls.__doc__.strip().splitlines()[0]
+    assert f'the {cls.format_description} format' in summary
+    for ext in (*cls._format.extensions, *(display for display, _ in cls._format.patterns)):
+        assert f'``{ext}``' in summary
+
+
+def test_file_formats_unique_and_used():
+    names = [fmt.description for fmt in FILE_FORMATS]
+    assert len(set(names)) == len(names)
+    assert {cls._format for cls in [*READER_CLASSES, *WRITER_CLASSES]} == set(FILE_FORMATS)
+
+
+# Every extension save dispatches on, per mesh type, so dropping or moving one is deliberate
+@pytest.mark.parametrize(
+    ('mesh_type', 'expected'),
+    [
+        (
+            pv.ImageData,
+            {
+                '.bmp': pv.BMPWriter,
+                '.jpeg': pv.JPEGWriter,
+                '.jpg': pv.JPEGWriter,
+                '.nii': pv.NIFTIImageWriter,
+                '.nii.gz': pv.NIFTIImageWriter,
+                '.png': pv.PNGWriter,
+                '.pnm': pv.PNMWriter,
+                '.tif': pv.TIFFWriter,
+                '.tiff': pv.TIFFWriter,
+                '.vti': pv.XMLImageDataWriter,
+                '.vtk': pv.DataSetWriter,
+            },
+        ),
+        (
+            pv.RectilinearGrid,
+            {'.vtk': pv.RectilinearGridWriter, '.vtr': pv.XMLRectilinearGridWriter},
+        ),
+        (
+            pv.PolyData,
+            {
+                '.geo': pv.HoudiniPolyDataWriter,
+                '.hdf': pv.HDFWriter,
+                '.iv': pv.IVWriter,
+                '.obj': pv.OBJWriter,
+                '.ply': pv.PLYWriter,
+                '.stl': pv.STLWriter,
+                '.vtk': pv.PolyDataWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtp': pv.XMLPolyDataWriter,
+            },
+        ),
+        (pv.StructuredGrid, {'.vtk': pv.StructuredGridWriter, '.vts': pv.XMLStructuredGridWriter}),
+        (
+            pv.UnstructuredGrid,
+            {
+                '.case': pv.EnSightWriter,
+                '.hdf': pv.HDFWriter,
+                '.vtk': pv.UnstructuredGridWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtu': pv.XMLUnstructuredGridWriter,
+            },
+        ),
+        (
+            pv.ExplicitStructuredGrid,
+            {'.vtk': pv.UnstructuredGridWriter, '.vtu': pv.XMLUnstructuredGridWriter},
+        ),
+        (pv.PointSet, {'.xyz': pv.SimplePointsWriter}),
+        (
+            pv.MultiBlock,
+            {
+                '.hdf': pv.HDFWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtm': pv.XMLMultiBlockDataWriter,
+                '.vtmb': pv.XMLMultiBlockDataWriter,
+            },
+        ),
+        (
+            pv.PartitionedDataSet,
+            {
+                '.hdf': pv.HDFWriter,
+                '.vtkhdf': pv.HDFWriter,
+                '.vtpd': pv.XMLPartitionedDataSetWriter,
+            },
+        ),
+    ],
+)
+def test_writers_snapshot(mesh_type, expected):
+    if pv.vtk_version_info < (9, 4):
+        expected = {ext: cls for ext, cls in expected.items() if cls is not pv.HDFWriter}
+    assert expected == mesh_type._WRITERS
+
+
+def test_map_extensions_rejects_shared_extension():
+    match = r'\.vtk is claimed by both DataSetWriter and PolyDataWriter'
+    with pytest.raises(ValueError, match=match):
+        _map_extensions(pv.DataSetWriter, pv.PolyDataWriter)
+
+
+def test_format_description_undeclared():
+    class _Reader(pv.BaseReader): ...
+
+    assert _Reader.format_description == ''
+    assert pv.core.utilities.fileio._FileIOBase.format_description == ''
+    with pytest.raises(AttributeError, match='_Reader does not declare a file format'):
+        _map_extensions(_Reader)
+
+
+def test_format_description_custom_reader():
+    class _Reader(pv.BaseReader):
+        format_description = 'My Format'
+
+    assert _Reader.format_description == 'My Format'
+    assert pv.BaseReader.format_description == ''
 
 
 def test_ply_writer(sphere, tmp_path):

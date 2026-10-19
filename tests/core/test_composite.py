@@ -494,13 +494,13 @@ def test_multi_block_io(
     # these cases are tested separately
     multi = (
         pv.MultiBlock([pv.PolyData(), pv.UnstructuredGrid()])
-        if extension == '.vtkhdf'
+        if extension in pv.HDFWriter.extensions
         else multiblock_all_with_nested_and_none
     )
 
     # Save it out
-    if extension == '.vtkhdf' and binary is False:
-        match = '.vtkhdf files can only be written in binary format'
+    if extension in pv.HDFWriter.extensions and binary is False:
+        match = rf'\{extension} files can only be written in binary format'
         with pytest.raises(ValueError, match=match):
             multi.save(filename, binary=binary)
         return
@@ -518,7 +518,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
 
     multi = pv.MultiBlock([pv.MultiBlock()])
     match = (
-        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Nested MultiBlocks are not supported by the VTKHDF format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
     with pytest.raises(TypeError, match=match):
@@ -526,7 +526,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
 
     multi = pv.MultiBlock([None])
     match = (
-        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Saving None blocks is not supported by the VTKHDF format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
     with pytest.raises(TypeError, match=match):
@@ -540,7 +540,7 @@ def test_multi_block_hdf_invalid_block_type(tmpdir):
     multi = pv.MultiBlock([pv.ImageData()])
     match = (
         "Block at index [0] with name 'Block-00' has type 'ImageData' which cannot be saved to "
-        "the .vtkhdf format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
+        "the VTKHDF format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
         "'MultiBlock', 'PartitionedDataSet']."
     )
     with pytest.raises(TypeError, match=re.escape(match)):
@@ -554,7 +554,7 @@ def test_multi_block_hdf_invalid_nested_block(tmpdir):
     multi = pv.MultiBlock([pv.MultiBlock({'nested_block': pv.PointSet()})])
     match = (
         "Block at index [0][0] with name 'nested_block' has type 'PointSet' which cannot be saved "
-        'to the .vtkhdf format.'
+        'to the VTKHDF format.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         multi.save(filename)
@@ -1727,6 +1727,10 @@ def test_block_types(multiblock_all_with_nested_and_none):
             [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
             'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
         ),
+        (
+            [pv.ImageData(), pv.MultiBlock([pv.ImageData()])],
+            'MultiBlock[MultiBlock[ImageData] | ImageData]',
+        ),
     ],
 )
 def test_inferred_type(blocks, expected):
@@ -1789,7 +1793,7 @@ _WIDE = [
                     pv.PointSet(),
                 ]
             ),
-            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
+            'MultiBlock[MultiBlock[PolyData] | ExplicitStructuredGrid | ...]',
         ),
     ],
 )

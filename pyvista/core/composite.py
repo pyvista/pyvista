@@ -16,20 +16,19 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
+from typing import Self
 from typing import Union
 from typing import cast
 from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
-from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import TypeVar
 from typing_extensions import Unpack
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core._vtk_utilities import vtk_version_info
 
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
@@ -46,11 +45,12 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import parse_field_choice
+from .utilities.fileio import _map_extensions
 from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 from .utilities.misc import _BoundsSizeMixin
-from .utilities.writer import HDFWriter
+from .utilities.writer import _HDF_WRITERS
 from .utilities.writer import XMLMultiBlockDataWriter
 
 if TYPE_CHECKING:
@@ -88,18 +88,18 @@ class MultiBlock(
     Pythonic manner.
 
     You can think of ``MultiBlock`` like a list as we
-    can iterate over this data structure by index.  It has some dictionary
+    can iterate over this data structure by index. It has some dictionary
     features as we can also access blocks by their string name.
 
     Subscripting the class declares the block type for static type checking,
     so that ``MultiBlock[PolyData]`` indexes and iterates as
-    :class:`~pyvista.PolyData` and its mutators accept nothing else.  Nothing
-    is checked at runtime.  An unsubscripted ``MultiBlock`` holds any
+    :class:`~pyvista.PolyData` and its mutators accept nothing else. Nothing
+    is checked at runtime. An unsubscripted ``MultiBlock`` holds any
     combination of datasets, nested composites and empty blocks.
 
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
-       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
+       from :class:`collections.abc.MutableSequence`. Multiple nonconforming
        behaviors were removed or modified.
 
     .. versionadded:: 0.50
@@ -174,11 +174,9 @@ class MultiBlock(
 
     plot = pv._plot.plot
 
-    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = dict.fromkeys(
-        ['.vtm', '.vtmb'], XMLMultiBlockDataWriter
+    _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
+        XMLMultiBlockDataWriter, *_HDF_WRITERS
     )
-    if vtk_version_info >= (9, 4):
-        _WRITERS['.vtkhdf'] = HDFWriter
 
     # fmt: off
     # ruff: disable[E501]
@@ -189,7 +187,7 @@ class MultiBlock(
     @overload  # copy
     def __init__(self, dataset: _vtk.vtkMultiBlockDataSet, /, *, deep: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
     @overload  # read from file
-    def __init__(self, *args: Unpack[tuple[str | Path]], validate: bool | _NestedMeshValidationFields = ..., **kwargs: Any) -> None: ...  # pragma: no cover
+    def __init__(self, *args: *tuple[str | Path], validate: bool | _NestedMeshValidationFields = ..., **kwargs: Any) -> None: ...  # pragma: no cover
     @overload  # build from blocks, named or not
     def __init__(self, dataset: Sequence[_BlockType] | dict[str, _BlockType], /, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
     @overload  # build from raw VTK blocks, which are wrapped
@@ -355,7 +353,7 @@ class MultiBlock(
 
         node_type : 'parent' | 'child', default: 'child'
             Type of node blocks to generate ``contents`` from. If ``'parent'``, the
-            contents are generated from :class:`MultiBlock` nodes.  If ``'child'``, the
+            contents are generated from :class:`MultiBlock` nodes. If ``'child'``, the
             contents are generated from :class:`~pyvista.DataSet` and ``None`` nodes.
 
         skip_none : bool, default: False
@@ -1358,7 +1356,7 @@ class MultiBlock(
 
         preference : str, default: "cell"
             When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'point'``,
+            to search for in the dataset. Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
 
             .. versionadded:: 0.45
@@ -1465,14 +1463,14 @@ class MultiBlock(
             Dataset to append to this multi-block.
 
         name : str, optional
-            Block name to give to dataset.  A default name is given
+            Block name to give to dataset. A default name is given
             depending on the block index as ``'Block-{i:02}'``.
 
         Raises
         ------
         TypeError
             If ``dataset`` is a composite which cannot be a block, such as a
-            :class:`~pyvista.PartitionedDataSet`.  Convert it with
+            :class:`~pyvista.PartitionedDataSet`. Convert it with
             :meth:`~pyvista.DataObject.cast_to_multiblock` first.
 
         Examples
@@ -1961,7 +1959,7 @@ class MultiBlock(
         dataset : pyvista.DataSet or pyvista.MultiBlock
             Data to insert.
         name : str, optional
-            Name for key to give dataset.  A default name is given
+            Name for key to give dataset. A default name is given
             depending on the block index as ``'Block-{i:02}'``.
 
         Examples
@@ -1997,7 +1995,7 @@ class MultiBlock(
         Parameters
         ----------
         index : int or str, default: -1
-            Index or name of the dataset within the multiblock.  Defaults to
+            Index or name of the dataset within the multiblock. Defaults to
             last dataset.
 
         Returns
@@ -2302,14 +2300,14 @@ class MultiBlock(
         Parameters
         ----------
         name : str or None
-            Name of the scalars array to assign as active.  If
+            Name of the scalars array to assign as active. If
             ``None``, deactivates active scalars for both point and
             cell data.
 
         preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
-            type.  Can be either ``'cell'`` or ``'point'``.
+            type. Can be either ``'cell'`` or ``'point'``.
 
         allow_missing : bool, default: False
             Allow missing scalars in part of the composite dataset. If all
@@ -2607,6 +2605,7 @@ class MultiBlock(
 
         Nested blocks of the same class at the same depth are described together, so
         every :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
+        Nested composites are listed before the other block types.
         A composite without blocks is a bare ``MultiBlock``.
 
         .. versionadded:: 0.50
@@ -2627,7 +2626,7 @@ class MultiBlock(
 
         >>> nested = pv.MultiBlock([multi, pv.ImageData(), None])
         >>> nested.inferred_type
-        'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
+        'MultiBlock[MultiBlock[PolyData] | ImageData | None]'
 
         """
         return _inferred_type(type(self).__name__, self, float('inf'))[0]
@@ -2852,7 +2851,7 @@ def _inferred_type(
             leaves.add('None' if block is None else type(block).__name__)
     if not leaves and not nested:
         return name, 1
-    members = sorted([*(leaves - {'None'}), *nested]) + sorted(leaves & {'None'})
+    members = [*sorted(nested), *sorted(leaves - {'None'}), *sorted(leaves & {'None'})]
     shown: list[str] = []
     used = 1
     for member in members:

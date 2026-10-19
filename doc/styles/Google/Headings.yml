@@ -49,4 +49,3 @@ exceptions:
   - ^glTF\b
   - ^mini\b # Apple's `Mac mini`
   - ^pytest\b
-  - ^pyvista\.\w+\b # allow the `pyvista.` namespace in headings

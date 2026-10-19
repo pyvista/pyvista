@@ -60,9 +60,9 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
@@ -95,7 +95,7 @@ if TYPE_CHECKING:
 def _rectilinear_transform_components(
     transform: Transform,
 ) -> _RectilinearComponents:
-    """Return the translation, scale and axis order of a transform a grid can represent."""
+    """Return the translation, scale, and axis order of a transform a grid can represent."""
     # Follow similar decomposition performed by ImageData.index_to_physical_matrix
     T, R, N, S, K = transform.decompose()
 
@@ -177,7 +177,7 @@ def _convert_transform_input_to_float(
 
 
 def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) -> None:
-    """Copy the point, cell and field arrays the transform filter produced."""
+    """Copy the point, cell, and field arrays the transform filter produced."""
     output.point_data.update(filtered.point_data, copy=copy)
     output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
@@ -198,7 +198,7 @@ def _transform_rectilinear_axes(
     dataset: RectilinearGrid,
     components: _RectilinearComponents,
 ) -> None:
-    """Set a grid's axes to another's, permuted, scaled and translated."""
+    """Set a grid's axes to another grid's, permuted, scaled, and translated."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
     translation, scale, axes = components
     coordinates = (dataset.x, dataset.y, dataset.z)
@@ -2078,10 +2078,10 @@ class DataObjectFilters:
         .. warning::
             When using ``transform_all_input_vectors=True``, there is
             no distinction in VTK between vectors and arrays with
-            three components.  This may be an issue if you have scalar
-            data with three components (for example, RGB data).  This will be
+            three components. This may be an issue if you have scalar
+            data with three components (for example, RGB data). This will be
             improperly transformed as if it was vector data rather
-            than scalar data.  One possible (albeit ugly) workaround
+            than scalar data. One possible (albeit ugly) workaround
             is to store the three components as separate scalar
             arrays.
 
@@ -2097,7 +2097,7 @@ class DataObjectFilters:
         .. warning::
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
             :class:`~pyvista.RectilinearGrid`, and :class:`~pyvista.RectilinearGrid` only
-            supports rotations which map each axis onto a coordinate axis, i.e. multiples
+            supports rotations which map each axis onto a coordinate axis, that is, multiples
             of 90 degrees. If an unsupported transformation is present, a ``ValueError``
             is raised. To fully support these transformations, the input should be cast to
             :class:`~pyvista.StructuredGrid` `before` applying this filter.
@@ -2139,7 +2139,7 @@ class DataObjectFilters:
         transform_all_input_vectors : bool, default: False
             When ``True``, all arrays with three components are
             transformed. Otherwise, only the normals and vectors are
-            transformed.  See the warning for more details.
+            transformed. See the warning for more details.
 
         inplace : bool
             When ``True``, modifies the dataset in-place and returned dataset is
@@ -3085,7 +3085,7 @@ class DataObjectFilters:
         Parameters
         ----------
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3147,7 +3147,7 @@ class DataObjectFilters:
         Parameters
         ----------
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3209,7 +3209,7 @@ class DataObjectFilters:
         Parameters
         ----------
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3275,7 +3275,7 @@ class DataObjectFilters:
            Normal vector to flip about.
 
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3545,7 +3545,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Clip a cube along the +X direction.  ``triangulate`` is used as
+        Clip a cube along the +X direction. ``triangulate`` is used as
         the cube is initially composed of quadrilateral faces and
         subdivide only works on triangles.
 
@@ -3554,7 +3554,7 @@ class DataObjectFilters:
         >>> clipped_cube = cube.clip()
         >>> clipped_cube.plot()
 
-        Clip a cube in the +Z direction.  This leaves half a cube
+        Clip a cube in the +Z direction. This leaves half a cube
         below the XY plane.
 
         >>> import pyvista as pv
@@ -3698,7 +3698,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Clip a corner of a cube.  The bounds of a cube are normally
+        Clip a corner of a cube. The bounds of a cube are normally
         ``[-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]``, and this removes 1/8 of
         the cube's surface.
 
@@ -5061,7 +5061,7 @@ class DataObjectFilters:
 
         The scalar values lie within a user specified range, and are
         generated by computing a projection of each dataset point onto
-        a line.  The line can be oriented arbitrarily.  A typical
+        a line. The line can be oriented arbitrarily. A typical
         example is to generate scalars based on elevation or height
         above a plane.
 
@@ -5110,7 +5110,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Generate the "elevation" scalars for a sphere mesh.  This is
+        Generate the "elevation" scalars for a sphere mesh. This is
         simply the height in Z from the XY plane.
 
         >>> import pyvista as pv
@@ -5118,7 +5118,7 @@ class DataObjectFilters:
         >>> sphere_elv = sphere.elevation()
         >>> sphere_elv.plot(smooth_shading=True)
 
-        Access the first 4 elevation scalars.  This is a point-wise
+        Access the first 4 elevation scalars. This is a point-wise
         array containing the "elevation" of each point.
 
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
@@ -5373,7 +5373,7 @@ class DataObjectFilters:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
-        within cells.  Optionally, the input point data can be passed
+        within cells. Optionally, the input point data can be passed
         through to the output.
 
         The method of transformation is based on averaging the data
@@ -5407,7 +5407,7 @@ class DataObjectFilters:
         Examples
         --------
         First compute the face area of the example airplane mesh and
-        show the cell values.  This is to show discrete cell data.
+        show the cell values. This is to show discrete cell data.
 
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
@@ -5459,7 +5459,7 @@ class DataObjectFilters:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
-        within cells.  Optionally, the input point data can be passed
+        within cells. Optionally, the input point data can be passed
         through to the output.
 
         This method is an alias for :func:`cell_data_to_point_data`.
@@ -5542,9 +5542,9 @@ class DataObjectFilters:
 
         Examples
         --------
-        Color cells by their z coordinates.  First, create point
-        scalars based on z-coordinates of a sample sphere mesh.  Then
-        convert this point data to cell data.  Use a low resolution
+        Color cells by their z coordinates. First, create point
+        scalars based on z-coordinates of a sample sphere mesh. Then
+        convert this point data to cell data. Use a low resolution
         sphere for emphasis of cell valued data.
 
         First, plot these values as point values to show the
@@ -5601,7 +5601,7 @@ class DataObjectFilters:
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
-        within cells.  Optionally, the input point data can be passed
+        within cells. Optionally, the input point data can be passed
         through to the output.
 
         This method is an alias for :func:`point_data_to_cell_data`.
@@ -5733,10 +5733,10 @@ class DataObjectFilters:
         """Resample array data from a passed mesh onto this mesh.
 
         For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
-        the points of ``mesh1``.  This function interpolates within an
-        enclosing cell.  This contrasts with
+        the points of ``mesh1``. This function interpolates within an
+        enclosing cell. This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
-        weighting for nearby points.  If there is cell topology, ``sample`` is
+        weighting for nearby points. If there is cell topology, ``sample`` is
         usually preferred.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled
@@ -5755,7 +5755,7 @@ class DataObjectFilters:
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
-            in a cell of the input.  If not given, tolerance is
+            in a cell of the input. If not given, tolerance is
             automatically generated.
 
         pass_cell_data : bool, default: True
@@ -5780,7 +5780,7 @@ class DataObjectFilters:
 
         locator : :vtk:`vtkAbstractCellLocator` or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
-            operation.  If ``None``, uses the DataSet ``FindCell`` method.
+            operation. If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
                 * ``'cell'`` - :vtk:`vtkCellLocator`

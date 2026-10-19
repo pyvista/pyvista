@@ -1831,6 +1831,188 @@ def test_resample_cell_data_sample_rate_raises():
         image.resample(0.1)
 
 
+@pytest.mark.parametrize(
+    ('dtype', 'scale', 'tolerance'), [('uint8', 1, 1), ('int64', 1, 1), ('float32', 255, 1e-6)]
+)
+@pytest.mark.parametrize('interpolation', ['linear', 'cubic', 'lanczos', 'bspline'])
+@pytest.mark.parametrize('n_points', [6, 40])
+def test_resample_premultiply_alpha(dtype, scale, tolerance, interpolation, n_points):
+    # An opaque color next to transparent white, as in a transparent screenshot
+    color = np.array([40, 80, 120, 255]) / scale
+    rgba = np.where(np.arange(16)[:, None] < 8, color, np.array([255, 255, 255, 0]) / scale)
+    image = pv.ImageData(dimensions=(16, 1, 1))
+    image['rgba'] = rgba.astype(dtype)
+    kwargs = dict(dimensions=(n_points, 1, 1), interpolation=interpolation, anti_aliasing=True)
+
+    straight = image.resample(**kwargs)['rgba']
+    premultiplied = image.resample(premultiply_alpha=True, **kwargs)['rgba']
+    assert premultiplied.dtype == dtype
+    assert np.allclose(premultiplied[:, 3], np.clip(straight[:, 3], 0, color[3]), atol=tolerance)
+
+    alpha = premultiplied[:, 3]
+    edge = (alpha > 0) & (alpha < color[3])
+    assert edge.any()
+    # The white under zero alpha bleeds into the edge unless alpha is premultiplied
+    assert np.abs(straight[edge, :3] - color[:3]).max() > 20 * tolerance
+    assert np.allclose(premultiplied[alpha > 0, :3], color[:3], atol=tolerance)
+    assert np.all(premultiplied[alpha == 0, :3] == 0)
+
+
+@pytest.mark.parametrize(('dtype', 'scale'), [('uint8', 1), ('float32', 255)])
+def test_resample_premultiply_alpha_weights_colors_by_alpha(dtype, scale):
+    # Two visible colors with different alphas, so the clip cannot produce the result
+    image = pv.ImageData(dimensions=(2, 1, 1))
+    image['rgba'] = (np.array([[255, 0, 0, 255], [0, 0, 255, 51]]) / scale).astype(dtype)
+
+    resampled = image.resample(
+        dimensions=(3, 1, 1), interpolation='linear', extend_border=False, premultiply_alpha=True
+    )
+    # The colors are averaged with weights 255 and 51, and the alphas are averaged
+    expected = np.array([255 * 255, 0, 255 * 51]) / (255 + 51)
+    assert np.allclose(resampled['rgba'][1, :3] * scale, expected, atol=0.5)
+    assert np.isclose(resampled['rgba'][1, 3] * scale, (255 + 51) / 2, atol=0.5)
+
+
+@pytest.mark.parametrize('interpolation', ['cubic', 'lanczos', 'bspline'])
+def test_resample_premultiply_alpha_clips_to_visible_colors(interpolation):
+    # Ringing between two visible colors stays within their range, whatever is transparent
+    colors = np.array([[10, 200, 30, 255], [90, 20, 250, 128], [255, 255, 255, 0]])
+    image = pv.ImageData(dimensions=(30, 1, 1))
+    image['rgba'] = np.repeat(colors, 10, axis=0).astype(np.uint8)
+
+    resampled = image.resample(dimensions=(70, 1, 1), interpolation=interpolation)
+    unclipped = resampled['rgba']
+    resampled = image.resample(
+        dimensions=(70, 1, 1), interpolation=interpolation, premultiply_alpha=True
+    )
+    rgba = resampled['rgba']
+    visible = rgba[:, 3] > 0
+    assert np.all(rgba[visible, :3] >= colors[:2, :3].min(axis=0))
+    assert np.all(rgba[visible, :3] <= colors[:2, :3].max(axis=0))
+    assert np.all(rgba[~visible, :3] == 0)
+    # Without premultiplying, the transparent white leaks into the visible pixels
+    assert np.any(unclipped[visible, :3] > colors[:2, :3].max(axis=0))
+
+
+@pytest.mark.parametrize(('dtype', 'scale'), [('float32', 255), ('uint8', 1)])
+@pytest.mark.parametrize('interpolation', ['lanczos', 'bspline'])
+def test_resample_premultiply_alpha_clips_alpha(dtype, scale, interpolation):
+    # Ringing kernels overshoot the alpha of a sharp edge, within the range of the dtype
+    image = pv.ImageData(dimensions=(32, 1, 1))
+    rgba = np.where(np.arange(32)[:, None] < 12, [40, 80, 120, 204], [255, 255, 255, 102])
+    image['rgba'] = (rgba / scale).astype(dtype)
+    kwargs = dict(dimensions=(80, 1, 1), interpolation=interpolation)
+
+    straight_alpha = image.resample(**kwargs)['rgba'][:, 3] * scale
+    alpha = image.resample(premultiply_alpha=True, **kwargs)['rgba'][:, 3] * scale
+    assert straight_alpha.min() < 101
+    assert straight_alpha.max() > 205
+    assert np.isclose(alpha.min(), 102)
+    assert np.isclose(alpha.max(), 204)
+
+
+def test_resample_premultiply_alpha_cell_data():
+    color = [40, 80, 120]
+    image = pv.ImageData(dimensions=(9, 2, 1))
+    rgba = np.where(np.arange(8)[:, None] < 3, [*color, 255], [255, 255, 255, 0])
+    image.cell_data['rgba'] = rgba.astype(np.uint8)
+
+    resampled = image.resample(0.5, 'linear', premultiply_alpha=True)
+    rgba_out = resampled.cell_data['rgba']
+    alpha = rgba_out[:, 3]
+    assert np.any((alpha > 0) & (alpha < 255))
+    assert np.array_equal(rgba_out[alpha > 0, :3], np.broadcast_to(color, (np.sum(alpha > 0), 3)))
+    assert np.all(rgba_out[alpha == 0, :3] == 0)
+
+
+@pytest.mark.parametrize('n_components', [1, 3])
+def test_resample_premultiply_alpha_raises(n_components):
+    image = pv.ImageData(dimensions=(4, 4, 1))
+    image['rgb'] = np.zeros((image.n_points, n_components)).squeeze()
+    match = (
+        f"`premultiply_alpha` requires RGBA scalars with 4 components, but 'rgb' has "
+        f'{n_components}.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(0.5, premultiply_alpha=True)
+
+
+def _linear_to_srgb(value):
+    """Encode a linear value in [0, 1] with the sRGB transfer function."""
+    return np.where(value <= 0.0031308, value * 12.92, 1.055 * value ** (1 / 2.4) - 0.055)
+
+
+@pytest.mark.parametrize(
+    ('dtype', 'scale', 'tolerance'), [('uint8', 1, 0.5), ('float32', 255, 1e-4)]
+)
+def test_resample_is_srgb(dtype, scale, tolerance):
+    image = pv.ImageData(dimensions=(2, 1, 1))
+    image['rgb'] = (np.array([[0, 0, 0], [255, 255, 255]]) / scale).astype(dtype)
+    kwargs = dict(dimensions=(3, 1, 1), interpolation='linear', extend_border=False)
+
+    # Black and white average to half the light, not half the encoded value
+    gray = image.resample(is_srgb=True, **kwargs)['rgb'][1] * scale
+    assert np.allclose(gray, 255 * _linear_to_srgb(0.5), atol=tolerance)
+    assert np.allclose(image.resample(**kwargs)['rgb'][1] * scale, 127.5, atol=tolerance)
+    assert image.resample(is_srgb=True, **kwargs)['rgb'].dtype == dtype
+
+
+def test_resample_is_srgb_premultiply_alpha():
+    image = pv.ImageData(dimensions=(2, 1, 1))
+    image['rgba'] = np.array([[255, 0, 0, 255], [0, 0, 255, 51]], dtype=np.uint8)
+    kwargs = dict(
+        dimensions=(3, 1, 1), interpolation='linear', extend_border=False, premultiply_alpha=True
+    )
+
+    rgba = image.resample(is_srgb=True, **kwargs)['rgba'][1]
+    # Linear red and blue are weighted by alpha, then encoded, and alpha is not encoded
+    expected = 255 * _linear_to_srgb(np.array([255, 0, 51]) / (255 + 51))
+    assert np.allclose(rgba[:3], expected, atol=0.5)
+    assert rgba[3] == image.resample(**kwargs)['rgba'][1, 3]
+
+
+def test_resample_is_srgb_cell_data():
+    image = pv.ImageData(dimensions=(3, 2, 1))
+    image.cell_data['rgb'] = np.array([[0, 0, 0], [255, 255, 255]], dtype=np.uint8)
+    resampled = image.resample(dimensions=(4, 2, 1), interpolation='linear', is_srgb=True)
+    assert np.allclose(resampled.cell_data['rgb'][1], 255 * _linear_to_srgb(0.5), atol=0.5)
+
+
+def test_resample_is_srgb_round_trip():
+    # Decoding and encoding every 8-bit value returns it unchanged
+    image = pv.ImageData(dimensions=(16, 16, 1))
+    image['rgba'] = np.repeat(np.arange(256, dtype=np.uint8)[:, None], 4, axis=1)
+    assert np.array_equal(image.resample(is_srgb=True)['rgba'], image['rgba'])
+
+
+@pytest.mark.parametrize(
+    ('values', 'error', 'match'),
+    [
+        (np.zeros(16), ValueError, "RGB or RGBA scalars with 3 or 4 components, but 'rgb' has 1"),
+        (
+            np.zeros((16, 2)),
+            ValueError,
+            "RGB or RGBA scalars with 3 or 4 components, but 'rgb' has 2",
+        ),
+        (
+            np.zeros((16, 3), dtype=np.int32),
+            TypeError,
+            "uint8 or floating point scalars, but 'rgb' has dtype int32",
+        ),
+        (
+            np.zeros((16, 3), dtype=np.int64),
+            TypeError,
+            "uint8 or floating point scalars, but 'rgb' has dtype int64",
+        ),
+    ],
+)
+def test_resample_is_srgb_raises(values, error, match):
+    image = pv.ImageData(dimensions=(4, 4, 1))
+    image['rgb'] = values
+    with pytest.raises(error, match=re.escape(match)):
+        image.resample(0.5, is_srgb=True)
+
+
 def test_reslice_physical_alignment():
     # The image is sampled at the physical position of the reference's points
     image = pv.ImageData(dimensions=(10, 10, 10))

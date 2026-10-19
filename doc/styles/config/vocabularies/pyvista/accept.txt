@@ -65,6 +65,7 @@ Henneberg
 Hertzian
 Hopf
 Hotfixes
+IDEs
 IPython
 Interactor
 Isenburg
@@ -147,12 +148,14 @@ SciPy
 Segmentations
 Sextic
 Siggraph
+Signa
 Skybox
 Snoeyink
 Sphinx
 Staatliche
 Subplotting
 Subreports
+Subscripting
 Subselected
 Superquadric
 Supertoroid
@@ -248,7 +251,10 @@ docstrings
 doctest
 doctests
 doi
+dtype
+dtypes
 dunder
+dunders
 eigen
 eigenmode
 eigenmodes
@@ -334,6 +340,7 @@ multiblock
 multielement
 multiphysic
 multisamples
+mutators
 namedtuple
 namespace
 namespaced
@@ -370,6 +377,7 @@ prepended
 prepending
 prepends
 prostar
+pv
 py
 pyarrow
 pyembree
@@ -395,6 +403,7 @@ rasterizes
 raytracing
 readme
 rebasing
+recurse
 refleak
 reimplements
 relicense
@@ -453,6 +462,7 @@ tensor
 tetgen
 tetrahedra
 tetrahedralization
+tetrahedralizing
 thresholded
 thresholding
 timestep
@@ -467,10 +477,12 @@ un
 unarchived
 unclipped
 uncollectable
+undrawn
 unittest
 unpickable
 unpickle
 unpickling
+unsubscripted
 unticked
 untrusted
 upscaling
@@ -488,6 +500,8 @@ von
 voxel
 voxelization
 voxelized
+voxelizer
+voxelizing
 voxels
 vrml
 vtk

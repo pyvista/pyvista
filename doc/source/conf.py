@@ -147,6 +147,7 @@ extensions = [
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
+    'pyvista.ext._autoclassproperty',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
     'pyvista.ext._embed_py_file',
@@ -394,7 +395,7 @@ root_doc = 'index'
 
 # General information about the project.
 project = 'PyVista'
-year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
+year = datetime.datetime.now(tz=datetime.UTC).date().year
 copyright = f'2017-{year}, The PyVista Developers'  # noqa: A001
 author = 'Alex Kaszynski and Bane Sullivan'
 
@@ -1131,7 +1132,7 @@ def drop_type_alias_docstring(  # noqa: PLR0917
 _TYPE_ALIAS_FORMS = (Literal, Union, UnionType)
 
 # Widest line that fits the content column at a 1280 px window without scrolling
-_TYPE_ALIAS_LINE_LENGTH = 72
+_TYPE_ALIAS_LINE_LENGTH = 68
 
 # A cross-reference role, whose displayed text is its title
 _TYPE_REFERENCE = re.compile(r':py:\w+:`([^`<]*?)(?: <[^`]*>)?`')
