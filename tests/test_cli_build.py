@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import fields
 import subprocess
 from typing import TYPE_CHECKING
 
 import pytest
 from rich.console import Console
 
+from pyvista.__main__ import main
 from pyvista._build import BuildConfig
 from pyvista._build import Builder
 from pyvista._build import phases
@@ -32,6 +34,33 @@ def no_tools(mocker: MockerFixture):
     mocker.patch.object(tools, 'command_succeeds', return_value=True)
     mocker.patch.object(tools, 'executable_version', return_value='99.0')
     mocker.patch.object(tools, 'python_build_packages', return_value=[])
+
+
+def test_cli_requires_backend(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture):
+    monkeypatch.delenv('PYVISTA_VTK_BACKEND', raising=False)
+    with pytest.raises(SystemExit):
+        main('build')
+    assert 'pyvista build vtk' in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures('no_tools')
+def test_cli_env_backend(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture
+):
+    monkeypatch.setenv('PYVISTA_VTK_BACKEND', 'vtkmodules')
+    monkeypatch.chdir(tmp_path)
+    main('build --dry-run --with io,web --without rendering -D X=1')
+    out = capsys.readouterr().out
+    assert 'Building backend: vtk' in out
+    assert str(tmp_path / 'vtk-build') in ''.join(out.split())
+    assert '-DX=1' in out
+    assert 'To build a fork instead' not in out
+
+
+def test_cli_source_and_url_exclusive(capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit):
+        main('build vtk --source . --url x')
+    assert 'mutually exclusive' in capsys.readouterr().err
 
 
 @pytest.mark.usefixtures('no_tools')
@@ -101,6 +130,16 @@ def test_interactive_required_and_conflicting_groups(tmp_path: Path, mocker: Moc
     builder.phase_groups()
     assert builder.groups == ['b', 'core']
     assert not any('core' in q or "'c'" in q for q in asked)
+
+
+def test_cli_interrupt(mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture):
+    mocker.patch.object(Builder, 'build', side_effect=KeyboardInterrupt)
+    with pytest.raises(SystemExit) as info:
+        main(f'build vtk --dry-run --build-dir {tmp_path}')
+    assert info.value.code == 130
+    captured = capsys.readouterr()
+    assert 'Stopped.' in captured.out
+    assert 'PyVista build stopped' not in captured.err
 
 
 @pytest.mark.usefixtures('no_tools')
@@ -419,6 +458,129 @@ def test_prompts_print_brackets_verbatim():
     assert str(prompt.make_prompt('y')).endswith('(y): ')
     confirm = phases.Confirm('Delete it? [careful]', console=console)
     assert '[careful]' in str(confirm.make_prompt(False))
+
+
+@pytest.fixture
+def captured(mocker: MockerFixture, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Record the configuration each ``pyvista build`` call would build with."""
+    monkeypatch.chdir(tmp_path)
+    configs: list[BuildConfig] = []
+
+    def fake_build(self):
+        configs.append(self.config)
+
+    mocker.patch.object(Builder, 'build', fake_build)
+    return configs
+
+
+def test_cli_defaults(captured: list[BuildConfig], tmp_path: Path):
+    main('build vtk')
+    expected = BuildConfig(backend='vtk', build_dir=(tmp_path / 'vtk-build').resolve())
+    assert captured[-1] == expected
+
+
+@pytest.mark.parametrize(
+    ('args', 'field', 'value'),
+    [
+        ('--no-repair', 'repair', False),
+        ('--compiler-cache auto', 'compiler_cache', 'auto'),
+        ('--build-type Debug', 'build_type', 'Debug'),
+        ('--jobs 3', 'jobs', 3),
+        ('--clean', 'clean', True),
+        ('--reconfigure', 'reconfigure', True),
+        ('--update', 'update', True),
+        ('--ref v9.6.0', 'ref', 'v9.6.0'),
+        ('--opt smp=TBB --opt web=OFF', 'options', ['smp=TBB', 'web=OFF']),
+        ('--version-suffix dev1', 'version_suffix', 'dev1'),
+        ('-D A=1 --define B=2', 'defines', ['A=1', 'B=2']),
+        ('--with io,web --with qt', 'with_', ['io', 'web', 'qt']),
+        ('--without web', 'without', ['web']),
+        ('--minimal', 'minimal', True),
+        ('--url https://example.com/f.git', 'url', 'https://example.com/f.git'),
+        ('--yes', 'yes', True),
+        ('-y', 'yes', True),
+        ('--interactive', 'interactive', True),
+        ('-i', 'interactive', True),
+        ('--dry-run', 'dry_run', True),
+        ('--verbose', 'verbose', True),
+        ('-v', 'verbose', True),
+        ('--install', 'install', True),
+    ],
+)
+def test_cli_flag_sets_config(captured: list[BuildConfig], args: str, field: str, value):
+    """Each flag sets its own configuration field and leaves every other at its default."""
+    main('build vtk')
+    default = captured[-1]
+    main(f'build vtk {args}')
+    assert getattr(captured[-1], field) == value
+    changed = [
+        f.name
+        for f in fields(BuildConfig)
+        if getattr(captured[-1], f.name) != getattr(default, f.name)
+    ]
+    assert changed == [field]
+
+
+def test_cli_path_flags(captured: list[BuildConfig], tmp_path: Path):
+    """Path flags are resolved against the working directory."""
+    (tmp_path / 'checkout').mkdir()
+    main('build vtk --build-dir out --compiler-cache ccache --cache-dir cache --source checkout')
+    assert captured[-1].build_dir == (tmp_path / 'out').resolve()
+    assert captured[-1].cache_dir == (tmp_path / 'cache').resolve()
+    assert captured[-1].source == (tmp_path / 'checkout').resolve()
+
+
+def test_cli_manylinux(captured: list[BuildConfig]):
+    main('build vtk --dry-run')
+    assert captured[-1].manylinux is None
+    main('build vtk --dry-run --manylinux')
+    assert captured[-1].manylinux.startswith('quay.io/pypa/manylinux_2_28_')
+    main('build vtk --dry-run --manylinux --manylinux-image my/image')
+    assert captured[-1].manylinux == 'my/image'
+    main('build vtk --dry-run -i')
+    assert captured[-1].interactive is True
+    assert captured[-1].yes is False
+    main('build vtk --dry-run --yes')
+    assert captured[-1].yes is True
+    main('build vtk --dry-run -y --install')
+    assert (captured[-1].yes, captured[-1].install) == (True, True)
+
+
+def test_cli_manylinux_image_needs_manylinux(capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit):
+        main('build vtk --dry-run --manylinux-image my/image')
+    assert '--manylinux-image needs --manylinux' in capsys.readouterr().err
+
+
+def test_cli_cache_dir_needs_compiler_cache(capsys: pytest.CaptureFixture):
+    with pytest.raises(SystemExit):
+        main('build vtk --dry-run --cache-dir cache')
+    assert '--cache-dir needs --compiler-cache' in capsys.readouterr().err
+
+
+def test_cli_os_error(mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture):
+    mocker.patch.object(Builder, 'build', side_effect=PermissionError('denied: [x]'))
+    with pytest.raises(SystemExit):
+        main(f'build vtk --dry-run --build-dir {tmp_path}')
+    err = capsys.readouterr().err
+    assert 'PyVista build stopped' in err
+    assert 'denied: [x]' in err
+
+
+def test_cli_end_of_input(mocker: MockerFixture, tmp_path: Path):
+    mocker.patch.object(Builder, 'build', side_effect=EOFError)
+    with pytest.raises(SystemExit) as info:
+        main(f'build vtk --dry-run --build-dir {tmp_path}')
+    assert info.value.code == 130
+
+
+def test_cli_build_error(mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture):
+    mocker.patch.object(Builder, 'build', side_effect=phases.BuildError('no [bold]compiler[/x]'))
+    with pytest.raises(SystemExit):
+        main(f'build vtk --dry-run --build-dir {tmp_path}')
+    err = capsys.readouterr().err
+    assert 'PyVista build stopped' in err
+    assert 'no [bold]compiler[/x]' in err
 
 
 def test_default_ref_without_shipped_manifest(tmp_path: Path):

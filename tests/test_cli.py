@@ -110,6 +110,7 @@ def test_no_input(args, capsys: pytest.CaptureFixture):
         │ validate     Validate data, points, and cells for one or more mesh │
         │              files.                                                │
         │ report       Generate a PyVista software environment report.       │
+        │ build        Build a VTK backend wheel from source.                │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
@@ -133,12 +134,13 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     │ validate     Validate data, points, and cells for one or more mesh │
     │              files.                                                │
     │ report       Generate a PyVista software environment report.       │
+    │ build        Build a VTK backend wheel from source.                │
     │ --help (-h)  Display this message and exit.                        │
     │ --version    Display application version.                          │
     ╰────────────────────────────────────────────────────────────────────╯
     ╭─ Error ────────────────────────────────────────────────────────────╮
     │ Unknown command "foo". Available commands: plot, compare, convert, │
-    │ validate, report.                                                  │
+    │ validate, report, build.                                           │
     ╰────────────────────────────────────────────────────────────────────╯
     """
     )
@@ -1784,6 +1786,7 @@ def test_help(capsys: pytest.CaptureFixture):
         │ validate     Validate data, points, and cells for one or more mesh │
         │              files.                                                │
         │ report       Generate a PyVista software environment report.       │
+        │ build        Build a VTK backend wheel from source.                │
         │ --help (-h)  Display this message and exit.                        │
         │ --version    Display application version.                          │
         ╰────────────────────────────────────────────────────────────────────╯
