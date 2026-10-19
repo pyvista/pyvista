@@ -965,6 +965,40 @@ def test_decimate_binned_target_points(fine_sphere, target, rtol):
     assert mesh.n_points == np.unique(mesh.faces.reshape(-1, 4)[:, 1:]).size
 
 
+def _binned_test_shape(name):
+    if name == 'tube':
+        grid = pv.CylinderStructured(
+            radius=0.5, height=60.0, theta_resolution=40, z_resolution=2500
+        )
+        return grid.extract_surface(algorithm='dataset_surface').triangulate()
+    if name == 'sheet':
+        return pv.Plane(i_resolution=300, j_resolution=300).triangulate()
+    spheres = [pv.Sphere(radius=r, theta_resolution=60, phi_resolution=60) for r in range(1, 21)]
+    return pv.merge(spheres)
+
+
+@pytest.mark.parametrize('shape', ['tube', 'sheet', 'shells'])
+def test_decimate_binned_target_points_shapes(shape):
+    mesh = _binned_test_shape(shape)
+    decimated = mesh.decimate_binned(10_000)
+    assert decimated.n_points == pytest.approx(10_000, rel=0.1)
+
+
+def test_decimate_binned_bin_limit(fine_sphere, monkeypatch):
+    monkeypatch.setattr('pyvista.core.filters.poly_data._MAX_BINS', 1000)
+    divisions = []
+    update_alg = pv.core.filters.poly_data._update_alg
+
+    def spy(alg, **kwargs):
+        divisions.append(alg.GetNumberOfDivisions())
+        update_alg(alg, **kwargs)
+
+    monkeypatch.setattr('pyvista.core.filters.poly_data._update_alg', spy)
+    mesh = fine_sphere.decimate_binned(20_000)
+    assert all(np.prod(divs) <= 1000 for divs in divisions)
+    assert 0 < mesh.n_points < 1000
+
+
 def test_decimate_binned_keeps_data(fine_sphere):
     fine_sphere.points = fine_sphere.points.astype(np.float64)
     mesh = fine_sphere.decimate_binned(2000)

@@ -40,6 +40,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Sequence
     from typing import Any
 
@@ -68,7 +69,53 @@ _CappingOptions = Literal[
     'intersection', 'minimum_distance', 'maximum_distance', 'average_distance'
 ]
 _BinnedPointGenerationOptions = Literal['bin_points', 'bin_centers', 'bin_averages']
-_MAX_BINNED_DIVISIONS = 1024
+_PROBE_BINS = 2**17
+_MAX_BINS = 2**28  # VTK holds about 4 bytes per bin
+_MAX_BIN_PASSES = 8
+
+
+def _bin_to_target(
+    sizes: NDArray[np.float64],
+    target: int,
+    binned: Callable[..., PolyData],
+    *,
+    progress_bar: bool,
+) -> PolyData:
+    """Return the binned mesh closest to ``target`` points from a few grid sizes."""
+    spanned = sizes[sizes > 0]
+    if spanned.size == 0:
+        return binned(np.ones(3, dtype=int), progress_bar=progress_bar)
+    # Cubic bins sized from the spanned volume keep bins across thin parts
+    edge = float((np.prod(spanned) / _PROBE_BINS) ** (1 / spanned.size))
+    best: PolyData | None = None
+    last: tuple[float, int] | None = None
+    for _ in range(_MAX_BIN_PASSES):
+        divisions = np.maximum(np.round(sizes / edge), 1)
+        excess = np.prod(divisions) / _MAX_BINS
+        capped = excess > 1
+        if capped:
+            shrink = excess ** (1 / np.count_nonzero(divisions > 1))
+            divisions = np.maximum(np.floor(divisions / shrink), 1)
+        mesh = binned(divisions.astype(int), progress_bar=progress_bar)
+        n_points = mesh.n_points
+        if best is None or abs(n_points - target) < abs(best.n_points - target):
+            best = mesh
+        if (
+            abs(n_points - target) <= 0.05 * target
+            or (capped and n_points < target)
+            or (n_points > target and (divisions == 1).all())
+        ):
+            break
+        if n_points == 0:
+            edge /= 4
+            continue
+        # Sheets gain points with the square of the divisions, nested surfaces faster
+        exponent = 2.0
+        if last is not None and last[1] not in (0, n_points) and last[0] != edge:
+            exponent = float(np.clip(np.log(n_points / last[1]) / np.log(last[0] / edge), 1, 3))
+        last = (edge, n_points)
+        edge *= (n_points / target) ** (1 / exponent)
+    return cast('PolyData', best)
 
 
 def _gather_attributes(
@@ -2100,11 +2147,11 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         target_points : int, optional
-            Approximate number of points in the output. The bin grid is sized
-            by a coarse probe followed by up to two refinements, which brings
-            large targets within about 5 percent. Small targets land further
-            off, since each bin then covers a large part of the surface. Bins
-            are kept cubic and the longest axis is limited to 1024 divisions.
+            Approximate number of points in the output. Cubic bins are sized
+            over a few passes until the output is within about 5 percent of
+            the target. Small targets can land further off, since each bin then
+            covers a large part of the surface, and very large ones stop short
+            when the grid reaches 2**28 bins.
 
         divisions : int | VectorLike[int], optional
             Number of bins along each axis. A single integer applies to the
@@ -2145,7 +2192,8 @@ class PolyDataFilters(DataSetFilters):
         -----
         The filter allocates one integer per bin, so memory grows with the
         product of the divisions rather than with the size of the mesh: about
-        4 GB for a cube-shaped mesh at 1024 divisions per axis.
+        1 GB at the 2**28 bins ``target_points`` stops at. Explicit
+        ``divisions`` are not limited.
 
         Points created by ``'bin_centers'`` and ``'bin_averages'`` are single
         precision.
@@ -2196,10 +2244,9 @@ class PolyDataFilters(DataSetFilters):
         else:
             source.point_data['vtkOriginalPointIds'] = np.arange(self.n_points, dtype=float)
 
-        def _per_axis(longest: float) -> NDArray[np.int_]:
-            """Return the divisions per axis for cubic bins."""
-            scaled = np.round(longest * sizes / max(sizes.max(), np.finfo(float).tiny))
-            return np.maximum(scaled, 1).astype(int)
+        def _per_axis(edge: float) -> NDArray[np.int_]:
+            """Return the divisions per axis for cubic bins ``edge`` wide."""
+            return np.maximum(np.round(sizes / edge), 1).astype(int)
 
         def _binned(divs: VectorLikeInt, *, progress_bar: bool) -> PolyData:
             """Run the binned decimation with the given divisions per axis."""
@@ -2221,7 +2268,7 @@ class PolyDataFilters(DataSetFilters):
                     must_be_in_range=[1, np.inf],
                     name='divisions',
                 )
-                divs = _per_axis(longest)
+                divs = _per_axis(max(sizes.max(), np.finfo(float).tiny) / longest)
             else:
                 divs = _validation.validate_array3(
                     divisions,
@@ -2238,17 +2285,7 @@ class PolyDataFilters(DataSetFilters):
                 must_be_in_range=[1, np.inf],
                 name='target_points',
             )
-            probe = 50.0
-            mesh = best = _binned(_per_axis(probe), progress_bar=progress_bar)
-            for _ in range(2):
-                if abs(mesh.n_points - target) <= 0.05 * target or probe >= _MAX_BINNED_DIVISIONS:
-                    break
-                # Surface point counts grow with the square of the divisions
-                probe = min(probe * np.sqrt(target / max(mesh.n_points, 1)), _MAX_BINNED_DIVISIONS)
-                mesh = _binned(_per_axis(probe), progress_bar=progress_bar)
-                if abs(mesh.n_points - target) < abs(best.n_points - target):
-                    best = mesh
-            mesh = best
+            mesh = _bin_to_target(sizes, target, _binned, progress_bar=progress_bar)
 
         cell_ids = mesh.cell_data.pop('vtkOriginalCellIds').astype(int)
         _gather_attributes(self.cell_data, mesh.cell_data, cell_ids)
