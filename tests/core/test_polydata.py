@@ -1002,7 +1002,8 @@ def test_decimate_binned_bin_limit(fine_sphere, monkeypatch):
         update_alg(alg, **kwargs)
 
     monkeypatch.setattr('pyvista.core.filters.poly_data._update_alg', spy)
-    mesh = fine_sphere.decimate_binned(20_000)
+    with pytest.warns(UserWarning, match='of the 20000 target points'):
+        mesh = fine_sphere.decimate_binned(20_000)
     assert all(np.prod(divs) <= 1000 for divs in divisions)
     assert 0 < mesh.n_points < 1000
 
@@ -1091,8 +1092,25 @@ def test_decimate_binned_flat():
 
 def test_decimate_binned_coincident_points():
     points = np.zeros((3, 3))
-    mesh = pv.PolyData(points, faces=[3, 0, 1, 2]).decimate_binned(100)
+    with pytest.warns(UserWarning, match='kept 0 of the 100 target points'):
+        mesh = pv.PolyData(points, faces=[3, 0, 1, 2]).decimate_binned(100)
     assert mesh.n_cells == 0
+
+
+def test_decimate_binned_unused_points(fine_sphere):
+    points = np.vstack([fine_sphere.points, [[100.0, 100.0, 100.0]]])
+    mesh = pv.PolyData(points, faces=fine_sphere.faces)
+    mesh.point_data['point_ids'] = np.arange(mesh.n_points)
+    decimated = mesh.decimate_binned(2000)
+    assert decimated.n_points == pytest.approx(2000, rel=0.1)
+    assert np.array_equal(decimated.points, mesh.points[decimated['point_ids']])
+
+
+def test_decimate_binned_warns_out_of_reach():
+    small = pv.Sphere(radius=0.05, theta_resolution=100, phi_resolution=100)
+    mesh = small + small.translate((100.0, 100.0, 100.0))
+    with pytest.warns(UserWarning, match=r'kept \d+ of the 2000 target points'):
+        mesh.decimate_binned(2000)
 
 
 @pytest.mark.parametrize('kwargs', [{'target_points': 2000}, {'divisions': 30}])

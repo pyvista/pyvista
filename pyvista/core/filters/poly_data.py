@@ -2181,6 +2181,12 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        Warns
+        -----
+        UserWarning
+            When ``target_points`` is given and the output has fewer than half
+            of the target points, or of the input points if there are fewer.
+
         See Also
         --------
         decimate
@@ -2194,6 +2200,10 @@ class PolyDataFilters(DataSetFilters):
         product of the divisions rather than with the size of the mesh: about
         1 GB at the 2**28 bins ``target_points`` stops at. Explicit
         ``divisions`` are not limited.
+
+        The bins span the bounds of the points used by the mesh, so a part far
+        from the rest coarsens the whole grid and parts smaller than a bin
+        merge away.
 
         Points created by ``'bin_centers'`` and ``'bin_averages'`` are single
         precision.
@@ -2226,7 +2236,6 @@ class PolyDataFilters(DataSetFilters):
             msg = 'Specify exactly one of `target_points` or `divisions`.'
             raise ValueError(msg)
 
-        sizes = np.ptp(np.reshape(self.bounds, (3, 2)), axis=1)
         averaging = point_generation == 'bin_averages'
 
         # VTK converts integer arrays to float32 and fails on string arrays, so
@@ -2243,6 +2252,12 @@ class PolyDataFilters(DataSetFilters):
                     source.point_data[name] = array.astype(float)
         else:
             source.point_data['vtkOriginalPointIds'] = np.arange(self.n_points, dtype=float)
+        # Unused points would stretch the bounds the bins span
+        used = np.zeros(self.n_points, dtype=bool)
+        used[self.regular_faces.ravel()] = True
+        if not used.all():
+            source = source.remove_unused_points()
+        sizes = np.ptp(np.reshape(source.bounds, (3, 2)), axis=1)
 
         def _per_axis(edge: float) -> NDArray[np.int_]:
             """Return the divisions per axis for cubic bins ``edge`` wide."""
@@ -2286,6 +2301,15 @@ class PolyDataFilters(DataSetFilters):
                 name='target_points',
             )
             mesh = _bin_to_target(sizes, target, _binned, progress_bar=progress_bar)
+            if mesh.n_points < 0.5 * min(target, source.n_points):
+                extent = ' x '.join(f'{size:.3g}' for size in sizes)
+                msg = (
+                    f'`decimate_binned` kept {mesh.n_points} of the {target} target points. '
+                    f'The bins span the bounds of the mesh ({extent}) and are limited to '
+                    '2**28, so parts smaller than a bin merge away. Remove parts far from '
+                    'the rest of the mesh, or use `decimate_pro`.'
+                )
+                warn_external(msg)
 
         cell_ids = mesh.cell_data.pop('vtkOriginalCellIds').astype(int)
         _gather_attributes(self.cell_data, mesh.cell_data, cell_ids)
