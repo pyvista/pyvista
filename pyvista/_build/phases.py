@@ -16,6 +16,7 @@ import re
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import threading
@@ -121,6 +122,20 @@ _SETUPTOOLS_WARNINGS = (
     'ignore:setup.py install is deprecated::setuptools._distutils.cmd',
 )
 _TICK_SECONDS = 1.0
+
+
+def _remove_tree(path: Path) -> None:
+    """Delete a directory tree, including the read-only files git writes on Windows."""
+    if os.name == 'nt':
+        for item in path.rglob('*'):
+            if item.is_file():
+                item.chmod(stat.S_IWRITE)
+    shutil.rmtree(path)
+
+
+def _same_url(first: str, second: str) -> bool:
+    """Return whether two git URLs match once a trailing ``/`` and ``.git`` are dropped."""
+    return first.rstrip('/').removesuffix('.git') == second.rstrip('/').removesuffix('.git')
 
 
 def _short_name(cmd: Sequence[str]) -> str:
@@ -437,9 +452,19 @@ class Builder:
         container = bool(cfg.manylinux) and not cfg.in_container
         os_name = 'linux' if container else cfg.os_name
         manifest = self._planned_manifest()
-        if (cfg.src_dir / '.git').exists():
+        if cfg.source is not None:
+            source = f'build the checkout at {cfg.source}'
+        elif (cfg.src_dir / '.git').exists():
+            if msg := self._unused_url():
+                raise BuildError(msg)
             source = f'reuse the checkout at {cfg.src_dir}'
-            if cfg.ref:
+        if cfg.source is not None or (cfg.src_dir / '.git').exists():
+            if cfg.update:
+                source += (
+                    f'. --update fetches, then checks out {cfg.ref or "the release tag"}'
+                    '; local edits stop it'
+                )
+            elif cfg.ref:
                 source += (
                     f', checked out at {cfg.ref} (local edits stop it unless it is already there)'
                 )
@@ -836,10 +861,11 @@ class Builder:
         url = cfg.url or BACKENDS.get(cfg.backend)
         if url is None and shipped is not None:
             url = find_manifest(cfg.backend, None).url
+        replacing = False
         if cfg.source is not None:
             self.say(f'Using the existing checkout at [bold]{escape(str(cfg.source))}[/bold].')
             self._existing_checkout(cfg.source)
-        elif (cfg.src_dir / '.git').exists():
+        elif (cfg.src_dir / '.git').exists() and not (replacing := self._replace_checkout()):
             where = escape(str(cfg.src_dir))
             self.say(f'Reusing the checkout at [bold]{where}[/bold]; local edits are kept.')
             self._existing_checkout(cfg.src_dir)
@@ -849,22 +875,146 @@ class Builder:
             ref = cfg.ref
             if ref is None and shipped is not None:
                 ref = find_manifest(cfg.backend, None).default_ref
-            self.say(
-                f'The source will be cloned from [bold]{escape(url)}[/bold] into [bold]'
-                f'{escape(str(cfg.src_dir))}[/bold] (blob-less partial clone: history without '
-                'file contents until needed).'
-            )
-            if not self.confirm('Clone it now?'):
-                msg = 'Nothing to build without a source checkout.'
+            if not replacing and cfg.src_dir.is_dir() and any(cfg.src_dir.iterdir()):
+                msg = (
+                    f'{cfg.src_dir} exists but is not a git checkout. Move it away, or pass '
+                    '--build-dir to build somewhere else.'
+                )
                 raise BuildError(msg)
+            if not replacing:
+                self.say(
+                    f'The source will be cloned from [bold]{escape(url)}[/bold] into [bold]'
+                    f'{escape(str(cfg.src_dir))}[/bold] (blob-less partial clone: history '
+                    'without file contents until needed).'
+                )
+                if cfg.prompting:
+                    self.say(
+                        'To build a fork instead, answer with its git URL (https://... or '
+                        'git@...), or with the path of a local checkout to build that one.'
+                    )
+                source, _ = self._ask_source(
+                    'Clone it now?', stop='Nothing to build without a source checkout.'
+                )
+                if source is not None:
+                    self.say(f'Using the existing checkout at [bold]{escape(str(source))}[/bold].')
+                    cfg.source = source
+                    self._existing_checkout(source)
+                    self._load_manifest()
+                    return
+            url, ref = cfg.url or url, cfg.ref or ref
+            if replacing:
+                _remove_tree(cfg.src_dir)
             self.git('clone', '--progress', '--filter=blob:none', url, str(cfg.src_dir))
             if ref is None:
                 ref = find_manifest(cfg.backend, cfg.src_dir).default_ref
             self.git('-c', 'advice.detachedHead=false', 'checkout', ref, cwd=cfg.src_dir)
 
+        self._load_manifest()
+
+    def _load_manifest(self) -> None:
+        """Load the manifest from the checkout, falling back to the shipped one."""
+        cfg = self.config
         source = cfg.src_dir if cfg.src_dir.exists() else None
         self._manifest = find_manifest(cfg.backend, source)
         self.say(f'Manifest: [bold]{escape(str(self.manifest.path))}[/bold]')
+
+    def _replace_checkout(self) -> bool:
+        """Ask whether to keep the checkout in the build tree, replace it, or build another.
+
+        Returns
+        -------
+        bool
+            ``True`` when a fork is to be cloned in its place; ``False`` when the checkout is
+            kept or another local checkout, set as ``config.source``, is built instead.
+
+        """
+        cfg = self.config
+        if msg := self._unused_url():
+            raise BuildError(msg)
+        if not cfg.prompting:
+            return False
+        self.say(
+            f'A checkout already exists at [bold]{escape(str(cfg.src_dir))}[/bold]. Answer y '
+            'to build it as is, a git URL (https://... or git@...) to delete it and clone that '
+            'fork in its place, or the path of a local checkout to build that one.'
+        )
+        source, typed_url = self._ask_source(
+            'Reuse it?',
+            stop=f'Stopped. Delete {cfg.src_dir} or pass --build-dir to build elsewhere.',
+        )
+        if source is not None:
+            cfg.source = source
+            return False
+        if not typed_url:
+            return False
+        self.say(f'[yellow]{escape(str(cfg.src_dir))} will be deleted and cloned again.[/yellow]')
+        if not self.confirm('Delete it? (n stops and keeps it)', default=False):
+            msg = 'Keeping the existing checkout. Run again to build it, or pass --build-dir.'
+            raise BuildError(msg)
+        return True
+
+    def _ask_source(self, question: str, *, stop: str) -> tuple[Path | None, bool]:
+        """Ask ``question``, taking a git URL or a local checkout instead of a yes.
+
+        Parameters
+        ----------
+        question : str
+            Question to ask. Yes keeps the current plan.
+
+        stop : str
+            Error raised when the answer is no.
+
+        Returns
+        -------
+        Path or None
+            An existing checkout to use instead, else ``None``.
+
+        bool
+            Whether a git URL was typed; it is then in ``config.url``.
+
+        """
+        cfg = self.config
+        if not cfg.prompting:
+            if not self.confirm(question):
+                raise BuildError(stop)
+            return None, False
+        while True:
+            answer = Prompt.ask(
+                f'{question} [y / n = stop / git URL / path to a checkout]',
+                default='y',
+                console=self.console,
+            ).strip()
+            if answer.lower() in ('y', 'yes'):
+                return None, False
+            if answer.lower() in ('n', 'no'):
+                raise BuildError(stop)
+            path = Path(answer).expanduser()
+            if (path / '.git').exists():
+                return path.resolve(), False
+            if path.exists() or ('://' not in answer and not answer.startswith('git@')):
+                self.say(f'[red]{escape(answer)} is neither a git checkout nor a git URL.[/red]')
+                continue
+            cfg.url = answer
+            default = cfg.ref or self._default_ref()
+            hint = '' if default else "; Enter takes the default ref in the fork's manifest"
+            cfg.ref = (
+                Prompt.ask(
+                    f'Tag, branch or commit to check out (e.g. v9.7.0, main, or a SHA){hint}',
+                    default=default or '',
+                    show_default=bool(default),
+                    console=self.console,
+                ).strip()
+                or None
+            )
+            ref = escape(cfg.ref) if cfg.ref else "its manifest's default ref"
+            self.say(f'Cloning [bold]{escape(cfg.url)}[/bold] at [bold]{ref}[/bold] instead.')
+            return None, True
+
+    def _default_ref(self) -> str | None:
+        """Return the shipped manifest's default ref, or ``None`` without one."""
+        if shipped_manifest(self.config.backend) is None:
+            return None
+        return find_manifest(self.config.backend, None).default_ref
 
     def _existing_checkout(self, src: Path) -> None:
         """Apply ``--update`` / ``--ref`` to a checkout that already exists."""
@@ -890,6 +1040,23 @@ class Builder:
             ref = f'origin/{ref}'
         if cfg.update or self.confirm(f'Check out {ref!r} in {src}?'):
             self.git('-c', 'advice.detachedHead=false', 'checkout', ref, cwd=src)
+
+    def _unused_url(self) -> str | None:
+        """Return why ``--url`` cannot apply to the checkout in the build tree, or ``None``."""
+        cfg = self.config
+        if cfg.url is None or cfg.source is not None or not (cfg.src_dir / '.git').exists():
+            return None
+        try:
+            origin = self.git('remote', 'get-url', 'origin', cwd=cfg.src_dir, capture=True)
+        except (OSError, subprocess.CalledProcessError):
+            origin = None
+        if origin is not None and _same_url(origin, cfg.url):
+            return None
+        return (
+            f'--url is not used: a checkout of {origin or "another URL"} already exists at '
+            f'{cfg.src_dir}. Pass --build-dir to clone the URL somewhere else, or delete the '
+            'checkout.'
+        )
 
     def _has_ref(self, src: Path, ref: str) -> bool:
         """Return whether ``ref`` names a commit in the checkout."""
@@ -1266,6 +1433,18 @@ class Builder:
         except (OSError, ValueError):
             return None
 
+    def _configured_source(self) -> Path | None:
+        """Return the source directory the build tree's CMake cache was made from."""
+        try:
+            text = (self.config.cmake_dir / 'CMakeCache.txt').read_text(encoding='utf-8')
+        except OSError:
+            return None
+        for line in text.splitlines():
+            key, sep, value = line.partition('=')
+            if sep and key.partition(':')[0] == 'CMAKE_HOME_DIRECTORY':
+                return Path(value)
+        return None
+
     def phase_configure(self) -> None:
         """Run cmake, or skip it when the tree is already configured the same way."""
         cfg = self.config
@@ -1273,7 +1452,23 @@ class Builder:
         if cfg.clean and cfg.cmake_dir.exists():
             self.say(f'--clean removes [bold]{escape(str(cfg.cmake_dir))}[/bold].')
             if self.confirm('Delete it?') and not cfg.dry_run:
-                shutil.rmtree(cfg.cmake_dir)
+                _remove_tree(cfg.cmake_dir)
+        elif (old := self._configured_source()) is not None and (
+            old.resolve() != cfg.src_dir.resolve()
+        ):
+            self.say(
+                f'[bold]{escape(str(cfg.cmake_dir))}[/bold] was configured from '
+                f'{escape(str(old))}, but this build uses {escape(str(cfg.src_dir))}. '
+                'CMake cannot switch a build tree to another source.'
+            )
+            if not self.confirm('Delete the build tree and start over?', default=False):
+                msg = (
+                    f'Stopped; {cfg.cmake_dir} belongs to {old}. '
+                    'Pass --clean to replace it, or --build-dir for a separate build.'
+                )
+                raise BuildError(msg)
+            if not cfg.dry_run:
+                _remove_tree(cfg.cmake_dir)
         cmd = self.configure_command()
         env = self.configure_env()
         state = {'command': cmd, 'env': env}

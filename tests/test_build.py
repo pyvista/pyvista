@@ -453,6 +453,16 @@ def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
     return builder
 
 
+def test_remove_tree_clears_read_only_files(tmp_path: Path, mocker: MockerFixture):
+    tree = tmp_path / 'src' / '.git' / 'objects'
+    tree.mkdir(parents=True)
+    (tree / 'pack').write_text('')
+    (tree / 'pack').chmod(0o444)
+    mocker.patch.object(phases.os, 'name', 'nt')
+    phases._remove_tree(tmp_path / 'src')
+    assert not (tmp_path / 'src').exists()
+
+
 def test_manifest_before_source(tmp_path: Path):
     with pytest.raises(BuildError, match='only available after the source phase'):
         _ = Builder(_config(tmp_path), Console(quiet=True)).manifest
