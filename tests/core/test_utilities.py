@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version
 import importlib.util
 import inspect
 import itertools
@@ -15,6 +17,7 @@ import platform
 import re
 import shutil
 import sys
+import tomllib
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -27,6 +30,9 @@ import warnings
 from hypothesis import given
 from hypothesis import strategies as st
 import numpy as np
+from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 import pytest
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
@@ -39,7 +45,9 @@ from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _MAX_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -236,6 +244,33 @@ def test_vtk_version_info_raises(operation):
     match = f'Comparing against unsupported VTK version 1.2.3. Minimum supported is {version_str}'
     with pytest.raises(pv.VTKVersionError, match=match):
         operation(pv.vtk_version_info, (1, 2, 3))
+
+
+def test_supported_vtk_versions_match_pin(pytestconfig):
+    with (pytestconfig.rootpath / 'pyproject.toml').open('rb') as file:
+        dependencies = tomllib.load(file)['project']['dependencies']
+    pin = SpecifierSet()
+    for requirement in map(Requirement, dependencies):
+        if requirement.name == 'vtk':
+            pin &= requirement.specifier
+    maximum = Version(VersionInfo._format(_MAX_SUPPORTED_VTK_VERSION))
+    assert maximum in pin
+    assert Version(f'{maximum.major}.{maximum.minor + 1}.0') not in pin
+
+
+@pytest.mark.skipif(pv.vtk_backend() != 'vtk', reason='Checks stock VTK releases only')
+def test_installed_vtk_not_newer_than_max_supported():
+    try:
+        installed = Version(version('vtk'))
+    except PackageNotFoundError:  # pragma: no cover -- VTK built from source
+        pytest.skip('VTK is not installed from a distribution')
+    if installed.is_prerelease or installed.local:  # pragma: no cover -- VTK nightly
+        pytest.skip('Checks VTK releases only')
+    maximum = VersionInfo._format(_MAX_SUPPORTED_VTK_VERSION)
+    assert installed.release[:2] <= _MAX_SUPPORTED_VTK_VERSION[:2], (
+        f'vtk {installed} is a newer minor release than _MAX_SUPPORTED_VTK_VERSION ({maximum}), '
+        'which sets the release `pyvista build vtk` builds by default'
+    )
 
 
 @pytest.mark.skipif(

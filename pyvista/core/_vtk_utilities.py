@@ -91,6 +91,7 @@ class VTKVersionInfo(VersionInfo):
 
 vtk_version_info = VTKVersionInfo(*_get_vtk_version())
 _MIN_SUPPORTED_VTK_VERSION = (9, 3, 1)
+_MAX_SUPPORTED_VTK_VERSION = (9, 7, 1)
 
 
 def vtk_backend() -> str:
