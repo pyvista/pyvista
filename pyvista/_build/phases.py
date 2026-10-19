@@ -884,6 +884,7 @@ class Builder:
         manifest = self._planned_manifest()
         self._checked_tools = dict(manifest.tools) if manifest else {}
         tools = _tools.required_tools(cfg.os_name, self._checked_tools, repair=cfg.repair)
+        self._activate_msvc(tools)
         table = Table(show_header=True, header_style='bold purple')
         table.add_column('Tool')
         table.add_column('Found')
@@ -937,6 +938,27 @@ class Builder:
                 if bad:
                     msg = f'Still not usable after install: {", ".join(bad)}.'
                     raise BuildError(msg)
+
+    def _activate_msvc(self, tools: list[_tools.Tool]) -> None:
+        """On Windows, import the MSVC environment when ``cl`` is not already on PATH."""
+        if self.config.os_name != 'windows':
+            return
+        msvc = next(t for t in tools if t.name == 'msvc')
+        if _tools.detect(msvc, self.env):
+            return
+        arch = _tools.msvc_arch()
+        vcvarsall = _tools.find_vcvarsall(arch)
+        if vcvarsall is None:
+            return
+        self.say(
+            f'Visual Studio found; importing its build environment from [bold]{vcvarsall}[/bold].'
+        )
+        if self.confirm('Use it?'):
+            try:
+                self.env = _tools.msvc_environment(vcvarsall, arch, env=self.env)
+            except subprocess.CalledProcessError as err:
+                msg = f'{vcvarsall} failed with exit status {err.returncode}.'
+                raise BuildError(msg) from None
 
     def recheck_tools(self) -> None:
         """Check again the tool versions the checkout's manifest asks for, if they changed."""

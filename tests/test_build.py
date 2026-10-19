@@ -62,32 +62,6 @@ def no_tools(mocker: MockerFixture):
     mocker.patch.object(tools, 'command_succeeds', return_value=True)
 
 
-def _fake_git(head: str, status: str = ' M file.cxx'):
-    """Return a ``subprocess.run`` stand-in for a checkout at ``head`` with ``status`` output."""
-
-    def run(cmd, **_):
-        out = {'status': status, 'rev-parse': head if cmd[-1] == 'HEAD' else 'b' * 40}
-        return subprocess.CompletedProcess(cmd, 0, stdout=out.get(cmd[1], ''), stderr='')
-
-    return run
-
-
-def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
-    """Return a builder on the shipped VTK manifest with the source phase done."""
-    cfg = _config(tmp_path, dry_run=False, **kwargs)
-    builder = Builder(cfg, Console(record=True, width=4000, force_terminal=False))
-    builder._manifest = find_manifest('vtk', None)
-    builder.groups = resolve_groups(builder.manifest, cfg.os_name)
-    builder.option_values = resolve_options(builder.manifest, None)
-    mocker.patch.object(builder, 'version_suffix', return_value=None)
-    return builder
-
-
-def _path_style(path: str) -> str:
-    """Return the style a narrated POSIX path gets, unlinked where it has no file URI."""
-    return 'magenta' if os.name == 'nt' else f'magenta link file://{path}'
-
-
 @pytest.mark.usefixtures('no_tools')
 @pytest.mark.parametrize('os_name', OS_NAMES)
 def test_dry_run_commands(tmp_path: Path, os_name):
@@ -240,6 +214,16 @@ def test_hooks_and_init_cache(tmp_path: Path):
     assert 'git clone' not in out
 
 
+def _fake_git(head: str, status: str = ' M file.cxx'):
+    """Return a ``subprocess.run`` stand-in for a checkout at ``head`` with ``status`` output."""
+
+    def run(cmd, **_):
+        out = {'status': status, 'rev-parse': head if cmd[-1] == 'HEAD' else 'b' * 40}
+        return subprocess.CompletedProcess(cmd, 0, stdout=out.get(cmd[1], ''), stderr='')
+
+    return run
+
+
 def test_existing_checkout_dirty(tmp_path: Path, mocker: MockerFixture):
     src = tmp_path / 'vtk-build' / 'src'
     (src / '.git').mkdir(parents=True)
@@ -381,6 +365,44 @@ def test_tables_print_manifest_text_verbatim(tmp_path: Path, mocker: MockerFixtu
     out = builder.console.export_text()
     assert 'Enables [experimental] and [/b] mode' in out
     assert '[red]x' in out
+
+
+def test_msvc_environment(mocker: MockerFixture, tmp_path: Path):
+    run = mocker.patch.object(
+        tools.subprocess,
+        'run',
+        return_value=subprocess.CompletedProcess(
+            '', 0, stdout='INCLUDE=C:\\inc\nPATH=C:\\vc;old\nUSER=Jürgen\n'.encode('utf-16-le')
+        ),
+    )
+    vcvarsall = tmp_path / 'vcvarsall.bat'
+    before = {'PATH': 'old', 'KEEP': '1'}
+    env = tools.msvc_environment(vcvarsall, env=before)
+    assert env == {'PATH': 'C:\\vc;old', 'KEEP': '1', 'INCLUDE': 'C:\\inc', 'USER': 'Jürgen'}
+    assert before == {'PATH': 'old', 'KEEP': '1'}
+    assert run.call_args.args[0] == f'cmd /u /c ""{vcvarsall}" x64 >nul && set"'
+
+
+def test_msvc_failure_is_a_build_error(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=tmp_path / 'vcvarsall.bat')
+    mocker.patch.object(
+        tools, 'msvc_environment', side_effect=subprocess.CalledProcessError(2, 'cmd')
+    )
+    builder = _builder(tmp_path, mocker, os_name='windows')
+    with pytest.raises(BuildError, match=r'vcvarsall\.bat failed with exit status 2'):
+        builder._activate_msvc(tools.required_tools('windows', {}, repair=False))
+
+
+def _builder(tmp_path: Path, mocker: MockerFixture, **kwargs) -> Builder:
+    """Return a builder on the shipped VTK manifest with the source phase done."""
+    cfg = _config(tmp_path, dry_run=False, **kwargs)
+    builder = Builder(cfg, Console(record=True, width=4000, force_terminal=False))
+    builder._manifest = find_manifest('vtk', None)
+    builder.groups = resolve_groups(builder.manifest, cfg.os_name)
+    builder.option_values = resolve_options(builder.manifest, None)
+    mocker.patch.object(builder, 'version_suffix', return_value=None)
+    return builder
 
 
 def test_manifest_before_source(tmp_path: Path):
@@ -682,6 +704,35 @@ def test_confirm_installs(tmp_path: Path, mocker: MockerFixture, kwargs, tty, an
     assert console.export_text() == 'The build installs:\n  • ninja into /env\n'
 
 
+def test_windows_msvc(tmp_path: Path, mocker: MockerFixture):
+    present = {'git', 'cmake', 'ninja', 'delvewheel'}
+
+    def which(name, path=None, **_):
+        if name == 'cl':
+            return 'C:/vs/cl' if path and 'C:/vs' in path else None
+        return f'C:/t/{name}' if name in present else None
+
+    mocker.patch.object(tools.shutil, 'which', side_effect=which)
+    mocker.patch.object(tools, 'executable_version', return_value='99.0')
+    mocker.patch.object(tools, 'python_build_packages', return_value=[])
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=None)
+    builder = _builder(tmp_path, mocker, os_name='windows')
+    with pytest.raises(BuildError, match='msvc'):
+        builder.phase_tools()
+    vcvarsall = tmp_path / 'vcvarsall.bat'
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=vcvarsall)
+    activated = mocker.patch.object(
+        tools, 'msvc_environment', return_value={'PATH': 'C:/vs;C:/t', 'INCLUDE': 'x'}
+    )
+    mocker.patch.object(tools, 'msvc_arch', return_value='arm64')
+    builder = _builder(tmp_path, mocker, os_name='windows')
+    builder.phase_tools()
+    activated.assert_called_once()
+    assert activated.call_args.args == (vcvarsall, 'arm64')
+    assert tools.find_vcvarsall.call_args.args == ('arm64',)
+    assert builder.env['INCLUDE'] == 'x'
+
+
 def test_git_version_suffix(tmp_path: Path, mocker: MockerFixture):
     cfg = _config(tmp_path, dry_run=False)
     (cfg.src_dir / '.git').mkdir(parents=True)
@@ -926,6 +977,39 @@ def test_build_wheel_repair_install_paths(tmp_path: Path, mocker: MockerFixture)
     assert 'install the wheel yourself' in builder.console.export_text()
 
 
+def test_vswhere(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.dict(tools.os.environ, {'PROGRAMFILES(X86)': '', 'PROGRAMFILES': ''})
+    assert tools.vswhere_path() is None
+    assert tools.find_vcvarsall() is None
+    mocker.patch.dict(tools.os.environ, {'PROGRAMFILES(X86)': str(tmp_path)})
+    assert tools.vswhere_path() is None
+    vswhere = tmp_path / 'Microsoft Visual Studio' / 'Installer' / 'vswhere.exe'
+    vswhere.parent.mkdir(parents=True)
+    vswhere.write_text('')
+    assert tools.vswhere_path() == vswhere
+    run = mocker.patch.object(
+        tools.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout='')
+    )
+    assert tools.find_vcvarsall() is None
+    install = tmp_path / 'VS'
+    vcvarsall = install / 'VC' / 'Auxiliary' / 'Build' / 'vcvarsall.bat'
+    vcvarsall.parent.mkdir(parents=True)
+    vcvarsall.write_text('')
+    run.return_value = subprocess.CompletedProcess([], 0, stdout=f'{install}\n')
+    assert tools.find_vcvarsall() == vcvarsall
+    assert 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' in run.call_args.args[0]
+    assert tools.find_vcvarsall('arm64') == vcvarsall
+    assert 'Microsoft.VisualStudio.Component.VC.Tools.ARM64' in run.call_args.args[0]
+
+
+@pytest.mark.parametrize(
+    ('plat', 'arch'), [('win-arm64', 'arm64'), ('win-amd64', 'x64'), ('win32', 'x86')]
+)
+def test_msvc_arch_follows_the_interpreter(mocker: MockerFixture, plat, arch):
+    mocker.patch.object(tools.sysconfig, 'get_platform', return_value=plat)
+    assert tools.msvc_arch() == arch
+
+
 @pytest.mark.usefixtures('no_tools')
 def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
     console = Console(record=True, width=4000, force_terminal=False)
@@ -1106,6 +1190,28 @@ def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
         builder.phase_build()
 
 
+def test_msvc_environment_skips_lines_without_value(mocker: MockerFixture, tmp_path: Path):
+    mocker.patch.object(
+        tools.subprocess,
+        'run',
+        return_value=subprocess.CompletedProcess(
+            '', 0, stdout='banner\nINCLUDE=C:\\inc\n'.encode('utf-16-le')
+        ),
+    )
+    env = tools.msvc_environment(tmp_path / 'vcvarsall.bat', env={})
+    assert env == {'INCLUDE': 'C:\\inc'}
+
+
+def test_windows_declined_msvc(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    mocker.patch.object(tools, 'find_vcvarsall', return_value=tmp_path / 'vcvarsall.bat')
+    activated = mocker.patch.object(tools, 'msvc_environment')
+    builder = _builder(tmp_path, mocker, os_name='windows')
+    mocker.patch.object(builder, 'confirm', return_value=False)
+    builder._activate_msvc(tools.required_tools('windows', builder.manifest.tools, repair=False))
+    assert not activated.called
+
+
 def test_plan(tmp_path: Path):
     """The start summary says what every step does with the given settings."""
     cfg = _config(
@@ -1156,6 +1262,11 @@ def test_plan(tmp_path: Path):
     assert "checkout's manifest" in plan['Build options']
     assert plan['Repair'].startswith('skipped (--no-repair)')
     assert plan['Install'].startswith('skipped')
+
+
+def _path_style(path: str) -> str:
+    """Return the style a narrated POSIX path gets, unlinked where it has no file URI."""
+    return 'magenta' if os.name == 'nt' else f'magenta link file://{path}'
 
 
 def test_paths_link_only_on_a_real_terminal(tmp_path: Path):
