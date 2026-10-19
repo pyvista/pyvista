@@ -587,10 +587,12 @@ jobs:
             printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
           }
 
-          # Strips wall-clock timing so two runs hitting the identical failure hash the same.
+          # Strips wall-clock timing, object addresses and ordering so two runs hitting the
+          # identical failures hash the same.
           normalize_for_hash() {
             grep -Ev '^\s*(py3\.[0-9]+-[a-z_-]+: (exit|FAIL code)|evaluation failed|congratulations|py3\.[0-9]+-[a-z_-]+: OK)' \
-              | sed -E 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//'
+              | sed -E -e 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//' -e 's/0x[0-9a-fA-F]+/0x?/g' \
+              | LC_ALL=C sort
           }
 
           # Ensure the dedup label exists (idempotent).
@@ -612,14 +614,17 @@ jobs:
           # Only jobs that ran pytest and failed have a failure-summary-* artifact.
           summary_names=()
           summary_texts=()
+          summary_counts=()
           if [ -d failure-summaries ]; then
             while IFS= read -r label_file; do
               summary_file="$(dirname "$label_file")/failure_summary.txt"
               [ -f "$summary_file" ] || continue
               name="$(cat "$label_file")"
               summary="$(cat "$summary_file")"
+              count_file="$(dirname "$label_file")/n_failures.txt"
               summary_names+=("$name")
               summary_texts+=("$summary")
+              summary_counts+=("$(cat "$count_file" 2>/dev/null || echo 0)")
             done < <(find failure-summaries -name job_label.txt | sort)
           fi
 
@@ -648,10 +653,12 @@ jobs:
               IFS=$'\t' read -r name url <<< "$row"
 
               summary=""
+              count=0
               if [ "${#summary_names[@]}" -gt 0 ]; then
                 for i in "${!summary_names[@]}"; do
                   if [ "${summary_names[$i]}" = "$name" ]; then
                     summary="${summary_texts[$i]}"
+                    count="${summary_counts[$i]}"
                     break
                   fi
                 done
@@ -669,13 +676,19 @@ jobs:
               fi
 
               # Without a pytest short-summary section the summary is the tail of the tox log.
-              n_failures="$(printf '%s\n' "$summary" | grep -cE '^(FAILED|ERROR) ' || true)"
+              # The summary is capped, so the count comes from pytest's final line when known.
+              n_lines="$(printf '%s\n' "$summary" | grep -cE '^(FAILED|ERROR) ' || true)"
+              n_failures="$count"
+              [ "$n_failures" -gt 0 ] 2>/dev/null || n_failures="$n_lines"
               if [ "$n_failures" -eq 0 ]; then
                 summary_label="failed before pytest reported (end of log)"
               elif [ "$n_failures" -eq 1 ]; then
                 summary_label="1 failure"
               else
                 summary_label="${n_failures} failures"
+              fi
+              if [ "$n_lines" -gt 0 ] && [ "$n_lines" -lt "$n_failures" ]; then
+                summary_label+=", first ${n_lines} shown"
               fi
 
               # Indented 2 spaces to stay nested inside this list item on GitHub.
