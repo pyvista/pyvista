@@ -218,6 +218,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         self._mouse_move_observer: int | None = None
         self._left_press_observer: int | None = None
         self._left_release_observer: int | None = None
+        self._original_interactor_style: _vtk.vtkInteractorStyle | None = None
 
         self._cached_matrix = self._main_actor.user_matrix
 
@@ -448,7 +449,11 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def _press_callback(self, interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
         """Process actions for the mouse button press event."""
-        if self._selected_actor:
+        if self._selected_actor and not self._pressing_down:
+            self._original_interactor_style = self._pl._get_iren_not_none().get_interactor_style()
+            # The current style may have already handled the press and grabbed focus.
+            if self._original_interactor_style is not None:
+                self._original_interactor_style.OnLeftButtonUp()
             self._pl.enable_trackball_actor_style()
             self._pressing_down = True
             if self._selected_actor in self._circles:
@@ -458,11 +463,19 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def _release_callback(self, _interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
         """Process actions for the mouse button release event."""
-        self._pl.enable_trackball_style()
-        self._pressing_down = False
-        self._cached_matrix = self._main_actor.user_matrix
+        if not self._pressing_down:
+            return
+        self._end_interaction()
         if self._user_release_callback:
             try_callback(self._user_release_callback, self._main_actor.user_matrix)
+
+    def _end_interaction(self) -> None:
+        """Restore the interactor style and retain the completed actor transform."""
+        if self._pressing_down:
+            self._pressing_down = False
+            self._pl._get_iren_not_none().style = self._original_interactor_style
+            self._original_interactor_style = None
+            self._cached_matrix = self._main_actor.user_matrix
 
     def _reset(self) -> None:
         """Reset the actor and cached transform."""
@@ -546,6 +559,7 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     def disable(self) -> None:
         """Disable the widget."""
+        self._end_interaction()
         self._pl.disable_picking()
         iren = self._pl._get_iren_not_none()
         if self._mouse_move_observer:

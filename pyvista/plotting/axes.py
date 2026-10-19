@@ -21,13 +21,13 @@ class Axes(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAxes):
     Parameters
     ----------
     show_actor : bool, optional
-        Hide or show the actor of these axes.  Default ``False``.
+        Hide or show the actor of these axes. Default ``False``.
 
     actor_scale : float, optional
-        Scale the size of the axes actor.  Default ``1``.
+        Scale the size of the axes actor. Default ``1``.
 
     line_width : float, optional
-        Width of the axes lines.  Default ``1``.
+        Width of the axes lines. Default ``1``.
 
     symmetric : bool, optional
         If true, the axis continue to negative values.

@@ -490,6 +490,7 @@ def test_download_pump_bracket():
     dataset = examples.download_pump_bracket(load=True)
     assert isinstance(dataset, pv.UnstructuredGrid)
     assert len(dataset.point_data) == 10
+    assert np.all(dataset.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
 
 
 def test_download_electronics_cooling():
@@ -500,6 +501,7 @@ def test_download_electronics_cooling():
     structure, air = examples.download_electronics_cooling(load=True)
     assert isinstance(structure, pv.PolyData)
     assert isinstance(air, pv.UnstructuredGrid)
+    assert np.all(air.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
 
 
 def test_download_angular_sector():
@@ -804,11 +806,20 @@ def test_download_action_figure(high_resolution: bool):
 def test_download_notch_stress():
     dataset = examples.download_notch_stress()
     assert isinstance(dataset, pv.UnstructuredGrid)
+    assert np.all(dataset.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
 
 
 def test_download_notch_displacement():
     dataset = examples.download_notch_displacement()
     assert isinstance(dataset, pv.UnstructuredGrid)
+    assert np.all(dataset.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
+
+
+def test_download_structured_grid_two():
+    dataset = examples.download_structured_grid_two()
+    assert isinstance(dataset, pv.StructuredGrid)
+    assert dataset.dimensions == (40, 30, 20)
+    assert np.all(dataset.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
 
 
 def test_download_louis_louvre():
@@ -943,6 +954,7 @@ def test_download_aero_bracket():
     dataset = examples.download_aero_bracket(load=True)
     assert isinstance(dataset, pv.UnstructuredGrid)
     assert len(dataset.point_data.keys()) == 3
+    assert np.all(dataset.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
 
 
 def test_download_coil_magnetic_field():

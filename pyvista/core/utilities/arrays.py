@@ -28,9 +28,10 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import DTypeLike
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataObject
     from pyvista import DataSet
@@ -140,7 +141,7 @@ def _coerce_pointslike_arg(
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
-        Whether to copy the ``points`` array.  Copying always occurs if ``points``
+        Whether to copy the ``points`` array. Copying always occurs if ``points``
         is not :class:`numpy.ndarray`.
 
     Returns
@@ -297,7 +298,7 @@ def convert_array(
     Returns
     -------
     output : :vtk:`vtkDataArray` | numpy.ndarray
-        The converted array.  If input is a :class:`numpy.ndarray` then
+        The converted array. If input is a :class:`numpy.ndarray` then
         returns :vtk:`vtkDataArray` or if input is :vtk:`vtkDataArray` then
         returns NumPy ``ndarray``.
 
@@ -367,7 +368,7 @@ def get_array(
 
     preference : str, default: "cell"
         When scalars is specified, this is the preferred array type to
-        search for in the dataset.  Must be either ``'point'``,
+        search for in the dataset. Must be either ``'point'``,
         ``'cell'``, or ``'field'``.
 
     err : bool, default: False
@@ -376,7 +377,7 @@ def get_array(
     Returns
     -------
     output : pyvista.pyvista_ndarray | None
-        Requested array.  Return ``None`` if there is no array
+        Requested array. Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
     """
@@ -444,7 +445,7 @@ def get_array_association(
 
     preference : str, default: "cell"
         When scalars is specified, this is the preferred array type to
-        search for in the dataset.  Must be either ``'point'``,
+        search for in the dataset. Must be either ``'point'``,
         ``'cell'``, or ``'field'``.
 
     err : bool, default: False
@@ -585,7 +586,7 @@ _ASSOCIATION_ATTRIBUTES = {
 def _assoc_array(
     obj: DataSet | _vtk.vtkDataSet, name: str, association: str = 'point'
 ) -> pyvista_ndarray | None:
-    """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
+    """Return a point, cell, or field array from a :class:`pyvista.DataSet` or VTK object.
 
     If the array or index doesn't exist, return nothing. This matches VTK's
     behavior when using ``GetAbstractArray`` with an invalid key or index.
@@ -899,8 +900,8 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     If an active vector already exists, no changes are made.
 
     If an active vectors does not exist, it checks for possibly cell
-    or point arrays with shape ``(n, 3)``.  If only one exists, then
-    it is set as the active vectors.  Otherwise, an error is raised.
+    or point arrays with shape ``(n, 3)``. If only one exists, then
+    it is set as the active vectors. Otherwise, an error is raised.
 
     .. versionchanged:: 0.45
         The field and name of the active array is now returned.
@@ -967,7 +968,7 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     If an active scalars already exists, no changes are made.
 
     If an active scalars does not exist, it checks for point or cell
-    arrays.  If only one exists, then it is set as the active scalars.
+    arrays. If only one exists, then it is set as the active scalars.
     Otherwise, an error is raised.
 
     .. versionchanged:: 0.45

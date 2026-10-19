@@ -34,7 +34,7 @@ def test_warn_external(recwarn: pytest.WarningsRecorder):
 def test_warn_external_frame_embedded_python(mocker: MockerFixture):
     """Taken and adapted from
     https://github.com/matplotlib/matplotlib/blob/a00d606d592bcf8d335f4f3ac2768882d3a49e7b/lib/matplotlib/tests/test_cbook.py#L525"""
-    m = mocker.patch.object(sys, '_getframe')
+    m = mocker.patch('inspect.currentframe')
     m.return_value = None
     with pytest.warns(UserWarning, match=r'\Adummy\Z'):
         warn_external('dummy')
