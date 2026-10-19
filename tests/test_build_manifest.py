@@ -282,7 +282,7 @@ def test_option_needs_cmake_or_env():
 
 
 def test_known_backends():
-    assert known_backends() == ['vtk']
+    assert known_backends() == ['cvista', 'vtk']
 
 
 def test_option_coerce_and_schema_errors():

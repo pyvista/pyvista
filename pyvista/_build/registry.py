@@ -20,7 +20,9 @@ DEFAULT_REFS: dict[str, str] = {
 }
 
 #: Git URL of each backend whose manifest lives in its own tree.
-BACKENDS: dict[str, str] = {}
+BACKENDS: dict[str, str] = {
+    'cvista': 'https://github.com/pyvista/cvista.git',
+}
 
 
 def known_backends() -> list[str]:
