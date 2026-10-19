@@ -44,19 +44,14 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CCACHE_DIR: ${{ github.workspace }}/compiler-cache
       CCACHE_MAXSIZE: 1G
-      # Version string, not mtime: survives a runner-image update that keeps the compiler.
-      CCACHE_COMPILERCHECK: "%compiler% --version"
-      SCCACHE_DIR: ${{ github.workspace }}/compiler-cache
       SCCACHE_CACHE_SIZE: 1G
 
     steps:
-      - name: Checkout PyVista build script
+      - name: Checkout PyVista
         uses: actions/checkout@v7
         with:
           persist-credentials: false
-          sparse-checkout: .github/scripts
 
       - name: Checkout VTK master (pinned to nightly date-stamp commit)
         shell: bash
@@ -118,7 +113,6 @@ jobs:
           path: vtk-commit-range.md
 
       - name: Setup Python
-        if: runner.os != 'Linux'
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
@@ -127,43 +121,24 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ccache
 
-      - name: Install NASM (Windows)
-        if: runner.os == 'Windows'
+      - name: Install PyVista
         shell: bash
-        run: |
-          # The pinned download VTK's own Windows wheel builds use, for libjpeg-turbo's SIMD code.
-          cd vtk-src
-          CMAKE_CONFIGURATION=windows cmake -P .gitlab/ci/download_nasm.cmake
-          cygpath -w "$PWD/.gitlab/nasm" >> "$GITHUB_PATH"
-
-      - name: Install build tools
-        if: runner.os != 'Linux'
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip wheel setuptools ninja
-          if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
-          if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
-
-      - name: Set compiler launcher
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
-          else
-            echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
-          fi
+        # `--manylinux` mounts this installed PyVista into the container.
+        run: python -m pip install --upgrade pip -e .
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
-      - name: Find the newest compiler cache uploaded from main
+      - name: Find the newest compiler cache from this branch or main
         id: find-compiler-cache
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          # Newest first. Only runs on main upload one, but filter anyway.
-          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=10" \
-            --jq '[.artifacts[] | select((.expired | not) and .workflow_run.head_branch == "main")][0].workflow_run.id // empty')"; then
+          # Newest first: this branch's own upload, else main's, from this repository only.
+          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=50" \
+            --jq '[.artifacts[] | select((.expired | not) and .workflow_run.head_repository_id == .workflow_run.repository_id)] as $a
+              | ([$a[] | select(.workflow_run.head_branch == env.BRANCH)] + [$a[] | select(.workflow_run.head_branch == "main")])[0].workflow_run.id // empty')"; then
             echo "::warning::Could not list the compiler cache artifacts; building cold"
             run_id=""
           fi
@@ -191,59 +166,37 @@ jobs:
         if: runner.os == 'Windows'
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
 
-      - name: Start manylinux container (Linux)
-        if: runner.os == 'Linux'
+      - name: Build VTK wheel
+        shell: bash
+        # --manylinux (Linux) builds inside the manylinux_2_28 container.
         env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
+          MANYLINUX: ${{ runner.os == 'Linux' && '--manylinux' || '' }}
         run: |
-          # VTK's own x86_64 wheels build on this image (glibc 2.17), so auditwheel tags
-          # ours manylinux2014 as well. The steps below run through $RUN_IN, which stays
-          # empty on macOS and Windows.
-          py="cp${PYTHON_VERSION//./}"
-          docker run --detach --name manylinux \
-            --volume "$GITHUB_WORKSPACE:/work" --workdir /work \
-            --env RUNNER_OS=Linux --env VTK_NIGHTLY_SHA --env COMPILER_LAUNCHER \
-            --env CCACHE_DIR=/work/compiler-cache --env CCACHE_MAXSIZE --env CCACHE_COMPILERCHECK \
-            --env PYTHON="/opt/python/${py}-${py}/bin/python" \
-            quay.io/pypa/manylinux2014_x86_64 sleep infinity
-          docker exec manylinux bash -euxo pipefail -c '
-            yum install -y --setopt=install_weak_deps=False libX11-devel libXcursor-devel mesa-libGL-devel
-            "$PYTHON" -m pip install --upgrade pip wheel setuptools ninja cmake
-            curl -sSfL -o /tmp/ccache.tar.xz https://github.com/ccache/ccache/releases/download/v4.14/ccache-4.14-linux-x86_64-musl-static.tar.xz
-            echo "888eaf9697919d6eba77be797e9d9c9e40e734d11d67d25a79b075c3f79f6c77  /tmp/ccache.tar.xz" | sha256sum --check
-            tar -xJf /tmp/ccache.tar.xz -C /usr/local/bin --strip-components=1 ccache-4.14-linux-x86_64-musl-static/ccache
-          '
-          echo "RUN_IN=docker exec manylinux" >> "$GITHUB_ENV"
+          python -m pyvista build vtk $MANYLINUX --yes \
+            --source vtk-src --build-dir vtk-build --compiler-cache auto --cache-dir compiler-cache \
+            --version-suffix "dev0+g${VTK_NIGHTLY_SHA:0:8}"
 
-      - name: Configure
+      - name: Show the full build log
+        if: failure()
         shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh configure
+        run: |
+          if [ ! -f vtk-build/build.log ]; then
+            echo "The build stopped before compiling."
+          elif grep -Eq '^ninja: (build stopped|error)' vtk-build/build.log; then
+            cat vtk-build/build.log
+          else
+            echo "The build log shows no compile failure. See the failing step above."
+          fi
 
-      - name: Build
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh build
-
-      - name: Show compiler cache statistics
-        shell: bash
-        run: $RUN_IN $COMPILER_LAUNCHER --show-stats
-
+      # Fork pull requests read the cache but never upload one.
       - name: Upload compiler cache
-        # Never from a pull request: the nightly restores whichever upload is newest.
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: actions/upload-artifact@v7
         with:
           name: compiler-cache-${{ runner.os }}
           path: compiler-cache
           compression-level: 0
           retention-days: 7
-
-      - name: Build wheel
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh wheel
-
-      - name: Repair wheel
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh repair
 
       - name: Upload VTK wheel
         uses: actions/upload-artifact@v7
