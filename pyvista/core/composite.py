@@ -244,7 +244,9 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))
+                # Leaves are validated as their own level wraps them
+                nested = isinstance(block, _vtk.vtkMultiBlockDataSet)
+                self.SetBlock(i, wrap(block, validate=False) if nested else wrap(block))
 
     def _items(self) -> Iterable[tuple[str | None, _BlockType]]:
         yield from zip(self.keys(), self, strict=True)
@@ -2246,7 +2248,8 @@ class MultiBlock(
             return
         # Copy one level at a time so each block is visited once
         self.SetNumberOfBlocks(0)
-        _vtk.vtkCompositeDataSet.CompositeShallowCopy(self, to_copy)  # non-virtual: no blocks
+        # Base-class call: copies field data and information, not blocks
+        _vtk.vtkCompositeDataSet.CompositeShallowCopy(self, to_copy)
         n_blocks = to_copy.GetNumberOfBlocks()
         self.SetNumberOfBlocks(n_blocks)
         for i in range(n_blocks):
