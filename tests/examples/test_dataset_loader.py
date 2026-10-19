@@ -895,6 +895,75 @@ def test_get_all_nested_filepaths_missing_path_raises(tmp_path):
         _get_all_nested_filepaths(missing)
 
 
+def test_get_all_nested_filepaths_includes_subfolders(tmp_path):
+    (tmp_path / 'sub').mkdir()
+    (tmp_path / 'a.txt').write_text('a')
+    (tmp_path / 'sub' / 'b.txt').write_text('bb')
+    (tmp_path / 'sub' / 'README.md').write_text('readme')
+    assert sorted(_get_all_nested_filepaths(str(tmp_path))) == [
+        str(tmp_path / 'a.txt'),
+        str(tmp_path / 'sub' / 'b.txt'),
+    ]
+    assert _get_file_or_folder_size(str(tmp_path)) == 3
+
+
+def test_file_props_include_multiblock_sidecar(tmp_path):
+    nested = pv.MultiBlock({'cube': pv.Cube()})
+    multi = pv.MultiBlock(
+        {'sphere': pv.Sphere(), 'nested': nested, 'image': pv.ImageData(dimensions=(2, 2, 2))}
+    )
+    path = tmp_path / 'multi.vtm'
+    multi.save(path)
+    all_files = [p for p in tmp_path.rglob('*') if p.is_file()]
+    assert len(all_files) > 1
+
+    loader = _SingleFileDatasetLoader(str(path))
+    assert loader._file_sizes == (sum(p.stat().st_size for p in all_files),)
+    assert loader.num_files == len(all_files)
+    assert loader.unique_extensions == ('.vti', '.vtm', '.vtp')
+
+
+def test_file_props_include_pvd_references(tmp_path):
+    names = ['mesh_0.vtp', 'mesh_1.vtp']
+    for name in names:
+        pv.Sphere().save(tmp_path / name)
+    datasets = ''.join(f'<DataSet timestep="{i}" file="{name}"/>' for i, name in enumerate(names))
+    path = tmp_path / 'series.pvd'
+    path.write_text(f'<VTKFile type="Collection"><Collection>{datasets}</Collection></VTKFile>')
+
+    expected = sum((tmp_path / name).stat().st_size for name in [*names, 'series.pvd'])
+    assert _get_file_or_folder_size(str(path)) == expected
+    assert sorted(_get_file_or_folder_ext(str(path))) == ['.pvd', '.vtp', '.vtp']
+
+
+def test_get_file_or_folder_size_counts_folder_sidecar_once(tmp_path):
+    pv.MultiBlock({'sphere': pv.Sphere(), 'cube': pv.Cube()}).save(tmp_path / 'multi.vtm')
+    expected = sum(p.stat().st_size for p in tmp_path.rglob('*') if p.is_file())
+    assert _get_file_or_folder_size(str(tmp_path)) == expected
+
+
+def test_get_file_or_folder_size_pvtu_pieces(tmp_path):
+    pv.Sphere().cast_to_unstructured_grid().save(tmp_path / 'piece.vtu')
+    path = tmp_path / 'mesh.pvtu'
+    path.write_text(
+        '<VTKFile><PUnstructuredGrid><Piece Source="piece.vtu"/></PUnstructuredGrid></VTKFile>'
+    )
+    expected = path.stat().st_size + (tmp_path / 'piece.vtu').stat().st_size
+    assert _get_file_or_folder_size(str(path)) == expected
+
+
+def test_get_file_or_folder_size_self_reference(tmp_path):
+    path = tmp_path / 'loop.vtm'
+    path.write_text('<VTKFile><Block><DataSet file="loop.vtm"/></Block></VTKFile>')
+    assert _get_file_or_folder_size(str(path)) == path.stat().st_size
+
+
+def test_get_file_or_folder_size_skips_missing_reference(tmp_path):
+    path = tmp_path / 'series.pvd'
+    path.write_text('<VTKFile><Collection><DataSet file="missing.vtp"/></Collection></VTKFile>')
+    assert _get_file_or_folder_size(str(path)) == path.stat().st_size
+
+
 def test_load_as_multiblock_non_loadable_file_before_loadable_file():
     # A non-loadable metafile listed before a loadable file must not cause the
     # loadable file to be dropped from the result.
