@@ -2226,8 +2226,12 @@ class PolyDataFilters(DataSetFilters):
         ... )
 
         """
+        # VTK returns an empty mesh for any other cell, rather than an error
         if not self.is_all_triangles or self.n_strips:
-            msg = 'Input mesh for decimation must be all triangles.'
+            msg = (
+                'Input mesh for decimation must be all triangles. Use `triangulate()` for '
+                'polygons and strips, and remove lines and vertices.'
+            )
             raise NotAllTrianglesError(msg)
         _validation.check_contains(
             get_args(_BinnedPointGenerationOptions),
@@ -2246,6 +2250,7 @@ class PolyDataFilters(DataSetFilters):
         source.SetPoints(self.GetPoints())
         source.SetPolys(self.GetPolys())
         source.cell_data['vtkOriginalCellIds'] = np.arange(self.n_cells, dtype=float)
+        # Averaged point data has to be averaged by VTK, so those arrays go through it
         if averaging:
             for name, array in self.point_data.items():
                 if np.issubdtype(array.dtype, np.floating):
@@ -2254,7 +2259,7 @@ class PolyDataFilters(DataSetFilters):
                     source.point_data[name] = array.astype(float)
         else:
             source.point_data['vtkOriginalPointIds'] = np.arange(self.n_points, dtype=float)
-        # Unused points would stretch the bounds the bins span
+        # Unused points would stretch the bounds the bins span, so drop any there are
         used = np.zeros(self.n_points, dtype=bool)
         used[self.regular_faces.ravel()] = True
         if not used.all():
@@ -2278,6 +2283,7 @@ class PolyDataFilters(DataSetFilters):
             return _get_output(alg)
 
         if divisions is not None:
+            # One number sets the longest axis and the others follow with cubic bins
             if np.ndim(divisions) == 0:
                 longest = _validation.validate_number(
                     cast('int', divisions),
@@ -2303,6 +2309,7 @@ class PolyDataFilters(DataSetFilters):
                 name='target_points',
             )
             mesh = _bin_to_target(sizes, target, _binned, progress_bar=progress_bar)
+            # Far apart parts or the bin limit can leave the result well short
             if mesh.n_points < 0.5 * min(target, source.n_points):
                 extent = ' x '.join(f'{size:.3g}' for size in sizes)
                 msg = (
@@ -2313,6 +2320,7 @@ class PolyDataFilters(DataSetFilters):
                 )
                 warn_external(msg)
 
+        # Gather the input arrays at the ids VTK carried through, keeping their dtypes
         cell_ids = mesh.cell_data.pop('vtkOriginalCellIds').astype(int)
         mesh.cell_data.update(
             {name: array[cell_ids] for name, array in self.cell_data.items()}, copy=False
@@ -2322,8 +2330,10 @@ class PolyDataFilters(DataSetFilters):
             mesh.point_data.update(
                 {name: array[point_ids] for name, array in self.point_data.items()}, copy=False
             )
+            # VTK writes single precision points, so take the kept points from the input
             if point_generation == 'bin_points':
                 mesh.points = self.points[point_ids]
+        # Adding arrays activates scalars, so restore the input's choice, including none
         for attributes_in, attributes_out in (
             (self.point_data, mesh.point_data),
             (self.cell_data, mesh.cell_data),

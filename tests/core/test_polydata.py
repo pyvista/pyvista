@@ -1158,13 +1158,37 @@ def test_decimate_binned_raises(fine_sphere, kwargs, error, match):
         fine_sphere.decimate_binned(**kwargs)
 
 
-def test_decimate_binned_not_all_triangles(sphere):
-    with pytest.raises(NotAllTrianglesError):
-        pv.Cylinder().decimate_binned(100)
-    sphere.strips = [5, 0, 1, 2, 3, 4]
-    assert sphere.is_all_triangles
-    with pytest.raises(NotAllTrianglesError):
-        sphere.decimate_binned(100)
+def _with_strip(mesh):
+    mesh.strips = [5, 0, 1, 2, 3, 4]
+    return mesh
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        pv.Plane,
+        pv.Cylinder,
+        lambda: pv.Sphere() + pv.Plane(center=(3.0, 0.0, 0.0)),
+        lambda: pv.Line(resolution=10),
+        lambda: pv.PolyData(np.eye(3)),
+        lambda: pv.Sphere() + pv.Line(),
+        lambda: pv.Sphere().strip(),
+        lambda: _with_strip(pv.Sphere()),
+    ],
+    ids=[
+        'quads',
+        'polygons',
+        'triangles_and_quads',
+        'lines',
+        'vertices',
+        'triangles_and_lines',
+        'strips',
+        'triangles_and_strips',
+    ],
+)
+def test_decimate_binned_not_all_triangles(make_mesh):
+    with pytest.raises(NotAllTrianglesError, match='triangulate'):
+        make_mesh().decimate_binned(100)
 
 
 def test_compute_normals(sphere):
