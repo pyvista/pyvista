@@ -172,7 +172,7 @@ jobs:
         env:
           MANYLINUX: ${{ runner.os == 'Linux' && '--manylinux' || '' }}
         run: |
-          python -m pyvista build vtk $MANYLINUX --yes \
+          python -m pyvista build vtk $MANYLINUX --yes --verbose \
             --source vtk-src --build-dir vtk-build --compiler-cache auto --cache-dir compiler-cache \
             --version-suffix "dev0+g${VTK_NIGHTLY_SHA:0:8}"
 
