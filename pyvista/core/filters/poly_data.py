@@ -2153,7 +2153,7 @@ class PolyDataFilters(DataSetFilters):
             covers a large part of the surface, and very large ones stop short
             when the grid reaches 2**28 bins.
 
-        divisions : int | VectorLike[int], optional
+        divisions : int | VectorLikeInt, optional
             Number of bins along each axis. A single integer applies to the
             longest axis of the bounds and the other axes get proportionally
             fewer, with at least one per axis. Three integers set each axis
