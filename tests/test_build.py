@@ -115,6 +115,9 @@ def test_dry_run_commands(tmp_path: Path, os_name):
     assert 'setup.py bdist_wheel' in out
     hint = next(line for line in out.splitlines() if '--force-reinstall' in line)
     assert str(cfg.wheelhouse) in hint
+    assert out.splitlines()[1] == 'Dry run: every command is printed and nothing runs.'
+    assert out.rstrip().endswith('Dry run: nothing was built.')
+    assert 'incremental rebuild' not in out
     launcher = 'sccache' if os_name == 'windows' else 'ccache'
     assert f'-DCMAKE_CXX_COMPILER_LAUNCHER={launcher}' in out
     assert f'$ {launcher} --show-stats' in out
@@ -135,7 +138,7 @@ def test_dry_run_flags(tmp_path: Path):
     )
     Builder(cfg, console).build()
     out = console.export_text()
-    assert out.count('Compiler cache: none') == 1
+    assert 'Compiler cache: none' not in out.splitlines()
     assert '-DCMAKE_C_COMPILER_LAUNCHER= -DCMAKE_CXX_COMPILER_LAUNCHER= ' in out
     assert '-DCMAKE_BUILD_TYPE=Debug' in out
     assert '--parallel 3' in out
@@ -862,22 +865,22 @@ def test_configure_state(tmp_path: Path, mocker: MockerFixture):
     confirm = mocker.patch.object(builder, 'confirm', return_value=True)
     builder.phase_configure()
     assert 'new commit' in builder.console.export_text()
-    assert [c.args[0] for c in confirm.call_args_list] == ['Run cmake?']
+    assert [c.args[0] for c in confirm.call_args_list] == ['Run cmake with these? [y / n / flags]']
     assert '-DVTK_VERSION_SUFFIX=dev0+gabcdef12' in run.call_args.args[0]
     state_file.write_text('{')
     builder.phase_configure()
     assert 'no record of how this tree was configured' in builder.console.export_text()
-    assert confirm.call_args_list[-2].args[0] == 'Reconfigure?'
+    assert confirm.call_args_list[-2].args[0] == 'Reconfigure? (n stops)'
     state_file.write_text(json.dumps({'command': ['cmake'], 'env': {}}))
     confirm.reset_mock()
     builder.phase_configure()
-    assert confirm.call_args_list[0].args[0] == 'Reconfigure?'
+    assert confirm.call_args_list[0].args[0] == 'Reconfigure? (n stops)'
     state = {'command': builder.configure_command(), 'env': {}}
     state_file.write_text(json.dumps(state))
     mocker.patch.object(builder, 'configure_env', return_value={'X': '1'})
     confirm.reset_mock()
     builder.phase_configure()
-    assert confirm.call_args_list[0].args[0] == 'Reconfigure?'
+    assert confirm.call_args_list[0].args[0] == 'Reconfigure? (n stops)'
 
 
 def test_clean_dry_run_keeps_tree(tmp_path: Path, mocker: MockerFixture):
@@ -1080,7 +1083,8 @@ def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
     console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path, interactive=True), console).build()
     out = console.export_text()
-    assert out.splitlines()[1] == 'The build runs these eight steps:'
+    assert out.splitlines()[1] == 'Dry run: every command is printed and nothing runs.'
+    assert out.splitlines()[2] == 'The build runs these eight steps:'
     assert 'asks before running' not in out
     assert out.index('Proceed?') < out.index('1/8 Tools') < out.index('2/8 Source')
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
@@ -1088,7 +1092,9 @@ def test_intro_explains_and_asks(tmp_path: Path, mocker: MockerFixture):
     builder = Builder(_config(tmp_path, interactive=True, dry_run=False), console)
     with pytest.raises(BuildError, match='Stopped before the first step'):
         builder.build()
-    assert 'asks before running any command; Enter takes the default' in console.export_text()
+    assert (
+        'asks before running any command. Enter takes the default shown' in console.export_text()
+    )
 
 
 @pytest.mark.parametrize(
@@ -1511,6 +1517,15 @@ def test_build_in_manylinux_dry_run(tmp_path: Path, mocker: MockerFixture):
     out = console.export_text()
     assert 'Run the build in the container? (n stops) -> yes (dry run)' in out
     assert not (tmp_path / 'vtk-build').exists()
+    which = mocker.patch.object(
+        tools.shutil, 'which', side_effect=lambda name, **_: None if name == 'docker' else name
+    )
+    console = Console(record=True, width=4000, force_terminal=False)
+    builder = Builder(_config(tmp_path, manylinux='img'), console)
+    mocker.patch.object(builder, 'run')
+    assert builder.build() is None
+    assert 'docker was not found on PATH' in console.export_text()
+    which.side_effect = lambda name, **_: f'/usr/bin/{name}'
     mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
     builder = Builder(_config(tmp_path, dry_run=False, manylinux='img'), Console(quiet=True))
     mocker.patch.object(builder, 'phase_source', side_effect=AssertionError)
@@ -1715,8 +1730,9 @@ def test_plan(tmp_path: Path):
     assert 'auditwheel' in plan['Repair']
     assert 'rendering' in plan['Build options']
     assert 'web' not in plan['Build options']
-    assert plan['Configure'].endswith(', plus -DX=1. Compiler cache: none')
-    assert plan['Build'].startswith('compile with 3 parallel jobs')
+    assert plan['Configure'].endswith(', plus -DX=1. Compiler cache (--compiler-cache): none')
+    assert plan['Build'].startswith('compile with 3 parallel jobs (--jobs)')
+    assert plan['Build options'].endswith('--opt NAME=VALUE change them')
     assert plan['Install'] == f'install the wheel into {sys.prefix}'
     with pytest.raises(BuildError, match='nope'):
         Builder(_config(tmp_path, with_=['nope']), Console(quiet=True)).plan()
@@ -1738,8 +1754,18 @@ def test_plan(tmp_path: Path):
     for choice, text in [('auto', 'ccache or sccache'), ('sccache', 'sccache')]:
         plan = dict(Builder(_config(tmp_path, compiler_cache=choice), Console(quiet=True)).plan())
         assert plan['Configure'].endswith(
-            f'Compiler cache: {text}' + ('' if choice == 'sccache' else ', whichever is on PATH')
+            f'Compiler cache (--compiler-cache): {text}'
+            + ('' if choice == 'sccache' else ', whichever is on PATH')
         )
+    plan = dict(Builder(_config(tmp_path, clean=True, update=True), Console(quiet=True)).plan())
+    assert plan['Configure'].startswith(f'delete {cfg.cmake_dir} (--clean), then cmake')
+    assert plan['Source'].endswith(
+        '--update fetches, then checks out the release tag; local edits stop it'
+    )
+    mine = tmp_path / 'mine'
+    (mine / '.git').mkdir(parents=True)
+    plan = dict(Builder(_config(tmp_path, source=mine), Console(quiet=True)).plan())
+    assert plan['Source'] == f'build the checkout at {mine}, local edits kept'
 
 
 def _path_style(path: str) -> str:
@@ -1972,10 +1998,12 @@ def test_default_jobs_follow_memory(tmp_path: Path, mocker: MockerFixture):
     out = builder.console.export_text()
     assert '16 CPU cores and 8 GB of memory detected; compiling with 4 jobs, one per 2 GB' in out
     assert dict(builder.plan())['Build'].startswith(
-        'compile with 4 parallel jobs (one per 2 GB of memory)'
+        'compile with 4 parallel jobs (--jobs), one per 2 GB of memory'
     )
     builder.config.jobs = 6
-    assert dict(builder.plan())['Build'].startswith('compile with 6 parallel jobs, logging')
+    assert dict(builder.plan())['Build'].startswith(
+        'compile with 6 parallel jobs (--jobs), logging'
+    )
 
 
 def test_recheck_tools_after_clone(tmp_path: Path, mocker: MockerFixture):
