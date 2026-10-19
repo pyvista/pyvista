@@ -5,10 +5,13 @@ from __future__ import annotations
 import contextlib
 from dataclasses import dataclass
 from dataclasses import field
+import json
 import os
 from pathlib import Path
+import platform
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 from typing import TYPE_CHECKING
@@ -26,6 +29,9 @@ from rich.text import Text
 from . import tools as _tools
 from .manifest import MANIFEST_FILENAME
 from .manifest import ManifestError
+from .manifest import cmake_entries
+from .manifest import cmake_unset
+from .manifest import option_environment
 from .manifest import resolve_groups
 from .manifest import resolve_options
 from .registry import BACKENDS
@@ -39,6 +45,10 @@ if TYPE_CHECKING:
     from typing import IO
 
     from .manifest import Manifest
+
+STATE_FILENAME = '.pyvista-build.json'
+VERSION_SUFFIX_DEFINE = '-DVTK_VERSION_SUFFIX='
+DEFAULT_MACOS_TARGET = '11.0'
 
 
 class _NarrationHighlighter(Highlighter):
@@ -453,6 +463,19 @@ class Builder:
         """Interpreter the wheel is built for."""
         return sys.executable
 
+    def hooks(self, name: str) -> None:
+        """Run the manifest's hook commands inside the source tree, with the options' variables.
+
+        Parameters
+        ----------
+        name : str
+            Hook name, for example ``'post_build'``.
+
+        """
+        cfg = self.config
+        for template in self.manifest.hooks.get(name, ()):
+            self.run(self._expand(template), cwd=cfg.src_dir, env=self.configure_env())
+
     def _expand(self, template: str) -> list[str]:
         """Split a manifest command template, then substitute the placeholders per part."""
         cfg = self.config
@@ -758,3 +781,232 @@ class Builder:
         except subprocess.CalledProcessError:
             return None
         return f'dev0+g{sha}'
+
+    def configure_command(self) -> list[str]:
+        """Assemble the ``cmake`` configure command.
+
+        Returns
+        -------
+        list[str]
+            Command and arguments.
+
+        """
+        cfg = self.config
+        cmd = ['cmake', '-Wno-dev', '-S', str(cfg.src_dir), '-B', str(cfg.cmake_dir), '-GNinja']
+        cmd += [f'-U{key}' for key in cmake_unset(self.manifest, cfg.os_name, groups=self.groups)]
+        init_cache = self.manifest.init_cache.get(cfg.os_name)
+        if init_cache:
+            cmd += ['-C', str(cfg.src_dir / init_cache)]
+        cmd += [
+            f'-DCMAKE_BUILD_TYPE={cfg.build_type}',
+            f'-DPython3_EXECUTABLE={self.python}',
+            '-DPython3_FIND_STRATEGY=LOCATION',
+        ]
+        cmd.append(f'{VERSION_SUFFIX_DEFINE}{self.version_suffix() or ""}')
+        entries = cmake_entries(
+            self.manifest, cfg.os_name, groups=self.groups, options=self.option_values
+        )
+        cmd += [f'-D{e}' for e in entries]
+        if cfg.os_name == 'macos' and not self._macos_targets():
+            cmd.append(f'-DCMAKE_OSX_DEPLOYMENT_TARGET={DEFAULT_MACOS_TARGET}')
+        cmd += [f'-D{e}' for e in cfg.defines]
+        return cmd
+
+    def configure_env(self) -> dict[str, str]:
+        """Return the environment cmake runs in: the manifest options and the wheel platform.
+
+        Returns
+        -------
+        dict[str, str]
+            Variable name to value.
+
+        """
+        return {**option_environment(self.manifest, self.option_values), **self.wheel_env()}
+
+    def _stored_state(self) -> object:
+        """Return the configure state saved by the last run, or ``None`` when unreadable."""
+        state_file = self.config.cmake_dir / STATE_FILENAME
+        try:
+            return json.loads(state_file.read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            return None
+
+    def phase_configure(self) -> None:
+        """Run cmake, or skip it when the tree is already configured the same way."""
+        cfg = self.config
+        self.step('4/8 Configure')
+        if cfg.clean and cfg.cmake_dir.exists():
+            self.say(f'--clean removes [bold]{escape(str(cfg.cmake_dir))}[/bold].')
+            if self.confirm('Delete it?') and not cfg.dry_run:
+                shutil.rmtree(cfg.cmake_dir)
+        cmd = self.configure_command()
+        env = self.configure_env()
+        state = {'command': cmd, 'env': env}
+        configured = (cfg.cmake_dir / 'CMakeCache.txt').exists() and not cfg.clean
+        stored = self._stored_state() if configured else None
+        if configured and not cfg.reconfigure and stored == state:
+            self.say(
+                f'[bold]{escape(str(cfg.cmake_dir))}[/bold] is already configured; skipping '
+                '(use --reconfigure).'
+            )
+            return
+        if configured and stored != state:
+            if self._only_version_changed(stored, cmd, env):
+                self.say('The source is at a new commit, so the version suffix changes.')
+            else:
+                if stored is None:
+                    self.say('There is no record of how this tree was configured.')
+                else:
+                    self.say(
+                        'The configure command differs from the one this tree was set up with.'
+                    )
+                if not self.confirm('Reconfigure?'):
+                    msg = 'Stopped; the build tree keeps its earlier configuration.'
+                    raise BuildError(msg)
+        tree = escape(str(cfg.cmake_dir))
+        self.say(f'Build type [bold]{cfg.build_type}[/bold], build tree [bold]{tree}[/bold].')
+        if not self.confirm('Run cmake?'):
+            msg = 'Stopped before configure.'
+            raise BuildError(msg)
+        self.run(cmd, env=env)
+        self.hooks('post_configure')
+        if not cfg.dry_run:
+            state_file = cfg.cmake_dir / STATE_FILENAME
+            state_file.parent.mkdir(parents=True, exist_ok=True)
+            state_file.write_text(json.dumps(state, indent=2), encoding='utf-8')
+
+    @staticmethod
+    def _only_version_changed(stored: object, cmd: list[str], env: dict[str, str]) -> bool:
+        """Return whether a stored state differs from this one only in the version suffix."""
+        if not isinstance(stored, dict) or stored.get('env') != env:
+            return False
+        old = stored.get('command')
+        if not isinstance(old, list) or len(old) != len(cmd):
+            return False
+        prefix = VERSION_SUFFIX_DEFINE
+        return all(
+            a == b or (str(a).startswith(prefix) and b.startswith(prefix))
+            for a, b in zip(old, cmd, strict=True)
+        )
+
+    def phase_build(self) -> None:
+        """Compile with ninja through cmake."""
+        cfg = self.config
+        self.step('5/8 Build')
+        jobs, cores, memory = self._jobs()
+        found = f'{cores} CPU cores'
+        if memory is not None:
+            found += f' and {memory / 2**30:.0f} GB of memory'
+        if cfg.jobs:
+            why = ' (--jobs)'
+        elif jobs < cores:
+            why = ', one per 2 GB of memory so the compilers do not run out of it'
+        else:
+            why = ''
+        self.say(
+            f'{found} detected; compiling with [bold]{jobs}[/bold] jobs{why}. '
+            'A full VTK build takes tens of minutes to hours.'
+        )
+        jobs = self._ask_jobs(jobs)
+        self.run(
+            ['cmake', '--build', str(cfg.cmake_dir), '--parallel', str(jobs)],
+            env=self.configure_env(),
+            log=cfg.build_dir / 'build.log',
+        )
+        self.hooks('post_build')
+
+    def _jobs(self) -> tuple[int, int, int | None]:
+        """Return the job count, the CPU cores and the physical memory it was chosen from."""
+        cores = os.cpu_count() or 1
+        memory = _tools.physical_memory()
+        return self.config.jobs or _tools.default_jobs(cores, memory), cores, memory
+
+    def _ask_jobs(self, jobs: int) -> int:
+        """Confirm the build, taking a number as the job count instead of a yes.
+
+        Parameters
+        ----------
+        jobs : int
+            Proposed job count.
+
+        Returns
+        -------
+        int
+            Job count to build with.
+
+        """
+        if not self.config.prompting:
+            if not self.confirm('Start the build?'):
+                msg = 'Stopped before building.'
+                raise BuildError(msg)
+            return jobs
+        while True:
+            answer = (
+                Prompt.ask(
+                    'Start the build? [y/n, or a number of jobs]',
+                    default='y',
+                    console=self.console,
+                )
+                .strip()
+                .lower()
+            )
+            if answer in ('y', 'yes'):
+                return jobs
+            if answer in ('n', 'no'):
+                msg = 'Stopped before building.'
+                raise BuildError(msg)
+            if answer.isdigit() and int(answer) > 0:
+                return int(answer)
+            self.say('[red]Answer y, n or a positive number.[/red]')
+
+    def _macos_targets(self) -> list[str]:
+        """Return the ``CMAKE_OSX_DEPLOYMENT_TARGET`` values from the manifest and ``-D``."""
+        entries = [
+            *self.manifest.cmake_common,
+            *self.manifest.cmake_os['macos'],
+            *self.config.defines,
+        ]
+        return [
+            value
+            for key, _, value in (e.partition('=') for e in entries)
+            if key.split(':')[0] == 'CMAKE_OSX_DEPLOYMENT_TARGET'
+        ]
+
+    def wheel_env(self) -> dict[str, str]:
+        """Return the extra environment for ``bdist_wheel``.
+
+        Returns
+        -------
+        dict[str, str]
+            Platform tag variables on macOS; empty elsewhere.
+
+        """
+        cfg = self.config
+        if cfg.os_name != 'macos':
+            return {}
+        arch = platform.machine()
+        targets = self._macos_targets()
+        target = targets[-1] if targets else DEFAULT_MACOS_TARGET
+        return {'_PYTHON_HOST_PLATFORM': f'macosx-{target}-{arch}', 'ARCHFLAGS': f'-arch {arch}'}
+
+    def phase_wheel(self) -> None:
+        """Package the build tree into a wheel."""
+        cfg = self.config
+        self.step('6/8 Wheel')
+        self.say(f'The wheel is written to [bold]{escape(str(cfg.dist_dir))}[/bold].')
+        if not self.confirm('Build the wheel?'):
+            msg = 'Stopped before packaging.'
+            raise BuildError(msg)
+        self.run([self.python, 'setup.py', 'bdist_wheel'], cwd=cfg.cmake_dir, env=self.wheel_env())
+        self.hooks('post_wheel')
+        self.wheel = self._newest_wheel(cfg.dist_dir)
+
+    def _newest_wheel(self, folder: Path) -> Path | None:
+        """Return the most recently written wheel in a folder."""
+        wheels = sorted(folder.glob('*.whl'), key=lambda p: p.stat().st_mtime)
+        if not wheels:
+            if self.config.dry_run:
+                return None
+            msg = f'No wheel found in {folder}.'
+            raise BuildError(msg)
+        return wheels[-1]

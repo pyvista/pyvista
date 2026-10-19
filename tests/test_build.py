@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from io import StringIO
+import json
 import os
 import shutil
 import subprocess
@@ -18,6 +19,7 @@ from pyvista._build import Builder
 from pyvista._build import BuildError
 from pyvista._build import phases
 from pyvista._build import tools
+from pyvista._build.manifest import cmake_unset
 from pyvista._build.manifest import parse_manifest
 from pyvista._build.manifest import resolve_groups
 from pyvista._build.manifest import resolve_options
@@ -363,6 +365,100 @@ def test_git_version_suffix(tmp_path: Path, mocker: MockerFixture):
     assert builder.version_suffix() is None
 
 
+def test_configure_paths(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, clean=True)
+    cfg = builder.config
+    cfg.cmake_dir.mkdir(parents=True)
+    (cfg.cmake_dir / 'stale').write_text('')
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_configure()
+    assert not (cfg.cmake_dir / 'stale').exists()
+    assert run.called
+    assert (cfg.cmake_dir / phases.STATE_FILENAME).is_file()
+    (cfg.cmake_dir / 'CMakeCache.txt').write_text('')
+    builder = _builder(tmp_path, mocker)
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_configure()
+    assert not run.called
+    assert 'already configured' in builder.console.export_text()
+    builder = _builder(tmp_path, mocker, build_type='Debug')
+    mocker.patch.object(
+        builder, 'confirm', side_effect=lambda q, **_: not q.startswith('Reconfigure')
+    )
+    with pytest.raises(BuildError, match='keeps its earlier configuration'):
+        builder.phase_configure()
+    builder = _builder(tmp_path, mocker, reconfigure=True)
+    mocker.patch.object(
+        builder, 'confirm', side_effect=lambda q, **_: not q.startswith('Run cmake')
+    )
+    with pytest.raises(BuildError, match='Stopped before configure'):
+        builder.phase_configure()
+
+
+def test_configure_state(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    cfg = builder.config
+    run = mocker.patch.object(builder, 'run')
+    builder.phase_configure()
+    state_file = cfg.cmake_dir / phases.STATE_FILENAME
+    stored = json.loads(state_file.read_text())
+    assert stored == {'command': builder.configure_command(), 'env': {}}
+    assert run.call_args.args[0] == stored['command']
+    (cfg.cmake_dir / 'CMakeCache.txt').write_text('')
+    mocker.patch.object(builder, 'version_suffix', return_value='dev0+gabcdef12')
+    confirm = mocker.patch.object(builder, 'confirm', return_value=True)
+    builder.phase_configure()
+    assert 'new commit' in builder.console.export_text()
+    assert [c.args[0] for c in confirm.call_args_list] == ['Run cmake?']
+    assert '-DVTK_VERSION_SUFFIX=dev0+gabcdef12' in run.call_args.args[0]
+    state_file.write_text('{')
+    builder.phase_configure()
+    assert 'no record of how this tree was configured' in builder.console.export_text()
+    assert confirm.call_args_list[-2].args[0] == 'Reconfigure?'
+    state_file.write_text(json.dumps({'command': ['cmake'], 'env': {}}))
+    confirm.reset_mock()
+    builder.phase_configure()
+    assert confirm.call_args_list[0].args[0] == 'Reconfigure?'
+    state = {'command': builder.configure_command(), 'env': {}}
+    state_file.write_text(json.dumps(state))
+    mocker.patch.object(builder, 'configure_env', return_value={'X': '1'})
+    confirm.reset_mock()
+    builder.phase_configure()
+    assert confirm.call_args_list[0].args[0] == 'Reconfigure?'
+
+
+def test_clean_dry_run_keeps_tree(tmp_path: Path, mocker: MockerFixture):
+    """``--clean --dry-run`` on a configured tree leaves it alone and shows the configure."""
+    builder = _builder(tmp_path, mocker, clean=True)
+    builder.config.dry_run = True
+    cmake_dir = builder.config.cmake_dir
+    cmake_dir.mkdir(parents=True)
+    (cmake_dir / 'stale').write_text('')
+    (cmake_dir / 'CMakeCache.txt').write_text('')
+    state = json.dumps({'command': builder.configure_command(), 'env': builder.configure_env()})
+    (cmake_dir / phases.STATE_FILENAME).write_text(state)
+    builder.phase_configure()
+    out = builder.console.export_text()
+    assert '$ cmake -Wno-dev' in out
+    assert 'already configured' not in out
+    assert (cmake_dir / 'stale').exists()
+    assert (cmake_dir / phases.STATE_FILENAME).read_text() == state
+
+
+def test_disabled_groups_unset_their_keys(tmp_path: Path, mocker: MockerFixture, demo):
+    assert cmake_unset(demo, 'linux', groups=['a', 'core']) == ['B', 'C']
+    assert cmake_unset(demo, 'macos', groups=['b', 'core']) == []
+    builder = _builder(tmp_path, mocker)
+    cmd = builder.configure_command()
+    unset = [a for a in cmd if a.startswith('-U')]
+    assert unset == ['-UVTK_OPENGL_HAS_EGL', '-UVTK_USE_X']
+    first_define = min(i for i, a in enumerate(cmd) if a.startswith(('-C', '-D')))
+    assert all(cmd.index(a) < first_define for a in unset)
+    builder.groups = [*builder.groups, 'headless']
+    cmd = builder.configure_command()
+    assert not any(a.startswith('-U') for a in cmd)
+
+
 def test_confirm_asks_on_a_terminal(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     ask = mocker.patch.object(phases.Confirm, 'ask', return_value=False)
@@ -421,6 +517,37 @@ def test_version_command_output(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(subprocess, 'run', side_effect=FileNotFoundError('gone'))
     with pytest.raises(BuildError, match='Cannot run version_command'):
         builder.version_suffix()
+
+
+def test_newest_wheel_by_mtime(tmp_path: Path):
+    old, new = tmp_path / 'b-old.whl', tmp_path / 'a-new.whl'
+    old.write_bytes(b'')
+    new.write_bytes(b'')
+    os.utime(old, (1, 1))
+    builder = Builder(_config(tmp_path), Console(quiet=True))
+    assert builder._newest_wheel(tmp_path) == new
+    assert builder._newest_wheel(tmp_path / 'empty') is None
+
+
+def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
+    mocker.patch.object(phases.os, 'cpu_count', return_value=8)
+    mocker.patch.object(tools, 'physical_memory', return_value=64 * 2**30)
+    builder = _builder(tmp_path, mocker)
+    builder.config.interactive = True
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'hooks')
+    mocker.patch.object(phases.Prompt, 'ask', side_effect=['x', '0', '4'])
+    builder.phase_build()
+    out = builder.console.export_text()
+    assert '8 CPU cores and 64 GB of memory detected; compiling with 8 jobs.' in out
+    assert run.call_args_list[0].args[0][-2:] == ['--parallel', '4']
+    mocker.patch.object(phases.Prompt, 'ask', return_value='y')
+    builder.phase_build()
+    assert run.call_args_list[-1].args[0][-2:] == ['--parallel', '8']
+    mocker.patch.object(phases.Prompt, 'ask', return_value='n')
+    with pytest.raises(BuildError, match='Stopped before building'):
+        builder.phase_build()
 
 
 def test_paths_link_only_on_a_real_terminal(tmp_path: Path):
@@ -511,6 +638,14 @@ def test_update_follows_the_remote_branch(
     assert git('rev-parse', 'HEAD', cwd=tmp_path / 'src') == tagged
 
 
+def test_wheel_env_takes_the_define(tmp_path: Path, mocker: MockerFixture):
+    """A ``-D CMAKE_OSX_DEPLOYMENT_TARGET`` sets the wheel's platform tag."""
+    builder = _builder(
+        tmp_path, mocker, os_name='macos', defines=['CMAKE_OSX_DEPLOYMENT_TARGET:STRING=12.0']
+    )
+    assert builder.wheel_env()['_PYTHON_HOST_PLATFORM'].startswith('macosx-12.0-')
+
+
 def test_recheck_tools_after_clone(tmp_path: Path, mocker: MockerFixture):
     """Tool versions only the cloned manifest asks for are checked after the clone."""
     builder = _builder(tmp_path, mocker)
@@ -576,6 +711,53 @@ def test_patchelf_offered_on_linux(tmp_path: Path, mocker: MockerFixture):
     builder.phase_tools()
     assert run.call_args.args[0] == ['pip', 'install', 'patchelf']
     assert f'  • patchelf into {sys.prefix}' in builder.console.export_text()
+
+
+def test_failed_post_configure_hook_reruns_configure(tmp_path: Path, mocker: MockerFixture):
+    """The configure state is saved only after the hooks pass, so a failed hook runs again."""
+    builder = _builder(tmp_path, mocker)
+    cmake_dir = builder.config.cmake_dir
+    run = mocker.patch.object(builder, 'run')
+    hooks = mocker.patch.object(builder, 'hooks', side_effect=BuildError('hook failed'))
+    with pytest.raises(BuildError, match='hook failed'):
+        builder.phase_configure()
+    assert not (cmake_dir / phases.STATE_FILENAME).exists()
+    cmake_dir.mkdir(parents=True)
+    (cmake_dir / 'CMakeCache.txt').write_text('')
+    hooks.side_effect = None
+    builder.phase_configure()
+    assert run.call_count == 2
+    assert hooks.call_count == 2
+    assert (cmake_dir / phases.STATE_FILENAME).is_file()
+
+
+def test_build_runs_in_the_configure_env(tmp_path: Path, mocker: MockerFixture):
+    """``cmake --build`` gets the configure environment, so a self-reconfigure keeps it."""
+    builder = _builder(tmp_path, mocker, os_name='macos', yes=True)
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'hooks')
+    builder.phase_build()
+    env = run.call_args.kwargs['env']
+    assert env == builder.configure_env()
+    assert '_PYTHON_HOST_PLATFORM' in env
+
+
+def test_macos_deployment_target_fallback(tmp_path: Path, mocker: MockerFixture):
+    """Without a deployment target from the manifest or ``-D``, cmake gets the tag's one."""
+    define = f'-DCMAKE_OSX_DEPLOYMENT_TARGET={phases.DEFAULT_MACOS_TARGET}'
+    builder = _builder(tmp_path, mocker, os_name='macos')
+    assert builder.configure_command().count(define) == 1
+    manifest = builder.manifest
+    builder._manifest = replace(manifest, cmake_os={**manifest.cmake_os, 'macos': ()})
+    assert define in builder.configure_command()
+    platform_tag = builder.wheel_env()['_PYTHON_HOST_PLATFORM']
+    assert platform_tag.startswith(f'macosx-{phases.DEFAULT_MACOS_TARGET}-')
+    builder.config.defines = ['CMAKE_OSX_DEPLOYMENT_TARGET=12.0']
+    cmd = builder.configure_command()
+    assert define not in cmd
+    assert '-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0' in cmd
+    linux = _builder(tmp_path, mocker)
+    assert not any('CMAKE_OSX_DEPLOYMENT_TARGET' in arg for arg in linux.configure_command())
 
 
 @pytest.mark.parametrize(
