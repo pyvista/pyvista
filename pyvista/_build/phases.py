@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections import deque
 import contextlib
 from dataclasses import dataclass
 from dataclasses import field
+from io import TextIOWrapper
 import json
 import os
 from pathlib import Path
@@ -12,8 +14,11 @@ import platform
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
+import threading
+import time
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -42,6 +47,7 @@ from .registry import shipped_manifest
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Sequence
+    from io import BufferedReader
     from typing import IO
 
     from .manifest import Manifest
@@ -103,6 +109,39 @@ _join = subprocess.list2cmdline if os.name == 'nt' else shlex.join
 _NOISY_BUILD_LINE = re.compile(
     r': warning C\d+:|: note:|^\s+(with|\[|\])\s*$|^\s+[A-Za-z_][A-Za-z0-9_]*='
 )
+_TAIL_LINES = 40
+_TICK_SECONDS = 1.0
+
+
+def _short_name(cmd: Sequence[str]) -> str:
+    """Return a command's program name, plus its subcommand when it has one."""
+    words = [Path(cmd[0]).stem]
+    if len(cmd) > 1 and not cmd[1].startswith('-') and not set('/\\') & set(cmd[1]):
+        words.append(cmd[1])
+    return ' '.join(words)
+
+
+def _lf(line: str) -> str:
+    """Return a line with its Windows line ending turned into a plain newline."""
+    return line[:-2] + '\n' if line.endswith('\r\n') else line
+
+
+def _duration(seconds: float) -> str:
+    """Return an elapsed time as ``1h 02m``, ``3m 04s`` or ``5s``."""
+    minutes, secs = divmod(round(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f'{hours}h {minutes:02d}m'
+    if minutes:
+        return f'{minutes}m {secs:02d}s'
+    return f'{secs}s'
+
+
+def _interrupt(proc: subprocess.Popen[bytes]) -> None:
+    """Pass Ctrl-C on to a command running in its own session."""
+    if sys.platform != 'win32':
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(proc.pid, signal.SIGINT)
 
 
 class BuildError(Exception):
@@ -466,10 +505,12 @@ class Builder:
         env: Mapping[str, str] | None = None,
         log: Path | None = None,
         fatal: bool = True,
+        passthrough: bool = False,
     ) -> None:
         """Print and run a command; raise :class:`BuildError` when it fails.
 
-        Without ``verbose``, the printed command leaves out its environment variables.
+        Without ``verbose``, the printed command leaves out its environment variables and its
+        standard output shows as one updating status line.
 
         Parameters
         ----------
@@ -488,6 +529,9 @@ class Builder:
         fatal : bool, default: True
             Raise on a non-zero exit status instead of only reporting it.
 
+        passthrough : bool, default: False
+            Leave the command's output to the terminal, whatever ``verbose`` says.
+
         """
         where = f' (in {cwd})' if cwd is not None else ''
         shown_env = (env or {}) if self.config.verbose else {}
@@ -500,41 +544,116 @@ class Builder:
         full_env = dict(self.env)
         full_env.update(env or {})
         resolved = [_tools.which(cmd[0], full_env), *cmd[1:]]
+        started = time.monotonic()
         try:
-            if log is None:
+            if passthrough or (self.config.verbose and log is None):
                 status = subprocess.run(resolved, cwd=cwd, env=full_env, check=False).returncode
             else:
-                status = self._run_logged(resolved, cwd=cwd, env=full_env, log=log)
+                status = self._run_captured(resolved, cwd=cwd, env=full_env, log=log)
         except OSError as err:
             msg = f'Cannot run {cmd[0]}: {err}'
             raise BuildError(msg) from None
-        if status != 0 and fatal:
+        if status == 0:
+            self.say(f'[green]Done[/green] in {_duration(time.monotonic() - started)}')
+        elif fatal:
             msg = f'Command failed with exit status {status}: {_join(cmd)}'
             raise BuildError(msg)
 
-    def _run_logged(
-        self, cmd: Sequence[str], *, cwd: Path | None, env: dict[str, str], log: Path
+    def _run_captured(
+        self, cmd: Sequence[str], *, cwd: Path | None, env: dict[str, str], log: Path | None
     ) -> int:
-        """Run a command, writing its full output to a log and a filtered view to the console."""
-        with (
-            log.open('w', encoding='utf-8') as log_file,
-            subprocess.Popen(
-                cmd,
-                cwd=cwd,
-                env=env,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                encoding='utf-8',
-                errors='replace',
-            ) as proc,
-        ):
-            for line in cast('IO[str]', proc.stdout):
-                log_file.write(line)
-                if not _NOISY_BUILD_LINE.search(line):
-                    self.console.out(line, end='', highlight=False)
+        """Run a command, folding its standard output into a status line unless verbose."""
+        verbose = self.config.verbose
+        tail: deque[str] = deque(maxlen=_TAIL_LINES)
+        lock = threading.Lock()
+        stopped = threading.Event()
+        started = time.monotonic()
+        current = _short_name(cmd)
+
+        def show(line: str) -> None:
+            if log is None or not _NOISY_BUILD_LINE.search(line):
+                self.console.out(line, end='', highlight=False)
+
+        def lines(stream: IO[bytes] | None) -> TextIOWrapper:
+            buffer = cast('BufferedReader', stream)
+            return TextIOWrapper(buffer, encoding='utf-8', errors='replace', newline='')
+
+        def render() -> None:
+            if status is not None:
+                elapsed = _duration(time.monotonic() - started)
+                status.update(f'{escape(current)} [dim]{elapsed}[/dim]')
+
+        def update(line: str) -> None:
+            nonlocal current
+            current = line.strip().expandtabs()[: max(self.console.width - 14, 20)]
+            render()
+
+        def tick() -> None:
+            while not stopped.wait(_TICK_SECONDS):
+                with lock:
+                    render()
+
+        with contextlib.ExitStack() as stack:
+            log_file = stack.enter_context(log.open('w', encoding='utf-8')) if log else None
+            proc = stack.enter_context(
+                subprocess.Popen(
+                    cmd,
+                    cwd=cwd,
+                    env=env,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
+                )
+            )
+
+            def stop(kind: type[BaseException] | None, *_: object) -> None:
+                if kind is KeyboardInterrupt:
+                    _interrupt(proc)
+
+            stack.push(stop)
+            status = None
+            if not verbose and self.console.is_terminal:
+                status = stack.enter_context(self.console.status('', spinner='dots'))
+                render()
+                ticker = threading.Thread(target=tick, daemon=True)
+                ticker.start()
+                stack.callback(ticker.join)
+                stack.callback(stopped.set)
+
+            def copy_stderr() -> None:
+                with lines(proc.stderr) as stream:
+                    for line in map(_lf, stream):
+                        with lock:
+                            if not line.endswith('\n'):
+                                update(line)
+                                continue
+                            if log_file is not None:
+                                log_file.write(line)
+                            show(line)
+
+            reader = threading.Thread(target=copy_stderr, daemon=True)
+            reader.start()
+            with lines(proc.stdout) as stream:
+                for line in map(_lf, stream):
+                    with lock:
+                        if not line.endswith('\n'):
+                            update(line)
+                            continue
+                        if log_file is not None:
+                            log_file.write(line)
+                        if verbose:
+                            show(line)
+                            continue
+                        tail.append(line)
+                        update(line)
+            reader.join()
         if proc.returncode != 0:
-            self.say(f'[red]Build failed; the full log is in {escape(str(log))}[/red]')
+            if not verbose:
+                for line in tail:
+                    show(line)
+            if log is not None:
+                self.say(f'[red]Build failed; the full log is in {escape(str(log))}[/red]')
         return proc.returncode
 
     def git(self, *args: str, cwd: Path | None = None, capture: bool = False) -> str:

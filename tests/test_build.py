@@ -434,6 +434,103 @@ def test_run_logged_filters_noise(tmp_path: Path, mocker: MockerFixture):
     assert 'full log is in' in out
     builder.run([sys.executable, '-c', 'print("clean")'], log=log)
     assert log.read_text() == 'clean\n'
+    crlf = (
+        'import sys; sys.stdout.buffer.write(b"one\\r\\n"); sys.stderr.buffer.write(b"two\\r\\n")'
+    )
+    builder.run([sys.executable, '-c', crlf], log=log)
+    assert sorted(log.read_bytes().decode().splitlines(keepends=True)) == [
+        f'one{os.linesep}',
+        f'two{os.linesep}',
+    ]
+    out = builder.console.export_text()
+    assert 'two\n' in out
+    assert '\r' not in out
+
+
+def test_run_folds_output_into_a_status_line(tmp_path: Path, mocker: MockerFixture):
+    """Standard output becomes one status line, stderr still prints, a failure shows the tail."""
+    builder = _builder(tmp_path, mocker)
+    builder.console = Console(record=True, width=4000, force_terminal=True)
+    status = mocker.patch.object(builder.console, 'status')
+    mocker.patch.object(phases, '_TICK_SECONDS', 0.01)
+    script = tmp_path / 'chatty.py'
+    script.write_text(
+        'import sys, time\n'
+        'time.sleep(0.2)\n'
+        'sys.stderr.write("Updating files: 50%\\rUpdating files: 99%\\r")\n'
+        'sys.stdout.write("Receiving 10%\\r")\n'
+        'for i in range(50): print(f"step {i}")\n'
+        'print("careful", file=sys.stderr)\n'
+        'raise SystemExit(int(sys.argv[1]))\n'
+    )
+    builder.run([sys.executable, str(script), '0'])
+    out = builder.console.export_text()
+    assert 'careful' in out
+    assert 'step 49' not in out
+    assert 'Updating files' not in out
+    assert re.search(r'Done in \d+s\n', out)
+    update = status.return_value.__enter__.return_value.update
+    shown = [c.args[0].split(' [dim]')[0] for c in update.call_args_list]
+    assert shown[0] == phases._short_name([sys.executable])
+    assert shown.count(shown[0]) > 1
+    assert [s for s in shown if s.startswith('step')][-1] == 'step 49'
+    assert {'Updating files: 99%', 'Receiving 10%'} <= set(shown)
+    assert re.search(r' \[dim\]\d+s\[/dim\]$', update.call_args.args[0])
+    with pytest.raises(BuildError, match='exit status 2'):
+        builder.run([sys.executable, str(script), '2'])
+    out = builder.console.export_text()
+    assert 'step 49' in out
+    assert 'step 9\n' not in out
+
+    builder.config.verbose = True
+    builder.run([sys.executable, str(script), '0'], log=tmp_path / 'build.log')
+    assert 'step 0' in builder.console.export_text()
+    assert 'careful' in (tmp_path / 'build.log').read_text()
+    assert 'Updating files' not in (tmp_path / 'build.log').read_text()
+    with pytest.raises(BuildError):
+        builder.run([sys.executable, str(script), '1'], log=tmp_path / 'build.log')
+    assert builder.console.export_text().count('step 49') == 1
+
+
+def test_short_name():
+    assert phases._short_name(['git', 'clone', 'https://x/y.git']) == 'git clone'
+    assert phases._short_name(['/usr/bin/cmake', '-S', 'src']) == 'cmake'
+    assert phases._short_name(['python', 'setup.py', 'bdist_wheel']) == 'python setup.py'
+    assert phases._short_name(['python', '/a/b.py']) == 'python'
+
+
+@pytest.mark.parametrize(('seconds', 'text'), [(4.6, '5s'), (64, '1m 04s'), (3725, '1h 02m')])
+def test_duration(seconds, text):
+    assert phases._duration(seconds) == text
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='POSIX sessions and signals')
+def test_run_captured_in_own_session(tmp_path: Path, mocker: MockerFixture):
+    """A folded command leaves the terminal alone, and Ctrl-C still reaches it."""
+    builder = _builder(tmp_path, mocker)
+    builder.console = Console(record=True, width=4000, force_terminal=True)
+    builder.run([sys.executable, '-c', 'import os; print(os.getsid(0))'], log=tmp_path / 'a.log')
+    assert int((tmp_path / 'a.log').read_text()) != os.getsid(0)
+
+    status = mocker.patch.object(builder.console, 'status')
+
+    def press_ctrl_c(text: str) -> None:
+        if text.startswith('ready'):
+            raise KeyboardInterrupt
+
+    status.return_value.__enter__.return_value.update.side_effect = press_ctrl_c
+    mocker.patch.object(phases, '_TICK_SECONDS', 60)
+    marker = tmp_path / 'interrupted'
+    script = tmp_path / 'wait.py'
+    script.write_text(
+        'import signal, sys, time\n'
+        f'signal.signal(signal.SIGINT, lambda *_: open({str(marker)!r}, "w") and sys.exit(1))\n'
+        'print("ready", flush=True)\n'
+        'time.sleep(30)\n'
+    )
+    with pytest.raises(KeyboardInterrupt):
+        builder.run([sys.executable, str(script)])
+    assert marker.exists()
 
 
 @pytest.mark.parametrize('verbose', [False, True])
@@ -443,6 +540,13 @@ def test_run_prints_the_environment_only_when_verbose(tmp_path: Path, verbose):
     builder.run(['cmake', '--build', 'b'], env={'ARCHFLAGS': '-arch arm64'})
     shown = "$ ARCHFLAGS='-arch arm64' cmake --build b" if verbose else '$ cmake --build b'
     assert console.export_text() == f'{shown}\n'
+
+
+def test_run_passthrough(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker)
+    spy = mocker.patch.object(subprocess, 'run', return_value=subprocess.CompletedProcess([], 0))
+    builder.run([sys.executable, '-V'], passthrough=True)
+    assert spy.called
 
 
 def test_source_not_a_checkout(tmp_path: Path, mocker: MockerFixture):
