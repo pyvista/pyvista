@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -53,3 +54,25 @@ def test_use_circular_splat(mapper):
 
     mapper.use_default_splat()
     assert mapper.GetSplatShaderCode() is None
+
+
+@pytest.mark.parametrize('scalars', [None, 'radius'])
+def test_scalar_range(scalars):
+    """The scalar bar of a points_gaussian actor spans its data, as for other styles."""
+    rng = np.random.default_rng(seed=0)
+    points = pv.PolyData(rng.random((100, 3)))
+    points['radius'] = rng.random(100) * 0.02
+    pl = pv.Plotter()
+    actor = pl.add_mesh(points, scalars=scalars, style='points_gaussian')
+    expected = points.get_data_range('radius')
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == pytest.approx(expected)
+
+
+def test_scalar_range_clim():
+    """An explicit ``clim`` survives the conversion to RGBA."""
+    points = pv.PolyData(np.random.default_rng(seed=0).random((100, 3)))
+    points['radius'] = np.linspace(0, 0.02, 100)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(points, style='points_gaussian', clim=[0, 0.05])
+    assert actor.mapper.scalar_range == pytest.approx((0, 0.05))
