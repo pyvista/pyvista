@@ -285,7 +285,11 @@ _VTK_CELL_STATUS_INFO = {
     ),
     'COINCIDENT_POINTS': _CellStatusTuple(
         value=0x100,
-        doc='Cell has duplicate coordinates or repeated use of the same connectivity entry.',
+        doc=(
+            'Cell has duplicate coordinates or repeated use of the same connectivity entry. '
+            'A polyline is only checked for consecutive duplicates, and a triangle strip for '
+            'having fewer than three distinct points.'
+        ),
     ),
 }
 
@@ -446,7 +450,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             data_fields=data_fields,
             point_fields=point_fields,
             cell_fields=cell_fields,
-            explicit=validation_fields is not None,
+            requested=_MeshValidator._requested(validation_fields),
             **cell_validator_kwargs,
         )
 
@@ -456,9 +460,13 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
         *,
-        explicit: bool,
+        requested: tuple[str, ...],
     ) -> tuple[tuple[_PointFields, ...], tuple[_CellFields, ...]]:
-        """Drop the fields this mesh type cannot check, or raise if they were asked for."""
+        """Drop the fields this mesh type cannot check, or raise if they were requested.
+
+        A field named in ``requested`` raises, and so does a group in ``requested`` of which no
+        field can be checked. Other fields of a group which cannot be checked are dropped.
+        """
         unsupported: tuple[_LiteralMeshValidationFields, ...] = ()
         if isinstance(mesh, pv.PointSet):
             unsupported = ('unused_points', *_MeshValidator._allowed_cell_fields)
@@ -475,15 +483,38 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'degenerate_faces',
                 'coincident_points',
             )
+        group_fields = {
+            'data': _MeshValidator._allowed_data_fields,
+            'points': _MeshValidator._allowed_point_fields,
+            'cells': _MeshValidator._allowed_cell_fields,
+            'memory_safe': get_args(_MemorySafeFields),
+        }
+        for group, members in group_fields.items():
+            if group in requested and all(field in unsupported for field in members):
+                msg = f'No {group!r} validation fields are supported for {type(mesh).__name__}.'
+                raise ValueError(msg)
         for field in unsupported:
             if field in cell_fields or field in point_fields:
-                if explicit:
+                if field in requested:
                     kind = 'Point' if field in point_fields else 'Cell'
                     msg = f'{kind} field {field!r} is not supported for {type(mesh).__name__}.'
                     raise ValueError(msg)
                 cell_fields = tuple(f for f in cell_fields if f != field)
                 point_fields = tuple(f for f in point_fields if f != field)
         return point_fields, cell_fields
+
+    @staticmethod
+    def _requested(
+        validation_fields: _LiteralMeshValidationFields
+        | Sequence[_LiteralMeshValidationFields]
+        | None,
+    ) -> tuple[str, ...]:
+        """Return the validation fields and groups requested by name."""
+        if validation_fields is None:
+            return ()
+        if isinstance(validation_fields, str):
+            return (validation_fields,)
+        return tuple(validation_fields)
 
     @staticmethod
     def _validate_fields(
@@ -613,7 +644,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        explicit: bool,
+        requested: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
@@ -629,7 +660,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    explicit=explicit,
+                    requested=requested,
                     **cell_validator_kwargs,
                 )
             else:
@@ -639,7 +670,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    explicit=explicit,
+                    requested=requested,
                     **cell_validator_kwargs,
                 )
 
@@ -651,11 +682,11 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        explicit: bool,
+        requested: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_DataSetType]:
         point_fields, cell_fields = _MeshValidator._supported_fields(
-            mesh, point_fields, cell_fields, explicit=explicit
+            mesh, point_fields, cell_fields, requested=requested
         )
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
@@ -708,7 +739,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
-        explicit: bool,
+        requested: tuple[str, ...],
         **cell_validator_kwargs: Any,
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
@@ -726,7 +757,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
-                    explicit=explicit,
+                    requested=requested,
                     **cell_validator_kwargs,
                 )
                 reports.append(report)
@@ -1333,7 +1364,8 @@ class DataObjectFilters:
         **Cell validation fields**
 
         - ``coincident_points``: Ensure there are no duplicate coordinates or repeated use of the
-          same connectivity entry.
+          same connectivity entry. A polyline may revisit a point other than the one before it,
+          and a triangle strip may repeat points if it has at least three distinct points.
         - ``degenerate_faces``: Ensure faces do not collapse to a line or a point through repeated
           collocated vertices.
         - ``intersecting_edges``: Ensure two edges of a 2D cell do not intersect.
@@ -1394,6 +1426,19 @@ class DataObjectFilters:
               that is, the default value of ``report_body`` is now ``'message'`` instead of
               ``'fields'``.
 
+        .. versionchanged:: 0.50
+
+            - ``zero_size`` and ``negative_size`` use a default size tolerance which scales with
+              each cell and the precision of the points. See
+              :meth:`~pyvista.DataObjectFilters.cell_validator`.
+            - ``coincident_points`` allows a polyline to revisit a point other than the one
+              before it, and a triangle strip to repeat points if it has at least three distinct
+              points.
+            - A field group skips the fields the mesh type cannot check instead of raising, if
+              it has any field the mesh type can check. For example,
+              ``validate_mesh('cells')`` on :class:`~pyvista.ImageData` checks only
+              ``invalid_point_references``, ``negative_size``, and ``zero_size``.
+
         Parameters
         ----------
         validation_fields : MeshValidationFields | sequence[MeshValidationFields], optional
@@ -1409,6 +1454,15 @@ class DataObjectFilters:
               ``point_data_wrong_length``, and ``invalid_point_references``.
 
             Fields that are excluded from the report will have a value of ``None``.
+
+            Some fields cannot be checked for some mesh types, such as ``unused_points`` and
+            all cell fields for a :class:`~pyvista.PointSet`. For these fields:
+
+            - A group skips them and checks the rest. For example, ``'points'`` checks only
+              ``non_finite_points`` for a :class:`~pyvista.PointSet`.
+            - A group raises a ``ValueError`` if it has no field left to check. For example,
+              ``'cells'`` raises for a :class:`~pyvista.PointSet`.
+            - Naming such a field directly raises a ``ValueError``.
 
         action : 'warn' | 'error', optional
             Issue a warning or raise an error if the mesh is not valid for the specified fields.
@@ -1767,6 +1821,11 @@ class DataObjectFilters:
         .. versionadded:: 0.48
             Add tolerance keywords.
 
+        .. versionchanged:: 0.50
+            :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` allows a polyline to revisit a point
+            other than the one before it, and a triangle strip to repeat points if it has at least
+            three distinct points.
+
         Parameters
         ----------
         tolerance : float, default: 1.1920929e-07
@@ -1796,12 +1855,19 @@ class DataObjectFilters:
             :meth:`size <pyvista.DataObjectFilters.compute_cell_sizes>` of a cell. Cells with an
             absolute size less than or equal to this value are flagged as having
             :attr:`~pyvista.CellStatus.ZERO_SIZE`, and
-            cells with a size less than this value are flagged as having
+            cells with a size less than the negative of this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
-            The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
-            :class:`numpy.finfo`.
+
+            By default, each cell's size is compared with how much it can change when its points
+            move by one unit in the last place of the points ``dtype``, taken at the mesh's
+            largest absolute coordinate along each axis. Only a cell too small to resolve at the
+            precision of its points has zero size, whatever the scale of the mesh.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
+
+            .. versionchanged:: 0.50
+                The default depends on the size of each cell and the magnitude of the
+                coordinates. Previously, it was the epsilon of the points ``dtype``.
 
             .. note::
                 This tolerance is independent of any other tolerances.
@@ -1940,13 +2006,22 @@ class DataObjectFilters:
         # so skip the checks which dereference cell points when the connectivity is invalid
         invalid_references = _has_invalid_point_references(self)
 
+        # Grids cannot have invalid connectivity, so they skip vtkCellValidator
+        ugrid: pv.UnstructuredGrid | None = None
+        if not isinstance(self, pv.Grid):
+            ugrid = (
+                self if isinstance(self, pv.UnstructuredGrid) else self.cast_to_unstructured_grid()
+            )
+
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
-        skip_validator = isinstance(self, pv.Grid) or invalid_references
+        skip_validator = ugrid is None or invalid_references
         if skip_validator:
             output = self.copy(deep=False)
         else:
             cell_validator = _vtk.vtkCellValidator()
-            cell_validator.SetInputData(self)
+            cell_validator.SetInputData(
+                _cells_in_local_coordinates(cast('pv.UnstructuredGrid', ugrid))
+            )
             cell_validator.SetTolerance(tol)
             if pv.vtk_version_info >= (9, 6, 0):
                 # vtkCellValidator stores PlanarityTolerance as static class state, so we must
@@ -1955,7 +2030,10 @@ class DataObjectFilters:
                     planarity_tolerance if planarity_tolerance is not None else 0.1
                 )
             cell_validator.Update()
-            output = _get_output(cell_validator)
+            output = self.copy(deep=False)
+            output.cell_data['ValidityState'] = _get_output(cell_validator).cell_data[
+                'ValidityState'
+            ]
 
         def post_process(mesh: DataSet) -> None:
             # Make scalars 64-bit, rename, and make them active
@@ -1987,11 +2065,10 @@ class DataObjectFilters:
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
-                # Use points dtype eps by default
-                size_tol: float = (
+                size_tol: float | NDArray[np.float64] = (
                     size_tolerance
                     if size_tolerance is not None
-                    else np.finfo(mesh.points.dtype).eps
+                    else _cell_size_rounding(mesh, ugrid)
                 )
                 size_data = mesh.compute_cell_sizes(
                     vertex_count=True, length=True, area=True, volume=True
@@ -2003,21 +2080,20 @@ class DataObjectFilters:
                     + size_data['Volume']
                 )
 
+                # A size at the clamp is too large to compare with the tolerance
+                clamped = np.abs(size) >= _VERDICT_DBL_MAX
+
                 # NEGATIVE_SIZE
-                state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
+                state[(size < -size_tol) | (clamped & (size < 0))] |= CellStatus.NEGATIVE_SIZE
 
                 # ZERO_SIZE
-                state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
+                state[(np.abs(size) <= size_tol) & ~clamped] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
             # Skip remaining checks for datasets where cell connectivity cannot be invalid
             # Do not skip types StructuredGrid where coincident points are possible
-            if isinstance(mesh, pv.Grid):
+            if ugrid is None:
                 return
-
-            ugrid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
 
             conn = ugrid.cell_connectivity
             offset = ugrid.cell_offsets
@@ -2027,8 +2103,10 @@ class DataObjectFilters:
             # VTK's face-based vtkCellValidator never flags 2D cells,
             # so a collapsed edge (two coincident points) is missed. Add a PyVista-side
             # check: a cell is coincident if any two of its points are within tol. This
-            # applies to all cell types (also OR-ing the bit into already-caught cases).
+            # applies to all cell types (also OR-ing the bit into already-caught cases),
+            # except those which repeat points by design.
             coincident = np.zeros(n_cells, dtype=bool)
+            celltypes = ugrid.celltypes
             n_cell_points = np.diff(offset)
             valid_conn = (conn >= 0) & (conn < n_points)
             for size in np.unique(n_cell_points[n_cell_points >= 2]):
@@ -2042,8 +2120,23 @@ class DataObjectFilters:
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
                 diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
                 dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                close = dist_sq <= tol * tol
                 iu = np.triu_indices(size, k=1)
-                any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
+                any_coincident = np.any(close[:, iu[0], iu[1]], axis=1)
+                # A polyline may revisit its points, such as to close a loop, so only a
+                # zero-length segment is coincident
+                is_line = celltypes[cells] == CellType.POLY_LINE
+                if is_line.any():
+                    segment = np.arange(size - 1)
+                    any_coincident[is_line] = np.any(
+                        close[is_line][:, segment, segment + 1], axis=1
+                    )
+                # A strip repeats points for degenerate triangles, so only a strip without
+                # three distinct points is coincident
+                is_strip = celltypes[cells] == CellType.TRIANGLE_STRIP
+                if is_strip.any():
+                    repeated = np.any(np.tril(close[is_strip], k=-1), axis=2)
+                    any_coincident[is_strip] = size - repeated.sum(axis=1) < 3
                 coincident[cells] = any_coincident & group_valid
             state[coincident] |= CellStatus.COINCIDENT_POINTS
 
@@ -6591,6 +6684,132 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
+def _cells_in_local_coordinates(ugrid: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
+    """Return the cells of a grid, each with its own copy of its points centered on the cell.
+
+    :vtk:`vtkCellValidator` intersects edges with a tolerance relative to the distance from the
+    origin, which this makes relative to the size of each cell.
+    """
+    offsets = ugrid.cell_offsets
+    counts = np.diff(offsets)
+    points = ugrid.points[ugrid.cell_connectivity].astype(float, copy=False)
+    nonempty = counts > 0
+    center = np.zeros((ugrid.n_cells, 3))
+    with np.errstate(invalid='ignore', over='ignore'):
+        if nonempty.any():
+            sums = np.add.reduceat(points, offsets[:-1][nonempty])
+            center[nonempty] = sums / counts[nonempty, np.newaxis]
+        points -= np.repeat(center, counts, axis=0)
+
+    if not np.any(ugrid.celltypes == CellType.POLYHEDRON):
+        local = pv.UnstructuredGrid()
+        local.SetPoints(pv.vtk_points(points, deep=False))
+        local.SetCells(
+            _vtk.numpy_to_vtk(ugrid.celltypes.astype(np.uint8), deep=True),
+            pv.CellArray.from_arrays(offsets, np.arange(offsets[-1])),
+        )
+        return local
+
+    # Polyhedron faces store point ids, which must point to the copies of each cell. VTK stores
+    # faces differently before and after 9.4, so let vtkShrinkFilter copy the points of each cell
+    # and renumber the faces. Only its cells are used: its points are float32, and are replaced
+    # below by the centered points. Drop the data arrays, which it would copy to every point.
+    bare = ugrid.copy(deep=False)
+    bare.clear_data()
+    shrink = _vtk.vtkShrinkFilter()
+    shrink.SetShrinkFactor(1.0)
+    shrink.SetInputData(bare)
+    shrink.Update()
+    local = cast('pv.UnstructuredGrid', pv.wrap(shrink.GetOutput()))
+    # The filter outputs nothing for a mesh without points
+    if not np.array_equal(local.cell_offsets, offsets):
+        return ugrid
+    # Each copied point replaces its point in the connectivity of one cell
+    entry = np.zeros(local.n_points, dtype=int)
+    entry[local.cell_connectivity] = np.arange(offsets[-1])
+    local.points = points[entry]
+    return local
+
+
+def _cell_size_rounding(mesh: DataSet, ugrid: pv.UnstructuredGrid | None) -> NDArray[np.float64]:
+    """Return how much rounding the points by one unit in the last place may change cell sizes.
+
+    Each axis is rounded at the mesh's largest coordinate along it. A line changes by at most the
+    length of the rounding vector. An area or volume changes by at most the sum, over the axes, of
+    the rounding along the axis times the extent of the cell's bounding box across it.
+    ``ugrid`` is the mesh as an unstructured grid, or ``None`` for a :class:`pyvista.Grid`.
+    """
+    if ugrid is None:
+        grid = cast('pv.Grid', mesh)
+        dtypes: list[np.dtype[Any]] = (
+            [grid.x.dtype, grid.y.dtype, grid.z.dtype]
+            if isinstance(grid, pv.RectilinearGrid)
+            else [np.dtype(np.float64)] * 3
+        )
+        if grid.n_cells == 0:
+            return np.zeros(0)
+        cell = grid.get_cell(0)
+        dimension = np.full(grid.n_cells, cell.dimension)
+        if isinstance(grid, pv.ImageData):
+            # Every cell has the shape of the first
+            extent = np.tile(np.ptp(np.reshape(cell.bounds, (3, 2)), axis=1), (grid.n_cells, 1))
+        else:
+            dx, dy, dz = (
+                np.abs(np.diff(coords).astype(float)) if coords.size > 1 else np.zeros(1)
+                for coords in (grid.x, grid.y, grid.z)
+            )
+            # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
+            shape = (dz.size, dy.size, dx.size)
+            extent = np.stack(
+                [
+                    np.broadcast_to(dx, shape),
+                    np.broadcast_to(dy[:, np.newaxis], shape),
+                    np.broadcast_to(dz[:, np.newaxis, np.newaxis], shape),
+                ],
+                axis=-1,
+            ).reshape(-1, 3)
+    else:
+        dtypes = [ugrid.points.dtype] * 3
+        offsets = ugrid.cell_offsets
+        extent = np.zeros((ugrid.n_cells, 3))
+        nonempty = np.diff(offsets) > 0
+        if nonempty.any():
+            points = ugrid.points[ugrid.cell_connectivity]
+            starts = offsets[:-1][nonempty]
+            with np.errstate(invalid='ignore', over='ignore'):
+                extent[nonempty] = np.maximum.reduceat(points, starts) - np.minimum.reduceat(
+                    points, starts
+                )
+        celltypes = ugrid.celltypes
+        dimension = np.zeros(ugrid.n_cells, dtype=int)
+        for celltype in np.unique(celltypes):
+            dimension[celltypes == celltype] = CellType(celltype).dimension
+
+    bounds = np.abs(np.reshape(mesh.bounds, (3, 2)))
+    magnitude = np.max(np.where(np.isfinite(bounds), bounds, 0.0), axis=1)
+    ulp = np.zeros(3)
+    with np.errstate(invalid='ignore', over='ignore'):
+        for axis, dtype in enumerate(dtypes):
+            float_dtype = cast(
+                'np.dtype[np.floating[Any]]',
+                dtype if np.issubdtype(dtype, np.floating) else np.dtype(np.float64),
+            )
+            value = min(float(magnitude[axis]), float(np.finfo(float_dtype).max))
+            ulp[axis] = np.spacing(np.asarray(value, dtype=float_dtype))
+        ex, ey, ez = extent.T
+        dx, dy, dz = ulp
+        return np.select(
+            [dimension == 1, dimension == 2, dimension == 3],
+            [
+                np.full(len(dimension), np.linalg.norm(ulp)),
+                dx * np.hypot(ey, ez) + dy * np.hypot(ex, ez) + dz * np.hypot(ex, ey),
+                dx * ey * ez + dy * ex * ez + dz * ex * ey,
+            ],
+            # A vertex is measured by its point count, which has no rounding
+            default=0.0,
+        )
+
+
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
     """Return ``True`` if any cell of a mesh or of its blocks references a missing point id."""
     blocks = (
@@ -6635,6 +6854,8 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
+# Areas and volumes are clamped to +/-1e30
+_VERDICT_DBL_MAX = 1.0e30
 
 
 def _slice_image_along_axis(
