@@ -53,6 +53,21 @@ def _config(tmp_path: Path, **kwargs) -> BuildConfig:
     return BuildConfig(**defaults)
 
 
+@pytest.fixture(autouse=True)
+def _no_compiler_cache_env(monkeypatch: pytest.MonkeyPatch):
+    """Keep the developer's compiler cache settings out of every test."""
+    for name in (
+        'CCACHE_BASEDIR',
+        'CCACHE_COMPILERCHECK',
+        'CCACHE_CONFIGPATH',
+        'CCACHE_DIR',
+        'CCACHE_LOGFILE',
+        'CCACHE_NOHASHDIR',
+        'SCCACHE_DIR',
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def no_tools(mocker: MockerFixture):
     """Pretend every tool is present and pip is available."""
@@ -71,6 +86,7 @@ def test_dry_run_commands(tmp_path: Path, os_name):
         os_name=os_name,
         defines=['FOO=1', 'VTK_WRAP_PYTHON=OFF'],
         ref='v9.7.0',
+        compiler_cache='auto',
         repair=True,
         verbose=True,
     )
@@ -94,7 +110,9 @@ def test_dry_run_commands(tmp_path: Path, os_name):
     assert 'setup.py bdist_wheel' in out
     hint = next(line for line in out.splitlines() if '--force-reinstall' in line)
     assert str(cfg.wheelhouse) in hint
-    assert 'COMPILER_LAUNCHER' not in out
+    launcher = 'sccache' if os_name == 'windows' else 'ccache'
+    assert f'-DCMAKE_CXX_COMPILER_LAUNCHER={launcher}' in out
+    assert f'$ {launcher} --show-stats' in out
 
 
 @pytest.mark.usefixtures('no_tools')
@@ -112,7 +130,8 @@ def test_dry_run_flags(tmp_path: Path):
     )
     Builder(cfg, console).build()
     out = console.export_text()
-    assert 'COMPILER_LAUNCHER' not in out
+    assert out.count('Compiler cache: none') == 1
+    assert '-DCMAKE_C_COMPILER_LAUNCHER= -DCMAKE_CXX_COMPILER_LAUNCHER= ' in out
     assert '-DCMAKE_BUILD_TYPE=Debug' in out
     assert '--parallel 3' in out
     assert '-DVTK_GROUP_ENABLE_Rendering=NO' in out
@@ -197,6 +216,15 @@ def test_too_old_tool(tmp_path: Path, mocker: MockerFixture):
 
 
 @pytest.mark.usefixtures('no_tools')
+def test_explicit_cache_missing(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools, 'compiler_cache_tool', return_value=None)
+    install = mocker.patch.object(tools, 'pip_install_command')
+    with pytest.raises(BuildError, match='sccache: pip install sccache'):
+        Builder(_config(tmp_path, compiler_cache='sccache'), Console(quiet=True)).build()
+    assert not install.called
+
+
+@pytest.mark.usefixtures('no_tools')
 def test_hooks_and_init_cache(tmp_path: Path):
     src = tmp_path / 'src'
     (src / '.git').mkdir(parents=True)
@@ -257,6 +285,21 @@ def test_state_change_prompts_reconfigure(tmp_path: Path, mocker: MockerFixture)
     console = Console(record=True, width=4000, force_terminal=False)
     Builder(_config(tmp_path, version_suffix=''), console).build()
     assert 'differs from the one this tree was set up with' in console.export_text()
+
+
+@pytest.mark.parametrize(
+    ('choice', 'os_name', 'expected'),
+    [
+        ('auto', 'linux', 'ccache'),
+        ('auto', 'windows', 'sccache'),
+        ('sccache', 'macos', 'sccache'),
+        ('none', 'linux', None),
+    ],
+)
+def test_compiler_cache_tool(mocker: MockerFixture, choice, os_name, expected):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    tool = tools.compiler_cache_tool(choice, os_name)
+    assert (tool.name if tool else None) == expected
 
 
 def test_env_options_and_version_command(tmp_path: Path, mocker: MockerFixture):
@@ -389,7 +432,7 @@ def test_msvc_failure_is_a_build_error(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(
         tools, 'msvc_environment', side_effect=subprocess.CalledProcessError(2, 'cmd')
     )
-    builder = _builder(tmp_path, mocker, os_name='windows')
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
     with pytest.raises(BuildError, match=r'vcvarsall\.bat failed with exit status 2'):
         builder._activate_msvc(tools.required_tools('windows', {}, repair=False))
 
@@ -716,7 +759,7 @@ def test_windows_msvc(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(tools, 'executable_version', return_value='99.0')
     mocker.patch.object(tools, 'python_build_packages', return_value=[])
     mocker.patch.object(tools, 'find_vcvarsall', return_value=None)
-    builder = _builder(tmp_path, mocker, os_name='windows')
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
     with pytest.raises(BuildError, match='msvc'):
         builder.phase_tools()
     vcvarsall = tmp_path / 'vcvarsall.bat'
@@ -725,12 +768,19 @@ def test_windows_msvc(tmp_path: Path, mocker: MockerFixture):
         tools, 'msvc_environment', return_value={'PATH': 'C:/vs;C:/t', 'INCLUDE': 'x'}
     )
     mocker.patch.object(tools, 'msvc_arch', return_value='arm64')
-    builder = _builder(tmp_path, mocker, os_name='windows')
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
     builder.phase_tools()
     activated.assert_called_once()
     assert activated.call_args.args == (vcvarsall, 'arm64')
     assert tools.find_vcvarsall.call_args.args == ('arm64',)
     assert builder.env['INCLUDE'] == 'x'
+
+
+def test_compiler_cache_auto_missing(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, compiler_cache='auto')
+    mocker.patch.object(tools, 'compiler_cache_tool', return_value=None)
+    builder._activate_compiler_cache()
+    assert 'No ccache/sccache on PATH' in builder.console.export_text()
 
 
 def test_git_version_suffix(tmp_path: Path, mocker: MockerFixture):
@@ -1169,6 +1219,12 @@ def test_wheel_env_and_repair_command(tmp_path: Path, mocker: MockerFixture, os_
     ]
 
 
+def test_compiler_cache_tool_missing(mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    assert tools.compiler_cache_tool('sccache', 'linux') is None
+    assert tools.compiler_cache_tool('auto', 'linux') is None
+
+
 def test_build_asks_for_jobs(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(phases.sys.stdin, 'isatty', return_value=True)
     mocker.patch.object(phases.os, 'cpu_count', return_value=8)
@@ -1206,10 +1262,63 @@ def test_windows_declined_msvc(tmp_path: Path, mocker: MockerFixture):
     mocker.patch.object(tools.shutil, 'which', return_value=None)
     mocker.patch.object(tools, 'find_vcvarsall', return_value=tmp_path / 'vcvarsall.bat')
     activated = mocker.patch.object(tools, 'msvc_environment')
-    builder = _builder(tmp_path, mocker, os_name='windows')
+    builder = _builder(tmp_path, mocker, os_name='windows', compiler_cache='none')
     mocker.patch.object(builder, 'confirm', return_value=False)
     builder._activate_msvc(tools.required_tools('windows', builder.manifest.tools, repair=False))
     assert not activated.called
+
+
+def test_compiler_cache_row(tmp_path: Path, mocker: MockerFixture):
+    builder = _builder(tmp_path, mocker, compiler_cache='none')
+    assert builder._compiler_cache_row() == (
+        'compiler cache',
+        '-',
+        '[dim]off (--compiler-cache none)[/dim]',
+    )
+    mocker.patch.object(tools.shutil, 'which', return_value=None)
+    builder.config.compiler_cache = 'auto'
+    assert builder._compiler_cache_row()[0] == 'ccache/sccache (compiler cache)'
+    assert 'optional' in builder._compiler_cache_row()[2]
+    builder.config.compiler_cache = 'sccache'
+    assert builder._compiler_cache_row() == ('sccache (compiler cache)', '-', '[red]missing[/red]')
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    builder.config.compiler_cache = 'auto'
+    assert builder._compiler_cache_row() == (
+        'ccache (compiler cache)',
+        '/usr/bin/ccache',
+        '[green]ok[/green]',
+    )
+
+
+def test_ccache_basedir(tmp_path: Path, mocker: MockerFixture):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    builder = _builder(tmp_path, mocker, compiler_cache='ccache')
+    builder._activate_compiler_cache()
+    assert builder.env['CCACHE_BASEDIR'] == str(builder.config.build_dir.resolve())
+    assert builder.env['CCACHE_NOHASHDIR'] == '1'
+    assert 'CCACHE_DIR' not in builder.env
+    assert 'Compiler cache: ccache in its default location' in builder.console.export_text()
+    assert builder.env['CCACHE_COMPILERCHECK'] == '%compiler% --version'
+    builder = _builder(tmp_path, mocker, compiler_cache='ccache', source=tmp_path.parents[-1])
+    builder._activate_compiler_cache()
+    assert 'CCACHE_BASEDIR' not in builder.env
+
+
+@pytest.mark.parametrize(('choice', 'var'), [('ccache', 'CCACHE_DIR'), ('sccache', 'SCCACHE_DIR')])
+def test_cache_dir_precedence(tmp_path: Path, mocker: MockerFixture, monkeypatch, choice, var):
+    mocker.patch.object(tools.shutil, 'which', side_effect=lambda name, **_: f'/usr/bin/{name}')
+    monkeypatch.setenv(var, str(tmp_path / 'mine'))
+    builder = _builder(tmp_path, mocker, compiler_cache=choice, os_name='windows')
+    builder._activate_compiler_cache()
+    assert builder.env[var] == str(tmp_path / 'mine')
+    assert 'CCACHE_COMPILERCHECK' not in builder.env
+    builder = _builder(tmp_path, mocker, compiler_cache=choice, cache_dir=tmp_path / 'flag')
+    builder._activate_compiler_cache()
+    assert builder.env[var] == str(tmp_path / 'flag')
+    run = mocker.patch.object(builder, 'run')
+    mocker.patch.object(builder, 'hooks')
+    builder.phase_build()
+    assert run.call_args.args[0] == [choice, '--show-stats']
 
 
 def test_plan(tmp_path: Path):
@@ -1242,7 +1351,7 @@ def test_plan(tmp_path: Path):
     assert 'auditwheel' in plan['Repair']
     assert 'rendering' in plan['Build options']
     assert 'web' not in plan['Build options']
-    assert plan['Configure'].endswith(', plus -DX=1')
+    assert plan['Configure'].endswith(', plus -DX=1. Compiler cache: none')
     assert plan['Build'].startswith('compile with 3 parallel jobs')
     assert plan['Install'] == f'install the wheel into {sys.prefix}'
     with pytest.raises(BuildError, match='nope'):
@@ -1262,6 +1371,11 @@ def test_plan(tmp_path: Path):
     assert "checkout's manifest" in plan['Build options']
     assert plan['Repair'].startswith('skipped (--no-repair)')
     assert plan['Install'].startswith('skipped')
+    for choice, text in [('auto', 'ccache or sccache'), ('sccache', 'sccache')]:
+        plan = dict(Builder(_config(tmp_path, compiler_cache=choice), Console(quiet=True)).plan())
+        assert plan['Configure'].endswith(
+            f'Compiler cache: {text}' + ('' if choice == 'sccache' else ', whichever is on PATH')
+        )
 
 
 def _path_style(path: str) -> str:
@@ -1412,6 +1526,18 @@ def test_narration_escapes_paths(tmp_path: Path):
     cfg = _config(tmp_path, build_dir=tmp_path / 'b[x]')
     Builder(cfg, console).summary()
     assert 'b[x]' in console.export_text()
+
+
+def test_ccache_basedir_across_drives(tmp_path: Path, mocker: MockerFixture):
+    """Source and build on different drives set no ``CCACHE_BASEDIR``."""
+    mocker.patch.object(
+        tools, 'compiler_cache_tool', return_value=tools.Tool('ccache', ('ccache',))
+    )
+    mocker.patch.object(phases.os.path, 'commonpath', side_effect=ValueError)
+    builder = Builder(_config(tmp_path, compiler_cache='ccache'), Console(quiet=True))
+    builder.env.pop('CCACHE_BASEDIR', None)
+    builder._activate_compiler_cache()
+    assert 'CCACHE_BASEDIR' not in builder.env
 
 
 def test_default_jobs_follow_memory(tmp_path: Path, mocker: MockerFixture):

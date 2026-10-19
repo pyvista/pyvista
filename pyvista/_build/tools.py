@@ -364,6 +364,67 @@ def python_build_packages() -> list[str]:
     return [name for name in PYTHON_BUILD_PACKAGES if importlib.util.find_spec(name) is None]
 
 
+def compiler_cache_tool(
+    choice: str, os_name: str, env: Mapping[str, str] | None = None
+) -> Tool | None:
+    """Resolve the ``--compiler-cache`` choice to a launcher found on ``PATH``.
+
+    Parameters
+    ----------
+    choice : str
+        ``'auto'``, ``'ccache'``, ``'sccache'`` or ``'none'``.
+
+    os_name : str
+        Operating system name; ``auto`` prefers ``sccache`` on Windows.
+
+    env : Mapping[str, str], optional
+        Environment whose ``PATH`` to search.
+
+    Returns
+    -------
+    Tool | None
+        Detected launcher, or ``None`` when none is available.
+
+    """
+    if choice == 'none':
+        return None
+    order: tuple[str, ...] = (choice,)
+    if choice == 'auto':
+        order = ('sccache', 'ccache') if os_name == 'windows' else ('ccache', 'sccache')
+    for name in order:
+        tool = Tool(name, (name,))
+        if detect(tool, env):
+            return tool
+    return None
+
+
+def compiler_cache_instructions(os_name: str, name: str = 'auto') -> str:
+    """Return how to install a compiler cache.
+
+    Parameters
+    ----------
+    os_name : str
+        Operating system name.
+
+    name : str, default: 'auto'
+        ``ccache``, ``sccache``, or ``auto`` for the usual one on this system.
+
+    Returns
+    -------
+    str
+        Installation instructions.
+
+    """
+    if name == 'sccache' or (name == 'auto' and os_name == 'windows'):
+        other = {'windows': 'choco install sccache', 'macos': 'brew install sccache'}.get(os_name)
+        return f'pip install sccache   (or: {other})' if other else 'pip install sccache'
+    if os_name == 'macos':
+        return 'brew install ccache'
+    if os_name == 'windows':
+        return 'choco install ccache'
+    return 'apt install ccache   (or: dnf install ccache)'
+
+
 _VC_TOOLS = {'arm64': 'ARM64'}
 
 

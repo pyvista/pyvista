@@ -39,8 +39,18 @@ def test_tool_helpers(mocker: MockerFixture):
         return_value=subprocess.CompletedProcess([], 0, stdout='no digits'),
     )
     assert tools.executable_version('x') is None
-    for os_name in OS_NAMES:
-        assert tools.compiler_instructions(os_name)
+    hints = {
+        (os_name, name): tools.compiler_cache_instructions(os_name, name)
+        for os_name in OS_NAMES
+        for name in ('auto', 'ccache', 'sccache')
+    }
+    assert hints['linux', 'sccache'] == 'pip install sccache'
+    assert hints['macos', 'sccache'] == 'pip install sccache   (or: brew install sccache)'
+    assert hints['windows', 'sccache'] == 'pip install sccache   (or: choco install sccache)'
+    assert hints['windows', 'ccache'] == 'choco install ccache'
+    assert hints['macos', 'auto'] == 'brew install ccache'
+    assert 'sccache' in hints['windows', 'auto']
+    assert all(tools.compiler_instructions(os_name) for os_name in OS_NAMES)
     tool = tools.Tool('t', ('t',), spec='>=1')
     mocker.patch.object(tools.shutil, 'which', return_value='/usr/bin/t')
     mocker.patch.object(tools, 'executable_version', return_value=None)

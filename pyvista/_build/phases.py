@@ -229,6 +229,8 @@ class BuildConfig:
     clean: bool = False
     reconfigure: bool = False
     update: bool = False
+    compiler_cache: str = 'none'
+    cache_dir: Path | None = None
     version_suffix: str | None = None
     repair: bool = True
     install: bool = False
@@ -288,6 +290,7 @@ class Builder:
         self._approved_installs: set[str] = set()
         self.groups: list[str] = []
         self.option_values: dict[str, bool | int | str] = {}
+        self.launcher: _tools.Tool | None = None
         self.wheel: Path | None = None
 
     @property
@@ -474,6 +477,8 @@ class Builder:
         configure = f'cmake, {cfg.build_type} build with Ninja, into {cfg.cmake_dir}'
         if cfg.defines:
             configure += ', plus ' + ' '.join(f'-D{d}' for d in cfg.defines)
+        cache = {'auto': 'ccache or sccache, whichever is on PATH'}
+        configure += f'. Compiler cache: {cache.get(cfg.compiler_cache, cfg.compiler_cache)}'
         jobs, cores, _ = self._jobs()
         limit = ' (one per 2 GB of memory)' if not cfg.jobs and jobs < cores else ''
         build = (
@@ -914,7 +919,14 @@ class Builder:
                 table.add_row(f'{name} (python)', '-', '[yellow]missing[/yellow]')
             else:
                 table.add_row(f'{name} (python)', escape(sys.prefix), '[green]ok[/green]')
+        table.add_row(*self._compiler_cache_row())
         self.console.print(table)
+        choice = cfg.compiler_cache
+        if choice not in ('none', 'auto') and not _tools.compiler_cache_tool(
+            choice, cfg.os_name, self.env
+        ):
+            hint = _tools.compiler_cache_instructions(cfg.os_name, choice)
+            blocking.append(_tools.Tool(choice, (choice,), instructions=hint))
         if blocking:
             lines = [f'{t.name}: {t.instructions}' for t in blocking]
             msg = 'Install these and run again:\n  ' + '\n  '.join(lines)
@@ -938,6 +950,7 @@ class Builder:
                 if bad:
                     msg = f'Still not usable after install: {", ".join(bad)}.'
                     raise BuildError(msg)
+        self._activate_compiler_cache()
 
     def _activate_msvc(self, tools: list[_tools.Tool]) -> None:
         """On Windows, import the MSVC environment when ``cl`` is not already on PATH."""
@@ -959,6 +972,74 @@ class Builder:
             except subprocess.CalledProcessError as err:
                 msg = f'{vcvarsall} failed with exit status {err.returncode}.'
                 raise BuildError(msg) from None
+
+    def _compiler_cache_row(self) -> tuple[str, str, str]:
+        """Return the tools-table row for the ``--compiler-cache`` choice."""
+        choice = self.config.compiler_cache
+        if choice == 'none':
+            return 'compiler cache', '-', '[dim]off (--compiler-cache none)[/dim]'
+        tool = _tools.compiler_cache_tool(choice, self.config.os_name, self.env)
+        if tool is None:
+            label = 'ccache/sccache' if choice == 'auto' else choice
+            status = (
+                '[yellow]missing, optional[/yellow]' if choice == 'auto' else '[red]missing[/red]'
+            )
+            return f'{label} (compiler cache)', '-', status
+        found = f'{tool.path} ({tool.version})' if tool.version else (tool.path or '-')
+        return f'{tool.name} (compiler cache)', found, '[green]ok[/green]'
+
+    def compiler_cache_dir(self, var: str) -> Path | None:
+        """Return the compiler cache directory the user chose.
+
+        Parameters
+        ----------
+        var : str
+            Cache tool's directory variable, ``CCACHE_DIR`` or ``SCCACHE_DIR``.
+
+        Returns
+        -------
+        Path | None
+            ``--cache-dir``, else ``var`` when it is set, else ``None`` for the tool's default.
+
+        """
+        if self.config.cache_dir is not None:
+            return self.config.cache_dir
+        if self.env.get(var):
+            return Path(self.env[var]).resolve()
+        return None
+
+    def _activate_compiler_cache(self) -> None:
+        """Pick the compiler launcher and point it at the chosen cache directory, if any."""
+        cfg = self.config
+        if cfg.compiler_cache == 'none':
+            return
+        self.launcher = _tools.compiler_cache_tool(cfg.compiler_cache, cfg.os_name, self.env)
+        if self.launcher is None:
+            hint = _tools.compiler_cache_instructions(cfg.os_name, cfg.compiler_cache)
+            self.say(
+                '[yellow]No ccache/sccache on PATH; rebuilds will be slow. '
+                f'Install one: {hint}[/yellow]'
+            )
+            return
+        var = 'SCCACHE_DIR' if self.launcher.name == 'sccache' else 'CCACHE_DIR'
+        cache_dir = self.compiler_cache_dir(var)
+        if cache_dir is None:
+            self.say(f'Compiler cache: [bold]{self.launcher.name}[/bold] in its default location')
+        else:
+            self.say(
+                f'Compiler cache: [bold]{self.launcher.name}[/bold] in [bold]{cache_dir}[/bold]'
+            )
+            self.env[var] = str(cache_dir)
+        if self.launcher.name == 'ccache':
+            if cfg.os_name != 'windows':
+                self.env.setdefault('CCACHE_COMPILERCHECK', '%compiler% --version')
+            try:
+                base = Path(os.path.commonpath([cfg.src_dir.resolve(), cfg.cmake_dir.resolve()]))
+            except ValueError:
+                base = Path(cfg.cmake_dir.resolve().anchor)
+            if base != Path(base.anchor):
+                self.env.setdefault('CCACHE_BASEDIR', str(base))
+                self.env.setdefault('CCACHE_NOHASHDIR', '1')
 
     def recheck_tools(self) -> None:
         """Check again the tool versions the checkout's manifest asks for, if they changed."""
@@ -1118,6 +1199,11 @@ class Builder:
             f'-DPython3_EXECUTABLE={self.python}',
             '-DPython3_FIND_STRATEGY=LOCATION',
         ]
+        launcher = self.launcher.name if self.launcher is not None else ''
+        cmd += [
+            f'-DCMAKE_C_COMPILER_LAUNCHER={launcher}',
+            f'-DCMAKE_CXX_COMPILER_LAUNCHER={launcher}',
+        ]
         cmd.append(f'{VERSION_SUFFIX_DEFINE}{self.version_suffix() or ""}')
         entries = cmake_entries(
             self.manifest, cfg.os_name, groups=self.groups, options=self.option_values
@@ -1229,6 +1315,8 @@ class Builder:
             env=self.configure_env(),
             log=cfg.build_dir / 'build.log',
         )
+        if self.launcher is not None:
+            self.run([self.launcher.name, '--show-stats'], fatal=False, passthrough=True)
         self.hooks('post_build')
 
     def _jobs(self) -> tuple[int, int, int | None]:
