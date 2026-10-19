@@ -663,10 +663,6 @@ def test_plotter_theme_attribute_setter():
         pytest.fail('Remove the `theme` setter')
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically '
-    'detected:UserWarning'
-)
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     pv.plotting.themes.DarkTheme().save(filename)
@@ -677,10 +673,10 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pv.plotting.themes.DarkTheme()
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically '
-    'detected:UserWarning'
-)
+def test_trame_to_dict_skips_detected_flag(default_theme):
+    assert 'jupyter_extension_available' not in default_theme.trame.to_dict()
+
+
 def test_load_theme_unknown_key(default_theme):
     dict_ = default_theme.to_dict()
     dict_['a_stale_removed_property'] = True
@@ -689,10 +685,6 @@ def test_load_theme_unknown_key(default_theme):
     assert loaded_theme == default_theme
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically '
-    'detected:UserWarning'
-)
 def test_save_interactor_style(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     default_theme.interactor_style = 'terrain_style'
@@ -704,10 +696,6 @@ def test_save_interactor_style(tmpdir, default_theme):
     assert loaded_theme == default_theme
 
 
-@pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically '
-    'detected:UserWarning'
-)
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()

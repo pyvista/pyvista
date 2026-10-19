@@ -1519,13 +1519,24 @@ def download_nefertiti(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    .. pyvista-plot::
-        :force_static:
+    Downloading the dataset warns about its license.
+
+    .. code-block:: python
 
         from pyvista import examples
 
         dataset = examples.download_nefertiti()
         dataset.plot(cpos='xz')
+
+    Plot the CC0 Washington bust instead.
+
+    .. pyvista-plot::
+        :force_static:
+
+        from pyvista import examples
+
+        dataset = examples.download_washington_bust()
+        dataset.plot()
 
     .. seealso::
 

@@ -1499,6 +1499,8 @@ class _TrameConfig(_ConfigBase):
 
     """
 
+    _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'jupyter_extension_available'})
+
     __slots__ = [
         '_default_mode',
         '_interactive_ratio',
