@@ -600,7 +600,7 @@ def _execute_pieces(
     function_name: str | None,
     force_static: bool,
 ) -> tuple[list[tuple[str, list[str]]], list[str], dict[str, Any], str]:
-    """Run the pieces; return ``(results, messages, namespace, source)``, results as basenames."""
+    """Run the pieces and return ``(results, messages, namespace, source)``."""
     results: list[tuple[str, list[str]]] = []
     messages: list[str] = []
     ns = plot_context if context else {}

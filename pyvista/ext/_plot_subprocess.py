@@ -1,12 +1,13 @@
 """Render ``pyvista-plot`` snippets in a separate process during parallel Sphinx builds.
 
 Sphinx runs parallel builds with forked worker processes. On macOS a forked process that
-never calls ``exec`` cannot use Cocoa, Metal or libdispatch, and VTK needs all three to
-render, so rendering inside such a worker aborts the build. Each worker therefore starts one
-long-lived interpreter with :mod:`subprocess` and sends it every snippet it has to render as
-a JSON line on stdin. The render process executes the snippet, writes the images, and replies
-with the image names, the warnings to log and the sphinx-autocodelink records. Every parallel
-build uses it, on every platform; serial builds render in the Sphinx process itself.
+never calls ``exec`` cannot use Cocoa, Metal, or Grand Central Dispatch, and VTK needs all
+three to render, so rendering inside such a worker aborts the build. Each worker therefore
+starts one long-lived interpreter with :mod:`subprocess` and sends it every snippet it has to
+render as a JSON line on its standard input. The render process executes the snippet, writes
+the images, and replies with the image names, the warnings to log, and the
+sphinx-autocodelink records. Every parallel build uses it, on every platform. Serial builds
+render in the Sphinx process itself.
 """
 
 from __future__ import annotations
@@ -65,7 +66,7 @@ class RenderProcess:
     """A spawned interpreter that renders the snippets of one Sphinx worker."""
 
     def __init__(self) -> None:
-        """Start the interpreter and send it this process's theme, paths and warning filters."""
+        """Start the interpreter and send it this process's theme, paths, and warning filters."""
         self._proc = subprocess.Popen(
             [sys.executable, '-c', 'from pyvista.ext._plot_subprocess import main; main()'],
             stdin=subprocess.PIPE,
@@ -114,7 +115,7 @@ class RenderProcess:
         return json.loads(line)
 
     def _raise_exited(self) -> None:
-        """Raise for a render process that exited; its traceback is on stderr."""
+        """Raise an error saying that the render process exited."""
         msg = (
             f'The pyvista-plot render process exited with code {self._proc.wait()}; '
             'its error output precedes this message'

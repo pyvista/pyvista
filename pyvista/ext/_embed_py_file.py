@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def _download(name: str) -> str | list[str]:
-    """Download ``name``, in a subprocess when this is a forked Sphinx worker."""
+    """Download ``name``, in a separate process when this is a forked Sphinx worker."""
     if not in_forked_worker():
         return download_file(name)
     code = (
