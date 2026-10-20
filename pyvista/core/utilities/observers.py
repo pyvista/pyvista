@@ -73,7 +73,7 @@ def set_error_output(
         Destination for VTK errors:
 
         - If not specified (default), restores VTK's default error output window
-          and stderr verbosity.
+          and standard error verbosity.
         - If ``None`` or :data:`os.devnull`, silences all VTK error output.
         - If a file path or string, redirects VTK error output to the specified file.
 
