@@ -987,16 +987,13 @@ def restore_vtk_output():
     """Ensure VTK global output state is cleanly restored after tests."""
     orig_instance = _vtk.vtkOutputWindow.GetInstance()
     orig_warning_display = _vtk.vtkOutputWindow.GetGlobalWarningDisplay()
-    orig_verbosity = (
-        _vtk.vtkLogger.GetCurrentVerbosityCutoff() if hasattr(_vtk, 'vtkLogger') else None
-    )
+    orig_verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
     try:
         yield
     finally:
         _vtk.vtkOutputWindow.SetInstance(orig_instance)
         _vtk.vtkOutputWindow.SetGlobalWarningDisplay(orig_warning_display)
-        if hasattr(_vtk, 'vtkLogger') and orig_verbosity is not None:
-            _vtk.vtkLogger.SetStderrVerbosity(orig_verbosity)
+        _vtk.vtkLogger.SetStderrVerbosity(orig_verbosity)
 
 
 @pytest.mark.usefixtures('restore_vtk_output')
@@ -1040,8 +1037,7 @@ def test_set_error_output_reset():
     pv.set_error_output(None)
     sink, win = pv.set_error_output()
     assert sink is win
-    if hasattr(_vtk, 'vtkLogger'):
-        assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_INFO
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_INFO
 
 
 @pytest.mark.usefixtures('restore_vtk_output')
