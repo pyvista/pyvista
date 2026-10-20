@@ -2809,6 +2809,29 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize(
     'transformation',
+    [
+        pv.Transform(),
+        pv.Transform().rotate_z(90),
+        pv.Transform().rotate_z(90).rotate_x(90),
+        pv.Transform().reflect((1, 0, 0)),
+        pv.Transform().rotate_y(180),
+    ],
+    ids=['identity', 'one-axis-pair', 'all-three-axes', 'reflect', 'rotate-180'],
+)
+def test_transform_rectilinear_offset_follows_axes(transformation, inplace):
+    """Test the offset moves with the axes, using a grid whose coordinates are its indices."""
+    offset = (-4, 2, 7)
+    x, y, z = (start + np.arange(size) for start, size in zip(offset, (5, 3, 2), strict=True))
+    grid = pv.RectilinearGrid(x, y, z)
+    grid.offset = offset
+    assert grid.extent == grid.bounds
+    transformed = grid.transform(transformation, inplace=inplace)
+    assert transformed.extent == transformed.bounds
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
     [pv.Transform().rotate_z(90), pv.Transform().rotate_z(90).rotate_x(90)],
     ids=['one-axis-pair', 'all-three-axes'],
 )
@@ -4786,7 +4809,12 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
         pv.PolyData(),
         pv.UnstructuredGrid(),
         pv.MultiBlock([pv.PolyData()]),
-        # pv.ExplicitStructuredGrid(),  Seg fault with empty mesh. This type is tested separately.
+        pytest.param(
+            pv.ExplicitStructuredGrid(),
+            marks=pytest.mark.needs_vtk_version(
+                9, 4, reason='empty extent has a phantom cell and segfaults'
+            ),
+        ),
     ],
 )
 @pytest.mark.parametrize('validate', [True, 'data'])

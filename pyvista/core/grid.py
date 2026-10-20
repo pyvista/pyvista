@@ -28,6 +28,8 @@ from pyvista.core.utilities.writer import TIFFWriter
 from pyvista.core.utilities.writer import XMLImageDataWriter
 from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
+from ._structured_data import _extent_from
+from ._structured_data import _StructuredDataMixin
 from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
@@ -60,43 +62,8 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class Grid(DataSet):
+class Grid(_StructuredDataMixin, DataSet):
     """A class full of common methods for non-pointset grids."""
-
-    @property
-    def dimensions(self: Self) -> tuple[int, int, int]:
-        """Return the grid's dimensions.
-
-        These are effectively the number of points along each of the
-        three dataset axes.
-
-        Returns
-        -------
-        tuple[int]
-            Dimensions of the grid.
-
-        Examples
-        --------
-        Create a uniform grid with dimensions ``(1, 2, 3)``.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(2, 3, 4))
-        >>> grid.dimensions
-        (2, 3, 4)
-        >>> grid.plot(show_edges=True)
-
-        Set the dimensions to ``(3, 4, 5)``
-
-        >>> grid.dimensions = (3, 4, 5)
-        >>> grid.plot(show_edges=True)
-
-        """
-        return self.GetDimensions()
-
-    @dimensions.setter
-    def dimensions(self: Self, dims: VectorLikeInt) -> None:
-        self.SetDimensions(*dims)
-        self.Modified()
 
     def _convert_points_precision(self, points: NDArray[np.floating]) -> NDArray[np.floating]:
         """Apply :attr:`pyvista.core.config.Config.points_dtype` to points generated on demand."""
@@ -197,12 +164,6 @@ class Grid(DataSet):
             raise ValueError(msg)
         return self.cast_to_structured_grid().cast_to_unstructured_grid()
 
-    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
-        """Return the representation methods (internal helper)."""
-        attrs = DataSet._get_attrs(self)
-        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
-        return attrs
-
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
@@ -270,6 +231,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = _map_extensions(
         RectilinearGridWriter, XMLRectilinearGridWriter
+    )
+
+    _has_fixed_dimensions: ClassVar[bool] = True
+    _fixed_dimensions_hint: ClassVar[str] = (
+        'Set the x, y and z coordinates to resize it, or the offset to shift its extent.'
     )
 
     def __init__(
@@ -340,8 +306,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return DataSet.__str__(self)
 
     def _update_dimensions(self: Self) -> None:
-        """Update the dimensions if coordinates have changed."""
-        self.SetDimensions(len(self.x), len(self.y), len(self.z))
+        """Update the dimensions to the coordinates, keeping the offset."""
+        self._set_extent(_extent_from(self.offset, (len(self.x), len(self.y), len(self.z))))
 
     def _from_arrays(
         self: Self,
@@ -584,21 +550,6 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self._update_dimensions()
         self.Modified()
 
-    @Grid.dimensions.setter  # type: ignore[attr-defined]
-    def dimensions(self: Self, _dims: VectorLikeInt) -> None:
-        """Set Dimensions.
-
-        Parameters
-        ----------
-        _dims : VectorLikeInt
-            Ignored dimensions.
-
-        """
-        msg = (
-            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.'
-        )
-        raise AttributeError(msg)
-
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
         """Cast this rectilinear grid to a :class:`~pyvista.StructuredGrid`.
 
@@ -619,7 +570,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         alg = _vtk.vtkRectilinearGridToPointSet()
         alg.SetInputData(self)
         alg.Update()
-        return _get_output(alg)
+        out = _get_output(alg)
+        out.offset = self.offset
+        return out
 
 
 class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
@@ -646,7 +599,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
-        :attr:`~pyvista.Grid.dimensions` of the uniform grid.
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
         :attr:`spacing` of the uniform grid in each dimension. Must be positive.
@@ -664,9 +617,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         .. versionadded:: 0.45
 
     offset : int | VectorLikeInt, default: (0, 0, 0)
-        The offset defines the minimum :attr:`extent` of the image. Offset values
-        can be positive or negative. In physical space, the offset is relative
-        to the image's :attr:`origin`.
+        The offset defines the minimum
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent` of the image.
+        Offset values can be positive or negative. In physical space, the offset is
+        relative to the image's :attr:`origin`.
 
         .. versionadded:: 0.45
 
@@ -1121,6 +1075,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         alg.SetInputData(self)
         alg.Update()
         out = _get_output(alg)
+        out.offset = self.offset
         out.set_active_scalars(self.active_scalars_name)
         return out
 
@@ -1135,6 +1090,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """
         rectilinear_coords = self._generate_rectilinear_coords()
         grid = pv.RectilinearGrid(*rectilinear_coords)
+        grid.offset = self.offset
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
@@ -1172,121 +1128,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
         return [ijk[axis] * spacing[axis] * sign[axis] + origin[axis] for axis in range(3)]
-
-    @property
-    def extent(
-        self: Self,
-    ) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
-        """Return or set the extent of the ImageData.
-
-        The extent is simply the first and last indices for each of the three axes.
-        It encodes information about the image's :attr:`offset` and
-        :attr:`~pyvista.Grid.dimensions`.
-
-        Examples
-        --------
-        Create a ``ImageData`` and show its extent.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
-        >>> grid.extent
-        (0, 9, 0, 9, 0, 9)
-
-        >>> grid.extent = (2, 5, 2, 5, 2, 5)
-        >>> grid.extent
-        (2, 5, 2, 5, 2, 5)
-
-        Note how this also modifies the grid's :attr:`offset`,
-        :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
-        we use default spacing of 1 here, the bounds match the extent exactly.
-
-        >>> grid.offset
-        (2, 2, 2)
-
-        >>> grid.dimensions
-        (4, 4, 4)
-
-        >>> grid.bounds
-        BoundsTuple(x_min = 2.0,
-                    x_max = 5.0,
-                    y_min = 2.0,
-                    y_max = 5.0,
-                    z_min = 2.0,
-                    z_max = 5.0)
-
-        """
-        return self.GetExtent()
-
-    @extent.setter
-    def extent(self: Self, new_extent: VectorLikeInt) -> None:
-        new_extent_ = _validation.validate_arrayN(
-            new_extent,
-            must_be_integer=True,
-            must_have_length=6,
-            to_list=True,
-            dtype_out=int,
-        )
-        self.SetExtent(new_extent_)
-
-    @property
-    def offset(self: Self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
-        """Return or set the index offset of the ImageData.
-
-        The offset is simply the first indices for each of the three axes
-        and defines the minimum :attr:`extent` of the image. Offset values
-        can be positive or negative. In physical space, the offset is relative
-        to the image's :attr:`origin`.
-
-        .. versionadded:: 0.45
-
-        Examples
-        --------
-        Create a ``ImageData`` and show that the offset is zeros by default.
-
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
-        >>> grid.offset
-        (0, 0, 0)
-
-        The offset defines the minimum extent.
-
-        >>> grid.extent
-        (0, 9, 0, 9, 0, 9)
-
-        Set the offset to a new value for all axes.
-
-        >>> grid.offset = 2
-        >>> grid.offset
-        (2, 2, 2)
-
-        Show the extent again. Note how all values have increased by the offset value.
-
-        >>> grid.extent
-        (2, 11, 2, 11, 2, 11)
-
-        Set the offset for each axis separately and show the extent again.
-
-        >>> grid.offset = (-1, -2, -3)
-        >>> grid.extent
-        (-1, 8, -2, 7, -3, 6)
-
-        """
-        return self.extent[::2]
-
-    @offset.setter
-    def offset(self: Self, offset: int | VectorLikeInt) -> None:
-        offset_ = _validation.validate_array3(
-            offset, broadcast=True, must_be_integer=True, dtype_out=int
-        )
-        dims = self.dimensions
-        self.extent = (
-            offset_[0],
-            offset_[0] + dims[0] - 1,
-            offset_[1],
-            offset_[1] + dims[1] - 1,
-            offset_[2],
-            offset_[2] + dims[2] - 1,
-        )
 
     @_wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(

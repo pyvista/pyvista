@@ -8599,12 +8599,13 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     >>> dataset = examples.download_reservoir()
     >>> dataset
     ExplicitStructuredGrid (...)
-      N Cells:    47610
-      N Points:   58433
-      X Bounds:   3.104e+05, 3.177e+05
-      Y Bounds:   7.477e+06, 7.486e+06
-      Z Bounds:   -2.472e+03, -1.577e+03
-      N Arrays:   6
+      N Cells:      47610
+      N Points:     58433
+      X Bounds:     3.104e+05, 3.177e+05
+      Y Bounds:     7.477e+06, 7.486e+06
+      Z Bounds:     -2.472e+03, -1.577e+03
+      Dimensions:   47, 70, 16
+      N Arrays:     6
 
 
     >>> pl = pv.Plotter()
