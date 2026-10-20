@@ -890,26 +890,24 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             points = np.zeros((0, 3))
 
         else:
-            # Get grid dimensions
-            nx, ny, nz = self.dimensions
-            nx -= 1
-            ny -= 1
-            nz -= 1
-            # get the points and convert to spacings
-            dx, dy, dz = self.spacing
-            # Now make the cell arrays
-            ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
-            x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
-            y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
-            z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-            xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
-
-            direction = self.direction_matrix
-            if not np.array_equal(direction, np.eye(3)):
-                points = (
-                    pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
+            # Map each structured index to physical space, as VTK does, by adding the
+            # contribution of each axis, laid out as (nz, ny, nx) so that x varies fastest
+            extent = self.extent
+            matrix = self.index_to_physical_matrix
+            # A non-finite or huge geometry gives non-finite points
+            with np.errstate(invalid='ignore', over='ignore'):
+                i, j, k = (
+                    np.arange(extent[2 * axis], extent[2 * axis + 1] + 1, dtype=float)[
+                        :, np.newaxis
+                    ]
+                    * matrix[:3, axis]
+                    for axis in range(3)
                 )
+                points = (
+                    k[:, np.newaxis, np.newaxis]
+                    + j[np.newaxis, :, np.newaxis]
+                    + (i + matrix[:3, 3])[np.newaxis, np.newaxis]
+                ).reshape(-1, 3)
 
         return self._convert_points_precision(points)
 
