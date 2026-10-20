@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import FieldLiteral
     from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.core.utilities.fileio import _CompressionOptions
 
 
 _ColorModeOptions = Literal['map', 'direct']
@@ -380,6 +381,85 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         return Texture(self._image()._flip_uniform(1))
+
+    def save(
+        self,
+        filename: Path | str,
+        *,
+        binary: bool = True,
+        texture: NDArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
+    ) -> None:
+        """Save the texture's image to a file.
+
+        Only the image data is saved, not texture settings such as interpolation
+        or wrapping. Cubemap textures are not supported.
+
+        .. versionchanged:: 0.50
+            Save the underlying image using :meth:`pyvista.ImageData.save`.
+
+        Parameters
+        ----------
+        filename : str, pathlib.Path
+            Output filename. The extension selects an image writer, for example
+            ``'.png'``, ``'.jpg'``, or ``'.vti'``.
+
+        binary : bool, default: True
+            Write binary data rather than ASCII when supported by the writer.
+
+        texture : str, numpy.ndarray, optional
+            Accepted for compatibility with :meth:`pyvista.DataObject.save`.
+            This option only applies to PLY meshes and has no effect on images.
+
+        compression : str or None, default: 'zlib'
+            Compression for binary XML files. See :meth:`pyvista.ImageData.save`.
+
+        **writer_kwargs : dict, optional
+            Additional options passed to a registered custom image writer.
+            Built-in writers reject these options.
+
+        Raises
+        ------
+        ValueError
+            If the texture is empty, is a cubemap, or has an unsupported extension.
+
+        See Also
+        --------
+        pyvista.ImageData.save
+        pyvista.read_texture
+
+        Examples
+        --------
+        Save and reload an RGB texture.
+
+        >>> from pathlib import Path
+        >>> from tempfile import TemporaryDirectory
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> array = np.arange(18, dtype=np.uint8).reshape(2, 3, 3)
+        >>> texture = pv.Texture(array)
+        >>> with TemporaryDirectory() as directory:
+        ...     filename = Path(directory) / 'texture.png'
+        ...     texture.save(filename)
+        ...     restored = pv.read_texture(filename)
+        >>> np.array_equal(restored.to_array(), array)
+        True
+
+        """
+        if self.cube_map:
+            msg = 'Saving cubemap textures is not supported.'
+            raise ValueError(msg)
+        if self.is_empty:
+            msg = 'The texture is empty and has no image.'
+            raise ValueError(msg)
+        self._image().save(
+            filename,
+            binary=binary,
+            texture=texture,
+            compression=compression,
+            **writer_kwargs,
+        )
 
     def to_image(self) -> pv.ImageData | None:
         """Return the texture as an image.
