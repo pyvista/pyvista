@@ -5105,7 +5105,7 @@ def _restore_cells(
 
 
 def _original_cell_ids(mesh: PolyData, output: PolyData) -> NDArray[np.int64]:
-    """Return the input cell of each vert, line segment, polygon and strip triangle of a strip."""
+    """Return the input cell of each piece of a strip, in the order its field data holds them."""
     first_poly = mesh.n_verts + mesh.n_lines
     first_strip = first_poly + mesh.GetNumberOfPolys()
     line_runs, line_owners = _cell_windows(mesh.GetLines(), 2, first_id=mesh.n_verts)
