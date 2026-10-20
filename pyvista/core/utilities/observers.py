@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import os
 from pathlib import Path
 import re
 import signal
@@ -55,6 +56,73 @@ class _Sentinel:
 
 
 _DEFAULT_OUTPUT: Any = _Sentinel('default')
+
+
+def set_error_output(
+    target: str | Path | None = _DEFAULT_OUTPUT,
+) -> tuple[
+    _vtk.vtkFileOutputWindow | _vtk.vtkStringOutputWindow | _vtk.vtkOutputWindow,
+    _vtk.vtkOutputWindow,
+]:
+    """Configure or redirect VTK error output.
+
+    Parameters
+    ----------
+    target : str | Path | None, optional
+        Destination for VTK errors:
+
+        - If not specified (default), restores VTK's default error output window
+          and stderr verbosity.
+        - If ``None`` or :data:`os.devnull`, silences all VTK error output.
+        - If a file path or string, redirects VTK error output to the specified file.
+
+    Returns
+    -------
+    :vtk:`vtkFileOutputWindow` or :vtk:`vtkStringOutputWindow` or :vtk:`vtkOutputWindow`
+        Active VTK output sink.
+    :vtk:`vtkOutputWindow`
+        VTK output window manager instance.
+
+    Examples
+    --------
+    Silence VTK errors completely:
+
+    >>> import pyvista as pv
+    >>> pv.set_error_output(None)
+
+    Redirect errors to a log file:
+
+    >>> pv.set_error_output('vtk_errors.log')
+
+    Reset back to VTK defaults:
+
+    >>> pv.set_error_output()
+
+    """
+    if target is _DEFAULT_OUTPUT:
+        _vtk.vtkOutputWindow.SetInstance(None)
+        if hasattr(_vtk, 'vtkLogger'):
+            # Restore VTK's default stderr verbosity (INFO) so errors are no longer silenced
+            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
+        win = _vtk.vtkOutputWindow.GetInstance()
+        return win, win
+
+    if target is None or str(target) == os.devnull:
+        string_window = _vtk.vtkStringOutputWindow()
+        _vtk.vtkOutputWindow.SetInstance(string_window)
+        if hasattr(_vtk, 'vtkLogger'):
+            # Silence vtkLogger so modern VTK log messages do not leak to stderr
+            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        return string_window, _vtk.vtkOutputWindow.GetInstance()
+
+    resolved_path = Path(target).expanduser().resolve()
+    file_output_window = _vtk.vtkFileOutputWindow()
+    file_output_window.SetFileName(str(resolved_path))
+    _vtk.vtkOutputWindow.SetInstance(file_output_window)
+    if hasattr(_vtk, 'vtkLogger'):
+        # Mute stderr logging so output goes only to the file without stderr duplication
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+    return file_output_window, _vtk.vtkOutputWindow.GetInstance()
 
 
 def set_error_output_file(
