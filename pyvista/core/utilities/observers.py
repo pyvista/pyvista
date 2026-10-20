@@ -26,9 +26,9 @@ _vtk_log = logging.getLogger('pyvista.vtk')
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import FrameType
+    from typing import Self
 
     from tqdm import tqdm
-    from typing_extensions import Self
 
     from pyvista._vtk import vtkObject
     from pyvista.core.utilities.reader import BaseVTKReader

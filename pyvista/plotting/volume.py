@@ -9,7 +9,7 @@ from pyvista import _vtk
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
     from .mapper import _BaseMapper
     from .volume_property import VolumeProperty

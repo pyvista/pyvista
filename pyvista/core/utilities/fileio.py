@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
 from typing import TextIO
@@ -49,6 +50,8 @@ if TYPE_CHECKING:
     from pyvista import Texture
     from pyvista import UnstructuredGrid
 
+    from ._file_formats import _FileFormat
+
 _CompressionOptions = Literal['zlib', 'lz4', 'lzma', None]  # noqa: PYI061
 PathStrSeq = str | Path | Sequence['PathStrSeq']
 _PICKLE_FILE_EXT = ('.pkl', '.pickle')
@@ -86,6 +89,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
     """
 
     _vtk_class_name: str = ''
+    _format: ClassVar[_FileFormat]
 
     def __repr__(self) -> str:
         """Representation of a FileIO object."""
@@ -140,6 +144,45 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
                     extensions.add(ext)  # type: ignore[unreachable]
         return tuple(sorted(extensions))
 
+    @classmethod
+    def _get_format(cls) -> _FileFormat:
+        """Return the file format this class reads or writes."""
+        try:
+            return cls._format
+        except AttributeError:
+            msg = f'{cls.__name__} does not declare a file format.'
+            raise AttributeError(msg) from None
+
+    @_classproperty
+    def format_description(cls) -> str:  # noqa: N805
+        """Return the human-readable description of the file format.
+
+        A reader and a writer for the same format share the same description. A custom
+        reader subclass can set its own with ``format_description = 'My Format'`` in the
+        class body.
+
+        .. versionadded:: 0.50
+
+        Returns
+        -------
+        str
+            Description of the file format, or an empty string if the class does not
+            declare one.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pv.get_reader(examples.hexbeamfile).format_description
+        'Legacy VTK'
+        >>> pv.XMLUnstructuredGridReader.format_description
+        'VTK UnstructuredGrid'
+        >>> pv.XMLUnstructuredGridWriter.format_description
+        'VTK UnstructuredGrid'
+
+        """
+        return cls._format.description if hasattr(cls, '_format') else ''
+
     @_classproperty
     def extension_patterns(cls) -> tuple[re.Pattern[str], ...]:  # noqa: N805
         """Return mapping from regex pattern matching associated with this class.
@@ -159,6 +202,21 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
             if typ is cls  # type: ignore[comparison-overlap, redundant-expr]
         }
         return tuple(sorted(patterns, key=lambda pattern: pattern.pattern))
+
+
+_FileIOT = TypeVar('_FileIOT', bound=type[_FileIOBase])
+
+
+def _map_extensions(*classes: _FileIOT) -> dict[str, _FileIOT]:
+    """Map each extension of each class's file format to that class."""
+    mapping: dict[str, _FileIOT] = {}
+    for cls in classes:
+        for ext in cls._get_format().extensions:
+            if ext in mapping:
+                msg = f'{ext} is claimed by both {mapping[ext].__name__} and {cls.__name__}.'
+                raise ValueError(msg)
+            mapping[ext] = cls
+    return mapping
 
 
 def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
@@ -251,7 +309,7 @@ def get_ext(filename: str | Path) -> str:
     """Extract the extension of the filename.
 
     For files with the .gz suffix, the previous extension is returned as well.
-    This is needed for example, for the compressed NIFTI format (.nii.gz).
+    This is needed for example, for the compressed NIfTI format (``.nii.gz``).
 
     Parameters
     ----------
@@ -308,16 +366,17 @@ def read(
         command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
 
     Automatically determines the correct reader to use then wraps the
-    corresponding mesh as a pyvista object.  Attempts native ``vtk``
+    corresponding mesh as a pyvista object. Attempts native ``vtk``
     readers first then tries to use ``meshio``.
 
     Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
-    temporary file automatically.  Install ``fsspec`` for full protocol
+    temporary file automatically. Install ``fsspec`` for full protocol
     support (``pip install pyvista[io]``); ``pooch`` is used as a
-    fallback for HTTP(S).  Third-party reader plugins registered via
+    fallback for HTTP(S). Third-party reader plugins registered via
     :func:`pyvista.register_reader` are also checked.
 
-    See :func:`pyvista.get_reader` for list of vtk formats supported.
+    See the tables below for a list of all supported file formats. See also
+    :func:`pyvista.get_reader` for a similar list organized by reader class.
 
     .. include:: /api/utilities/mesh_io.rst
 
@@ -461,10 +520,10 @@ def _needs_reader_object(
     override of such an extension therefore steps aside rather than
     reinterpreting any of the three.
     """
-    from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
+    from pyvista.core.utilities.reader import _CLASS_READERS  # noqa: PLC0415
 
     asked = progress_bar or validate is not None or bool(kwargs)
-    return asked and ext in CLASS_READERS
+    return asked and ext in _CLASS_READERS
 
 
 def _read_dispatch(  # noqa: PLR0911
@@ -1472,12 +1531,12 @@ def save_meshio(
         Any PyVista mesh/spatial data type.
 
     file_format : str, optional
-        File type for meshio to save.  For example ``'.bdf'``.  This
+        File type for meshio to save. For example ``'.bdf'``. This
         is normally inferred from the extension but this can be
         overridden.
 
     **kwargs : dict, optional
-        Additional keyword arguments.  See
+        Additional keyword arguments. See
         ``meshio.Mesh.write`` for more details.
 
     Examples

@@ -494,13 +494,13 @@ def test_multi_block_io(
     # these cases are tested separately
     multi = (
         pv.MultiBlock([pv.PolyData(), pv.UnstructuredGrid()])
-        if extension == '.vtkhdf'
+        if extension in pv.HDFWriter.extensions
         else multiblock_all_with_nested_and_none
     )
 
     # Save it out
-    if extension == '.vtkhdf' and binary is False:
-        match = '.vtkhdf files can only be written in binary format'
+    if extension in pv.HDFWriter.extensions and binary is False:
+        match = rf'\{extension} files can only be written in binary format'
         with pytest.raises(ValueError, match=match):
             multi.save(filename, binary=binary)
         return
@@ -518,7 +518,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
 
     multi = pv.MultiBlock([pv.MultiBlock()])
     match = (
-        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Nested MultiBlocks are not supported by the VTKHDF format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
     with pytest.raises(TypeError, match=match):
@@ -526,7 +526,7 @@ def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
 
     multi = pv.MultiBlock([None])
     match = (
-        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Saving None blocks is not supported by the VTKHDF format in VTK 9.4.\n'
         'Upgrade to VTK>=9.5 for this functionality.'
     )
     with pytest.raises(TypeError, match=match):
@@ -540,7 +540,7 @@ def test_multi_block_hdf_invalid_block_type(tmpdir):
     multi = pv.MultiBlock([pv.ImageData()])
     match = (
         "Block at index [0] with name 'Block-00' has type 'ImageData' which cannot be saved to "
-        "the .vtkhdf format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
+        "the VTKHDF format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
         "'MultiBlock', 'PartitionedDataSet']."
     )
     with pytest.raises(TypeError, match=re.escape(match)):
@@ -554,7 +554,7 @@ def test_multi_block_hdf_invalid_nested_block(tmpdir):
     multi = pv.MultiBlock([pv.MultiBlock({'nested_block': pv.PointSet()})])
     match = (
         "Block at index [0][0] with name 'nested_block' has type 'PointSet' which cannot be saved "
-        'to the .vtkhdf format.'
+        'to the VTKHDF format.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         multi.save(filename)
@@ -722,6 +722,101 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
             assert (multi[i] is block) != recursive
         else:
             assert block is multi[i]
+
+
+@pytest.mark.parametrize('recursive', [True, False])
+def test_multi_block_shallow_copy_self(recursive, multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    keys, blocks = multi.keys(), list(multi)
+    multi.shallow_copy(multi, recursive=recursive)
+    assert multi.keys() == keys
+    assert all(a is b for a, b in zip(multi, blocks, strict=True))
+
+
+@pytest.mark.parametrize('recursive', [True, False])
+def test_multi_block_shallow_copy_deeply_nested(recursive, monkeypatch):
+    depth = 20
+    root = level = MultiBlock()
+    for i in range(depth):
+        level.append(pv.Sphere(center=(i, 0, 0)), f'sphere{i}')
+        child = MultiBlock()
+        child.field_data['level'] = [i]
+        level.append(child, f'level{i}')
+        level = child
+    multi_copy = MultiBlock()
+
+    n_init = 0
+    init = MultiBlock.__init__
+
+    def counting_init(self, *args, **kwargs):
+        nonlocal n_init
+        n_init += 1
+        assert n_init <= depth, 'each nested block must be copied at most once'
+        init(self, *args, **kwargs)
+
+    monkeypatch.setattr(MultiBlock, '__init__', counting_init)
+    multi_copy.shallow_copy(root, recursive=recursive)
+    assert n_init == (depth if recursive else 0)
+
+    source, copied = root, multi_copy
+    for i in range(depth):
+        assert copied.keys() == [f'sphere{i}', f'level{i}']
+        assert copied[0] is source[0]
+        assert (copied[1] is source[1]) != recursive
+        source, copied = source[1], copied[1]
+        assert copied.field_data['level'] == [i]
+
+
+def test_multi_block_from_raw_deeply_nested(monkeypatch):
+    depth = 20
+    root = level = _vtk.vtkMultiBlockDataSet()
+    for i in range(depth):
+        leaf = _vtk.vtkPolyData()
+        leaf.ShallowCopy(pv.Sphere(center=(i, 0, 0)))
+        child = _vtk.vtkMultiBlockDataSet()
+        level.SetNumberOfBlocks(2)
+        level.SetBlock(0, leaf)
+        level.SetBlock(1, child)
+        level = child
+
+    n_init = 0
+    init = MultiBlock.__init__
+
+    def counting_init(self, *args, **kwargs):
+        nonlocal n_init
+        n_init += 1
+        assert n_init <= depth + 1, 'each nested block must be wrapped at most once'
+        init(self, *args, **kwargs)
+
+    n_checks = 0
+    check = pv.core.utilities.helpers._dataset_array_lengths_match
+
+    def counting_check(obj):
+        nonlocal n_checks
+        n_checks += 1
+        return check(obj)
+
+    monkeypatch.setattr(MultiBlock, '__init__', counting_init)
+    monkeypatch.setattr(pv.core.utilities.helpers, '_dataset_array_lengths_match', counting_check)
+    multi = MultiBlock(root)
+    assert n_init == depth + 1
+    assert n_checks == depth
+
+    for _ in range(depth):
+        assert multi.keys() == [None, None]
+        assert isinstance(multi[0], PolyData)
+        assert isinstance(multi[1], MultiBlock)
+        multi = multi[1]
+
+
+def test_multi_block_shallow_copy_replaces_existing_blocks():
+    multi = MultiBlock({'x': pv.Sphere(), 'y': pv.Cube(), 'z': pv.Cone()})
+    source = _vtk.vtkMultiBlockDataSet()
+    source.SetNumberOfBlocks(2)
+    source.SetBlock(0, pv.Plane())
+    source.SetBlock(1, pv.Disc())
+    multi.shallow_copy(source)
+    assert multi.keys() == [None, None]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -1727,6 +1822,10 @@ def test_block_types(multiblock_all_with_nested_and_none):
             [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
             'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
         ),
+        (
+            [pv.ImageData(), pv.MultiBlock([pv.ImageData()])],
+            'MultiBlock[MultiBlock[ImageData] | ImageData]',
+        ),
     ],
 )
 def test_inferred_type(blocks, expected):
@@ -1789,7 +1888,7 @@ _WIDE = [
                     pv.PointSet(),
                 ]
             ),
-            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
+            'MultiBlock[MultiBlock[PolyData] | ExplicitStructuredGrid | ...]',
         ),
     ],
 )
