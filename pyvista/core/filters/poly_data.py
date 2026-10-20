@@ -2125,8 +2125,9 @@ class PolyDataFilters(DataSetFilters):
 
     def decimate_binned(  # type: ignore[misc]
         self: PolyData,
-        target_points: int | None = None,
+        target_reduction: float | None = None,
         *,
+        target_points: int | None = None,
         divisions: int | VectorLikeInt | None = None,
         point_generation: _BinnedPointGenerationOptions = 'bin_points',
         inplace: bool = False,
@@ -2142,12 +2143,18 @@ class PolyDataFilters(DataSetFilters):
         not preserving topology. It suits previews and level-of-detail rendering
         of very large surfaces.
 
-        Give exactly one of ``target_points`` or ``divisions``.
+        Give exactly one of ``target_reduction``, ``target_points`` or
+        ``divisions``.
 
         .. versionadded:: 0.50
 
         Parameters
         ----------
+        target_reduction : float, optional
+            Fraction of the points to remove, from 0 up to but not including 1.
+            A value of 0.9 leaves about 10% of the points. The grid is then
+            sized as for ``target_points``.
+
         target_points : int, optional
             Approximate number of points in the output. Cubic bins are sized
             over a few passes until the output is within about 5 percent of
@@ -2186,8 +2193,9 @@ class PolyDataFilters(DataSetFilters):
         Warns
         -----
         UserWarning
-            When ``target_points`` is given and the output has fewer than half
-            of the target points, or of the input points if there are fewer.
+            When ``target_reduction`` or ``target_points`` is given and the
+            output has fewer than half of the target points, or of the input
+            points if there are fewer.
 
         See Also
         --------
@@ -2200,7 +2208,7 @@ class PolyDataFilters(DataSetFilters):
         -----
         The filter allocates one integer per bin, so memory grows with the
         product of the divisions rather than with the size of the mesh: about
-        1 GB at the 2**28 bins ``target_points`` stops at. Explicit
+        1 GB at the 2**28 bins a target stops at. Explicit
         ``divisions`` are not limited.
 
         The bins span the bounds of the points used by the mesh, so a part far
@@ -2216,8 +2224,12 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(theta_resolution=200, phi_resolution=200)
-        >>> decimated = sphere.decimate_binned(2000)
+        >>> decimated = sphere.decimate_binned(target_points=2000)
         >>> decimated.plot(show_edges=True, line_width=2)
+
+        Remove about 90% of the points.
+
+        >>> decimated = sphere.decimate_binned(0.9)
 
         Use an explicit bin grid, averaging the points in each bin.
 
@@ -2233,8 +2245,8 @@ class PolyDataFilters(DataSetFilters):
             must_contain=point_generation,
             name='point_generation',
         )
-        if (target_points is None) == (divisions is None):
-            msg = 'Specify exactly one of `target_points` or `divisions`.'
+        if [target_reduction, target_points, divisions].count(None) != 2:
+            msg = 'Specify exactly one of `target_reduction`, `target_points` or `divisions`.'
             raise ValueError(msg)
 
         averaging = point_generation == 'bin_averages'
@@ -2297,12 +2309,21 @@ class PolyDataFilters(DataSetFilters):
                 )
             mesh = _binned(divs, progress_bar=progress_bar)
         else:
-            target = _validation.validate_number(
-                cast('int', target_points),
-                must_have_dtype=int,
-                must_be_in_range=[1, np.inf],
-                name='target_points',
-            )
+            if target_reduction is not None:
+                reduction = _validation.validate_number(
+                    target_reduction,
+                    must_be_in_range=[0, 1],
+                    strict_upper_bound=True,
+                    name='target_reduction',
+                )
+                target = max(round(source.n_points * (1 - reduction)), 1)
+            else:
+                target = _validation.validate_number(
+                    cast('int', target_points),
+                    must_have_dtype=int,
+                    must_be_in_range=[1, np.inf],
+                    name='target_points',
+                )
             mesh = _bin_to_target(sizes, target, _binned, progress_bar=progress_bar)
             # Far apart parts or the bin limit can leave the result well short
             if mesh.n_points < 0.5 * min(target, source.n_points):

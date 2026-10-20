@@ -151,18 +151,17 @@ armadillo = examples.download_armadillo()
 armadillo_cpos = pv.CameraPosition(
     position=(161.5, 82.1, -330.2), focal_point=(-4.3, 24.5, -1.6), viewup=(-0.1, 1, 0.12)
 )
-binned = armadillo.decimate_binned(5_000)
+binned = armadillo.decimate_binned(target_points=5_000)
 binned.plot(cpos=armadillo_cpos, show_edges=True)
 
 # %%
 # Time each of the three surface decimation filters on the same reduction.
 
-target = 5_000
-reduction = 1 - target / armadillo.n_points
+reduction = 1 - 5_000 / armadillo.n_points
 filters = {
     'decimate': lambda: armadillo.decimate(reduction),
     'decimate_pro': lambda: armadillo.decimate_pro(reduction),
-    'decimate_binned': lambda: armadillo.decimate_binned(target),
+    'decimate_binned': lambda: armadillo.decimate_binned(reduction),
 }
 
 results = {}

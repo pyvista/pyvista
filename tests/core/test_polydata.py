@@ -959,7 +959,7 @@ def fine_sphere():
 
 @pytest.mark.parametrize(('target', 'rtol'), [(500, 0.2), (2000, 0.05), (20000, 0.05)])
 def test_decimate_binned_target_points(fine_sphere, target, rtol):
-    mesh = fine_sphere.decimate_binned(target)
+    mesh = fine_sphere.decimate_binned(target_points=target)
     assert mesh.n_points == pytest.approx(target, rel=rtol)
     assert mesh.is_all_triangles
     assert mesh.n_points == np.unique(mesh.faces.reshape(-1, 4)[:, 1:]).size
@@ -980,7 +980,7 @@ def _binned_test_shape(name):
 @pytest.mark.parametrize('shape', ['tube', 'sheet', 'shells'])
 def test_decimate_binned_target_points_shapes(shape):
     mesh = _binned_test_shape(shape)
-    decimated = mesh.decimate_binned(10_000)
+    decimated = mesh.decimate_binned(target_points=10_000)
     assert decimated.n_points == pytest.approx(10_000, rel=0.1)
 
 
@@ -988,7 +988,7 @@ def test_decimate_binned_empty_probe():
     small = pv.Sphere(radius=0.05, theta_resolution=100, phi_resolution=100)
     mesh = small + small.translate((10.0, 10.0, 10.0))
     assert mesh.decimate_binned(divisions=50).n_points == 0
-    decimated = mesh.decimate_binned(300)
+    decimated = mesh.decimate_binned(target_points=300)
     assert decimated.n_points == pytest.approx(300, rel=0.1)
 
 
@@ -1003,14 +1003,14 @@ def test_decimate_binned_bin_limit(fine_sphere, monkeypatch):
 
     monkeypatch.setattr('pyvista.core.filters.poly_data._update_alg', spy)
     with pytest.warns(UserWarning, match='of the 20000 target points'):
-        mesh = fine_sphere.decimate_binned(20_000)
+        mesh = fine_sphere.decimate_binned(target_points=20_000)
     assert all(np.prod(divs) <= 1000 for divs in divisions)
     assert 0 < mesh.n_points < 1000
 
 
 def test_decimate_binned_keeps_data(fine_sphere):
     fine_sphere.points = fine_sphere.points.astype(np.float64)
-    mesh = fine_sphere.decimate_binned(2000)
+    mesh = fine_sphere.decimate_binned(target_points=2000)
     point_ids = mesh.point_data['point_ids']
     cell_ids = mesh.cell_data['cell_ids']
     assert point_ids.dtype == cell_ids.dtype == np.int_
@@ -1082,7 +1082,7 @@ def test_decimate_binned_divisions(fine_sphere):
 
 def test_decimate_binned_flat():
     plane = pv.Plane(i_resolution=300, j_resolution=300).triangulate()
-    mesh = plane.decimate_binned(5000)
+    mesh = plane.decimate_binned(target_points=5000)
     assert mesh.n_points == pytest.approx(5000, rel=0.05)
     assert np.allclose(mesh.points[:, 2], 0.0)
 
@@ -1093,7 +1093,7 @@ def test_decimate_binned_flat():
 def test_decimate_binned_coincident_points():
     points = np.zeros((3, 3))
     with pytest.warns(UserWarning, match='kept 0 of the 100 target points'):
-        mesh = pv.PolyData(points, faces=[3, 0, 1, 2]).decimate_binned(100)
+        mesh = pv.PolyData(points, faces=[3, 0, 1, 2]).decimate_binned(target_points=100)
     assert mesh.n_cells == 0
 
 
@@ -1101,7 +1101,7 @@ def test_decimate_binned_unused_points(fine_sphere):
     points = np.vstack([fine_sphere.points, [[100.0, 100.0, 100.0]]])
     mesh = pv.PolyData(points, faces=fine_sphere.faces)
     mesh.point_data['point_ids'] = np.arange(mesh.n_points)
-    decimated = mesh.decimate_binned(2000)
+    decimated = mesh.decimate_binned(target_points=2000)
     assert decimated.n_points == pytest.approx(2000, rel=0.1)
     assert np.array_equal(decimated.points, mesh.points[decimated['point_ids']])
 
@@ -1110,7 +1110,17 @@ def test_decimate_binned_warns_out_of_reach():
     small = pv.Sphere(radius=0.05, theta_resolution=100, phi_resolution=100)
     mesh = small + small.translate((100.0, 100.0, 100.0))
     with pytest.warns(UserWarning, match=r'kept \d+ of the 2000 target points'):
-        mesh.decimate_binned(2000)
+        mesh.decimate_binned(target_points=2000)
+
+
+@pytest.mark.parametrize(
+    ('target_reduction', 'rtol'), [(0.0, 0.1), (0.5, 0.05), (0.9, 0.05), (0.99, 0.2)]
+)
+def test_decimate_binned_target_reduction(fine_sphere, target_reduction, rtol):
+    target = round(fine_sphere.n_points * (1 - target_reduction))
+    mesh = fine_sphere.decimate_binned(target_reduction)
+    assert mesh.n_points == pytest.approx(target, rel=rtol)
+    assert mesh == fine_sphere.decimate_binned(target_points=target)
 
 
 @pytest.mark.parametrize('kwargs', [{'target_points': 2000}, {'divisions': 30}])
@@ -1144,6 +1154,10 @@ def test_decimate_binned_unset_active_scalars(fine_sphere):
     [
         ({}, ValueError, 'exactly one'),
         ({'target_points': 100, 'divisions': 10}, ValueError, 'exactly one'),
+        ({'target_reduction': 0.5, 'target_points': 100}, ValueError, 'exactly one'),
+        ({'target_reduction': 0.5, 'divisions': 10}, ValueError, 'exactly one'),
+        ({'target_reduction': 1.0}, ValueError, 'target_reduction'),
+        ({'target_reduction': -0.1}, ValueError, 'target_reduction'),
         ({'target_points': 0}, ValueError, 'target_points'),
         ({'target_points': 10.5}, TypeError, 'target_points'),
         ({'divisions': 0}, ValueError, 'divisions'),
@@ -1188,7 +1202,7 @@ def _with_strip(mesh):
 )
 def test_decimate_binned_not_all_triangles(make_mesh):
     with pytest.raises(NotAllTrianglesError, match='triangulate'):
-        make_mesh().decimate_binned(100)
+        make_mesh().decimate_binned(target_points=100)
 
 
 def test_compute_normals(sphere):
@@ -1640,7 +1654,7 @@ def test_is_all_triangles():
     [
         lambda mesh: mesh.decimate(0.5),
         lambda mesh: mesh.decimate_pro(0.5),
-        lambda mesh: mesh.decimate_binned(100),
+        lambda mesh: mesh.decimate_binned(target_points=100),
         lambda mesh: mesh.subdivide(1),
         lambda mesh: mesh.subdivide_adaptive(),
         lambda mesh: mesh.geodesic(0, 10),
