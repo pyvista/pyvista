@@ -18,6 +18,7 @@ from typing import NoReturn
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKExecutionError
 from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -169,6 +170,9 @@ def set_error_output_file(
 ) -> tuple[_vtk.vtkFileOutputWindow, _vtk.vtkOutputWindow]:
     """Set a file to write out the VTK errors.
 
+    .. deprecated:: 0.50.0
+       Use :func:`pyvista.set_error_output` instead.
+
     Parameters
     ----------
     filename : str, Path
@@ -182,6 +186,11 @@ def set_error_output_file(
         VTK output window.
 
     """
+    # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
+    warn_external(
+        '`set_error_output_file` has been deprecated. Use `set_error_output` instead.',
+        PyVistaDeprecationWarning,
+    )
     filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)  # type: ignore[arg-type]

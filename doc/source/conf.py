@@ -75,7 +75,7 @@ from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 _vtk.import_all()
 
 # Manage errors
-pv.set_error_output_file('errors.txt')
+pv.set_error_output('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
 pv.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
