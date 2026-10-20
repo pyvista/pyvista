@@ -125,6 +125,45 @@ def set_error_output(
     return file_output_window, _vtk.vtkOutputWindow.GetInstance()
 
 
+def set_warning_output(
+    target: str | Path | None = _DEFAULT_OUTPUT,
+) -> None:  # numpydoc ignore=RT01
+    """Configure VTK warning display.
+
+    Parameters
+    ----------
+    target : str | Path | None, optional
+        Warning display setting:
+
+        - If not specified (default), enables VTK global warning display.
+        - If ``None`` or :data:`os.devnull`, suppresses VTK global warning display.
+        - If a file path or string, enables warning display and redirects output to file.
+
+    Examples
+    --------
+    Silence VTK warnings:
+
+    >>> import pyvista as pv
+    >>> pv.set_warning_output(None)
+
+    Reset warnings back to VTK defaults:
+
+    >>> pv.set_warning_output()
+
+    """
+    if target is _DEFAULT_OUTPUT:
+        _vtk.vtkOutputWindow.GlobalWarningDisplayOn()
+        return
+
+    if target is None or str(target) == os.devnull:
+        _vtk.vtkOutputWindow.GlobalWarningDisplayOff()
+        return
+
+    # If redirected to a path, ensure warnings are on and redirect output
+    _vtk.vtkOutputWindow.GlobalWarningDisplayOn()
+    set_error_output(target)
+
+
 def set_error_output_file(
     filename: str | Path,
 ) -> tuple[_vtk.vtkFileOutputWindow, _vtk.vtkOutputWindow]:
