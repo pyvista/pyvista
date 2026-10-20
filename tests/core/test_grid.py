@@ -716,6 +716,25 @@ def test_linear_copy_mixed_cells():
     assert np.array_equal(lgrid.cell_data['ids'], grid.cell_data['ids'])
 
 
+@pytest.mark.parametrize('dtype', [np.int32, np.int64])
+@pytest.mark.parametrize('make_cell', [cells.Hexahedron, cells.QuadraticHexahedron])
+@pytest.mark.parametrize('deep', [False, True])
+def test_linear_copy_storage(make_cell, dtype, deep):
+    grid = make_cell()
+    grid._replace_cell_array(
+        pv.CellArray.from_arrays(
+            grid.cell_offsets.astype(dtype), grid.cell_connectivity.astype(dtype)
+        )
+    )
+    lgrid = grid.linear_copy(deep=deep)
+
+    assert lgrid.cell_connectivity.dtype == dtype
+    assert lgrid.cell_offsets.dtype == dtype
+    assert not np.shares_memory(lgrid.cell_connectivity, grid.cell_connectivity)
+    assert not np.shares_memory(lgrid.celltypes, grid.celltypes)
+    assert np.shares_memory(lgrid.points, grid.points) == (not deep)
+
+
 @pytest.mark.needs_vtk_version(9, 5, reason='Older vtk drops the polyhedron cells')
 def test_linear_copy_keeps_polyhedron():
     grid = pv.merge([cells.QuadraticTetrahedron(), cells.Polyhedron()], merge_points=False)

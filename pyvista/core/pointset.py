@@ -3755,11 +3755,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             else:
                 linear_sizes[mask] = linear_type.n_points
 
-        # VTK lists the corner points of a nonlinear cell before its other points
-        position = np.arange(connectivity.size) - np.repeat(offsets[:-1], sizes)
-        corners = position < np.repeat(linear_sizes, sizes)
-        linear_offsets = np.concatenate(([0], np.cumsum(linear_sizes)))
-        cells = CellArray.from_arrays(linear_offsets, connectivity[corners], deep=True)
+        if np.array_equal(linear_sizes, sizes):
+            cells = _vtk.vtkCellArray()
+            cells.DeepCopy(cell_array)
+        else:
+            linear_offsets = np.empty_like(offsets)
+            linear_offsets[0] = 0
+            np.cumsum(linear_sizes, out=linear_offsets[1:])
+            # VTK lists the corner points before the other points of each cell.
+            indices = np.repeat(offsets[:-1] - linear_offsets[:-1], linear_sizes)
+            indices += np.arange(linear_offsets[-1], dtype=offsets.dtype)
+            cells = CellArray.from_arrays(linear_offsets, connectivity[indices])
 
         vtk_cell_type = _vtk.numpy_to_vtk(linear_types, deep=True)
         if pv.vtk_version_info >= (9, 5):
