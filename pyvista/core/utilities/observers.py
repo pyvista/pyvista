@@ -89,40 +89,37 @@ def set_error_output(
     Silence VTK errors completely:
 
     >>> import pyvista as pv
-    >>> pv.set_error_output(None)
+    >>> sink, _ = pv.set_error_output(None)
 
     Redirect errors to a log file:
 
-    >>> pv.set_error_output('vtk_errors.log')
+    >>> sink, _ = pv.set_error_output('vtk_errors.log')
 
     Reset back to VTK defaults:
 
-    >>> pv.set_error_output()
+    >>> sink, _ = pv.set_error_output()
 
     """
     if target is _DEFAULT_OUTPUT:
-        _vtk.vtkOutputWindow.SetInstance(None)
-        if hasattr(_vtk, 'vtkLogger'):
-            # Restore VTK's default stderr verbosity (INFO) so errors are no longer silenced
-            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
+        _vtk.vtkOutputWindow.SetInstance(None)  # type: ignore[arg-type]
+        # Restore VTK's default stderr verbosity (INFO) so errors are no longer silenced
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
         win = _vtk.vtkOutputWindow.GetInstance()
         return win, win
 
     if target is None or str(target) == os.devnull:
         string_window = _vtk.vtkStringOutputWindow()
         _vtk.vtkOutputWindow.SetInstance(string_window)
-        if hasattr(_vtk, 'vtkLogger'):
-            # Silence vtkLogger so modern VTK log messages do not leak to stderr
-            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        # Silence vtkLogger so modern VTK log messages do not leak to stderr
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         return string_window, _vtk.vtkOutputWindow.GetInstance()
 
     resolved_path = Path(target).expanduser().resolve()
     file_output_window = _vtk.vtkFileOutputWindow()
     file_output_window.SetFileName(str(resolved_path))
     _vtk.vtkOutputWindow.SetInstance(file_output_window)
-    if hasattr(_vtk, 'vtkLogger'):
-        # Mute stderr logging so output goes only to the file without stderr duplication
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+    # Mute stderr logging so output goes only to the file without stderr duplication
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
     return file_output_window, _vtk.vtkOutputWindow.GetInstance()
 
 
