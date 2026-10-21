@@ -723,28 +723,23 @@ def test_linear_copy_higher_order(make_cell, cell_order):
     _assert_linear_copy_keeps_corners(make_cell(cell_order=cell_order))
 
 
+def _straight_sided_grid(cell_type):
+    """Return a one-cell grid of a cell type whose edges are straight."""
+    if cell_type == CellType.QUADRATIC_POLYGON:
+        corners = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
+        points = np.vstack([corners, (corners + np.roll(corners, -1, axis=0)) / 2])
+        return pv.UnstructuredGrid({cell_type: np.arange(8)[None]}, points)
+    grid = examples.cells.generate_cell_blocks(
+        cell_type, generator='source', unsupported_action='skip'
+    )[0]
+    return examples.cells.generate_cell_blocks(cell_type)[0] if grid is None else grid
+
+
 @pytest.mark.needs_vtk_version(9, 7, reason='Older vtk computes negative wedge volumes')
-@pytest.mark.parametrize(
-    'cell_type',
-    [
-        pytest.param(
-            cell_type,
-            marks=pytest.mark.xfail(reason='Example cell has a curved edge', strict=True),
-        )
-        if cell_type == CellType.QUADRATIC_POLYGON
-        else cell_type
-        for cell_type in _NONLINEAR_CELL_TYPES
-    ],
-    ids=lambda cell_type: cell_type.name,
-)
+@pytest.mark.parametrize('cell_type', _NONLINEAR_CELL_TYPES, ids=lambda cell_type: cell_type.name)
 def test_linear_copy_keeps_size_and_bounds(cell_type):
     """Test a straight-sided cell keeps its signed size and bounds."""
-    blocks = examples.cells.generate_cell_blocks(
-        cell_type, generator='source', unsupported_action='skip'
-    )
-    grid = blocks[0]
-    if grid is None:
-        grid = examples.cells.generate_cell_blocks(cell_type)[0]
+    grid = _straight_sided_grid(cell_type)
     lgrid = grid.linear_copy()
 
     size = ('Length', 'Area', 'Volume')[cell_type.dimension - 1]
