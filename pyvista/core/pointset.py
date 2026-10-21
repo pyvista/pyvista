@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 import functools
 from pathlib import Path
+import re
 import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -3665,22 +3666,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         Each nonlinear cell below becomes the linear cell through its corner
         points. Its other points stay in the grid, unused by the new cell.
 
-        - :attr:`~pyvista.CellType.LINE`: ``QUADRATIC_EDGE``, ``CUBIC_LINE``,
-          ``LAGRANGE_CURVE``, ``BEZIER_CURVE``
-        - :attr:`~pyvista.CellType.TRIANGLE`: ``QUADRATIC_TRIANGLE``,
-          ``BIQUADRATIC_TRIANGLE``, ``LAGRANGE_TRIANGLE``, ``BEZIER_TRIANGLE``
-        - :attr:`~pyvista.CellType.QUAD`: ``QUADRATIC_QUAD``, ``QUADRATIC_LINEAR_QUAD``,
-          ``BIQUADRATIC_QUAD``, ``LAGRANGE_QUADRILATERAL``, ``BEZIER_QUADRILATERAL``
-        - :attr:`~pyvista.CellType.POLYGON`: ``QUADRATIC_POLYGON``
-        - :attr:`~pyvista.CellType.TETRA`: ``QUADRATIC_TETRA``,
-          ``LAGRANGE_TETRAHEDRON``, ``BEZIER_TETRAHEDRON``
-        - :attr:`~pyvista.CellType.PYRAMID`: ``QUADRATIC_PYRAMID``,
-          ``TRIQUADRATIC_PYRAMID``
-        - :attr:`~pyvista.CellType.WEDGE`: ``QUADRATIC_WEDGE``, ``QUADRATIC_LINEAR_WEDGE``,
-          ``BIQUADRATIC_QUADRATIC_WEDGE``, ``LAGRANGE_WEDGE``, ``BEZIER_WEDGE``
-        - :attr:`~pyvista.CellType.HEXAHEDRON`: ``QUADRATIC_HEXAHEDRON``,
-          ``TRIQUADRATIC_HEXAHEDRON``, ``BIQUADRATIC_QUADRATIC_HEXAHEDRON``,
-          ``LAGRANGE_HEXAHEDRON``, ``BEZIER_HEXAHEDRON``
+        {_linear_copy_docs_insert()}
 
         .. versionchanged:: 0.50
 
@@ -5230,3 +5216,28 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             return self
         else:
             return self.copy().compute_connections(inplace=True)
+
+
+def _linear_copy_docs_insert(indent: str) -> str:
+    """Format the cell types converted by ``linear_copy`` as nested bullets."""
+    groups: dict[CellType, list[CellType]] = {}
+    for cell_type in CellType:
+        if not cell_type.is_linear and (linear_type := cell_type._linear_type):
+            groups.setdefault(linear_type, []).append(cell_type)
+    lines = []
+    for linear_type, cell_types in sorted(groups.items()):
+        lines += [f'- :attr:`~pyvista.CellType.{linear_type.name}`', '']
+        lines += [f'  - :attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cell_types]
+        lines.append('')
+    return '\n'.join(f'{indent}{line}' if line else '' for line in lines).strip()
+
+
+# Fill the placeholder in the `linear_copy` docstring with the converted cell types.
+placeholder = '{_linear_copy_docs_insert()}'
+method = UnstructuredGrid.linear_copy
+if method.__doc__ is not None:
+    if match := re.search(rf'^( *){re.escape(placeholder)}', method.__doc__, re.MULTILINE):
+        method.__doc__ = method.__doc__.replace(placeholder, _linear_copy_docs_insert(match[1]))
+    else:
+        msg = f'{method.__name__!r} docs are missing the linear cell types placeholder.'
+        raise RuntimeError(msg)
