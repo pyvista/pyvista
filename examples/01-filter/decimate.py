@@ -84,6 +84,27 @@ binned = armadillo.decimate_binned(target_points=5_000)
 binned.plot(cpos=armadillo_cpos, show_edges=True)
 
 # %%
+# Compare each ``point_generation`` option with uniform and per-axis ``divisions``.
+
+sphere = pv.Sphere(theta_resolution=200, phi_resolution=200)
+point_generations = {}
+for divisions in (8, (4, 8, 16)):
+    for point_generation in ('bin_points', 'bin_centers', 'bin_averages'):
+        label = f'{point_generation}\ndivisions={divisions}'
+        point_generations[label] = sphere.decimate_binned(
+            divisions=divisions, point_generation=point_generation
+        )
+
+# sphinx_gallery_start_ignore
+# labels are missing in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
+pv.plot_compare(
+    point_generations, shape=(2, 3), show_edges=True, cpos='iso', window_size=[1200, 800]
+)
+
+# %%
 # Time each of the three surface decimation filters on the same reduction.
 
 reduction = 1 - 5_000 / armadillo.n_points
