@@ -56,13 +56,14 @@ def fail_on_vtk_output(request: pytest.FixtureRequest) -> Generator[None, None, 
     """
     if marker := request.node.get_closest_marker('skip_vtk_output_check'):
         _require_reason(marker)
-        yield
+        with pv.vtk_messages(errors='ignore', warnings='ignore'):
+            yield
         return
     markers = list(request.node.iter_markers('expect_vtk_output'))
     for marker in markers:
         _require_reason(marker)
     expected = [pattern for marker in markers for pattern in marker.args]
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages(errors='ignore', warnings='ignore') as catcher:
         yield
     if unexpected := [
         event for event in catcher.events if not any(text in event.alert for text in expected)

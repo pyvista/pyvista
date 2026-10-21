@@ -2964,9 +2964,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         # Get output
-        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        with pv.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
+        _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
         output: pv.PolyData = _get_output(alg)
 

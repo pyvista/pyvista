@@ -749,6 +749,7 @@ def test_vtksz_file_size_exceptions(request, test_name, expected):
     assert test_case.max_vtksz_file_size == expected
 
 
+@pytest.mark.expect_vtk_output('cannot be added as a block', reason='the inner tests log it')
 def test_vtk_output_fails_the_test(
     pytester: pytest.Pytester,
     results_parser: PytesterStdoutParser,

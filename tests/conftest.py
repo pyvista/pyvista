@@ -242,10 +242,8 @@ def reset_global_state():
     pv.vtk_snake_case('error')
     assert pv.vtk_snake_case() == 'error'
 
-    pv.vtk_verbosity('info')
-    # On VTK built with VTK_ENABLE_LOGGING=OFF the cutoff is fixed at the
-    # disabled sentinel and setting verbosity is a no-op, so it stays 'off'.
-    assert pv.vtk_verbosity() in ('info', 'off')
+    pv.vtk_verbosity('off')
+    assert pv.vtk_verbosity() == 'off'
 
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False

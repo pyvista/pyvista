@@ -45,8 +45,8 @@ Show the VTK-inherited API in :func:`dir` (and IDE tab-completion):
 
 Dump the current config to a plain dict (useful for logging or round-tripping):
 
->>> pv.global_config.to_dict()
-{'points_dtype': None, 'show_vtk_api': False, 'validate_on_wrap': True}
+>>> sorted(pv.global_config.to_dict())
+['points_dtype', 'show_vtk_api', 'validate_on_wrap', 'vtk_errors', 'vtk_warnings']
 
 """
 
@@ -69,6 +69,7 @@ if TYPE_CHECKING:
     from numpy.typing import DTypeLike
 
 _PointsDtypeOptions = Literal['preserve', 'float32', 'float64'] | None
+_VtkMessageLevel = Literal['raise', 'warn', 'log', 'ignore']
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
@@ -222,12 +223,20 @@ class Config(_ConfigBase):
 
     """
 
-    __slots__ = ['_points_dtype', '_show_vtk_api', '_validate_on_wrap']
+    __slots__ = [
+        '_points_dtype',
+        '_show_vtk_api',
+        '_validate_on_wrap',
+        '_vtk_errors',
+        '_vtk_warnings',
+    ]
 
     def __init__(self) -> None:
         self._validate_on_wrap: bool = True
         self._show_vtk_api: bool = False
         self._points_dtype: _PointsDtypeOptions = None
+        self._vtk_errors: _VtkMessageLevel = 'warn'
+        self._vtk_warnings: _VtkMessageLevel = 'warn'
 
     def __repr__(self) -> str:
         header = 'PyVista Config'
@@ -486,6 +495,75 @@ class Config(_ConfigBase):
             msg = f'`show_vtk_api` must be a bool, got {type(value).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._show_vtk_api = value
+
+    @property
+    def vtk_errors(self) -> _VtkMessageLevel:  # numpydoc ignore=RT01
+        """Return or set what happens when VTK reports an error.
+
+        - ``'raise'``: raise :class:`~pyvista.VTKExecutionError` when the PyVista
+          operation or :class:`~pyvista.vtk_messages` block ends.
+        - ``'warn'`` (the default): emit a :class:`~pyvista.VTKExecutionWarning`.
+        - ``'log'``: log with the ``'pyvista.vtk'`` logger at the ``ERROR`` level.
+        - ``'ignore'``: do nothing.
+
+        A PyVista operation whose VTK algorithm fails raises
+        :class:`~pyvista.VTKExecutionError` at every level. Use
+        :class:`~pyvista.vtk_messages` to change the level for a block of code.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_config.vtk_errors = 'raise'
+        >>> pv.global_config.vtk_errors
+        'raise'
+        >>> pv.global_config.vtk_errors = 'warn'  # restore default
+
+        """
+        return self._vtk_errors
+
+    @vtk_errors.setter
+    def vtk_errors(self, value: _VtkMessageLevel) -> None:
+        self._vtk_errors = _validate_vtk_message_level(value, 'vtk_errors')
+
+    @property
+    def vtk_warnings(self) -> _VtkMessageLevel:  # numpydoc ignore=RT01
+        """Return or set what happens when VTK reports a warning.
+
+        - ``'raise'``: raise :class:`~pyvista.VTKExecutionError` when the PyVista
+          operation or :class:`~pyvista.vtk_messages` block ends.
+        - ``'warn'`` (the default): emit a :class:`~pyvista.VTKExecutionWarning`.
+        - ``'log'``: log with the ``'pyvista.vtk'`` logger at the ``WARNING`` level.
+        - ``'ignore'``: do nothing.
+
+        Use :class:`~pyvista.vtk_messages` to change the level for a block of code.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_config.vtk_warnings = 'ignore'
+        >>> pv.global_config.vtk_warnings
+        'ignore'
+        >>> pv.global_config.vtk_warnings = 'warn'  # restore default
+
+        """
+        return self._vtk_warnings
+
+    @vtk_warnings.setter
+    def vtk_warnings(self, value: _VtkMessageLevel) -> None:
+        self._vtk_warnings = _validate_vtk_message_level(value, 'vtk_warnings')
+
+
+def _validate_vtk_message_level(value: str, name: str) -> _VtkMessageLevel:
+    """Check a VTK message level."""
+    levels = ('raise', 'warn', 'log', 'ignore')
+    if value not in levels:
+        msg = f'`{name}` must be one of {levels}, got {value!r}.'
+        raise ValueError(msg)
+    return cast('_VtkMessageLevel', value)
 
 
 global_config = Config()

@@ -473,9 +473,9 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         return cast('_T_Output_co', data)
 
     def _update_information(self) -> None:
-        with pv.VtkErrorCatcher() as catcher:
+        with pv.vtk_messages() as messages:
             self.reader.UpdateInformation()
-        self._information_errors = catcher.error_events
+        self._information_errors = messages.error_events
 
     def _set_defaults(self) -> None:
         """Set defaults on reader, if needed."""

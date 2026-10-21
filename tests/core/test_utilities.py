@@ -924,112 +924,146 @@ def _generate_vtk_warn():
     merge.Update()
 
 
-@pytest.mark.expect_vtk_output(
+ERROR_MATCH = re.compile(
+    r'ERROR: In vtkWriter\.cxx, line \d+\n'
+    r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!\n*'
+)
+WARNING_MATCH = re.compile(
+    r'Warning: In vtkMergeFilter\.cxx, line \d+\n'
+    r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
+)
+VTK_OUTPUT = pytest.mark.expect_vtk_output(
     'No input provided!',
     'Nothing to merge!',
-    reason='the test triggers VTK errors and warnings for the catcher to record',
+    reason='the test triggers VTK errors and warnings on purpose',
 )
-def test_vtk_error_catcher():
-    # raise_errors: False
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
-    with error_catcher:
-        _generate_vtk_err()
-        _generate_vtk_err()
-        _generate_vtk_warn()
-        _generate_vtk_warn()
-    assert len(error_catcher.events) == 4
-    assert len(error_catcher.error_events) == 2
-    assert len(error_catcher.warning_events) == 2
 
-    # raise_errors: False, no error
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
-    with error_catcher:
+
+@VTK_OUTPUT
+def test_vtk_messages_records():
+    with pv.vtk_messages() as messages:
+        _generate_vtk_err()
+        _generate_vtk_err()
+        _generate_vtk_warn()
+        _generate_vtk_warn()
+    assert len(messages.events) == 4
+    assert len(messages.error_events) == 2
+    assert len(messages.warning_events) == 2
+    assert messages.events == [*messages.error_events, *messages.warning_events]
+
+    with pv.vtk_messages(errors='raise', warnings='raise') as messages:
         pass
+    assert messages.events == []
 
-    # raise_errors: True
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
-    error_match = re.compile(
-        r'ERROR: In vtkWriter\.cxx, line \d+\n'
-        r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!\n*'
-    )
-    with pytest.raises(RuntimeError, match=re.compile(error_match)):  # noqa: PT012
-        with error_catcher:
+
+@VTK_OUTPUT
+def test_vtk_messages_raise():
+    with pytest.raises(pv.VTKExecutionError, match=ERROR_MATCH):  # noqa: PT012
+        with pv.vtk_messages(errors='raise'):
             _generate_vtk_err()
             _generate_vtk_warn()
-    assert len(error_catcher.events) == 2
-    assert len(error_catcher.error_events) == 1
-    assert len(error_catcher.warning_events) == 1
 
-    # Raise two VTK errors as a single RuntimeError
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
-        raise_errors=True, emit_warnings=True
-    )
-    error_match2 = re.compile(f'{error_match.pattern}\n{error_match.pattern}')
+    error_match2 = re.compile(f'{ERROR_MATCH.pattern}\n{ERROR_MATCH.pattern}')
     with pytest.raises(pv.VTKExecutionError, match=error_match2):  # noqa: PT012
-        with error_catcher:
+        with pv.vtk_messages(errors='raise'):
             _generate_vtk_err()
             _generate_vtk_err()
 
-    # Warnings are emitted before the error is raised
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
-        raise_errors=True, emit_warnings=True
-    )
-    warning_match = re.compile(
-        r'Warning: In vtkMergeFilter\.cxx, line \d+\n'
-        r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
-    )
-    with pytest.warns(pv.VTKExecutionWarning, match=warning_match):  # noqa: PT031
-        with pytest.raises(pv.VTKExecutionError, match=error_match):  # noqa: PT012
-            with error_catcher:
-                _generate_vtk_err()
-                _generate_vtk_warn()
-
-    # Test raise/emit with no errors/warnings generated
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
-        raise_errors=True, emit_warnings=True
-    )
-    with error_catcher:
-        pass
+    with pytest.raises(pv.VTKExecutionError, match=WARNING_MATCH):  # noqa: PT012
+        with pv.vtk_messages(errors='ignore', warnings='raise'):
+            _generate_vtk_err()
+            _generate_vtk_warn()
 
 
-@pytest.mark.expect_vtk_output(
-    'No input provided!',
-    'Nothing to merge!',
-    reason='the test triggers VTK errors and warnings for the catchers to record',
-)
-def test_vtk_error_catcher_nested():
-    with pv.VtkErrorCatcher() as outer:
+@VTK_OUTPUT
+def test_vtk_messages_warn():
+    with pytest.warns(pv.VTKExecutionWarning, match=ERROR_MATCH):
+        with pv.vtk_messages(errors='warn'):
+            _generate_vtk_err()
+    with pytest.warns(pv.VTKExecutionWarning, match=WARNING_MATCH):
+        with pv.vtk_messages(warnings='warn'):
+            _generate_vtk_warn()
+
+
+@VTK_OUTPUT
+def test_vtk_messages_log(caplog):
+    with caplog.at_level(logging.DEBUG), pv.vtk_messages(errors='log', warnings='log'):
         _generate_vtk_err()
-        with pv.VtkErrorCatcher() as inner:
+        _generate_vtk_warn()
+    assert [(r.name, r.levelname) for r in caplog.records] == [
+        ('pyvista.vtk', 'ERROR'),
+        ('pyvista.vtk', 'WARNING'),
+    ]
+    assert ERROR_MATCH.match(caplog.records[0].getMessage())
+
+
+@VTK_OUTPUT
+def test_vtk_messages_ignore(caplog):
+    with caplog.at_level(logging.DEBUG), pv.vtk_messages(errors='ignore', warnings='ignore'):
+        _generate_vtk_err()
+        _generate_vtk_warn()
+    assert caplog.records == []
+
+
+@VTK_OUTPUT
+def test_vtk_messages_global_config():
+    assert pv.core.config.Config().vtk_errors == 'warn'
+    assert pv.core.config.Config().vtk_warnings == 'warn'
+    pv.global_config.vtk_errors = 'ignore'
+    pv.global_config.vtk_warnings = 'raise'
+    try:
+        _generate_vtk_err()
+        with pytest.raises(pv.VTKExecutionError, match=WARNING_MATCH):
+            with pv.vtk_messages():
+                _generate_vtk_warn()
+        with pv.vtk_messages(warnings='ignore'):
+            _generate_vtk_warn()
+            assert pv.global_config.vtk_warnings == 'ignore'
+        assert pv.global_config.vtk_warnings == 'raise'
+    finally:
+        pv.global_config.vtk_errors = 'ignore'
+        pv.global_config.vtk_warnings = 'ignore'
+
+
+@pytest.mark.parametrize('name', ['vtk_errors', 'vtk_warnings'])
+def test_vtk_messages_invalid_level(name):
+    match = re.escape(f"`{name}` must be one of ('raise', 'warn', 'log', 'ignore'), got 'foo'.")
+    with pytest.raises(ValueError, match=match):
+        setattr(pv.global_config, name, 'foo')
+    match = re.escape("`errors` must be one of ('raise', 'warn', 'log', 'ignore'), got 'foo'.")
+    with pytest.raises(ValueError, match=match):
+        pv.vtk_messages(errors='foo')
+
+
+@VTK_OUTPUT
+def test_vtk_messages_nested():
+    with pv.vtk_messages(errors='ignore', warnings='ignore') as outer:
+        _generate_vtk_err()
+        with pv.vtk_messages() as inner:
             _generate_vtk_warn()
     assert outer.events == [outer.error_events[0], inner.warning_events[0]]
     assert inner.error_events == []
 
 
-@pytest.mark.expect_vtk_output(
-    'No input provided!',
-    reason='the test triggers a VTK error for the catcher to record',
-)
-def test_vtk_error_catcher_keeps_output_window(tmp_path):
+@VTK_OUTPUT
+def test_vtk_messages_keeps_output_window(tmp_path):
     original = _vtk.vtkOutputWindow.GetInstance()
     path = tmp_path / 'vtk.log'
-    pv.set_error_output_file(path)
+    with pytest.warns(PyVistaDeprecationWarning, match='set_error_output_file'):
+        pv.set_error_output_file(path)
     try:
-        with pv.VtkErrorCatcher() as catcher:
+        with pv.vtk_messages(errors='ignore') as messages:
             _generate_vtk_err()
     finally:
         _vtk.vtkOutputWindow.SetInstance(original)
-    assert len(catcher.error_events) == 1
+    assert len(messages.error_events) == 1
     assert 'No input provided!' in path.read_text()
 
 
-@pytest.mark.expect_vtk_output(
-    'No input provided!',
-    reason='the test triggers a VTK error while another exception propagates',
-)
-def test_vtk_error_catcher_keeps_propagating_exception():
+@VTK_OUTPUT
+def test_vtk_messages_keeps_propagating_exception():
     def interrupted():
-        with pv.VtkErrorCatcher(raise_errors=True):
+        with pv.vtk_messages(errors='raise'):
             _generate_vtk_err()
             raise KeyboardInterrupt
 
@@ -1037,30 +1071,31 @@ def test_vtk_error_catcher_keeps_propagating_exception():
         interrupted()
 
 
-@pytest.mark.expect_vtk_output(
-    'No input provided!',
-    'Nothing to merge!',
-    reason='the test triggers a VTK error and warning to log',
-)
-def test_vtk_messages_logged(caplog):
-    with caplog.at_level(logging.DEBUG):
-        _generate_vtk_err()
-        _generate_vtk_warn()
-    assert [(r.name, r.levelname) for r in caplog.records] == [
-        ('pyvista.vtk', 'ERROR'),
-        ('pyvista.vtk', 'WARNING'),
-    ]
-    assert caplog.records[0].getMessage() == 'No input provided!'
+def test_vtk_native_logging_off_by_default():
+    assert pv.vtk_verbosity() == 'off'
 
 
-def test_vtk_error_catcher_send_to_logging_deprecated():
-    with pytest.warns(PyVistaDeprecationWarning, match='send_to_logging'):
-        pv.VtkErrorCatcher(send_to_logging=False)
+@VTK_OUTPUT
+def test_vtk_error_catcher_deprecated():
+    with pytest.warns(PyVistaDeprecationWarning, match='VtkErrorCatcher'):
+        catcher = pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True)
+    with pytest.warns(pv.VTKExecutionWarning, match=WARNING_MATCH):  # noqa: PT031
+        with pytest.raises(pv.VTKExecutionError, match=ERROR_MATCH):  # noqa: PT012
+            with catcher:
+                _generate_vtk_err()
+                _generate_vtk_warn()
+    with pytest.warns(PyVistaDeprecationWarning, match='send_errors_to_logging'):
+        pv.send_errors_to_logging()
+    try:
+        assert pv.global_config.vtk_errors == 'log'
+    finally:
+        pv.global_config.vtk_errors = 'ignore'
+        pv.global_config.vtk_warnings = 'ignore'
     if pv._version.version_info[:2] > (0, 53):
-        msg = 'Convert the `send_to_logging` deprecation to an error'
+        msg = 'Convert the VtkErrorCatcher deprecations to errors'
         raise RuntimeError(msg)
     if pv._version.version_info[:2] > (0, 54):
-        msg = 'Remove the `send_to_logging` parameter'
+        msg = 'Remove VtkErrorCatcher, send_errors_to_logging and set_error_output_file'
         raise RuntimeError(msg)
 
 
@@ -1124,6 +1159,7 @@ def test_update_alg_warns_on_failure():
     with (
         pytest.warns(pv.VTKExecutionWarning, match='about to fail'),
         pytest.raises(pv.VTKExecutionError, match='failed'),
+        pv.vtk_messages(warnings='warn'),
     ):
         _update_alg(WarnThenFail())
 
@@ -3096,6 +3132,7 @@ def test_vtk_verbosity_no_context():
 
 @pytest.mark.usefixtures('modifies_verbosity')
 def test_vtk_verbosity_set_get():
+    pv.vtk_verbosity('info')
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
     pv.vtk_verbosity('off')
     assert pv.vtk_verbosity() == 'off'

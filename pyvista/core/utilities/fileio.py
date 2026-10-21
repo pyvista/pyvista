@@ -627,9 +627,9 @@ def _read_dispatch(  # noqa: PLR0911
         _set_reader_attributes(reader, **kwargs)
         if progress_bar:
             reader.show_progress()
-        with pv.VtkErrorCatcher() as catcher:
+        with pv.vtk_messages() as messages:
             mesh = reader.read(validate=validate)
-        if errors := catcher.error_events:
+        if errors := messages.error_events:
             warn_external(
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'

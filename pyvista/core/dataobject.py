@@ -36,7 +36,6 @@ from .utilities.helpers import wrap
 from .utilities.misc import _DataObjectMeta
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
-from .utilities.state_manager import vtk_verbosity
 from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
 from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_exts
 from .utilities.writer_registry import _missing_writer_message
@@ -1012,7 +1011,7 @@ class DataObject(
         state_dict = state[1][0]
         self.__dict__.update(state_dict['_PYVISTA_STATE_DICT'])
         # VTK's unserializer reads a legacy string whose metadata pass warns spuriously
-        with vtk_verbosity('off'):
+        with pv.vtk_messages(warnings='ignore'):
             obj = unserialize_func(state_dict)
         self.deep_copy(obj)
 
@@ -1064,7 +1063,7 @@ class DataObject(
             elif isinstance(vtk_serialized, str):
                 reader.SetInputString(vtk_serialized)
             # The metadata pass hands the string on without its length and warns spuriously
-            with vtk_verbosity('off'):
+            with pv.vtk_messages(warnings='ignore'):
                 reader.Update()
 
         mesh = wrap(reader.GetOutput())

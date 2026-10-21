@@ -38,7 +38,6 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PrecisionWarning
 from pyvista.core.errors import VTKExecutionError
-from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.observers import _join
@@ -72,7 +71,7 @@ def _update_alg(
             to_be_updated = alg
 
     # Do the update
-    with pv.VtkErrorCatcher() as catcher, _requested_points_precision(alg):
+    with pv.vtk_messages() as messages, _requested_points_precision(alg):
         if progress_bar:
             with ProgressMonitor(alg, message=message):
                 status = to_be_updated.Update()
@@ -80,10 +79,8 @@ def _update_alg(
             status = to_be_updated.Update()
 
     if status is not None and status == 0:
-        if catcher.warning_events:
-            warn_external(_join(catcher.warning_events), VTKExecutionWarning)
         msg = (
-            _join([*prior_errors, *catcher.error_events])
+            _join([*prior_errors, *messages.error_events])
             or f'{alg.GetClassName()} failed to update.'
         )
         raise VTKExecutionError(msg)

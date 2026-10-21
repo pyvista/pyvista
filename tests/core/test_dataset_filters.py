@@ -2201,7 +2201,7 @@ def test_streamlines_from_source_structured_grids():
     mesh['vectors'] = np.ones([mesh.n_points, 3])
     mesh.set_active_vectors('vectors')
 
-    with pv.VtkErrorCatcher(raise_errors=True):
+    with pv.vtk_messages(errors='raise'):
         stream = mesh.streamlines_from_source(mesh2)
     assert all([stream.n_points, stream.n_cells])
 
@@ -3787,7 +3787,7 @@ def test_select_interior_points_empty_mesh(method):
 @pytest.mark.parametrize('inside_out', [True, False])
 def test_select_interior_points_empty_surface(method, inside_out):
     mesh = pv.Sphere()
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         out = mesh.select_interior_points(pv.PolyData(), method=method, inside_out=inside_out)
     assert catcher.error_events == []
     assert np.array_equal(out['selected_points'], np.full(mesh.n_points, inside_out))

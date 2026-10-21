@@ -161,9 +161,18 @@ _VerbosityOptions = Literal[
 
 
 class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
-    """Context manager to set VTK verbosity level.
+    """Context manager to set the verbosity of VTK's own logger.
+
+    VTK's logger prints to stderr and is off by default. The errors and warnings VTK
+    reports reach Python through :attr:`pyvista.core.config.Config.vtk_errors` and
+    :attr:`pyvista.core.config.Config.vtk_warnings` whatever this setting is; turn it
+    on to also see VTK's own log lines, including its debug and info messages.
 
     .. versionadded:: 0.45
+
+    .. versionchanged:: 0.50
+
+        The default is ``'off'``.
 
     Parameters
     ----------
@@ -182,7 +191,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
 
     >>> import pyvista as pv
     >>> pv.vtk_verbosity()
-    'info'
+    'off'
 
     Set verbosity to max.
 
@@ -209,7 +218,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
     calls. If the context manager isn't used, the state needs to be reset explicitly.
     Here, we set it back to its default value.
 
-    >>> _ = pv.vtk_verbosity('info')
+    >>> _ = pv.vtk_verbosity('off')
 
     """
 
