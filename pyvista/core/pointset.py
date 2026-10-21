@@ -2658,40 +2658,6 @@ def _require_polyhedron_face_cell_arrays(name: str) -> None:
         raise VTKVersionError(msg)
 
 
-# Nonlinear cell types and the linear cell type spanned by their corner points
-_LINEAR_CELL_TYPES: dict[int, CellType] = {
-    CellType.QUADRATIC_EDGE: CellType.LINE,
-    CellType.CUBIC_LINE: CellType.LINE,
-    CellType.LAGRANGE_CURVE: CellType.LINE,
-    CellType.BEZIER_CURVE: CellType.LINE,
-    CellType.QUADRATIC_TRIANGLE: CellType.TRIANGLE,
-    CellType.BIQUADRATIC_TRIANGLE: CellType.TRIANGLE,
-    CellType.LAGRANGE_TRIANGLE: CellType.TRIANGLE,
-    CellType.BEZIER_TRIANGLE: CellType.TRIANGLE,
-    CellType.QUADRATIC_QUAD: CellType.QUAD,
-    CellType.QUADRATIC_LINEAR_QUAD: CellType.QUAD,
-    CellType.BIQUADRATIC_QUAD: CellType.QUAD,
-    CellType.LAGRANGE_QUADRILATERAL: CellType.QUAD,
-    CellType.BEZIER_QUADRILATERAL: CellType.QUAD,
-    CellType.QUADRATIC_POLYGON: CellType.POLYGON,
-    CellType.QUADRATIC_TETRA: CellType.TETRA,
-    CellType.LAGRANGE_TETRAHEDRON: CellType.TETRA,
-    CellType.BEZIER_TETRAHEDRON: CellType.TETRA,
-    CellType.QUADRATIC_PYRAMID: CellType.PYRAMID,
-    CellType.TRIQUADRATIC_PYRAMID: CellType.PYRAMID,
-    CellType.QUADRATIC_WEDGE: CellType.WEDGE,
-    CellType.QUADRATIC_LINEAR_WEDGE: CellType.WEDGE,
-    CellType.BIQUADRATIC_QUADRATIC_WEDGE: CellType.WEDGE,
-    CellType.LAGRANGE_WEDGE: CellType.WEDGE,
-    CellType.BEZIER_WEDGE: CellType.WEDGE,
-    CellType.QUADRATIC_HEXAHEDRON: CellType.HEXAHEDRON,
-    CellType.TRIQUADRATIC_HEXAHEDRON: CellType.HEXAHEDRON,
-    CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON: CellType.HEXAHEDRON,
-    CellType.LAGRANGE_HEXAHEDRON: CellType.HEXAHEDRON,
-    CellType.BEZIER_HEXAHEDRON: CellType.HEXAHEDRON,
-}
-
-
 class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
@@ -3744,11 +3710,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         linear_types = celltypes.copy()
         linear_sizes = sizes.copy()
-        for cell_type in np.unique(celltypes):
-            linear_type = _LINEAR_CELL_TYPES.get(int(cell_type))
-            if linear_type is None:
+        for value in np.unique(celltypes).tolist():
+            try:
+                cell_type = CellType(value)
+            except ValueError:
                 continue
-            mask = celltypes == cell_type
+            linear_type = cell_type._linear_type
+            if linear_type in (None, cell_type):
+                continue
+            mask = celltypes == value
             linear_types[mask] = linear_type
             if linear_type == CellType.POLYGON:
                 linear_sizes[mask] = sizes[mask] // 2
