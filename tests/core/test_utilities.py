@@ -990,6 +990,114 @@ def test_vtk_error_catcher():
         pass
 
 
+@pytest.fixture
+def restore_vtk_output():
+    """Ensure VTK global output state is cleanly restored after tests."""
+    orig_instance = _vtk.vtkOutputWindow.GetInstance()
+    orig_warning_display = _vtk.vtkOutputWindow.GetGlobalWarningDisplay()
+    orig_verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+    try:
+        yield
+    finally:
+        _vtk.vtkOutputWindow.SetInstance(orig_instance)
+        _vtk.vtkOutputWindow.SetGlobalWarningDisplay(orig_warning_display)
+        _vtk.vtkLogger.SetStderrVerbosity(orig_verbosity)
+
+
+@pytest.mark.usefixtures('restore_vtk_output')
+@pytest.mark.skip_vtk_output_check(
+    reason='Testing VTK output redirection directly manipulates the global output window'
+)
+def test_set_error_output_file_redirection(tmp_path):
+    """Test redirecting errors to a file."""
+    log_file = tmp_path / 'vtk_error.log'
+    sink, _ = pv.set_error_output(log_file)
+    assert isinstance(sink, _vtk.vtkFileOutputWindow)
+
+    _generate_vtk_err()
+
+    pv.set_error_output(None)  # close/flush output window to read file
+    assert log_file.exists()
+    content = log_file.read_text()
+    assert 'No input provided!' in content
+
+
+@pytest.mark.usefixtures('restore_vtk_output')
+@pytest.mark.skip_vtk_output_check(reason='Testing silencing VTK error output')
+@pytest.mark.parametrize('target', [None, os.devnull, Path(os.devnull)])
+def test_set_error_output_silence(target, capfd):
+    """Test silencing error output with None, os.devnull, and Path(os.devnull)."""
+    sink, _ = pv.set_error_output(target)
+    assert isinstance(sink, _vtk.vtkStringOutputWindow)
+
+    _generate_vtk_err()
+
+    captured = capfd.readouterr()
+    assert 'No input provided!' not in captured.err
+    assert 'No input provided!' not in captured.out
+    assert 'No input provided!' in sink.GetOutput()
+
+
+@pytest.mark.usefixtures('restore_vtk_output')
+@pytest.mark.skip_vtk_output_check(reason='Testing reset of VTK error output')
+def test_set_error_output_reset():
+    """Test resetting error output restores default behavior."""
+    pv.set_error_output(None)
+    sink, win = pv.set_error_output()
+    assert sink is win
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_INFO
+
+
+@pytest.mark.usefixtures('restore_vtk_output')
+@pytest.mark.skip_vtk_output_check(reason='Testing warning output configuration')
+@pytest.mark.parametrize('target', [None, os.devnull, Path(os.devnull)])
+def test_set_warning_output_silence(target, capfd):
+    """Test silencing warning output."""
+    pv.set_warning_output(target)
+    assert _vtk.vtkOutputWindow.GetGlobalWarningDisplay() == 0
+
+    _generate_vtk_warn()
+    captured = capfd.readouterr()
+    assert 'Nothing to merge!' not in captured.err
+    assert 'Nothing to merge!' not in captured.out
+
+    pv.set_warning_output()
+    assert _vtk.vtkOutputWindow.GetGlobalWarningDisplay() == 1
+
+
+@pytest.mark.usefixtures('restore_vtk_output')
+@pytest.mark.skip_vtk_output_check(reason='Testing redirecting warning output to a file')
+def test_set_warning_output_file(tmp_path):
+    """Test redirecting warnings to a file."""
+    log_file = tmp_path / 'vtk_warning.log'
+    pv.set_warning_output(log_file)
+    assert _vtk.vtkOutputWindow.GetGlobalWarningDisplay() == 1
+
+    _generate_vtk_warn()
+
+    pv.set_error_output(None)  # close/flush output window to read file
+    assert log_file.exists()
+    content = log_file.read_text()
+    assert 'Nothing to merge!' in content
+
+
+@pytest.mark.usefixtures('restore_vtk_output')
+@pytest.mark.skip_vtk_output_check(reason='Testing deprecation warning of set_error_output_file')
+def test_set_error_output_file_deprecated(tmp_path):
+    """Test that set_error_output_file emits PyVistaDeprecationWarning and writes output."""
+    log_file = tmp_path / 'deprecated_error.log'
+    with pytest.warns(PyVistaDeprecationWarning, match='has been deprecated'):
+        sink, _ = pv.set_error_output_file(log_file)
+    assert isinstance(sink, _vtk.vtkFileOutputWindow)
+
+    _generate_vtk_err()
+
+    pv.set_error_output(None)  # close/flush output window to read file
+    assert log_file.exists()
+    content = log_file.read_text()
+    assert 'No input provided!' in content
+
+
 @pytest.mark.expect_vtk_output(
     'Error opening file this_file_does_not_exist.vtp',
     'Algorithm vtkXMLPolyDataReader',
