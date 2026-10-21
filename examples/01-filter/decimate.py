@@ -67,6 +67,49 @@ pv.plot_compare(
 )
 
 # %%
+# Binned Decimation
+# -----------------
+# :func:`pyvista.PolyDataFilters.decimate_binned` splits the bounds of a mesh into
+# a grid of bins and merges the points in each bin into one. It does not preserve
+# topology, but it is orders of magnitude faster than the filters above, which makes
+# it a good fit for previews of very large surfaces.
+#
+# Decimate a larger mesh to roughly 5,000 points.
+
+armadillo = examples.download_armadillo()
+armadillo_cpos = pv.CameraPosition(
+    position=(161.5, 82.1, -330.2), focal_point=(-4.3, 24.5, -1.6), viewup=(-0.1, 1, 0.12)
+)
+binned = armadillo.decimate_binned(target_points=5_000)
+binned.plot(cpos=armadillo_cpos, show_edges=True)
+
+# %%
+# Time each of the three surface decimation filters on the same reduction.
+
+reduction = 1 - 5_000 / armadillo.n_points
+filters = {
+    'decimate': lambda: armadillo.decimate(reduction),
+    'decimate_pro': lambda: armadillo.decimate_pro(reduction),
+    'decimate_binned': lambda: armadillo.decimate_binned(reduction),
+}
+
+results = {}
+for name, run in filters.items():
+    start = time.perf_counter()
+    results[name] = run()
+    print(f'{name}: {time.perf_counter() - start:.3f} s')
+
+# %%
+# Plot the results side by side.
+
+# sphinx_gallery_start_ignore
+# labels are missing in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
+pv.plot_compare(results, cpos=armadillo_cpos, window_size=[1200, 500], show_edges=True)
+
+# %%
 # Decimate PolyLine Mesh
 # ----------------------
 #
@@ -119,49 +162,6 @@ pv.plot_compare(
     line_width=5,
     window_size=[1200, 400],
 )
-
-# %%
-# Binned Decimation
-# -----------------
-# :func:`pyvista.PolyDataFilters.decimate_binned` splits the bounds of a mesh into
-# a grid of bins and merges the points in each bin into one. It does not preserve
-# topology, but it is orders of magnitude faster than the filters above, which makes
-# it a good fit for previews of very large surfaces.
-#
-# Decimate a larger mesh to roughly 5,000 points.
-
-armadillo = examples.download_armadillo()
-armadillo_cpos = pv.CameraPosition(
-    position=(161.5, 82.1, -330.2), focal_point=(-4.3, 24.5, -1.6), viewup=(-0.1, 1, 0.12)
-)
-binned = armadillo.decimate_binned(target_points=5_000)
-binned.plot(cpos=armadillo_cpos, show_edges=True)
-
-# %%
-# Time each of the three surface decimation filters on the same reduction.
-
-reduction = 1 - 5_000 / armadillo.n_points
-filters = {
-    'decimate': lambda: armadillo.decimate(reduction),
-    'decimate_pro': lambda: armadillo.decimate_pro(reduction),
-    'decimate_binned': lambda: armadillo.decimate_binned(reduction),
-}
-
-results = {}
-for name, run in filters.items():
-    start = time.perf_counter()
-    results[name] = run()
-    print(f'{name}: {time.perf_counter() - start:.3f} s')
-
-# %%
-# Plot the results side by side.
-
-# sphinx_gallery_start_ignore
-# labels are missing in interactive plots
-PYVISTA_GALLERY_FORCE_STATIC = True
-# sphinx_gallery_end_ignore
-
-pv.plot_compare(results, cpos=armadillo_cpos, window_size=[1200, 500], show_edges=True)
 
 # %%
 # .. tags:: filter
