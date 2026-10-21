@@ -639,6 +639,188 @@ def test_linear_copy_surf_elem():
     assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
+_NONLINEAR_CELL_TYPES = [
+    cell_type for cell_type in CellType if not cell_type.is_linear and cell_type.vtk_class
+]
+
+
+def _corner_edges(cell):
+    """Return the corner point ids of each edge of a cell, as frozensets."""
+    if cell.dimension == 1:
+        points = cell.points
+        distances = np.linalg.norm(points[:, None] - points[None], axis=-1)
+        i, j = np.unravel_index(np.argmax(distances), distances.shape)
+        return {frozenset((cell.point_ids[i], cell.point_ids[j]))}
+    ids, counts = np.unique(
+        [pid for edge in cell.edges for pid in edge.point_ids], return_counts=True
+    )
+    corners = set(ids[counts > 1].tolist())
+    return {frozenset(edge.point_ids) & corners for edge in cell.edges}
+
+
+def _mean_normal(grid):
+    """Return the unit mean cell normal of a grid's subdivided surface."""
+    surface = grid.extract_surface(algorithm='dataset_surface', nonlinear_subdivision=3)
+    normals = surface.compute_normals(
+        cell_normals=True, point_normals=False, auto_orient_normals=False
+    )['Normals']
+    mean = normals.mean(axis=0)
+    return mean / np.linalg.norm(mean)
+
+
+def _assert_linear_copy_keeps_corners(grid):
+    """Assert the linear copy of a one-cell grid keeps its corners and orientation."""
+    lgrid = grid.linear_copy()
+    linear_cell = lgrid.get_cell(0)
+    assert linear_cell.is_linear
+    assert linear_cell.dimension == grid.get_cell(0).dimension
+    linear_edges = (
+        {frozenset(edge.point_ids) for edge in linear_cell.edges}
+        if linear_cell.dimension > 1
+        else {frozenset(linear_cell.point_ids)}
+    )
+    assert linear_edges == _corner_edges(grid.get_cell(0))
+    if linear_cell.dimension == 2:
+        assert np.allclose(_mean_normal(lgrid), _mean_normal(grid))
+    assert lgrid.validate_mesh('wrong_number_of_points').is_valid
+    assert np.array_equal(lgrid.points, grid.points)
+
+
+def test_nonlinear_cell_types_have_linear_type():
+    """Test every concrete nonlinear cell type maps to a linear cell type."""
+    assert _NONLINEAR_CELL_TYPES
+    for cell_type in _NONLINEAR_CELL_TYPES:
+        assert cell_type._linear_type is not None, cell_type.name
+        assert cell_type._linear_type.is_linear
+
+
+@pytest.mark.parametrize('cell_type', _NONLINEAR_CELL_TYPES, ids=lambda cell_type: cell_type.name)
+def test_linear_copy_keeps_corner_points(cell_type):
+    """Test each nonlinear cell type becomes the linear cell through its corners."""
+    _assert_linear_copy_keeps_corners(examples.cells.generate_cell_blocks(cell_type)[0])
+
+
+@pytest.mark.parametrize('cell_order', [2, 4])
+@pytest.mark.parametrize(
+    'make_cell',
+    [
+        cells.LagrangeCurve,
+        cells.LagrangeTriangle,
+        cells.LagrangeQuadrilateral,
+        cells.LagrangeTetrahedron,
+        cells.LagrangeHexahedron,
+        cells.LagrangeWedge,
+        cells.BezierCurve,
+        cells.BezierTriangle,
+        cells.BezierQuadrilateral,
+        cells.BezierTetrahedron,
+        cells.BezierHexahedron,
+        cells.BezierWedge,
+    ],
+)
+def test_linear_copy_higher_order(make_cell, cell_order):
+    """Test Lagrange and Bezier cells of other orders become the linear cell of their corners."""
+    _assert_linear_copy_keeps_corners(make_cell(cell_order=cell_order))
+
+
+def _straight_sided_grid(cell_type):
+    """Return a one-cell grid of a cell type whose edges are straight."""
+    if cell_type == CellType.QUADRATIC_POLYGON:
+        corners = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
+        points = np.vstack([corners, (corners + np.roll(corners, -1, axis=0)) / 2])
+        return pv.UnstructuredGrid({cell_type: np.arange(8)[None]}, points)
+    grid = examples.cells.generate_cell_blocks(
+        cell_type, generator='source', unsupported_action='skip'
+    )[0]
+    return examples.cells.generate_cell_blocks(cell_type)[0] if grid is None else grid
+
+
+@pytest.mark.needs_vtk_version(9, 7, reason='Older vtk computes negative wedge volumes')
+@pytest.mark.parametrize('cell_type', _NONLINEAR_CELL_TYPES, ids=lambda cell_type: cell_type.name)
+def test_linear_copy_keeps_size_and_bounds(cell_type):
+    """Test a straight-sided cell keeps its signed size and bounds."""
+    grid = _straight_sided_grid(cell_type)
+    lgrid = grid.linear_copy()
+
+    size = ('Length', 'Area', 'Volume')[cell_type.dimension - 1]
+    assert np.allclose(lgrid.compute_cell_sizes()[size], grid.compute_cell_sizes()[size])
+    assert np.allclose(lgrid.get_cell(0).bounds, grid.get_cell(0).bounds)
+
+
+def test_linear_copy_empty():
+    """Test an empty grid stays empty."""
+    lgrid = pv.UnstructuredGrid().linear_copy()
+    assert lgrid.n_cells == 0
+
+
+def test_linear_copy_unknown_cell_type():
+    """Test a cell type unknown to CellType is kept unchanged."""
+    grid = pv.UnstructuredGrid([4, 0, 1, 2, 3], [99], np.eye(4, 3))
+    lgrid = grid.linear_copy()
+    assert lgrid.celltypes.tolist() == [99]
+    assert np.array_equal(lgrid.cell_connectivity, grid.cell_connectivity)
+
+
+def test_linear_copy_mixed_cells():
+    """Test a grid of mixed cell types converts each cell and keeps cell data."""
+    expected = {
+        CellType.QUADRATIC_TETRA: (CellType.TETRA, 4),
+        CellType.QUADRATIC_POLYGON: (CellType.POLYGON, 4),
+        CellType.HEXAHEDRON: (CellType.HEXAHEDRON, 8),
+        CellType.BIQUADRATIC_QUAD: (CellType.QUAD, 4),
+    }
+    parts = [
+        cells.QuadraticTetrahedron(),
+        cells.QuadraticPolygon(),
+        cells.Hexahedron(),
+        cells.BiQuadraticQuadrilateral(),
+    ]
+    grid = pv.merge(parts, merge_points=False)
+    grid.cell_data['ids'] = np.arange(grid.n_cells)
+    lgrid = grid.linear_copy()
+
+    assert lgrid.n_cells == len(expected)
+    for i, cell_type in enumerate(grid.celltypes):
+        linear_type, n_corners = expected[cell_type]
+        assert lgrid.get_cell(i).type == linear_type
+        assert lgrid.get_cell(i).point_ids == grid.get_cell(i).point_ids[:n_corners]
+    assert lgrid.validate_mesh('wrong_number_of_points').is_valid
+    assert np.array_equal(lgrid.cell_data['ids'], grid.cell_data['ids'])
+
+
+@pytest.mark.parametrize('dtype', [np.int32, np.int64])
+@pytest.mark.parametrize('make_cell', [cells.Hexahedron, cells.QuadraticHexahedron])
+@pytest.mark.parametrize('deep', [False, True])
+def test_linear_copy_storage(make_cell, dtype, deep):
+    """Test the copy keeps the connectivity dtype and shares points only when shallow."""
+    grid = make_cell()
+    grid._replace_cell_array(
+        pv.CellArray.from_arrays(
+            grid.cell_offsets.astype(dtype), grid.cell_connectivity.astype(dtype)
+        )
+    )
+    lgrid = grid.linear_copy(deep=deep)
+
+    assert lgrid.cell_connectivity.dtype == dtype
+    assert lgrid.cell_offsets.dtype == dtype
+    assert not np.shares_memory(lgrid.cell_connectivity, grid.cell_connectivity)
+    assert not np.shares_memory(lgrid.celltypes, grid.celltypes)
+    assert np.shares_memory(lgrid.points, grid.points) == (not deep)
+
+
+@pytest.mark.needs_vtk_version(9, 5, reason='Older vtk drops the polyhedron cells')
+def test_linear_copy_keeps_polyhedron():
+    """Test polyhedron cells and their faces are kept unchanged."""
+    grid = pv.merge([cells.QuadraticTetrahedron(), cells.Polyhedron()], merge_points=False)
+    lgrid = grid.linear_copy()
+
+    assert lgrid.celltypes.tolist() == [CellType.TETRA, CellType.POLYHEDRON]
+    assert lgrid.get_cell(0).point_ids == grid.get_cell(0).point_ids[:4]
+    assert lgrid.get_cell(1).point_ids == grid.get_cell(1).point_ids
+    faces = [face.point_ids for face in grid.get_cell(1).faces]
+    assert [face.point_ids for face in lgrid.get_cell(1).faces] == faces
+
+
 @pytest.mark.parametrize('invert', [True, False])
 def test_extract_cells(hexbeam, invert):
     ind = [1, 2, 3]
