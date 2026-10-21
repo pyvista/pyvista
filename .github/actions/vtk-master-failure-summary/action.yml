@@ -12,38 +12,7 @@ runs:
         JOB_LABEL: ${{ github.job }} (${{ join(matrix.*, ', ') }})
       run: |
         printf '%s\n' "$JOB_LABEL" > job_label.txt
-        : > failure_summary.txt
-        n_failures=0
-        for log in core-test.log plotting-test.log; do
-          [ -s "$log" ] || continue
-          # Strip ANSI color codes (TOX_COLORED=yes forces them even under tee), Windows line
-          # endings, and object addresses, whose length would move the line cap below.
-          clean="$(tr -d '\r' < "$log" | sed -E -e $'s/\x1b\\[[0-9;]*[a-zA-Z]//g' -e 's/0x[0-9a-fA-F]+/0x?/g')"
-          start_line="$(printf '%s\n' "$clean" | grep -n -m1 -E '=+ short test summary info =+' | cut -d: -f1 || true)"
-          if [ -n "$start_line" ]; then
-            # Keep only FAILED/ERROR lines: counts and SKIPPED/XFAIL vary run to run even for
-            # the identical set of failing tests, which broke repeat-detection. Sorted, since
-            # xdist reports them in a different order each run.
-            segment="$(printf '%s\n' "$clean" | tail -n "+${start_line}" | grep -E '^(FAILED|ERROR) ' | LC_ALL=C sort || true)"
-            # pytest's final "= 93 failed, 3384 passed, ... in 12.3s =" line has the true count.
-            final="$(printf '%s\n' "$clean" | grep -E '^=+ .* in [0-9.]+s' | tail -n1 || true)"
-            for n in $(printf '%s' "$final" | grep -oE '[0-9]+ (failed|errors?)' | cut -d' ' -f1); do
-              n_failures=$((n_failures + n))
-            done
-          else
-            segment="$(printf '%s\n' "$clean" | tail -n 40)"
-          fi
-          [ -n "$segment" ] || continue
-          # Cap each line first: one assertion can print kilobytes of reprs, and a size cap
-          # applied to such lines would drop every other failure.
-          printf '%s\n' "$segment" | sed -E 's/^(.{200}).+$/\1.../' >> failure_summary.txt
-        done
-        # Keeps three jobs' reports under GitHub's 65536-character comment limit.
-        if [ "$(wc -c < failure_summary.txt)" -gt 16000 ]; then
-          head -c 16000 failure_summary.txt | sed '$d' > failure_summary.tmp
-          mv failure_summary.tmp failure_summary.txt
-        fi
-        printf '%s\n' "$n_failures" > n_failures.txt
+        bash .github/scripts/vtk-master-failure-summary.sh . core-test.log plotting-test.log
 
     - name: Upload failure summary artifact
       uses: actions/upload-artifact@v7

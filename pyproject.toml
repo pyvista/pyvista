@@ -596,6 +596,19 @@ pyvista = "pv"
 # A command-line script bundled with an agent skill, not an importable package.
 '.claude/skills/*/scripts/*.py' = ['INP', 'T20']
 '.github/scripts/*.py' = ['INP', 'T20'] # CI script, not a package
+'.github/scripts/test_*.py' = [
+  'ANN',
+  'D',
+  'FBT',
+  'INP',
+  'PLC0415',
+  'PLR0917',
+  'S101',
+  'S311',
+  'S603',
+  'S607',
+  'T20',
+] # a test, like tests/*
 '__init__.py' = ['PLC0414']
 'benchmarks/*' = ['ANN', 'S101']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
