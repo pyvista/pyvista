@@ -45,8 +45,6 @@ jobs:
 
     env:
       CCACHE_MAXSIZE: 1G
-      # Version string, not mtime: survives a runner-image update that keeps the compiler.
-      CCACHE_COMPILERCHECK: "%compiler% --version"
       SCCACHE_CACHE_SIZE: 1G
 
     steps:
@@ -169,18 +167,6 @@ jobs:
         run: |
           pyvista-build vtk $MANYLINUX --yes --verbose \
             --source vtk-src --build-dir vtk-build --compiler-cache auto --cache-dir compiler-cache
-
-      - name: Show the full build log
-        if: failure()
-        shell: bash
-        run: |
-          if [ ! -f vtk-build/build.log ]; then
-            echo "The build stopped before compiling."
-          elif grep -Eq '^ninja: (build stopped|error)' vtk-build/build.log; then
-            cat vtk-build/build.log
-          else
-            echo "The build log shows no compile failure. See the failing step above."
-          fi
 
       # The sccache action writes its own statistics to the summary on Windows.
       - name: Compiler cache statistics
