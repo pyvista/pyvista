@@ -12,6 +12,7 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
+from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 
@@ -151,10 +152,36 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
             else:
                 self.SetCellType(cell_type)
 
+            # Before VTK 9.7, vtkGenericCell.DeepCopy/ShallowCopy forwards the outer
+            # vtkGenericCell directly to the internal cell, so vtkPolyhedron's
+            # SafeDownCast fails and drops the faces. Unwrap vtkGenericCell first.
+            source_cell = (
+                vtk_cell.GetRepresentativeCell()
+                if isinstance(vtk_cell, _vtk.vtkGenericCell)
+                else vtk_cell
+            )
             if deep:
-                self.DeepCopy(vtk_cell)
+                self.DeepCopy(source_cell)
             else:
-                self.ShallowCopy(vtk_cell)
+                self.ShallowCopy(source_cell)
+                # vtkGenericCell.ShallowCopy updates the internal cell's PointIds
+                # pointer but leaves the outer vtkGenericCell.PointIds pointer stale.
+                # Call SetPointIds to synchronize both pointers.
+                # See https://github.com/pyvista/pyvista/issues/4723
+                self.SetPointIds(source_cell.GetPointIds())
+            if not _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS and isinstance(
+                source_cell, _vtk.vtkPolyhedron
+            ):
+                # VTK < 9.4 does not override DeepCopy or ShallowCopy on vtkPolyhedron.
+                n_faces = source_cell.GetNumberOfFaces()
+                face_stream = [n_faces]
+                for i in range(n_faces):
+                    face_pts = source_cell.GetFace(i).GetPointIds()
+                    n_pts = face_pts.GetNumberOfIds()
+                    face_stream.append(n_pts)
+                    face_stream.extend(face_pts.GetId(j) for j in range(n_pts))
+                cast('_vtk.vtkPolyhedron', self.GetRepresentativeCell()).SetFaces(face_stream)
+                self.Initialize()
 
     @property
     def type(self: Self) -> CellType:
@@ -622,6 +649,36 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
+    def __eq__(self: Self, other: object) -> bool:
+        """Return whether two cells are equivalent.
+
+        Two cells are equivalent when their type, point ids, and point
+        coordinates match.  The connectivity is part of the comparison, so a
+        copy that shares the point coordinates but not the point ids is not
+        equivalent to the cell it was copied from.
+
+        Examples
+        --------
+        >>> from pyvista.examples.cells import Tetrahedron
+        >>> cell = Tetrahedron().get_cell(0)
+        >>> cell == cell.copy(deep=True)
+        True
+
+        """
+        if self is other:
+            return True
+        if not isinstance(other, Cell):
+            return False
+        return (
+            self.type == other.type
+            and self.point_ids == other.point_ids
+            and np.array_equal(self.points, other.points, equal_nan=True)
+            and (self.type != CellType.POLYHEDRON or self.faces == other.faces)
+        )
+
+    # Cells are mutable, so they are not hashable.
+    __hash__ = None  # type: ignore[assignment]
+
     def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the cell.
 
@@ -652,6 +709,8 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         Create a shallow copy of the cell and demonstrate it is shallow.
 
         >>> shallow_cell = cell.copy(deep=False)
+        >>> shallow_cell.point_ids == cell.point_ids
+        True
         >>> shallow_cell.points[:] = 0
         >>> cell == shallow_cell
         True
