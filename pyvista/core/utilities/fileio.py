@@ -463,6 +463,15 @@ def read(
         Wrapped PyVista dataset. When ``cls`` is given, an instance of
         ``cls`` is returned instead.
 
+    Raises
+    ------
+    pyvista.VTKExecutionError
+        If the VTK reader fails. The errors VTK reported are included.
+
+        .. versionchanged:: 0.50
+
+            A failed read raises instead of returning an empty dataset.
+
     Examples
     --------
     Load an example mesh.
@@ -627,15 +636,7 @@ def _read_dispatch(  # noqa: PLR0911
         _set_reader_attributes(reader, **kwargs)
         if progress_bar:
             reader.show_progress()
-        with pv.vtk_messages() as messages:
-            mesh = reader.read(validate=validate)
-        if errors := messages.error_events:
-            warn_external(
-                f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
-                'raised an error while reading the file.\n'
-                f'\t"{errors[-1].alert}"',
-            )
-        return mesh
+        return reader.read(validate=validate)
 
 
 def _set_reader_attributes(reader: BaseReader[Any], **kwargs) -> None:

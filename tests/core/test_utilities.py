@@ -1009,6 +1009,7 @@ def test_vtk_messages_ignore(caplog):
 def test_vtk_messages_global_config():
     assert pv.core.config.Config().vtk_errors == 'warn'
     assert pv.core.config.Config().vtk_warnings == 'warn'
+    saved = pv.global_config.vtk_errors, pv.global_config.vtk_warnings
     pv.global_config.vtk_errors = 'ignore'
     pv.global_config.vtk_warnings = 'raise'
     try:
@@ -1021,8 +1022,7 @@ def test_vtk_messages_global_config():
             assert pv.global_config.vtk_warnings == 'ignore'
         assert pv.global_config.vtk_warnings == 'raise'
     finally:
-        pv.global_config.vtk_errors = 'ignore'
-        pv.global_config.vtk_warnings = 'ignore'
+        pv.global_config.vtk_errors, pv.global_config.vtk_warnings = saved
 
 
 @pytest.mark.parametrize('name', ['vtk_errors', 'vtk_warnings'])
@@ -1062,13 +1062,45 @@ def test_vtk_messages_keeps_output_window(tmp_path):
 
 @VTK_OUTPUT
 def test_vtk_messages_keeps_propagating_exception():
+    messages = pv.vtk_messages(errors='raise')
+
     def interrupted():
-        with pv.vtk_messages(errors='raise'):
+        with messages:
             _generate_vtk_err()
             raise KeyboardInterrupt
 
     with pytest.raises(KeyboardInterrupt):
         interrupted()
+    assert len(messages.error_events) == 1
+
+
+@pytest.mark.expect_vtk_output(
+    'No input provided!',
+    reason='the test triggers a VTK error inside a nested context',
+)
+def test_vtk_messages_inner_context_handles_its_messages():
+    with pv.vtk_messages(errors='raise') as outer:
+        with pytest.raises(pv.VTKExecutionError, match=ERROR_MATCH):
+            with pv.vtk_messages() as inner:
+                _generate_vtk_err()
+    assert outer.error_events == inner.error_events
+
+
+@pytest.mark.expect_vtk_output(
+    'Unexpected point index value: 0',
+    'Algorithm vtkOBJReader',
+    reason='the OBJ indices are out of range, and _update_alg raises on the VTK error',
+)
+def test_update_alg_raises_without_warning(tmp_path):
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
+            with pv.vtk_messages(errors='warn'):
+                _update_alg(reader)
 
 
 def test_vtk_native_logging_off_by_default():
@@ -1084,13 +1116,13 @@ def test_vtk_error_catcher_deprecated():
             with catcher:
                 _generate_vtk_err()
                 _generate_vtk_warn()
+    saved = pv.global_config.vtk_errors, pv.global_config.vtk_warnings
     with pytest.warns(PyVistaDeprecationWarning, match='send_errors_to_logging'):
         pv.send_errors_to_logging()
     try:
         assert pv.global_config.vtk_errors == 'log'
     finally:
-        pv.global_config.vtk_errors = 'ignore'
-        pv.global_config.vtk_warnings = 'ignore'
+        pv.global_config.vtk_errors, pv.global_config.vtk_warnings = saved
     if pv._version.version_info[:2] > (0, 53):
         msg = 'Convert the VtkErrorCatcher deprecations to errors'
         raise RuntimeError(msg)

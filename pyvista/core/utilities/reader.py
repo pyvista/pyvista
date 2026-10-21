@@ -455,6 +455,15 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
             :class:`~pyvista.XMLUnstructuredGridReader` produces an
             :class:`~pyvista.UnstructuredGrid`.
 
+        Raises
+        ------
+        pyvista.VTKExecutionError
+            If the VTK reader fails. The errors VTK reported are included.
+
+            .. versionchanged:: 0.50
+
+                A failed read raises instead of returning an empty dataset.
+
         """
         _update_alg(
             self.reader,

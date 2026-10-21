@@ -77,8 +77,11 @@ def _update_alg(
                 status = to_be_updated.Update()
         else:
             status = to_be_updated.Update()
+        failed = status is not None and status == 0
+        if failed:
+            messages._drop_pending_errors()
 
-    if status is not None and status == 0:
+    if failed:
         msg = (
             _join([*prior_errors, *messages.error_events])
             or f'{alg.GetClassName()} failed to update.'

@@ -41,7 +41,6 @@ stderr logger is off by default; :func:`~pyvista.vtk_verbosity` turns it on.
    :toctree: _autosummary
 
    vtk_messages
-   vtk_verbosity
 
 VTK Observers
 ~~~~~~~~~~~~~
