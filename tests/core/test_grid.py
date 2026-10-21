@@ -753,6 +753,14 @@ def test_linear_copy_empty():
     assert lgrid.n_cells == 0
 
 
+def test_linear_copy_unknown_cell_type():
+    """Test a cell type unknown to CellType is kept unchanged."""
+    grid = pv.UnstructuredGrid([4, 0, 1, 2, 3], [99], np.eye(4, 3))
+    lgrid = grid.linear_copy()
+    assert lgrid.celltypes.tolist() == [99]
+    assert np.array_equal(lgrid.cell_connectivity, grid.cell_connectivity)
+
+
 def test_linear_copy_mixed_cells():
     """Test a grid of mixed cell types converts each cell and keeps cell data."""
     expected = {

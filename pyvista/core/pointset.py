@@ -2659,6 +2659,14 @@ def _require_polyhedron_face_cell_arrays(name: str) -> None:
         raise VTKVersionError(msg)
 
 
+# Nonlinear cell types and the linear cell type spanned by their corner points
+_LINEAR_CELL_TYPES: dict[int, CellType] = {
+    cell_type: linear_type
+    for cell_type in CellType
+    if (linear_type := cell_type._linear_type) not in (None, cell_type)
+}
+
+
 class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
@@ -3697,12 +3705,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         linear_types = celltypes.copy()
         linear_sizes = sizes.copy()
         for value in np.unique(celltypes).tolist():
-            try:
-                cell_type = CellType(value)
-            except ValueError:
-                continue
-            linear_type = cell_type._linear_type
-            if linear_type in (None, cell_type):
+            if (linear_type := _LINEAR_CELL_TYPES.get(value)) is None:
                 continue
             mask = celltypes == value
             linear_types[mask] = linear_type
@@ -5221,9 +5224,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 def _linear_copy_docs_insert(indent: str) -> str:
     """Format the cell types converted by ``linear_copy`` as nested bullets."""
     groups: dict[CellType, list[CellType]] = {}
-    for cell_type in CellType:
-        if not cell_type.is_linear and (linear_type := cell_type._linear_type):
-            groups.setdefault(linear_type, []).append(cell_type)
+    for cell_type, linear_type in _LINEAR_CELL_TYPES.items():
+        groups.setdefault(linear_type, []).append(CellType(cell_type))
     lines = []
     for linear_type, cell_types in sorted(groups.items()):
         lines += [f'- :attr:`~pyvista.CellType.{linear_type.name}`', '']
