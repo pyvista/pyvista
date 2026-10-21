@@ -85,57 +85,40 @@ points[:, 1] = r * np.sin(phi)
 spiral = pv.PolyData(points, lines=np.append([n_points], np.arange(n_points)))
 
 # %%
-# Construct a reusable plotting function for future use.
-
-
-def compare_decimation(spiral, decimated):
-    pl = pv.Plotter()
-    pl.add_mesh(spiral, line_width=5, color='r', label='Original')
-    pl.add_mesh(decimated, line_width=3, color='k', label='Decimated')
-    pl.view_xy()
-    pl.add_legend(face='line', size=(0.25, 0.25))
-
-
-# %%
 # Decimate using :func:`pyvista.PolyDataFilters.decimate_polyline` filter by
-# target of 50%.
+# targets of 50% and 80%. To avoid errors of quickly changing features, also
+# use the ``maximum_error`` parameter. It is in units of fraction of the largest
+# length of the bounding box. Note that it limits the level of reduction
+# achieved.
 
-decimated = spiral.decimate_polyline(0.5)
-print(f'Original # of points:  {spiral.n_points}')
-print(f'Decimated # of points: {decimated.n_points}')
-
-# %%
-# The decimation looks OK at this level of reduction.
-
-compare_decimation(spiral, decimated)
-
-# %%
-# Using a larger level of reduction, 80%, leads to a much coarser level of
-# representation.
-
-decimated = spiral.decimate_polyline(0.8)
-print(f'Original # of points:  {spiral.n_points}')
-print(f'Decimated # of points: {decimated.n_points}')
+polylines = {
+    '50%': spiral.decimate_polyline(0.5),
+    '80%': spiral.decimate_polyline(0.8),
+    '80%, maximum_error=0.5': spiral.decimate_polyline(0.8, maximum_error=0.5),
+}
+print(f'Original # of points: {spiral.n_points}')
+for name, decimated in polylines.items():
+    print(f'{name}: {decimated.n_points}')
 
 # %%
-# The structure of the inner part of the spiral is completely
-# lost.
+# Compare each result, in red, with the original spiral, in black. The
+# decimation looks OK at 50%. At 80% the structure of the inner part of the
+# spiral is completely lost, and ``maximum_error`` captures it adequately.
 
-compare_decimation(spiral, decimated)
+# sphinx_gallery_start_ignore
+# labels are missing in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
-# %%
-# To avoid errors of quickly changing features, use the ``maximum_error``
-# parameter. It is in units of fraction of the largest length of the
-# bounding box. Note that it limits the level of reduction achieved.
-
-decimated = spiral.decimate_polyline(0.8, maximum_error=0.5)
-print(f'Original # of points:  {spiral.n_points}')
-print(f'Decimated # of points: {decimated.n_points}')
-
-# %%
-# The structure of the inner part of the spiral is captured adequately.
-
-compare_decimation(spiral, decimated)
+pv.plot_compare(
+    polylines,
+    reference_mesh=spiral,
+    reference_kwargs=dict(color='k', line_width=2),
+    cpos='xy',
+    color='r',
+    line_width=5,
+    window_size=[1200, 400],
+)
 
 # %%
 # Binned Decimation
