@@ -10,7 +10,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista.core._vtk_utilities import _COINCIDENT_OFFSET_UNITS_ARE_DEPTH_STEPS
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
@@ -300,7 +299,8 @@ class AffineWidget3D(_NoNewAttrMixin):
 
         if always_visible:
             # Draw the widget almost a third of the depth range in front of the scene.
-            depth_steps = 2**24 if _COINCIDENT_OFFSET_UNITS_ARE_DEPTH_STEPS else 65000
+            # VTK 9.8 measures offset units in depth-buffer steps.
+            depth_steps = 2**24 if pv.vtk_version_info >= (9, 7, 99) else 65000  # >= (9, 8, 0)
             units = -20000 * depth_steps / 65000
             for actor in self._arrows + self._circles:
                 mapper = actor.mapper
