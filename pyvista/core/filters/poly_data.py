@@ -1625,6 +1625,17 @@ class PolyDataFilters(DataSetFilters):
         >>> dashed = circle.dash_lines(pattern=[6, 2, 2, 2])
         >>> dashed.plot(color='black', line_width=4, cpos='xy')
 
+        The dashes keep the cell data of the edges they lie on. The pattern runs
+        across the joined edges, and a dash is split where the data changes.
+
+        >>> import numpy as np
+        >>> centers = circle.cell_centers().points
+        >>> circle.cell_data['angle'] = np.degrees(
+        ...     np.arctan2(centers[:, 1], centers[:, 0])
+        ... )
+        >>> dashed = circle.dash_lines()
+        >>> dashed.plot(scalars='angle', line_width=4, cpos='xy')
+
         """
         runs, period = _resolve_dash_pattern(style, pattern)
         if scale is not None:
