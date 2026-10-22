@@ -58,6 +58,7 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import cast
+from typing import get_args
 
 import numpy as np
 
@@ -559,7 +560,7 @@ class Config(_ConfigBase):
 
 def _validate_vtk_message_level(value: str, name: str) -> _VtkMessageLevel:
     """Check a VTK message level."""
-    levels = ('raise', 'warn', 'log', 'ignore')
+    levels = get_args(_VtkMessageLevel)
     if value not in levels:
         msg = f'`{name}` must be one of {levels}, got {value!r}.'
         raise ValueError(msg)

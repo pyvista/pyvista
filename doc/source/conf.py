@@ -6,6 +6,7 @@ import datetime
 import faulthandler
 import json
 import locale
+import logging
 import os
 from pathlib import Path
 import re
@@ -80,8 +81,9 @@ from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
 _vtk.import_all()
 
-# Manage errors
-pv.set_error_output_file('errors.txt')
+# Write the VTK errors and warnings reported during the build to errors.txt
+pv.global_config.vtk_errors = pv.global_config.vtk_warnings = 'log'
+logging.getLogger('pyvista.vtk').addHandler(logging.FileHandler('errors.txt'))
 # Ensure that offscreen rendering is used for docs generation
 pv.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
@@ -522,7 +524,7 @@ class ResetPyVista:
 
         # An example that aborted may have left the previous recording open.
         self._stop_catching_vtk_output()
-        catcher = pv.vtk_messages(errors='ignore', warnings='ignore')
+        catcher = pv.vtk_messages(errors='log', warnings='log')
         catcher.__enter__()
         self._error_catcher = catcher
 

@@ -38,6 +38,7 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PrecisionWarning
 from pyvista.core.errors import VTKExecutionError
+from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.observers import _join
@@ -71,22 +72,33 @@ def _update_alg(
             to_be_updated = alg
 
     # Do the update
-    with pv.vtk_messages() as messages, _requested_points_precision(alg):
-        if progress_bar:
-            with ProgressMonitor(alg, message=message):
+    failed = False
+    try:
+        with pv.vtk_messages() as messages, _requested_points_precision(alg):
+            if progress_bar:
+                with ProgressMonitor(alg, message=message):
+                    status = to_be_updated.Update()
+            else:
                 status = to_be_updated.Update()
-        else:
-            status = to_be_updated.Update()
-        failed = status is not None and status == 0
-        if failed:
-            messages._drop_pending_errors()
+            failed = status is not None and status == 0
+            if failed:
+                messages._drop_pending_errors()
+    except VTKExecutionWarning as exc:
+        if not failed:
+            raise
+        raise VTKExecutionError(_failure_message(alg, prior_errors, messages)) from exc
 
     if failed:
-        msg = (
-            _join([*prior_errors, *messages.error_events])
-            or f'{alg.GetClassName()} failed to update.'
-        )
-        raise VTKExecutionError(msg)
+        raise VTKExecutionError(_failure_message(alg, prior_errors, messages))
+
+
+def _failure_message(
+    alg: _vtk.vtkAlgorithm, prior_errors: Sequence[VtkEvent], messages: pv.vtk_messages
+) -> str:
+    """Format the errors VTK reported for a failed update."""
+    return (
+        _join([*prior_errors, *messages.error_events]) or f'{alg.GetClassName()} failed to update.'
+    )
 
 
 DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION

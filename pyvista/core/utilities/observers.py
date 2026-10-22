@@ -129,11 +129,13 @@ class vtk_messages:  # noqa: N801
         warnings: _VtkMessageLevel | None = None,
     ) -> None:
         """Initialize context manager."""
-        self._errors = _validate_vtk_message_level(errors, 'errors') if errors else None
-        self._warnings = _validate_vtk_message_level(warnings, 'warnings') if warnings else None
+        self._errors = None if errors is None else _validate_vtk_message_level(errors, 'errors')
+        self._warnings = (
+            None if warnings is None else _validate_vtk_message_level(warnings, 'warnings')
+        )
         self._events: list[tuple[str, VtkEvent]] = []
         self._pending: list[tuple[str, VtkEvent, _VtkMessageLevel]] = []
-        self._saved: tuple[_VtkMessageLevel, _VtkMessageLevel] | None = None
+        self._saved: dict[str, _VtkMessageLevel] = {}
 
     def __enter__(self: Self) -> Self:
         """Start recording VTK errors and warnings."""
@@ -142,39 +144,47 @@ class vtk_messages:  # noqa: N801
         self._events = []
         self._pending = []
         config = pv.global_config
-        self._saved = (config.vtk_errors, config.vtk_warnings)
+        self._saved = {}
         if self._errors is not None:
+            self._saved['vtk_errors'] = config.vtk_errors
             config.vtk_errors = self._errors
         if self._warnings is not None:
+            self._saved['vtk_warnings'] = config.vtk_warnings
             config.vtk_warnings = self._warnings
         _vtk_event_dispatcher.add(self)
         return self
 
     def __exit__(self, exc_type: type[BaseException] | None, *args: object) -> None:
-        """Stop recording, then handle the messages reported inside the block."""
+        """Stop recording, then handle the messages reported inside the block.
+
+        Messages at the ``'raise'`` level are dropped when the block exits with an
+        exception, so the exception propagates. A warning filter that turns a VTK warning
+        into an exception keeps a pending ``VTKExecutionError`` as its cause.
+        """
         import pyvista as pv  # noqa: PLC0415
 
         _vtk_event_dispatcher.remove(self)
-        if self._saved is not None:
-            pv.global_config.vtk_errors, pv.global_config.vtk_warnings = self._saved
-        if exc_type is not None:
-            return
-        raised = []
-        pending = iter(self._pending)
-        try:
-            for event_type, event, level in pending:
-                if level == 'raise':
+        for name, level in self._saved.items():
+            setattr(pv.global_config, name, level)
+        self._saved = {}
+        raised: list[VtkEvent] = []
+        warning_exc: VTKExecutionWarning | None = None
+        for event_type, event, level in self._pending:
+            if level == 'raise':
+                if exc_type is None:
                     raised.append(event)
+                continue
+            try:
+                _handle(event_type, event, level)
+            except VTKExecutionWarning as exc:
+                if exc_type is not None or warning_exc is not None:
+                    _handle(event_type, event, 'log')
                 else:
-                    _handle(event_type, event, level)
-        finally:
-            for event_type, event, level in pending:
-                if level == 'raise':
-                    raised.append(event)
-                elif level == 'log':
-                    _handle(event_type, event, level)
+                    warning_exc = exc
         if raised:
-            raise VTKExecutionError(_join(raised))
+            raise VTKExecutionError(_join(raised)) from warning_exc
+        if warning_exc is not None:
+            raise warning_exc
 
     def _record(self, event_type: str, event: VtkEvent) -> None:
         """Record one VTK event."""
@@ -209,18 +219,17 @@ class VtkErrorCatcher(vtk_messages):
 
     .. deprecated:: 0.50
 
-        Use :class:`pyvista.vtk_messages` instead. Messages not raised or emitted by
-        this catcher follow :attr:`pyvista.core.config.Config.vtk_errors` and
-        :attr:`pyvista.core.config.Config.vtk_warnings`, and ``send_to_logging`` has
-        no effect.
+        Use :class:`pyvista.vtk_messages` instead. Messages this catcher does not
+        raise or emit are logged with the ``'pyvista.vtk'`` logger, or ignored when
+        ``send_to_logging`` is ``False``.
 
     Parameters
     ----------
     raise_errors : bool, default: False
         Raise a ``pyvista.VTKExecutionError`` when a VTK error is recorded.
 
-    send_to_logging : bool, optional
-        Has no effect.
+    send_to_logging : bool, default: True
+        Log the messages that are not raised or emitted.
 
     emit_warnings : bool, default: False
         Emit a ``pyvista.VTKExecutionWarning`` when a VTK warning is recorded.
@@ -231,16 +240,20 @@ class VtkErrorCatcher(vtk_messages):
         self,
         *,
         raise_errors: bool = False,
-        send_to_logging: bool | None = None,  # noqa: ARG002
+        send_to_logging: bool = True,
         emit_warnings: bool = False,
     ) -> None:
         """Initialize context manager."""
         # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
         msg = '`VtkErrorCatcher` is deprecated. Use `pv.vtk_messages` instead.'
         warn_external(msg, PyVistaDeprecationWarning)
+        self.raise_errors = raise_errors
+        self.send_to_logging = send_to_logging
+        self.emit_warnings = emit_warnings
+        fallback: _VtkMessageLevel = 'log' if send_to_logging else 'ignore'
         super().__init__(
-            errors='raise' if raise_errors else None,
-            warnings='warn' if emit_warnings else None,
+            errors='raise' if raise_errors else fallback,
+            warnings='warn' if emit_warnings else fallback,
         )
 
 

@@ -924,6 +924,16 @@ def _generate_vtk_warn():
     merge.Update()
 
 
+class _WarnThenFail(_vtk.VTKPythonAlgorithmBase):
+    def __init__(self):
+        super().__init__(nInputPorts=0, nOutputPorts=1, outputType='vtkPolyData')
+
+    def RequestData(self, *_):  # noqa: N802
+        _vtk.vtkOutputWindow.GetInstance().DisplayWarningText('about to fail')
+        _vtk.vtkOutputWindow.GetInstance().DisplayErrorText('failed')
+        return 0
+
+
 ERROR_MATCH = re.compile(
     r'ERROR: In vtkWriter\.cxx, line \d+\n'
     r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!\n*'
@@ -1108,6 +1118,127 @@ def test_vtk_native_logging_off_by_default():
 
 
 @VTK_OUTPUT
+def test_vtk_messages_inner_quieter_than_outer():
+    with pv.vtk_messages(errors='raise') as outer:
+        with pv.vtk_messages(errors='ignore') as inner:
+            _generate_vtk_err()
+    assert outer.error_events == inner.error_events
+    assert len(outer.error_events) == 1
+
+    with pytest.raises(pv.VTKExecutionError, match=ERROR_MATCH):  # noqa: PT012
+        with pv.vtk_messages(errors='raise'):
+            with pv.vtk_messages(errors='ignore'):
+                _generate_vtk_err()
+            _generate_vtk_err()
+
+
+@VTK_OUTPUT
+def test_vtk_messages_warns_when_block_raises():
+    def interrupted():
+        with pv.vtk_messages(errors='warn'):
+            _generate_vtk_err()
+            raise KeyboardInterrupt
+
+    with pytest.warns(pv.VTKExecutionWarning, match=ERROR_MATCH):
+        with pytest.raises(KeyboardInterrupt):
+            interrupted()
+
+
+@VTK_OUTPUT
+def test_vtk_messages_logs_when_block_raises(caplog):
+    def interrupted():
+        with pv.vtk_messages(errors='log'):
+            _generate_vtk_err()
+            raise KeyboardInterrupt
+
+    with caplog.at_level(logging.ERROR, logger='pyvista.vtk'):
+        with pytest.raises(KeyboardInterrupt):
+            interrupted()
+    assert 'No input provided!' in caplog.text
+
+
+@VTK_OUTPUT
+def test_vtk_messages_keeps_exception_when_warning_filter_raises(caplog):
+    def interrupted():
+        with pv.vtk_messages(errors='warn'):
+            _generate_vtk_err()
+            raise KeyboardInterrupt
+
+    with warnings.catch_warnings(), caplog.at_level(logging.ERROR, logger='pyvista.vtk'):
+        warnings.simplefilter('error', pv.VTKExecutionWarning)
+        with pytest.raises(KeyboardInterrupt):
+            interrupted()
+    assert 'No input provided!' in caplog.text
+
+
+@VTK_OUTPUT
+def test_vtk_messages_chains_error_to_raising_warning_filter():
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.VTKExecutionWarning)
+        with pytest.raises(pv.VTKExecutionError, match=ERROR_MATCH) as info:  # noqa: PT012
+            with pv.vtk_messages(errors='raise', warnings='warn'):
+                _generate_vtk_warn()
+                _generate_vtk_err()
+    assert isinstance(info.value.__cause__, pv.VTKExecutionWarning)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.VTKExecutionWarning)
+        with pytest.raises(pv.VTKExecutionWarning, match=WARNING_MATCH):
+            with pv.vtk_messages(warnings='warn'):
+                _generate_vtk_warn()
+
+
+def test_vtk_messages_restores_only_overridden_levels():
+    saved = pv.global_config.vtk_errors, pv.global_config.vtk_warnings
+    try:
+        with pv.vtk_messages(warnings='ignore'):
+            pv.global_config.vtk_errors = 'log'
+        assert pv.global_config.vtk_errors == 'log'
+        assert pv.global_config.vtk_warnings == saved[1]
+
+        with pv.vtk_messages():
+            pv.global_config.vtk_warnings = 'log'
+        assert pv.global_config.vtk_warnings == 'log'
+
+        with pv.vtk_messages(errors='raise'):
+            assert pv.global_config.vtk_errors == 'raise'
+        assert pv.global_config.vtk_errors == 'log'
+    finally:
+        pv.global_config.vtk_errors, pv.global_config.vtk_warnings = saved
+
+
+@pytest.mark.parametrize('name', ['errors', 'warnings'])
+def test_vtk_messages_rejects_empty_level(name):
+    with pytest.raises(ValueError, match=f'`{name}` must be one of'):
+        pv.vtk_messages(**{name: ''})
+
+
+@VTK_OUTPUT
+def test_vtk_error_catcher_defaults_log(caplog):
+    with pytest.warns(PyVistaDeprecationWarning, match='VtkErrorCatcher'):
+        catcher = pv.VtkErrorCatcher()
+    assert (catcher.raise_errors, catcher.send_to_logging, catcher.emit_warnings) == (
+        False,
+        True,
+        False,
+    )
+    with caplog.at_level(logging.WARNING, logger='pyvista.vtk'), catcher:
+        _generate_vtk_err()
+        _generate_vtk_warn()
+    assert 'No input provided!' in caplog.text
+    assert 'Nothing to merge!' in caplog.text
+    assert len(catcher.events) == 2
+
+    caplog.clear()
+    with pytest.warns(PyVistaDeprecationWarning, match='VtkErrorCatcher'):
+        catcher = pv.VtkErrorCatcher(send_to_logging=False)
+    with caplog.at_level(logging.WARNING, logger='pyvista.vtk'), catcher:
+        _generate_vtk_err()
+    assert caplog.text == ''
+    assert len(catcher.error_events) == 1
+
+
+@VTK_OUTPUT
 def test_vtk_error_catcher_deprecated():
     with pytest.warns(PyVistaDeprecationWarning, match='VtkErrorCatcher'):
         catcher = pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True)
@@ -1179,21 +1310,28 @@ def test_update_alg_raises_upstream_error():
     reason='the algorithm warns and then fails on purpose',
 )
 def test_update_alg_warns_on_failure():
-    class WarnThenFail(_vtk.VTKPythonAlgorithmBase):
-        def __init__(self):
-            super().__init__(nInputPorts=0, nOutputPorts=1, outputType='vtkPolyData')
-
-        def RequestData(self, *_):  # noqa: N802
-            _vtk.vtkOutputWindow.GetInstance().DisplayWarningText('about to fail')
-            _vtk.vtkOutputWindow.GetInstance().DisplayErrorText('failed')
-            return 0
-
     with (
         pytest.warns(pv.VTKExecutionWarning, match='about to fail'),
         pytest.raises(pv.VTKExecutionError, match='failed'),
         pv.vtk_messages(warnings='warn'),
     ):
-        _update_alg(WarnThenFail())
+        _update_alg(_WarnThenFail())
+
+
+@pytest.mark.expect_vtk_output(
+    'about to fail',
+    'failed',
+    'Algorithm vtkPythonAlgorithm',
+    reason='the algorithm warns and then fails on purpose',
+)
+def test_update_alg_raises_when_warning_filter_raises():
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.VTKExecutionWarning)
+        with pytest.raises(pv.VTKExecutionError, match='failed') as info:
+            with pv.vtk_messages(warnings='warn'):
+                _update_alg(_WarnThenFail())
+    assert isinstance(info.value.__cause__, pv.VTKExecutionWarning)
+    assert 'about to fail' in str(info.value.__cause__)
 
 
 @pytest.mark.expect_vtk_output(
