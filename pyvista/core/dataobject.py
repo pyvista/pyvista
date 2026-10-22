@@ -18,6 +18,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
+from ._structured_data import _StructuredDataMixin
 from .datasetattributes import DataSetAttributes
 from .utilities.accessor_registry import _clear_accessor_cache
 from .utilities.accessor_registry import _pending_accessor_names
@@ -526,8 +527,8 @@ class DataObject(
                 equal_attrs.append('celltypes')
                 equal_attrs.append('polyhedron_faces')
                 equal_attrs.append('polyhedron_face_locations')
-            elif isinstance(self, pv.StructuredGrid):
-                equal_attrs.append('dimensions')
+            elif isinstance(self, _StructuredDataMixin):
+                equal_attrs.append('extent')
 
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista

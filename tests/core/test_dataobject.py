@@ -123,6 +123,37 @@ def test_structured_grid_eq_dimensions(dimensions):
     assert other != grid
 
 
+@pytest.mark.parametrize(
+    'make_grid',
+    [
+        lambda: pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid(),
+        lambda: pv.ImageData(dimensions=(3, 4, 2)).cast_to_rectilinear_grid(),
+        examples.load_explicit_structured,
+    ],
+    ids=['StructuredGrid', 'RectilinearGrid', 'ExplicitStructuredGrid'],
+)
+def test_structured_grid_eq_extent(make_grid):
+    grid = make_grid()
+    grid.point_data['point_values'] = np.arange(grid.n_points)
+    grid.cell_data['cell_values'] = np.arange(grid.n_cells)
+    other = grid.copy()
+    assert grid == other
+    assert other == grid
+
+    other.offset = (-2, 3, -4)
+    assert grid.dimensions == other.dimensions
+    assert grid.extent != other.extent
+    assert np.array_equal(grid.points, other.points)
+    assert grid.point_data == other.point_data
+    assert grid.cell_data == other.cell_data
+    assert grid != other
+    assert other != grid
+
+    other.extent = grid.extent
+    assert grid == other
+    assert other == grid
+
+
 def test_unstructured_grid_eq(hexbeam):
     copy = hexbeam.copy()
     assert hexbeam == copy
