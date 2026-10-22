@@ -116,10 +116,13 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ccache
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
       - name: Install pyvista-build
         shell: bash
         # From GitHub until the first PyPI release: https://pyvista.github.io/pyvista-build/
-        run: python -m pip install --upgrade pip "pyvista-build @ git+https://github.com/pyvista/pyvista-build.git"
+        run: uv pip install --system "pyvista-build @ git+https://github.com/pyvista/pyvista-build.git"
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
@@ -164,6 +167,7 @@ jobs:
         # --manylinux (Linux) builds inside the manylinux_2_28 container.
         env:
           MANYLINUX: ${{ runner.os == 'Linux' && '--manylinux' || '' }}
+          FORCE_COLOR: "1"
         run: |
           pyvista-build vtk $MANYLINUX --yes --verbose \
             --source vtk-src --build-dir vtk-build --compiler-cache auto --cache-dir compiler-cache
