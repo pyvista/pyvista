@@ -163,10 +163,21 @@ _VerbosityOptions = Literal[
 class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
     """Context manager to set the verbosity of VTK's own logger.
 
-    VTK's logger prints to stderr and is off by default. The errors and warnings VTK
-    reports reach Python through :attr:`pyvista.core.config.Config.vtk_errors` and
-    :attr:`pyvista.core.config.Config.vtk_warnings` whatever this setting is; turn it
-    on to also see VTK's own log lines, including its debug and info messages.
+    VTK has a logger, :vtk:`vtkLogger`, that prints straight to ``stderr`` with a
+    timestamp, source file and line. This setting controls that logger only. It is
+    ``'off'`` by default, and it has no effect on what PyVista does with VTK messages.
+
+    What it does not control: the errors and warnings VTK reports always reach PyVista,
+    whatever this setting is. They are handled by
+    :attr:`pyvista.core.config.Config.vtk_errors` and
+    :attr:`pyvista.core.config.Config.vtk_warnings`, or by a
+    :class:`~pyvista.vtk_messages` block, and a failed filter or reader always raises
+    :class:`~pyvista.VTKExecutionError`.
+
+    What it does control: VTK's own log stream, which is the only place some of VTK's
+    output goes. That includes debug and info messages, and messages that VTK logs
+    directly instead of reporting as an error or warning. Turn it on when a VTK
+    operation misbehaves without PyVista reporting anything.
 
     .. versionadded:: 0.45
 
