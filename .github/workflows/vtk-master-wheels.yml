@@ -121,8 +121,8 @@ jobs:
 
       - name: Install pyvista-build
         shell: bash
-        # From GitHub until the first PyPI release: https://pyvista.github.io/pyvista-build/
-        run: uv pip install --system "pyvista-build @ git+https://github.com/pyvista/pyvista-build.git"
+        # https://pyvista.github.io/pyvista-build/
+        run: uv pip install --system pyvista-build==0.1.0
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
@@ -170,7 +170,9 @@ jobs:
           FORCE_COLOR: "1"
         run: |
           pyvista-build vtk $MANYLINUX --yes --verbose \
-            --source vtk-src --build-dir vtk-build --compiler-cache auto --cache-dir compiler-cache
+            --source vtk-src \
+            --build-dir vtk-build \
+            --cache-dir compiler-cache
 
       - name: Upload compiler cache
         # Never from a pull request: the nightly restores whichever upload is newest.
