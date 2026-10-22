@@ -68,6 +68,8 @@ def test_load_tetbeam():
     mesh = examples.load_tetbeam()
     assert mesh.n_cells
     assert (mesh.celltypes == 10).all()
+    assert mesh.array_names == ['vtkOriginalCellIds']
+    assert np.all(mesh.compute_cell_sizes(length=False, area=False)['Volume'] > 0)
 
 
 @pytest.mark.parametrize(

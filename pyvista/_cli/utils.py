@@ -7,6 +7,7 @@ Mostly contains converters, validators, console error helper and help formatters
 from __future__ import annotations
 
 import ast
+from enum import StrEnum
 import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -32,7 +33,6 @@ from rich.panel import Panel
 from rich.text import Text
 
 import pyvista as pv
-from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 from pyvista.plotting._typing import ThemeOptions
 
 from .app import CLI_APP

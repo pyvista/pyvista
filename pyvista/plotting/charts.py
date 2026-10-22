@@ -722,7 +722,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         """Flag denoting whether a log scale is used for this axis.
 
         Note that setting this property to ``True`` will not guarantee
-        that the log scale will be enabled.  Verify whether activating
+        that the log scale will be enabled. Verify whether activating
         the log scale succeeded by rereading this property.
 
         Examples
@@ -914,7 +914,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         You can specify a sequence, to provide a unique label to every
         tick position; a string, to describe the label format to use
         for each label; or ``None``, which will revert back to the
-        default tick labels.  A label format is a string consisting of
+        default tick labels. A label format is a string consisting of
         an integer part, denoting the precision to use, and a final
         character, denoting the notation to use.
 
@@ -1723,15 +1723,15 @@ class _Chart(DocSubs):
             when plotting off screen.
 
         off_screen : bool, optional
-            Plots off screen when ``True``.  Helpful for saving screenshots
+            Plots off screen when ``True``. Helpful for saving screenshots
             without a window popping up. Defaults to active theme setting.
 
         full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores
+            Opens window in full screen. When enabled, ignores
             ``window_size``. Defaults to active theme setting.
 
         screenshot : str | bool, default: False
-            Saves screenshot to file when enabled.  See:
+            Saves screenshot to file when enabled. See:
             :func:`Plotter.screenshot() <pyvista.Plotter.screenshot>`.
 
             When ``True``, takes screenshot and returns ``numpy`` array of
@@ -1742,11 +1742,11 @@ class _Chart(DocSubs):
 
         notebook : bool, optional
             When ``True``, the resulting plot is placed inline a
-            jupyter notebook.  Assumes a jupyter console is active.
+            jupyter notebook. Assumes a jupyter console is active.
 
         background : ColorLike, default: "w"
             Use to make the entire mesh have a single solid color.
-            Either a string, RGB list, or hex color string.  For example:
+            Either a string, RGB list, or hex color string. For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``.
 
@@ -1761,8 +1761,7 @@ class _Chart(DocSubs):
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
-              ``transparent_background=True``.
+            * [Window height x Window width x 4] otherwise.
 
         Examples
         --------

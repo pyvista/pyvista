@@ -29,7 +29,7 @@ def plot_example():
 # %%
 # PyVista's default color theme is chosen to be generally easy on your
 # eyes and is best used when working long hours on your visualization
-# project.  The grey background and warm colormaps are chosen to make
+# project. The grey background and warm colormaps are chosen to make
 # sure 3D renderings do not drastically change the brightness of your
 # screen when working in dark environments.
 #
@@ -64,7 +64,7 @@ pv.set_plot_theme('dark')
 plot_example()
 
 # %%
-# Demo the ``'document'`` theme.  This theme is used on our online examples.
+# Demo the ``'document'`` theme. This theme is used on our online examples.
 
 pv.set_plot_theme('document')
 
@@ -86,11 +86,11 @@ cpos = pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can control how meshes are displayed by setting individual
 # parameters when plotting like ``mesh.plot(show_edges=True)``, or by
-# setting a global theme.  You can also control individual parameters
+# setting a global theme. You can also control individual parameters
 # how all meshes are displayed by default via ``pyvista.global_theme``.
 #
 # Here, we print out the current global defaults for all ``pyvista``
-# meshes.  These values have been changed by the previous "Document"
+# meshes. These values have been changed by the previous "Document"
 # theme.
 
 pv.global_theme
@@ -98,7 +98,7 @@ pv.global_theme
 
 # %%
 # By default, edges are not shown on meshes unless explicitly
-# specified when plotting a mesh via ``show_edges=True``.  You can
+# specified when plotting a mesh via ``show_edges=True``. You can
 # change this default behavior globally by changing the default
 # parameter.
 
@@ -109,7 +109,7 @@ cpos = pv.Sphere().plot()
 # %%
 # You can reset pyvista to default behavior with ``restore_defaults``.
 # Note that the figure's color was reset to the default "white" color
-# rather than the ``'lightblue'`` color default with the document theme.  Under
+# rather than the ``'lightblue'`` color default with the document theme. Under
 # the hood, each theme applied changes the global plot defaults stored
 # within ``pyvista.global_theme.``
 
@@ -142,7 +142,7 @@ cpos = pv.Sphere().plot()
 # Creating a Custom Theme and Applying It to a Single Plotter
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we create a custom theme from the base "default"
-# theme and then apply it to a single plotter.  Note that this does
+# theme and then apply it to a single plotter. Note that this does
 # not change the behavior of the global "defaults", which are still
 # set to the modified ``DarkTheme``.
 #

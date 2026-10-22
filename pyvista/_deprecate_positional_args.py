@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import inspect
 from pathlib import Path
-import sys
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
@@ -12,6 +11,7 @@ from typing_extensions import ParamSpec
 
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -230,13 +230,15 @@ def _deprecate_positional_args(
                 def call_site() -> str:
                     # Get location where the function is called
                     # Optimization: ``inspect.stack()`` reads source lines for every frame
-                    frame = sys._getframe(stack_level)
+                    frame = inspect.currentframe()
+                    for _ in range(stack_level):
+                        frame = frame.f_back if frame else None
+                    if frame is None:
+                        return '<unknown>'
                     file = Path(frame.f_code.co_filename).as_posix()
                     return f'{file}:{frame.f_lineno}'
 
                 def warn_positional_args() -> None:
-                    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
-
                     msg = (
                         f'\n{call_site()}: '
                         f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '

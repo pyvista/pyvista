@@ -10,7 +10,7 @@ For more
 details regarding the glTF format, see:
 https://www.khronos.org/gltf/
 
-First, download the examples.  Note that here we're using a high
+First, download the examples. Note that here we're using a high
 dynamic range texture since glTF files generally contain physically
 based rendering and VTK v9 supports high dynamic range textures.
 
@@ -28,9 +28,9 @@ texture.interpolate = True
 
 
 # %%
-# Set up the plotter and enable environment textures.  This works well
+# Set up the plotter and enable environment textures. This works well
 # for physically based rendering enabled meshes like the damaged
-# helmet example.  Use :func:`pyvista.Plotter.import_gltf` to import file.
+# helmet example. Use :func:`pyvista.Plotter.import_gltf` to import file.
 
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True

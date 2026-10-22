@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
-import numpy as np
-
 # `typing.overload` registers with `get_overloads` only from 3.11
-from typing_extensions import overload
+from typing import overload
+
+import numpy as np
 
 import pyvista as pv
 from pyvista._warn_external import warn_external

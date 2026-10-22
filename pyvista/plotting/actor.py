@@ -25,8 +25,7 @@ from .prop3d import Prop3D
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-    from typing_extensions import Self
+    from typing import Self
 
     from pyvista import DataSet
     from pyvista.core._typing_core import LineStyle

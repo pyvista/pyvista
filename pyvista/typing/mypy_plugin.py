@@ -11,10 +11,10 @@ from typing import TypeVar
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from typing import Any
+    from typing import Self
 
     from mypy.plugin import ClassDefContext
     from mypy.types import Instance
-    from typing_extensions import Self
 
 
 _T = TypeVar('_T', bound=type)

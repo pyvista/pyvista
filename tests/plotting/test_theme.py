@@ -554,6 +554,7 @@ def test_set_hidden_line_removal(default_theme):
         ('interactive', False),
         ('render_points_as_spheres', True),
         ('transparent_background', True),
+        ('transparent_background', 'straight'),
         ('title', 'test_title'),
         ('multi_samples', 10),
         ('multi_rendering_splitting_position', 0.1),

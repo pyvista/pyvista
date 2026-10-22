@@ -44,8 +44,6 @@ def _iter_source_files() -> Iterator[Path]:
 
 def _namespace_modules() -> set[str]:
     """Modules ruff requires to be namespace-imported."""
-    if sys.version_info < (3, 11):
-        pytest.skip('tomllib requires Python 3.11+')
     import tomllib
 
     with (PYVISTA_ROOT_DIR / 'pyproject.toml').open('rb') as file:

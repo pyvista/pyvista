@@ -1252,7 +1252,7 @@ class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
         Returns
         -------
         str
-            Dtype of the generated points, ``'float32'`` or ``'float64'``.
+            The dtype of the generated points, ``'float32'`` or ``'float64'``.
 
         """
         precision = self.GetOutputPointsPrecision()

@@ -22,8 +22,9 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -600,7 +601,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.scale."""
+        """Wrap :attr:`pyvista.Prop3D.scale`."""
         return self._prop3d.scale
 
     @scale.setter
@@ -612,7 +613,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.position.fget)  # type: ignore[attr-defined]
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.position."""
+        """Wrap :attr:`pyvista.Prop3D.position`."""
         return self._prop3d.position
 
     @position.setter
@@ -624,7 +625,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.orientation.fget)  # type: ignore[attr-defined]
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.orientation."""
+        """Wrap :attr:`pyvista.Prop3D.orientation`."""
         return self._prop3d.orientation
 
     @orientation.setter
@@ -636,7 +637,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.origin.fget)  # type: ignore[attr-defined]
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.origin."""
+        """Wrap :attr:`pyvista.Prop3D.origin`."""
         return self._prop3d.origin
 
     @origin.setter
@@ -648,7 +649,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
     def user_matrix(self) -> NDArray[np.float64]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.user_matrix."""
+        """Wrap :attr:`pyvista.Prop3D.user_matrix`."""
         return self._prop3d.user_matrix
 
     @user_matrix.setter
@@ -679,13 +680,13 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.bounds`."""
+        """Wrap :attr:`pyvista.Prop3D.bounds`."""
         return BoundsTuple(*self._get_bounds())
 
     @property
     @functools.wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.center."""
+        """Wrap :attr:`pyvista.Prop3D.center`."""
         bnds = self.bounds
         return (
             (bnds.x_min + bnds.x_max) / 2,
@@ -696,7 +697,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     @property
     @functools.wraps(Prop3D.length.fget)  # type: ignore[attr-defined]
     def length(self) -> float:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.length."""
+        """Wrap :attr:`pyvista.Prop3D.length`."""
         bnds = self.bounds
         return np.linalg.norm(
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)

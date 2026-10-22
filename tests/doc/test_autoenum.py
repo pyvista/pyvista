@@ -7,6 +7,7 @@ from enum import EnumMeta
 from enum import Flag
 from enum import IntEnum
 from enum import IntFlag
+from enum import StrEnum
 from pathlib import Path
 import re
 import shutil
@@ -206,7 +207,7 @@ def test_is_bitmask_like_true_for_flag_regardless_of_values():
 
 
 def test_is_bitmask_like_false_for_non_int_enum():
-    class Shape(str, Enum):
+    class Shape(StrEnum):
         CIRCLE = 'circle'
 
     assert not autoenum._is_bitmask_like(Shape)

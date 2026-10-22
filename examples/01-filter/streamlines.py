@@ -88,7 +88,7 @@ pl.show()
 # %%
 # A source mesh can also be provided using the
 # :func:`pyvista.DataSetFilters.streamlines_from_source`
-# filter, for example if an inlet surface is available.  In this example, the
+# filter, for example if an inlet surface is available. In this example, the
 # inlet surface is extracted just inside the domain for use as the seed for
 # the streamlines.
 

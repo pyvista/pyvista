@@ -23,6 +23,19 @@
   margin-top: auto;
 }
 
+/* On wide screens the theme draws the vertical rule as a border-left on each
+   item, so pushing the card down leaves a gap in it. Draw the rule once on
+   the items container instead so it runs unbroken from the toc to the card. */
+@media (min-width: 1200px) {
+  .bd-sidebar-secondary .sidebar-secondary-items {
+    border-left: 1px solid var(--pst-color-border);
+  }
+
+  .bd-sidebar-secondary .sidebar-secondary-items .sidebar-secondary-item {
+    border-left: none;
+  }
+}
+
 .codimensional-partner-card {
   padding-top: 1em;
 }

@@ -12,12 +12,14 @@ import pytest
 
 import pyvista as pv
 from pyvista import jupyter as jupyter_mod
+from pyvista.jupyter import ALLOWED_BACKENDS
 from pyvista.jupyter import _custom_backend_sources
 from pyvista.jupyter import _custom_backends
 from pyvista.jupyter import _get_custom_backend_handler
 from pyvista.jupyter import _resolve_backend
 from pyvista.jupyter import _validate_jupyter_backend
 from pyvista.jupyter import register_jupyter_backend
+from pyvista.jupyter.notebook import _warn_missing_server_proxy
 from pyvista.jupyter.notebook import handle_plotter
 
 has_ipython = bool(importlib.util.find_spec('IPython'))
@@ -310,8 +312,111 @@ def test_handle_plotter_auto_static_warns_install():
             'pyvista.jupyter.notebook.show_static_image',
             return_value='static_img',
         ),
-        pytest.warns(UserWarning, match=r'pip install trame-pyvista'),
+        pytest.warns(UserWarning, match=r'pip install pyvista\[jupyter\]'),
     ):
         result = handle_plotter(plotter, backend=None)
 
     assert result == 'static_img'
+
+
+@pytest.fixture
+def set_server_proxy_importable(monkeypatch):
+    """Control whether ``jupyter_server_proxy`` is importable and reset the warn-once cache."""
+    find_spec = importlib.util.find_spec
+    importable = False
+
+    def fake_find_spec(name, *args, **kwargs):
+        """Report ``jupyter_server_proxy`` as importable or not."""
+        if name == 'jupyter_server_proxy':
+            return MagicMock() if importable else None
+        return find_spec(name, *args, **kwargs)
+
+    def set_importable(value):
+        """Set whether ``jupyter_server_proxy`` is importable."""
+        nonlocal importable
+        importable = value
+
+    monkeypatch.setattr(importlib.util, 'find_spec', fake_find_spec)
+    _warn_missing_server_proxy.cache_clear()
+    yield set_importable
+    _warn_missing_server_proxy.cache_clear()
+
+
+@skip_no_ipython
+@pytest.mark.parametrize(
+    ('backend', 'theme_enabled', 'kwargs', 'installed', 'warns'),
+    [
+        ('trame', True, {}, False, True),
+        ('server', True, {}, False, True),
+        ('client', True, {}, False, True),
+        ('html', True, {'mode': 'trame'}, False, True),
+        ('trame', False, {'server_proxy_enabled': True}, False, True),
+        ('trame', True, {'server_proxy_enabled': None}, False, True),
+        ('trame', True, {'server_proxy_enabled': False}, False, False),
+        ('trame', True, {'jupyter_extension_enabled': True}, False, False),
+        ('trame', True, {'server_proxy_prefix': 'https://example.com/proxy/'}, False, False),
+        ('trame', True, {'mode': 'html'}, False, False),
+        ('trame', False, {}, False, False),
+        ('trame', True, {}, True, False),
+        ('html', True, {}, False, False),
+    ],
+)
+def test_handle_plotter_warns_missing_server_proxy(
+    monkeypatch, set_server_proxy_importable, backend, theme_enabled, kwargs, installed, warns
+):
+    """Warn when the trame iframe is routed through an unavailable jupyter-server-proxy."""
+    set_server_proxy_importable(installed)
+    monkeypatch.setattr(pv.global_theme.trame, '_server_proxy_enabled', theme_enabled)
+    mock_handler = MagicMock(return_value='widget')
+    plotter = MagicMock()
+
+    with _without_custom_backends():
+        register_jupyter_backend(backend, mock_handler, override=True)
+        if warns:
+            with pytest.warns(UserWarning, match='pip install jupyter-server-proxy'):
+                result = handle_plotter(plotter, backend=backend, **kwargs)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter('error')
+                result = handle_plotter(plotter, backend=backend, **kwargs)
+
+    assert result == 'widget'
+    mock_handler.assert_called_once_with(plotter, screenshot=None, **kwargs)
+
+
+@skip_no_ipython
+@pytest.mark.usefixtures('set_server_proxy_importable')
+def test_handle_plotter_warns_missing_server_proxy_once(monkeypatch):
+    """Warn about a missing jupyter-server-proxy only on the first plot."""
+    monkeypatch.setattr(pv.global_theme.trame, '_server_proxy_enabled', True)
+    plotter = MagicMock()
+
+    with _without_custom_backends():
+        register_jupyter_backend('trame', MagicMock(), override=True)
+        with pytest.warns(UserWarning, match='pip install jupyter-server-proxy'):
+            handle_plotter(plotter, backend='trame')
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            handle_plotter(plotter, backend='trame')
+
+
+@skip_no_ipython
+@pytest.mark.usefixtures('set_server_proxy_importable')
+def test_handle_plotter_static_fallback_skips_server_proxy_warning(monkeypatch):
+    """Do not warn about jupyter-server-proxy when the plot falls back to a static image."""
+    monkeypatch.setattr(pv.global_theme.trame, '_server_proxy_enabled', True)
+
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.notebook.show_static_image', return_value='static_img'),
+        pytest.warns(UserWarning, match='Falling back to a static output') as record,
+    ):
+        result = handle_plotter(MagicMock(), backend='trame')
+
+    assert result == 'static_img'
+    assert not any('jupyter-server-proxy' in str(w.message) for w in record)
+
+
+def test_allowed_backends():
+    """``ALLOWED_BACKENDS`` holds the backend names in order."""
+    assert ALLOWED_BACKENDS == ('static', 'client', 'server', 'trame', 'html', 'none')

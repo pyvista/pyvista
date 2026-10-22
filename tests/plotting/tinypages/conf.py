@@ -25,7 +25,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 root_doc = 'index'
 project = 'tinypages'
-year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
+year = datetime.datetime.now(tz=datetime.UTC).date().year
 copyright = f'2021-{year}, PyVista developers'  # noqa: A001
 version = '0.1'
 release = '0.1'

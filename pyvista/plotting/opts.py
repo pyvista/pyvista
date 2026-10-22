@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
-class ShaderType(str, Enum):
+class ShaderType(StrEnum):
     """Shader types for GLSL shader replacements.
 
     .. versionadded:: 0.48
@@ -29,7 +29,7 @@ class ShaderType(str, Enum):
     GEOMETRY = 'geometry', 'Geometry shader.'
 
 
-class PointSpriteShape(str, Enum):
+class PointSpriteShape(StrEnum):
     """Point sprite shape options for fragment shader rendering.
 
     .. versionadded:: 0.48
@@ -71,7 +71,7 @@ class InterpolationType(AnnotatedIntEnum):
         Parameters
         ----------
         input_str : str
-            The string representation of the interpolation type.  Accepts
+            The string representation of the interpolation type. Accepts
             aliases such as ``'pbr'`` for ``'Physically based rendering'``.
 
         Returns

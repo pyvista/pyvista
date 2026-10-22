@@ -11,6 +11,11 @@ As defined by the :meth:`~pyvista.DataObjectFilters.validate_mesh` method.
 """
 
 # sphinx_gallery_thumbnail_number = 5
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import pyvista as pv
 from pyvista.examples import plot_cell
 

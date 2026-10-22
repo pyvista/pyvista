@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.dataobject import DataObject
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
@@ -796,8 +797,6 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         if not hasattr(self, 'GetWrap'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = '`wrap` requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
 
@@ -806,8 +805,6 @@ class Texture(DataObject, _vtk.vtkTexture):
     @wrap.setter
     def wrap(self, value: Texture.WrapType | int) -> None:
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = '`wrap` requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
 

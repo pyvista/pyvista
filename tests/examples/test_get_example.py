@@ -9,11 +9,11 @@ import re
 import textwrap
 from typing import TYPE_CHECKING
 from typing import get_args
+from typing import get_overloads
 import warnings
 
 import numpy as np
 import pytest
-from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista import examples

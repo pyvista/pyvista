@@ -21,6 +21,7 @@ from sphinx.util.inspect import safe_getattr
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core._structured_data import _StructuredDataMixin
 import pyvista.core.filters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
@@ -117,7 +118,7 @@ def test_documented_classes_needs_the_extension_to_be_loaded(monkeypatch):
 
 def test_provider_finds_the_class_that_defines_the_member():
     assert autoinherit._provider(pv.PolyData, 'center_of_mass') is _PointSetBase
-    assert autoinherit._provider(pv.ImageData, 'dimensions') is Grid
+    assert autoinherit._provider(pv.ImageData, 'to_hexahedra') is Grid
     assert autoinherit._provider(pv.PolyData, 'faces') is pv.PolyData
 
 
@@ -174,6 +175,7 @@ def test_the_bases_that_collapse_duplicates_are_documented(documented):
     """Guard the doc entries that ``test_no_implementation_is_documented_twice`` needs."""
     assert _PointSetBase in documented
     assert Grid in documented
+    assert _StructuredDataMixin in documented
 
 
 def test_home_is_none_for_a_member_vtk_implements():
@@ -184,8 +186,8 @@ def test_home_is_none_for_a_member_vtk_implements():
 
 def test_own_members_excludes_what_a_documented_base_already_documents():
     own = autoinherit.own_members('pyvista', 'ImageData', _members(pv.ImageData))
-    assert 'offset' in own  # ImageData defines it
-    assert 'dimensions' not in own  # documented as Grid.dimensions
+    assert 'origin' in own  # ImageData defines it
+    assert 'dimensions' not in own  # documented as _StructuredDataMixin.dimensions
     assert 'dimensionality' not in own  # documented as DataSet.dimensionality
     assert 'contour' not in own  # documented as DataSetFilters.contour
     assert 'min_spatial_dimension' not in own  # implemented by VTK

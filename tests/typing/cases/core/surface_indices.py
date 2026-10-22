@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 import numpy as np
 from numpy.typing import NDArray
 from type_assert import assert_types
-from typing_extensions import Never
 
 from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image

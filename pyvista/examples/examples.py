@@ -241,7 +241,13 @@ def _tetbeam_load_func() -> pv.UnstructuredGrid:
     yrng = np.linspace(0, 1, 3)
     zrng = np.linspace(0, 5, 11)
     grid = pv.RectilinearGrid(xrng, yrng, zrng)
-    return grid.to_tetrahedra()
+    tetra = grid.to_tetrahedra()
+    # to_tetrahedra emits every tetra with negative volume
+    inverted = tetra.compute_cell_sizes(length=False, area=False)['Volume'] < 0
+    cells = tetra.cell_connectivity.reshape(-1, 4).copy()
+    cells[inverted] = cells[inverted][:, [0, 1, 3, 2]]
+    tetra.cell_connectivity = cells.ravel()
+    return tetra
 
 
 _dataset_tetbeam = _DatasetLoader(_tetbeam_load_func)
@@ -310,7 +316,7 @@ _dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pv.Po
 
 
 def load_globe_texture() -> Texture:
-    """Load a pyvista.Texture that can be applied to the globe source.
+    """Load a :class:`pyvista.Texture` that can be applied to the globe source.
 
     Returns
     -------

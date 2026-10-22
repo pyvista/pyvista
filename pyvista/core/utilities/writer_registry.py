@@ -153,13 +153,13 @@ def register_writer(
 
     handler : callable, optional
         A callable with signature ``handler(dataset, path, **kwargs)`` that
-        writes ``dataset`` to ``path``.  Any extra keyword arguments passed to
+        writes ``dataset`` to ``path``. Any extra keyword arguments passed to
         :meth:`pyvista.DataObject.save` are forwarded to the handler as
         ``**kwargs``—use them to expose format-specific options such as
-        compression level, thread count, or chunking.  Handlers that do
+        compression level, thread count, or chunking. Handlers that do
         not need per-call options can omit ``**kwargs``; a call to
         :meth:`~pyvista.DataObject.save` that passes extras to such a
-        handler will raise :class:`TypeError` from Python itself.  When
+        handler will raise :class:`TypeError` from Python itself. When
         ``handler`` is omitted the function acts as a decorator and
         returns the decorated callable unchanged.
 
@@ -172,7 +172,7 @@ def register_writer(
     -------
     callable or None
         When used as a decorator (``handler`` omitted), returns the
-        decorated function.  Otherwise returns ``None``.
+        decorated function. Otherwise returns ``None``.
 
     Raises
     ------
@@ -198,13 +198,13 @@ def register_writer(
     -----
     When :meth:`pyvista.DataObject.save` is called, registered custom
     writers are dispatched *before* built-in VTK writers—mirroring
-    the dispatch order of :func:`pyvista.read`.  Passing
+    the dispatch order of :func:`pyvista.read`. Passing
     ``override=True`` is therefore the only way to replace a built-in
     writer at save time.
 
     Any keyword arguments passed to :meth:`~pyvista.DataObject.save`
     beyond its documented parameters are forwarded verbatim to the
-    registered handler.  When no custom writer is registered for the
+    registered handler. When no custom writer is registered for the
     target extension, extra keyword arguments raise :class:`TypeError`
     from :meth:`~pyvista.DataObject.save`—PyVista never silently
     drops writer options.

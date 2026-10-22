@@ -9,6 +9,7 @@ from __future__ import annotations
 from enum import Enum
 from enum import EnumMeta
 from enum import Flag
+import importlib
 import inspect
 from typing import TYPE_CHECKING
 from typing import Any
@@ -18,6 +19,7 @@ from sphinx.ext.autodoc import ClassDocumenter
 from sphinx.ext.autodoc import ClassLevelDocumenter
 from sphinx.ext.autodoc import ObjectMember
 from sphinx.ext.autodoc import PropertyDocumenter
+from sphinx.ext.autosummary import generate
 from sphinx.util import logging
 
 if TYPE_CHECKING:
@@ -35,8 +37,6 @@ def _is_enum(obj: Any) -> bool:
 
 def _resolve(module: str, objname: str) -> Any:
     """Import ``module`` and walk ``objname``'s dotted path to the object it names."""
-    import importlib  # noqa: PLC0415
-
     obj = importlib.import_module(module)
     for part in objname.split('.'):
         obj = getattr(obj, part)
@@ -230,8 +230,6 @@ def _patch_autosummary_objtype() -> None:
     the documenter registry, so registering :class:`EnumDocumenter` is not enough to map
     enums to ``enum.rst`` there.
     """
-    from sphinx.ext.autosummary import generate  # noqa: PLC0415
-
     original = generate._get_documenter  # type: ignore[attr-defined]
     if getattr(original, '_autoenum_patch', False):
         return

@@ -255,7 +255,7 @@ def plot_wave(
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.
+        notebook. Assumes a jupyter console is active.
 
     Returns
     -------
@@ -378,7 +378,7 @@ def plot_ants_plane(notebook: bool | None = None) -> None:  # noqa: FBT001
     ----------
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.
+        notebook. Assumes a jupyter console is active.
 
     Examples
     --------
@@ -422,7 +422,7 @@ def plot_beam(notebook: bool | None = None) -> None:  # noqa: FBT001
     ----------
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.
+        notebook. Assumes a jupyter console is active.
 
     Examples
     --------
@@ -472,7 +472,7 @@ def plot_datasets(dataset_type: _DatasetTypeOptions | None = None) -> None:
     Parameters
     ----------
     dataset_type : str, optional
-        If set, plot just that dataset.  Must be one of the following:
+        If set, plot just that dataset. Must be one of the following:
 
         * ``'PolyData'``
         * ``'UnstructuredGrid'``

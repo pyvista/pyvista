@@ -26,8 +26,8 @@ mesh.rotate_z(120, inplace=True)
 #
 # .. Note::
 #    VTK has known issues when rendering shadows on certain window
-#    sizes.  Be prepared to experiment with the ``window_size``
-#    parameter.  An initial window size of ``(1000, 1000)`` seems to
+#    sizes. Be prepared to experiment with the ``window_size``
+#    parameter. An initial window size of ``(1000, 1000)`` seems to
 #    work well, which can be manually resized without issue.
 
 light1 = pv.Light(
@@ -80,7 +80,7 @@ pl.show()
 
 
 # %%
-# Show light penetrating several planes.  Adjust the light intensity
+# Show light penetrating several planes. Adjust the light intensity
 # and the ``shadow_attenuation`` to change how many planes the
 # light can go through.
 

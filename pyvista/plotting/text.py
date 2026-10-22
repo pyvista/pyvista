@@ -1,4 +1,4 @@
-"""Contains the pyvista.Text class."""
+"""Contains the :class:`pyvista.Text` class."""
 
 from __future__ import annotations
 
@@ -509,7 +509,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         Plot-specific theme.
 
     color : ColorLike, optional
-        Either a string, RGB list, or hex color string.  For example:
+        Either a string, RGB list, or hex color string. For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
         specified.

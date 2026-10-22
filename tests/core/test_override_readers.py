@@ -43,7 +43,7 @@ def ply_file(tmp_path):
 
 @pytest.mark.parametrize(('ext', 'source'), EXT_SOURCES)
 def test_package_claims_the_extension(ext, source):
-    assert ext in pv.core.utilities.reader.CLASS_READERS
+    assert ext in pv.core.utilities.reader._CLASS_READERS
     _reg_mod._get_ext_handler(ext)
 
     registration = next(r for r in pv.registered_readers() if r.extension == ext)

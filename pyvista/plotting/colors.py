@@ -1,6 +1,6 @@
 """Color module supporting plotting module.
 
-Used code from matplotlib.colors.  Thanks for your work.
+Used code from matplotlib.colors. Thanks for your work.
 """
 
 # Necessary for autodoc_type_aliases to recognize the type aliases used in the signatures
@@ -30,7 +30,9 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _linear_to_srgb
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _srgb_to_linear
 
 try:
     from matplotlib import colormaps
@@ -2201,11 +2203,7 @@ class Color(_NoNewAttrMixin):
             A new ``Color`` instance with sRGB color values.
 
         """
-        rgba = np.array(self.float_rgba)
-        mask = rgba < 0.0031308
-        rgba[mask] *= 12.92
-        rgba[~mask] = 1.055 * rgba[~mask] ** (1 / 2.4) - 0.055
-        return Color(rgba)
+        return Color(_linear_to_srgb(np.array(self.float_rgba)))
 
     def srgb_to_linear(self) -> Color:
         """Convert from sRGB color values to linear color values.
@@ -2216,11 +2214,7 @@ class Color(_NoNewAttrMixin):
             A new ``Color`` instance with linear color values.
 
         """
-        rgba = np.array(self.float_rgba)
-        mask = rgba < 0.04045
-        rgba[mask] /= 12.92
-        rgba[~mask] = ((rgba[~mask] + 0.055) / 1.055) ** 2.4
-        return Color(rgba)
+        return Color(_srgb_to_linear(np.array(self.float_rgba)))
 
     @classmethod
     def from_dict(cls, dict_: dict[str, int | float | str]) -> Color:  # numpydoc ignore=RT01

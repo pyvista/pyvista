@@ -1,4 +1,4 @@
-"""Contains the pyvista.Cell class."""
+"""Contains the :class:`pyvista.Cell` class."""
 
 from __future__ import annotations
 
@@ -27,9 +27,9 @@ from .utilities.misc import _NoNewAttrMixin
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
@@ -628,7 +628,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         Parameters
         ----------
         deep : bool, optional
-            When ``True`` makes a full copy of the cell.  When ``False``,
+            When ``True`` makes a full copy of the cell. When ``False``,
             performs a shallow copy where the new cell still references the
             original cell.
 

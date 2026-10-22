@@ -35,7 +35,9 @@ from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _convex_hull_scipy
+from pyvista.core.filters.data_object import _distinct_cell_types
 from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.filters.data_object import _has_invalid_point_references
 from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from pyvista.core.utilities.helpers import _NORMALS
@@ -2809,6 +2811,29 @@ def test_transform_rectilinear_axis_aligned_rotation(rectilinear, transformation
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize(
     'transformation',
+    [
+        pv.Transform(),
+        pv.Transform().rotate_z(90),
+        pv.Transform().rotate_z(90).rotate_x(90),
+        pv.Transform().reflect((1, 0, 0)),
+        pv.Transform().rotate_y(180),
+    ],
+    ids=['identity', 'one-axis-pair', 'all-three-axes', 'reflect', 'rotate-180'],
+)
+def test_transform_rectilinear_offset_follows_axes(transformation, inplace):
+    """Test the offset moves with the axes, using a grid whose coordinates are its indices."""
+    offset = (-4, 2, 7)
+    x, y, z = (start + np.arange(size) for start, size in zip(offset, (5, 3, 2), strict=True))
+    grid = pv.RectilinearGrid(x, y, z)
+    grid.offset = offset
+    assert grid.extent == grid.bounds
+    transformed = grid.transform(transformation, inplace=inplace)
+    assert transformed.extent == transformed.bounds
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    'transformation',
     [pv.Transform().rotate_z(90), pv.Transform().rotate_z(90).rotate_x(90)],
     ids=['one-axis-pair', 'all-three-axes'],
 )
@@ -3746,6 +3771,87 @@ def test_validate_mesh_cell_status():
     assert str(report_enum) == str(report_str)
 
 
+def test_validate_mesh_explicit_structured_grid_unused_points():
+    grid = examples.load_explicit_structured()
+    grid.points = np.vstack([grid.points, [[1.0e3, 1.0e3, 1.0e3]]])
+    assert grid.validate_mesh().unused_points == [grid.n_points - 1]
+
+
+@pytest.mark.parametrize(
+    ('attr', 'value'),
+    [
+        ('origin', (np.nan, 0.0, 0.0)),
+        ('spacing', (np.inf, 1.0, 1.0)),
+        ('spacing', (1e308, 1.0, 1.0)),  # Finite geometry with overflowing points
+        ('SetDirectionMatrix', (1.0, np.nan, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
+    ],
+)
+def test_validate_mesh_image_data_non_finite_points(attr, value):
+    image = pv.ImageData(dimensions=(3, 2, 2))
+    if attr == 'SetDirectionMatrix':
+        # The direction_matrix property rejects non-finite values
+        image.SetDirectionMatrix(*value)
+    else:
+        setattr(image, attr, value)
+    expected = np.flatnonzero(~np.isfinite(image.points).all(axis=1)).tolist()
+    assert expected
+    assert image.validate_mesh().non_finite_points == expected
+
+
+@pytest.mark.parametrize('value', [np.inf, np.nan, 1e308])
+@pytest.mark.parametrize(
+    ('make_mesh', 'n_points'),
+    [
+        (pv.Sphere, 1),
+        # Hexahedra, unlike voxels, are measured by verdict
+        (
+            lambda: (
+                pv.ImageData(dimensions=(3, 3, 3))
+                .cast_to_structured_grid()
+                .cast_to_unstructured_grid()
+            ),
+            1,
+        ),
+        # Its sub-triangle areas add up
+        (examples.cells.QuadraticTriangle, 2),
+    ],
+    ids=['PolyData', 'UnstructuredGrid', 'QuadraticTriangle'],
+)
+def test_validate_mesh_unmeasurable_cells_have_no_size(make_mesh, n_points, value):
+    mesh = make_mesh()
+    points = mesh.points.astype(float)
+    points[:n_points] = (value, 0.0, 0.0)
+    mesh.points = points
+    report = mesh.validate_mesh(['negative_size', 'zero_size'])
+    assert report.is_valid
+
+
+@pytest.mark.expect_vtk_output(
+    'Unable to factor linear system',
+    reason='VTK may fail to triangulate a polyhedron with a non-finite point',
+)
+@pytest.mark.parametrize('value', [np.inf, np.nan])
+def test_validate_mesh_polyhedron_non_finite_point(value):
+    # VTK measures a polyhedron it cannot triangulate as zero
+    mesh = examples.cells.Polyhedron()
+    mesh.points[0] = (value, 0.0, 0.0)
+    report = mesh.validate_mesh(['non_finite_points', 'negative_size', 'zero_size'])
+    assert report.invalid_fields == ('non_finite_points',)
+
+
+def test_validate_mesh_rectilinear_grid_overflowing_coordinates():
+    # The coordinates are finite, but their difference overflows
+    grid = pv.RectilinearGrid([-1e308, 1e308], [0.0, 1.0], [0.0, 1.0])
+    assert grid.validate_mesh().is_valid
+
+
+def test_validate_mesh_rectilinear_grid_non_finite_points():
+    grid = pv.RectilinearGrid([0.0, np.nan, 2.0], [0.0, 1.0], [0.0, 1.0])
+    expected = np.flatnonzero(~np.isfinite(grid.points).all(axis=1)).tolist()
+    assert expected
+    assert grid.validate_mesh().non_finite_points == expected
+
+
 def test_validate_mesh_message(sphere_with_invalid_arrays):
     assert pv.PolyData().validate_mesh().message is None
     assert sphere_with_invalid_arrays.validate_mesh().message
@@ -3822,7 +3928,10 @@ def test_validate_mesh_imagedata(image150):
         image150.validate_mesh('cells')
 
 
-@pytest.mark.parametrize('field', [f.lower() for f in _VTK_CELL_STATUS_INFO if f != 'VALID'])
+@pytest.mark.parametrize(
+    'field',
+    [f.lower() for f in _VTK_CELL_STATUS_INFO if f not in ('VALID', 'COINCIDENT_POINTS')],
+)
 def test_validate_mesh_imagedata_vtk_fields(image150, field):
     # Ensure vtk fields raise error
     match = f'Cell field {field!r} is not supported for ImageData.'
@@ -4533,6 +4642,122 @@ def test_validate_mesh_coincident_points_structured_grid(degenerate_structured_g
     assert report.invalid_fields == ('coincident_points',)
 
 
+@pytest.mark.parametrize('z', [[0.0, 1.0], [0.0]], ids=['3D', 'flat'])
+def test_validate_mesh_coincident_points_rectilinear_grid(z):
+    grid = pv.RectilinearGrid([0.0, 0.0, 1.0], [0.0, 1.0, 2.0], z)
+    expected = grid.cast_to_structured_grid().cell_validator().field_data['coincident_points']
+    assert expected.tolist() == [0, 2]
+    assert grid.cell_validator().field_data['coincident_points'].tolist() == expected.tolist()
+    assert 'coincident_points' in grid.validate_mesh().invalid_fields
+
+
+def _hide_cells(mesh, ids, flag=_vtk.vtkDataSetAttributes.HIDDENCELL):
+    ghosts = np.zeros(mesh.n_cells, dtype=np.uint8)
+    ghosts[ids] = flag
+    mesh.cell_data['vtkGhostType'] = ghosts
+    return mesh
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {'dimensions': (3, 3, 2)},
+        {'dimensions': (3, 3, 2), 'spacing': (1.0, 1e-9, 1.0)},
+        # A skewed direction collapses a diagonal of each cell but none of its edges
+        {'dimensions': (3, 3, 2), 'direction_matrix': [[1, 1, 0], [0, 1e-9, 0], [0, 0, 1]]},
+    ],
+    ids=['uniform', 'thin', 'skewed'],
+)
+@pytest.mark.parametrize('hidden', [[], [0]])
+def test_validate_mesh_coincident_points_image_data(kwargs, hidden):
+    image = _hide_cells(pv.ImageData(**kwargs), hidden)
+    expected = image.cast_to_structured_grid().cell_validator().field_data['coincident_points']
+    expected = expected.tolist()
+    assert image.cell_validator().field_data['coincident_points'].tolist() == expected
+    assert ('coincident_points' in image.validate_mesh().invalid_fields) == bool(expected)
+
+
+@pytest.mark.parametrize(
+    'cast',
+    [
+        lambda grid: grid,
+        lambda grid: grid.cast_to_structured_grid(),
+        lambda grid: grid.cast_to_structured_grid().cast_to_explicit_structured_grid(),
+    ],
+    ids=['RectilinearGrid', 'StructuredGrid', 'ExplicitStructuredGrid'],
+)
+@pytest.mark.parametrize(
+    'flag',
+    [_vtk.vtkDataSetAttributes.HIDDENCELL, _vtk.vtkDataSetAttributes.REFINEDCELL],
+    ids=['hidden', 'refined'],
+)
+def test_validate_mesh_hidden_structured_cells_keep_their_size(cast, flag):
+    # Cell 1 is degenerate along x, and hidden
+    grid = pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])
+    mesh = _hide_cells(cast(grid), [1], flag)
+    assert mesh.validate_mesh().zero_size == [1]
+    assert mesh.cell_data['vtkGhostType'][1] == flag
+
+
+@pytest.mark.parametrize(
+    'cast',
+    [lambda grid: grid, lambda grid: grid.cast_to_structured_grid()],
+    ids=['RectilinearGrid', 'StructuredGrid'],
+)
+@pytest.mark.parametrize('z', [[0.0, 1.0], [0.0]], ids=['3D', 'flat'])
+def test_validate_mesh_hidden_points_keep_cell_sizes(cast, z):
+    # Cell 1 is degenerate along x, and hiding point 2 hides cells 1 and 2
+    mesh = cast(pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], z))
+    ghosts = np.zeros(mesh.n_points, dtype=np.uint8)
+    ghosts[2] = _vtk.vtkDataSetAttributes.HIDDENPOINT
+    mesh.point_data['vtkGhostType'] = ghosts
+    assert mesh.validate_mesh().zero_size == [1]
+
+
+def test_validate_mesh_structured_grid_hide_points():
+    grid = pv.ImageData(dimensions=(4, 3, 2)).cast_to_structured_grid()
+    grid.hide_points([0])
+    assert grid.validate_mesh().is_valid
+
+
+@pytest.mark.parametrize('to_ugrid', [False, True], ids=['PolyData', 'UnstructuredGrid'])
+def test_validate_mesh_hidden_cells_keep_their_size(to_ugrid):
+    mesh = pv.PolyData([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]], faces=[3, 0, 1, 2])
+    mesh = mesh.cast_to_unstructured_grid() if to_ugrid else mesh
+    assert _hide_cells(mesh, [0]).validate_mesh().zero_size == [0]
+
+
+@pytest.mark.parametrize(
+    ('dtype', 'n_ghosts', 'invalid_fields'),
+    [
+        # Longer than the cells, since VTK would read past the end of a shorter array
+        (np.uint8, 4, ('cell_data_wrong_length', 'zero_size')),
+        (float, 3, ('zero_size',)),
+        (np.int32, 3, ('zero_size',)),
+    ],
+    ids=['length', 'float', 'int32'],
+)
+def test_validate_mesh_invalid_ghost_array(dtype, n_ghosts, invalid_fields):
+    # Cell 1 is degenerate along x and marked hidden
+    mesh = pv.RectilinearGrid([0.0, 1.0, 1.0, 2.0], [0.0, 1.0], [0.0, 1.0])
+    ghosts = np.zeros(n_ghosts, dtype=dtype)
+    ghosts[1] = _vtk.vtkDataSetAttributes.HIDDENCELL
+    array = _vtk.numpy_to_vtk(ghosts, deep=True)
+    array.SetName('vtkGhostType')
+    mesh.GetCellData().AddArray(array)
+    report = mesh.validate_mesh(['data', 'zero_size'])
+    assert report.invalid_fields == invalid_fields
+    assert report.zero_size == [1]
+
+
+def test_validate_mesh_invalid_point_references_explicit_structured_grid():
+    grid = examples.load_explicit_structured()
+    grid.SetPoints(pv.vtk_points(grid.points[:-5]))
+    assert _has_invalid_point_references(grid)
+    assert _distinct_cell_types(grid) == {pv.CellType.HEXAHEDRON}
+    assert grid.validate_mesh().invalid_fields == ('invalid_point_references',)
+
+
 def test_validate_mesh_invalid_point_references():
     # Define mesh with a cell that has point indices > n_points
     cells = [3, 0, 1, 2]
@@ -4786,7 +5011,12 @@ def test_init_invalid_mesh(invalid_random_polydata, tmp_path, as_grid, validate)
         pv.PolyData(),
         pv.UnstructuredGrid(),
         pv.MultiBlock([pv.PolyData()]),
-        # pv.ExplicitStructuredGrid(),  Seg fault with empty mesh. This type is tested separately.
+        pytest.param(
+            pv.ExplicitStructuredGrid(),
+            marks=pytest.mark.needs_vtk_version(
+                9, 4, reason='empty extent has a phantom cell and segfaults'
+            ),
+        ),
     ],
 )
 @pytest.mark.parametrize('validate', [True, 'data'])

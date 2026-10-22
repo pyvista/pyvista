@@ -129,6 +129,12 @@ repos:
         entry: '#\s*(?:noqa|ruff)'
         files: ^examples/
         types: [python]
+      - id: sentence-spacing
+        name: "One space between sentences in docstrings, gallery text and .rst"
+        language: python
+        entry: python -m hooks.sentence_spacing
+        files: ^(pyvista|examples|doc/source)/|^CONTRIBUTING\.rst$
+        types_or: [python, rst]
       - id: no-import-error-skip
         name: "Tests must not be skipped based on ImportError"
         language: pygrep

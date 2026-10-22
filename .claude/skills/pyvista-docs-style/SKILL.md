@@ -17,9 +17,12 @@ python3 doc/run_vale.py
 ```
 
 That script holds the list of paths Vale checks, extracts the `.rst` files it needs, and
-finishes by confirming the heading rule still rejects the fixture in
-`tests/doc/vale/headings_invalid.rst`. Do not spell the `vale` invocation out by hand --
-four copies of it had already drifted apart once.
+finishes by confirming the rules still reject the fixtures in `tests/doc/vale/`. Do not
+spell the `vale` invocation out by hand -- four copies of it had already drifted apart
+once.
+
+Double spaces between sentences are the `sentence-spacing` pre-commit hook's job
+(`hooks/sentence_spacing.py`), not Vale's: run `pre-commit run sentence-spacing --files ...`.
 
 Prose in a `.py` file is checked through the `.rst` the extraction script generates, not
 from the `.py` itself. The extracted file has the same line numbers as the source

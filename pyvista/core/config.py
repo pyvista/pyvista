@@ -64,8 +64,9 @@ import numpy as np
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from numpy.typing import DTypeLike
-    from typing_extensions import Self
 
 _PointsDtypeOptions = Literal['preserve', 'float32', 'float64'] | None
 

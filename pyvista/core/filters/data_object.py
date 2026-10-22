@@ -60,9 +60,9 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
+    from typing import Self
 
     from numpy.typing import NDArray
-    from typing_extensions import Self
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
@@ -95,7 +95,7 @@ if TYPE_CHECKING:
 def _rectilinear_transform_components(
     transform: Transform,
 ) -> _RectilinearComponents:
-    """Return the translation, scale and axis order of a transform a grid can represent."""
+    """Return the translation, scale, and axis order of a transform a grid can represent."""
     # Follow similar decomposition performed by ImageData.index_to_physical_matrix
     T, R, N, S, K = transform.decompose()
 
@@ -177,7 +177,7 @@ def _convert_transform_input_to_float(
 
 
 def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) -> None:
-    """Copy the point, cell and field arrays the transform filter produced."""
+    """Copy the point, cell, and field arrays the transform filter produced."""
     output.point_data.update(filtered.point_data, copy=copy)
     output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
@@ -198,7 +198,7 @@ def _transform_rectilinear_axes(
     dataset: RectilinearGrid,
     components: _RectilinearComponents,
 ) -> None:
-    """Set a grid's axes to another's, permuted, scaled and translated."""
+    """Set a grid's axes to another grid's, permuted, scaled, and translated."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
     translation, scale, axes = components
     coordinates = (dataset.x, dataset.y, dataset.z)
@@ -211,6 +211,20 @@ def _transform_rectilinear_axes(
         array[::-1] if factor < 0 else array
         for array, factor in zip(transformed, scale, strict=True)
     )
+
+
+def _transform_rectilinear_offset(
+    offset: tuple[int, int, int],
+    dimensions: tuple[int, int, int],
+    components: _RectilinearComponents,
+) -> list[int]:
+    """Return a grid's offset permuted and reflected with its axes."""
+    _, scale, axes = components
+    # A reversed axis mirrors its extent about index zero
+    return [
+        offset[axis] if factor > 0 else -(offset[axis] + dimensions[axis] - 1)
+        for axis, factor in zip(axes, scale, strict=True)
+    ]
 
 
 def _permute_rectilinear_arrays(
@@ -473,7 +487,6 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'inverted_faces',
                 'non_planar_faces',
                 'degenerate_faces',
-                'coincident_points',
             )
         for field in unsupported:
             if field in cell_fields or field in point_fields:
@@ -926,8 +939,9 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         """Validate points and only return summary objects for the requested fields."""
 
         def get_unused_point_ids() -> list[int]:
-            if hasattr(mesh, 'dimensions'):
-                return []  # Cells are implicitly defined and cannot have unused points
+            # Grid and StructuredGrid cells are implicit; ExplicitStructuredGrid stores its cells
+            if isinstance(mesh, (pv.Grid, pv.StructuredGrid)):
+                return []
             grid = (
                 mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
             )
@@ -937,8 +951,18 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             return np.setdiff1d(all_points, used_points, assume_unique=True).tolist()
 
         def get_non_finite_point_ids() -> list[int]:
-            if isinstance(mesh, pv.Grid):
-                return []  # Points are implicitly defined and cannot be non-finite
+            if isinstance(mesh, pv.ImageData):
+                # A non-finite origin, spacing or direction reaches every point
+                if not np.isfinite(mesh.index_to_physical_matrix).all():
+                    return list(range(mesh.n_points))
+                # Points are affine in the index, so the corners that set the bounds are extremes
+                if np.isfinite(mesh.bounds).all():
+                    return []
+            elif isinstance(mesh, pv.RectilinearGrid):
+                # A point is non-finite if any of its coordinates is, with x varying fastest
+                x, y, z = (~np.isfinite(coords) for coords in (mesh.x, mesh.y, mesh.z))
+                mask = x | y[:, np.newaxis] | z[:, np.newaxis, np.newaxis]
+                return np.flatnonzero(mask).tolist()
             mask = ~np.isfinite(mesh.points).all(axis=1)
             return np.where(mask)[0].tolist()
 
@@ -1984,6 +2008,14 @@ class DataObjectFilters:
 
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
+            # Grids are checked from their geometry, other meshes from their cells
+            ugrid: pv.UnstructuredGrid | None = None
+            if not isinstance(mesh, pv.Grid):
+                ugrid = (
+                    mesh
+                    if isinstance(mesh, pv.UnstructuredGrid)
+                    else mesh.cast_to_unstructured_grid()
+                )
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
@@ -1993,7 +2025,16 @@ class DataObjectFilters:
                     if size_tolerance is not None
                     else np.finfo(mesh.points.dtype).eps
                 )
-                size_data = mesh.compute_cell_sizes(
+                measured = mesh
+                if isinstance(
+                    mesh, (pv.RectilinearGrid, pv.StructuredGrid, pv.ExplicitStructuredGrid)
+                ) and (_GHOST_ARRAY in mesh.cell_data or _GHOST_ARRAY in mesh.point_data):
+                    # VTK measures the cells these types hide as empty cells, so measure the
+                    # geometry of every cell without the ghost arrays
+                    measured = mesh.copy(deep=False)
+                    measured.cell_data.pop(_GHOST_ARRAY, None)
+                    measured.point_data.pop(_GHOST_ARRAY, None)
+                size_data = measured.compute_cell_sizes(
                     vertex_count=True, length=True, area=True, volume=True
                 ).cell_data
                 size = (
@@ -2002,6 +2043,18 @@ class DataObjectFilters:
                     + size_data['Area']
                     + size_data['Volume']
                 )
+                # Verdict clamps triangle areas and hexahedron volumes to +/-1e30 and reports a
+                # NaN one, from non-finite or overflowing points, as -1e30, summed over the
+                # sub-cells of higher-order cells. Such a size is unknown; a real size beyond
+                # -1e30 cannot be told apart from it. An overflowing quad measures 0 instead.
+                unknown = (size_data['Area'] <= -_VERDICT_DBL_MAX) | (
+                    size_data['Volume'] <= -_VERDICT_DBL_MAX
+                )
+                # A cell with a non-finite point cannot be measured either, which some cells,
+                # such as polyhedra, report as zero. Its points are reported as non-finite.
+                if ugrid is not None:
+                    unknown |= _cells_with_non_finite_points(ugrid)
+                size = np.where(unknown, np.nan, size)
 
                 # NEGATIVE_SIZE
                 state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
@@ -2010,14 +2063,11 @@ class DataObjectFilters:
                 state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
-            # Skip remaining checks for datasets where cell connectivity cannot be invalid
-            # Do not skip types StructuredGrid where coincident points are possible
-            if isinstance(mesh, pv.Grid):
+            if ugrid is None:
+                grid = cast('pv.Grid', mesh)
+                state[_grid_coincident_cells(grid, tol)] |= CellStatus.COINCIDENT_POINTS
+                # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
-
-            ugrid = (
-                mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
-            )
 
             conn = ugrid.cell_connectivity
             offset = ugrid.cell_offsets
@@ -2040,8 +2090,10 @@ class DataObjectFilters:
                 # indexing so the gather never raises on out-of-range ids.
                 group_valid = np.all(valid_conn[entry_ids], axis=1)
                 pts = ugrid.points[np.clip(pids, 0, n_points - 1)]
-                diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
-                dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
+                # Non-finite points compare as not coincident; they are reported separately
+                with np.errstate(invalid='ignore', over='ignore'):
+                    diff = pts[:, :, np.newaxis, :] - pts[:, np.newaxis, :, :]
+                    dist_sq = np.einsum('mijk,mijk->mij', diff, diff)
                 iu = np.triu_indices(size, k=1)
                 any_coincident = np.any(dist_sq[:, iu[0], iu[1]] <= tol * tol, axis=1)
                 coincident[cells] = any_coincident & group_valid
@@ -2078,10 +2130,10 @@ class DataObjectFilters:
         .. warning::
             When using ``transform_all_input_vectors=True``, there is
             no distinction in VTK between vectors and arrays with
-            three components.  This may be an issue if you have scalar
-            data with three components (for example, RGB data).  This will be
+            three components. This may be an issue if you have scalar
+            data with three components (for example, RGB data). This will be
             improperly transformed as if it was vector data rather
-            than scalar data.  One possible (albeit ugly) workaround
+            than scalar data. One possible (albeit ugly) workaround
             is to store the three components as separate scalar
             arrays.
 
@@ -2097,7 +2149,7 @@ class DataObjectFilters:
         .. warning::
             Shear transformations are not supported for :class:`~pyvista.ImageData` or
             :class:`~pyvista.RectilinearGrid`, and :class:`~pyvista.RectilinearGrid` only
-            supports rotations which map each axis onto a coordinate axis, i.e. multiples
+            supports rotations which map each axis onto a coordinate axis, that is, multiples
             of 90 degrees. If an unsupported transformation is present, a ``ValueError``
             is raised. To fully support these transformations, the input should be cast to
             :class:`~pyvista.StructuredGrid` `before` applying this filter.
@@ -2111,8 +2163,9 @@ class DataObjectFilters:
         .. versionchanged:: 0.50
             Rotations which map each axis onto a coordinate axis are supported for
             :class:`~pyvista.RectilinearGrid`. Its coordinates always ascend, and its
-            :attr:`~pyvista.RectilinearGrid.dimensions`, points and arrays are ordered to
-            match.
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`,
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`, points and
+            arrays are ordered to match.
 
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously
@@ -2139,7 +2192,7 @@ class DataObjectFilters:
         transform_all_input_vectors : bool, default: False
             When ``True``, all arrays with three components are
             transformed. Otherwise, only the normals and vectors are
-            transformed.  See the warning for more details.
+            transformed. See the warning for more details.
 
         inplace : bool
             When ``True``, modifies the dataset in-place and returned dataset is
@@ -2284,7 +2337,9 @@ class DataObjectFilters:
                 dataset = cast('pv.RectilinearGrid', self)
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = dataset.dimensions
+                offset = dataset.offset
                 _transform_rectilinear_axes(output, dataset, components)
+                output.offset = _transform_rectilinear_offset(offset, dimensions, components)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 _permute_rectilinear_arrays(output, dimensions, components)
@@ -3085,7 +3140,7 @@ class DataObjectFilters:
         Parameters
         ----------
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3147,7 +3202,7 @@ class DataObjectFilters:
         Parameters
         ----------
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3209,7 +3264,7 @@ class DataObjectFilters:
         Parameters
         ----------
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3275,7 +3330,7 @@ class DataObjectFilters:
            Normal vector to flip about.
 
         point : VectorLikeFloat, optional
-            Point to rotate about.  Defaults to center of mesh at
+            Point to rotate about. Defaults to center of mesh at
             :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
@@ -3545,7 +3600,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Clip a cube along the +X direction.  ``triangulate`` is used as
+        Clip a cube along the +X direction. ``triangulate`` is used as
         the cube is initially composed of quadrilateral faces and
         subdivide only works on triangles.
 
@@ -3554,7 +3609,7 @@ class DataObjectFilters:
         >>> clipped_cube = cube.clip()
         >>> clipped_cube.plot()
 
-        Clip a cube in the +Z direction.  This leaves half a cube
+        Clip a cube in the +Z direction. This leaves half a cube
         below the XY plane.
 
         >>> import pyvista as pv
@@ -3698,7 +3753,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Clip a corner of a cube.  The bounds of a cube are normally
+        Clip a corner of a cube. The bounds of a cube are normally
         ``[-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]``, and this removes 1/8 of
         the cube's surface.
 
@@ -5061,7 +5116,7 @@ class DataObjectFilters:
 
         The scalar values lie within a user specified range, and are
         generated by computing a projection of each dataset point onto
-        a line.  The line can be oriented arbitrarily.  A typical
+        a line. The line can be oriented arbitrarily. A typical
         example is to generate scalars based on elevation or height
         above a plane.
 
@@ -5110,7 +5165,7 @@ class DataObjectFilters:
 
         Examples
         --------
-        Generate the "elevation" scalars for a sphere mesh.  This is
+        Generate the "elevation" scalars for a sphere mesh. This is
         simply the height in Z from the XY plane.
 
         >>> import pyvista as pv
@@ -5118,7 +5173,7 @@ class DataObjectFilters:
         >>> sphere_elv = sphere.elevation()
         >>> sphere_elv.plot(smooth_shading=True)
 
-        Access the first 4 elevation scalars.  This is a point-wise
+        Access the first 4 elevation scalars. This is a point-wise
         array containing the "elevation" of each point.
 
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
@@ -5373,7 +5428,7 @@ class DataObjectFilters:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
-        within cells.  Optionally, the input point data can be passed
+        within cells. Optionally, the input point data can be passed
         through to the output.
 
         The method of transformation is based on averaging the data
@@ -5407,7 +5462,7 @@ class DataObjectFilters:
         Examples
         --------
         First compute the face area of the example airplane mesh and
-        show the cell values.  This is to show discrete cell data.
+        show the cell values. This is to show discrete cell data.
 
         >>> from pyvista import examples
         >>> surf = examples.load_airplane()
@@ -5459,7 +5514,7 @@ class DataObjectFilters:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
-        within cells.  Optionally, the input point data can be passed
+        within cells. Optionally, the input point data can be passed
         through to the output.
 
         This method is an alias for :func:`cell_data_to_point_data`.
@@ -5542,9 +5597,9 @@ class DataObjectFilters:
 
         Examples
         --------
-        Color cells by their z coordinates.  First, create point
-        scalars based on z-coordinates of a sample sphere mesh.  Then
-        convert this point data to cell data.  Use a low resolution
+        Color cells by their z coordinates. First, create point
+        scalars based on z-coordinates of a sample sphere mesh. Then
+        convert this point data to cell data. Use a low resolution
         sphere for emphasis of cell valued data.
 
         First, plot these values as point values to show the
@@ -5601,7 +5656,7 @@ class DataObjectFilters:
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
-        within cells.  Optionally, the input point data can be passed
+        within cells. Optionally, the input point data can be passed
         through to the output.
 
         This method is an alias for :func:`point_data_to_cell_data`.
@@ -5733,10 +5788,10 @@ class DataObjectFilters:
         """Resample array data from a passed mesh onto this mesh.
 
         For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
-        the points of ``mesh1``.  This function interpolates within an
-        enclosing cell.  This contrasts with
+        the points of ``mesh1``. This function interpolates within an
+        enclosing cell. This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
-        weighting for nearby points.  If there is cell topology, ``sample`` is
+        weighting for nearby points. If there is cell topology, ``sample`` is
         usually preferred.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled
@@ -5755,7 +5810,7 @@ class DataObjectFilters:
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
-            in a cell of the input.  If not given, tolerance is
+            in a cell of the input. If not given, tolerance is
             automatically generated.
 
         pass_cell_data : bool, default: True
@@ -5780,7 +5835,7 @@ class DataObjectFilters:
 
         locator : :vtk:`vtkAbstractCellLocator` or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
-            operation.  If ``None``, uses the DataSet ``FindCell`` method.
+            operation. If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
                 * ``'cell'`` - :vtk:`vtkCellLocator`
@@ -6581,7 +6636,7 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     :attr:`~pyvista.DataSet.distinct_cell_types` builds every cell, so a cell referencing a
     point id which does not exist makes VTK read out of bounds.
     """
-    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid)):
+    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid, pv.ExplicitStructuredGrid)):
         # Connectivity is implicit and cannot reference an invalid point id
         return mesh.distinct_cell_types
     grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
@@ -6589,6 +6644,48 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     if mesh._has_hidden_cells:
         cell_types.add(CellType.EMPTY_CELL)
     return cell_types
+
+
+def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a grid that reference a non-finite point."""
+    non_finite = ~np.isfinite(grid.points).all(axis=1)
+    if not non_finite.any():
+        return np.zeros(grid.n_cells, dtype=bool)
+    # Count each cell's non-finite points from the cumulative count along its connectivity
+    count = np.concatenate([[0], np.cumsum(non_finite[grid.cell_connectivity])])
+    offsets = grid.cell_offsets
+    return count[offsets[1:]] > count[offsets[:-1]]
+
+
+def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
+    """Return a mask of the cells of a grid with two points within ``tolerance``.
+
+    This uses the grid geometry rather than building every cell. Cells with non-finite points,
+    which are reported separately, may differ from the per-cell check of other datasets.
+    """
+    if grid.n_cells == 0:
+        return np.zeros(0, dtype=bool)
+    if isinstance(grid, pv.ImageData):
+        # Every cell has the shape of the first. Its corners are index offsets of 0 or 1 along
+        # each axis with more than one point. The direction matrix may skew the cell, so every
+        # pair of corners is compared, not only the edges.
+        steps = [(0, 1) if dim > 1 else (0,) for dim in grid.dimensions]
+        ijk = np.array(list(itertools.product(*steps)), dtype=float)
+        matrix = grid.index_to_physical_matrix
+        with np.errstate(invalid='ignore', over='ignore'):
+            points = ijk @ matrix[:3, :3].T + matrix[:3, 3]
+            dist = np.linalg.norm(points[:, np.newaxis] - points[np.newaxis], axis=-1)
+        coincident = np.any(dist[np.triu_indices(len(points), k=1)] <= tolerance)
+        return np.full(grid.n_cells, coincident)
+
+    # A cell is an axis-aligned box, and its closest pair of corners are the ends of an edge
+    with np.errstate(invalid='ignore', over='ignore'):
+        x, y, z = (
+            np.abs(np.diff(coords)) <= tolerance if coords.size > 1 else np.zeros(1, dtype=bool)
+            for coords in (grid.x, grid.y, grid.z)
+        )
+    # Broadcast to (nz, ny, nx), which ravels to cell ids with x varying fastest
+    return (x | y[:, np.newaxis] | z[:, np.newaxis, np.newaxis]).ravel()
 
 
 def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
@@ -6608,6 +6705,8 @@ def _has_invalid_point_references(dataset: DataSet | MultiBlock[Any]) -> bool:
             ]
         elif isinstance(mesh, pv.UnstructuredGrid):
             arrays = [mesh.cell_connectivity]
+        elif isinstance(mesh, pv.ExplicitStructuredGrid):
+            arrays = [_vtk.vtk_to_numpy(mesh.GetCells().GetConnectivityArray())]
         else:
             # Connectivity is implicit and cannot reference an invalid point id
             continue
@@ -6635,6 +6734,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
+_VERDICT_DBL_MAX = 1.0e30
 
 
 def _slice_image_along_axis(
