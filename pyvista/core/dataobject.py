@@ -527,7 +527,7 @@ class DataObject(
                 equal_attrs.append('celltypes')
                 equal_attrs.append('polyhedron_faces')
                 equal_attrs.append('polyhedron_face_locations')
-            elif isinstance(self, _StructuredDataMixin):
+            elif issubclass(type(self), _StructuredDataMixin):
                 equal_attrs.append('extent')
 
         for attr in equal_attrs:
