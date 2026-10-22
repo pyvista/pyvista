@@ -64,25 +64,33 @@ def _occurrences(keys: NDArray[np.intp]) -> NDArray[np.intp]:
     return rank
 
 
+def _row_codes(rows: NDArray[np.int64]) -> NDArray[np.int64]:
+    """Return one integer per row, equal only for equal rows."""
+    top = int(rows.max(initial=0)) + 1
+    if top ** rows.shape[1] < 2**63:
+        codes = np.zeros(rows.shape[0], dtype=np.int64)
+        for column in rows.T:
+            codes = codes * top + column
+        return codes
+    return np.unique(rows, axis=0, return_inverse=True)[1].ravel().astype(np.int64)
+
+
 def _match_runs(
     runs: NDArray[np.int64], owners: NDArray[np.int64], targets: NDArray[np.int64]
 ) -> NDArray[np.int64]:
     """Return the owner of the run equal to each target, or ``-1`` where none is."""
-    if targets.shape[0] == 0:
-        return np.zeros(0, dtype=np.int64)
-    _, inverse = np.unique(np.concatenate([runs, targets]), axis=0, return_inverse=True)
-    inverse = inverse.ravel()
-    keys, wanted = inverse[: runs.shape[0]], inverse[runs.shape[0] :]
+    if targets.shape[0] == 0 or runs.shape[0] == 0:
+        return np.full(targets.shape[0], -1, dtype=np.int64)
+    codes = _row_codes(np.concatenate([runs, targets]))
+    keys, wanted = codes[: runs.shape[0]], codes[runs.shape[0] :]
+    # a stable sort keeps the copies of a repeated run in input order
+    order = np.argsort(keys, kind='stable')
+    ordered = keys[order]
+    first = np.searchsorted(ordered, wanted, side='left')
+    count = np.searchsorted(ordered, wanted, side='right') - first
     # the k-th copy of a repeated run is matched to the k-th copy among the runs
-    count = np.bincount(keys, minlength=inverse.max() + 1)
-    rank = np.minimum(_occurrences(wanted), count[wanted] - 1)
-    stride = int(count.max(initial=0)) + 1
-    codes = keys * stride + _occurrences(keys)
-    order = np.argsort(codes)
-    wanted_codes = wanted * stride + rank
-    position = np.minimum(np.searchsorted(codes[order], wanted_codes), order.size - 1)
-    found = codes[order][position] == wanted_codes
-    return np.where(found, owners[order][position], -1)
+    position = first + np.minimum(_occurrences(wanted), count - 1)
+    return np.where(count > 0, owners[order][position], -1)
 
 
 def _loose_cells(mesh: PolyData) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
