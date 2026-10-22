@@ -186,13 +186,15 @@ def test_ruled_surface():
 
 
 def _mixed_strip_mesh():
-    """Return a vert, line segments out of order, a polyline and two triangles that strip."""
-    points = np.array([[x, y, 0.0] for y in (0, 1) for x in range(6)])
+    """Return a vert, lines out of order, a polyline, two triangles, two polygons and a strip."""
+    points = np.array([[x, y, 0.0] for y in (0, 1, 2) for x in range(6)])
     mesh = pv.PolyData(
         points,
         verts=[1, 11],
         lines=[2, 2, 3, 2, 0, 1, 2, 1, 2, 3, 3, 4, 5],
-        faces=[3, 6, 7, 9, 3, 7, 10, 9],
+        # the pentagon shares three consecutive points with the second triangle
+        faces=[5, 9, 10, 7, 13, 12, 3, 6, 7, 9, 3, 7, 10, 9, 4, 10, 11, 17, 16],
+        strips=[4, 14, 15, 9, 8],
     )
     mesh.cell_data['c'] = np.arange(mesh.n_cells) * 10.0
     return mesh
@@ -205,12 +207,49 @@ def test_strip_passes_cell_data_per_piece(join):
     ids = stripped.field_data['vtkOriginalCellIds']
     assert np.array_equal(stripped.field_data['c'], mesh.cell_data['c'][ids])
 
-    # one tuple per piece, in the order triangulate splits the output into pieces
-    pieces = stripped.triangulate(pass_verts=True, pass_lines=True)
-    assert pieces.n_cells == ids.size
-    for piece, owner in zip(pieces.cell, ids, strict=True):
-        assert set(piece.point_ids) <= set(mesh.get_cell(owner).point_ids)
-    assert sorted(ids) == [0, 1, 2, 3, 4, 4, 5, 6]
+    # one tuple per vert, line segment, polygon and strip triangle, in cell order
+    pieces = []
+    for cell in stripped.cell:
+        points = list(cell.point_ids)
+        if cell.type in (pv.CellType.LINE, pv.CellType.POLY_LINE):
+            pieces += [set(pair) for pair in itertools.pairwise(points)]
+        elif cell.type == pv.CellType.TRIANGLE_STRIP:
+            pieces += [set(points[k : k + 3]) for k in range(len(points) - 2)]
+        else:
+            pieces.append(set(points))
+    assert len(pieces) == ids.size
+    for piece, owner in zip(pieces, ids, strict=True):
+        assert piece <= set(mesh.get_cell(owner).point_ids)
+    assert sorted(ids) == [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 9]
+
+
+def test_strip_cell_ids_per_segment_across_max_length():
+    points = np.column_stack([np.arange(10.0), np.zeros(10), np.zeros(10)])
+    mesh = pv.PolyData(
+        points, lines=np.column_stack([np.full(9, 2), np.arange(9), np.arange(1, 10)])
+    )
+    stripped = mesh.strip(max_length=4, pass_cell_ids=True)
+    assert [list(cell.point_ids) for cell in stripped.cell] == [
+        [0, 1, 2, 3, 4],
+        [4, 5, 6, 7, 8],
+        [8, 9],
+    ]
+    assert stripped.field_data['vtkOriginalCellIds'].tolist() == list(range(9))
+
+
+@pytest.mark.parametrize('join', [True, False])
+def test_strip_cell_ids_with_int32_cells(join):
+    mesh = _mixed_strip_mesh()
+    narrow = pv.PolyData(mesh.points)
+    for kind in ('vert', 'line', 'face', 'strip'):
+        offsets = getattr(mesh, f'{kind}_offsets').astype(np.int32)
+        connectivity = getattr(mesh, f'{kind}_connectivity').astype(np.int32)
+        setattr(narrow, f'{kind}s', pv.CellArray.from_arrays(offsets, connectivity))
+    assert not narrow.GetLines().IsStorage64Bit()
+    ids = narrow.strip(join=join, pass_cell_ids=True).field_data['vtkOriginalCellIds']
+    expected = mesh.strip(join=join, pass_cell_ids=True).field_data['vtkOriginalCellIds']
+    assert ids.tolist() == expected.tolist()
+    assert sorted(ids) == [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9, 9]
 
 
 def test_strip_cell_ids_follow_the_verts():
@@ -223,12 +262,12 @@ def test_strip_cell_ids_follow_the_verts():
 @pytest.mark.parametrize('join', [True, False])
 def test_strip_keeps_lines_without_two_distinct_points(join):
     points = np.array([[0.0, 0, 0], [1, 0, 0], [2, 0, 0]])
-    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 1, 1, 2, 2, 1, 2])
-    mesh.cell_data['c'] = [0, 1, 2, 3]
+    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 1, 1, 2, 2, 1, 2, 0])
+    mesh.cell_data['c'] = [0, 1, 2, 3, 4]
     stripped = mesh.strip(join=join, pass_cell_data=True)
     # the stripper alone drops the single point and reads past the repeated one
     cells = sorted(list(cell.point_ids) for cell in stripped.cell)
-    assert cells in ([[0, 1, 2], [1, 1], [2]], [[1, 1], [2], [2, 1, 0]])
+    assert cells in ([[], [0, 1, 2], [1, 1], [2]], [[], [1, 1], [2], [2, 1, 0]])
     assert sorted(stripped.field_data['c']) == [0, 1, 3]
 
 

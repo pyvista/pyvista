@@ -4212,8 +4212,8 @@ class PolyDataFilters(DataSetFilters):
             Pass the cell data of the input to the output as field data,
             with one tuple per piece of the output in cell order: each
             vertex and polygon cell, each line segment and each triangle
-            of a strip. A line of one point holds no segment, so it adds
-            no tuple.
+            of a strip. A line with fewer than two points holds no
+            segment, so it adds no tuple.
 
         pass_cell_ids : bool, default: False
             If ``True``, the output has a field data array

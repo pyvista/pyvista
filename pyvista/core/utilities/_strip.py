@@ -160,23 +160,21 @@ class _StripTrace:
         return _cell_windows(mesh.line_connectivity, mesh.line_offsets, 2, first_id=mesh.n_verts)
 
     @functools.cached_property
-    def loose_lines(self) -> NDArray[np.bool_]:
+    def degenerate_lines(self) -> NDArray[np.bool_]:
         """Mark the lines with no two distinct points."""
         connectivity, offsets = self.mesh.line_connectivity, self.mesh.line_offsets
         sizes = np.diff(offsets)
-        loose = np.ones(sizes.size, dtype=bool)
+        degenerate = np.ones(sizes.size, dtype=bool)
         if connectivity.size < 2:
-            return loose
-        distinct = connectivity[1:] != connectivity[:-1]
-        # a pair spanning two cells is an edge of neither
-        boundaries = offsets[1:-1] - 1
-        distinct[boundaries[boundaries >= 0]] = False
+            return degenerate
         owners = np.repeat(np.arange(sizes.size), sizes)
-        loose[owners[:-1][distinct]] = False
-        return loose
+        # a pair spanning two cells is an edge of neither
+        distinct = (connectivity[1:] != connectivity[:-1]) & (owners[1:] == owners[:-1])
+        degenerate[owners[:-1][distinct]] = False
+        return degenerate
 
     @functools.cached_property
-    def loose_polys(self) -> NDArray[np.bool_]:
+    def degenerate_polys(self) -> NDArray[np.bool_]:
         """Mark the triangles with a repeated point."""
         connectivity, offsets = self.mesh.face_connectivity, self.mesh.face_offsets
         sizes = np.diff(offsets)
@@ -198,8 +196,12 @@ class _StripTrace:
     def source(self) -> PolyData:
         """Return the mesh to hand the stripper, which is the mesh itself when it is sound."""
         mesh, join = self.mesh, self.join
-        loose_lines, loose_polys = self.loose_lines, self.loose_polys
-        if not (join and mesh.n_lines) and not loose_lines.any() and not loose_polys.any():
+        degenerate_lines, degenerate_polys = self.degenerate_lines, self.degenerate_polys
+        if (
+            not (join and mesh.n_lines)
+            and not degenerate_lines.any()
+            and not degenerate_polys.any()
+        ):
             return mesh
         first_poly = mesh.n_verts + mesh.n_lines
         if join:
@@ -208,9 +210,11 @@ class _StripTrace:
             lines = _cells(runs[segments].ravel(), np.full(segments.sum(), 2))
             line_cells = owners[segments]
         else:
-            lines = _cells(*_kept_cells(mesh.line_connectivity, mesh.line_offsets, ~loose_lines))
-            line_cells = mesh.n_verts + np.flatnonzero(~loose_lines)
-        faces = _cells(*_kept_cells(mesh.face_connectivity, mesh.face_offsets, ~loose_polys))
+            lines = _cells(
+                *_kept_cells(mesh.line_connectivity, mesh.line_offsets, ~degenerate_lines)
+            )
+            line_cells = mesh.n_verts + np.flatnonzero(~degenerate_lines)
+        faces = _cells(*_kept_cells(mesh.face_connectivity, mesh.face_offsets, ~degenerate_polys))
         # a shallow copy keeps the points, point data, active names and field data as they are
         source = mesh.copy(deep=False)
         source.cell_data.clear()
@@ -223,8 +227,8 @@ class _StripTrace:
                 [
                     np.arange(mesh.n_verts),
                     line_cells,
-                    first_poly + np.flatnonzero(~loose_polys),
-                    first_poly + loose_polys.size + np.arange(mesh.n_strips),
+                    first_poly + np.flatnonzero(~degenerate_polys),
+                    first_poly + degenerate_polys.size + np.arange(mesh.n_strips),
                 ]
             )
             source.cell_data[ghosts] = np.asarray(mesh.cell_data[ghosts])[cells]
@@ -242,7 +246,7 @@ class _StripTrace:
         if self.source is self.mesh:
             return
         mesh = self.mesh
-        lines, polys = self.loose_lines, self.loose_polys
+        lines, polys = self.degenerate_lines, self.degenerate_polys
         ghosts = _vtk.vtkDataSetAttributes.GhostArrayName()
         if ghosts in mesh.cell_data:
             # the stripper skips ghost cells, so the cells left out of it skip them too
@@ -259,15 +263,19 @@ class _StripTrace:
             keep[1:] = (connectivity[1:] != connectivity[:-1]) | (owners[1:] != owners[:-1])
             connectivity = connectivity[keep]
             sizes = np.bincount(owners[keep], minlength=sizes.size)
-        loose, loose_sizes = _kept_cells(mesh.line_connectivity, mesh.line_offsets, lines)
+        degenerate, degenerate_sizes = _kept_cells(
+            mesh.line_connectivity, mesh.line_offsets, lines
+        )
         output.lines = _cells(
-            np.concatenate([connectivity, loose]), np.concatenate([sizes, loose_sizes])
+            np.concatenate([connectivity, degenerate]), np.concatenate([sizes, degenerate_sizes])
         )
         if polys.any():
-            loose, loose_sizes = _kept_cells(mesh.face_connectivity, mesh.face_offsets, polys)
+            degenerate, degenerate_sizes = _kept_cells(
+                mesh.face_connectivity, mesh.face_offsets, polys
+            )
             output.faces = _cells(
-                np.concatenate([output.face_connectivity, loose]),
-                np.concatenate([np.diff(output.face_offsets), loose_sizes]),
+                np.concatenate([output.face_connectivity, degenerate]),
+                np.concatenate([np.diff(output.face_offsets), degenerate_sizes]),
             )
 
     def original_cell_ids(self, output: PolyData) -> NDArray[np.int64]:
@@ -308,17 +316,18 @@ class _StripTrace:
                 _cell_rows(output.face_connectivity, output.face_offsets, width),
             )
         if output.n_strips:
-            triangle_runs, triangle_owners = _cell_windows(
-                mesh.face_connectivity, mesh.face_offsets, 3, first_id=first_poly
-            )
             # only triangles become strips, so a polygon's own runs of three are not candidates
-            triangles = np.diff(mesh.face_offsets)[triangle_owners - first_poly] == 3
+            sizes = np.diff(mesh.face_offsets)
+            triangles = sizes == 3
+            corners = np.asarray(mesh.face_connectivity, dtype=np.int64)
+            triangle_runs = _sort_rows(corners[np.repeat(triangles, sizes)].reshape(-1, 3))
+            triangle_owners = first_poly + np.flatnonzero(triangles)
             strip_runs, strip_owners = _cell_windows(
                 mesh.strip_connectivity, mesh.strip_offsets, 3, first_id=first_strip
             )
             strips = _match_runs(
-                np.concatenate([triangle_runs[triangles], strip_runs]),
-                np.concatenate([triangle_owners[triangles], strip_owners]),
+                np.concatenate([triangle_runs, strip_runs]),
+                np.concatenate([triangle_owners, strip_owners]),
                 _cell_windows(output.strip_connectivity, output.strip_offsets, 3)[0],
             )
         verts = np.arange(output.n_verts, dtype=np.int64)
