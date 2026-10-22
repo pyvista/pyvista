@@ -289,7 +289,7 @@ class _StripTrace:
         Returns
         -------
         numpy.ndarray
-            Input cell id of each vert, line segment, polygon and strip triangle.
+            Input cell id of each vert, line segment, polygon, and strip triangle.
 
         """
         mesh = self.mesh
