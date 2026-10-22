@@ -23,9 +23,7 @@ from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities._strip import _original_cell_ids
-from pyvista.core.utilities._strip import _restore_cells
-from pyvista.core.utilities._strip import _strip_source
+from pyvista.core.utilities._strip import _StripTrace
 from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import PointLiteral
@@ -4248,19 +4246,18 @@ class PolyDataFilters(DataSetFilters):
         >>> stripped.plot(show_edges=True, line_width=3)
 
         """
-        source, loose_lines, loose_polys = _strip_source(self, join=join)
+        trace = _StripTrace(self, join=join)
         alg = _vtk.vtkStripper()
-        alg.SetInputDataObject(source)
+        alg.SetInputDataObject(trace.source)
         alg.SetJoinContiguousSegments(join)
         alg.SetMaximumLength(max_length)
         alg.SetPassThroughPointIds(pass_point_ids)
         _update_alg(alg, progress_bar=progress_bar, message='Stripping Mesh')
         output = _get_output(alg)
-        if source is not self:
-            _restore_cells(self, output, join=join, lines=loose_lines, polys=loose_polys)
+        trace.restore(output)
         if pass_cell_data or pass_cell_ids:
             # the stripper's own tracing skips segments and miscounts after verts
-            ids = _original_cell_ids(self, output)
+            ids = trace.original_cell_ids(output)
             if pass_cell_data:
                 for name, array in self.cell_data.items():
                     output.field_data[name] = np.asarray(array)[ids]
