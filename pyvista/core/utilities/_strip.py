@@ -105,8 +105,6 @@ def _match_runs(
     runs: NDArray[np.int64], owners: NDArray[np.int64], targets: NDArray[np.int64]
 ) -> NDArray[np.int64]:
     """Return the owner of the run equal to each target, or ``-1`` where none is."""
-    if targets.shape[0] == 0 or runs.shape[0] == 0:
-        return np.full(targets.shape[0], -1, dtype=np.int64)
     codes = _row_codes(np.concatenate([runs, targets]))
     keys, wanted = codes[: runs.shape[0]], codes[runs.shape[0] :]
     order = np.argsort(keys)

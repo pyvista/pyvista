@@ -573,6 +573,23 @@ def test_dash_lines_hidden_style():
     assert hidden.n_cells == 0
 
 
+def test_dash_lines_skips_ghost_lines():
+    points = np.column_stack([np.arange(4.0), np.zeros(4), np.zeros(4)])
+    mesh = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+    mesh.cell_data['c'] = [0, 1, 2]
+    ghosts = np.zeros(mesh.n_cells, dtype=np.uint8)
+    ghosts[1] = 32
+    mesh.cell_data['vtkGhostType'] = ghosts
+    dashed = mesh.dash_lines(pattern=[3, 1], scale=0.1)
+    assert dashed.n_cells > 0
+    assert set(dashed.cell_data['c']) == {0, 2}
+    assert dashed.points[:, 0].min() == pytest.approx(0.0)
+    assert dashed.points[:, 0].max() == pytest.approx(3.0)
+    # nothing is drawn on the ghost line between x=1 and x=2
+    inside = (dashed.points[:, 0] > 1.0 + 1e-9) & (dashed.points[:, 0] < 2.0 - 1e-9)
+    assert not inside.any()
+
+
 def test_dash_lines_keeps_active_scalars_and_field_data():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
     line.point_data['vals'] = np.arange(line.n_points, dtype=float)

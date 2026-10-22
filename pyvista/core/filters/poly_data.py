@@ -5049,8 +5049,6 @@ def _line_cell_data_labels(mesh: PolyData) -> NDArray[np.intp]:
         # compare the raw bytes so that NaN rows match one another
         raw = rows.view(np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))).ravel()
         labels.append(np.unique(raw, return_inverse=True)[1].ravel())
-    if not labels:
-        return np.zeros(mesh.n_lines, dtype=np.intp)
     return np.unique(np.column_stack(labels), axis=0, return_inverse=True)[1].ravel()
 
 
