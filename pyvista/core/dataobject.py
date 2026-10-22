@@ -526,6 +526,8 @@ class DataObject(
                 equal_attrs.append('celltypes')
                 equal_attrs.append('polyhedron_faces')
                 equal_attrs.append('polyhedron_face_locations')
+            elif isinstance(self, pv.StructuredGrid):
+                equal_attrs.append('dimensions')
 
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista

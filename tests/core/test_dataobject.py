@@ -105,6 +105,24 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
 
+@pytest.mark.parametrize('dimensions', [(2, 3, 1), (1, 2, 3)])
+def test_structured_grid_eq_dimensions(dimensions):
+    x, y, z = np.meshgrid(np.arange(3.0), np.arange(2.0), [0.0], indexing='ij')
+    grid = pv.StructuredGrid(x, y, z)
+    grid.point_data['point_values'] = np.arange(grid.n_points)
+    grid.cell_data['cell_values'] = np.arange(grid.n_cells)
+    other = grid.copy()
+    assert grid == other
+    assert other == grid
+
+    other.dimensions = dimensions
+    assert np.array_equal(grid.points, other.points)
+    assert grid.n_cells == other.n_cells == 2
+    assert grid.get_cell(0).point_ids != other.get_cell(0).point_ids
+    assert grid != other
+    assert other != grid
+
+
 def test_unstructured_grid_eq(hexbeam):
     copy = hexbeam.copy()
     assert hexbeam == copy
