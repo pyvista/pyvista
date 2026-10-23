@@ -105,7 +105,8 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-timeout<2.5.0',
   'pytest-xdist<3.9.0',
-  'pytest<9.2.0',
+  # pytest-cases 3.10.1 uses pytest's internal IdMaker, whose signature changed in pytest 9.1
+  'pytest<9.1.0',
   'pyvista-frd-reader>=0.2.1,<0.4.0',
   'pyvista-miniply>=0.5.2,<0.6.0',
   'pyvista-stl>=0.5.3,<0.6.0',
