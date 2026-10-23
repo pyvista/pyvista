@@ -2697,7 +2697,8 @@ class BasePlotter(_BoundsSizeMixin):
     def render(self) -> None:
         """Render the main window.
 
-        Will not render until ``show`` has been called.
+        Will not render until ``show`` has been called, nor while the
+        render window interactor has rendering disabled.
 
         Any render callbacks added with
         :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
@@ -2722,6 +2723,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.render_window is not None
             and not self._first_time
             and not self._suppress_rendering
+            and self._interactor_render_enabled()
         ):
             log.debug('Rendering')
             self.renderers.on_plotter_render()
@@ -2729,6 +2731,26 @@ class BasePlotter(_BoundsSizeMixin):
             self._rendered = True
         for callback in self._on_render_callbacks:
             callback(self)
+
+    def _interactor_render_enabled(self) -> bool:
+        """Return whether the render window interactor allows rendering."""
+        # The stubs say non-None, but a window without an interactor returns None
+        interactor: _vtk.vtkRenderWindowInteractor | None = cast(
+            '_vtk.vtkRenderWindow', self.render_window
+        ).GetInteractor()
+        return interactor is None or bool(interactor.GetEnableRender())
+
+    def _render_requested(self) -> None:
+        """Render even while the render window interactor has rendering disabled."""
+        if self.render_window is None or self._interactor_render_enabled():
+            self.render()
+            return
+        interactor = self.render_window.GetInteractor()
+        interactor.EnableRenderOn()
+        try:
+            self.render()
+        finally:
+            interactor.EnableRenderOff()
 
     def add_on_render_callback(
         self,
@@ -7476,9 +7498,9 @@ class BasePlotter(_BoundsSizeMixin):
             # before extracting an image
             if self._first_time:
                 self._on_first_render_request()
-                self.render()
+                self._render_requested()
             elif render:
-                self.render()
+                self._render_requested()
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()
@@ -9208,11 +9230,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if jupyter_backend is None or jupyter_backend.lower() != 'none':
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
-        self.render()
+        self._render_requested()
 
         # initial double render needed for certain passes when offscreen
         if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
-            self.render()
+            self._render_requested()
 
         # This has to be after the first render for some reason
         if title is None:

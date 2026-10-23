@@ -576,6 +576,29 @@ def test_close_releases_render_window_observers(event):
     assert reference() is None
 
 
+def test_render_respects_interactor_enable_render(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    renders = []
+    pl.render_window.AddObserver(_vtk.vtkCommand.StartEvent, lambda *_: renders.append(1))
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+
+    pl.render()
+    assert not renders
+
+    pl.screenshot(return_img=True)
+    assert renders
+    assert not interactor.GetEnableRender()
+
+    interactor.EnableRenderOn()
+    renders.clear()
+    pl.render()
+    assert renders
+    pl.close()
+
+
 def test_show_after_closed_raises():
     pl = pv.Plotter()
     pl.close()
