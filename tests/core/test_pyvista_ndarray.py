@@ -240,7 +240,9 @@ def test_raises(val):
 def test_wrap_pandas(obj_in):
     array = pyvista_ndarray(obj_in)
     df = pd.DataFrame(array)
-    assert np.shares_memory(df.values, array)
+    # pandas < 3 zero-copies the wrapped 2D array; pandas >= 3 conservatively
+    # copies any writable input, so only verify the values survive the wrap.
+    assert np.array_equal(df.values, array)
 
 
 def test_no_dataset_does_not_allocate_weak_reference():
