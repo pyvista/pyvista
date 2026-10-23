@@ -866,7 +866,8 @@ def ParametricKlein(**kwargs) -> PolyData:
     u1 = np.flatnonzero(u == 1)
     u0 = u0[np.argsort(v[u0])]
     u1 = u1[np.argsort(v[u1])]
-    u1 = np.roll(u1, -(v_res // 2))
+    # On the u seam, vtkParametricKlein identifies v with pi - v (mod 2*pi).
+    u1 = u1[(v_res // 2 - np.arange(v_res)) % v_res]
     u_next = np.roll(np.arange(v_res), -1)
     u_faces = np.column_stack(
         [4 * np.ones(v_res, dtype=int), u0, u0[u_next], u1[u_next], u1],
