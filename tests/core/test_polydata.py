@@ -858,6 +858,24 @@ def test_triangulate_filter_pass_lines(sphere: pv.PolyData, plane: pv.PolyData, 
 
 
 @pytest.mark.parametrize('pass_verts', [True, False])
+@pytest.mark.parametrize('pass_lines', [True, False])
+def test_triangulate_cell_data_with_verts_and_lines(pass_verts, pass_lines):
+    # https://github.com/pyvista/pyvista/issues/8897
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [2, 2, 2], [3, 3, 3], [4, 4, 4]], dtype=float
+    )
+    mesh = pv.PolyData(points, faces=[4, 0, 1, 2, 3], lines=[2, 4, 5], verts=[1, 6])
+    # Cell order is verts, lines, polys
+    mesh.cell_data['data'] = [10, 20, 30]
+
+    tri = mesh.triangulate(pass_verts=pass_verts, pass_lines=pass_lines)
+
+    expected = ([10] if pass_verts else []) + ([20] if pass_lines else []) + [30, 30]
+    assert tri.n_cells == len(expected)
+    assert tri.cell_data['data'].tolist() == expected
+
+
+@pytest.mark.parametrize('pass_verts', [True, False])
 def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
     merge: pv.PolyData = plane + (verts := pv.PolyData([0.0, 1.0, 2.0]))
     tri: pv.PolyData = merge.triangulate(pass_verts=pass_verts, inplace=False)

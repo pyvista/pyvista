@@ -873,8 +873,8 @@ class PolyDataFilters(DataSetFilters):
         kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
         return self.plot(scalars=self.curvature(curv_type), **kwargs)
 
-    def triangulate(  # type: ignore[override]
-        self,
+    def triangulate(  # type: ignore[override, misc]
+        self: PolyData,
         *,
         pass_verts: bool = False,
         pass_lines: bool = False,
@@ -923,16 +923,44 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        n_verts = self.n_verts
+        n_lines = self.n_lines
+        n_other = n_verts + n_lines
+        # vtkTriangleFilter returns cell data of the wrong length when verts or
+        # lines are mixed with polys or strips, so only the polys and strips go
+        # through it. Cells are ordered verts, lines, polys, strips.
+        split = bool(n_other and (self.n_faces or self.n_strips))
+
         trifilter = _vtk.vtkTriangleFilter()
-        trifilter.SetInputData(self)
+        if split:
+            poly_input = self.copy()
+            poly_input.verts = pv.CellArray()
+            poly_input.lines = pv.CellArray()
+            poly_input.cell_data.clear()
+            for name in self.cell_data:
+                poly_input.cell_data[name] = np.array(self.cell_data[name][n_other:])
+            trifilter.SetInputData(poly_input)
+        else:
+            trifilter.SetInputData(self)
         trifilter.SetPassVerts(pass_verts)
         trifilter.SetPassLines(pass_lines)
         _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
 
         mesh = _get_output(trifilter)
+        if split:
+            kept = []
+            if pass_verts and n_verts:
+                mesh.verts = self.verts
+                kept.append(slice(0, n_verts))
+            if pass_lines and n_lines:
+                mesh.lines = self.lines
+                kept.append(slice(n_verts, n_other))
+            for name in list(mesh.cell_data.keys()):
+                parts = [np.asarray(self.cell_data[name][s]) for s in kept]
+                mesh.cell_data[name] = np.concatenate([*parts, np.asarray(mesh.cell_data[name])])
         if inplace:
-            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
-            return cast('PolyData', self)
+            self.copy_from(mesh, deep=False)
+            return self
         return mesh
 
     def smooth(  # type: ignore[misc]
