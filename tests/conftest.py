@@ -109,6 +109,11 @@ HAS_IO_ENSIGHT = _has_vtk_module('vtkIOEnSight')  # EnSightReader (.case)
 HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
 HAS_IO_EXTRA = HAS_IO_HDF and HAS_IO_ENSIGHT and HAS_IO_CHEMISTRY
 
+# Import eagerly to avoid false positive leak-checks from module-level vtk instances
+# defined upstream.
+if importlib.util.find_spec('trame_pyvista') is not None:
+    importlib.import_module('trame_pyvista')
+
 pv.OFF_SCREEN = True
 
 PYVISTA_ROOT_DIR = Path(__file__).parent.parent
