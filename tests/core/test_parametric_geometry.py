@@ -238,9 +238,15 @@ def test_parametric_klein_resolutions(clean, texture_coordinates):
     assert geom.point_data.active_normals_name == 'Normals'
 
 
-@pytest.mark.parametrize(('u_res', 'v_res'), [(1, 8), (8, 1)])
+def test_parametric_klein_minimum_valid_resolution():
+    geom = pv.ParametricKlein(u_res=3, v_res=3)
+    assert geom.n_open_edges == 0
+    assert geom.is_manifold
+
+
+@pytest.mark.parametrize(('u_res', 'v_res'), [(1, 8), (2, 8), (8, 1), (8, 2)])
 def test_parametric_klein_requires_minimum_resolution(u_res, v_res):
-    error = 'The `u_res` and `v_res` values must be at least 2.'
+    error = 'The `u_res` and `v_res` values must be at least 3.'
     with pytest.raises(ValueError, match=error):
         pv.ParametricKlein(u_res=u_res, v_res=v_res)
 
