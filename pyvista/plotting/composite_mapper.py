@@ -654,9 +654,8 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, scalars='data', show_scalar_bar=False
+        ...     dataset, scalars='data', show_scalar_bar=False, nan_color='r'
         ... )
-        >>> pv.global_theme.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
 
