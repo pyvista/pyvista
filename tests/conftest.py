@@ -479,6 +479,19 @@ def pytest_runtest_teardown(item):
     assert_no_leaks(item, owner=__name__, flush_ghosts=True)
 
 
+_TYPING_CASES = Path(__file__).parent / 'typing' / 'cases'
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item: pytest.Item):
+    """Log the VTK messages a typing case reports: it checks a type, not VTK's output."""
+    if _TYPING_CASES in item.path.parents:
+        with pv.vtk_messages(errors='log', warnings='log'):
+            yield
+    else:
+        yield
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_sessionstart():
     """Register Hypothesis' global PRNG now, while the heap is still thawed.

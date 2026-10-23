@@ -501,14 +501,14 @@ class Config(_ConfigBase):
     def vtk_errors(self) -> _VtkMessageLevel:  # numpydoc ignore=RT01
         """Return or set what happens when VTK reports an error.
 
-        - ``'raise'``: raise :class:`~pyvista.VTKExecutionError` when the PyVista
+        - ``'raise'``: raise :class:`~pyvista.core.errors.VTKExecutionError` when the PyVista
           operation or :class:`~pyvista.vtk_messages` block ends.
-        - ``'warn'`` (the default): emit a :class:`~pyvista.VTKExecutionWarning`.
+        - ``'warn'`` (the default): emit a :class:`~pyvista.core.errors.VTKExecutionWarning`.
         - ``'log'``: log with the ``'pyvista.vtk'`` logger at the ``ERROR`` level.
         - ``'ignore'``: do nothing.
 
         A PyVista operation whose VTK algorithm fails raises
-        :class:`~pyvista.VTKExecutionError` at every level. Use
+        :class:`~pyvista.core.errors.VTKExecutionError` at every level. Use
         :class:`~pyvista.vtk_messages` to change the level for a block of code.
 
         .. versionadded:: 0.50
@@ -532,9 +532,9 @@ class Config(_ConfigBase):
     def vtk_warnings(self) -> _VtkMessageLevel:  # numpydoc ignore=RT01
         """Return or set what happens when VTK reports a warning.
 
-        - ``'raise'``: raise :class:`~pyvista.VTKExecutionError` when the PyVista
+        - ``'raise'``: raise :class:`~pyvista.core.errors.VTKExecutionError` when the PyVista
           operation or :class:`~pyvista.vtk_messages` block ends.
-        - ``'warn'`` (the default): emit a :class:`~pyvista.VTKExecutionWarning`.
+        - ``'warn'`` (the default): emit a :class:`~pyvista.core.errors.VTKExecutionWarning`.
         - ``'log'``: log with the ``'pyvista.vtk'`` logger at the ``WARNING`` level.
         - ``'ignore'``: do nothing.
 

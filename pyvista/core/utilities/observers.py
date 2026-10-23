@@ -81,13 +81,13 @@ class vtk_messages:  # noqa: N801
     :attr:`pyvista.core.config.Config.vtk_warnings` set this globally, and this context
     manager overrides them for a block of code. Each level is one of:
 
-    - ``'raise'``: raise :class:`~pyvista.VTKExecutionError` when the block ends.
-    - ``'warn'``: emit a :class:`~pyvista.VTKExecutionWarning`.
+    - ``'raise'``: raise :class:`~pyvista.core.errors.VTKExecutionError` when the block ends.
+    - ``'warn'``: emit a :class:`~pyvista.core.errors.VTKExecutionWarning`.
     - ``'log'``: log with the ``'pyvista.vtk'`` logger.
     - ``'ignore'``: do nothing.
 
     A PyVista operation whose VTK algorithm fails raises
-    :class:`~pyvista.VTKExecutionError` at every level, with the messages VTK reported.
+    :class:`~pyvista.core.errors.VTKExecutionError` at every level, with the messages VTK reported.
 
     Contexts can be nested, and each one records every message reported while it is
     active, whatever the level. The levels are process-wide, so a context in one thread

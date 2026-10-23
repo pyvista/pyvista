@@ -457,7 +457,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
         Raises
         ------
-        pyvista.VTKExecutionError
+        pyvista.core.errors.VTKExecutionError
             If the VTK reader fails. The errors VTK reported are included.
 
             .. versionchanged:: 0.50

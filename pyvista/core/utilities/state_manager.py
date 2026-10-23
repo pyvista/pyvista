@@ -172,7 +172,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
     :attr:`pyvista.core.config.Config.vtk_errors` and
     :attr:`pyvista.core.config.Config.vtk_warnings`, or by a
     :class:`~pyvista.vtk_messages` block, and a failed filter or reader always raises
-    :class:`~pyvista.VTKExecutionError`.
+    :class:`~pyvista.core.errors.VTKExecutionError`.
 
     What it does control: VTK's own log stream, which is the only place some of VTK's
     output goes. That includes debug and info messages, and messages that VTK logs
