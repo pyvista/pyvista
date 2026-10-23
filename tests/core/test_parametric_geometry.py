@@ -215,6 +215,34 @@ def test_parametric_henneberg():
 def test_parametric_klein():
     geom = pv.ParametricKlein()
     assert geom.n_points
+    assert geom.n_open_edges == 0
+    assert geom.is_manifold
+    assert geom.point_data.active_scalars_name is None
+    assert geom.point_data.active_normals_name == 'Normals'
+
+
+@pytest.mark.parametrize('clean', [False, True])
+@pytest.mark.parametrize('texture_coordinates', [False, True])
+def test_parametric_klein_resolutions(clean, texture_coordinates):
+    geom = pv.ParametricKlein(
+        u_res=17,
+        v_res=11,
+        clean=clean,
+        texture_coordinates=texture_coordinates,
+    )
+    assert geom.n_open_edges == 0
+    assert geom.is_manifold
+    assert (geom.active_texture_coordinates is not None) is texture_coordinates
+    assert ('Textures' in geom.point_data) is texture_coordinates
+    assert geom.point_data.active_scalars_name is None
+    assert geom.point_data.active_normals_name == 'Normals'
+
+
+@pytest.mark.parametrize(('u_res', 'v_res'), [(1, 8), (8, 1)])
+def test_parametric_klein_requires_minimum_resolution(u_res, v_res):
+    error = 'The `u_res` and `v_res` values must be at least 2.'
+    with pytest.raises(ValueError, match=error):
+        pv.ParametricKlein(u_res=u_res, v_res=v_res)
 
 
 def test_parametric_kuen():
