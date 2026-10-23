@@ -15,6 +15,7 @@ import pickle
 import platform
 import re
 import shutil
+import signal
 import sys
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -781,6 +782,14 @@ def test_progress_monitor_interrupt_without_abort_execute():
     monitor(reader)
 
 
+def test_progress_monitor_handler_defers_interrupt(caplog):
+    monitor = ProgressMonitor(_vtk.vtkSphereSource())
+    with caplog.at_level(logging.DEBUG, logger='pyvista.core.utilities.observers'):
+        monitor.handler(signal.SIGINT, None)
+    assert monitor._interrupt_signal_received == (signal.SIGINT, None)
+    assert 'Delaying KeyboardInterrupt' in caplog.text
+
+
 def test_observer():
     msg = 'KIND: In PATH, line 0\nfoo (0x000000): ALERT'
     obs = Observer()
@@ -932,6 +941,12 @@ class _WarnThenFail(_vtk.VTKPythonAlgorithmBase):
         _vtk.vtkOutputWindow.GetInstance().DisplayWarningText('about to fail')
         _vtk.vtkOutputWindow.GetInstance().DisplayErrorText('failed')
         return 0
+
+
+class _WarnThenSucceed(_WarnThenFail):
+    def RequestData(self, *_):  # noqa: N802
+        _vtk.vtkOutputWindow.GetInstance().DisplayWarningText('warned')
+        return 1
 
 
 ERROR_MATCH = re.compile(
@@ -1254,10 +1269,10 @@ def test_vtk_error_catcher_deprecated():
         assert pv.global_config.vtk_errors == 'log'
     finally:
         pv.global_config.vtk_errors, pv.global_config.vtk_warnings = saved
-    if pv._version.version_info[:2] > (0, 53):
+    if pv._version.version_info[:2] > (0, 53):  # pragma: no cover
         msg = 'Convert the VtkErrorCatcher deprecations to errors'
         raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 54):
+    if pv._version.version_info[:2] > (0, 54):  # pragma: no cover
         msg = 'Remove VtkErrorCatcher, send_errors_to_logging and set_error_output_file'
         raise RuntimeError(msg)
 
@@ -1316,6 +1331,15 @@ def test_update_alg_warns_on_failure():
         pv.vtk_messages(warnings='warn'),
     ):
         _update_alg(_WarnThenFail())
+
+
+@pytest.mark.expect_vtk_output('warned', reason='the algorithm warns on purpose')
+def test_update_alg_propagates_raising_warning_on_success():
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.VTKExecutionWarning)
+        with pytest.raises(pv.VTKExecutionWarning, match='warned'):
+            with pv.vtk_messages(warnings='warn'):
+                _update_alg(_WarnThenSucceed())
 
 
 @pytest.mark.expect_vtk_output(
