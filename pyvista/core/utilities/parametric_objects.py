@@ -817,7 +817,7 @@ def ParametricKlein(**kwargs) -> PolyData:
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
-        ``u_res`` and ``v_res`` must each be at least 4. An odd
+        ``u_res`` must be at least 4 and ``v_res`` at least 7. An odd
         ``v_res`` is rounded up to the next even value so the half-twist closes
         on mesh vertices.
 
@@ -843,8 +843,8 @@ def ParametricKlein(**kwargs) -> PolyData:
     texture_coordinates = kwargs.pop('texture_coordinates', False)
     u_res = kwargs.get('u_res', 100)
     v_res = kwargs.get('v_res', 100)
-    if u_res < 4 or v_res < 4:
-        error = 'The `u_res` and `v_res` values must be at least 4.'
+    if u_res < 4 or v_res < 7:
+        error = 'The `u_res` must be at least 4 and `v_res` at least 7.'
         raise ValueError(error)
     if v_res % 2:
         v_res += 1
