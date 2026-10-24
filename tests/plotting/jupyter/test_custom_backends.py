@@ -476,3 +476,39 @@ def test_display_without_ipython_raises(monkeypatch):
     monkeypatch.setitem(sys.modules, 'IPython', None)
     with pytest.raises(ImportError, match='Install IPython'):
         jupyter_mod._display('image')
+
+
+@pytest.mark.parametrize(('renders', 'expected'), [(True, 'trame'), (False, 'static')])
+def test_resolve_backend_in_marimo(monkeypatch, renders, expected):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: renders)
+    with _without_custom_backends():
+        for name in ('trame', 'html'):
+            _custom_backends[name] = _mock_handler
+            _custom_backend_sources[name] = 'trame_pyvista.jupyter:show_trame'
+        assert _resolve_backend() == expected
+
+
+def test_handle_plotter_in_marimo_asks_to_upgrade_trame_pyvista(monkeypatch):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: False)
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.notebook.show_static_image', return_value='static_img'),
+    ):
+        _custom_backends['trame'] = _mock_handler
+        _custom_backend_sources['trame'] = 'trame_pyvista.jupyter:show_trame'
+        with pytest.warns(UserWarning, match='Upgrade trame-pyvista'):
+            result = handle_plotter(MagicMock())
+    assert result == 'static_img'
+
+
+def test_resolve_backend_in_marimo_keeps_other_plugins(monkeypatch):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: False)
+    with _without_custom_backends():
+        _custom_backends['trame'] = _mock_handler
+        _custom_backend_sources['trame'] = 'trame_pyvista.jupyter:show_trame'
+        _custom_backends['other'] = _mock_handler
+        _custom_backend_sources['other'] = 'other_plugin:show'
+        assert _resolve_backend() == 'other'
