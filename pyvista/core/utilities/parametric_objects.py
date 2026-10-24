@@ -817,6 +817,10 @@ def ParametricKlein(**kwargs) -> PolyData:
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
+        ``u_res`` must be at least 4 and ``v_res`` at least 7. An odd
+        ``v_res`` is rounded up to the next even value so the half-twist closes
+        on mesh vertices.
+
     Returns
     -------
     pyvista.PolyData
@@ -835,8 +839,73 @@ def ParametricKlein(**kwargs) -> PolyData:
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
-    kwargs.setdefault('clean', True)
+    clean = kwargs.pop('clean', True)
+    texture_coordinates = kwargs.pop('texture_coordinates', False)
+    u_res = kwargs.get('u_res', 100)
+    v_res = kwargs.get('v_res', 100)
+    if u_res < 4 or v_res < 7:
+        error = 'The `u_res` must be at least 4 and `v_res` at least 7.'
+        raise ValueError(error)
+    if v_res % 2:
+        v_res += 1
+        kwargs['v_res'] = v_res
+
+    # vtkParametricFunctionSource leaves the Klein bottle's half-twist open.
+    # Keep both periodic seams out of the sampled domain and close them with
+    # cells that follow the parametric identifications.
+    parametric_function.SetMaximumU((u_res - 1) / u_res * math.pi)
+    parametric_function.SetMaximumV((v_res - 1) / v_res * 2 * math.pi)
+    parametric_function.SetJoinU(False)
+    parametric_function.SetJoinV(False)
+
+    kwargs['clean'] = False
+    kwargs['texture_coordinates'] = True
     surf = surface_from_para(parametric_function, **kwargs)
+    u, v = surf.point_data['Textures'].T
+
+    u0 = np.flatnonzero(u == 0)
+    u1 = np.flatnonzero(u == 1)
+    u0 = u0[np.argsort(v[u0])]
+    u1 = u1[np.argsort(v[u1])]
+    # On the u seam, vtkParametricKlein identifies v with pi - v (mod 2*pi).
+    u1 = u1[(v_res // 2 - np.arange(v_res)) % v_res]
+    u_next = np.roll(np.arange(v_res), -1)
+    u_faces = np.column_stack(
+        [4 * np.ones(v_res, dtype=int), u0, u0[u_next], u1[u_next], u1],
+    ).ravel()
+
+    v0 = np.flatnonzero(v == 0)
+    v1 = np.flatnonzero(v == 1)
+    v0 = v0[np.argsort(u[v0])]
+    v1 = v1[np.argsort(u[v1])]
+    v_faces = np.column_stack(
+        [4 * np.ones(u_res - 1, dtype=int), v0[:-1], v0[1:], v1[1:], v1[:-1]],
+    ).ravel()
+
+    parametric_surf = surf
+    active_scalars_name = parametric_surf.point_data.active_scalars_name
+    surf = pv.PolyData(
+        parametric_surf.points,
+        faces=np.concatenate((parametric_surf.faces, v_faces, u_faces)),
+    )
+    surf.point_data.update(parametric_surf.point_data)
+    surf.field_data.update(parametric_surf.field_data)
+    surf = surf.triangulate()
+    if clean:
+        surf = surf.clean(
+            tolerance=1e-7,
+            absolute=False,
+            lines_to_points=False,
+            polys_to_lines=False,
+            strips_to_polys=False,
+        )
+    surf.point_data.active_scalars_name = active_scalars_name
+    surf.point_data.active_normals_name = 'Normals'
+    if texture_coordinates:
+        surf.point_data.active_texture_coordinates_name = 'Textures'
+    else:
+        del surf.point_data['Textures']
+
     _translate_and_orient(surf, center, direction)
     return surf
 
