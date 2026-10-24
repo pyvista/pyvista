@@ -239,10 +239,8 @@ def test_raises(val):
 @pytest.mark.parametrize('obj_in', [np.eye(3), vtk_points(np.eye(3)).GetData()])
 def test_wrap_pandas(obj_in):
     array = pyvista_ndarray(obj_in)
-    df = pd.DataFrame(array)
-    # pandas < 3 zero-copies the wrapped 2D array; pandas >= 3 conservatively
-    # copies any writable input, so only verify the values survive the wrap.
-    assert np.array_equal(df.values, array)
+    df = pd.DataFrame(array, copy=False)
+    assert np.shares_memory(df.values, array)
 
 
 def test_no_dataset_does_not_allocate_weak_reference():
