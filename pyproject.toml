@@ -182,7 +182,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-pyvista==0.2.1',
+  'trame-pyvista==0.2.2',
   'trimesh==5.1.0',
   { include-group = 'pinned' },
 ]
@@ -191,7 +191,7 @@ docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
-  'trame-pyvista==0.2.1',
+  'trame-pyvista==0.2.2',
   'type-assert==0.5.0', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
