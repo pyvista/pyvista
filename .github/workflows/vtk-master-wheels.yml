@@ -121,7 +121,7 @@ jobs:
 
       - name: Install pyvista-build
         shell: bash
-        run: uv pip install --system "pyvista-build[tools]==0.1.1"
+        run: uv pip install --system "pyvista-build[tools]==0.4.0"
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
