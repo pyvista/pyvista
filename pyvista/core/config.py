@@ -108,8 +108,8 @@ class _ConfigBase(metaclass=_ForceSlots):
 
     __slots__: ClassVar[list[str]] = []
 
-    # Slot names (without the leading underscore) that should be omitted from
-    # ``to_dict`` output even though they live in ``__slots__``. Subclasses may
+    # Slot names (without the leading underscore) that ``to_dict`` omits and
+    # ``from_dict`` ignores even though they live in ``__slots__``. Subclasses may
     # override this with their own ``frozenset``.
     _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset()
 
@@ -123,9 +123,10 @@ class _ConfigBase(metaclass=_ForceSlots):
             Mapping of public attribute name to value, as produced by
             :meth:`to_dict`. Nested config objects are recursively
             reconstructed via their own ``from_dict``. A key that is not a
-            valid attribute of ``cls`` is skipped with a warning instead of
-            raising, so a dict saved by a different pyvista version can
-            still be loaded.
+            valid attribute of ``cls``, or whose value its setter rejects, is
+            skipped with a warning instead of raising, so a dict saved by a
+            different pyvista version or on a different machine can still be
+            loaded. Names listed in ``_TO_DICT_SKIP`` are ignored.
 
         Returns
         -------
@@ -134,16 +135,23 @@ class _ConfigBase(metaclass=_ForceSlots):
 
         """
         inst = cls()
+        skip = cls._TO_DICT_SKIP
         for key, value in dict_.items():
+            if key in skip:
+                continue
             if not hasattr(inst, key):
                 msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
                 warn_external(msg)
                 continue
             attr = getattr(inst, key)
-            if hasattr(attr, 'from_dict'):
-                setattr(inst, key, attr.from_dict(value))
-            else:
-                setattr(inst, key, value)
+            try:
+                if hasattr(attr, 'from_dict'):
+                    setattr(inst, key, attr.from_dict(value))
+                else:
+                    setattr(inst, key, value)
+            except (ImportError, OSError, TypeError, ValueError) as exc:
+                msg = f'{cls.__name__!r} cannot set {key!r} to {value!r}. Ignoring it.\n{exc}'
+                warn_external(msg)
         return inst
 
     def to_dict(self) -> dict[str, Any]:
