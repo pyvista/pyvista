@@ -1761,7 +1761,26 @@ class WidgetComponent(_NoNewAttrMixin):
         return slider_widget
 
     def clear_slider_widgets(self) -> None:
-        """Remove all of the slider widgets."""
+        """Remove all of the slider widgets.
+
+        Examples
+        --------
+        Add a slider that controls a mesh's opacity, then clear it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> def set_opacity(value):
+        ...     actor.prop.opacity = value
+        >>> _ = pl.add_slider_widget(set_opacity, [0, 1], title='Opacity')
+        >>> len(pl.widgets.slider_widgets)
+        1
+        >>> pl.clear_slider_widgets()
+        >>> len(pl.widgets.slider_widgets)
+        0
+        >>> pl.close()
+
+        """
         for slider_widget in self.slider_widgets:
             slider_widget.Off()
         self.slider_widgets.clear()
