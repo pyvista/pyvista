@@ -8,11 +8,13 @@ from __future__ import annotations
 from collections.abc import Callable  # noqa: TC003
 from importlib.metadata import entry_points
 import importlib.util
+import sys
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import get_args
 
+import scooby
 from typing_extensions import TypeIs
 
 import pyvista as pv
@@ -196,6 +198,14 @@ def _ensure_entry_points() -> None:
             continue
         _custom_backends[name] = handler
         _custom_backend_sources[name] = ep.value
+
+
+def _in_notebook() -> bool:
+    """Return whether this process runs notebook cells, in Jupyter or marimo."""
+    if scooby.in_ipykernel():
+        return True
+    marimo = sys.modules.get('marimo')
+    return marimo is not None and bool(marimo.running_in_notebook())
 
 
 def _resolve_backend() -> str:

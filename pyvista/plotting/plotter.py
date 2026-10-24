@@ -55,6 +55,7 @@ from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.jupyter import _in_notebook
 from pyvista.jupyter.notebook import handle_plotter
 
 from ._plotting import _common_arg_parser
@@ -8867,10 +8868,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             off_screen = pv.OFF_SCREEN
 
         if notebook is None:
-            if self._theme.notebook is not None:
-                notebook = self._theme.notebook
-            else:
-                notebook = scooby.in_ipykernel()
+            notebook = self._theme.notebook if self._theme.notebook is not None else _in_notebook()
 
         self.notebook = notebook
         if self.notebook or pv.ON_SCREENSHOT:

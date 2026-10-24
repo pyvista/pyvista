@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import contextlib
 import importlib.util
+import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from unittest.mock import patch
 import warnings
@@ -420,3 +422,30 @@ def test_handle_plotter_static_fallback_skips_server_proxy_warning(monkeypatch):
 def test_allowed_backends():
     """``ALLOWED_BACKENDS`` holds the backend names in order."""
     assert ALLOWED_BACKENDS == ('static', 'client', 'server', 'trame', 'html', 'none')
+
+
+@pytest.mark.parametrize(
+    ('ipykernel', 'marimo', 'expected'),
+    [
+        (True, None, True),
+        (False, None, False),
+        (False, True, True),
+        (False, False, False),
+    ],
+)
+def test_in_notebook(monkeypatch, ipykernel, marimo, expected):
+    monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: ipykernel)
+    if marimo is None:
+        monkeypatch.delitem(sys.modules, 'marimo', raising=False)
+    else:
+        monkeypatch.setitem(
+            sys.modules, 'marimo', SimpleNamespace(running_in_notebook=lambda: marimo)
+        )
+    assert jupyter_mod._in_notebook() is expected
+
+
+def test_plotter_notebook_in_marimo(monkeypatch):
+    monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: False)
+    monkeypatch.setitem(sys.modules, 'marimo', SimpleNamespace(running_in_notebook=lambda: True))
+    monkeypatch.setattr(pv.global_theme, 'notebook', None)
+    assert pv.Plotter().notebook is True
