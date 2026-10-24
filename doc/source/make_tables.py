@@ -2901,7 +2901,7 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     module_display = module_name.removeprefix('pyvista.')
     summary = bold(f'generating rst for {module_display}...')
     print(f'{summary} {darkgreen(dataset_name)}', flush=True)
-    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+    with pv.vtk_messages(errors='ignore', warnings='ignore') as catcher:
         if isinstance(dataset_loader, _DOWNLOADABLE_TYPES):
             dataset_loader.download()
         dataset_loader.load_and_store_dataset()

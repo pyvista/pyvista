@@ -28,6 +28,20 @@ Errors and Warnings
    core.errors.VTKExecutionWarning
    core.errors.VTKVersionError
 
+VTK Messages
+~~~~~~~~~~~~
+VTK reports errors and warnings as messages. By default each one becomes a
+Python warning. :attr:`~pyvista.core.config.Config.vtk_errors` and
+:attr:`~pyvista.core.config.Config.vtk_warnings` on ``pv.global_config`` set
+what happens globally, and :class:`~pyvista.vtk_messages` overrides them for
+a block of code and records the messages reported inside it. VTK's own
+stderr logger is off by default; :func:`~pyvista.vtk_verbosity` turns it on.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   vtk_messages
+
 VTK Observers
 ~~~~~~~~~~~~~
 These classes observe events on VTK objects, such as errors, warnings, and
@@ -38,16 +52,13 @@ the progress of an algorithm.
 
    Observer
    ProgressMonitor
-   core.utilities.VtkErrorCatcher
 
-VTK Error Output
-~~~~~~~~~~~~~~~~
-These functions redirect the errors and warnings that VTK emits. To
-control how much VTK logs in the first place, see
-:func:`~pyvista.vtk_verbosity`.
+Deprecated
+~~~~~~~~~~
 
 .. autosummary::
    :toctree: _autosummary
 
+   core.utilities.VtkErrorCatcher
    send_errors_to_logging
    core.utilities.set_error_output_file

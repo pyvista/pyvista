@@ -242,10 +242,8 @@ def reset_global_state():
     pv.vtk_snake_case('error')
     assert pv.vtk_snake_case() == 'error'
 
-    pv.vtk_verbosity('info')
-    # On VTK built with VTK_ENABLE_LOGGING=OFF the cutoff is fixed at the
-    # disabled sentinel and setting verbosity is a no-op, so it stays 'off'.
-    assert pv.vtk_verbosity() in ('info', 'off')
+    pv.vtk_verbosity('off')
+    assert pv.vtk_verbosity() == 'off'
 
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
@@ -479,6 +477,19 @@ def pytest_runtest_teardown(item):
     # leak. A ghost whose C++ object is still alive -- the shape #8873 shipped, planted by
     # tests/core/test_gc.py -- survives the sweep and is still reported.
     assert_no_leaks(item, owner=__name__, flush_ghosts=True)
+
+
+_TYPING_CASES = Path(__file__).parent / 'typing' / 'cases'
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item: pytest.Item):
+    """Log the VTK messages a typing case reports: it checks a type, not VTK's output."""
+    if _TYPING_CASES in item.path.parents:
+        with pv.vtk_messages(errors='log', warnings='log'):
+            yield
+    else:
+        yield
 
 
 @pytest.hookimpl(trylast=True)

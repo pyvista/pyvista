@@ -31,8 +31,6 @@ from pyvista.core.utilities.arrays import USER_DICT_KEY
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from .observers import Observer
-
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Mapping
@@ -465,6 +463,15 @@ def read(
         Wrapped PyVista dataset. When ``cls`` is given, an instance of
         ``cls`` is returned instead.
 
+    Raises
+    ------
+    pyvista.core.errors.VTKExecutionError
+        If the VTK reader fails. The errors VTK reported are included.
+
+        .. versionchanged:: 0.50
+
+            A failed read raises instead of returning an empty dataset.
+
     Examples
     --------
     Load an example mesh.
@@ -627,18 +634,9 @@ def _read_dispatch(  # noqa: PLR0911
             raise OSError(msg)
     else:
         _set_reader_attributes(reader, **kwargs)
-        observer = Observer()
-        observer.observe(reader.reader)
         if progress_bar:
             reader.show_progress()
-        mesh = reader.read(validate=validate)
-        if observer.has_event_occurred():
-            warn_external(
-                f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
-                'raised an error while reading the file.\n'
-                f'\t"{observer.get_message()}"',
-            )
-        return mesh
+        return reader.read(validate=validate)
 
 
 def _set_reader_attributes(reader: BaseReader[Any], **kwargs) -> None:
