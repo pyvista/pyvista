@@ -3693,7 +3693,7 @@ def test_writer_data_mode_mixin(writer_cls):
 def test_fileio_extensions(cls):
     if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('Needs vtk 9.4')
-    if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
+    if cls == pv.OpenFOAMReader:
         # These classes are not associated with any extensions
         pytest.xfail()
     assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
@@ -3789,7 +3789,7 @@ def test_file_formats_unique_and_used():
             pv.ExplicitStructuredGrid,
             {'.vtk': pv.UnstructuredGridWriter, '.vtu': pv.XMLUnstructuredGridWriter},
         ),
-        (pv.PointSet, {'.xyz': pv.SimplePointsWriter}),
+        (pv.PointSet, {'.txt': pv.SimplePointsWriter, '.xyz': pv.SimplePointsWriter}),
         (
             pv.MultiBlock,
             {
