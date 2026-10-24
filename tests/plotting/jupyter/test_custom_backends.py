@@ -431,12 +431,15 @@ def test_allowed_backends():
         (False, None, False),
         (False, True, True),
         (False, False, False),
+        (False, 'missing', False),
     ],
 )
 def test_in_notebook(monkeypatch, ipykernel, marimo, expected):
     monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: ipykernel)
     if marimo is None:
         monkeypatch.delitem(sys.modules, 'marimo', raising=False)
+    elif marimo == 'missing':
+        monkeypatch.setitem(sys.modules, 'marimo', SimpleNamespace())
     else:
         monkeypatch.setitem(
             sys.modules, 'marimo', SimpleNamespace(running_in_notebook=lambda: marimo)

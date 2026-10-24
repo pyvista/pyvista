@@ -200,12 +200,15 @@ def _ensure_entry_points() -> None:
         _custom_backend_sources[name] = ep.value
 
 
+def _in_marimo() -> bool:
+    """Return whether this process runs marimo notebook cells."""
+    running_in_notebook = getattr(sys.modules.get('marimo'), 'running_in_notebook', None)
+    return running_in_notebook is not None and bool(running_in_notebook())
+
+
 def _in_notebook() -> bool:
     """Return whether this process runs notebook cells, in Jupyter or marimo."""
-    if scooby.in_ipykernel():
-        return True
-    marimo = sys.modules.get('marimo')
-    return marimo is not None and bool(marimo.running_in_notebook())
+    return scooby.in_ipykernel() or _in_marimo()
 
 
 def _resolve_backend() -> str:
