@@ -239,7 +239,7 @@ def test_raises(val):
 @pytest.mark.parametrize('obj_in', [np.eye(3), vtk_points(np.eye(3)).GetData()])
 def test_wrap_pandas(obj_in):
     array = pyvista_ndarray(obj_in)
-    df = pd.DataFrame(array)
+    df = pd.DataFrame(array, copy=False)
     assert np.shares_memory(df.values, array)
 
 
