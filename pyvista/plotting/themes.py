@@ -2401,6 +2401,10 @@ class Theme(_ConfigBase):
         Setting this to ``True`` always enables notebook plotting,
         while setting it to ``False`` disables plotting even when
         plotting within a jupyter notebook and plots externally.
+        ``None`` enables it in a Jupyter kernel or a marimo notebook.
+
+        .. versionchanged:: 0.50
+            ``None`` also detects marimo notebooks.
 
         Examples
         --------
