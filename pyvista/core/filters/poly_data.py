@@ -2094,7 +2094,9 @@ class PolyDataFilters(DataSetFilters):
              Point clouds are not supported.
            - Triangle strips are broken up into triangle polygons.
              You may want to restrip the triangles.
-           - Previous arrays named ``"Normals"`` will be overwritten.
+           - Existing :attr:`~pyvista.DataSetAttributes.active_normals` are kept and not
+             recomputed. Clear them first, for example with
+             :meth:`~pyvista.DataSet.clear_data`, to compute new normals.
 
         Parameters
         ----------
@@ -2188,6 +2190,16 @@ class PolyDataFilters(DataSetFilters):
         (842, 3)
         >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
+
+        Existing normals are not recomputed, so clear them first to flip them.
+
+        >>> sphere = pv.Sphere()
+        >>> float(sphere.point_data['Normals'][0, 2])
+        1.0
+        >>> sphere.clear_data()
+        >>> flipped = sphere.compute_normals(flip_normals=True)
+        >>> float(flipped.point_data['Normals'][0, 2])
+        -1.0
 
         """
         # track original point indices
