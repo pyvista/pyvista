@@ -55,6 +55,7 @@ from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.jupyter import _display
 from pyvista.jupyter import _in_notebook
 from pyvista.jupyter.notebook import handle_plotter
 
@@ -9315,12 +9316,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         if jupyter_disp is not None and not return_viewer:
             # Default behaviour is to display the Jupyter viewer
-            try:
-                from IPython import display  # noqa: PLC0415
-            except ImportError:  # pragma: no cover
-                msg = 'Install IPython to display an image in a notebook'
-                raise ImportError(msg)
-            display.display(jupyter_disp)
+            _display(jupyter_disp)
 
         # Three possible return values: (cpos, image, widget)
         return_values = tuple(

@@ -211,6 +211,21 @@ def _in_notebook() -> bool:
     return scooby.in_ipykernel() or _in_marimo()
 
 
+def _display(obj: Any) -> None:
+    """Display an object in the notebook, through marimo when IPython is missing."""
+    try:
+        from IPython import display  # noqa: PLC0415
+    except ImportError:
+        if not _in_marimo():
+            msg = 'Install IPython to display an image in a notebook'
+            raise ImportError(msg) from None
+        import marimo  # noqa: PLC0415
+
+        marimo.output.append(obj)
+    else:
+        display.display(obj)
+
+
 def _resolve_backend() -> str:
     """Auto-detect the best available Jupyter backend.
 

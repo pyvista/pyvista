@@ -447,8 +447,32 @@ def test_in_notebook(monkeypatch, ipykernel, marimo, expected):
     assert jupyter_mod._in_notebook() is expected
 
 
-def test_plotter_notebook_in_marimo(monkeypatch):
+def _fake_marimo(monkeypatch):
+    """Run as a marimo notebook outside a Jupyter kernel and return the fake marimo module."""
+    marimo = SimpleNamespace(running_in_notebook=lambda: True, output=MagicMock())
     monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: False)
-    monkeypatch.setitem(sys.modules, 'marimo', SimpleNamespace(running_in_notebook=lambda: True))
-    monkeypatch.setattr(pv.global_theme, 'notebook', None)
-    assert pv.Plotter().notebook is True
+    monkeypatch.setitem(sys.modules, 'marimo', marimo)
+    return marimo
+
+
+@pytest.mark.parametrize(('theme', 'expected'), [(None, True), (False, False)])
+def test_plotter_notebook_in_marimo(monkeypatch, theme, expected):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(pv.global_theme, 'notebook', theme)
+    pl = pv.Plotter()
+    assert pl.notebook is expected
+    pl.close()
+
+
+def test_display_through_marimo_without_ipython(monkeypatch):
+    marimo = _fake_marimo(monkeypatch)
+    monkeypatch.setitem(sys.modules, 'IPython', None)
+    jupyter_mod._display('image')
+    marimo.output.append.assert_called_once_with('image')
+
+
+def test_display_without_ipython_raises(monkeypatch):
+    monkeypatch.delitem(sys.modules, 'marimo', raising=False)
+    monkeypatch.setitem(sys.modules, 'IPython', None)
+    with pytest.raises(ImportError, match='Install IPython'):
+        jupyter_mod._display('image')
