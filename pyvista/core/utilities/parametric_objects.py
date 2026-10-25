@@ -800,6 +800,13 @@ def ParametricKlein(**kwargs) -> PolyData:
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
+        ``u_res`` must be at least 3 and ``v_res`` at least 4. An odd
+        ``v_res`` is rounded up to the next even value.
+
+        .. versionchanged:: 0.50
+            The surface is closed along both seams, ``clean`` defaults to
+            ``False``, and ``u_res`` and ``v_res`` have minimum values.
+
     Returns
     -------
     pyvista.PolyData
@@ -818,8 +825,40 @@ def ParametricKlein(**kwargs) -> PolyData:
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
-    kwargs.setdefault('clean', True)
+    clean = kwargs.pop('clean', False)
+    u_res = kwargs.get('u_res', 100)
+    v_res = kwargs.get('v_res', 100)
+    if u_res < 3 or v_res < 4:
+        msg = '`u_res` must be at least 3 and `v_res` at least 4.'
+        raise ValueError(msg)
+    # The u seam maps v to pi - v, which lands on a sample only for even v_res.
+    v_res += v_res % 2
+    kwargs['v_res'] = v_res
+
+    # vtkParametricFunctionSource cannot join the half-twisted u seam, so sample
+    # neither seam and stitch both from the structured point ordering.
+    parametric_function.SetMaximumU((u_res - 1) / u_res * math.pi)
+    parametric_function.SetMaximumV((v_res - 1) / v_res * 2 * math.pi)
+    parametric_function.SetJoinU(False)
+    parametric_function.SetJoinV(False)
     surf = surface_from_para(parametric_function, **kwargs)
+
+    # grid[i, j] is the point at u = i * pi / u_res, v = j * 2 * pi / v_res
+    grid = np.arange(u_res * v_res).reshape(u_res, v_res)
+    twisted = grid[0, (v_res // 2 - np.arange(v_res)) % v_res]
+    a, b, c, d = (
+        np.concatenate(corners)
+        for corners in zip(
+            (grid[:-1, -1], grid[:-1, 0], grid[1:, 0], grid[1:, -1]),
+            (grid[-1], np.roll(grid[-1], -1), np.roll(twisted, -1), twisted),
+            strict=True,
+        )
+    )
+    seam = np.column_stack([a, b, c, a, c, d]).reshape(-1, 3)
+    surf.regular_faces = np.vstack([surf.regular_faces, seam])
+    if clean:
+        surf = _clean_parametric_surface(surf)
+
     _translate_and_orient(surf, center, direction)
     return surf
 
@@ -1471,11 +1510,15 @@ def surface_from_para(  # noqa: PLR0917
     _update_alg(para_source)
     surf = _apply_points_dtype(wrap(para_source.GetOutput()), algorithm=para_source)
     if clean:
-        surf = surf.clean(
-            tolerance=1e-7,  # determined experimentally
-            absolute=False,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
-        )
+        surf = _clean_parametric_surface(surf)
     return surf
+
+
+def _clean_parametric_surface(surf: PolyData) -> PolyData:
+    return surf.clean(
+        tolerance=1e-7,  # determined experimentally
+        absolute=False,
+        lines_to_points=False,
+        polys_to_lines=False,
+        strips_to_polys=False,
+    )
