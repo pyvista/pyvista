@@ -10,6 +10,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _GENERIC_CELL_COPY_UNWRAPS
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
@@ -152,12 +153,9 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
             else:
                 self.SetCellType(cell_type)
 
-            # Before VTK 9.7, vtkGenericCell.DeepCopy/ShallowCopy forwards the outer
-            # vtkGenericCell directly to the internal cell, so vtkPolyhedron's
-            # SafeDownCast fails and drops the faces. Unwrap vtkGenericCell first.
             source_cell = (
                 vtk_cell.GetRepresentativeCell()
-                if isinstance(vtk_cell, _vtk.vtkGenericCell)
+                if not _GENERIC_CELL_COPY_UNWRAPS and isinstance(vtk_cell, _vtk.vtkGenericCell)
                 else vtk_cell
             )
             if deep:
