@@ -3691,6 +3691,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Each nonlinear cell below becomes the linear cell through its corner
         points. Its other points stay in the grid, unused by the new cell.
+        Call :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points` or
+        :meth:`~pyvista.UnstructuredGridFilters.clean` on the output to remove them.
 
         {_linear_copy_docs_insert()}
 
