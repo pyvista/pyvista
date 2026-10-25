@@ -1044,6 +1044,35 @@ def test_compute_normals_recompute_false(sphere_stale_normals):
     assert np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
 
 
+def _sphere_custom_normals(dtype):
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    for data, n in ((sphere.point_data, sphere.n_points), (sphere.cell_data, sphere.n_cells)):
+        data['CustomNormals'] = np.tile((1.0, 0.0, 0.0), (n, 1)).astype(dtype)
+        data.active_normals_name = 'CustomNormals'
+    return sphere
+
+
+@pytest.mark.needs_vtk_version((9, 4, 0), reason='Existing normals recomputed before VTK 9.4')
+@pytest.mark.parametrize('plain_normals', [True, False])
+def test_compute_normals_recompute_false_custom_name(plain_normals):
+    sphere = _sphere_custom_normals(np.float32)
+    if plain_normals:
+        sphere.point_data['Normals'] = np.zeros((sphere.n_points, 3), dtype=np.float32)
+    mesh = sphere.compute_normals(recompute=False, consistent_normals=False)
+    for data in (mesh.point_data, mesh.cell_data):
+        assert data.active_normals_name == 'CustomNormals'
+        assert np.allclose(data['CustomNormals'], (1.0, 0.0, 0.0))
+
+
+def test_compute_normals_recompute_false_float64():
+    sphere = _sphere_custom_normals(np.float64)
+    mesh = sphere.compute_normals(recompute=False, consistent_normals=False)
+    for data in (mesh.point_data, mesh.cell_data):
+        assert data.active_normals_name == 'Normals'
+        assert not np.allclose(data['Normals'], (1.0, 0.0, 0.0))
+
+
 def test_compute_normals_inplace(sphere):
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)

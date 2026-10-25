@@ -2241,9 +2241,21 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
         mesh = _get_output(normal)
-        try:
-            mesh['Normals']
-        except KeyError:
+        for data, compute, kept in (
+            (mesh.point_data, point_normals, self.point_data.active_normals_name),
+            (mesh.cell_data, cell_normals, self.cell_data.active_normals_name),
+        ):
+            if data.active_normals_name is not None:
+                continue
+            # Normals passed through by vtkPolyDataNormals lose their active flag
+            if not recompute and kept in data:
+                data.active_normals_name = kept
+            elif compute and 'Normals' in data:
+                data.active_normals_name = 'Normals'
+        if (
+            mesh.point_data.active_normals_name is None
+            and mesh.cell_data.active_normals_name is None
+        ):
             if (self.n_verts + self.n_lines) == self.n_cells:
                 msg = (
                     'Normals cannot be computed for PolyData containing only vertex cells '
@@ -2257,10 +2269,6 @@ class PolyDataFilters(DataSetFilters):
                     'Please report the issue at https://github.com/pyvista/pyvista/issues.'
                 )
                 raise RuntimeError(msg)
-        if point_normals:
-            mesh.GetPointData().SetActiveNormals('Normals')
-        if cell_normals:
-            mesh.GetCellData().SetActiveNormals('Normals')
         for data in (mesh.point_data, mesh.cell_data):
             name, computed = old_normals.get(data.association, (None, False))
             if name is None or name not in data:
