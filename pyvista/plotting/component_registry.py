@@ -41,6 +41,7 @@ import contextlib
 # for every importer, for the duration of the test.
 from importlib import import_module  # noqa: ICN003
 from importlib.metadata import entry_points
+import threading
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -251,6 +252,7 @@ _registrations: list[ComponentRegistration] = []
 _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
 _pending_components: dict[str, str] = {}
+_entry_points_lock = threading.RLock()
 
 
 def _save_registry_state() -> _ComponentRegistryState:
@@ -615,9 +617,12 @@ def _ensure_entry_points() -> None:
     if _entry_points_loaded:
         return
 
-    _entry_points_loaded = True
-    for component_entry_point in entry_points(group=COMPONENT_ENTRY_POINT_GROUP):
-        _pending_components[component_entry_point.name] = component_entry_point.value
+    with _entry_points_lock:
+        if _entry_points_loaded:
+            return
+        for component_entry_point in entry_points(group=COMPONENT_ENTRY_POINT_GROUP):
+            _pending_components[component_entry_point.name] = component_entry_point.value
+        _entry_points_loaded = True
 
 
 def _resolve_pending_component(name: str) -> bool:
@@ -628,7 +633,8 @@ def _resolve_pending_component(name: str) -> bool:
     scanned, pops the pending entry for ``name``, and imports the
     corresponding plugin module. Importing the module triggers any
     ``@register_plotter_component`` decorators inside it and attaches
-    the component as a side effect.
+    the component as a side effect. A thread that arrives while another
+    is importing the plugin waits for the import to finish.
 
     Returns
     -------
@@ -639,19 +645,20 @@ def _resolve_pending_component(name: str) -> bool:
 
     """
     _ensure_entry_points()
-    module_path = _pending_components.pop(name, None)
-    if module_path is None:
-        return False
-    try:
-        import_module(module_path)
-    except Exception as exc:  # noqa: BLE001
-        msg = (
-            f'Failed to load {COMPONENT_ENTRY_POINT_GROUP} entry point '
-            f'"{name}" from {module_path}: {exc}'
-        )
-        warn_external(msg)
-        return False
-    return True
+    with _entry_points_lock:
+        module_path = _pending_components.pop(name, None)
+        if module_path is None:
+            return False
+        try:
+            import_module(module_path)
+        except Exception as exc:  # noqa: BLE001
+            msg = (
+                f'Failed to load {COMPONENT_ENTRY_POINT_GROUP} entry point '
+                f'"{name}" from {module_path}: {exc}'
+            )
+            warn_external(msg)
+            return False
+        return True
 
 
 def _pending_component_names() -> tuple[str, ...]:

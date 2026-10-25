@@ -5,6 +5,8 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import sys
+import threading
+import time
 from types import ModuleType
 from unittest.mock import MagicMock
 import warnings
@@ -597,6 +599,58 @@ def test_pending_plugin_only_imported_once(monkeypatch):
     finally:
         with contextlib.suppress(ValueError):
             pv.unregister_plotter_component('one_shot')
+        sys.modules.pop(plugin_name, None)
+
+
+def test_concurrent_first_access_loads_plugin_for_every_thread(monkeypatch):
+    """Two threads touching a pending component at once both get it."""
+    plugin_name = 'fake_pc_concurrent'
+
+    def _slow_import(path):
+        time.sleep(0.2)
+        module = ModuleType(path)
+        sys.modules[path] = module
+        exec(  # noqa: S102
+            'import pyvista as pv\n'
+            "@pv.register_plotter_component('concurrent')\n"
+            'class ConcurrentComponent:\n'
+            '    def __init__(self, plotter):\n'
+            '        self._plotter = plotter\n',
+            module.__dict__,
+        )
+        return module
+
+    ep = MagicMock()
+    ep.name = 'concurrent'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.plotting.component_registry.import_module',
+        _slow_import,
+    )
+
+    plotters = [pv.Plotter() for _ in range(2)]
+    barrier = threading.Barrier(len(plotters))
+    errors = []
+
+    def _access(pl):
+        barrier.wait()
+        try:
+            _ = pl.concurrent
+        except AttributeError as exc:
+            errors.append(exc)
+
+    threads = [threading.Thread(target=_access, args=(pl,)) for pl in plotters]
+    try:
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert errors == []
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_plotter_component('concurrent')
         sys.modules.pop(plugin_name, None)
 
 
