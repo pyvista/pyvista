@@ -342,6 +342,10 @@ def test_init_from_dict_variable_length():
     with pytest.raises(ValueError, match='non-empty 1D array'):
         pv.UnstructuredGrid({CellType.POLYGON: [np.array([0.0, 1.0, 2.0])]}, points)
 
+    # timedelta64 is an integer subtype, so it is accepted like int.
+    grid = pv.UnstructuredGrid({CellType.POLYGON: [np.array([0, 1, 2], dtype='m8[s]')]}, points)
+    assert grid.get_cell(0).point_ids == [0, 1, 2]
+
     # A 2D [N, D] integer array is N cells of D points each, also alongside other types.
     cells = {
         CellType.POLYGON: np.array([[0, 1, 2, 3], [1, 2, 3, 4]]),

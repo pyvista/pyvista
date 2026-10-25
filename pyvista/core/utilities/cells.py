@@ -266,6 +266,7 @@ def _variable_size_cells(
     n_cells = len(per_cell)
     sizes = np.empty(n_cells, dtype=pv.ID_TYPE)
     for i, cell in enumerate(per_cell):
+        # Matches np.issubdtype(dtype, np.integer), where timedelta64 ('m') is a subtype
         if cell.ndim != 1 or cell.dtype.kind not in ('i', 'u', 'm') or cell.size == 0:
             msg = (
                 f"Each cell of type '{elem_t.name}' must be a non-empty 1D array of "
