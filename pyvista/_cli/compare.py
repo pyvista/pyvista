@@ -56,6 +56,9 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
+    from pyvista.core.dataobject import DataObject
+    from pyvista.core.pointset import PolyData
+
 _HELP_SHAPE = """\
 Shape of the subplot grid, as either the number of rows and columns, e.g. ``2,2``,
 or one of the string descriptors accepted by ``Plotter``, e.g. ``3|1`` for three
@@ -226,7 +229,7 @@ def _parse_shape(shape: str) -> list[int] | str:
     return [int(value) for value in re.split(r'[,\s]+', shape.strip()) if value]
 
 
-def _enclosing_outline(meshes: list[pv.DataObject]) -> pv.PolyData:
+def _enclosing_outline(meshes: list[DataObject]) -> PolyData:
     """Return an outline enclosing every mesh, including each partition of a partitioned one."""
     blocks = [
         mesh.cast_to_multiblock() if isinstance(mesh, pv.PartitionedDataSet) else mesh

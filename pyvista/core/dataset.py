@@ -68,6 +68,8 @@ if TYPE_CHECKING:
     from pyvista import Cell
     from pyvista import CellType
     from pyvista import PointSet
+    from pyvista.core.pointset import PolyData
+    from pyvista.core.pointset import UnstructuredGrid
 
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import VectorLikeFloat
@@ -554,7 +556,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     @property
     def arrows(
         self: Self,
-    ) -> pv.PolyData | None:
+    ) -> PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points or cells of the mesh and
@@ -1848,7 +1850,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def cast_to_unstructured_grid(self: Self) -> pv.UnstructuredGrid:
+    def cast_to_unstructured_grid(self: Self) -> UnstructuredGrid:
         """Get a new representation of this object as a :class:`~pyvista.UnstructuredGrid`.
 
         .. note::
@@ -1951,7 +1953,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             pset.active_scalars_name = name
         return pset
 
-    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> pv.PolyData:
+    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters

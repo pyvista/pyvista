@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting.camera import Camera
 
 
 def _pad_bounds(bounds: VectorLikeFloat, *, padding: float) -> NDArray[np.float64]:
@@ -303,7 +304,7 @@ class CubeAxesActor(
 
     def __init__(
         self,
-        camera: pv.Camera,
+        camera: Camera,
         *,
         minor_ticks: bool = False,
         tick_location: str | None = None,
@@ -617,12 +618,12 @@ class CubeAxesActor(
         self.SetTitleOffset(list(offset))
 
     @property
-    def camera(self) -> pv.Camera:  # numpydoc ignore=RT01
+    def camera(self) -> Camera:  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: pv.Camera) -> None:
+    def camera(self, camera: Camera) -> None:
         self.SetCamera(camera)
 
     @property

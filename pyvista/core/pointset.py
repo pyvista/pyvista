@@ -368,7 +368,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         pdata._sync_user_dict()
         return pdata
 
-    def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
+    def cast_to_unstructured_grid(self) -> UnstructuredGrid:
         """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
 
         A deep copy of the points and point data is made.
@@ -2424,7 +2424,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def point_normals(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
         The active point normals are returned if they exist. Otherwise, they
@@ -2458,7 +2458,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         return normals
 
     @property
-    def cell_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def cell_normals(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         The active cell normals are returned if they exist. Otherwise, they
@@ -2492,7 +2492,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         return normals
 
     @property
-    def face_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def face_normals(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.

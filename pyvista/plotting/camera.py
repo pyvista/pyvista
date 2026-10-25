@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core.pointset import PolyData
 
     from .helpers import _ViewOptions
     from .renderer import Renderer
@@ -877,7 +878,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         """
         return self.GetDirectionOfProjection()
 
-    def view_frustum(self, aspect: float = 1.0) -> pv.PolyData:
+    def view_frustum(self, aspect: float = 1.0) -> PolyData:
         """Get the view frustum.
 
         Parameters

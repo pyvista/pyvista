@@ -38,13 +38,14 @@ _GENERATED_START = '# --- generated overloads ---\n'
 _GENERATED_END = '# --- end generated overloads ---\n'
 # the `load=False` half of a function's return annotation, which is not a dataset
 _PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
-# every other dataset type name is an attribute of `pv`
+# every other dataset type name is spelled as the annotation spells it
 _DATASET_TYPE_NAMES = {'ndarray': 'NDArray[Any]'}
 _REGENERATE = (
     'Regenerate the generated block with\n'
     '  pytest tests/examples/test_get_example.py -k overloads_current '
     '--test_downloads --regenerate_overloads\n'
-    'and run pre-commit afterwards.'
+    'and run pre-commit afterwards. Import any new type names under TYPE_CHECKING in\n'
+    'pyvista/examples/_get_example.py.'
 )
 
 
@@ -63,7 +64,7 @@ def _dataset_annotation(function):
     annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
     members = _split_union(str(annotation))
     dataset = ' | '.join(member for member in members if member not in _PATH_TYPES)
-    return re.sub(r'\b(?<!\.)[A-Za-z_]\w*', _qualify_type_name, dataset)
+    return re.sub(r'\b(?<!\.)[A-Za-z_]\w*', _spell_type_name, dataset)
 
 
 def _split_union(annotation):
@@ -78,17 +79,14 @@ def _split_union(annotation):
     return members
 
 
-def _qualify_type_name(match):
+def _spell_type_name(match):
     """Return a type name as the generated overloads spell it."""
-    name = match[0]
-    if name == 'None':
-        return name
-    return _DATASET_TYPE_NAMES.get(name, f'pv.{name}')
+    return _DATASET_TYPE_NAMES.get(match[0], match[0])
 
 
 def _readers_annotation(example):
     """Render the exact tuple type of ``example.readers``."""
-    names = ', '.join(f'pv.{type(reader).__name__}' for reader in example.readers)
+    names = ', '.join(type(reader).__name__ for reader in example.readers)
     return f'tuple[{names}]' if names else 'tuple[()]'
 
 
@@ -303,20 +301,20 @@ def test_example_name_literal_lists_every_example():
 
 
 def test_dataset_annotation_keeps_nested_unions():
-    """Only a top-level path member is dropped, and every class name is qualified."""
+    """Only a top-level path member is dropped, and nested names are kept as written."""
 
     def load() -> MultiBlock[UnstructuredGrid | None] | str:
         """Stand in for an example function without overloads."""
 
-    assert _dataset_annotation(load) == 'pv.MultiBlock[pv.UnstructuredGrid | None]'
+    assert _dataset_annotation(load) == 'MultiBlock[UnstructuredGrid | None]'
 
 
 def test_format_overloads_renders_one_line_per_stub():
     """The generated block is the name literal, then an ``@overload`` and a one-line stub each."""
     block = _format_overloads(
         {
-            'cow': ('pv.PolyData', 'tuple[pv.XMLPolyDataReader]'),
-            'ant': ('pv.PolyData', 'tuple[pv.PLYReader]'),
+            'cow': ('PolyData', 'tuple[XMLPolyDataReader]'),
+            'ant': ('PolyData', 'tuple[PLYReader]'),
         }
     )
     assert block == (
@@ -325,10 +323,10 @@ def test_format_overloads_renders_one_line_per_stub():
         ']\n'
         '@overload\n'
         "def get_example(name: Literal['ant'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.PLYReader]]: ...\n'
+        ' -> Example[PolyData, tuple[PLYReader]]: ...\n'
         '@overload\n'
         "def get_example(name: Literal['cow'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.XMLPolyDataReader]]: ...\n'
+        ' -> Example[PolyData, tuple[XMLPolyDataReader]]: ...\n'
     )
 
 

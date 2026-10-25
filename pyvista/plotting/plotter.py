@@ -145,6 +145,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _Real
     from pyvista.core._typing_core import _Scalar
+    from pyvista.core.grid import ImageData
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
@@ -5324,7 +5325,7 @@ class BasePlotter(_BoundsSizeMixin):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast('pv.ImageData', wrap(volume))
+                volume = cast('ImageData', wrap(volume))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -5424,7 +5425,7 @@ class BasePlotter(_BoundsSizeMixin):
             )
             raise TypeError(msg)
 
-        volume = cast('pv.DataSet', volume)
+        volume = cast('DataSet', volume)
         if opacity_unit_distance is None and not isinstance(volume, pv.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -6664,7 +6665,7 @@ class BasePlotter(_BoundsSizeMixin):
             msg = 'Input should be an array of point segments'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        lines_polydata: pv.PolyData = (
+        lines_polydata: PolyData = (
             pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
         )
 
@@ -7561,7 +7562,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points: int = 20,
         viewup: VectorLikeFloat | None = None,
         shift: float = 0.0,
-    ) -> pv.PolyData:
+    ) -> PolyData:
         """Generate an orbital path around the data scene.
 
         Parameters
@@ -7637,7 +7638,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def orbit_on_path(
         self,
-        path: pv.PolyData | None = None,
+        path: PolyData | None = None,
         *,
         focus: VectorLikeFloat | None = None,
         step: float = 0.5,
@@ -7802,7 +7803,7 @@ class BasePlotter(_BoundsSizeMixin):
         exporter.Write()
 
     @property
-    def _datasets(self) -> list[pv.DataSet]:
+    def _datasets(self) -> list[DataSet]:
         """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
@@ -9497,7 +9498,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     @property
     def meshes(
         self,
-    ) -> list[pv.DataSet | pv.MultiBlock[Any]]:  # numpydoc ignore=RT01
+    ) -> list[DataSet | MultiBlock[Any]]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns
@@ -9539,7 +9540,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                         input_alg.Update()
                     meshes.append(pv.wrap(dataset))
 
-        meshes: list[pv.DataSet | pv.MultiBlock[Any]] = []
+        meshes: list[DataSet | MultiBlock[Any]] = []
         for actor in self.actors.values():
             for leaf in _iter_leaf_props(actor):
                 _append_actor_dataset(leaf)

@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core import _NumericArray
+    from pyvista.core.celltype import CellType
 
 
 def Capsule(
@@ -1172,7 +1173,7 @@ def SolidSphereGeneric(
             ntheta_ = ntheta
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
-    def _add_cells(celltype: pv.CellType, *point_ids: int | NDArray[np.signedinteger]) -> None:
+    def _add_cells(celltype: CellType, *point_ids: int | NDArray[np.signedinteger]) -> None:
         """Append one block of same-type cells, one row per broadcast element."""
         ids = np.broadcast_arrays(*point_ids)
         block = np.stack([np.full_like(ids[0], len(ids)), *ids], axis=-1)
@@ -2052,7 +2053,7 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
+    return cast('ImageData', wrap(wavelet_source.GetOutput()))
 
 
 def CircularArc(

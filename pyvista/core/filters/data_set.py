@@ -944,7 +944,7 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
         """
-        surface_ = cast('pv.PolyData', wrap(surface))
+        surface_ = cast('PolyData', wrap(surface))
         if not isinstance(surface_, pv.PolyData):
             surface_ = surface_.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_pointid=False, pass_cellid=False
@@ -3362,7 +3362,7 @@ class DataSetFilters(DataObjectFilters):
 
     def select_interior_points(  # type:ignore[misc]
         self: _DataSetType,
-        surface: pv.PolyData,
+        surface: PolyData,
         *,
         method: _SelectInteriorPointsOptions = 'signed_distance',
         inside_out: bool = False,
@@ -7142,7 +7142,7 @@ class DataSetFilters(DataObjectFilters):
         # pyvista does not yet support vtkPartitionedDataSet
         part = alg.GetOutput()
         datasets = [part.GetPartition(ii) for ii in range(part.GetNumberOfPartitions())]
-        composite: pv.MultiBlock[DataSet] = pv.MultiBlock(datasets)
+        composite: MultiBlock[DataSet] = pv.MultiBlock(datasets)
         if not as_composite:
             # note, SetPreservePartitionsInOutput does not work correctly in
             # vtk 9.2.0, so instead we set it to True always and simply merge

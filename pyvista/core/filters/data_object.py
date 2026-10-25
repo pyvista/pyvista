@@ -83,6 +83,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core._typing_core import _OutputDataObject
     from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core.grid import Grid
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -846,7 +847,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
-        ctype = cast('pv.CellType', cell_type)
+        ctype = cast('CellType', cell_type)
         if ctype and name_norm in ['zero size', 'negative size']:
             if ctype.dimension == 1:
                 size = 'length'
@@ -2009,7 +2010,7 @@ class DataObjectFilters:
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
             # Grids are checked from their geometry, other meshes from their cells
-            ugrid: pv.UnstructuredGrid | None = None
+            ugrid: UnstructuredGrid | None = None
             if not isinstance(mesh, pv.Grid):
                 ugrid = (
                     mesh
@@ -2064,7 +2065,7 @@ class DataObjectFilters:
 
             # COINCIDENT_POINTS
             if ugrid is None:
-                grid = cast('pv.Grid', mesh)
+                grid = cast('Grid', mesh)
                 state[_grid_coincident_cells(grid, tol)] |= CellStatus.COINCIDENT_POINTS
                 # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
@@ -2326,7 +2327,7 @@ class DataObjectFilters:
                 vtk_filter_output = self
 
             if isinstance(output, pv.ImageData):
-                _orient_image_structure(output, cast('pv.ImageData', self), t)
+                _orient_image_structure(output, cast('ImageData', self), t)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             elif isinstance(output, pv.RectilinearGrid):
@@ -2334,7 +2335,7 @@ class DataObjectFilters:
                     '_RectilinearComponents',
                     rectilinear_components,
                 )
-                dataset = cast('pv.RectilinearGrid', self)
+                dataset = cast('RectilinearGrid', self)
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = dataset.dimensions
                 offset = dataset.offset
@@ -4592,7 +4593,7 @@ class DataObjectFilters:
     # fmt: on
     def slice_along_line(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        line: pv.PolyData,
+        line: PolyData,
         *,
         generate_triangles: bool = False,
         contour: bool = False,
@@ -6646,7 +6647,7 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_]:
+def _cells_with_non_finite_points(grid: UnstructuredGrid) -> NDArray[np.bool_]:
     """Return a mask of the cells of a grid that reference a non-finite point."""
     non_finite = ~np.isfinite(grid.points).all(axis=1)
     if not non_finite.any():
@@ -6657,7 +6658,7 @@ def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_
     return count[offsets[1:]] > count[offsets[:-1]]
 
 
-def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
+def _grid_coincident_cells(grid: Grid, tolerance: float) -> NDArray[np.bool_]:
     """Return a mask of the cells of a grid with two points within ``tolerance``.
 
     This uses the grid geometry rather than building every cell. Cells with non-finite points,
