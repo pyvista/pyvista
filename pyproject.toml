@@ -24,7 +24,7 @@ dependencies = [
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'pyvista-validation==0.5.4', # Exact pin: the validation API is still unstable
-  'scooby @ git+https://github.com/user27182/scooby@feat/in-marimo',
+  'scooby @ git+https://github.com/user27182/scooby@draft/in-marimo-static-version',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
@@ -52,6 +52,7 @@ io = [
 ]
 io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['trame-pyvista[jupyter]']
+marimo = ['trame-pyvista[marimo]']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
@@ -62,7 +63,7 @@ pinned = [ # Pinned versions of core dependencies
   'pillow<12.4.0',
   'pooch<1.10.0',
   'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
-  'scooby @ git+https://github.com/user27182/scooby@feat/in-marimo',
+  'scooby @ git+https://github.com/user27182/scooby@draft/in-marimo-static-version',
   'typing-extensions<4.17.0',
 ]
 
@@ -123,7 +124,7 @@ test = [
   'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
   'tqdm<4.71.0',
-  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@cffd25ca2743c2529e8d4637017148f8f95859b8',
+  'trame-pyvista @ git+https://github.com/juampatronics/trame-pyvista@54ab662e2395394c5bcba5bb91c49deadb1cddc4',
   'trimesh<5.2.0',
   'type-assert==0.5.0',
   'typing-extensions<4.17.0',
@@ -183,7 +184,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@cffd25ca2743c2529e8d4637017148f8f95859b8',
+  'trame-pyvista @ git+https://github.com/juampatronics/trame-pyvista@54ab662e2395394c5bcba5bb91c49deadb1cddc4',
   'trimesh==5.1.1',
   { include-group = 'pinned' },
 ]
@@ -192,7 +193,7 @@ docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
-  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@cffd25ca2743c2529e8d4637017148f8f95859b8',
+  'trame-pyvista @ git+https://github.com/juampatronics/trame-pyvista@54ab662e2395394c5bcba5bb91c49deadb1cddc4',
   'type-assert==0.5.0', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]

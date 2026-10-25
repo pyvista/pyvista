@@ -205,7 +205,7 @@ def _in_notebook() -> bool:
 
 
 def _marimo_renders_trame_pyvista() -> bool:
-    """Return whether trame-pyvista's notebook widgets are anywidgets."""
+    """Return whether trame-pyvista's notebook widgets subclass ``AnyWidget``."""
     try:
         from anywidget import AnyWidget  # noqa: PLC0415
         from trame_pyvista.jupyter import Widget  # noqa: PLC0415

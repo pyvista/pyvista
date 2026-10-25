@@ -72,11 +72,11 @@ def handle_plotter(
     # Auto-detect the best available backend when not specified
     if backend is None:
         backend = _resolve_backend()
-        if backend == 'static' and scooby.in_marimo() and 'trame' in _custom_backends:
+        if backend == 'static' and scooby.in_marimo():
             warn_external(
                 'Using static image for notebook display.\n'
-                'Upgrade trame-pyvista to show interactive plots in marimo:'
-                ' pip install -U "trame-pyvista[jupyter]>=0.3"'
+                'Install trame-pyvista for interactive plots in marimo:'
+                ' pip install -U "pyvista[marimo]"'
             )
         elif backend == 'static':
             warn_external(
