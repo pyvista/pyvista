@@ -2702,12 +2702,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._cube_axes_follow_scene = True
             self.Modified()
 
-    def add_light(self, light: _vtk.vtkLight | Light) -> None:
+    def add_light(self, light: Light | _vtk.vtkLight) -> None:
         """Add a light to the renderer.
 
         Parameters
         ----------
-        light : :vtk:`vtkLight` | Light
+        light : Light | :vtk:`vtkLight`
             Light to add.
 
         """

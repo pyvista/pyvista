@@ -187,8 +187,8 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.ManifoldEdgesOff()
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
-        edges = _get_output(featureEdges)
-        orig_id = cast('NDArray[np.signedinteger]', pv.point_array(edges, 'point_ind'))
+        edges = _get_output(featureEdges, output_type=pv.PolyData)
+        orig_id = edges.point_data['point_ind']
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -226,7 +226,7 @@ class PolyDataFilters(DataSetFilters):
         bfilter.SetTolerance(tolerance)
         _update_alg(bfilter, progress_bar=progress_bar, message='Performing Boolean Operation')
 
-        return _get_output(bfilter)
+        return _get_output(bfilter, output_type=pv.PolyData)
 
     def boolean_union(  # type: ignore[misc]
         self: PolyData,
@@ -558,7 +558,7 @@ class PolyDataFilters(DataSetFilters):
             append_filter.AddInputData(mesh)
 
         _update_alg(append_filter, progress_bar=progress_bar, message='Append PolyData')
-        merged = _get_output(append_filter)
+        merged = _get_output(append_filter, output_type=pv.PolyData)
 
         if inplace:
             self.deep_copy(merged)
@@ -826,9 +826,9 @@ class PolyDataFilters(DataSetFilters):
             message='Computing the intersection between two meshes',
         )
 
-        intersection = _get_output(intfilter, oport=0)
-        first = _get_output(intfilter, oport=1)
-        second = _get_output(intfilter, oport=2)
+        intersection = _get_output(intfilter, output_type=pv.PolyData, oport=0)
+        first = _get_output(intfilter, output_type=pv.PolyData, oport=1)
+        second = _get_output(intfilter, output_type=pv.PolyData, oport=2)
 
         return intersection, first, second
 
@@ -898,7 +898,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(curvefilter, progress_bar=progress_bar, message='Computing Curvature')
 
         # Compute and return curvature
-        curv = _get_output(curvefilter)
+        curv = _get_output(curvefilter, output_type=pv.PolyData)
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
     def plot_curvature(  # type: ignore[misc]
@@ -999,7 +999,7 @@ class PolyDataFilters(DataSetFilters):
         trifilter.SetPassLines(pass_lines)
         _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
 
-        mesh = _get_output(trifilter)
+        mesh = _get_output(trifilter, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return cast('PolyData', self)
@@ -1090,7 +1090,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetRelaxationFactor(relaxation_factor)
         _update_alg(alg, progress_bar=progress_bar, message='Smoothing Mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -1261,7 +1261,7 @@ class PolyDataFilters(DataSetFilters):
             alg, progress_bar=progress_bar, message='Smoothing Mesh using Taubin Smoothing'
         )
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -1387,7 +1387,7 @@ class PolyDataFilters(DataSetFilters):
 
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -1501,7 +1501,7 @@ class PolyDataFilters(DataSetFilters):
 
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -1600,7 +1600,7 @@ class PolyDataFilters(DataSetFilters):
         # Apply the filter
         _update_alg(tube, progress_bar=progress_bar, message='Creating Tube')
 
-        mesh = _get_output(tube)
+        mesh = _get_output(tube, output_type=pv.PolyData)
         if inplace:
             poly_data.copy_from(mesh, deep=False)
             return poly_data
@@ -1826,7 +1826,7 @@ class PolyDataFilters(DataSetFilters):
         sfilter.SetInputData(_with_64_bit_faces(self))
         _update_alg(sfilter, progress_bar=progress_bar, message='Subdividing Mesh')
 
-        submesh = _get_output(sfilter)
+        submesh = _get_output(sfilter, output_type=pv.PolyData)
         if inplace:
             self.copy_from(submesh, deep=False)
             return self
@@ -1929,7 +1929,7 @@ class PolyDataFilters(DataSetFilters):
 
         sfilter.SetInputData(self)
         _update_alg(sfilter, progress_bar=progress_bar, message='Adaptively Subdividing Mesh')
-        submesh = _get_output(sfilter)
+        submesh = _get_output(sfilter, output_type=pv.PolyData)
 
         if inplace:
             self.copy_from(submesh, deep=False)
@@ -2133,7 +2133,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -2304,7 +2304,7 @@ class PolyDataFilters(DataSetFilters):
             alg.AutoAdjustNumberOfDivisionsOff()
             alg.SetNumberOfDivisions(*(int(d) for d in divs))
             _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
-            return _get_output(alg)
+            return _get_output(alg, output_type=pv.PolyData)
 
         if divisions is not None:
             # One number sets the longest axis and the others follow with cubic bins
@@ -2532,7 +2532,7 @@ class PolyDataFilters(DataSetFilters):
         normal.SetInputData(self)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
-        mesh = _get_output(normal)
+        mesh = _get_output(normal, output_type=pv.PolyData)
         try:
             mesh['Normals']
         except KeyError:
@@ -2671,7 +2671,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTolerance(tolerance)
         alg.SetClippingPlanes(collection)
         _update_alg(alg, progress_bar=progress_bar, message='Clipping Closed Surface')
-        result = _get_output(alg)
+        result = _get_output(alg, output_type=pv.PolyData)
 
         if inplace:
             self.copy_from(result, deep=False)
@@ -2734,7 +2734,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Filling Holes')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -2839,7 +2839,7 @@ class PolyDataFilters(DataSetFilters):
                 alg.SetTolerance(tolerance)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
 
         # Check output so no segfaults occur
         if output.n_points < 1 and self.n_cells > 0:
@@ -2928,7 +2928,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(dijkstra, progress_bar=progress_bar, message='Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
-        output = _get_output(dijkstra)
+        output = _get_output(dijkstra, output_type=pv.PolyData)
         if output.is_empty:
             msg = (
                 f'There is no path between vertices {start_vertex} and {end_vertex}. '
@@ -3609,7 +3609,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetReverseNormals(reverse_normals)
         alg.SetReverseCells(reverse_cells)
         _update_alg(alg, progress_bar=progress_bar)
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -3883,7 +3883,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Sometimes lines are given in the output. The
         # `.triangulate()` filter cleans those
-        mesh = _get_output(alg).triangulate()
+        mesh = _get_output(alg, output_type=pv.PolyData).triangulate()
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -3930,7 +3930,7 @@ class PolyDataFilters(DataSetFilters):
         alg = _vtk.vtkAppendArcLength()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing the Arc Length')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.PolyData)
 
     def project_points_to_plane(  # type: ignore[misc]
         self: PolyData,
@@ -4129,7 +4129,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             alg.SetGenerateTCoordsToOff()
         _update_alg(alg, progress_bar=progress_bar, message='Creating a Ribbon')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.PolyData)
 
     def extrude(  # type: ignore[misc]
         self: PolyData,
@@ -4221,7 +4221,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetCapping(capping)
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -4377,7 +4377,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetRotationAxis(*axis)
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         if inplace:
             self.copy_from(output, deep=False)
             return self
@@ -4566,7 +4566,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetMaximumLength(max_length)
         alg.SetPassThroughPointIds(pass_point_ids)
         _update_alg(alg, progress_bar=progress_bar, message='Stripping Mesh')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         trace.restore(output)
         if pass_cell_data or pass_cell_ids:
             # the stripper's own tracing skips segments and miscounts after verts
@@ -4732,7 +4732,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetGenerateScalars(generate_scalars)
         _update_alg(alg, progress_bar=progress_bar, message='Computing collisions')
 
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
 
         if generate_scalars:
             # must rename array as VTK sets the cell scalars array name to
@@ -4746,6 +4746,16 @@ class PolyDataFilters(DataSetFilters):
 
         return output, alg.GetNumberOfContacts()
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def contour_banded(self: PolyData, n_contours: int, *, rng: VectorLikeFloat | None = ..., scalars: str | None = ..., component: int = ..., clip_tolerance: float = ..., generate_contour_edges: Literal[True] = ..., scalar_mode: _BandedScalarModeOptions = ..., clipping: bool = ..., progress_bar: bool = ...) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    @overload
+    def contour_banded(self: PolyData, n_contours: int, *, rng: VectorLikeFloat | None = ..., scalars: str | None = ..., component: int = ..., clip_tolerance: float = ..., generate_contour_edges: Literal[False], scalar_mode: _BandedScalarModeOptions = ..., clipping: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload
+    def contour_banded(self: PolyData, n_contours: int, *, rng: VectorLikeFloat | None = ..., scalars: str | None = ..., component: int = ..., clip_tolerance: float = ..., generate_contour_edges: bool = ..., scalar_mode: _BandedScalarModeOptions = ..., clipping: bool = ..., progress_bar: bool = ...) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def contour_banded(  # type: ignore[misc]
         self: PolyData,
         n_contours: int,
@@ -4815,7 +4825,7 @@ class PolyDataFilters(DataSetFilters):
             Surface containing the contour surface.
 
         edges : pyvista.PolyData
-            Optional edges when ``generate_contour_edges`` is ``True``.
+            Contour edges, returned only when ``generate_contour_edges`` is ``True``.
 
         Examples
         --------
@@ -4900,7 +4910,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetClipTolerance(clip_tolerance)
         alg.SetComponent(component)
         _update_alg(alg, progress_bar=progress_bar, message='Contouring Mesh')
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.PolyData)
 
         # Must rename array as VTK sets the active scalars array name to a nullptr.
         # Please note this was fixed upstream in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/9840
@@ -4997,7 +5007,7 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar=progress_bar, message='Reconstructing surface')
-        return _get_output(mc)
+        return _get_output(mc, output_type=pv.PolyData)
 
     def triangulate_contours(  # type: ignore[misc]
         self: _PolyDataType,
@@ -5081,7 +5091,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
         _update_alg(alg, progress_bar=progress_bar, message='Triangulating Contours')
-        return _get_output(alg)
+        return _get_output(alg, output_type=type(self))
 
     def protein_ribbon(self: PolyData, *, progress_bar: bool = False) -> PolyData:  # type: ignore[misc]
         """Generate protein ribbon.
@@ -5110,7 +5120,7 @@ class PolyDataFilters(DataSetFilters):
         alg = _vtk.vtkRibbonFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Generating Protein Ribbons')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.PolyData)
 
     def ruled_surface(  # type: ignore[misc]
         self: PolyData, *, resolution: VectorLikeInt | None = None, progress_bar: bool = False
@@ -5171,7 +5181,7 @@ class PolyDataFilters(DataSetFilters):
             _validation.validate_array(resolution, must_have_shape=2, must_have_dtype=int)
             alg.SetResolution(resolution)  # type: ignore[arg-type]
         _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.PolyData)
 
     def remove_unused_points(  # type: ignore[misc]
         self: _PolyDataType,

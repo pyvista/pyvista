@@ -51,7 +51,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     Parameters
     ----------
-    uinput : str | numpy.ndarray | :vtk:`vtkImageData` | :vtk:`vtkTexture` | sequence, optional
+    uinput : str | numpy.ndarray | ImageData | Texture | sequence, optional
         Filename, :vtk:`vtkImageData`, :vtk:`vtkTexture`, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
@@ -141,7 +141,9 @@ class Texture(DataObject, _vtk.vtkTexture):
     def __init__(
         self,
         uinput: str
+        | Texture
         | _vtk.vtkTexture
+        | ImageData
         | _vtk.vtkImageData
         | NDArray[_Scalar]
         | Sequence[ImageData]

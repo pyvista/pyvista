@@ -89,7 +89,7 @@ class StructuredGridFilters(DataSetFilters):
         alg.SetSampleRate(rate)  # type: ignore[arg-type]
         alg.SetIncludeBoundary(boundary)
         alg.Update()
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.StructuredGrid)
         rates = [int(r) for r in rate]
         if any(r != 1 for r in rates):
             # VTK rebases a sampled axis to 0. Divide its extent by the rate instead, as for

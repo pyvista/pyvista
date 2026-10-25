@@ -75,6 +75,8 @@ if TYPE_CHECKING:
     from ._typing_core import VectorLikeFloat
     from ._typing_core import _AnyArrayLike
     from ._typing_core import _ArrayLikeOrScalar
+    from ._typing_core import _NumericScalar
+    from ._typing_core import _VectorSequence
 
     _Dimensionality = Literal[0, 1, 2, 3]
 
@@ -1811,12 +1813,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, *, deep: bool = True) -> None:
+    def copy_from(self: Self, mesh: DataSet | _vtk.vtkDataSet, *, deep: bool = True) -> None:
         """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
         ----------
-        mesh : :vtk:`vtkDataSet`
+        mesh : DataSet | :vtk:`vtkDataSet`
             The overwriting mesh.
 
         deep : bool, default: True
@@ -1842,7 +1844,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                 f'compatible with the one being overwritten {type(self)}'
             )
             raise TypeError(msg)
-        if deep:  # type: ignore[unreachable]
+        if deep:
             self.deep_copy(mesh)
         else:
             self.shallow_copy(mesh)
@@ -1911,7 +1913,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         _update_alg(alg)
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def cast_to_pointset(self: Self, *, pass_cell_data: bool = False) -> PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
@@ -2096,6 +2098,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     # fmt: off
     # ruff: disable[E501]
     @overload
+    def find_closest_cell(self: Self, point: Sequence[float] | _VectorSequence, *, return_closest_point: Literal[False] = False) -> int: ...
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[float] | _VectorSequence, *, return_closest_point: Literal[True]) -> tuple[int, NDArray[np.float64]]: ...
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]], *, return_closest_point: Literal[False] = False) -> NDArray[np.int_]: ...
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]], *, return_closest_point: Literal[True]) -> tuple[NDArray[np.int_], NDArray[np.float64]]: ...
+    @overload
     def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[False] = False) -> int | NDArray[np.int_]: ...
     @overload
     def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[True]) -> tuple[int | NDArray[np.int_], NDArray[np.float64]]: ...
@@ -2240,6 +2250,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def find_containing_cell(self: Self, point: Sequence[float] | _VectorSequence) -> int: ...
+    @overload
+    def find_containing_cell(self: Self, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]]) -> NDArray[np.int_]: ...
+    @overload
+    def find_containing_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat) -> int | NDArray[np.int_]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_containing_cell(
         self: Self,
         point: VectorLikeFloat | MatrixLikeFloat,
@@ -3212,6 +3232,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return out[::-1]
         return out
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def point_is_inside_cell(self: Self, ind: int, point: Sequence[float] | _VectorSequence) -> bool: ...
+    @overload
+    def point_is_inside_cell(self: Self, ind: int, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]]) -> NDArray[np.bool_]: ...
+    @overload
+    def point_is_inside_cell(self: Self, ind: int, point: VectorLikeFloat | MatrixLikeFloat) -> bool | NDArray[np.bool_]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def point_is_inside_cell(
         self: Self,
         ind: int,

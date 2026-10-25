@@ -866,12 +866,12 @@ class DataObject(
         """
         self.CopyStructure(dataset) if dataset is not self else None
 
-    def copy_attributes(self: Self, dataset: Self) -> None:
+    def copy_attributes(self: Self, dataset: DataObject) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pyvista.DataObject
             Dataset to copy the data attributes from.
 
         Examples
@@ -1074,7 +1074,7 @@ class DataObject(
 
         # copy data
         self.copy_structure(mesh)  # type: ignore[arg-type]
-        self.copy_attributes(mesh)  # type: ignore[arg-type]
+        self.copy_attributes(mesh)
 
     @property
     @abstractmethod

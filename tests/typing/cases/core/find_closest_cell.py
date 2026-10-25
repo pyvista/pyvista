@@ -17,11 +17,16 @@ def a_flag() -> bool:
     return True
 
 
-assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0)), _Cell)
-assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]), _Cell)
-assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=False), _Cell)
+assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0)), int)
+assert_types(pv.Sphere().find_closest_cell([0, 0, 0], return_closest_point=False), int)
+assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=True), tuple[int, NDArray[np.float64]])
 
-assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=True), _CellAndPoint)
+assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]), NDArray[np.int_])
+assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0)], return_closest_point=True), tuple[NDArray[np.int_], NDArray[np.float64]])
+
+# An array, whose shape is not known statically
+assert_types(pv.Sphere().find_closest_cell(np.zeros(3)), _Cell)
+assert_types(pv.Sphere().find_closest_cell(np.zeros((2, 3)), return_closest_point=True), _CellAndPoint)
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=a_flag()), _Cell | _CellAndPoint)

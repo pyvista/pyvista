@@ -40,7 +40,6 @@ import posixpath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Protocol
-from typing import cast
 from typing import final
 from xml.etree import ElementTree as ET
 
@@ -56,7 +55,6 @@ if TYPE_CHECKING:
     from pyvista import BaseReader
     from pyvista import CellType
     from pyvista import DataSet
-    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
     from pyvista.plotting.texture import Texture
@@ -320,11 +318,7 @@ class _DatasetLoader:
         cell_types: dict[CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
-            dataset = (
-                cast('ImageData', pv.wrap(data.GetInput()))
-                if isinstance(data, pv.Texture)
-                else data
-            )
+            dataset = pv.wrap(data.GetInput()) if isinstance(data, pv.Texture) else data
             if not isinstance(dataset, pv.DataSet):
                 # NumPy arrays and MultiBlock have no cells of their own
                 continue

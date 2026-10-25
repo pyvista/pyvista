@@ -218,6 +218,16 @@ def logo_basic() -> PolyData:
     return logo_letters(merge=True).compute_normals(split_vertices=True)
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def plot_logo(*, window_size: list[int] | None = ..., off_screen: bool | None = ..., screenshot: str | Path | None = ..., cpos: CameraPositionOptions | None = ..., just_return_plotter: Literal[True], show_note: bool = ..., **kwargs: Any) -> Plotter: ...
+@overload
+def plot_logo(*, window_size: list[int] | None = ..., off_screen: bool | None = ..., screenshot: str | Path | None = ..., cpos: CameraPositionOptions | None = ..., just_return_plotter: Literal[False] = False, show_note: bool = ..., **kwargs: Any) -> _ShowReturnType: ...
+@overload
+def plot_logo(*, window_size: list[int] | None = ..., off_screen: bool | None = ..., screenshot: str | Path | None = ..., cpos: CameraPositionOptions | None = ..., just_return_plotter: bool = ..., show_note: bool = ..., **kwargs: Any) -> Plotter | _ShowReturnType: ...
+# ruff: enable[E501]
+# fmt: on
 def plot_logo(
     *,
     window_size: list[int] | None = None,
@@ -249,10 +259,10 @@ def plot_logo(
 
     Returns
     -------
-    output : Plotter or camera position
+    output : Plotter | CameraPosition | None
         Returns the plotter instance if ``just_return_plotter`` is ``True``,
         otherwise returns the camera position if ``screenshot`` is specified,
-        otherwise shows the plot.
+        otherwise returns what :meth:`Plotter.show` returns.
 
     Examples
     --------

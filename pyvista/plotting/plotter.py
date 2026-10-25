@@ -135,6 +135,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import ImageData
+    from pyvista import Light
     from pyvista import LookupTable
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -7926,7 +7927,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         self.renderer.ResetCameraClippingRange()
 
-    def add_light(self, light: _vtk.vtkLight, *, only_active: bool = False) -> None:
+    def add_light(self, light: Light | _vtk.vtkLight, *, only_active: bool = False) -> None:
         """Add a Light to the scene.
 
         Parameters
@@ -9447,7 +9448,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         focal_point: Sequence[float] = (0.0, 0.0, 0.0),
         color: ColorLike | None = None,
-    ) -> _vtk.vtkActor:
+    ) -> Actor:
         """Add a cursor of a PyVista or VTK dataset to the scene.
 
         Parameters
@@ -9471,8 +9472,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the 2D cursor.
+        pyvista.Actor
+            Actor of the 2D cursor.
 
         Examples
         --------
@@ -9490,10 +9491,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         alg.AllOn()
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
-        actor, prop = self.add_actor(mapper)
-        cast('_vtk.vtkProperty', prop).SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
+        actor = Actor(mapper=mapper)
+        self.add_actor(actor)
+        actor.prop.color = color
 
-        return cast('_vtk.vtkActor', actor)
+        return actor
 
     @property
     def meshes(

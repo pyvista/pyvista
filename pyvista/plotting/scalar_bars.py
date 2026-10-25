@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import ValuesView
 
     from pyvista.plotting.lookup_table import LookupTable
+    from pyvista.plotting.mapper import _BaseMapper
     from pyvista.plotting.plotter import Plotter
     from pyvista.plotting.themes import Theme
 
@@ -1117,8 +1118,8 @@ class ScalarBars(_NoNewAttrMixin):
         self,
         title: str = '',
         *,
-        mapper: _vtk.vtkMapper | None = None,
-        lookup_table: _vtk.vtkLookupTable | LookupTable | None = None,
+        mapper: _BaseMapper | None = None,
+        lookup_table: LookupTable | None = None,
         cmap: ColormapOptions | list[str] | None = None,
         clim: Sequence[float] | None = None,
         n_labels: int = 5,
@@ -1163,13 +1164,13 @@ class ScalarBars(_NoNewAttrMixin):
         title : str, default: ""
             Title of the scalar bar. Default is rendered as an empty title.
 
-        mapper : :vtk:`vtkMapper`, optional
+        mapper : pyvista.plotting.mapper._BaseMapper, optional
             Mapper used for the scalar bar. Defaults to the last mapper created
             by the plotter if neither ``mapper``, ``lookup_table``, or
             ``cmap`` is provided. Raises ValueError if more than one of
             ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
-        lookup_table : :vtk:`vtkLookupTable`, optional
+        lookup_table : pyvista.LookupTable, optional
             Lookup table used for the scalar bar. Raises ValueError if more
             than one of ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 

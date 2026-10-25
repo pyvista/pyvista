@@ -424,7 +424,12 @@ class CompositeFilters(DataObjectFilters):
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+            alg = _vtk.vtkOutlineCornerFilter()
+            alg.SetInputDataObject(self)
+            alg.SetCornerFactor(factor)
+            message = 'Producing an Outline of the Corners'
+            _update_alg(alg, progress_bar=progress_bar, message=message)
+            return _get_output(alg, output_type=pv.MultiBlock)
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
@@ -467,7 +472,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetFeatureAngle(feature_angle)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Normals')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.MultiBlock)
 
 
 def _format_nested_index(index: tuple[int, ...]) -> str:
