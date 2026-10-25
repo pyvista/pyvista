@@ -32,8 +32,25 @@ jobs:
           RUN: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}
         run: echo "run=$RUN" >> "$GITHUB_OUTPUT"
 
-  build-vtk:
+  # Seconds, and gates the hours-long build: a broken report would otherwise only show
+  # once the next failure is misreported.
+  test-failure-report:
     needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: pip install pytest
+      - run: pytest -c /dev/null --rootdir=. .github/scripts/test_vtk_master_failure_report.py
+
+  build-vtk:
+    needs: [check-should-run, test-failure-report]
     if: needs.check-should-run.outputs.run == 'true'
     strategy:
       fail-fast: false
@@ -492,6 +509,12 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Checkout PyVista report helpers
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
       - name: Download VTK commit range
         id: download-commit-range
         uses: actions/download-artifact@v8
@@ -525,11 +548,8 @@ jobs:
             printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
           }
 
-          # Strips wall-clock timing so two runs hitting the identical failure hash the same.
-          normalize_for_hash() {
-            grep -Ev '^\s*(py3\.[0-9]+-[a-z_-]+: (exit|FAIL code)|evaluation failed|congratulations|py3\.[0-9]+-[a-z_-]+: OK)' \
-              | sed -E 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//'
-          }
+          # shellcheck source=.github/scripts/vtk-master-failure-report.sh
+          source .github/scripts/vtk-master-failure-report.sh
 
           # Ensure the dedup label exists (idempotent).
           gh label create vtk-master-wheel-failure \
@@ -550,14 +570,17 @@ jobs:
           # Only jobs that ran pytest and failed have a failure-summary-* artifact.
           summary_names=()
           summary_texts=()
+          summary_counts=()
           if [ -d failure-summaries ]; then
             while IFS= read -r label_file; do
               summary_file="$(dirname "$label_file")/failure_summary.txt"
               [ -f "$summary_file" ] || continue
               name="$(cat "$label_file")"
               summary="$(cat "$summary_file")"
+              count_file="$(dirname "$label_file")/n_failures.txt"
               summary_names+=("$name")
               summary_texts+=("$summary")
+              summary_counts+=("$(cat "$count_file" 2>/dev/null || echo 0)")
             done < <(find failure-summaries -name job_label.txt | sort)
           fi
 
@@ -586,10 +609,12 @@ jobs:
               IFS=$'\t' read -r name url <<< "$row"
 
               summary=""
+              count=0
               if [ "${#summary_names[@]}" -gt 0 ]; then
                 for i in "${!summary_names[@]}"; do
                   if [ "${summary_names[$i]}" = "$name" ]; then
                     summary="${summary_texts[$i]}"
+                    count="${summary_counts[$i]}"
                     break
                   fi
                 done
@@ -600,21 +625,13 @@ jobs:
                 continue
               fi
 
-              hash="$(printf '%s' "$summary" | normalize_for_hash | sha256sum | cut -d' ' -f1)"
+              hash="$(printf '%s' "$summary" | failure_hash)"
               prev_hash="$(extract_hash "$prev_text" "$name")"
               if [ -n "$prev_hash" ] && [ "$prev_hash" = "$hash" ]; then
                 jobs_list+="  ⚠️ Same failure signature as the [previous report](${prev_url})."$'\n'
               fi
 
-              # Without a pytest short-summary section the summary is the tail of the tox log.
-              n_failures="$(printf '%s\n' "$summary" | grep -cE '^(FAILED|ERROR) ' || true)"
-              if [ "$n_failures" -eq 0 ]; then
-                summary_label="failed before pytest reported (end of log)"
-              elif [ "$n_failures" -eq 1 ]; then
-                summary_label="1 failure"
-              else
-                summary_label="${n_failures} failures"
-              fi
+              summary_label="$(summary_label "$count" "$summary")"
 
               # Indented 2 spaces to stay nested inside this list item on GitHub.
               jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
