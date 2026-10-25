@@ -1012,6 +1012,31 @@ def test_compute_normals_recompute_skipped_normals_untouched(sphere_stale_normal
     assert not np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
 
 
+def test_compute_normals_recompute_stale_cell_normals_not_reused(sphere_stale_normals):
+    expected = pv.Sphere()
+    expected.clear_data()
+    expected = expected.compute_normals(cell_normals=False)
+
+    mesh = sphere_stale_normals.compute_normals(cell_normals=False)
+    assert np.allclose(mesh.point_data['Normals'], expected.point_data['Normals'])
+    assert mesh.cell_data.active_normals_name == 'Normals'
+    assert np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_compute_normals_recompute_replaces_custom_name(sphere_stale_normals, dtype):
+    mesh = sphere_stale_normals
+    for data in (mesh.point_data, mesh.cell_data):
+        data['CustomNormals'] = data.pop('Normals').astype(dtype)
+        data.active_normals_name = 'CustomNormals'
+
+    result = mesh.compute_normals(flip_normals=True)
+    for data in (result.point_data, result.cell_data):
+        assert data.active_normals_name == 'Normals'
+        assert 'CustomNormals' not in data
+        assert not np.allclose(data['Normals'], (1.0, 0.0, 0.0))
+
+
 @pytest.mark.needs_vtk_version((9, 4, 0), reason='Existing normals recomputed before VTK 9.4')
 def test_compute_normals_recompute_false(sphere_stale_normals):
     mesh = sphere_stale_normals.compute_normals(recompute=False, flip_normals=True)

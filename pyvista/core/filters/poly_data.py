@@ -2095,8 +2095,7 @@ class PolyDataFilters(DataSetFilters):
              Point clouds are not supported.
            - Triangle strips are broken up into triangle polygons.
              You may want to restrip the triangles.
-           - Previous arrays named ``"Normals"`` will be overwritten unless
-             ``recompute=False`` keeps existing active normals.
+           - Previous active normals are replaced by ``"Normals"``, see ``recompute``.
 
         Parameters
         ----------
@@ -2144,9 +2143,10 @@ class PolyDataFilters(DataSetFilters):
         recompute : bool, default: True
             Recompute normals even if the mesh already has
             :attr:`~pyvista.DataSetAttributes.active_normals`. When ``False``,
-            the behavior is left to :vtk:`vtkPolyDataNormals`, which since VTK
-            9.4 may keep existing active normals instead of recomputing them, so
-            options such as ``flip_normals`` do not apply to them.
+            VTK 9.4 and later keep existing active ``float32`` normals with
+            their name instead of recomputing them, so options such as
+            ``flip_normals`` do not apply to them. Earlier VTK versions always
+            recompute.
 
             .. versionadded:: 0.50
 
@@ -2227,13 +2227,16 @@ class PolyDataFilters(DataSetFilters):
         normal.SetFeatureAngle(feature_angle)
 
         input_mesh = self
+        old_normals = {}
         if recompute:
-            # vtkPolyDataNormals passes existing active normals through unchanged
+            # vtkPolyDataNormals reuses any active normals, so hide them all from it
             input_mesh = self.copy(deep=False)
-            if point_normals:
-                input_mesh.point_data.active_normals_name = None
-            if cell_normals:
-                input_mesh.cell_data.active_normals_name = None
+            for data, compute in (
+                (input_mesh.point_data, point_normals),
+                (input_mesh.cell_data, cell_normals),
+            ):
+                old_normals[data.association] = (data.active_normals_name, compute)
+                data.active_normals_name = None
         normal.SetInputData(input_mesh)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
@@ -2258,6 +2261,14 @@ class PolyDataFilters(DataSetFilters):
             mesh.GetPointData().SetActiveNormals('Normals')
         if cell_normals:
             mesh.GetCellData().SetActiveNormals('Normals')
+        for data in (mesh.point_data, mesh.cell_data):
+            name, computed = old_normals.get(data.association, (None, False))
+            if name is None or name not in data:
+                continue
+            if not computed:
+                data.active_normals_name = name
+            elif name != 'Normals':
+                del data[name]
 
         if inplace:
             self.copy_from(mesh, deep=False)
