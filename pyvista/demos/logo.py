@@ -75,7 +75,7 @@ def atomize(
     return cells[0].merge(cells[1:])
 
 
-def text_3d(string: str, depth: float = 0.5) -> PolyData:
+def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     """Create 3D text from a given string.
 
     .. deprecated:: 0.50

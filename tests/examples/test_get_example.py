@@ -38,8 +38,6 @@ _GENERATED_START = '# --- generated overloads ---\n'
 _GENERATED_END = '# --- end generated overloads ---\n'
 # the `load=False` half of a function's return annotation, which is not a dataset
 _PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
-# every other dataset type name is spelled as the annotation spells it
-_DATASET_TYPE_NAMES = {'ndarray': 'NDArray[Any]'}
 _REGENERATE = (
     'Regenerate the generated block with\n'
     '  pytest tests/examples/test_get_example.py -k overloads_current '
@@ -64,7 +62,7 @@ def _dataset_annotation(function):
     annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
     members = _split_union(str(annotation))
     dataset = ' | '.join(member for member in members if member not in _PATH_TYPES)
-    return re.sub(r'\b(?<!\.)[A-Za-z_]\w*', _spell_type_name, dataset)
+    return re.sub(r'\bndarray\b', 'NDArray[Any]', dataset)
 
 
 def _split_union(annotation):
@@ -77,11 +75,6 @@ def _split_union(annotation):
             start = i + 1
     members.append(annotation[start:].strip())
     return members
-
-
-def _spell_type_name(match):
-    """Return a type name as the generated overloads spell it."""
-    return _DATASET_TYPE_NAMES.get(match[0], match[0])
 
 
 def _readers_annotation(example):

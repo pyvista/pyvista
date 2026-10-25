@@ -47,11 +47,11 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
-    from pyvista.core.pointset import PolyData
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.helpers import _NormalsLiteral

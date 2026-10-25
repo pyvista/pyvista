@@ -14,10 +14,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import DataSet
-    from pyvista.core.grid import ImageData
-    from pyvista.core.grid import RectilinearGrid
-    from pyvista.core.pointset import PolyData
-    from pyvista.core.pointset import StructuredGrid
+    from pyvista import ImageData
+    from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
 
 _EDGE_CHUNK_CELLS = 1_000_000
 

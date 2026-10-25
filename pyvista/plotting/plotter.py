@@ -134,6 +134,7 @@ if TYPE_CHECKING:
     from trame_pyvista.jupyter import Widget
 
     from pyvista import DataSet
+    from pyvista import ImageData
     from pyvista import LookupTable
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -145,7 +146,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _Real
     from pyvista.core._typing_core import _Scalar
-    from pyvista.core.grid import ImageData
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions

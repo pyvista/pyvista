@@ -68,8 +68,8 @@ if TYPE_CHECKING:
     from pyvista import Cell
     from pyvista import CellType
     from pyvista import PointSet
-    from pyvista.core.pointset import PolyData
-    from pyvista.core.pointset import UnstructuredGrid
+    from pyvista import PolyData
+    from pyvista import UnstructuredGrid
 
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import VectorLikeFloat
