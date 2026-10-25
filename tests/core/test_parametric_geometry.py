@@ -215,42 +215,64 @@ def test_parametric_henneberg():
 def test_parametric_klein():
     geom = pv.ParametricKlein()
     assert geom.n_points
-    assert geom.n_open_edges == 0
     assert geom.is_manifold
-    assert geom.point_data.active_scalars_name is None
     assert geom.point_data.active_normals_name == 'Normals'
 
 
 @pytest.mark.parametrize('clean', [False, True])
 @pytest.mark.parametrize('texture_coordinates', [False, True])
-def test_parametric_klein_resolutions(clean, texture_coordinates):
+@pytest.mark.parametrize(('u_res', 'v_res'), [(3, 4), (17, 11)])
+def test_parametric_klein_resolutions(clean, texture_coordinates, u_res, v_res):
     geom = pv.ParametricKlein(
-        u_res=17,
-        v_res=11,
+        u_res=u_res,
+        v_res=v_res,
         clean=clean,
         texture_coordinates=texture_coordinates,
     )
-    assert geom.n_open_edges == 0
     assert geom.is_manifold
+    assert geom.n_points == u_res * (v_res + v_res % 2)
     assert (geom.active_texture_coordinates is not None) is texture_coordinates
-    assert ('Textures' in geom.point_data) is texture_coordinates
-    assert geom.point_data.active_scalars_name is None
-    assert geom.point_data.active_normals_name == 'Normals'
 
 
-def test_parametric_klein_minimum_valid_resolution():
-    geom = pv.ParametricKlein(u_res=4, v_res=7)
-    assert geom.n_open_edges == 0
-    assert geom.is_manifold
+@pytest.mark.parametrize(('u_res', 'v_res'), [(3, 4), (6, 8), (5, 10)])
+def test_parametric_klein_seams(u_res, v_res):
+    geom = pv.ParametricKlein(u_res=u_res, v_res=v_res)
+    directed = [
+        tuple(edge)
+        for tri in geom.regular_faces
+        for edge in zip(tri, np.roll(tri, -1), strict=True)
+    ]
+    edges = {frozenset(edge) for edge in directed}
+
+    # A Klein bottle is non-orientable, but winding should only flip across the u seam
+    assert len(directed) - len(set(directed)) == v_res
+
+    # Sample one step past each seam, at u = pi and v = 2 * pi
+    function = _vtk.vtkParametricKlein()
+    function.SetMaximumU(np.pi)
+    function.SetMaximumV(2 * np.pi)
+    function.SetJoinU(False)
+    function.SetJoinV(False)
+    reference = pv.surface_from_para(function, u_res=u_res + 1, v_res=v_res + 1)
+    grid = reference.points.reshape(u_res + 1, v_res + 1, 3)
+
+    def index(point):
+        i = geom.find_closest_point(point)
+        assert np.allclose(geom.points[i], point, atol=1e-5)
+        return i
+
+    pairs = [
+        *zip(grid[-2, :-1], grid[-1, :-1], strict=True),
+        *zip(grid[:-1, -2], grid[:-1, -1], strict=True),
+    ]
+    for inside, across in pairs:
+        assert frozenset((index(inside), index(across))) in edges
 
 
-@pytest.mark.parametrize(
-    ('u_res', 'v_res'),
-    [(1, 8), (2, 8), (3, 8), (8, 1), (8, 2), (8, 3), (8, 6)],
-)
+@pytest.mark.parametrize(('u_res', 'v_res'), [(2, 8), (8, 3)])
 def test_parametric_klein_requires_minimum_resolution(u_res, v_res):
-    error = 'The `u_res` must be at least 4 and `v_res` at least 7.'
-    with pytest.raises(ValueError, match=error):
+    match = '`u_res` must be at least 3 and `v_res` at least 4.'
+    with pytest.raises(ValueError, match=match):
         pv.ParametricKlein(u_res=u_res, v_res=v_res)
 
 

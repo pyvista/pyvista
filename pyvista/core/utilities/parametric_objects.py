@@ -817,9 +817,12 @@ def ParametricKlein(**kwargs) -> PolyData:
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
 
-        ``u_res`` must be at least 4 and ``v_res`` at least 7. An odd
-        ``v_res`` is rounded up to the next even value so the half-twist closes
-        on mesh vertices.
+        ``u_res`` must be at least 3 and ``v_res`` at least 4. An odd
+        ``v_res`` is rounded up to the next even value.
+
+        .. versionchanged:: 0.50
+            The surface is closed along both seams, ``clean`` defaults to
+            ``False``, and ``u_res`` and ``v_res`` have minimum values.
 
     Returns
     -------
@@ -839,72 +842,39 @@ def ParametricKlein(**kwargs) -> PolyData:
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
-    clean = kwargs.pop('clean', True)
-    texture_coordinates = kwargs.pop('texture_coordinates', False)
+    clean = kwargs.pop('clean', False)
     u_res = kwargs.get('u_res', 100)
     v_res = kwargs.get('v_res', 100)
-    if u_res < 4 or v_res < 7:
-        error = 'The `u_res` must be at least 4 and `v_res` at least 7.'
-        raise ValueError(error)
-    if v_res % 2:
-        v_res += 1
-        kwargs['v_res'] = v_res
+    if u_res < 3 or v_res < 4:
+        msg = '`u_res` must be at least 3 and `v_res` at least 4.'
+        raise ValueError(msg)
+    # The u seam maps v to pi - v, which lands on a sample only for even v_res.
+    v_res += v_res % 2
+    kwargs['v_res'] = v_res
 
-    # vtkParametricFunctionSource leaves the Klein bottle's half-twist open.
-    # Keep both periodic seams out of the sampled domain and close them with
-    # cells that follow the parametric identifications.
+    # vtkParametricFunctionSource cannot join the half-twisted u seam, so sample
+    # neither seam and stitch both from the structured point ordering.
     parametric_function.SetMaximumU((u_res - 1) / u_res * math.pi)
     parametric_function.SetMaximumV((v_res - 1) / v_res * 2 * math.pi)
     parametric_function.SetJoinU(False)
     parametric_function.SetJoinV(False)
-
-    kwargs['clean'] = False
-    kwargs['texture_coordinates'] = True
     surf = surface_from_para(parametric_function, **kwargs)
-    u, v = surf.point_data['Textures'].T
 
-    u0 = np.flatnonzero(u == 0)
-    u1 = np.flatnonzero(u == 1)
-    u0 = u0[np.argsort(v[u0])]
-    u1 = u1[np.argsort(v[u1])]
-    # On the u seam, vtkParametricKlein identifies v with pi - v (mod 2*pi).
-    u1 = u1[(v_res // 2 - np.arange(v_res)) % v_res]
-    u_next = np.roll(np.arange(v_res), -1)
-    u_faces = np.column_stack(
-        [4 * np.ones(v_res, dtype=int), u0, u0[u_next], u1[u_next], u1],
-    ).ravel()
-
-    v0 = np.flatnonzero(v == 0)
-    v1 = np.flatnonzero(v == 1)
-    v0 = v0[np.argsort(u[v0])]
-    v1 = v1[np.argsort(u[v1])]
-    v_faces = np.column_stack(
-        [4 * np.ones(u_res - 1, dtype=int), v0[:-1], v0[1:], v1[1:], v1[:-1]],
-    ).ravel()
-
-    parametric_surf = surf
-    active_scalars_name = parametric_surf.point_data.active_scalars_name
-    surf = pv.PolyData(
-        parametric_surf.points,
-        faces=np.concatenate((parametric_surf.faces, v_faces, u_faces)),
-    )
-    surf.point_data.update(parametric_surf.point_data)
-    surf.field_data.update(parametric_surf.field_data)
-    surf = surf.triangulate()
-    if clean:
-        surf = surf.clean(
-            tolerance=1e-7,
-            absolute=False,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
+    # grid[i, j] is the point at u = i * pi / u_res, v = j * 2 * pi / v_res
+    grid = np.arange(u_res * v_res).reshape(u_res, v_res)
+    twisted = grid[0, (v_res // 2 - np.arange(v_res)) % v_res]
+    a, b, c, d = (
+        np.concatenate(corners)
+        for corners in zip(
+            (grid[:-1, -1], grid[:-1, 0], grid[1:, 0], grid[1:, -1]),
+            (grid[-1], np.roll(grid[-1], -1), np.roll(twisted, -1), twisted),
+            strict=True,
         )
-    surf.point_data.active_scalars_name = active_scalars_name
-    surf.point_data.active_normals_name = 'Normals'
-    if texture_coordinates:
-        surf.point_data.active_texture_coordinates_name = 'Textures'
-    else:
-        del surf.point_data['Textures']
+    )
+    seam = np.column_stack([a, b, c, a, c, d]).reshape(-1, 3)
+    surf.regular_faces = np.vstack([surf.regular_faces, seam])
+    if clean:
+        surf = _clean_parametric_surface(surf)
 
     _translate_and_orient(surf, center, direction)
     return surf
@@ -1557,11 +1527,15 @@ def surface_from_para(
     _update_alg(para_source)
     surf = _apply_points_dtype(wrap(para_source.GetOutput()), algorithm=para_source)
     if clean:
-        surf = surf.clean(
-            tolerance=1e-7,  # determined experimentally
-            absolute=False,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
-        )
+        surf = _clean_parametric_surface(surf)
     return surf
+
+
+def _clean_parametric_surface(surf: PolyData) -> PolyData:
+    return surf.clean(
+        tolerance=1e-7,  # determined experimentally
+        absolute=False,
+        lines_to_points=False,
+        polys_to_lines=False,
+        strips_to_polys=False,
+    )
