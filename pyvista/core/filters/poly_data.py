@@ -2087,7 +2087,10 @@ class PolyDataFilters(DataSetFilters):
         present, the edges are split and new points generated to
         prevent blurry edges (due to Phong shading).
 
-        An array named ``"Normals"`` is stored with the mesh.
+        Requested normals are stored as the active ``"Normals"`` array of the
+        point data and/or cell data, replacing any previous active normals
+        there (see ``recompute``). Normals that are not requested are left
+        unchanged.
 
         .. warning::
 
@@ -2095,7 +2098,6 @@ class PolyDataFilters(DataSetFilters):
              Point clouds are not supported.
            - Triangle strips are broken up into triangle polygons.
              You may want to restrip the triangles.
-           - Previous active normals are replaced by ``"Normals"``, see ``recompute``.
 
         Parameters
         ----------
@@ -2141,12 +2143,12 @@ class PolyDataFilters(DataSetFilters):
             value, the shared edge is considered "sharp".
 
         recompute : bool, default: True
-            Recompute normals even if the mesh already has
-            :attr:`~pyvista.DataSetAttributes.active_normals`. When ``False``,
-            VTK 9.4 and later keep existing active ``float32`` normals with
-            their name instead of recomputing them, so options such as
-            ``flip_normals`` do not apply to them. Earlier VTK versions always
-            recompute.
+            Recompute normals that already exist as
+            :attr:`~pyvista.DataSetAttributes.active_normals`. If ``False`` and
+            every requested kind of normals (point and/or cell) is already
+            active, the mesh is returned unchanged and all other options are
+            ignored. If only some are, all requested normals are recomputed as
+            with ``True``.
 
             .. versionadded:: 0.50
 
@@ -2209,7 +2211,29 @@ class PolyDataFilters(DataSetFilters):
         >>> float(flipped.point_data['Normals'][0, 2])
         -1.0
 
+        With ``recompute=False``, the existing point normals are kept when only
+        point normals are requested.
+
+        >>> kept = sphere.compute_normals(
+        ...     cell_normals=False, flip_normals=True, recompute=False
+        ... )
+        >>> float(kept.point_data['Normals'][0, 2])
+        1.0
+
+        The sphere has no cell normals, so requesting both recomputes both.
+
+        >>> flipped = sphere.compute_normals(flip_normals=True, recompute=False)
+        >>> float(flipped.point_data['Normals'][0, 2])
+        -1.0
+
         """
+        old_normals = (
+            (point_normals, self.point_data.active_normals_name),
+            (cell_normals, self.cell_data.active_normals_name),
+        )
+        if not recompute and all(name is not None for compute, name in old_normals if compute):
+            return self if inplace else self.copy(deep=False)
+
         # track original point indices
         if split_vertices:
             self.point_data['pyvistaOriginalPointIds'] = np.arange(
@@ -2226,35 +2250,18 @@ class PolyDataFilters(DataSetFilters):
         normal.SetNonManifoldTraversal(non_manifold_traversal)
         normal.SetFeatureAngle(feature_angle)
 
-        input_mesh = self
-        old_normals = {}
-        if recompute:
-            # vtkPolyDataNormals reuses any active normals, so hide them all from it
-            input_mesh = self.copy(deep=False)
-            for data, compute in (
-                (input_mesh.point_data, point_normals),
-                (input_mesh.cell_data, cell_normals),
-            ):
-                old_normals[data.association] = (data.active_normals_name, compute)
-                data.active_normals_name = None
+        # vtkPolyDataNormals reuses any active normals, so hide them all from it
+        input_mesh = self.copy(deep=False)
+        input_mesh.point_data.active_normals_name = None
+        input_mesh.cell_data.active_normals_name = None
         normal.SetInputData(input_mesh)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
         mesh = _get_output(normal)
-        for data, compute, kept in (
-            (mesh.point_data, point_normals, self.point_data.active_normals_name),
-            (mesh.cell_data, cell_normals, self.cell_data.active_normals_name),
-        ):
-            if data.active_normals_name is not None:
-                continue
-            # Normals passed through by vtkPolyDataNormals lose their active flag
-            if not recompute and kept in data:
-                data.active_normals_name = kept
-            elif compute and 'Normals' in data:
-                data.active_normals_name = 'Normals'
-        if (
-            mesh.point_data.active_normals_name is None
-            and mesh.cell_data.active_normals_name is None
+        attributes = (mesh.point_data, mesh.cell_data)
+        if any(
+            compute and data.active_normals_name != 'Normals'
+            for data, (compute, _) in zip(attributes, old_normals, strict=True)
         ):
             if (self.n_verts + self.n_lines) == self.n_cells:
                 msg = (
@@ -2269,11 +2276,10 @@ class PolyDataFilters(DataSetFilters):
                     'Please report the issue at https://github.com/pyvista/pyvista/issues.'
                 )
                 raise RuntimeError(msg)
-        for data in (mesh.point_data, mesh.cell_data):
-            name, computed = old_normals.get(data.association, (None, False))
+        for data, (compute, name) in zip(attributes, old_normals, strict=True):
             if name is None or name not in data:
                 continue
-            if not computed:
+            if not compute:
                 data.active_normals_name = name
             elif name != 'Normals':
                 del data[name]
