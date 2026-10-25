@@ -134,6 +134,7 @@ test = [
 test-playwright = ['playwright<1.65.0', { include-group = 'test' }]
 
 docs = [
+  'anywidget==0.11.0',
   'cmcrameri==1.10',
   'cmocean==4.0.3',
   'colorcet==3.2.1',
