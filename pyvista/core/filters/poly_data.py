@@ -2070,6 +2070,7 @@ class PolyDataFilters(DataSetFilters):
         auto_orient_normals: bool = False,
         non_manifold_traversal: bool = True,
         feature_angle: float = 30.0,
+        recompute: bool = True,
         inplace: bool = False,
         progress_bar: bool = False,
     ) -> PolyData:
@@ -2094,9 +2095,8 @@ class PolyDataFilters(DataSetFilters):
              Point clouds are not supported.
            - Triangle strips are broken up into triangle polygons.
              You may want to restrip the triangles.
-           - Existing :attr:`~pyvista.DataSetAttributes.active_normals` are kept and not
-             recomputed. Clear them first, for example with
-             :meth:`~pyvista.DataSet.clear_data`, to compute new normals.
+           - Previous arrays named ``"Normals"`` will be overwritten unless
+             ``recompute=False`` keeps existing active normals.
 
         Parameters
         ----------
@@ -2140,6 +2140,15 @@ class PolyDataFilters(DataSetFilters):
             The angle that defines a sharp edge. If the difference in
             angle across neighboring polygons is greater than this
             value, the shared edge is considered "sharp".
+
+        recompute : bool, default: True
+            Recompute normals even if the mesh already has
+            :attr:`~pyvista.DataSetAttributes.active_normals`. When ``False``,
+            the behavior is left to :vtk:`vtkPolyDataNormals`, which since VTK
+            9.4 may keep existing active normals instead of recomputing them, so
+            options such as ``flip_normals`` do not apply to them.
+
+            .. versionadded:: 0.50
 
         inplace : bool, default: False
             Updates mesh in-place.
@@ -2191,12 +2200,11 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
 
-        Existing normals are not recomputed, so clear them first to flip them.
+        Existing normals are recomputed by default, so they can be flipped.
 
         >>> sphere = pv.Sphere()
         >>> float(sphere.point_data['Normals'][0, 2])
         1.0
-        >>> sphere.clear_data()
         >>> flipped = sphere.compute_normals(flip_normals=True)
         >>> float(flipped.point_data['Normals'][0, 2])
         -1.0
@@ -2217,7 +2225,16 @@ class PolyDataFilters(DataSetFilters):
         normal.SetAutoOrientNormals(auto_orient_normals)
         normal.SetNonManifoldTraversal(non_manifold_traversal)
         normal.SetFeatureAngle(feature_angle)
-        normal.SetInputData(self)
+
+        input_mesh = self
+        if recompute:
+            # vtkPolyDataNormals passes existing active normals through unchanged
+            input_mesh = self.copy(deep=False)
+            if point_normals:
+                input_mesh.point_data.active_normals_name = None
+            if cell_normals:
+                input_mesh.cell_data.active_normals_name = None
+        normal.SetInputData(input_mesh)
         _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
         mesh = _get_output(normal)

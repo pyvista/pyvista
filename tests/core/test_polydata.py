@@ -976,6 +976,49 @@ def test_compute_normals_raises(sphere):
         lines.compute_normals()
 
 
+@pytest.fixture
+def sphere_stale_normals():
+    sphere = pv.Sphere().compute_normals()
+    sphere.point_data['Normals'][:] = (1.0, 0.0, 0.0)
+    sphere.cell_data['Normals'][:] = (1.0, 0.0, 0.0)
+    return sphere
+
+
+@pytest.mark.parametrize('flip_normals', [True, False])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_compute_normals_recompute(sphere_stale_normals, flip_normals, inplace):
+    expected = pv.Sphere()
+    expected.clear_data()
+    expected = expected.compute_normals(flip_normals=flip_normals)
+
+    stale_point_normals = sphere_stale_normals.point_data['Normals'].copy()
+    mesh = sphere_stale_normals.compute_normals(flip_normals=flip_normals, inplace=inplace)
+
+    assert (mesh is sphere_stale_normals) == inplace
+    assert mesh.point_data.active_normals_name == 'Normals'
+    assert mesh.cell_data.active_normals_name == 'Normals'
+    assert np.allclose(mesh.point_data['Normals'], expected.point_data['Normals'])
+    assert np.allclose(mesh.cell_data['Normals'], expected.cell_data['Normals'])
+    if not inplace:
+        assert sphere_stale_normals.point_data.active_normals_name == 'Normals'
+        assert sphere_stale_normals.cell_data.active_normals_name == 'Normals'
+        assert np.array_equal(sphere_stale_normals.point_data['Normals'], stale_point_normals)
+
+
+def test_compute_normals_recompute_skipped_normals_untouched(sphere_stale_normals):
+    mesh = sphere_stale_normals.compute_normals(point_normals=False)
+    assert mesh.point_data.active_normals_name == 'Normals'
+    assert np.allclose(mesh.point_data['Normals'], (1.0, 0.0, 0.0))
+    assert not np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
+
+
+@pytest.mark.needs_vtk_version((9, 4, 0), reason='Existing normals recomputed before VTK 9.4')
+def test_compute_normals_recompute_false(sphere_stale_normals):
+    mesh = sphere_stale_normals.compute_normals(recompute=False, flip_normals=True)
+    assert np.allclose(mesh.point_data['Normals'], (1.0, 0.0, 0.0))
+    assert np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
+
+
 def test_compute_normals_inplace(sphere):
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)
