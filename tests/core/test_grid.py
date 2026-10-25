@@ -339,6 +339,17 @@ def test_init_from_dict_variable_length():
     # Each ragged cell must be a non-empty 1D integer array; an empty cell is rejected.
     with pytest.raises(ValueError, match='non-empty 1D array'):
         pv.UnstructuredGrid({CellType.POLYGON: [np.array([], dtype=int)]}, points)
+    with pytest.raises(ValueError, match='non-empty 1D array'):
+        pv.UnstructuredGrid({CellType.POLYGON: [np.array([0.0, 1.0, 2.0])]}, points)
+
+    # A 2D [N, D] integer array is N cells of D points each, also alongside other types.
+    cells = {
+        CellType.POLYGON: np.array([[0, 1, 2, 3], [1, 2, 3, 4]]),
+        CellType.TRIANGLE: np.array([[0, 1, 2]]),
+    }
+    grid = pv.UnstructuredGrid(cells, points)
+    assert grid.celltypes.tolist() == [CellType.POLYGON, CellType.POLYGON, CellType.TRIANGLE]
+    assert grid.get_cell(1).point_ids == [1, 2, 3, 4]
 
 
 def test_init_polyhedron():
