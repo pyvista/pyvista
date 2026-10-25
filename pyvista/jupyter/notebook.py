@@ -75,7 +75,7 @@ def handle_plotter(
         if backend == 'static' and scooby.in_marimo():
             warn_external(
                 'Using static image for notebook display.\n'
-                'Install trame-pyvista for interactive plots in marimo:'
+                'Install or upgrade trame-pyvista for interactive plots in marimo:'
                 ' pip install -U "pyvista[marimo]"'
             )
         elif backend == 'static':

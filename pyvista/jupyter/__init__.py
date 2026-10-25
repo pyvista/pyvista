@@ -281,7 +281,7 @@ def _validate_jupyter_backend(
         return None
     backend = backend.lower()
 
-    if not importlib.util.find_spec('IPython'):
+    if not importlib.util.find_spec('IPython') and not scooby.in_marimo():
         msg = 'Install IPython to display with pyvista in a notebook.'
         raise ImportError(msg)
 

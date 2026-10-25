@@ -478,18 +478,38 @@ def test_display_without_ipython_raises(monkeypatch):
         jupyter_mod._display('image')
 
 
+_TRAME_PYVISTA_SOURCES = pytest.mark.parametrize(
+    'trame_source',
+    ['trame_pyvista.jupyter:show_trame', 'trame_pyvista._make_handler.<locals>._handler'],
+)
+
+
+@_TRAME_PYVISTA_SOURCES
 @pytest.mark.parametrize(
     ('running', 'renders', 'expected'),
     [(True, True, 'trame'), (True, False, 'static'), (False, False, 'trame')],
 )
-def test_resolve_backend_in_marimo(monkeypatch, running, renders, expected):
+def test_resolve_backend_in_marimo(monkeypatch, trame_source, running, renders, expected):
     _fake_marimo(monkeypatch, running=running)
     monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: renders)
     with _without_custom_backends():
         for name in ('trame', 'html'):
             _custom_backends[name] = _mock_handler
-            _custom_backend_sources[name] = 'trame_pyvista.jupyter:show_trame'
+            _custom_backend_sources[name] = trame_source
         assert _resolve_backend() == expected
+
+
+@pytest.mark.parametrize(('running', 'raises'), [(True, False), (False, True)])
+def test_validate_backend_without_ipython(monkeypatch, running, raises):
+    _fake_marimo(monkeypatch, running=running)
+    find_spec = importlib.util.find_spec
+    monkeypatch.setattr(
+        importlib.util, 'find_spec', lambda name: None if name == 'IPython' else find_spec(name)
+    )
+    with (
+        pytest.raises(ImportError, match='Install IPython') if raises else contextlib.nullcontext()
+    ):
+        assert _validate_jupyter_backend('static') == 'static'
 
 
 def test_marimo_renders_trame_pyvista():
@@ -533,12 +553,13 @@ def test_handle_plotter_outside_marimo_suggests_jupyter_extra(monkeypatch):
         handle_plotter(MagicMock())
 
 
-def test_resolve_backend_in_marimo_keeps_other_plugins(monkeypatch):
+@_TRAME_PYVISTA_SOURCES
+def test_resolve_backend_in_marimo_keeps_other_plugins(monkeypatch, trame_source):
     _fake_marimo(monkeypatch)
     monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: False)
     with _without_custom_backends():
         _custom_backends['trame'] = _mock_handler
-        _custom_backend_sources['trame'] = 'trame_pyvista.jupyter:show_trame'
+        _custom_backend_sources['trame'] = trame_source
         _custom_backends['other'] = _mock_handler
         _custom_backend_sources['other'] = 'other_plugin:show'
         assert _resolve_backend() == 'other'
