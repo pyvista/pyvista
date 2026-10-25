@@ -14,6 +14,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import DataSet
+    from pyvista.core.grid import ImageData
+    from pyvista.core.grid import RectilinearGrid
+    from pyvista.core.pointset import PolyData
+    from pyvista.core.pointset import StructuredGrid
 
 _EDGE_CHUNK_CELLS = 1_000_000
 
@@ -71,7 +75,7 @@ def _cell_edge_lengths(
 
 
 def _image_edge_lengths(
-    mesh: pv.ImageData, cell_ids: NDArray[np.signedinteger] | None
+    mesh: ImageData, cell_ids: NDArray[np.signedinteger] | None
 ) -> NDArray[np.float64]:
     """Return the four edges per axis shared by every cell of an image."""
     spacing = np.array(mesh.spacing, dtype=float)[np.array(mesh.dimensions) > 1]
@@ -80,7 +84,7 @@ def _image_edge_lengths(
 
 
 def _rectilinear_edge_lengths(
-    mesh: pv.RectilinearGrid, cell_ids: NDArray[np.signedinteger] | None
+    mesh: RectilinearGrid, cell_ids: NDArray[np.signedinteger] | None
 ) -> NDArray[np.float64]:
     """Return the four edges per axis of the axis-aligned cells of a rectilinear grid."""
     coords = [np.asarray(c, dtype=float) for c in (mesh.x, mesh.y, mesh.z)]
@@ -96,7 +100,7 @@ def _rectilinear_edge_lengths(
 
 
 def _structured_edge_lengths(
-    mesh: pv.StructuredGrid, cell_ids: NDArray[np.signedinteger] | None
+    mesh: StructuredGrid, cell_ids: NDArray[np.signedinteger] | None
 ) -> NDArray[np.floating]:
     """Return the edges of the hexahedral cells of a structured grid."""
     dims = np.array(mesh.dimensions)
@@ -132,7 +136,7 @@ def _edges_per_axis(n_axes: int) -> int:
 
 
 def _polydata_edge_lengths(
-    mesh: pv.PolyData, cell_ids: NDArray[np.signedinteger] | None
+    mesh: PolyData, cell_ids: NDArray[np.signedinteger] | None
 ) -> NDArray[np.float64]:
     """Return the edges of the vertex, line, polygon, and strip cells of polydata."""
     cell_arrays = [mesh.GetVerts(), mesh.GetLines(), mesh.GetPolys(), mesh.GetStrips()]

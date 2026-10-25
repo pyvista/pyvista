@@ -62,6 +62,7 @@ if TYPE_CHECKING:
     from .volume import Volume
 
     _PlaneWidget: TypeAlias = _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget
+    from pyvista.core.pointset import PolyData
 
 _CLOSED_PLOTTER_MSG = 'Cannot add a widget to a closed plotter.'
 _SliderStyleOptions = Literal['classic', 'modern']
@@ -2387,7 +2388,7 @@ class WidgetComponent(_NoNewAttrMixin):
         spline_sliced_mesh = pv.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline: pv.PolyData) -> None:
+        def callback(spline: PolyData) -> None:
             polyline = cast('_vtk.vtkPolyLine', spline.GetCell(0))
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
@@ -2811,7 +2812,7 @@ class WidgetComponent(_NoNewAttrMixin):
             color3: ColorLike,
             *,
             dims: tuple[int, int, int] = (size, size, 1),
-        ) -> pv.ImageData:
+        ) -> ImageData:
             rgb1 = np.array(Color(color1).int_rgb)
             rgb2 = np.array(Color(color2).int_rgb)
             rgb3 = np.array(Color(color3).int_rgb)
@@ -2976,7 +2977,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         def create_radio_button(  # noqa: PLR0917
             fg_color: Color, bg_color: Color, size: int = size, smooth: int = 2
-        ) -> pv.ImageData:
+        ) -> ImageData:
             fg_rgb = np.array(fg_color.int_rgb)
             bg_rgb = np.array(bg_color.int_rgb)
 

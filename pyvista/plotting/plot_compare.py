@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
     from pyvista.plotting._typing import ThemeOptions
+    from pyvista.plotting.text import Text
     from pyvista.plotting.text import TextPositionOptions
     from pyvista.plotting.themes import Theme
 
@@ -473,7 +474,7 @@ def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float, measu
 
 
 def _fit_labels(
-    actors: Sequence[pv.Text],
+    actors: Sequence[Text],
     labels: Sequence[str],
     renderers: Sequence[Any],
     *,

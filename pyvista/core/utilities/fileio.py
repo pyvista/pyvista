@@ -221,7 +221,7 @@ def _map_extensions(*classes: _FileIOT) -> dict[str, _FileIOT]:
     return mapping
 
 
-def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+def _warn_multiblock_nested_field_data(mesh: DataObject) -> None:
     if not isinstance(mesh, pv.MultiBlock):
         return
     iterator = mesh.recursive_iterator('all', node_type='parent')
@@ -809,7 +809,7 @@ def read_exodus(
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast('pv.DataSet', wrap(reader.GetOutput()))
+    return cast('DataSet', wrap(reader.GetOutput()))
 
 
 def read_grdecl(

@@ -146,7 +146,7 @@ def map_loc_to_pos(
     return x, y, size
 
 
-def make_legend_face(face: str | pv.PolyData | None) -> PolyData:
+def make_legend_face(face: str | PolyData | None) -> PolyData:
     """Create the legend face based on the given face.
 
     Parameters
@@ -4253,7 +4253,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         size: Sequence[float] = (0.2, 0.2),
         name: str | None = None,
         loc: str = 'upper right',
-        face: str | pv.PolyData | None = None,
+        face: str | PolyData | None = None,
         font_family: str | None = None,
         background_opacity: float = 1.0,
     ) -> _vtk.vtkLegendBoxActor:

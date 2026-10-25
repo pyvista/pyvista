@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import _Scalar
+    from pyvista.core.grid import ImageData
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import FieldLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -143,7 +144,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         | _vtk.vtkTexture
         | _vtk.vtkImageData
         | NDArray[_Scalar]
-        | Sequence[pv.ImageData]
+        | Sequence[ImageData]
         | None = None,
         **kwargs: Any,
     ) -> None:
@@ -381,7 +382,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         """
         return Texture(self._image()._flip_uniform(1))
 
-    def to_image(self) -> pv.ImageData | None:
+    def to_image(self) -> ImageData | None:
         """Return the texture as an image.
 
         Returns
@@ -393,7 +394,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         """
         return self.GetInput()
 
-    def _image(self) -> pv.ImageData:
+    def _image(self) -> ImageData:
         """Return the texture's image, or raise if it has none."""
         image = self.to_image()
         if image is None:
@@ -848,7 +849,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return Texture(data)
 
 
-def image_to_texture(image: pv.ImageData | _vtk.vtkImageData) -> Texture:
+def image_to_texture(image: ImageData | _vtk.vtkImageData) -> Texture:
     """Convert :class:`pyvista.ImageData` to a :class:`pyvista.Texture`.
 
     Parameters

@@ -882,7 +882,7 @@ class ImageDataFilters(DataSetFilters):
                 mesh[scalars] = mask_
 
             field, scalars_ = _validate_scalars(mesh, scalars)
-            array = cast('pv.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field))
+            array = cast('pyvista_ndarray', get_array(mesh, name=scalars_, preference=field))
             num_components = 1 if array.ndim == 1 else array.shape[1]
 
             # Create a binary foreground/background mask array
@@ -2380,7 +2380,7 @@ class ImageDataFilters(DataSetFilters):
             raise ValueError(msg)
         return scalars_name
 
-    def _flip_uniform(self: ImageData, axis: int) -> pv.ImageData:  # type: ignore[misc]
+    def _flip_uniform(self: ImageData, axis: int) -> ImageData:  # type: ignore[misc]
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -2390,7 +2390,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return cast('pv.ImageData', wrap(alg.GetOutput()))
+        return cast('ImageData', wrap(alg.GetOutput()))
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
@@ -2819,7 +2819,7 @@ class ImageDataFilters(DataSetFilters):
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
 
-        def _empty_output(dtype_: np.dtype[Any]) -> pv.PolyData:
+        def _empty_output(dtype_: np.dtype[Any]) -> PolyData:
             """Return a contour with no cells and an empty boundary labels array."""
             empty = pv.PolyData()
             components = 1 if simplify_output else 2
@@ -2936,7 +2936,7 @@ class ImageDataFilters(DataSetFilters):
         if (dim := alg_input.dimensionality) != 3:
             msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
             raise ValueError(msg)
-        active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
+        active_scalars = cast('pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
             return _empty_output(active_scalars.dtype)
@@ -2952,7 +2952,7 @@ class ImageDataFilters(DataSetFilters):
         if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
-                array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
+                array_=cast('pyvista_ndarray', alg_input.active_scalars),
             )
         _configure_smoothing(
             alg,
@@ -2968,7 +2968,7 @@ class ImageDataFilters(DataSetFilters):
         with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
-        output: pv.PolyData = _get_output(alg)
+        output: PolyData = _get_output(alg)
 
         # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
         with contextlib.suppress(KeyError):
@@ -5770,7 +5770,7 @@ class ImageDataFilters(DataSetFilters):
         replacement_value: float | VectorLikeFloat | None,
     ) -> ImageData:
         input_array = cast(
-            'pv.pyvista_ndarray',
+            'pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
         )
         preference: PointLiteral | CellLiteral = (
