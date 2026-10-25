@@ -5694,6 +5694,23 @@ class BasePlotter(_BoundsSizeMixin):
         name : str, optional
             The title of the scalar bar to update.
 
+        Examples
+        --------
+        Update the range of a named scalar bar.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['height'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
+        ...     mesh,
+        ...     scalars='height',
+        ...     clim=(-0.5, 0.5),
+        ...     scalar_bar_args={'title': 'Height'},
+        ... )
+        >>> pl.update_scalar_bar_range((-1, 1), name='Height')
+        >>> pl.show()
+
         """
         if isinstance(clim, (float, int)):
             clim = (-clim, clim)
