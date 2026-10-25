@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -22,6 +23,7 @@ from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.utilities._strip import _StripTrace
 from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import PointLiteral
@@ -1553,7 +1555,7 @@ class PolyDataFilters(DataSetFilters):
         and strips are removed.
 
         Point data is interpolated onto the dash end points. Cell data is copied from
-        the parent line cell, unless ``join`` merges those cells together.
+        the line cell each dash lies on.
 
         .. versionadded:: 0.50
 
@@ -1583,8 +1585,8 @@ class PolyDataFilters(DataSetFilters):
 
         join : bool, default: True
             Join connected line cells into polylines with :func:`strip` first so the
-            pattern runs continuously across them. Joined cells have no cell data of
-            their own, so the input's cell data is dropped.
+            pattern runs continuously across them. A dash crossing into a cell with
+            different cell data is split there, so each piece keeps its own cell's data.
 
         inplace : bool, default: False
             Update this dataset in place. When ``False``, return a new dataset.
@@ -1623,14 +1625,29 @@ class PolyDataFilters(DataSetFilters):
         >>> dashed = circle.dash_lines(pattern=[6, 2, 2, 2])
         >>> dashed.plot(color='black', line_width=4, cpos='xy')
 
+        The dashes keep the cell data of the edges they lie on. The pattern runs
+        across the joined edges, and a dash is split where the data changes.
+
+        >>> import numpy as np
+        >>> centers = circle.cell_centers().points
+        >>> circle.cell_data['angle'] = np.degrees(
+        ...     np.arctan2(centers[:, 1], centers[:, 0])
+        ... )
+        >>> dashed = circle.dash_lines()
+        >>> dashed.plot(scalars='angle', line_width=4, cpos='xy')
+
         """
         runs, period = _resolve_dash_pattern(style, pattern)
         if scale is not None:
             _validation.check_finite(scale, name='scale')
             _validation.check_greater_than(scale, 0, name='scale')
 
-        source = self.strip(join=True, progress_bar=progress_bar) if join else self
-        output = _dashed_polydata(source, runs, period=period, scale=scale)
+        source, segment_cells = self, None
+        if join:
+            source, segment_cells = _join_lines(self, progress_bar=progress_bar)
+        output = _dashed_polydata(
+            source, self, runs, period=period, scale=scale, segment_cells=segment_cells
+        )
         for array_name, array in self.field_data.items():
             output.field_data[array_name] = array
         _copy_active_names(self.point_data, output.point_data)
@@ -4180,11 +4197,16 @@ class PolyDataFilters(DataSetFilters):
 
         Also note that if triangle strips or polylines are defined in
         the input they are passed through and not joined nor
-        extended. (If you wish to strip these use ``triangulate``
-        filter to fragment the input into triangles and lines prior to
-        running this filter.)
+        extended, except that ``join`` joins polylines too. (If you
+        wish to strip these use ``triangulate`` filter to fragment the
+        input into triangles and lines prior to running this filter.)
 
         This filter implements :vtk:`vtkStripper`.
+
+        .. versionchanged:: 0.50
+            ``pass_cell_data`` and ``pass_cell_ids`` give one tuple per line
+            segment and keep the input's field data, and ``join`` keeps to
+            the input's edges.
 
         Parameters
         ----------
@@ -4198,14 +4220,17 @@ class PolyDataFilters(DataSetFilters):
             strip, and/or the maximum number of lines in a polyline.
 
         pass_cell_data : bool, default: False
-            Enable/Disable passing of the cell data in the input to the
-            output as FieldData. Note the field data is transformed.
+            Pass the cell data of the input to the output as field data,
+            with one tuple per piece of the output in cell order: each
+            vertex and polygon cell, each line segment and each triangle
+            of a strip. A line with fewer than two points holds no
+            segment, so it adds no tuple.
 
         pass_cell_ids : bool, default: False
-            If ``True``, the output polygonal dataset will have a
-            cell data array that holds the cell index of the original
-            3D cell that produced each output cell. This is useful for
-            picking. The default is ``False`` to conserve memory.
+            If ``True``, the output has a field data array
+            ``'vtkOriginalCellIds'`` holding the id of the input cell
+            that produced each piece of the output, in the same order
+            as ``pass_cell_data``.
 
         pass_point_ids : bool, default: False
             If ``True``, the output polygonal dataset will have a
@@ -4232,15 +4257,24 @@ class PolyDataFilters(DataSetFilters):
         >>> stripped.plot(show_edges=True, line_width=3)
 
         """
+        trace = _StripTrace(self, join=join)
         alg = _vtk.vtkStripper()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(trace.source)
         alg.SetJoinContiguousSegments(join)
         alg.SetMaximumLength(max_length)
-        alg.SetPassCellDataAsFieldData(pass_cell_data)
-        alg.SetPassThroughCellIds(pass_cell_ids)
         alg.SetPassThroughPointIds(pass_point_ids)
         _update_alg(alg, progress_bar=progress_bar, message='Stripping Mesh')
-        return _get_output(alg)
+        output = _get_output(alg)
+        trace.restore(output)
+        if pass_cell_data or pass_cell_ids:
+            # the stripper's own tracing skips segments and miscounts after verts
+            ids = trace.original_cell_ids(output)
+            if pass_cell_data:
+                for name, array in self.cell_data.items():
+                    output.field_data[name] = np.asarray(array)[ids]
+            if pass_cell_ids:
+                output.field_data['vtkOriginalCellIds'] = ids
+        return output
 
     def collision(  # type: ignore[misc]
         self: PolyData,
@@ -4982,8 +5016,50 @@ def _drawn_intervals(
     return intervals
 
 
+def _join_lines(
+    mesh: PolyData, *, progress_bar: bool
+) -> tuple[PolyData, NDArray[np.int64] | None]:
+    """Return the lines of a mesh joined by :func:`strip`, and the input cell of each segment.
+
+    The cells are traced only when the mesh has cell data to carry.
+    """
+    # strip the lines on their own so the polygons are not traced for nothing
+    lines = pv.PolyData(mesh.points, lines=mesh.lines)
+    ghosts = _vtk.vtkDataSetAttributes.GhostArrayName()
+    if ghosts in mesh.cell_data:
+        lines.cell_data[ghosts] = np.asarray(mesh.cell_data[ghosts])[
+            mesh.n_verts : mesh.n_verts + mesh.n_lines
+        ]
+    traced = bool(mesh.cell_data)
+    joined = lines.strip(join=True, pass_cell_ids=traced, progress_bar=progress_bar)
+    if not traced:
+        return joined, None
+    return joined, np.asarray(joined.field_data['vtkOriginalCellIds']) + mesh.n_verts
+
+
+def _line_cell_data_labels(mesh: PolyData) -> NDArray[np.intp]:
+    """Return one label per line cell, equal for lines whose cell data rows all match."""
+    lines = slice(mesh.n_verts, mesh.n_verts + mesh.n_lines)
+    labels = []
+    for array in mesh.cell_data.values():
+        rows = np.ascontiguousarray(np.asarray(array).reshape(mesh.n_cells, -1)[lines])
+        if np.issubdtype(rows.dtype, np.floating):
+            # adding zero turns -0.0 into 0.0, so the two compare equal
+            rows = rows + 0.0
+        # compare the raw bytes so that NaN rows match one another
+        raw = rows.view(np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))).ravel()
+        labels.append(np.unique(raw, return_inverse=True)[1].ravel())
+    return np.unique(np.column_stack(labels), axis=0, return_inverse=True)[1].ravel()
+
+
 def _build_dashes(
-    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
+    source: PolyData,
+    original: PolyData,
+    runs: list[tuple[float, float]] | None,
+    *,
+    period: float,
+    scale: float,
+    segment_cells: NDArray[np.int64] | None,
 ) -> tuple[
     NDArray[np.int64],
     NDArray[np.int64],
@@ -4991,7 +5067,10 @@ def _build_dashes(
     NDArray[np.int64],
     NDArray[np.int64],
 ]:
-    """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
+    """Return blend indices, weights, line connectivity and original cell ids for the dashes."""
+    # a joined source has its own cells, so each segment carries the cell it came from
+    labels = None if segment_cells is None else _line_cell_data_labels(original)
+    consumed = 0
     points = source.points
     cycle = period * scale
     index_a: list[int] = []
@@ -5010,6 +5089,8 @@ def _build_dashes(
         position += 1 + size
         parent = cell
         cell += 1
+        first_segment = consumed
+        consumed += max(size - 1, 0)
         if size < 2:
             continue
         distance = np.linalg.norm(np.diff(points[ids], axis=0), axis=1)
@@ -5017,22 +5098,34 @@ def _build_dashes(
         total = float(cumulative[-1])
         if total == 0.0:
             continue
+        owners = np.full(size - 1, parent)
+        breaks = np.zeros(0)
+        if segment_cells is not None and labels is not None:
+            owners = segment_cells[first_segment:consumed]
+            # repeated points leave segments of no length, which no dash can lie on
+            drawn = np.flatnonzero(distance > 0)
+            label = labels[owners[drawn] - original.n_verts]
+            # a dash is cut where the cell data changes from one segment to the next
+            breaks = cumulative[drawn[1:][label[1:] != label[:-1]]]
         for start, stop in _drawn_intervals(runs, total=total, cycle=cycle, scale=scale):
-            # keep the polyline's own points so the dash still follows its bends
-            inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
-            blend = [
-                _locate(ids, cumulative, start),
-                *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
-                _locate(ids, cumulative, stop),
-            ]
-            lines.append(len(blend))
-            for left, right, fraction in blend:
-                # the points are appended in order, so each id is the count so far
-                lines.append(len(index_a))
-                index_a.append(left)
-                index_b.append(right)
-                weight.append(fraction)
-            cells.append(parent)
+            bounds = [start, *breaks[(breaks > start) & (breaks < stop)].tolist(), stop]
+            for low, high in itertools.pairwise(bounds):
+                # keep the polyline's own points so the dash still follows its bends
+                inner = np.flatnonzero((cumulative > low) & (cumulative < high))
+                blend = [
+                    _locate(ids, cumulative, low),
+                    *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
+                    _locate(ids, cumulative, high),
+                ]
+                lines.append(len(blend))
+                for left, right, fraction in blend:
+                    # the points are appended in order, so each id is the count so far
+                    lines.append(len(index_a))
+                    index_a.append(left)
+                    index_b.append(right)
+                    weight.append(fraction)
+                segment = int(np.searchsorted(cumulative, (low + high) / 2.0)) - 1
+                cells.append(int(owners[segment]))
     return (
         np.asarray(index_a, dtype=np.int64),
         np.asarray(index_b, dtype=np.int64),
@@ -5043,16 +5136,27 @@ def _build_dashes(
 
 
 def _dashed_polydata(
-    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float | None
+    source: PolyData,
+    original: PolyData,
+    runs: list[tuple[float, float]] | None,
+    *,
+    period: float,
+    scale: float | None,
+    segment_cells: NDArray[np.int64] | None = None,
 ) -> PolyData:
-    """Return a dataset holding only the drawn parts of a source's line cells."""
+    """Return a dataset holding only the drawn parts of a source's line cells.
+
+    The source is the original mesh, or its lines joined into polylines over the same
+    points with the original cell of each segment. Point and cell data come from the
+    original either way.
+    """
     output = pv.PolyData()
     if source.n_lines == 0:
         return output
     # a two hundredth of the bounding box diagonal gives a readable default
     interval = source.length / 200.0 if scale is None else float(scale)
     index_a, index_b, weight, lines, cells = _build_dashes(
-        source, runs, period=period, scale=interval
+        source, original, runs, period=period, scale=interval, segment_cells=segment_cells
     )
     if lines.size == 0:
         return output
@@ -5060,13 +5164,13 @@ def _dashed_polydata(
         source.points, index_a=index_a, index_b=index_b, weight=weight
     )
     output.lines = lines
-    for name, array in source.point_data.items():
+    for name, array in original.point_data.items():
         # set_array rather than an item assignment, which would activate the first array
         output.point_data.set_array(
             _interpolate_rows(np.asarray(array), index_a=index_a, index_b=index_b, weight=weight),
             name,
         )
-    for name, array in source.cell_data.items():
+    for name, array in original.cell_data.items():
         output.cell_data.set_array(np.asarray(array)[cells], name)
     return output
 
