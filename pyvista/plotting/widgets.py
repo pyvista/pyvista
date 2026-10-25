@@ -1862,6 +1862,18 @@ class WidgetComponent(_NoNewAttrMixin):
         :vtk:`vtkActor`
             VTK actor of the mesh.
 
+        Examples
+        --------
+        Shows an interactive slider controlling the range of the threshold.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_random_hills()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_threshold(mesh)
+        >>> pl.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
 

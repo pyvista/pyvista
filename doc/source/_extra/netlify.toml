@@ -507,3 +507,33 @@ to = "/api/plotting/_autosummary/pyvista.Light.world_position.html"
 from = "/api/utilities/_autosummary/pyvista.ColorLike.html"
 status = 301
 to = "/api/core/typing.html#pyvista.typing.ColorLike"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.ImageData.extent.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core._structured_data._StructuredDataMixin.extent.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.ImageData.offset.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core._structured_data._StructuredDataMixin.offset.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Grid.dimensions.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core._structured_data._StructuredDataMixin.dimensions.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.RectilinearGrid.dimensions.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core._structured_data._StructuredDataMixin.dimensions.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.StructuredGrid.dimensions.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core._structured_data._StructuredDataMixin.dimensions.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.ExplicitStructuredGrid.dimensions.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core._structured_data._StructuredDataMixin.dimensions.html"

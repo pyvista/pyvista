@@ -8601,12 +8601,13 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     >>> dataset = examples.download_reservoir()
     >>> dataset
     ExplicitStructuredGrid (...)
-      N Cells:    47610
-      N Points:   58433
-      X Bounds:   3.104e+05, 3.177e+05
-      Y Bounds:   7.477e+06, 7.486e+06
-      Z Bounds:   -2.472e+03, -1.577e+03
-      N Arrays:   4
+      N Cells:      47610
+      N Points:     58433
+      X Bounds:     3.104e+05, 3.177e+05
+      Y Bounds:     7.477e+06, 7.486e+06
+      Z Bounds:     -2.472e+03, -1.577e+03
+      Dimensions:   47, 70, 16
+      N Arrays:     4
 
     The ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays are the structured
     indices of each cell. Plot the grid colored by its layer index ``'BLOCK_K'``.
