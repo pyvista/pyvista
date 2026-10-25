@@ -651,7 +651,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """Return whether two cells are equivalent.
 
         Two cells are equivalent when their type, point ids, and point
-        coordinates match.  The connectivity is part of the comparison, so a
+        coordinates match. The connectivity is part of the comparison, so a
         copy that shares the point coordinates but not the point ids is not
         equivalent to the cell it was copied from.
 
