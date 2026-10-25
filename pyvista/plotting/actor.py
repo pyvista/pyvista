@@ -610,8 +610,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
-    def backface_prop(self, value: Property) -> None:
-        self.SetBackfaceProperty(value)
+    def backface_prop(self, value: Property | None) -> None:
+        self.SetBackfaceProperty(value)  # type: ignore[arg-type]  # VTK accepts None
 
     def add_shader_replacement(
         self,

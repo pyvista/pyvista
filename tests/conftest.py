@@ -640,13 +640,12 @@ _RENDERING_MODULES = frozenset(
     }
 )
 
-# Typing case files whose runtime halves read downloaded example files.
-_DOWNLOAD_CASE_MODULES = frozenset(
-    {
-        'typing/cases/examples/download_loaders.py',
-        'typing/cases/examples/get_example.py',
-    }
-)
+# Typing case files whose runtime halves read downloaded example files, mapped to the
+# text naming those cases (empty matches every case in the file).
+_DOWNLOAD_CASES = {
+    'typing/cases/examples/download_loaders.py': '',
+    'typing/cases/examples/get_example.py': "'electronics_cooling'",
+}
 
 # Subset of ``_RENDERING_MODULES`` importing rendering at module scope, so on a
 # rendering-free backend they must be skipped at collection time (a marker is too late).
@@ -697,7 +696,7 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
 def pytest_collection_modifyitems(config, items):  # noqa: ARG001
     """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` / ``needs_download`` markers.
 
-    See ``_RENDERING_*``, ``_IO_EXTRA_*`` and ``_DOWNLOAD_CASE_MODULES`` above. The
+    See ``_RENDERING_*``, ``_IO_EXTRA_*`` and ``_DOWNLOAD_CASES`` above. The
     ``needs_io_extra`` marking only fires when the relevant ``HAS_IO_*`` probe reports the module
     absent, so it is a no-op on a full VTK build.
     """
@@ -724,7 +723,12 @@ def pytest_collection_modifyitems(config, items):  # noqa: ARG001
         if _name_needs_io_extra(item):
             item.add_marker(io_extra_mark)
         # Only the runtime half reads files; the static half checks without them
-        if rel in _DOWNLOAD_CASE_MODULES and item.name.endswith('[runtime]'):
+        download_text = _DOWNLOAD_CASES.get(rel)
+        if (
+            download_text is not None
+            and download_text in item.name
+            and item.name.endswith('[runtime]')
+        ):
             item.add_marker(pytest.mark.needs_download)
 
 

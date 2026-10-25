@@ -613,7 +613,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
-    ) -> tuple[FieldAssociation, pyvista_ndarray | None]:
+    ) -> tuple[FieldAssociation, pyvista_ndarray]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -676,9 +676,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfoTuple(field, name)
 
         if field == FieldAssociation.POINT:
-            return field, self.point_data.active_scalars
+            return field, self.point_data[name]
         else:  # must be cell
-            return field, self.cell_data.active_scalars
+            return field, self.cell_data[name]
 
     def set_active_vectors(
         self: Self,

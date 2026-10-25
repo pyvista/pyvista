@@ -3803,7 +3803,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        tuple
+        tuple[int, int, int, int]
             Pick position as ``x0, y0, x1, y1``.
 
         """

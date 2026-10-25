@@ -2341,11 +2341,7 @@ class MultiBlock(
                     )
                 else:
                     try:
-                        field, scalars_out = block.set_active_scalars(name, preference=preference)
-                        if scalars_out is None:
-                            field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
-                        else:
-                            scalars = scalars_out
+                        field, scalars = block.set_active_scalars(name, preference=preference)
                     except KeyError:
                         if not allow_missing:
                             raise

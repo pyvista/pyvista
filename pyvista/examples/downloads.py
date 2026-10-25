@@ -459,7 +459,7 @@ def download_masonry_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -502,7 +502,7 @@ def download_usa_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -547,7 +547,7 @@ def download_puppy_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -2070,7 +2070,7 @@ def download_bird_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -2264,7 +2264,7 @@ def download_cake_easy_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -2397,7 +2397,7 @@ def download_gourds_texture(*, zoom: bool = False, load: bool = True) -> Texture
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -3139,7 +3139,7 @@ def download_emoji_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -3502,7 +3502,7 @@ def download_sky_box_nz_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -4641,7 +4641,7 @@ def download_crater_imagery(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -4995,7 +4995,7 @@ def download_rgba_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -5037,7 +5037,7 @@ def download_vtk_logo(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -6977,7 +6977,7 @@ def download_parched_canal_4k(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
