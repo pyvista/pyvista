@@ -5,6 +5,7 @@ import itertools
 import re
 import sys
 from types import GeneratorType
+import warnings
 
 import numpy as np
 import pytest
@@ -346,14 +347,19 @@ def test_cell_no_field_data():
 
 @pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_copy_generic(cell):
+    n_faces = cell.n_faces
     cell = cell.copy()
+    assert cell.n_faces == n_faces
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
     cell_copy.points[:] = 1000
     assert cell_copy != cell
 
     cell_copy = cell.copy(deep=False)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
+    assert np.shares_memory(cell_copy.points, cell.points)
     cell_copy.points[:] = 1000
     assert cell_copy == cell
 
@@ -363,13 +369,47 @@ def test_cell_copy():
     assert isinstance(cell, pv.Cell)
     cell_copy = cell.copy(deep=True)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
     cell_copy.points[:] = 0
     assert cell_copy != cell
 
     cell_copy = cell.copy(deep=False)
     assert cell_copy == cell
+    assert cell_copy.point_ids == cell.point_ids
     cell_copy.points[:] = 0
     assert cell_copy == cell
+
+
+def test_cell_eq_compares_point_ids(monkeypatch):
+    points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+    cell = pv.PolyData(points, faces=[3, 0, 1, 2]).get_cell(0)
+
+    # Same coordinates in the same order, but stored under different point ids
+    shifted = pv.PolyData(np.vstack((points, points)), faces=[3, 3, 4, 5]).get_cell(0)
+
+    assert cell.type == shifted.type
+    assert np.array_equal(cell.points, shifted.points)
+    assert cell.point_ids != shifted.point_ids
+    same = cell
+    assert cell == same
+    assert cell != shifted
+    assert cell == cell.copy(deep=True)
+    assert cell != 'not a cell'
+    assert cell != pv.PolyData(points, lines=[3, 0, 1, 2]).get_cell(0)
+
+    poly = example_cells.Polyhedron().get_cell(0)
+    assert poly == poly.copy(deep=True)
+    assert poly == poly.copy(deep=False)
+    with warnings.catch_warnings(), monkeypatch.context() as m:
+        warnings.simplefilter('ignore', DeprecationWarning)
+        m.setattr(pv.core.cell, '_SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS', False)
+        assert cell == cell.copy(deep=True)
+        assert poly == poly.copy(deep=True)
+    flipped_faces = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    flipped = pv.UnstructuredGrid(
+        [len(flipped_faces), *flipped_faces], [pv.CellType.POLYHEDRON], poly.points.copy()
+    ).get_cell(0)
+    assert poly != flipped
 
 
 @pytest.mark.parametrize('cell', cells, ids=cell_ids)

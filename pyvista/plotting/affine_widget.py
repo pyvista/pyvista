@@ -298,13 +298,17 @@ class AffineWidget3D(_NoNewAttrMixin):
             actor.user_matrix = matrix
 
         if always_visible:
+            # Draw the widget almost a third of the depth range in front of the scene.
+            # VTK 9.8 measures offset units in depth-buffer steps.
+            depth_steps = 2**24 if pv.vtk_version_info >= (9, 7, 99) else 65000  # >= (9, 8, 0)
+            units = -20000 * depth_steps / 65000
             for actor in self._arrows + self._circles:
                 mapper = actor.mapper
                 if mapper is None:  # pragma: no cover
                     msg = 'The widget actor was added without a mapper.'
                     raise RuntimeError(msg)
                 mapper.SetResolveCoincidentTopologyToPolygonOffset()
-                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
+                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, units)
 
     def _get_world_coord_rot(
         self, interactor: _vtk.vtkRenderWindowInteractor

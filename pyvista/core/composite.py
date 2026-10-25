@@ -244,7 +244,9 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))
+                # Leaves are validated as their own level wraps them
+                nested = isinstance(block, _vtk.vtkMultiBlockDataSet)
+                self.SetBlock(i, wrap(block, validate=False) if nested else wrap(block))
 
     def _items(self) -> Iterable[tuple[str | None, _BlockType]]:
         yield from zip(self.keys(), self, strict=True)
@@ -2242,23 +2244,25 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        self.CompositeShallowCopy(to_copy)
+        if to_copy is self:
+            return
+        # Copy one level at a time so each block is visited once
+        self.SetNumberOfBlocks(0)
+        # Base-class call: copies field data and information, not blocks
+        _vtk.vtkCompositeDataSet.CompositeShallowCopy(self, to_copy)
+        n_blocks = to_copy.GetNumberOfBlocks()
+        self.SetNumberOfBlocks(n_blocks)
+        for i in range(n_blocks):
+            block = to_copy.GetBlock(i)
+            if recursive and isinstance(block, _vtk.vtkMultiBlockDataSet):
+                nested = MultiBlock()
+                nested.shallow_copy(block, recursive=True)
+                block = nested
+            self.SetBlock(i, block)
+            if to_copy.HasMetaData(i):
+                self.GetMetaData(i).Copy(to_copy.GetMetaData(i), 0)
         self._sync_user_dict()
         self.wrap_nested()
-
-        # Shallow copy creates new instances of nested multiblocks
-        # Iterate through the blocks to fix this recursively
-        def _replace_nested_multiblocks(
-            this_object_: MultiBlock[Any], new_object: _vtk.vtkMultiBlockDataSet
-        ) -> None:
-            for i, this_block in enumerate(this_object_):
-                if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
-                    block_to_copy = cast('MultiBlock', new_object.GetBlock(i))
-                    this_object_.replace(i, block_to_copy)
-                    _replace_nested_multiblocks(cast('MultiBlock[Any]', this_block), block_to_copy)
-
-        if not recursive:
-            _replace_nested_multiblocks(self, to_copy)
 
     def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
