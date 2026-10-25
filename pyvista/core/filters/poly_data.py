@@ -2088,14 +2088,15 @@ class PolyDataFilters(DataSetFilters):
         prevent blurry edges (due to Phong shading).
 
         Requested normals are stored as the active ``"Normals"`` array of the
-        point data and/or cell data, replacing any previous active normals
-        there (see ``recompute``). Normals that are not requested are left
-        unchanged.
+        point data and/or cell data (see ``recompute``). A previously active
+        normals array with another name is kept as an inactive array. Normals
+        that are not requested are left unchanged.
 
         .. warning::
 
            - Normals can only be computed for polygons and triangle strips.
-             Point clouds are not supported.
+             A mesh with only vertex or line cells is returned unchanged if it
+             already has active normals of a requested kind.
            - Triangle strips are broken up into triangle polygons.
              You may want to restrip the triangles.
 
@@ -2147,8 +2148,8 @@ class PolyDataFilters(DataSetFilters):
             :attr:`~pyvista.DataSetAttributes.active_normals`. If ``False`` and
             every requested kind of normals (point and/or cell) is already
             active, the mesh is returned unchanged and all other options are
-            ignored. If only some are, all requested normals are recomputed as
-            with ``True``.
+            ignored. Otherwise, all requested normals are recomputed as with
+            ``True``.
 
             .. versionadded:: 0.50
 
@@ -2161,8 +2162,8 @@ class PolyDataFilters(DataSetFilters):
         Raises
         ------
         TypeError
-            If the mesh contains only ``LINE`` or ``VERTEX`` cell types.
-            Normals cannot be computed for these cells.
+            If the mesh contains only ``LINE`` or ``VERTEX`` cell types and has
+            no active normals of a requested kind.
 
         Returns
         -------
@@ -2231,8 +2232,19 @@ class PolyDataFilters(DataSetFilters):
             (point_normals, self.point_data.active_normals_name),
             (cell_normals, self.cell_data.active_normals_name),
         )
-        if not recompute and all(name is not None for compute, name in old_normals if compute):
+        requested = [name for compute, name in old_normals if compute]
+        no_polygons = (self.n_verts + self.n_lines) == self.n_cells
+        if (not recompute and all(name is not None for name in requested)) or (
+            no_polygons and any(name is not None for name in requested)
+        ):
             return self if inplace else self.copy(deep=False)
+        if no_polygons:
+            msg = (
+                'Normals cannot be computed for PolyData containing only vertex cells '
+                '(e.g. point clouds)\n'
+                'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
+            )
+            raise TypeError(msg)
 
         # track original point indices
         if split_vertices:
@@ -2262,27 +2274,15 @@ class PolyDataFilters(DataSetFilters):
         if any(
             compute and data.active_normals_name != 'Normals'
             for data, (compute, _) in zip(attributes, old_normals, strict=True)
-        ):
-            if (self.n_verts + self.n_lines) == self.n_cells:
-                msg = (
-                    'Normals cannot be computed for PolyData containing only vertex cells '
-                    '(e.g. point clouds)\n'
-                    'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
-                )
-                raise TypeError(msg)
-            else:  # pragma: no cover
-                msg = (
-                    'Normals could not be computed for unknown reasons.\n'
-                    'Please report the issue at https://github.com/pyvista/pyvista/issues.'
-                )
-                raise RuntimeError(msg)
+        ):  # pragma: no cover
+            msg = (
+                'Normals could not be computed for unknown reasons.\n'
+                'Please report the issue at https://github.com/pyvista/pyvista/issues.'
+            )
+            raise RuntimeError(msg)
         for data, (compute, name) in zip(attributes, old_normals, strict=True):
-            if name is None or name not in data:
-                continue
-            if not compute:
+            if not compute and name is not None:
                 data.active_normals_name = name
-            elif name != 'Normals':
-                del data[name]
 
         if inplace:
             self.copy_from(mesh, deep=False)

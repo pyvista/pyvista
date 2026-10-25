@@ -1005,11 +1005,25 @@ def test_compute_normals_recompute(sphere_stale_normals, flip_normals, inplace):
         assert np.array_equal(sphere_stale_normals.point_data['Normals'], stale_point_normals)
 
 
+def _clean_sphere_normals(**kwargs):
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    return sphere.compute_normals(**kwargs)
+
+
 def test_compute_normals_recompute_skipped_normals_untouched(sphere_stale_normals):
+    expected = _clean_sphere_normals(point_normals=False)
     mesh = sphere_stale_normals.compute_normals(point_normals=False)
     assert mesh.point_data.active_normals_name == 'Normals'
     assert np.allclose(mesh.point_data['Normals'], (1.0, 0.0, 0.0))
-    assert not np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
+    assert np.allclose(mesh.cell_data['Normals'], expected.cell_data['Normals'])
+
+
+def test_compute_normals_recompute_neither_requested(sphere_stale_normals):
+    mesh = sphere_stale_normals.compute_normals(point_normals=False, cell_normals=False)
+    for data in (mesh.point_data, mesh.cell_data):
+        assert data.active_normals_name == 'Normals'
+        assert np.allclose(data['Normals'], (1.0, 0.0, 0.0))
 
 
 def test_compute_normals_recompute_stale_cell_normals_not_reused(sphere_stale_normals):
@@ -1024,17 +1038,22 @@ def test_compute_normals_recompute_stale_cell_normals_not_reused(sphere_stale_no
 
 
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_compute_normals_recompute_replaces_custom_name(sphere_stale_normals, dtype):
+def test_compute_normals_recompute_keeps_custom_name_inactive(sphere_stale_normals, dtype):
+    unflipped = _clean_sphere_normals()
     mesh = sphere_stale_normals
     for data in (mesh.point_data, mesh.cell_data):
         data['CustomNormals'] = data.pop('Normals').astype(dtype)
         data.active_normals_name = 'CustomNormals'
 
     result = mesh.compute_normals(flip_normals=True)
-    for data in (result.point_data, result.cell_data):
+    for data, unflipped_data in (
+        (result.point_data, unflipped.point_data),
+        (result.cell_data, unflipped.cell_data),
+    ):
         assert data.active_normals_name == 'Normals'
-        assert 'CustomNormals' not in data
-        assert not np.allclose(data['Normals'], (1.0, 0.0, 0.0))
+        assert np.allclose(data['Normals'], -unflipped_data['Normals'])
+        assert data['CustomNormals'].dtype == dtype
+        assert np.allclose(data['CustomNormals'], (1.0, 0.0, 0.0))
 
 
 def _sphere_custom_normals(dtype, *, point=True, cell=True):
@@ -1077,21 +1096,31 @@ def test_compute_normals_recompute_false_checks_requested_only():
     assert mesh.cell_data.keys() == []
 
 
-@pytest.mark.parametrize(('point', 'cell'), [(True, False), (False, True)])
-def test_compute_normals_recompute_false_partial_recomputes_all(point, cell):
-    expected = pv.Sphere()
-    expected.clear_data()
-    expected = expected.compute_normals(flip_normals=True)
-
+@pytest.mark.parametrize(('point', 'cell'), [(True, False), (False, True), (False, False)])
+def test_compute_normals_recompute_false_otherwise_recomputes_all(point, cell):
+    unflipped = _clean_sphere_normals()
     sphere = _sphere_custom_normals(np.float32, point=point, cell=cell)
     mesh = sphere.compute_normals(recompute=False, flip_normals=True)
-    for data, expected_data in (
-        (mesh.point_data, expected.point_data),
-        (mesh.cell_data, expected.cell_data),
+    for data, unflipped_data, had_custom in (
+        (mesh.point_data, unflipped.point_data, point),
+        (mesh.cell_data, unflipped.cell_data, cell),
     ):
         assert data.active_normals_name == 'Normals'
-        assert 'CustomNormals' not in data
-        assert np.allclose(data['Normals'], expected_data['Normals'])
+        assert np.allclose(data['Normals'], -unflipped_data['Normals'])
+        assert ('CustomNormals' in data) == had_custom
+
+
+@pytest.mark.parametrize('recompute', [True, False])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_compute_normals_no_polygons_keeps_existing(recompute, inplace):
+    cloud = pv.PolyData(pv.Sphere().points)
+    cloud.point_data['CustomNormals'] = np.tile((1.0, 0.0, 0.0), (cloud.n_points, 1))
+    cloud.point_data.active_normals_name = 'CustomNormals'
+    mesh = cloud.compute_normals(recompute=recompute, inplace=inplace)
+    assert (mesh is cloud) == inplace
+    assert mesh.point_data.keys() == ['CustomNormals']
+    assert mesh.point_data.active_normals_name == 'CustomNormals'
+    assert mesh.cell_data.keys() == []
 
 
 def test_compute_normals_inplace(sphere):
