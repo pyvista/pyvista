@@ -447,9 +447,9 @@ def test_in_notebook(monkeypatch, ipykernel, marimo, expected):
     assert jupyter_mod._in_notebook() is expected
 
 
-def _fake_marimo(monkeypatch):
+def _fake_marimo(monkeypatch, *, running=True):
     """Run as a marimo notebook outside a Jupyter kernel and return the fake marimo module."""
-    marimo = SimpleNamespace(running_in_notebook=lambda: True, output=MagicMock())
+    marimo = SimpleNamespace(running_in_notebook=lambda: running, output=MagicMock())
     monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: False)
     monkeypatch.setitem(sys.modules, 'marimo', marimo)
     return marimo
@@ -478,9 +478,12 @@ def test_display_without_ipython_raises(monkeypatch):
         jupyter_mod._display('image')
 
 
-@pytest.mark.parametrize(('renders', 'expected'), [(True, 'trame'), (False, 'static')])
-def test_resolve_backend_in_marimo(monkeypatch, renders, expected):
-    _fake_marimo(monkeypatch)
+@pytest.mark.parametrize(
+    ('running', 'renders', 'expected'),
+    [(True, True, 'trame'), (True, False, 'static'), (False, False, 'trame')],
+)
+def test_resolve_backend_in_marimo(monkeypatch, running, renders, expected):
+    _fake_marimo(monkeypatch, running=running)
     monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: renders)
     with _without_custom_backends():
         for name in ('trame', 'html'):
@@ -495,6 +498,12 @@ def test_marimo_renders_trame_pyvista():
 
 def test_marimo_renders_trame_pyvista_without_anywidget(monkeypatch):
     monkeypatch.setitem(sys.modules, 'anywidget', None)
+    assert not jupyter_mod._marimo_renders_trame_pyvista()
+
+
+def test_marimo_renders_trame_pyvista_old_widget(monkeypatch):
+    old_jupyter = SimpleNamespace(Widget=type('Widget', (), {}))
+    monkeypatch.setitem(sys.modules, 'trame_pyvista.jupyter', old_jupyter)
     assert not jupyter_mod._marimo_renders_trame_pyvista()
 
 

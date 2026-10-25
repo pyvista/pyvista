@@ -242,7 +242,7 @@ def _resolve_backend() -> str:
     """
     _ensure_entry_points()
     sources = _custom_backend_sources
-    if not scooby.in_ipykernel() and scooby.in_marimo() and not _marimo_renders_trame_pyvista():
+    if scooby.in_marimo() and not _marimo_renders_trame_pyvista():
         sources = {
             name: source
             for name, source in sources.items()

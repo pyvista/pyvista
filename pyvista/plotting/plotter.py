@@ -8724,9 +8724,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline in a Jupyter
-        or marimo notebook. Defaults to ``True`` when running in a
-        Jupyter kernel or a marimo notebook. Automatically enables
-        ``off_screen``.
+        or marimo notebook. Defaults to
+        :attr:`pyvista.plotting.themes.Theme.notebook`, or detects a
+        Jupyter kernel or marimo notebook when that is ``None``.
+        Automatically enables ``off_screen``.
 
         .. versionchanged:: 0.50
             Detects marimo notebooks.
