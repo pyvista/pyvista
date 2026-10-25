@@ -41,7 +41,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
+    from pyvista.core.pointset import UnstructuredGrid
 
     from ._typing import ColorLike
     from ._typing import StyleOptions
@@ -51,9 +54,6 @@ if TYPE_CHECKING:
 
     # Pickers that resolve a dataset.
     _DataSetPicker: TypeAlias = _vtk.vtkPicker | _vtk.vtkHardwarePicker
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.pointset import UnstructuredGrid
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',

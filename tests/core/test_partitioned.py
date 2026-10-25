@@ -6,6 +6,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import PartitionedDataSet
+from pyvista import _vtk
 from pyvista.core.errors import PartitionedDataSetsNotSupported
 
 
@@ -97,6 +98,24 @@ def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetb
     match = re.escape(f'index ({index}) out of range for this dataset.')
     with pytest.raises(IndexError, match=match):
         partitions[index] = uniform
+
+
+def test_setitem_raw_vtk_and_none(sphere):
+    partitions = PartitionedDataSet([sphere, sphere])
+    partitions[0] = _vtk.vtkPolyData()
+    assert isinstance(partitions[0], pv.PolyData)
+    partitions[1] = None
+    assert partitions[1] is None
+
+
+def test_setitem_mismatched_data_raises(sphere):
+    partitions = PartitionedDataSet([sphere, sphere])
+    with pytest.raises(
+        TypeError, match=re.escape('Setting a slice requires an iterable of datasets.')
+    ):
+        partitions[0:1] = sphere
+    with pytest.raises(TypeError, match=re.escape('Setting an index requires a dataset or None.')):
+        partitions[0] = [sphere]
 
 
 def test_del_slice(sphere):

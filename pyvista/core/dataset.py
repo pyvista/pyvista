@@ -68,6 +68,8 @@ if TYPE_CHECKING:
     from pyvista import Cell
     from pyvista import CellType
     from pyvista import PointSet
+    from pyvista.core.pointset import PolyData
+    from pyvista.core.pointset import UnstructuredGrid
 
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import VectorLikeFloat
@@ -75,8 +77,6 @@ if TYPE_CHECKING:
     from ._typing_core import _ArrayLikeOrScalar
 
     _Dimensionality = Literal[0, 1, 2, 3]
-    from pyvista.core.pointset import PolyData
-    from pyvista.core.pointset import UnstructuredGrid
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'

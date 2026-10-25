@@ -3141,6 +3141,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Uses ResetCamera to make a useful view.
 
+        .. versionchanged:: 0.50
+            Every element is a tuple of floats.
+
         Parameters
         ----------
         negative : bool, default: False

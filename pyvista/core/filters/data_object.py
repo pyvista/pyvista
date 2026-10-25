@@ -83,6 +83,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core._typing_core import _OutputDataObject
     from pyvista.core._typing_core import _OutputDataSet
+    from pyvista.core.grid import Grid
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -90,7 +91,6 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
     _RectilinearComponents = tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.intp]]
-    from pyvista.core.grid import Grid
 
 
 def _rectilinear_transform_components(

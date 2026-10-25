@@ -1376,6 +1376,9 @@ class _Chart(DocSubs):
     def size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
+
         A size of ``(1, 1)`` occupies the whole renderer.
 
         Examples
@@ -1406,6 +1409,9 @@ class _Chart(DocSubs):
     @doc_subs
     def loc(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         This denotes the location of the chart's bottom left corner.
 
@@ -4491,6 +4497,9 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     def size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
+
         A size of ``(1, 1)`` occupies the whole renderer.
 
         Examples
@@ -4517,6 +4526,9 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     @property
     def loc(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         This denotes the location of the chart's bottom left corner.
 
@@ -4775,6 +4787,9 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
     def size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
+
         A size of ``(1, 1)`` occupies the whole renderer.
 
         Examples
@@ -4801,6 +4816,9 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
     @property
     def loc(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         This denotes the location of the chart's bottom left corner.
 

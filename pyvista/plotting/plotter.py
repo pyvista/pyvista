@@ -145,6 +145,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _Real
     from pyvista.core._typing_core import _Scalar
+    from pyvista.core.grid import ImageData
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
@@ -185,7 +186,6 @@ if TYPE_CHECKING:
     )
 
     _DistortionState = tuple[tuple[float, ...], tuple[float, float], tuple[float, float]]
-    from pyvista.core.grid import ImageData
 
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']

@@ -45,7 +45,8 @@ _REGENERATE = (
     'Regenerate the generated block with\n'
     '  pytest tests/examples/test_get_example.py -k overloads_current '
     '--test_downloads --regenerate_overloads\n'
-    'and run pre-commit afterwards.'
+    'and run pre-commit afterwards. Import any new type names under TYPE_CHECKING in\n'
+    'pyvista/examples/_get_example.py.'
 )
 
 
@@ -306,6 +307,7 @@ def _expected_return_types(loader, dataset):
 
 
 @pytest.mark.needs_download
+@pytest.mark.needs_vtk_version(9, 7, 0, reason='Annotations describe what the newest VTK loads')
 @pytest.mark.parametrize('name', _all_example_names())
 def test_example_function_annotations_match_the_loaded_dataset(name):
     """The function and its ``load=False`` overload are annotated with what they return."""
