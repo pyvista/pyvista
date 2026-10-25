@@ -136,7 +136,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
                 raise IndexError(msg)
             if index < 0:
                 index = self.n_partitions + index
-            if isinstance(data, Iterable):
+            if data is not None and not isinstance(data, _vtk.vtkDataSet):
                 msg = 'Setting an index requires a dataset or None.'
                 raise TypeError(msg)
             self.SetPartition(index, data)  # type: ignore[arg-type]  # VTK accepts None

@@ -1481,7 +1481,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        pyvista_ndarray
+        pyvista_ndarray | None
             Normals of this dataset attribute. ``None`` if no normals have been
             set.
 

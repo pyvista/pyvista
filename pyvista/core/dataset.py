@@ -874,7 +874,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista_ndarray
+        pyvista_ndarray | None
             Active normals of this dataset.
 
         Notes
@@ -1232,7 +1232,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Returns
         -------
         int
-             Number of cells in the entire dataset.
+            Number of cells in the entire dataset.
 
         Notes
         -----
@@ -1259,7 +1259,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Returns
         -------
         int
-             Number of points.
+            Number of points.
 
         """
         return self.GetNumberOfPoints()
@@ -1271,7 +1271,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Returns
         -------
         int
-             Number of cells.
+            Number of cells.
 
         """
         return self.GetNumberOfCells()

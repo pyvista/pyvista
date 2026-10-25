@@ -2322,7 +2322,7 @@ class MultiBlock(
         pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             An array from the dataset matching ``name``.
 
         Notes

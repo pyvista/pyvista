@@ -427,7 +427,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         pyvista.Actor
-            VTK actor of the mesh.
+            Actor of the mesh.
 
         Examples
         --------
@@ -860,7 +860,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         pyvista.Actor
-            VTK actor of the mesh.
+            Actor of the mesh.
 
         Examples
         --------
@@ -1175,7 +1175,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         pyvista.Actor
-            VTK actor of the mesh.
+            Actor of the mesh.
 
         Examples
         --------
@@ -1880,7 +1880,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         pyvista.Actor
-            VTK actor of the mesh.
+            Actor of the mesh.
 
         Examples
         --------
@@ -2051,7 +2051,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         pyvista.Actor
-            VTK actor of the mesh.
+            Actor of the mesh.
 
         Examples
         --------
@@ -2364,7 +2364,7 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         pyvista.Actor
-            VTK actor of the mesh.
+            Actor of the mesh.
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)

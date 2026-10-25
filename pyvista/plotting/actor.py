@@ -569,7 +569,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> Property | None:  # numpydoc ignore=RT01
+    def backface_prop(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -580,7 +580,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Property | None
+        pyvista.Property
             The object describing backfaces.
 
         Examples

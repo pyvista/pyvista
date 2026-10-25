@@ -116,6 +116,8 @@ def test_setitem_mismatched_data_raises(sphere):
         partitions[0:1] = sphere
     with pytest.raises(TypeError, match=re.escape('Setting an index requires a dataset or None.')):
         partitions[0] = [sphere]
+    with pytest.raises(TypeError, match=re.escape('Setting an index requires a dataset or None.')):
+        partitions[0] = _vtk.vtkTable()
 
 
 def test_del_slice(sphere):

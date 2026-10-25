@@ -9196,7 +9196,7 @@ def download_room_cff(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | st
     Returns
     -------
     output : pyvista.MultiBlock | str
-        DataSet or tuple of filenames depending on ``load``.
+        DataSet or filename depending on ``load``.
 
     Examples
     --------

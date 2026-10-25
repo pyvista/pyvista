@@ -1440,7 +1440,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        :vtk:`vtkLegendBoxActor`
+        :vtk:`vtkLegendBoxActor` | None
             Legend actor.
 
         """
