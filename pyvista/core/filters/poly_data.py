@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -21,7 +22,9 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import _copy_active_attributes
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.utilities._strip import _StripTrace
 from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import PointLiteral
@@ -39,6 +42,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Sequence
     from typing import Any
 
@@ -66,6 +70,74 @@ _ExtrusionOptions = Literal['boundary_edges', 'all_edges']
 _CappingOptions = Literal[
     'intersection', 'minimum_distance', 'maximum_distance', 'average_distance'
 ]
+_BinnedPointGenerationOptions = Literal['bin_points', 'bin_centers', 'bin_averages']
+_PROBE_BINS = 2**17
+_MAX_BINS = 2**28  # VTK holds about 4 bytes per bin
+_MAX_BIN_PASSES = 8
+
+
+def _bin_to_target(
+    sizes: NDArray[np.float64],
+    target: int,
+    binned: Callable[..., PolyData],
+    *,
+    progress_bar: bool,
+) -> PolyData:
+    """Return the binned mesh closest to ``target`` points from a few grid sizes.
+
+    The search adjusts the edge length of cubic bins rather than the number of
+    divisions, so every axis is resolved at the same scale.
+    """
+    # Axes with no extent always get a single division
+    spanned = sizes[sizes > 0]
+    if spanned.size == 0:
+        return binned(np.ones(3, dtype=int), progress_bar=progress_bar)
+    # First guess: _PROBE_BINS cubic bins filling the volume of the spanned axes
+    edge = float((np.prod(spanned) / _PROBE_BINS) ** (1 / spanned.size))
+    best: PolyData | None = None
+    # Edge length and point count of the previous pass, to measure the growth rate
+    last: tuple[float, int] | None = None
+    for _ in range(_MAX_BIN_PASSES):
+        divisions = np.maximum(np.round(sizes / edge), 1)
+        # Memory is one integer per bin, so shrink every divided axis evenly to fit
+        excess = np.prod(divisions) / _MAX_BINS
+        capped = excess > 1
+        if capped:
+            shrink = excess ** (1 / np.count_nonzero(divisions > 1))
+            divisions = np.maximum(np.floor(divisions / shrink), 1)
+        mesh = binned(divisions.astype(int), progress_bar=progress_bar)
+        n_points = mesh.n_points
+        if best is None or abs(n_points - target) < abs(best.n_points - target):
+            best = mesh
+        # Stop when close enough, or when the grid can get no finer or no coarser
+        if (
+            abs(n_points - target) <= 0.05 * target
+            or (capped and n_points < target)
+            or (n_points > target and (divisions == 1).all())
+        ):
+            break
+        # Every triangle collapsed, so there is no count to scale from yet
+        if n_points == 0:
+            edge /= 4
+            continue
+        # Points grow as edge ** -exponent: about 2 for a sheet, up to 3 for nested shells
+        exponent = 2.0
+        if last is not None and last[1] not in (0, n_points) and last[0] != edge:
+            exponent = float(np.clip(np.log(n_points / last[1]) / np.log(last[0] / edge), 1, 3))
+        last = (edge, n_points)
+        # Scale the edge so the next pass predicts the target
+        edge *= (n_points / target) ** (1 / exponent)
+    return cast('PolyData', best)
+
+
+def _check_all_triangles(*meshes: PolyData, operation: str) -> None:
+    """Raise :class:`~pyvista.NotAllTrianglesError` unless every mesh is all triangles."""
+    if not all(mesh.is_all_triangles for mesh in meshes):
+        msg = (
+            f'Input mesh for {operation} must be all triangles. Use `triangulate()` for '
+            'polygons and strips, and remove lines and vertices.'
+        )
+        raise NotAllTrianglesError(msg)
 
 
 @abstract_class
@@ -139,9 +211,7 @@ class PolyDataFilters(DataSetFilters):
                 'Unable to perform boolean operations on an identical surface.'
             )
             raise ValueError(msg)
-        if not self.is_all_triangles or not other_mesh.is_all_triangles:
-            msg = 'Make sure both the input and output are triangulated.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, other_mesh, operation='boolean operations')
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
         if btype == 'union':
@@ -1320,6 +1390,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         decimate
             Another option for triangular meshes.
+        decimate_binned
+            Much faster option for large triangular meshes.
         decimate_polyline
             For use with polylines.
 
@@ -1337,9 +1409,7 @@ class PolyDataFilters(DataSetFilters):
         >>> decimated.plot(show_edges=True, line_width=2)
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for decimation must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='decimation')
 
         alg = _vtk.vtkDecimatePro()
         alg.SetInputData(self)
@@ -1592,7 +1662,7 @@ class PolyDataFilters(DataSetFilters):
         and strips are removed.
 
         Point data is interpolated onto the dash end points. Cell data is copied from
-        the parent line cell, unless ``join`` merges those cells together.
+        the line cell each dash lies on.
 
         .. versionadded:: 0.50
 
@@ -1622,8 +1692,8 @@ class PolyDataFilters(DataSetFilters):
 
         join : bool, default: True
             Join connected line cells into polylines with :func:`strip` first so the
-            pattern runs continuously across them. Joined cells have no cell data of
-            their own, so the input's cell data is dropped.
+            pattern runs continuously across them. A dash crossing into a cell with
+            different cell data is split there, so each piece keeps its own cell's data.
 
         inplace : bool, default: False
             Update this dataset in place. When ``False``, return a new dataset.
@@ -1662,14 +1732,29 @@ class PolyDataFilters(DataSetFilters):
         >>> dashed = circle.dash_lines(pattern=[6, 2, 2, 2])
         >>> dashed.plot(color='black', line_width=4, cpos='xy')
 
+        The dashes keep the cell data of the edges they lie on. The pattern runs
+        across the joined edges, and a dash is split where the data changes.
+
+        >>> import numpy as np
+        >>> centers = circle.cell_centers().points
+        >>> circle.cell_data['angle'] = np.degrees(
+        ...     np.arctan2(centers[:, 1], centers[:, 0])
+        ... )
+        >>> dashed = circle.dash_lines()
+        >>> dashed.plot(scalars='angle', line_width=4, cpos='xy')
+
         """
         runs, period = _resolve_dash_pattern(style, pattern)
         if scale is not None:
             _validation.check_finite(scale, name='scale')
             _validation.check_greater_than(scale, 0, name='scale')
 
-        source = self.strip(join=True, progress_bar=progress_bar) if join else self
-        output = _dashed_polydata(source, runs, period=period, scale=scale)
+        source, segment_cells = self, None
+        if join:
+            source, segment_cells = _join_lines(self, progress_bar=progress_bar)
+        output = _dashed_polydata(
+            source, self, runs, period=period, scale=scale, segment_cells=segment_cells
+        )
         for array_name, array in self.field_data.items():
             output.field_data[array_name] = array
         _copy_active_names(self.point_data, output.point_data)
@@ -1759,9 +1844,7 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True, line_width=3)
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for subdivision must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='subdivision')
 
         subdivision = subfilter.lower()
         if subdivision == 'linear':
@@ -1871,9 +1954,7 @@ class PolyDataFilters(DataSetFilters):
         >>> submesh.plot(show_edges=True)
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for subdivision must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='subdivision')
 
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
@@ -2012,6 +2093,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         decimate_pro
             Another option for triangular meshes.
+        decimate_binned
+            Much faster option for large triangular meshes.
         decimate_polyline
             For use with polylines.
 
@@ -2045,9 +2128,7 @@ class PolyDataFilters(DataSetFilters):
         ... )
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for decimation must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='decimation')
 
         has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
@@ -2092,6 +2173,249 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
         mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)
+            return self
+
+        return mesh
+
+    def decimate_binned(  # type: ignore[misc]
+        self: PolyData,
+        target_reduction: float | None = None,
+        *,
+        target_points: int | None = None,
+        divisions: int | VectorLikeInt | None = None,
+        point_generation: _BinnedPointGenerationOptions = 'bin_points',
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> PolyData:
+        """Reduce the number of triangles by merging points that share a spatial bin.
+
+        The bounds of the mesh are split into a regular grid of bins, every bin
+        collapses to a single point, and a triangle survives only when its three
+        points land in three different bins. This uses :vtk:`vtkBinnedDecimation`,
+        which is threaded and typically orders of magnitude faster than
+        :meth:`decimate` and :meth:`decimate_pro` on large meshes, at the cost of
+        not preserving topology. It suits previews and level-of-detail rendering
+        of very large surfaces.
+
+        Give exactly one of ``target_reduction``, ``target_points`` or
+        ``divisions``.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        target_reduction : float, optional
+            Fraction of the points to remove, from 0 up to but not including 1.
+            A value of 0.9 leaves about 10% of the points. The grid is then
+            sized as for ``target_points``.
+
+        target_points : int, optional
+            Approximate number of points in the output. Cubic bins are sized
+            over a few passes until the output is within about 5 percent of
+            the target. Small targets can land further off, since each bin then
+            covers a large part of the surface, and very large ones stop short
+            when the grid reaches 2**28 bins.
+
+        divisions : int | VectorLikeInt, optional
+            Number of bins along each axis. A single integer applies to the
+            longest axis of the bounds and the other axes get proportionally
+            fewer, with at least one per axis. Three integers set each axis
+            explicitly.
+
+        point_generation : str, default: 'bin_points'
+            How the point of each bin is chosen.
+
+            - ``'bin_points'``: keep one of the input points in the bin along
+              with its point data.
+            - ``'bin_averages'``: average the points in the bin and their point
+              data. Smoother, and slightly slower. Integer point arrays become
+              floating point and non-numeric point arrays are dropped.
+            - ``'bin_centers'``: place the point at the center of the bin,
+              giving a voxelized look, with the point data of one input point.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated mesh.
+
+        Warns
+        -----
+        UserWarning
+            When ``target_reduction`` or ``target_points`` is given and the
+            output has fewer than half of the target points, or of the input
+            points if there are fewer.
+
+        See Also
+        --------
+        decimate
+            Quadric decimation, slower and closer to the input.
+        decimate_pro
+            Topology-aware decimation of triangular meshes.
+
+        Notes
+        -----
+        The filter allocates one integer per bin, so memory grows with the
+        product of the divisions rather than with the size of the mesh: about
+        1 GB at the 2**28 bins a target stops at. Explicit
+        ``divisions`` are not limited.
+
+        The bins span the bounds of the points used by the mesh, so a part far
+        from the rest coarsens the whole grid and parts smaller than a bin
+        merge away.
+
+        Points created by ``'bin_centers'`` and ``'bin_averages'`` are single
+        precision.
+
+        Examples
+        --------
+        Decimate a sphere to roughly 2000 points and plot it.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=200, phi_resolution=200)
+        >>> decimated = sphere.decimate_binned(target_points=2000)
+        >>> decimated.plot(show_edges=True, line_width=2)
+
+        Remove about 90% of the points.
+
+        >>> decimated = sphere.decimate_binned(0.9)
+
+        Use an explicit bin grid, averaging the points in each bin.
+
+        >>> decimated = sphere.decimate_binned(
+        ...     divisions=20, point_generation='bin_averages'
+        ... )
+
+        """
+        # VTK returns an empty mesh for any other cell, rather than an error
+        _check_all_triangles(self, operation='decimation')
+        _validation.check_contains(
+            get_args(_BinnedPointGenerationOptions),
+            must_contain=point_generation,
+            name='point_generation',
+        )
+        if [target_reduction, target_points, divisions].count(None) != 2:
+            msg = 'Specify exactly one of `target_reduction`, `target_points` or `divisions`.'
+            raise ValueError(msg)
+
+        averaging = point_generation == 'bin_averages'
+
+        # VTK converts integer arrays to float32 and fails on string arrays, so
+        # only float64 ids go through the filter and the data is gathered after
+        source = pv.PolyData()
+        source.SetPoints(self.GetPoints())
+        source.SetPolys(self.GetPolys())
+        source.cell_data['vtkOriginalCellIds'] = np.arange(self.n_cells, dtype=float)
+        # Averaged point data has to be averaged by VTK, so those arrays go through it
+        if averaging:
+            for name, array in self.point_data.items():
+                if np.issubdtype(array.dtype, np.floating):
+                    source.point_data[name] = array
+                elif np.issubdtype(array.dtype, np.number):
+                    source.point_data[name] = array.astype(float)
+        else:
+            source.point_data['vtkOriginalPointIds'] = np.arange(self.n_points, dtype=float)
+        # Unused points would stretch the bounds the bins span, so drop any there are
+        used = np.zeros(self.n_points, dtype=bool)
+        used[self.regular_faces.ravel()] = True
+        if not used.all():
+            source = source.remove_unused_points()
+        sizes = np.ptp(np.reshape(source.bounds, (3, 2)), axis=1)
+
+        def _per_axis(edge: float) -> NDArray[np.int_]:
+            """Return the divisions per axis for cubic bins ``edge`` wide."""
+            return np.maximum(np.round(sizes / edge), 1).astype(int)
+
+        def _binned(divs: VectorLikeInt, *, progress_bar: bool) -> PolyData:
+            """Run the binned decimation with the given divisions per axis."""
+            alg = _vtk.vtkBinnedDecimation()
+            alg.SetInputData(source)
+            alg.SetPointGenerationMode(getattr(alg, point_generation.upper()))
+            alg.ProducePointDataOn()
+            alg.ProduceCellDataOn()
+            alg.AutoAdjustNumberOfDivisionsOff()
+            alg.SetNumberOfDivisions(*(int(d) for d in divs))
+            _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
+            return _get_output(alg)
+
+        if divisions is not None:
+            # One number sets the longest axis and the others follow with cubic bins
+            if np.ndim(divisions) == 0:
+                longest = _validation.validate_number(
+                    cast('int', divisions),
+                    must_have_dtype=int,
+                    must_be_in_range=[1, np.inf],
+                    name='divisions',
+                )
+                divs = _per_axis(max(sizes.max(), np.finfo(float).tiny) / longest)
+            else:
+                divs = _validation.validate_array3(
+                    divisions,
+                    must_have_dtype=int,
+                    must_be_in_range=[1, np.inf],
+                    dtype_out=int,
+                    name='divisions',
+                )
+            mesh = _binned(divs, progress_bar=progress_bar)
+        else:
+            if target_reduction is not None:
+                reduction = _validation.validate_number(
+                    target_reduction,
+                    must_be_in_range=[0, 1],
+                    strict_upper_bound=True,
+                    name='target_reduction',
+                )
+                target = max(round(source.n_points * (1 - reduction)), 1)
+            else:
+                target = _validation.validate_number(
+                    cast('int', target_points),
+                    must_have_dtype=int,
+                    must_be_in_range=[1, np.inf],
+                    name='target_points',
+                )
+            mesh = _bin_to_target(sizes, target, _binned, progress_bar=progress_bar)
+            # Far apart parts or the bin limit can leave the result well short
+            if mesh.n_points < 0.5 * min(target, source.n_points):
+                extent = ' x '.join(f'{size:.3g}' for size in sizes)
+                msg = (
+                    f'`decimate_binned` kept {mesh.n_points} of the {target} target points. '
+                    f'The bins span the bounds of the mesh ({extent}) and are limited to '
+                    '2**28, so parts smaller than a bin merge away. Remove parts far from '
+                    'the rest of the mesh, or use `decimate_pro`.'
+                )
+                warn_external(msg)
+
+        # Gather the input arrays at the ids VTK carried through, keeping their dtypes
+        cell_ids = mesh.cell_data.pop('vtkOriginalCellIds').astype(int)
+        mesh.cell_data.update(
+            {name: array[cell_ids] for name, array in self.cell_data.items()}, copy=False
+        )
+        if not averaging:
+            point_ids = mesh.point_data.pop('vtkOriginalPointIds').astype(int)
+            mesh.point_data.update(
+                {name: array[point_ids] for name, array in self.point_data.items()}, copy=False
+            )
+            # VTK writes single precision points, so take the kept points from the input
+            if point_generation == 'bin_points':
+                mesh.points = self.points[point_ids]
+        # Adding arrays activates scalars, so restore the input's choice, including none
+        for attributes_in, attributes_out in (
+            (self.point_data, mesh.point_data),
+            (self.cell_data, mesh.cell_data),
+        ):
+            active = attributes_in.active_scalars_name
+            if active is None or active in attributes_out:
+                attributes_out.active_scalars_name = active
+        _copy_active_attributes(self, mesh)
+        mesh.field_data.update(self.field_data)
+
         if inplace:
             self.copy_from(mesh, deep=False)
             return self
@@ -2633,9 +2957,7 @@ class PolyDataFilters(DataSetFilters):
         if not (0 <= start_vertex < self.n_points and 0 <= end_vertex < self.n_points):
             msg = 'Invalid point indices.'
             raise IndexError(msg)
-        if not self.is_all_triangles:
-            msg = 'Input mesh for geodesic path must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='geodesic path')
 
         dijkstra = _vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(self)
@@ -2895,9 +3217,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:
-            msg = 'Input mesh for multi_ray_trace must be all triangles.'
-            raise NotAllTrianglesError(msg)
+        _check_all_triangles(self, operation='multi_ray_trace')
 
         try:
             import trimesh  # noqa: PLC0415
@@ -3252,8 +3572,7 @@ class PolyDataFilters(DataSetFilters):
             remove_mask = np.zeros(self.n_points, np.bool_)
             remove_mask[remove_array] = True
 
-        if not self.is_all_triangles:
-            raise NotAllTrianglesError
+        _check_all_triangles(self, operation='remove_points')
 
         f = self.regular_faces
         vmask = remove_mask.take(f)
@@ -4219,11 +4538,16 @@ class PolyDataFilters(DataSetFilters):
 
         Also note that if triangle strips or polylines are defined in
         the input they are passed through and not joined nor
-        extended. (If you wish to strip these use ``triangulate``
-        filter to fragment the input into triangles and lines prior to
-        running this filter.)
+        extended, except that ``join`` joins polylines too. (If you
+        wish to strip these use ``triangulate`` filter to fragment the
+        input into triangles and lines prior to running this filter.)
 
         This filter implements :vtk:`vtkStripper`.
+
+        .. versionchanged:: 0.50
+            ``pass_cell_data`` and ``pass_cell_ids`` give one tuple per line
+            segment and keep the input's field data, and ``join`` keeps to
+            the input's edges.
 
         Parameters
         ----------
@@ -4237,14 +4561,17 @@ class PolyDataFilters(DataSetFilters):
             strip, and/or the maximum number of lines in a polyline.
 
         pass_cell_data : bool, default: False
-            Enable/Disable passing of the cell data in the input to the
-            output as FieldData. Note the field data is transformed.
+            Pass the cell data of the input to the output as field data,
+            with one tuple per piece of the output in cell order: each
+            vertex and polygon cell, each line segment and each triangle
+            of a strip. A line with fewer than two points holds no
+            segment, so it adds no tuple.
 
         pass_cell_ids : bool, default: False
-            If ``True``, the output polygonal dataset will have a
-            cell data array that holds the cell index of the original
-            3D cell that produced each output cell. This is useful for
-            picking. The default is ``False`` to conserve memory.
+            If ``True``, the output has a field data array
+            ``'vtkOriginalCellIds'`` holding the id of the input cell
+            that produced each piece of the output, in the same order
+            as ``pass_cell_data``.
 
         pass_point_ids : bool, default: False
             If ``True``, the output polygonal dataset will have a
@@ -4271,15 +4598,24 @@ class PolyDataFilters(DataSetFilters):
         >>> stripped.plot(show_edges=True, line_width=3)
 
         """
+        trace = _StripTrace(self, join=join)
         alg = _vtk.vtkStripper()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(trace.source)
         alg.SetJoinContiguousSegments(join)
         alg.SetMaximumLength(max_length)
-        alg.SetPassCellDataAsFieldData(pass_cell_data)
-        alg.SetPassThroughCellIds(pass_cell_ids)
         alg.SetPassThroughPointIds(pass_point_ids)
         _update_alg(alg, progress_bar=progress_bar, message='Stripping Mesh')
-        return _get_output(alg)
+        output = _get_output(alg)
+        trace.restore(output)
+        if pass_cell_data or pass_cell_ids:
+            # the stripper's own tracing skips segments and miscounts after verts
+            ids = trace.original_cell_ids(output)
+            if pass_cell_data:
+                for name, array in self.cell_data.items():
+                    output.field_data[name] = np.asarray(array)[ids]
+            if pass_cell_ids:
+                output.field_data['vtkOriginalCellIds'] = ids
+        return output
 
     def collision(  # type: ignore[misc]
         self: PolyData,
@@ -5021,8 +5357,50 @@ def _drawn_intervals(
     return intervals
 
 
+def _join_lines(
+    mesh: PolyData, *, progress_bar: bool
+) -> tuple[PolyData, NDArray[np.int64] | None]:
+    """Return the lines of a mesh joined by :func:`strip`, and the input cell of each segment.
+
+    The cells are traced only when the mesh has cell data to carry.
+    """
+    # strip the lines on their own so the polygons are not traced for nothing
+    lines = pv.PolyData(mesh.points, lines=mesh.lines)
+    ghosts = _vtk.vtkDataSetAttributes.GhostArrayName()
+    if ghosts in mesh.cell_data:
+        lines.cell_data[ghosts] = np.asarray(mesh.cell_data[ghosts])[
+            mesh.n_verts : mesh.n_verts + mesh.n_lines
+        ]
+    traced = bool(mesh.cell_data)
+    joined = lines.strip(join=True, pass_cell_ids=traced, progress_bar=progress_bar)
+    if not traced:
+        return joined, None
+    return joined, np.asarray(joined.field_data['vtkOriginalCellIds']) + mesh.n_verts
+
+
+def _line_cell_data_labels(mesh: PolyData) -> NDArray[np.intp]:
+    """Return one label per line cell, equal for lines whose cell data rows all match."""
+    lines = slice(mesh.n_verts, mesh.n_verts + mesh.n_lines)
+    labels = []
+    for array in mesh.cell_data.values():
+        rows = np.ascontiguousarray(np.asarray(array).reshape(mesh.n_cells, -1)[lines])
+        if np.issubdtype(rows.dtype, np.floating):
+            # adding zero turns -0.0 into 0.0, so the two compare equal
+            rows = rows + 0.0
+        # compare the raw bytes so that NaN rows match one another
+        raw = rows.view(np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))).ravel()
+        labels.append(np.unique(raw, return_inverse=True)[1].ravel())
+    return np.unique(np.column_stack(labels), axis=0, return_inverse=True)[1].ravel()
+
+
 def _build_dashes(
-    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
+    source: PolyData,
+    original: PolyData,
+    runs: list[tuple[float, float]] | None,
+    *,
+    period: float,
+    scale: float,
+    segment_cells: NDArray[np.int64] | None,
 ) -> tuple[
     NDArray[np.int64],
     NDArray[np.int64],
@@ -5030,7 +5408,10 @@ def _build_dashes(
     NDArray[np.int64],
     NDArray[np.int64],
 ]:
-    """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
+    """Return blend indices, weights, line connectivity and original cell ids for the dashes."""
+    # a joined source has its own cells, so each segment carries the cell it came from
+    labels = None if segment_cells is None else _line_cell_data_labels(original)
+    consumed = 0
     points = source.points
     cycle = period * scale
     index_a: list[int] = []
@@ -5049,6 +5430,8 @@ def _build_dashes(
         position += 1 + size
         parent = cell
         cell += 1
+        first_segment = consumed
+        consumed += max(size - 1, 0)
         if size < 2:
             continue
         distance = np.linalg.norm(np.diff(points[ids], axis=0), axis=1)
@@ -5056,22 +5439,34 @@ def _build_dashes(
         total = float(cumulative[-1])
         if total == 0.0:
             continue
+        owners = np.full(size - 1, parent)
+        breaks = np.zeros(0)
+        if segment_cells is not None and labels is not None:
+            owners = segment_cells[first_segment:consumed]
+            # repeated points leave segments of no length, which no dash can lie on
+            drawn = np.flatnonzero(distance > 0)
+            label = labels[owners[drawn] - original.n_verts]
+            # a dash is cut where the cell data changes from one segment to the next
+            breaks = cumulative[drawn[1:][label[1:] != label[:-1]]]
         for start, stop in _drawn_intervals(runs, total=total, cycle=cycle, scale=scale):
-            # keep the polyline's own points so the dash still follows its bends
-            inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
-            blend = [
-                _locate(ids, cumulative, start),
-                *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
-                _locate(ids, cumulative, stop),
-            ]
-            lines.append(len(blend))
-            for left, right, fraction in blend:
-                # the points are appended in order, so each id is the count so far
-                lines.append(len(index_a))
-                index_a.append(left)
-                index_b.append(right)
-                weight.append(fraction)
-            cells.append(parent)
+            bounds = [start, *breaks[(breaks > start) & (breaks < stop)].tolist(), stop]
+            for low, high in itertools.pairwise(bounds):
+                # keep the polyline's own points so the dash still follows its bends
+                inner = np.flatnonzero((cumulative > low) & (cumulative < high))
+                blend = [
+                    _locate(ids, cumulative, low),
+                    *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
+                    _locate(ids, cumulative, high),
+                ]
+                lines.append(len(blend))
+                for left, right, fraction in blend:
+                    # the points are appended in order, so each id is the count so far
+                    lines.append(len(index_a))
+                    index_a.append(left)
+                    index_b.append(right)
+                    weight.append(fraction)
+                segment = int(np.searchsorted(cumulative, (low + high) / 2.0)) - 1
+                cells.append(int(owners[segment]))
     return (
         np.asarray(index_a, dtype=np.int64),
         np.asarray(index_b, dtype=np.int64),
@@ -5082,16 +5477,27 @@ def _build_dashes(
 
 
 def _dashed_polydata(
-    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float | None
+    source: PolyData,
+    original: PolyData,
+    runs: list[tuple[float, float]] | None,
+    *,
+    period: float,
+    scale: float | None,
+    segment_cells: NDArray[np.int64] | None = None,
 ) -> PolyData:
-    """Return a dataset holding only the drawn parts of a source's line cells."""
+    """Return a dataset holding only the drawn parts of a source's line cells.
+
+    The source is the original mesh, or its lines joined into polylines over the same
+    points with the original cell of each segment. Point and cell data come from the
+    original either way.
+    """
     output = pv.PolyData()
     if source.n_lines == 0:
         return output
     # a two hundredth of the bounding box diagonal gives a readable default
     interval = source.length / 200.0 if scale is None else float(scale)
     index_a, index_b, weight, lines, cells = _build_dashes(
-        source, runs, period=period, scale=interval
+        source, original, runs, period=period, scale=interval, segment_cells=segment_cells
     )
     if lines.size == 0:
         return output
@@ -5099,13 +5505,13 @@ def _dashed_polydata(
         source.points, index_a=index_a, index_b=index_b, weight=weight
     )
     output.lines = lines
-    for name, array in source.point_data.items():
+    for name, array in original.point_data.items():
         # set_array rather than an item assignment, which would activate the first array
         output.point_data.set_array(
             _interpolate_rows(np.asarray(array), index_a=index_a, index_b=index_b, weight=weight),
             name,
         )
-    for name, array in source.cell_data.items():
+    for name, array in original.cell_data.items():
         output.cell_data.set_array(np.asarray(array)[cells], name)
     return output
 

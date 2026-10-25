@@ -1396,11 +1396,14 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
+        .. versionchanged:: 0.50
+            A mesh with triangle strips is no longer all triangles.
+
         Returns
         -------
         bool
             ``True`` if all the faces of the :class:`pyvista.PolyData`
-            are triangles and does not contain any vertices or lines.
+            are triangles and it contains no vertices, lines or strips.
 
         Examples
         --------
@@ -1420,8 +1423,8 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         True
 
         """
-        # Need to make sure there are only face cells and no lines/verts
-        if not self.n_faces or self.n_lines or self.n_verts:
+        # Need to make sure there are only face cells and no lines/verts/strips
+        if not self.n_faces or self.n_lines or self.n_verts or self.n_strips:
             return False
 
         # early return if not all triangular
@@ -2962,6 +2965,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         pyvista.DataSet.get_cell
         pyvista.UnstructuredGrid.cell_connectivity
         pyvista.UnstructuredGrid.cell_offsets
+        pyvista.UnstructuredGrid.polyhedron_faces
+        pyvista.UnstructuredGrid.polyhedron_face_locations
 
         Notes
         -----
@@ -2969,6 +2974,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         ``ValueError`` if attempted.
 
         You can, however, set the cells directly. See the example.
+
+        For ``POLYHEDRON`` cells, only the points of each cell are stored here. The
+        faces are stored separately, so this array is not the connectivity array used
+        to define the cell. Use :attr:`~pyvista.UnstructuredGrid.polyhedron_faces` and
+        :attr:`~pyvista.UnstructuredGrid.polyhedron_face_locations` to get them.
 
         Examples
         --------
@@ -2986,6 +2996,17 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         While you cannot change the array inplace, you can overwrite it. For example:
 
         >>> grid.cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
+
+        Create a grid with a single tetrahedron defined as a polyhedron. The cells
+        only contain its four points and not its faces.
+
+        >>> points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
+        >>> faces = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+        >>> grid = pv.UnstructuredGrid(
+        ...     [len(faces), *faces], [pv.CellType.POLYHEDRON], points
+        ... )
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
         """
         # Flag this array as read only to ensure users do not attempt to write to it.
@@ -3673,6 +3694,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Each nonlinear cell below becomes the linear cell through its corner
         points. Its other points stay in the grid, unused by the new cell.
+        Call :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points` or
+        :meth:`~pyvista.UnstructuredGridFilters.clean` on the output to remove them.
 
         {_linear_copy_docs_insert()}
 

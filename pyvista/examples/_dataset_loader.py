@@ -42,6 +42,7 @@ from typing import Any
 from typing import Protocol
 from typing import cast
 from typing import final
+from xml.etree import ElementTree as ET
 
 import pyvista as pv
 from pyvista.core.utilities._optional_formats import _declared_reader_class
@@ -75,7 +76,8 @@ class _FileProps:
     def num_files(self) -> int:
         """Return the number of files across all paths.
 
-        If a path is a folder, the number of files contained in the folder is returned.
+        A folder counts every file nested in it, and a composite file such as ``.vtm``
+        or ``.pvd`` also counts the files it references.
 
         Returns
         -------
@@ -83,9 +85,7 @@ class _FileProps:
             Number of files.
 
         """
-        return sum(
-            1 if Path(p).is_file() else len(_get_all_nested_filepaths(p)) for p in self.paths
-        )
+        return sum(len(_get_all_filepaths(p)) for p in self.paths)
 
     @property
     def unique_extensions(self) -> tuple[str, ...]:
@@ -893,14 +893,8 @@ def _load_and_merge(files: Sequence[_SingleFile]) -> DatasetObject:
 
 
 def _get_file_or_folder_size(filepath: str) -> int:
-    """Return the size of a file or folder in bytes."""
-    if Path(filepath).is_file():
-        return Path(filepath).stat().st_size
-    if not Path(filepath).is_dir():
-        msg = 'Expected a file or folder path.'
-        raise ValueError(msg)
-    all_filepaths = _get_all_nested_filepaths(filepath)
-    return sum(Path(file).stat().st_size for file in all_filepaths)
+    """Return the size in bytes of a file or folder, including any files it references."""
+    return sum(Path(file).stat().st_size for file in _get_all_filepaths(filepath))
 
 
 def _format_file_size(size: int) -> str:
@@ -914,13 +908,10 @@ def _format_file_size(size: int) -> str:
 
 
 def _get_file_or_folder_ext(path: str) -> str | list[str]:
-    """Wrap the ``get_ext`` function to handle special cases for directories."""
-    if Path(path).is_file():
+    """Return the extension of a file, or a list of extensions for a folder or composite file."""
+    all_paths = _get_all_filepaths(path)
+    if Path(path).is_file() and len(all_paths) == 1:
         return get_ext(path)
-    if not Path(path).is_dir():
-        msg = 'Expected a file or folder path.'
-        raise ValueError(msg)
-    all_paths = _get_all_nested_filepaths(path)
     ext = [get_ext(file) for file in all_paths]
     if len(ext) == 0:
         msg = f'No files with extensions were found in"\n\t{path}'
@@ -941,10 +932,51 @@ def _get_all_nested_filepaths(filepath: str, *, exclude_readme: bool = True) -> 
         """Return whether the file ``name`` should be kept."""
         return True if not exclude_readme else not name.lower().startswith('readme')
 
-    return next(
-        [str(Path(path, name)) for name in files if keep(name)]
+    return [
+        str(Path(path, name))
         for path, _, files in os.walk(filepath)
+        for name in files
+        if keep(name)
+    ]
+
+
+# XML index files whose ``file`` or ``Source`` attributes name the files holding the data
+_COMPOSITE_EXTS = frozenset(
+    {'.pvd', '.pvti', '.pvtp', '.pvtr', '.pvts', '.pvtu', '.vtm', '.vtmb', '.vtpc', '.vtpd'}
+)
+
+
+def _get_referenced_filepaths(filepath: Path) -> list[Path]:
+    """Return the existing files referenced by a composite index file such as ``.vtm``."""
+    if filepath.suffix.lower() not in _COMPOSITE_EXTS:
+        return []
+    try:
+        root = ET.parse(filepath).getroot()
+    except ET.ParseError:
+        return []
+    refs = (
+        filepath.parent / name
+        for el in root.iter()
+        if (name := el.get('file') or el.get('Source'))
     )
+    return [ref for ref in refs if ref.is_file()]
+
+
+def _get_all_filepaths(filepath: str) -> list[str]:
+    """Return every file making up a file or folder, including the files it references.
+
+    A folder contributes all of its nested files. A composite index file such as
+    ``.vtm`` or ``.pvd`` also contributes the files it references, recursively.
+    """
+    files = [filepath] if Path(filepath).is_file() else _get_all_nested_filepaths(filepath)
+    pending = [Path(file) for file in files]
+    found: set[Path] = set()
+    while pending:
+        path = pending.pop().resolve()
+        if path not in found:
+            found.add(path)
+            pending.extend(_get_referenced_filepaths(path))
+    return sorted(str(path) for path in found)
 
 
 def _get_unique_extensions(path: Sequence[str]) -> tuple[str, ...]:

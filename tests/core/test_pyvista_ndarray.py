@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import copy
 import gc
+import pickle
 import re
 
 import numpy as np
@@ -315,6 +317,32 @@ def test_copies_and_ufunc_results_are_not_associated():
         assert result.association == FieldAssociation.NONE
     assert points.T.VTKObject is points.VTKObject
     assert points.reshape(-1).dataset is points.dataset
+
+
+@pytest.mark.parametrize(
+    'select',
+    [
+        pytest.param(lambda mesh: mesh.points, id='points'),
+        pytest.param(lambda mesh: mesh.points[:, 0], id='strided_column'),
+        pytest.param(lambda mesh: mesh.point_data['Normals'], id='point_data'),
+    ],
+)
+def test_pickles_as_plain_ndarray(select):
+    # Unpickled where pyvista may be absent: Spyder's variable explorer, a worker
+    # process, a cache on disk. pandas keeps the subclass in a Series built from one.
+    array = select(pv.Sphere())
+    stream = pickle.dumps(array)
+    assert b'pyvista' not in stream
+    restored = pickle.loads(stream)
+    assert type(restored) is np.ndarray
+    np.testing.assert_array_equal(restored, array)
+    assert b'pyvista' not in pickle.dumps(pd.Series(array if array.ndim == 1 else array[:, 0]))
+
+
+@pytest.mark.parametrize('copier', [copy.copy, copy.deepcopy])
+def test_copies_keep_the_subclass(copier):
+    copied = copier(pv.Sphere().points)
+    assert type(copied) is pyvista_ndarray
 
 
 def test_dataset_reference_targets_owner():
