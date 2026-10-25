@@ -150,4 +150,12 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
+    def __reduce__(self: pyvista_ndarray) -> str | tuple[Any, ...]:
+        """Pickle as a plain :class:`numpy.ndarray`.
+
+        The VTK array, owning dataset and association cannot be pickled, so the
+        stream names only NumPy and loads in a process without ``pyvista``.
+        """
+        return np.asarray(self).__reduce__()
+
     __getattr__ = VTKObjectWrapperCheckSnakeCase.__getattr__

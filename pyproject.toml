@@ -719,6 +719,7 @@ pyvista = "pv"
 'tests/core/test_accessor_registry.py' = ['S301'] # unpickles its own objects
 'tests/core/test_dataobject.py' = ['S301'] # unpickles its own objects
 'tests/core/test_helpers.py' = ['S106'] # pass_data is not a password
+'tests/core/test_pyvista_ndarray.py' = ['S301'] # unpickles its own objects
 'tests/core/test_utilities.py' = ['S301'] # unpickles its own objects
 'tests/doc/doc_build/test_gallery_examples.py' = ['S314'] # gallery junit report
 'tests/doc/vale/check_expected_failures.py' = ['S607'] # vale comes from PATH
