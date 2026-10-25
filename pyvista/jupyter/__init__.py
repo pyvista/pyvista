@@ -8,7 +8,6 @@ from __future__ import annotations
 from collections.abc import Callable  # noqa: TC003
 from importlib.metadata import entry_points
 import importlib.util
-import sys
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
@@ -200,15 +199,9 @@ def _ensure_entry_points() -> None:
         _custom_backend_sources[name] = ep.value
 
 
-def _in_marimo() -> bool:
-    """Return whether this process runs marimo notebook cells."""
-    running_in_notebook = getattr(sys.modules.get('marimo'), 'running_in_notebook', None)
-    return running_in_notebook is not None and bool(running_in_notebook())
-
-
 def _in_notebook() -> bool:
     """Return whether this process runs notebook cells, in Jupyter or marimo."""
-    return scooby.in_ipykernel() or _in_marimo()
+    return scooby.in_ipykernel() or scooby.in_marimo()
 
 
 def _marimo_renders_trame_pyvista() -> bool:
@@ -226,7 +219,7 @@ def _display(obj: Any) -> None:
     try:
         from IPython import display  # noqa: PLC0415
     except ImportError:
-        if not _in_marimo():
+        if not scooby.in_marimo():
             msg = 'Install IPython to display an image in a notebook'
             raise ImportError(msg) from None
         import marimo  # noqa: PLC0415
@@ -249,7 +242,7 @@ def _resolve_backend() -> str:
     """
     _ensure_entry_points()
     sources = _custom_backend_sources
-    if not scooby.in_ipykernel() and _in_marimo() and not _marimo_renders_trame_pyvista():
+    if not scooby.in_ipykernel() and scooby.in_marimo() and not _marimo_renders_trame_pyvista():
         sources = {
             name: source
             for name, source in sources.items()
