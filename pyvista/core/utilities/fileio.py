@@ -761,7 +761,7 @@ def read_exodus(
 
     Returns
     -------
-    pyvista.DataSet | pyvista.MultiBlock
+    pyvista.DataSet
         Wrapped PyVista dataset.
 
     Examples
@@ -809,7 +809,7 @@ def read_exodus(
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast('DataSet', wrap(reader.GetOutput()))
+    return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
 def read_grdecl(
