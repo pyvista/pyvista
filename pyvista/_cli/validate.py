@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
-    from pyvista.core.dataobject import DataObject
+    from pyvista import DataObject
 
 fields_help = """
 Fields to validate. Specify individual fields or groups of fields:

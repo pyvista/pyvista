@@ -20,10 +20,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import Actor
+    from pyvista import PolyData
     from pyvista import Renderer
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
-    from pyvista.core.pointset import PolyData
     from pyvista.plotting.plotter import BasePlotter
 
     from ._typing import ColorLike

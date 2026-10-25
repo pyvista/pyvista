@@ -66,6 +66,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
+    from pyvista import Grid
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
@@ -83,7 +84,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core._typing_core import _OutputDataObject
     from pyvista.core._typing_core import _OutputDataSet
-    from pyvista.core.grid import Grid
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral

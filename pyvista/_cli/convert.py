@@ -25,7 +25,7 @@ from .utils import skip_unreadable
 from .utils import validate_paths
 
 if TYPE_CHECKING:
-    from pyvista.core.dataobject import DataObject
+    from pyvista import DataObject
 
 
 def _is_extension_only(file_out: str) -> bool:

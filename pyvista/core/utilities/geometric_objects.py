@@ -36,6 +36,7 @@ from .misc import check_valid_vector
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from pyvista import CellType
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
@@ -44,7 +45,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
     from pyvista.core._typing_core import _NumericArray
-    from pyvista.core.celltype import CellType
 
 
 def Capsule(

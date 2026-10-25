@@ -63,8 +63,8 @@ if TYPE_CHECKING:
     from pyvista import PolyData  # noqa: F401
     from pyvista import RectilinearGrid  # noqa: F401
     from pyvista import StructuredGrid  # noqa: F401
+    from pyvista import Table
     from pyvista import UnstructuredGrid  # noqa: F401
-    from pyvista.core.objects import Table
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 _CLASS_READERS: dict[str, type[BaseReader[Any]]] = {}

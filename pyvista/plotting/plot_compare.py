@@ -34,13 +34,13 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
     from pyvista import Plotter
+    from pyvista import Text
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BorderOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
     from pyvista.plotting._typing import ThemeOptions
-    from pyvista.plotting.text import Text
     from pyvista.plotting.text import TextPositionOptions
     from pyvista.plotting.themes import Theme
 

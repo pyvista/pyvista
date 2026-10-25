@@ -56,8 +56,8 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
-    from pyvista.core.dataobject import DataObject
-    from pyvista.core.pointset import PolyData
+    from pyvista import DataObject
+    from pyvista import PolyData
 
 _HELP_SHAPE = """\
 Shape of the subplot grid, as either the number of rows and columns, e.g. ``2,2``,

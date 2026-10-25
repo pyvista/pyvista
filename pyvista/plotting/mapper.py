@@ -39,10 +39,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import DataSet
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _AnyArrayLike
     from pyvista.core._typing_core import _Real
-    from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
