@@ -5709,7 +5709,7 @@ class BasePlotter(_BoundsSizeMixin):
         ...     scalar_bar_args={'title': 'Height'},
         ... )
         >>> pl.update_scalar_bar_range((-1, 1), name='Height')
-        >>> pl.close()
+        >>> pl.show()
 
         """
         if isinstance(clim, (float, int)):
