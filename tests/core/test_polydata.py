@@ -857,22 +857,67 @@ def test_triangulate_filter_pass_lines(sphere: pv.PolyData, plane: pv.PolyData, 
     assert tri.is_all_triangles if not pass_lines else (not tri.is_all_triangles)
 
 
-@pytest.mark.parametrize('pass_verts', [True, False])
-@pytest.mark.parametrize('pass_lines', [True, False])
-def test_triangulate_cell_data_with_verts_and_lines(pass_verts, pass_lines):
-    # https://github.com/pyvista/pyvista/issues/8897
-    points = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [2, 2, 2], [3, 3, 3], [4, 4, 4]], dtype=float
-    )
-    mesh = pv.PolyData(points, faces=[4, 0, 1, 2, 3], lines=[2, 4, 5], verts=[1, 6])
-    # Cell order is verts, lines, polys
-    mesh.cell_data['data'] = [10, 20, 30]
+_VERT = {'verts': [1, 6]}
+_POLYVERT = {'verts': [2, 7, 8]}
+_LINE = {'lines': [2, 4, 5]}
+_POLYLINE = {'lines': [3, 4, 5, 6]}
+_TRI = {'faces': [3, 0, 1, 2]}
+_QUAD = {'faces': [4, 0, 1, 2, 3]}
+_STRIP = {'strips': [4, 0, 1, 3, 2]}
+
+
+@pytest.mark.parametrize(
+    ('cells', 'pass_verts', 'pass_lines', 'expected'),
+    [
+        # https://github.com/pyvista/pyvista/issues/8897
+        ({**_VERT, **_LINE, **_QUAD}, True, True, [10, 20, 30, 30]),
+        ({**_VERT, **_LINE, **_QUAD}, True, False, [10, 30, 30]),
+        ({**_VERT, **_LINE, **_QUAD}, False, True, [20, 30, 30]),
+        ({**_VERT, **_LINE, **_QUAD}, False, False, [30, 30]),
+        ({**_POLYVERT, **_POLYLINE, **_QUAD}, True, True, [10, 10, 20, 20, 30, 30]),
+        ({**_QUAD, **_STRIP}, False, False, [10, 10, 20, 20]),
+        ({**_TRI, **_STRIP}, False, False, [10, 20, 20]),
+        ({**_POLYLINE, **_TRI}, False, False, [20]),
+        ({**_POLYLINE, **_TRI}, False, True, [10, 10, 20]),
+    ],
+)
+def test_triangulate_mixed_cell_kinds(cells, pass_verts, pass_lines, expected):
+    points = np.arange(27, dtype=float).reshape(9, 3)
+    points[:4] = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]]
+    mesh = pv.PolyData(points, **cells)
+    # Cells are ordered verts, lines, polys, strips
+    mesh.cell_data['data'] = np.arange(1, mesh.n_cells + 1) * 10
 
     tri = mesh.triangulate(pass_verts=pass_verts, pass_lines=pass_lines)
 
-    expected = ([10] if pass_verts else []) + ([20] if pass_lines else []) + [30, 30]
     assert tri.n_cells == len(expected)
     assert tri.cell_data['data'].tolist() == expected
+    alone = [
+        pv.PolyData(points, **{kind: conn}).triangulate(
+            pass_verts=pass_verts, pass_lines=pass_lines
+        )
+        for kind, conn in cells.items()
+    ]
+    for kind in ('verts', 'lines', 'faces'):
+        expected_cells = np.concatenate([getattr(part, kind) for part in alone])
+        assert np.array_equal(getattr(tri, kind), expected_cells)
+    assert tri.n_strips == 0
+
+
+def test_triangulate_mixed_cell_kinds_active_attributes():
+    points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float)
+    mesh = pv.PolyData(points, faces=[4, 0, 1, 2, 3], lines=[2, 0, 2], verts=[1, 3])
+    mesh.cell_data['first'] = [1, 2, 3]
+    mesh.cell_data['second'] = [4, 5, 6]
+    mesh.cell_data['vectors'] = np.eye(3)
+    mesh.cell_data.active_scalars_name = 'second'
+    mesh.cell_data.active_vectors_name = 'vectors'
+
+    tri = mesh.triangulate(pass_verts=True, pass_lines=True)
+
+    assert tri.cell_data.active_scalars_name == 'second'
+    assert tri.cell_data.active_vectors_name == 'vectors'
+    assert tri.cell_data['vectors'].tolist() == np.eye(3)[[0, 1, 2, 2]].tolist()
 
 
 @pytest.mark.parametrize('pass_verts', [True, False])
