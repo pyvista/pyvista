@@ -23,6 +23,7 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
+from ._structured_data import _StructuredDataMixin
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
@@ -190,7 +191,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Examples
         --------
         Create a mesh, add scalars to the mesh, and return the active
-        scalars info.  Note how when the scalars are added, they
+        scalars info. Note how when the scalars are added, they
         automatically become the active scalars.
 
         >>> import pyvista as pv
@@ -619,14 +620,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Parameters
         ----------
         name : str, optional
-            Name of the scalars array to assign as active.  If
+            Name of the scalars array to assign as active. If
             ``None``, deactivates active scalars for both point and
             cell data.
 
         preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
-            type.  Can be either ``'cell'`` or ``'point'``, or the matching
+            type. Can be either ``'cell'`` or ``'point'``, or the matching
             :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
         Returns
@@ -695,7 +696,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``, ``'field'`` or
+            matching this type. Can be either ``'cell'``, ``'field'`` or
             ``'point'``, or the matching
             :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
@@ -740,7 +741,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``, ``'field'`` or
+            matching this type. Can be either ``'cell'``, ``'field'`` or
             ``'point'``, or the matching
             :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
@@ -787,7 +788,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``,
+            matching this type. Can be either ``'cell'``,
             ``'field'``, or ``'point'``.
 
         Examples
@@ -883,7 +884,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Examples
         --------
         Compute normals on an example sphere mesh and return the
-        active normals for the dataset.  Show that this is the same size
+        active normals for the dataset. Show that this is the same size
         as the number of points.
 
         >>> import pyvista as pv
@@ -916,7 +917,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         preference : str, default: "cell"
             When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'point'``,
+            to search for in the dataset. Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
 
         Returns
@@ -1312,7 +1313,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Examples
         --------
-        Get the length of the bounding box of a cube.  This should
+        Get the length of the bounding box of a cube. This should
         match ``3**(1/2)`` since it is the diagonal of a cube that is
         ``1 x 1 x 1``.
 
@@ -1417,7 +1418,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         >>> mesh.area
         16.0
 
-        A mesh with 3D cells does not have an area.  To get
+        A mesh with 3D cells does not have an area. To get
         the outer surface area, first extract the surface using
         :func:`~pyvista.DataObjectFilters.extract_surface`.
 
@@ -1450,7 +1451,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         preference : str, default: "cell"
             When scalars is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
+            type to search for in the dataset. Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
 
         Returns
@@ -1506,7 +1507,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         preference : str, default: "cell"
             When ``name`` is specified, this is the preferred array
-            association to search for in the dataset.  Must be either
+            association to search for in the dataset. Must be either
             ``'point'``, ``'cell'``, or ``'field'``.
 
         Returns
@@ -1649,7 +1650,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             names.insert(0, active_scalars_name)
         return names
 
-    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
+    def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
@@ -1661,9 +1662,11 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
+        if isinstance(self, _StructuredDataMixin):
+            attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
-    def _repr_html_(self: Self) -> str:
+    def _repr_html_(self) -> str:
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -1704,7 +1707,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                 meta.append(('Cells', poly_items, ''))
 
         # Grid-specific properties
-        if hasattr(self, 'dimensions'):
+        if isinstance(self, _StructuredDataMixin):
             dims = self.dimensions
             grid_items: list[tuple[str, str]] = [
                 ('dims', f'{dims[0]} x {dims[1]} x {dims[2]}'),
@@ -2116,8 +2119,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         return_closest_point : bool, default: False
             If ``True``, the closest point within a mesh cell to that point is
-            returned.  This is not necessarily the closest nodal point on the
-            mesh.  Default is ``False``.
+            returned. This is not necessarily the closest nodal point on the
+            mesh. Default is ``False``.
 
         Returns
         -------
@@ -2131,7 +2134,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         numpy.ndarray
             Point or points inside a cell of the mesh that is/are closest
-            to the given points.  Only returned if
+            to the given points. Only returned if
             ``return_closest_point=True``.
 
             .. versionchanged:: 0.35.0
@@ -2183,9 +2186,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         (5000,)
 
         For the closest cell, find the point inside the cell that is
-        closest to the supplied point.  The rectangle is a unit square
+        closest to the supplied point. The rectangle is a unit square
         with 1 cell and 4 nodal points at the corners in the plane with
-        ``z`` normal and ``z=0``.  The closest point inside the cell is
+        ``z`` normal and ``z=0``. The closest point inside the cell is
         not usually at a nodal point.
 
         >>> unit_square = pv.Rectangle()
@@ -2196,7 +2199,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         array([0.25, 0.25, 0.  ])
 
         But, the closest point can be a nodal point, although the index of
-        that point is not returned.  If the closest nodal point by index is
+        that point is not returned. If the closest nodal point by index is
         desired, see :func:`DataSet.find_closest_point`.
 
         >>> index, closest_point = unit_square.find_closest_cell(
@@ -3590,7 +3593,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         """Compute distinct dimensions of cells. Only needed for legacy vtk < 9.5."""
         if self.n_cells == 0:
             return {0}
-        elif hasattr(self, 'dimensions'):
+        elif isinstance(self, _StructuredDataMixin):
             if self._has_hidden_cells:
                 return {cell_type.dimension for cell_type in self.distinct_cell_types}
             dims = np.array(self.dimensions)
@@ -3661,10 +3664,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if self.n_cells == 0:
             return set()
         has_hidden_cells = self._has_hidden_cells
-        if hasattr(self, 'dimensions') and not has_hidden_cells:
-            # Fast path for dimensioned grids without hidden/ghost cells
+        # Checked outside the mixin branch, where mypy cannot narrow to Grid
+        is_grid = isinstance(self, pv.Grid)
+        if isinstance(self, _StructuredDataMixin) and not has_hidden_cells:
+            # Fast path for structured data without hidden/ghost cells
             cell_dimension = next(iter(self._distinct_cell_dimensions))
-            if isinstance(self, pv.Grid):
+            if is_grid:
                 mapping = {
                     0: pv.CellType.VERTEX,
                     1: pv.CellType.LINE,

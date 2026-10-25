@@ -803,7 +803,7 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
     >>> from pathlib import Path
     >>> filename = examples.download_notch_displacement(load=False)
     >>> Path(filename).name
-    'notch_disp.vtu'
+    'notch_disp_v2.vtu'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
@@ -1016,7 +1016,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
     """Reader for the OpenFOAM format (``.foam``).
 
-    By default, PyVista enables all patch arrays.  This is a deviation
+    By default, PyVista enables all patch arrays. This is a deviation
     from the VTK default.
 
     Wraps :vtk:`vtkOpenFOAMReader`.
@@ -1791,7 +1791,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     Examples
     --------
-    Load a CGNS file.  All arrays are loaded by default.
+    Load a CGNS file. All arrays are loaded by default.
 
     >>> import pyvista as pv
     >>> from pyvista import examples

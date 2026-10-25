@@ -2,7 +2,7 @@ Optional Features
 =================
 Due to its usage of ``numpy``, the PyVista library plays well with
 other modules, including ``matplotlib``, ``trimesh``, ``rtree``, and
-``pyembree``.  The following examples show some optional features
+``pyembree``. The following examples show some optional features
 included within PyVista that use or combine several modules to
 perform advanced analyses not normally included within ``VTK``.
 

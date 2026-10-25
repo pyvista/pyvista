@@ -89,7 +89,10 @@ class Table(DataObject, _vtk.vtkTable):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
-            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
+            elif (
+                args[0].__class__.__name__ == 'DataFrame'
+                and args[0].__class__.__module__.split('.')[0] == 'pandas'
+            ):
                 self._from_pandas(args[0])
             else:
                 msg = f'Table unable to be made from ({type(args[0])})'
@@ -455,7 +458,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         preference : str, optional
             When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'row'`` or
+            to search for in the dataset. Must be either ``'row'`` or
             ``'field'``.
 
         Returns

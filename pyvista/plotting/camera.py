@@ -1072,8 +1072,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         The camera view direction is reoriented to be normal to the ``view``
         plane. When ``negative=False``, The first letter of ``view`` refers
         to the axis that points to the right. The second letter of ``view``
-        refers to axis that points up.  When ``negative=True``, the first
-        letter refers to the axis that points left.  The up direction is
+        refers to axis that points up. When ``negative=True``, the first
+        letter refers to the axis that points left. The up direction is
         unchanged.
 
         Parallel projection is enabled when using this function.
@@ -1147,8 +1147,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         # set focal point to objects' center
         # offset camera position from objects center by dist in opposite of viewing direction
-        # (actual distance doesn't matter due to parallel projection)
-        dist = 1
+        # Keep the camera outside the actors' bounds.
+        dist = max(1.0, abs(objects_size @ direction))
         camera_position = position + dist * direction
 
         self.SetViewUp(*viewup)

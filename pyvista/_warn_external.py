@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import itertools
 from pathlib import Path
 import re
@@ -28,7 +29,7 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
         basedir = Path(__file__).parents[1]
         kwargs['skip_file_prefixes'] = (str(basedir / 'pyvista'),)
     else:
-        frame = sys._getframe()
+        frame = inspect.currentframe()
         for stacklevel in itertools.count(1):
             if frame is None:
                 # when called in embedded context may hit frame is None
