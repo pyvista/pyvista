@@ -2723,12 +2723,12 @@ class BasePlotter(_BoundsSizeMixin):
             self.render_window is not None
             and not self._first_time
             and not self._suppress_rendering
-            and self._interactor_render_enabled()
         ):
-            log.debug('Rendering')
             self.renderers.on_plotter_render()
-            self.render_window.Render()
-            self._rendered = True
+            if self._interactor_render_enabled():
+                log.debug('Rendering')
+                self.render_window.Render()
+                self._rendered = True
         for callback in self._on_render_callbacks:
             callback(self)
 
@@ -2740,17 +2740,23 @@ class BasePlotter(_BoundsSizeMixin):
         ).GetInteractor()
         return interactor is None or bool(interactor.GetEnableRender())
 
-    def _render_requested(self) -> None:
-        """Render even while the render window interactor has rendering disabled."""
+    @contextlib.contextmanager
+    def _interactor_render_on(self) -> Iterator[None]:
+        """Allow rendering even while the render window interactor has rendering disabled."""
         if self.render_window is None or self._interactor_render_enabled():
-            self.render()
+            yield
             return
         interactor = self.render_window.GetInteractor()
         interactor.EnableRenderOn()
         try:
-            self.render()
+            yield
         finally:
             interactor.EnableRenderOff()
+
+    def _render_requested(self) -> None:
+        """Render even while the render window interactor has rendering disabled."""
+        with self._interactor_render_on():
+            self.render()
 
     def add_on_render_callback(
         self,
@@ -6471,13 +6477,14 @@ class BasePlotter(_BoundsSizeMixin):
         # before extracting an image
         if self._first_time:
             self._on_first_render_request()
-            self.render()
+            self._render_requested()
 
         if transparent_background is None:
             transparent_background = self.image_transparent_background
         _validate_transparent_background(transparent_background)
         mwriter = self._get_mwriter_not_none()
-        self.update()
+        with self._interactor_render_on():
+            self.update()
         mwriter.append_data(self._image_with_background(transparent_background))
 
     def get_image_depth(
