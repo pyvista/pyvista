@@ -2407,7 +2407,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
-    def background_color(self, color: Color) -> None:
+    def background_color(self, color: ColorLike | None) -> None:
         self.set_background(color)
 
     @property
@@ -5696,6 +5696,23 @@ class BasePlotter(_BoundsSizeMixin):
         name : str, optional
             The title of the scalar bar to update.
 
+        Examples
+        --------
+        Update the range of a named scalar bar.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['height'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
+        ...     mesh,
+        ...     scalars='height',
+        ...     clim=(-0.5, 0.5),
+        ...     scalar_bar_args={'title': 'Height'},
+        ... )
+        >>> pl.update_scalar_bar_range((-1, 1), name='Height')
+        >>> pl.show()
+
         """
         if isinstance(clim, (float, int)):
             clim = (-clim, clim)
@@ -5727,7 +5744,25 @@ class BasePlotter(_BoundsSizeMixin):
             self.scalar_bars._resync_titles.add(title)
 
     def clear_actors(self) -> None:
-        """Clear actors from all renderers."""
+        """Clear actors from all renderers.
+
+        Examples
+        --------
+        Add a mesh to each subplot, then remove both actors.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> [bool(renderer.actors) for renderer in pl.renderers]
+        [True, True]
+        >>> pl.clear_actors()
+        >>> [bool(renderer.actors) for renderer in pl.renderers]
+        [False, False]
+
+        """
         self.renderers.clear_actors()
 
     def clear(self) -> None:
@@ -8835,7 +8870,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
         border_width: float | None = None,
-        window_size: list[int] | None = None,
+        window_size: Sequence[int] | None = None,
         line_smoothing: bool = False,
         point_smoothing: bool = False,
         polygon_smoothing: bool = False,
@@ -8987,7 +9022,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         auto_close: bool | None = None,
         interactive_update: bool = False,
         full_screen: bool | None = None,
-        screenshot: str | Path | BytesIO | bool = False,
+        screenshot: str | Path | BytesIO | bool | None = False,
         return_img: bool = False,
         cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | str | None = None,

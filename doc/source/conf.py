@@ -1304,6 +1304,7 @@ _REFERENCE_PREFIXES = {
 # Objects that references name without their module
 _REFERENCE_NAMES = {
     'BytesIO': 'io.BytesIO',
+    'Figure': 'matplotlib.figure.Figure',
     'NDArray': 'numpy.typing.NDArray',
     'Path': 'pathlib.Path',
     'Rotation': 'scipy.spatial.transform.Rotation',
