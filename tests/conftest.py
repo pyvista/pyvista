@@ -596,6 +596,7 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
+        'typing/cases/examples/download_loaders.py',
         'typing/cases/plotting/add_actor.py',
         'typing/cases/plotting/add_axes.py',
         'typing/cases/plotting/add_axes_at_origin.py',
@@ -636,6 +637,14 @@ _RENDERING_MODULES = frozenset(
         'core/test_helpers.py',
         'core/test_polydata.py',
         'core/test_utilities.py',
+    }
+)
+
+# Typing case files whose runtime halves read downloaded example files.
+_DOWNLOAD_CASE_MODULES = frozenset(
+    {
+        'typing/cases/examples/download_loaders.py',
+        'typing/cases/examples/get_example.py',
     }
 )
 
@@ -686,10 +695,10 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
 
 
 def pytest_collection_modifyitems(config, items):  # noqa: ARG001
-    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` markers.
+    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` / ``needs_download`` markers.
 
-    See ``_RENDERING_*`` and ``_IO_EXTRA_*`` above. The ``needs_io_extra``
-    marking only fires when the relevant ``HAS_IO_*`` probe reports the module
+    See ``_RENDERING_*``, ``_IO_EXTRA_*`` and ``_DOWNLOAD_CASE_MODULES`` above. The
+    ``needs_io_extra`` marking only fires when the relevant ``HAS_IO_*`` probe reports the module
     absent, so it is a no-op on a full VTK build.
     """
     tests_root = Path(__file__).parent
@@ -714,6 +723,9 @@ def pytest_collection_modifyitems(config, items):  # noqa: ARG001
             item.add_marker(mark)
         if _name_needs_io_extra(item):
             item.add_marker(io_extra_mark)
+        # Only the runtime half reads files; the static half checks without them
+        if rel in _DOWNLOAD_CASE_MODULES and item.name.endswith('[runtime]'):
+            item.add_marker(pytest.mark.needs_download)
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
