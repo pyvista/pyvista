@@ -124,7 +124,7 @@ test = [
   'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
   'tqdm<4.71.0',
-  'trame-pyvista @ git+https://github.com/juampatronics/trame-pyvista@54ab662e2395394c5bcba5bb91c49deadb1cddc4',
+  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@feat/marimo-support',
   'trimesh<5.2.0',
   'type-assert==0.5.0',
   'typing-extensions<4.17.0',
@@ -185,7 +185,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-pyvista @ git+https://github.com/juampatronics/trame-pyvista@54ab662e2395394c5bcba5bb91c49deadb1cddc4',
+  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@feat/marimo-support',
   'trimesh==5.1.1',
   { include-group = 'pinned' },
 ]
@@ -194,7 +194,7 @@ docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
-  'trame-pyvista @ git+https://github.com/juampatronics/trame-pyvista@54ab662e2395394c5bcba5bb91c49deadb1cddc4',
+  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@feat/marimo-support',
   'type-assert==0.5.0', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
