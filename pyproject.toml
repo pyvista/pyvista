@@ -81,6 +81,7 @@ typing = [
 ]
 
 test = [
+  'anywidget<0.12.0',
   'cmcrameri<1.11.0',
   'cmocean<4.0.4',
   'colorcet<3.3.0',
@@ -122,7 +123,7 @@ test = [
   'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
   'tqdm<4.71.0',
-  'trame-pyvista<0.3.0',
+  'trame-pyvista @ git+https://github.com/pyvista/trame-pyvista@cffd25ca2743c2529e8d4637017148f8f95859b8',
   'trimesh<5.2.0',
   'type-assert==0.5.0',
   'typing-extensions<4.17.0',

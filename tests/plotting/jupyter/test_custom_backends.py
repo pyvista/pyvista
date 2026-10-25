@@ -489,6 +489,15 @@ def test_resolve_backend_in_marimo(monkeypatch, renders, expected):
         assert _resolve_backend() == expected
 
 
+def test_marimo_renders_trame_pyvista():
+    assert jupyter_mod._marimo_renders_trame_pyvista()
+
+
+def test_marimo_renders_trame_pyvista_without_anywidget(monkeypatch):
+    monkeypatch.setitem(sys.modules, 'anywidget', None)
+    assert not jupyter_mod._marimo_renders_trame_pyvista()
+
+
 def test_handle_plotter_in_marimo_asks_to_upgrade_trame_pyvista(monkeypatch):
     _fake_marimo(monkeypatch)
     monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: False)
