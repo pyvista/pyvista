@@ -228,7 +228,7 @@ def wrap(  # noqa: PLR0911
 
     Returns
     -------
-    pyvista.DataSet
+    pyvista.DataObject | pyvista.pyvista_ndarray | None
         The PyVista wrapped dataset.
 
     Examples

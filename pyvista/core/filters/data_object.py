@@ -605,7 +605,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         if exclude_fields:
 
-            def exclude(left: Sequence[_T], right: Sequence[_T]) -> Sequence[_T]:
+            def exclude(left: Sequence[_T], right: Sequence[_T]) -> list[_T]:
                 return [val for val in left if val not in right]
 
             return (
@@ -6958,11 +6958,11 @@ def _exclude_string_arrays(
 
 def _box_planes(
     bounds: NDArray[np.floating],
-) -> list[tuple[VectorLikeFloat, VectorLikeFloat]]:
+) -> list[tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
-    planes: list[tuple[VectorLikeFloat, VectorLikeFloat]] = []
+    planes: list[tuple[NDArray[np.floating], NDArray[np.floating]]] = []
     for axis in range(3):
         for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
             normal = np.zeros(3)

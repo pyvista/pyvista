@@ -397,10 +397,10 @@ class CompositeFilters(DataObjectFilters):
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock[Any],
         *,
-        factor=0.2,
+        factor: float = 0.2,
         nested: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | MultiBlock:
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters

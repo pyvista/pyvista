@@ -71,7 +71,6 @@ if TYPE_CHECKING:
 
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import VectorLikeFloat
-    from ._typing_core import VectorLikeInt
     from ._typing_core import _AnyArrayLike
     from ._typing_core import _ArrayLikeOrScalar
 
@@ -367,7 +366,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active tensor array.
 
         """
@@ -391,7 +390,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active vectors array.
 
         Examples
@@ -427,7 +426,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active scalars.
 
         Examples
@@ -568,7 +567,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.PolyData
+        pyvista.PolyData | None
             Active vectors represented as arrows.
 
         Examples
@@ -1232,7 +1231,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
+        int
              Number of cells in the entire dataset.
 
         Notes
@@ -1259,7 +1258,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
+        int
              Number of points.
 
         """
@@ -1271,7 +1270,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
+        int
              Number of cells.
 
         """
@@ -2016,12 +2015,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pset
 
     # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLikeInt: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> NDArray[np.int_]: ...
+    # ruff: enable[E501]
     # fmt: on
-    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLikeInt:
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = 1
+    ) -> int | NDArray[np.int_]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2045,8 +2048,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int
-            The index of the point in this mesh that is closest to the given point.
+        int | numpy.ndarray
+            Index of the closest point, or indices of the ``n`` closest points.
 
         See Also
         --------

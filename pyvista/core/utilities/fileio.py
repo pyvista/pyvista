@@ -461,7 +461,7 @@ def read(
 
     Returns
     -------
-    pyvista.DataSet | pyvista.MultiBlock
+    pyvista.DataObject
         Wrapped PyVista dataset. When ``cls`` is given, an instance of
         ``cls`` is returned instead.
 
@@ -761,7 +761,7 @@ def read_exodus(
 
     Returns
     -------
-    pyvista.DataSet
+    pyvista.DataSet | pyvista.MultiBlock
         Wrapped PyVista dataset.
 
     Examples

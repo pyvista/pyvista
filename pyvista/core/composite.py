@@ -1426,14 +1426,14 @@ class MultiBlock(
     def __getitem__(self, index: slice) -> MultiBlock[_BlockType]: ...  # pragma: no cover
     # fmt: on
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | str | slice) -> _BlockType | MultiBlock[_BlockType]:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
 
         """
         if isinstance(index, slice):
-            multi = MultiBlock()
+            multi: MultiBlock[_BlockType] = MultiBlock()
             for i in range(self.n_blocks)[index]:
                 multi.append(self[i], self.get_block_name(i))
             return multi
@@ -1446,7 +1446,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))
+        return cast('_BlockType', wrap(self.GetBlock(index)))
 
     # fmt: off
     # ruff: disable[E501]

@@ -664,7 +664,7 @@ class PolyDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.DataSet
+        pyvista.PolyData | pyvista.UnstructuredGrid
             :class:`pyvista.PolyData` if ``dataset`` is a
             :class:`pyvista.PolyData` or a sequence of them, otherwise a
             :class:`pyvista.UnstructuredGrid`.

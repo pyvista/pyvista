@@ -580,7 +580,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Property
+        pyvista.Property | None
             The object describing backfaces.
 
         Examples

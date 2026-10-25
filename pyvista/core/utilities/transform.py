@@ -1654,7 +1654,7 @@ class Transform(
         *,
         inverse: bool = False,
         copy: bool = True,
-    ):
+    ) -> NDArray[np.floating] | DataSet | MultiBlock[Any] | Prop3D:
         """Apply the current transformation :attr:`~Transform.matrix` to points, vectors, a dataset, or actor.
 
         .. note::
