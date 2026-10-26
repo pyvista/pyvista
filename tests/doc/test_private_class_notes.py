@@ -23,8 +23,8 @@ NOTE = 'private internal implementation detail'
 def _import_all_modules():
     """Return the importable ``pyvista`` modules and ``{name: error}`` for the rest."""
     modules, failed = [pv], {}
-    # ``onerror`` records a broken package instead of skipping or raising on it
-    on_package_error = lambda name: failed.setdefault(name, 'failed to import')
+    # A broken package is recorded below; ``onerror`` stops walk_packages raising it again
+    on_package_error = lambda _name: None
     for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.', onerror=on_package_error):
         try:
             with warnings.catch_warnings():
