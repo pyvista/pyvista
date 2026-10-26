@@ -43,33 +43,41 @@ import pyvista as pv
 # %%
 # Define Helpers
 # ==============
-# Define a function which labels the ``origin``, the ``position``, and
-# ``origin + position`` in a scene. Points at the same location share one label.
-# A grey :class:`~pyvista.AxesAssembly` marks the world axes.
+# Define a function which adds spatial context to a scene: a unit grid on the floor
+# at ``z=0``, grey world axes, and optionally colored markers for the ``origin``, the
+# ``position``, and ``origin + position``. A vertical line drops from each marker to
+# the floor. Markers decrease in size so that markers at the same location stay
+# visible.
 
-MARKER_COLORS = {'origin': 'purple', 'position': 'orange', 'origin + position': 'teal'}
+MARKERS = {
+    'origin': ('purple', 36),
+    'position': ('orange', 24),
+    'origin + position': ('cyan', 12),
+}
 
 
-def add_markers(pl, origin, position):
-    points = {
-        'origin': np.array(origin, dtype=float),
-        'position': np.array(position, dtype=float),
-    }
-    points['origin + position'] = points['origin'] + points['position']
+def add_context(pl, *, origin=None, position=None, view='iso', bounds=None):
+    if origin is not None:
+        origin = np.array(origin, dtype=float)
+        position = np.array(position, dtype=float)
+        points = [origin, position, origin + position]
 
-    groups = {}
-    for name, point in points.items():
-        groups.setdefault(tuple(point.round(6)), []).append(name)
-    for point, names in groups.items():
-        pl.add_point_labels(
-            [point],
-            [', '.join(names)],
-            point_color=MARKER_COLORS[names[0]],
-            point_size=20,
-            render_points_as_spheres=True,
-            font_size=14,
-            always_visible=True,
-        )
+        for index, (name, point) in enumerate(zip(MARKERS, points, strict=True)):
+            color, size = MARKERS[name]
+            covers_smaller = any(
+                np.allclose(point, other) for other in points[index + 1 :]
+            )
+            pl.add_mesh(
+                pv.PointSet([point]),
+                color=color,
+                point_size=size,
+                render_points_as_spheres=True,
+                opacity=0.4 if covers_smaller else 1.0,
+                label=name,
+            )
+            if point[2] != 0:
+                pl.add_mesh(pv.Line(point, (*point[:2], 0)), color=color, line_width=2)
+        pl.add_legend(face='circle')
 
     world_axes = pv.AxesAssembly(
         x_color='lightgray',
@@ -79,6 +87,17 @@ def add_markers(pl, origin, position):
         label_size=30,
     )
     pl.add_actor(world_axes)
+
+    scene_bounds = pl.renderer.bounds if bounds is None else bounds
+    floor = pv.Plane(i_size=40, j_size=40, i_resolution=40, j_resolution=40)
+    pl.add_mesh(
+        floor, style='wireframe', color='lightgray', lighting=False, reset_camera=False
+    )
+
+    if view == 'top':
+        pl.view_vector((0, -1, 1.5), viewup=(0, 1, 0), bounds=scene_bounds)
+    else:
+        pl.view_vector((1, 1, 1), viewup=(0, 0, 1), bounds=scene_bounds)
 
 
 # %%
@@ -99,19 +118,18 @@ properties = {
     'origin': dict(origin=(1, 1, 0)),
 }
 
-pl = pv.Plotter(shape=(2, 2))
-for index, (name, kwargs) in enumerate(properties.items()):
-    pl.subplot(*divmod(index, 2))
+for name, kwargs in properties.items():
+    pl = pv.Plotter()
     pl.add_text(f'{name}={kwargs[name]}', font_size=12)
     pl.add_actor(pv.AxesAssembly(**kwargs))
-    add_markers(
+    add_context(
         pl,
         origin=kwargs.get('origin', (0, 0, 0)),
         position=kwargs.get('position', (0, 0, 0)),
+        view='top',
+        bounds=(-1, 3, -1, 2, 0, 1),
     )
-    pl.view_xy()
-pl.link_views()
-pl.show()
+    pl.show()
 
 # %%
 # The Origin Is a Pivot, the Position Is an Offset
@@ -147,7 +165,7 @@ add_axes_and_pivot_line(
 add_axes_and_pivot_line(
     pl, scale=3, labels=('X3', 'Y3', 'Z3'), origin=center, position=center
 )
-add_markers(pl, origin=center, position=center)
+add_context(pl, origin=center, position=center)
 pl.show()
 
 # %%
@@ -159,7 +177,7 @@ pl = pv.Plotter()
 pl.add_text(f'origin=(0, 0, 0), position={center}', font_size=12)
 add_axes_and_pivot_line(pl, scale=1, labels=('X1', 'Y1', 'Z1'), position=center)
 add_axes_and_pivot_line(pl, scale=3, labels=('X3', 'Y3', 'Z3'), position=center)
-add_markers(pl, origin=(0, 0, 0), position=center)
+add_context(pl, origin=(0, 0, 0), position=center)
 pl.show()
 
 # %%
@@ -178,7 +196,7 @@ actor = pl.add_mesh(cone, color='tan')
 actor.origin = cone.center
 actor.position = target - cone.center
 actor.orientation = (0, 0, 90)
-add_markers(pl, origin=actor.origin, position=actor.position)
+add_context(pl, origin=actor.origin, position=actor.position)
 pl.show()
 
 # %%
@@ -201,14 +219,16 @@ rotate_then_scale = pv.Transform().rotate_z(angle).scale(scale)
 pl = pv.Plotter(shape=(1, 3))
 pl.add_text(f'scale={scale}\norientation=(0, 0, {angle})', font_size=10)
 pl.add_actor(pv.AxesAssembly(scale=scale, orientation=(0, 0, angle)))
+add_context(pl, view='top')
 pl.subplot(0, 1)
 pl.add_text('Transform()\n.scale().rotate_z()', font_size=10)
 pl.add_actor(pv.AxesAssembly(user_matrix=scale_then_rotate.matrix))
+add_context(pl, view='top')
 pl.subplot(0, 2)
 pl.add_text('Transform()\n.rotate_z().scale()', font_size=10)
 pl.add_actor(pv.AxesAssembly(user_matrix=rotate_then_scale.matrix))
+add_context(pl, view='top')
 pl.link_views()
-pl.view_xy()
 pl.show()
 
 # %%
@@ -223,14 +243,17 @@ orientation = (60, 45, 0)
 pl = pv.Plotter(shape=(1, 3))
 pl.add_text(f'orientation={orientation}', font_size=10)
 pl.add_actor(pv.AxesAssembly(orientation=orientation))
+add_context(pl)
 pl.subplot(0, 1)
 pl.add_text('Transform()\n.rotate_y(45).rotate_x(60)', font_size=10)
 transform = pv.Transform().rotate_y(orientation[1]).rotate_x(orientation[0])
 pl.add_actor(pv.AxesAssembly(user_matrix=transform.matrix))
+add_context(pl)
 pl.subplot(0, 2)
 pl.add_text('Transform()\n.rotate_x(60).rotate_y(45)', font_size=10)
 transform = pv.Transform().rotate_x(orientation[0]).rotate_y(orientation[1])
 pl.add_actor(pv.AxesAssembly(user_matrix=transform.matrix))
+add_context(pl)
 pl.link_views()
 pl.show()
 
@@ -251,8 +274,7 @@ pl.add_actor(
         position=position, user_matrix=rotation.matrix, labels=('X2', 'Y2', 'Z2')
     )
 )
-add_markers(pl, origin=(0, 0, 0), position=position)
-pl.view_xy()
+add_context(pl, origin=(0, 0, 0), position=position, view='top')
 pl.show()
 
 # %%
@@ -352,6 +374,7 @@ for index, (title, transform) in enumerate(scenes.items()):
         bottom_actor = pv.Actor(mapper=pv.DataSetMapper(hemisphere_bottom))
         bottom_actor.prop.color = 'blue'
         pl.add_actor(transform.apply(bottom_actor, 'replace'))
+    add_context(pl)
 pl.link_views()
 pl.show()
 
