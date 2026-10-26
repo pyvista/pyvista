@@ -383,12 +383,17 @@ def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
     return obs.observe(error_output)
 
 
+_ABORTING_SIGINT_HANDLERS = (signal.default_int_handler, signal.SIG_DFL)
+
+
 class ProgressMonitor(_NoNewAttrMixin):
     """A standard class for monitoring the progress of a VTK algorithm.
 
-    This must be used in a ``with`` context. A keyboard interrupt aborts the
-    algorithm and is delayed until the exit event, as interrupts will crash
-    the kernel if the VTK algorithm is still executing.
+    This must be used in a ``with`` context. A keyboard interrupt is delayed
+    until the exit event, as interrupts will crash the kernel if the VTK
+    algorithm is still executing. The algorithm is aborted when the previous
+    SIGINT handler raises ``KeyboardInterrupt`` or ends the process, and runs
+    to completion otherwise.
 
     Parameters
     ----------
@@ -439,7 +444,8 @@ class ProgressMonitor(_NoNewAttrMixin):
 
         On an event occurrence, this function executes.
         """
-        if self._interrupt_signal_received:
+        # Only abort when the restored handler stops the program, so any other gets complete output
+        if self._interrupt_signal_received and self._old_handler in _ABORTING_SIGINT_HANDLERS:
             if (abort := getattr(obj, 'AbortExecuteOn', None)) is not None:
                 abort()
         else:

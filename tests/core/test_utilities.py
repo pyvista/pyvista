@@ -787,12 +787,14 @@ def test_progress_monitor_interrupt_without_abort_execute():
     algorithm = _vtk.vtkSphereSource()
     monitor = ProgressMonitor(algorithm)
     monitor._interrupt_signal_received = True
+    monitor._old_handler = signal.default_int_handler
     monitor(algorithm)
     assert algorithm.GetAbortExecute()
 
     reader = _PVDReader()
     monitor = ProgressMonitor(reader)
     monitor._interrupt_signal_received = True
+    monitor._old_handler = signal.default_int_handler
     monitor(reader)
 
 
@@ -847,7 +849,8 @@ def test_progress_monitor_interrupt_calls_previous_handler():
     alg = _interrupting_elevation_filter()
     with ProgressMonitor(alg):
         alg.Update()
-    assert pv.wrap(alg.GetOutput()).n_points == 0
+    assert pv.wrap(alg.GetOutput()).n_points == pv.wrap(alg.GetInput()).n_points
+    assert not alg.GetAbortExecute()
     assert signal.getsignal(signal.SIGINT) is previous_handler
     assert received == [signal.SIGINT]
 
