@@ -50,9 +50,9 @@ import pyvista as pv
 # visible.
 
 MARKERS = {
-    'origin': ('purple', 36),
-    'position': ('orange', 24),
-    'origin + position': ('cyan', 12),
+    'origin': ('purple', 0.04),
+    'position': ('orange', 0.027),
+    'origin + position': ('cyan', 0.014),
 }
 
 
@@ -62,16 +62,19 @@ def add_context(pl, *, origin=None, position=None, view='iso', bounds=None):
         position = np.array(position, dtype=float)
         points = [origin, position, origin + position]
 
+        scene = np.array(pl.renderer.bounds if bounds is None else bounds).reshape(3, 2)
+        scene_size = np.linalg.norm(
+            np.maximum(scene[:, 1], np.max(points, axis=0))
+            - np.minimum(scene[:, 0], np.min(points, axis=0))
+        )
         for index, (name, point) in enumerate(zip(MARKERS, points, strict=True)):
-            color, size = MARKERS[name]
+            color, relative_radius = MARKERS[name]
             covers_smaller = any(
                 np.allclose(point, other) for other in points[index + 1 :]
             )
             pl.add_mesh(
-                pv.PointSet([point]),
+                pv.Sphere(radius=relative_radius * scene_size, center=point),
                 color=color,
-                point_size=size,
-                render_points_as_spheres=True,
                 opacity=0.4 if covers_smaller else 1.0,
                 label=name,
             )
