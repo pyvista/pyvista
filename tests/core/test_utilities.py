@@ -784,10 +784,8 @@ def test_progress_monitor_interrupt_without_abort_execute():
     monitor(reader)
 
 
-def _interrupting_elevation_filter():
-    """Return an elevation filter that sends SIGINT to the process when it starts."""
-    alg = _vtk.vtkElevationFilter()
-    alg.SetInputData(pv.Sphere(theta_resolution=400, phi_resolution=400))
+def _send_sigint_on_start(alg):
+    """Make ``alg`` send SIGINT to the process the first time it starts executing."""
 
     def send_sigint(*_):
         alg.RemoveObservers(_vtk.vtkCommand.StartEvent)
@@ -796,6 +794,13 @@ def _interrupting_elevation_filter():
             signal.raise_signal(signal.SIGINT)
 
     alg.AddObserver(_vtk.vtkCommand.StartEvent, send_sigint)
+
+
+def _interrupting_elevation_filter():
+    """Return an elevation filter that sends SIGINT to the process when it starts."""
+    alg = _vtk.vtkElevationFilter()
+    alg.SetInputData(pv.Sphere(theta_resolution=400, phi_resolution=400))
+    _send_sigint_on_start(alg)
     return alg
 
 
@@ -813,7 +818,8 @@ def test_progress_monitor_interrupt_raises():
     alg = _interrupting_elevation_filter()
     with pytest.raises(KeyboardInterrupt), ProgressMonitor(alg):
         alg.Update()
-    assert alg.GetAbortExecute()
+    assert pv.wrap(alg.GetOutput()).n_points == 0
+    assert not alg.GetAbortExecute()
     assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
 
 
@@ -828,9 +834,23 @@ def test_progress_monitor_interrupt_calls_previous_handler():
     alg = _interrupting_elevation_filter()
     with ProgressMonitor(alg):
         alg.Update()
-    assert alg.GetAbortExecute()
+    assert pv.wrap(alg.GetOutput()).n_points == 0
     assert signal.getsignal(signal.SIGINT) is previous_handler
     assert received == [signal.SIGINT]
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_reader_reads_again_after_interrupt(tmp_path):
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    path = tmp_path / 'sphere.vtp'
+    sphere = pv.Sphere(theta_resolution=400, phi_resolution=400)
+    sphere.save(path)
+    reader = pv.get_reader(path)
+    reader.show_progress()
+    _send_sigint_on_start(reader.reader)
+    with pytest.raises(KeyboardInterrupt):
+        reader.read()
+    assert reader.read().n_points == sphere.n_points
 
 
 @pytest.mark.usefixtures('restore_sigint')

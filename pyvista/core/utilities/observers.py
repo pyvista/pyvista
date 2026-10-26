@@ -478,5 +478,8 @@ class ProgressMonitor(_NoNewAttrMixin):
             self._old_handler = None
         if self._interrupt_signal_received:
             self._interrupt_signal_received = False
+            # Let a reused algorithm, such as a reader, execute again
+            if (abort_off := getattr(self.algorithm, 'AbortExecuteOff', None)) is not None:
+                abort_off()
             # Deliver the interrupt delayed while the algorithm ran to the restored handler
             signal.raise_signal(signal.SIGINT)
