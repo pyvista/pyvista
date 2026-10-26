@@ -24,8 +24,7 @@ def _import_all_modules():
     """Return the importable ``pyvista`` modules and ``{name: error}`` for the rest."""
     modules, failed = [pv], {}
     # A broken package is recorded below; ``onerror`` stops walk_packages raising it again
-    on_package_error = lambda _name: None
-    for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.', onerror=on_package_error):
+    for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.', onerror=lambda _name: None):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', PyVistaDeprecationWarning)  # deprecated shims
