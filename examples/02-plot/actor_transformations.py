@@ -91,16 +91,14 @@ def add_context(pl, *, origin=None, position=None, view='iso', bounds=None):
     )
     pl.add_actor(world_axes)
 
-    scene_bounds = pl.renderer.bounds if bounds is None else bounds
     floor = pv.Plane(i_size=40, j_size=40, i_resolution=40, j_resolution=40)
-    pl.add_mesh(
-        floor, style='wireframe', color='lightgray', lighting=False, reset_camera=False
-    )
+    floor_actor = pl.add_mesh(floor, style='wireframe', color='lightgray', lighting=False)
+    floor_actor.use_bounds = False
 
     if view == 'top':
-        pl.view_vector((0, -1, 1.5), viewup=(0, 1, 0), bounds=scene_bounds)
+        pl.view_vector((0, -1, 1.5), viewup=(0, 1, 0), bounds=bounds)
     else:
-        pl.view_vector((1, 1, 1), viewup=(0, 0, 1), bounds=scene_bounds)
+        pl.view_vector((1, 1, 1), viewup=(0, 0, 1), bounds=bounds)
 
 
 # %%
