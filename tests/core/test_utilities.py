@@ -554,6 +554,18 @@ def test_is_inside_bounds_raises():
         is_inside_bounds(point=None, bounds=(0,))
 
 
+def test_report_gpu_errors(monkeypatch):
+    def fail(*_):
+        msg = 'no GPU'
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr('pyvista.report.GPUInfo.get_info', fail)
+    monkeypatch.setattr('pyvista.report._get_render_window_class', fail)
+    report = repr(pv.Report(gpu=True))
+    assert 'GPU Details : error' in report
+    assert 'Render Window : error' in report
+
+
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
@@ -789,8 +801,9 @@ def _send_sigint_on_start(alg):
 
     def send_sigint(*_):
         alg.RemoveObservers(_vtk.vtkCommand.StartEvent)
+        handler = signal.getsignal(signal.SIGINT)
         # An interrupt that reaches a VTK callback unhandled exits the process
-        if isinstance(getattr(signal.getsignal(signal.SIGINT), '__self__', None), ProgressMonitor):
+        if isinstance(getattr(handler, '__self__', None), ProgressMonitor):  # pragma: no branch
             signal.raise_signal(signal.SIGINT)
 
     alg.AddObserver(_vtk.vtkCommand.StartEvent, send_sigint)
@@ -836,6 +849,21 @@ def test_progress_monitor_interrupt_calls_previous_handler():
         alg.Update()
     assert pv.wrap(alg.GetOutput()).n_points == 0
     assert signal.getsignal(signal.SIGINT) is previous_handler
+    assert received == [signal.SIGINT]
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_interrupt_without_abort_execute_off():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    received = []
+
+    def previous_handler(sig, _frame):
+        received.append(sig)
+
+    signal.signal(signal.SIGINT, previous_handler)
+    with ProgressMonitor(_PVDReader()):
+        signal.raise_signal(signal.SIGINT)
     assert received == [signal.SIGINT]
 
 
@@ -914,6 +942,21 @@ def test_observer_prints_traceback_of_handling_error(monkeypatch):
     assert "'foo'" in stdout.getvalue()
     assert 'parse_message' in stderr.getvalue()
     assert 'ValueError: parse failure' in stderr.getvalue()
+
+
+def test_observer_survives_unusable_streams(monkeypatch, caplog):
+    def parse_message(_message):
+        msg = 'parse failure'
+        raise ValueError(msg)
+
+    obs = Observer()
+    monkeypatch.setattr(obs, 'parse_message', parse_message)
+    closed = StringIO()
+    closed.close()
+    monkeypatch.setattr(sys, '__stdout__', closed)
+    with caplog.at_level('DEBUG', logger='pyvista.core.utilities.observers'):
+        obs(None, None, 'foo')
+    assert 'Failed to print VTK error message' in caplog.text
 
 
 def test_observer_default_event():
