@@ -1226,7 +1226,7 @@ class MultiBlock(
     def depth(self) -> int:  # numpydoc ignore=RT01
         """Return the number of :class:`MultiBlock` levels, including this one.
 
-        An empty or unnested :class:`MultiBlock` has a depth of 1.
+        A :class:`MultiBlock` with no nested :class:`MultiBlock` blocks has a depth of 1.
 
         .. versionadded:: 0.50
 
