@@ -155,6 +155,8 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('N Partitions', self.n_partitions, '{}'))
+        attrs.append(('N Points', self.n_points, '{}'))
+        attrs.append(('N Cells', self.n_cells, '{}'))
         return attrs
 
     def _repr_html_(self) -> str:
@@ -172,7 +174,11 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         return build_repr_html(
             obj_type=type(self).__name__,
             mesh_type='ImageData',
-            header_badges=[f'{self.n_partitions} partitions'],
+            header_badges=[
+                f'{self.n_partitions} partitions',
+                f'{self.n_points:,} points',
+                f'{self.n_cells:,} cells',
+            ],
             sections=sections,
             text_repr=repr(self),
         )
@@ -275,6 +281,38 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
         """
         return self.n_partitions == 0
+
+    @property
+    def n_points(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of points in all partitions.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> partitions = pv.PartitionedDataSet([pv.Sphere(), pv.Cube()])
+        >>> partitions.n_points
+        850
+
+        """
+        return self.GetNumberOfPoints()
+
+    @property
+    def n_cells(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of cells in all partitions.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> partitions = pv.PartitionedDataSet([pv.Sphere(), pv.Cube()])
+        >>> partitions.n_cells
+        1686
+
+        """
+        return self.GetNumberOfCells()
 
     def append(self, dataset: DataSet) -> None:
         """Add a data set to the next partition index.

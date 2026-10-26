@@ -147,6 +147,9 @@ class CompositeFilters(DataObjectFilters):
         >>> filtered
         MultiBlock[ImageData | PolyData | UnstructuredGrid] (...)
           N Blocks:   3
+          N Points:   1585
+          N Cells:    1841
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 5.000e-01

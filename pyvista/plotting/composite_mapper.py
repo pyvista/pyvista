@@ -479,6 +479,9 @@ class CompositeAttributes(
         >>> mapper.block_attr.get_block(0)
         MultiBlock[PolyData] (...)
           N Blocks:   2
+          N Points:   850
+          N Cells:    1686
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 1.500e+00
@@ -586,6 +589,9 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> mapper.dataset
         MultiBlock[PolyData] (...)
           N Blocks:   2
+          N Points:   850
+          N Cells:    1686
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 1.500e+00

@@ -1177,6 +1177,78 @@ class MultiBlock(
         return self.n_blocks == 0
 
     @property
+    def n_points(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of points in all blocks.
+
+        Nested blocks are counted recursively and ``None`` blocks count as zero.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+        >>> multi.n_points
+        850
+
+        This is the sum over all leaf datasets.
+
+        >>> sum(block.n_points for block in multi.recursive_iterator(skip_none=True))
+        850
+
+        """
+        return self.GetNumberOfPoints()
+
+    @property
+    def n_cells(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of cells in all blocks.
+
+        Nested blocks are counted recursively and ``None`` blocks count as zero.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+        >>> multi.n_cells
+        1686
+
+        This is the sum over all leaf datasets.
+
+        >>> sum(block.n_cells for block in multi.recursive_iterator(skip_none=True))
+        1686
+
+        """
+        return self.GetNumberOfCells()
+
+    @property
+    def depth(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of :class:`MultiBlock` levels, including this one.
+
+        An empty or unnested :class:`MultiBlock` has a depth of 1.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        is_nested
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere()])
+        >>> multi.depth
+        1
+
+        >>> nested = pv.MultiBlock([multi, pv.MultiBlock([multi])])
+        >>> nested.depth
+        3
+
+        """
+        return 1 + max((block.depth for block in self if isinstance(block, MultiBlock)), default=0)
+
+    @property
     def bounds(self) -> BoundsTuple:
         """Find min/max for bounds across blocks.
 
@@ -2095,6 +2167,9 @@ class MultiBlock(
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Blocks:', self.n_blocks, '{}'))
+        attrs.append(('N Points:', self.n_points, '{}'))
+        attrs.append(('N Cells:', self.n_cells, '{}'))
+        attrs.append(('Depth:', self.depth, '{}'))
         bds = self.bounds
         attrs.append(('X Bounds:', (bds.x_min, bds.x_max), '{:.3e}, {:.3e}'))
         attrs.append(('Y Bounds:', (bds.y_min, bds.y_max), '{:.3e}, {:.3e}'))
@@ -2148,6 +2223,9 @@ class MultiBlock(
             mesh_type='MultiBlock',
             header_badges=[
                 f'{self.n_blocks} blocks',
+                f'{self.n_points:,} points',
+                f'{self.n_cells:,} cells',
+                f'depth {self.depth}',
                 _fmt_memory(self.actual_memory_size),
             ],
             metadata=meta,
