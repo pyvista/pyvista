@@ -146,9 +146,9 @@ class CompositeFilters(DataObjectFilters):
         >>> filtered = multi.generic_filter(normalize_bounds)
         >>> filtered
         MultiBlock[ImageData | PolyData | UnstructuredGrid] (...)
-          N Blocks:   3
-          N Points:   1585
           N Cells:    1841
+          N Points:   1585
+          N Blocks:   3
           Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01

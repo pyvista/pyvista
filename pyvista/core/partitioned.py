@@ -154,9 +154,9 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(('N Partitions', self.n_partitions, '{}'))
-        attrs.append(('N Points', self.n_points, '{}'))
         attrs.append(('N Cells', self.n_cells, '{}'))
+        attrs.append(('N Points', self.n_points, '{}'))
+        attrs.append(('N Partitions', self.n_partitions, '{}'))
         return attrs
 
     def _repr_html_(self) -> str:
@@ -175,9 +175,9 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             obj_type=type(self).__name__,
             mesh_type='ImageData',
             header_badges=[
-                f'{self.n_partitions} partitions',
                 f'{self.n_points:,} points',
                 f'{self.n_cells:,} cells',
+                f'{self.n_partitions} partitions',
             ],
             sections=sections,
             text_repr=repr(self),

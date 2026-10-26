@@ -433,9 +433,9 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     assert multi._repr_html_() is not None
     pattern = (
         r'MultiBlock\[.+\] \(0x[0-9a-fA-F]+\)'
-        r'\s+N Blocks:\s{3}\d+'
-        r'\s+N Points:\s{3}\d+'
         r'\s+N Cells:\s{4}\d+'
+        r'\s+N Points:\s{3}\d+'
+        r'\s+N Blocks:\s{3}\d+'
         r'\s+Depth:\s{6}\d+'
         r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
@@ -475,7 +475,12 @@ def test_multi_block_counts_values():
     assert multi.n_cells == 1686
     assert multi.depth == 2
     lines = repr(multi).splitlines()
-    assert lines[2:5] == ['  N Points:   850', '  N Cells:    1686', '  Depth:      2']
+    assert lines[1:5] == [
+        '  N Cells:    1686',
+        '  N Points:   850',
+        '  N Blocks:   3',
+        '  Depth:      2',
+    ]
     html = multi._repr_html_()
     assert '850 points' in html
     assert '1,686 cells' in html

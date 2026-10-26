@@ -2166,9 +2166,9 @@ class MultiBlock(
     def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
-        attrs.append(('N Blocks:', self.n_blocks, '{}'))
-        attrs.append(('N Points:', self.n_points, '{}'))
         attrs.append(('N Cells:', self.n_cells, '{}'))
+        attrs.append(('N Points:', self.n_points, '{}'))
+        attrs.append(('N Blocks:', self.n_blocks, '{}'))
         attrs.append(('Depth:', self.depth, '{}'))
         bds = self.bounds
         attrs.append(('X Bounds:', (bds.x_min, bds.x_max), '{:.3e}, {:.3e}'))
@@ -2222,9 +2222,9 @@ class MultiBlock(
             obj_type=type(self).__name__,
             mesh_type='MultiBlock',
             header_badges=[
-                f'{self.n_blocks} blocks',
                 f'{self.n_points:,} points',
                 f'{self.n_cells:,} cells',
+                f'{self.n_blocks} blocks',
                 f'depth {self.depth}',
                 _fmt_memory(self.actual_memory_size),
             ],
