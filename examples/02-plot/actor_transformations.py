@@ -83,11 +83,14 @@ def add_context(pl, *, origin=None, position=None, view='iso', bounds=None):
         pl.add_legend(face='circle')
 
     world_axes = pv.AxesAssembly(
+        shaft_radius=0.01,
+        tip_radius=0.04,
         x_color='lightgray',
         y_color='lightgray',
         z_color='lightgray',
         label_color='gray',
         label_size=30,
+        label_position=1.25,
     )
     pl.add_actor(world_axes)
 
