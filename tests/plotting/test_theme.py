@@ -440,6 +440,8 @@ def test_window_size(default_theme):
 def test_camera(default_theme):
     with pytest.raises(TypeError, match='camera value must either be a'):
         default_theme.camera = [1, 0, 0]
+    with pytest.raises(ValueError, match='Camera up vector cannot be zero'):
+        default_theme.camera = {'viewup': [0, 0, 0]}
 
     # test _CameraConfig usage
     default_theme.camera = {'position': [1, 0, 0]}

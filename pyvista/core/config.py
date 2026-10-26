@@ -134,6 +134,11 @@ class _ConfigBase(metaclass=_ForceSlots):
             New instance of ``cls`` populated from ``dict_``.
 
         """
+        return cls._from_dict(dict_, strict=False)
+
+    @classmethod
+    def _from_dict(cls, dict_: dict[str, Any], *, strict: bool) -> Self:
+        """Create an instance from ``dict_``, raising a setter's rejection when ``strict``."""
         inst = cls()
         skip = cls._TO_DICT_SKIP
         for key, value in dict_.items():
@@ -145,11 +150,15 @@ class _ConfigBase(metaclass=_ForceSlots):
                 continue
             attr = getattr(inst, key)
             try:
-                if hasattr(attr, 'from_dict'):
+                if isinstance(attr, _ConfigBase):
+                    setattr(inst, key, attr._from_dict(value, strict=strict))
+                elif hasattr(attr, 'from_dict'):
                     setattr(inst, key, attr.from_dict(value))
                 else:
                     setattr(inst, key, value)
             except (ImportError, OSError, TypeError, ValueError) as exc:
+                if strict:
+                    raise
                 msg = f'{cls.__name__!r} cannot set {key!r} to {value!r}. Ignoring it.\n{exc}'
                 warn_external(msg)
         return inst

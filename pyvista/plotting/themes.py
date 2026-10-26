@@ -2392,7 +2392,7 @@ class Theme(_ConfigBase):
     @camera.setter
     def camera(self, camera: _CameraConfig | dict[str, Any]) -> None:
         if isinstance(camera, dict):
-            self._camera = _CameraConfig.from_dict(camera)
+            self._camera = _CameraConfig._from_dict(camera, strict=True)
         elif isinstance(camera, _CameraConfig):
             self._camera = camera
         else:
