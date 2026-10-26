@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 from typing import get_args
@@ -439,6 +440,8 @@ def test_window_size(default_theme):
 def test_camera(default_theme):
     with pytest.raises(TypeError, match='camera value must either be a'):
         default_theme.camera = [1, 0, 0]
+    with pytest.raises(ValueError, match='Camera up vector cannot be zero'):
+        default_theme.camera = {'viewup': [0, 0, 0]}
 
     # test _CameraConfig usage
     default_theme.camera = {'position': [1, 0, 0]}
@@ -673,8 +676,17 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pv.plotting.themes.DarkTheme()
 
 
-def test_trame_to_dict_skips_detected_flag(default_theme):
-    assert 'jupyter_extension_available' not in default_theme.trame.to_dict()
+def test_load_theme_skips_jupyter_extension_available(tmp_path, default_theme):
+    assert 'jupyter_extension_available' not in default_theme.to_dict()['trame']
+
+    dict_ = pv.plotting.themes.DarkTheme().to_dict()
+    del dict_['before_close_callback']
+    dict_['trame']['jupyter_extension_available'] = True
+    filename = tmp_path / 'theme.json'
+    filename.write_text(json.dumps(dict_))
+
+    loaded_theme = pv.load_theme(filename)
+    assert loaded_theme == pv.plotting.themes.DarkTheme()
 
 
 def test_load_theme_unknown_key(default_theme):
@@ -682,6 +694,30 @@ def test_load_theme_unknown_key(default_theme):
     dict_['a_stale_removed_property'] = True
     with pytest.warns(UserWarning, match="'Theme' has no attribute 'a_stale_removed_property'"):
         loaded_theme = Theme.from_dict(dict_)
+    assert loaded_theme == default_theme
+
+
+@pytest.mark.parametrize(
+    ('keys', 'value', 'match'),
+    [
+        (('trame', 'jupyter_extension_enabled'), True, 'pip install trame_jupyter_extension'),
+        (('logo_file',), 'missing_logo.png', r'Logo file \(missing_logo.png\) not found'),
+    ],
+    ids=['trame-extension', 'logo-file'],
+)
+def test_load_theme_rejected_value(monkeypatch, default_theme, keys, value, match):
+    monkeypatch.delenv('TRAME_JUPYTER_WWW', raising=False)
+    dict_ = default_theme.to_dict()
+    *parents, key = keys
+    target = dict_
+    for parent in parents:
+        target = target[parent]
+    target[key] = value
+
+    with pytest.warns(UserWarning, match=match) as record:
+        loaded_theme = Theme.from_dict(dict_)
+    assert len(record) == 1
+    assert f'cannot set {key!r} to {value!r}. Ignoring it.' in str(record[0].message)
     assert loaded_theme == default_theme
 
 
@@ -849,7 +885,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):  # noqa: B017, PT011
+    with pytest.raises(ValueError, match='pip install trame_jupyter_extension'):
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available
