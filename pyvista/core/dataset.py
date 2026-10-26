@@ -23,6 +23,7 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
+from ._structured_data import _StructuredDataMixin
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
@@ -1649,7 +1650,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             names.insert(0, active_scalars_name)
         return names
 
-    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
+    def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
@@ -1661,9 +1662,11 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
+        if isinstance(self, _StructuredDataMixin):
+            attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
-    def _repr_html_(self: Self) -> str:
+    def _repr_html_(self) -> str:
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -1704,7 +1707,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                 meta.append(('Cells', poly_items, ''))
 
         # Grid-specific properties
-        if hasattr(self, 'dimensions'):
+        if isinstance(self, _StructuredDataMixin):
             dims = self.dimensions
             grid_items: list[tuple[str, str]] = [
                 ('dims', f'{dims[0]} x {dims[1]} x {dims[2]}'),
@@ -3590,7 +3593,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         """Compute distinct dimensions of cells. Only needed for legacy vtk < 9.5."""
         if self.n_cells == 0:
             return {0}
-        elif hasattr(self, 'dimensions'):
+        elif isinstance(self, _StructuredDataMixin):
             if self._has_hidden_cells:
                 return {cell_type.dimension for cell_type in self.distinct_cell_types}
             dims = np.array(self.dimensions)
@@ -3661,10 +3664,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if self.n_cells == 0:
             return set()
         has_hidden_cells = self._has_hidden_cells
-        if hasattr(self, 'dimensions') and not has_hidden_cells:
-            # Fast path for dimensioned grids without hidden/ghost cells
+        # Checked outside the mixin branch, where mypy cannot narrow to Grid
+        is_grid = isinstance(self, pv.Grid)
+        if isinstance(self, _StructuredDataMixin) and not has_hidden_cells:
+            # Fast path for structured data without hidden/ghost cells
             cell_dimension = next(iter(self._distinct_cell_dimensions))
-            if isinstance(self, pv.Grid):
+            if is_grid:
                 mapping = {
                     0: pv.CellType.VERTEX,
                     1: pv.CellType.LINE,

@@ -193,17 +193,9 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 
 
 def _gltf_loader(name: str) -> _SingleFileDownloadableDatasetLoader:
-    """Return a dataset loader for glTF files.
-
-    The glTF files are hosted in a separate repository from `pyvista/data`, so
-    a separate pooch fetcher is used.
-    """
+    """Return a dataset loader for a glTF sample model hosted outside pyvista/data."""
     paths: dict[str, str] = {
-        'damaged_helmet': 'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
         'sheen_chair': 'SheenChair/glTF-Binary/SheenChair.glb',
-        'gearbox': 'GearboxAssy/glTF-Binary/GearboxAssy.glb',
-        'avocado': 'Avocado/glTF-Binary/Avocado.glb',
-        'milk_truck': 'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
     }
     base_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/'
     fetcher = pooch.create(  # type: ignore[attr-defined]
@@ -8599,12 +8591,13 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     >>> dataset = examples.download_reservoir()
     >>> dataset
     ExplicitStructuredGrid (...)
-      N Cells:    47610
-      N Points:   58433
-      X Bounds:   3.104e+05, 3.177e+05
-      Y Bounds:   7.477e+06, 7.486e+06
-      Z Bounds:   -2.472e+03, -1.577e+03
-      N Arrays:   6
+      N Cells:      47610
+      N Points:     58433
+      X Bounds:     3.104e+05, 3.177e+05
+      Y Bounds:     7.477e+06, 7.486e+06
+      Z Bounds:     -2.472e+03, -1.577e+03
+      Dimensions:   47, 70, 16
+      N Arrays:     6
 
 
     >>> pl = pv.Plotter()
@@ -10115,7 +10108,9 @@ def download_damaged_helmet(
     return _download_dataset(_dataset_damaged_helmet, load=load)
 
 
-_dataset_damaged_helmet = _gltf_loader('damaged_helmet')
+_dataset_damaged_helmet = _SingleFileDownloadableDatasetLoader(
+    'gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf'
+)
 
 
 @overload
@@ -10171,7 +10166,9 @@ def download_gearbox(
     return _download_dataset(_dataset_gearbox, load=load)
 
 
-_dataset_gearbox = _gltf_loader('gearbox')
+_dataset_gearbox = _SingleFileDownloadableDatasetLoader(
+    'gltf/GearboxAssy/glTF-Binary/GearboxAssy.glb'
+)
 
 
 @overload
@@ -10214,7 +10211,7 @@ def download_avocado(
     return _download_dataset(_dataset_avocado, load=load)
 
 
-_dataset_avocado = _gltf_loader('avocado')
+_dataset_avocado = _SingleFileDownloadableDatasetLoader('gltf/Avocado/glTF-Binary/Avocado.glb')
 
 
 @overload
@@ -10262,4 +10259,6 @@ def download_milk_truck(
     return _download_dataset(_dataset_milk_truck, load=load)
 
 
-_dataset_milk_truck = _gltf_loader('milk_truck')
+_dataset_milk_truck = _SingleFileDownloadableDatasetLoader(
+    'gltf/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb'
+)

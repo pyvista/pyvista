@@ -679,9 +679,9 @@ def StructuredSphere(
     ... )
     >>> sphere.plot(show_edges=True)
 
-    Use the ``i-j-k`` ordering to work with the grid by index. Since ``i`` is the
-    radial axis, an array shaped like
-    :attr:`~pyvista.StructuredGrid.dimensions` assigns a value per layer.
+    Use the ``i-j-k`` ordering to work with the grid by index. Since ``i`` is the radial axis, an
+    array shaped like :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`
+    assigns a value per layer.
 
     >>> sphere = pv.StructuredSphere(radius=np.linspace(1, 2, 5))
     >>> layer = np.zeros(sphere.dimensions)
