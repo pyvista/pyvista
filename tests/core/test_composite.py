@@ -481,10 +481,8 @@ def test_multi_block_counts_values():
         '  N Blocks:   3',
         '  Depth:      2',
     ]
-    html = multi._repr_html_()
-    assert '850 points' in html
-    assert '1,686 cells' in html
-    assert 'depth 2' in html
+    badges = re.findall(r"<span class='pv-header-badge'>([^<]*)</span>", multi._repr_html_())
+    assert badges[:4] == ['850 points', '1,686 cells', '3 blocks', 'depth 2']
 
 
 def test_multi_block_repr_bounds():

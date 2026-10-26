@@ -133,9 +133,8 @@ def test_partitioned_counts_repr():
     partitions = PartitionedDataSet([pv.Sphere(), pv.Cube()])
     lines = repr(partitions).splitlines()
     assert lines[1:] == ['  N Cells         1686', '  N Points        850', '  N Partitions    2']
-    html = partitions._repr_html_()
-    assert '850 points' in html
-    assert '1,686 cells' in html
+    badges = re.findall(r"<span class='pv-header-badge'>([^<]*)</span>", partitions._repr_html_())
+    assert badges == ['850 points', '1,686 cells', '2 partitions']
 
 
 def test_partitioned_is_empty(sphere):
