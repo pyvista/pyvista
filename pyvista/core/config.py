@@ -126,7 +126,7 @@ class _ConfigBase(metaclass=_ForceSlots):
             valid attribute of ``cls``, or whose value its setter rejects, is
             skipped with a warning instead of raising, so a dict saved by a
             different pyvista version or on a different machine can still be
-            loaded. Names listed in ``_TO_DICT_SKIP`` are ignored.
+            loaded.
 
         Returns
         -------
