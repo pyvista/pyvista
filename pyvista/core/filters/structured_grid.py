@@ -30,9 +30,11 @@ class StructuredGridFilters(DataSetFilters):
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max
-        indices that specify a rectangular region in the data. (Note
-        that these are 0-offset.) You can also specify a sampling rate
-        to subsample the data.
+        indices that specify a rectangular region in the data. They are in
+        the same index space as the extent, so they include the offset. You
+        can also specify a sampling rate to subsample the data, which divides
+        the extent of each sampled axis by its rate, as for
+        :meth:`pyvista.ImageDataFilters.extract_subset`.
 
         Typical applications of this filter are to extract a slice
         from a volume for image processing, subsampling large volumes
@@ -43,8 +45,8 @@ class StructuredGridFilters(DataSetFilters):
         ----------
         voi : VectorLikeInt
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-            These bounds specify the volume of interest in i-j-k min/max
-            indices.
+            These bounds specify the volume of interest in i-j-k min/max indices. Must be within
+            this mesh's :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent`.
 
         rate : VectorLikeInt, default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
@@ -86,7 +88,17 @@ class StructuredGridFilters(DataSetFilters):
         alg.SetSampleRate(rate)  # type: ignore[arg-type]
         alg.SetIncludeBoundary(boundary)
         alg.Update()
-        return _get_output(alg)
+        output = _get_output(alg)
+        rates = [int(r) for r in rate]
+        if any(r != 1 for r in rates):
+            # VTK rebases a sampled axis to 0. Divide its extent by the rate instead, as for
+            # ImageData, rounding down.
+            extent = self.extent  # type: ignore[attr-defined]
+            output.offset = [
+                offset if r == 1 else max(int(voi[2 * i]), extent[2 * i]) // r
+                for i, (r, offset) in enumerate(zip(rates, output.offset, strict=True))
+            ]
+        return output
 
     def concatenate(
         self, other: pv.StructuredGrid, axis: int, tolerance: float = 0.0
@@ -96,7 +108,7 @@ class StructuredGridFilters(DataSetFilters):
         Joins structured grids into a single structured grid. Grids
         must be of compatible dimension, and must be coincident along
         the seam. Grids must have the same point and cell data. Field
-        data is ignored.
+        data is ignored. The output keeps this grid's offset.
 
         Parameters
         ----------
@@ -207,6 +219,7 @@ class StructuredGridFilters(DataSetFilters):
         joined = pv.StructuredGrid()
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
+        joined.offset = self.offset  # type: ignore[attr-defined]
         joined.point_data.update(new_point_data)
         joined.cell_data.update(new_cell_data)
 

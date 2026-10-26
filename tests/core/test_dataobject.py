@@ -105,6 +105,55 @@ def test_polydata_eq(sphere):
     assert sphere != copy
 
 
+@pytest.mark.parametrize('dimensions', [(2, 3, 1), (1, 2, 3)])
+def test_structured_grid_eq_dimensions(dimensions):
+    x, y, z = np.meshgrid(np.arange(3.0), np.arange(2.0), [0.0], indexing='ij')
+    grid = pv.StructuredGrid(x, y, z)
+    grid.point_data['point_values'] = np.arange(grid.n_points)
+    grid.cell_data['cell_values'] = np.arange(grid.n_cells)
+    other = grid.copy()
+    assert grid == other
+    assert other == grid
+
+    other.dimensions = dimensions
+    assert np.array_equal(grid.points, other.points)
+    assert grid.n_cells == other.n_cells == 2
+    assert grid.get_cell(0).point_ids != other.get_cell(0).point_ids
+    assert grid != other
+    assert other != grid
+
+
+@pytest.mark.parametrize(
+    'make_grid',
+    [
+        lambda: pv.ImageData(dimensions=(3, 4, 2)).cast_to_structured_grid(),
+        lambda: pv.ImageData(dimensions=(3, 4, 2)).cast_to_rectilinear_grid(),
+        examples.load_explicit_structured,
+    ],
+    ids=['StructuredGrid', 'RectilinearGrid', 'ExplicitStructuredGrid'],
+)
+def test_structured_grid_eq_extent(make_grid):
+    grid = make_grid()
+    grid.point_data['point_values'] = np.arange(grid.n_points)
+    grid.cell_data['cell_values'] = np.arange(grid.n_cells)
+    other = grid.copy()
+    assert grid == other
+    assert other == grid
+
+    other.offset = (-2, 3, -4)
+    assert grid.dimensions == other.dimensions
+    assert grid.extent != other.extent
+    assert np.array_equal(grid.points, other.points)
+    assert grid.point_data == other.point_data
+    assert grid.cell_data == other.cell_data
+    assert grid != other
+    assert other != grid
+
+    other.extent = grid.extent
+    assert grid == other
+    assert other == grid
+
+
 def test_unstructured_grid_eq(hexbeam):
     copy = hexbeam.copy()
     assert hexbeam == copy
@@ -341,6 +390,18 @@ def _labelled_image():
     return image
 
 
+def _sphere_with_cell_ids():
+    sphere = pv.Sphere()
+    sphere.cell_data['ids'] = np.arange(sphere.n_cells)
+    return sphere
+
+
+def _edges_with_cell_ids():
+    edges = pv.Sphere().extract_all_edges()
+    edges.cell_data['ids'] = np.arange(edges.n_cells)
+    return edges
+
+
 def _other_with_dict():
     other = pv.Cube()
     other.user_dict['name'] = 'other'
@@ -359,6 +420,16 @@ USER_DICT_OPERATIONS = [
     pytest.param(pv.Sphere, lambda m: m.slice(), id='slice'),
     pytest.param(pv.Sphere, lambda m: m.extract_surface(algorithm=None), id='extract_surface'),
     pytest.param(pv.Sphere, lambda m: m.triangulate(), id='triangulate'),
+    pytest.param(_sphere_with_cell_ids, lambda m: m.strip(), id='strip'),
+    pytest.param(
+        _sphere_with_cell_ids, lambda m: m.strip(pass_cell_data=True), id='strip_pass_cell_data'
+    ),
+    pytest.param(
+        _edges_with_cell_ids,
+        lambda m: m.strip(join=True, pass_cell_data=True),
+        id='strip_join_pass_cell_data',
+    ),
+    pytest.param(_edges_with_cell_ids, lambda m: m.dash_lines(), id='dash_lines'),
     pytest.param(pv.Sphere, lambda m: m.decimate(0.5), id='decimate'),
     pytest.param(pv.Sphere, lambda m: m.smooth(), id='smooth'),
     pytest.param(pv.Sphere, lambda m: m.subdivide(1), id='subdivide'),

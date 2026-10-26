@@ -1761,7 +1761,26 @@ class WidgetComponent(_NoNewAttrMixin):
         return slider_widget
 
     def clear_slider_widgets(self) -> None:
-        """Remove all of the slider widgets."""
+        """Remove all of the slider widgets.
+
+        Examples
+        --------
+        Add a slider that controls a mesh's opacity, then clear it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> def set_opacity(value):
+        ...     actor.prop.opacity = value
+        >>> _ = pl.add_slider_widget(set_opacity, [0, 1], title='Opacity')
+        >>> len(pl.widgets.slider_widgets)
+        1
+        >>> pl.clear_slider_widgets()
+        >>> len(pl.widgets.slider_widgets)
+        0
+        >>> pl.close()
+
+        """
         for slider_widget in self.slider_widgets:
             slider_widget.Off()
         self.slider_widgets.clear()
@@ -1861,6 +1880,18 @@ class WidgetComponent(_NoNewAttrMixin):
         -------
         :vtk:`vtkActor`
             VTK actor of the mesh.
+
+        Examples
+        --------
+        Shows an interactive slider controlling the range of the threshold.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_random_hills()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_threshold(mesh)
+        >>> pl.show()
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
