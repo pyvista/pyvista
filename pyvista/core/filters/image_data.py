@@ -2939,7 +2939,7 @@ class ImageDataFilters(DataSetFilters):
         if (dim := alg_input.dimensionality) != 3:
             msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
             raise ValueError(msg)
-        active_scalars = cast('pyvista_ndarray', alg_input.active_scalars)
+        active_scalars = _active_point_scalars(alg_input)[1]
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
             return _empty_output(active_scalars.dtype)
@@ -2955,7 +2955,7 @@ class ImageDataFilters(DataSetFilters):
         if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
-                array_=cast('pyvista_ndarray', alg_input.active_scalars),
+                array_=_active_point_scalars(alg_input)[1],
             )
         _configure_smoothing(
             alg,

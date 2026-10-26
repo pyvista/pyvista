@@ -20,6 +20,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.data_set import _outline_corners_filter
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
@@ -424,11 +425,7 @@ class CompositeFilters(DataObjectFilters):
 
         """
         if nested:
-            alg = _vtk.vtkOutlineCornerFilter()
-            alg.SetInputDataObject(self)
-            alg.SetCornerFactor(factor)
-            message = 'Producing an Outline of the Corners'
-            _update_alg(alg, progress_bar=progress_bar, message=message)
+            alg = _outline_corners_filter(self, factor=factor, progress_bar=progress_bar)
             return _get_output(alg, output_type=pv.MultiBlock)
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)

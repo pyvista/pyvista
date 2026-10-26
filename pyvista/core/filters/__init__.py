@@ -233,30 +233,14 @@ _OutputT = TypeVar('_OutputT', bound='DataObject')
 _OutputT2 = TypeVar('_OutputT2', bound='DataObject')
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def _get_output(
-    algorithm: _vtk.vtkAlgorithm,
-    *,
-    output_type: type[_OutputT],
-    iport: int = ...,
-    iconnection: int = ...,
-    oport: int = ...,
-    active_scalars: str | None = ...,
-    active_scalars_field: PointLiteral | CellLiteral = ...,
-    keep_pointset: bool = ...,
-) -> _OutputT: ...
+def _get_output(algorithm: _vtk.vtkAlgorithm, *, output_type: type[_OutputT], iport: int = ..., iconnection: int = ..., oport: int = ..., active_scalars: str | None = ..., active_scalars_field: PointLiteral | CellLiteral = ..., keep_pointset: bool = ...) -> _OutputT: ...
 @overload
-def _get_output(
-    algorithm: _vtk.vtkAlgorithm,
-    *,
-    output_type: tuple[type[_OutputT], type[_OutputT2]],
-    iport: int = ...,
-    iconnection: int = ...,
-    oport: int = ...,
-    active_scalars: str | None = ...,
-    active_scalars_field: PointLiteral | CellLiteral = ...,
-    keep_pointset: bool = ...,
-) -> _OutputT | _OutputT2: ...
+def _get_output(algorithm: _vtk.vtkAlgorithm, *, output_type: tuple[type[_OutputT], type[_OutputT2]], iport: int = ..., iconnection: int = ..., oport: int = ..., active_scalars: str | None = ..., active_scalars_field: PointLiteral | CellLiteral = ..., keep_pointset: bool = ...) -> _OutputT | _OutputT2: ...
+# ruff: enable[E501]
+# fmt: on
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
     *,
@@ -268,11 +252,7 @@ def _get_output(
     active_scalars_field: PointLiteral | CellLiteral = 'point',
     keep_pointset: bool = True,
 ) -> DataObject:
-    """Get the algorithm's output of type ``output_type`` and copy input's pyvista meta info.
-
-    With ``keep_pointset``, a :class:`~pyvista.PointSet` input returns a ``PointSet``
-    instead, which the calling filter declares in its own ``PointSet`` overloads.
-    """
+    """Get the algorithm's output of type ``output_type`` and copy input's pyvista meta info."""
     ido: DataObject = wrap(algorithm.GetInputDataObject(iport, iconnection))
     data: DataObject = wrap(algorithm.GetOutputDataObject(oport))
     # A subclass passes for its PyVista base class, which is what VTK outputs wrap as

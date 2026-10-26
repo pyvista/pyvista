@@ -1164,7 +1164,7 @@ class ScalarBars(_NoNewAttrMixin):
         title : str, default: ""
             Title of the scalar bar. Default is rendered as an empty title.
 
-        mapper : pyvista.plotting.mapper._BaseMapper, optional
+        mapper : pyvista.DataSetMapper, optional
             Mapper used for the scalar bar. Defaults to the last mapper created
             by the plotter if neither ``mapper``, ``lookup_table``, or
             ``cmap`` is provided. Raises ValueError if more than one of

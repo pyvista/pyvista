@@ -206,6 +206,17 @@ class _ExtractValuesInputs(NamedTuple):
     component_logic: Callable[[NDArray[np.bool_]], NDArray[np.bool_]] | None
 
 
+def _outline_corners_filter(
+    mesh: _vtk.vtkDataObject, *, factor: float, progress_bar: bool
+) -> _vtk.vtkOutlineCornerFilter:
+    """Return an updated outline corner filter run on ``mesh``."""
+    alg = _vtk.vtkOutlineCornerFilter()
+    alg.SetInputDataObject(mesh)
+    alg.SetCornerFactor(factor)
+    _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
+    return alg
+
+
 @abstract_class
 class DataSetFilters(DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
@@ -1534,7 +1545,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     def outline_corners(  # type: ignore[misc]
-        self: _DataObjectType,
+        self: _DataSetType,
         *,
         factor: float = 0.2,
         progress_bar: bool = False,
@@ -1566,10 +1577,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pv.plot([sphere, corners], line_width=5)
 
         """
-        alg = _vtk.vtkOutlineCornerFilter()
-        alg.SetInputDataObject(self)
-        alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
+        alg = _outline_corners_filter(self, factor=factor, progress_bar=progress_bar)
         return _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
     def gaussian_splatting(  # type: ignore[misc]
@@ -2119,7 +2127,7 @@ class DataSetFilters(DataObjectFilters):
         factor : float, default: 1.0
             Scale factor applied to scaling array.
 
-        geom : pyvista.DataSet | sequence[pyvista.DataSet], optional
+        geom : pyvista.DataSet | :vtk:`vtkDataSet` | sequence[pyvista.DataSet], optional
             The geometry to use for the glyph. If missing, an arrow glyph
             is used. If a sequence, the datasets inside define a table of
             geometries to choose from based on scalars or vectors. In this
@@ -3844,7 +3852,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        source : pyvista.DataSet
+        source : pyvista.DataSet | :vtk:`vtkDataSet`
             The points of the source provide the starting points of the
             streamlines. This will override both sphere and line sources.
 
@@ -6517,7 +6525,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        grid : pyvista.DataSet | pyvista.MultiBlock | sequence[pyvista.DataSet], optional
+        grid : pyvista.DataSet | :vtk:`vtkDataSet` | pyvista.MultiBlock | sequence, optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True

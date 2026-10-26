@@ -205,7 +205,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __init__(
         self,
-        mapper: _BaseMapper | _vtk.vtkMapper | None = None,
+        mapper: _vtk.vtkMapper | _BaseMapper | None = None,
         prop: Property | None = None,
         name: str | None = None,
     ) -> None:
@@ -262,7 +262,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj: _BaseMapper | _vtk.vtkMapper | None) -> None:
+    def mapper(self, obj: _vtk.vtkMapper | _BaseMapper | None) -> None:
         # VTK's stubs do not allow clearing the mapper with ``None``, but VTK does
         self.SetMapper(obj)  # type: ignore[arg-type]
 
