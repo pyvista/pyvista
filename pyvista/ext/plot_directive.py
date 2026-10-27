@@ -294,7 +294,7 @@ class PlotDirective(Directive):
                 self.state,
                 self.lineno,
             )
-        except Exception as e:  # noqa: BLE001  # pragma: no cover
+        except Exception as e:  # noqa: BLE001 - re-raised as a directive error  # pragma: no cover
             raise self.error(str(e))
 
 

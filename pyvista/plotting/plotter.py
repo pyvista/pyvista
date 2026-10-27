@@ -1183,7 +1183,8 @@ class BasePlotter(_BoundsSizeMixin):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except Exception as e:  # noqa: BLE001  # pragma: no cover
+                        except AttributeError as e:  # pragma: no cover
+                            # The mapper has no PyVista dataset
                             log.debug('Failed to rename array during gLTF export: %s', e)
 
         exporter = _vtk.vtkGLTFExporter()
@@ -6059,9 +6060,12 @@ class BasePlotter(_BoundsSizeMixin):
 
         # end movie
         if self.mwriter is not None:
-            with contextlib.suppress(BaseException):
+            try:
                 self.mwriter.close()
-            self.mwriter = None
+            except Exception as e:  # noqa: BLE001 - finish closing the plotter
+                warn_external(f'Failed to finalize the movie file, it may be incomplete:\n{e}')
+            finally:
+                self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.

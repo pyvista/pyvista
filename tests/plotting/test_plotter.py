@@ -1537,13 +1537,14 @@ def test_off_screen_background_thread_rendering():
             assert img is not None
             assert img.shape[0] > 0
             pl.close()
-        except Exception as e:  # noqa: BLE001  # pragma: no cover
+        except Exception as e:  # noqa: BLE001 - reported by the assertion below  # pragma: no cover
             errors.append(e)
 
-    t = threading.Thread(target=render_on_thread)
+    t = threading.Thread(target=render_on_thread, daemon=True)
     t.start()
     t.join(timeout=10)
 
+    assert not t.is_alive(), 'Background thread rendering did not finish'
     assert not errors, f'Background thread rendering failed: {errors[0]}'
 
 
@@ -1655,4 +1656,23 @@ def test_backface_params_culling(sphere, value, expected):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, backface_params={'culling': value})
     assert actor.backface_prop.culling == expected
+    pl.close()
+
+
+def test_close_warns_when_movie_writer_fails():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = OSError('disk full')
+    with pytest.warns(UserWarning, match='disk full'):
+        pl.close()
+    assert pl.mwriter is None
+
+
+def test_close_propagates_keyboard_interrupt_from_movie_writer():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = KeyboardInterrupt
+    with pytest.raises(KeyboardInterrupt):
+        pl.close()
+    assert pl.mwriter is None
     pl.close()
