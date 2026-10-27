@@ -114,6 +114,29 @@ def test_partitioned_dataset_repr(ant, sphere, uniform, airplane):
     assert str(partitions) is not None
 
 
+@pytest.mark.parametrize(
+    ('datasets', 'n_points', 'n_cells'),
+    [
+        ([], 0, 0),
+        ([None], 0, 0),
+        ([pv.Sphere(), pv.Cube()], 850, 1686),
+        ([pv.Sphere(), None, pv.Cube()], 850, 1686),
+    ],
+)
+def test_partitioned_counts(datasets, n_points, n_cells):
+    partitions = PartitionedDataSet(datasets)
+    assert partitions.n_points == n_points
+    assert partitions.n_cells == n_cells
+
+
+def test_partitioned_counts_repr():
+    partitions = PartitionedDataSet([pv.Sphere(), pv.Cube()])
+    lines = repr(partitions).splitlines()
+    assert lines[1:] == ['  N Cells         1686', '  N Points        850', '  N Partitions    2']
+    badges = re.findall(r"<span class='pv-header-badge'>([^<]*)</span>", partitions._repr_html_())
+    assert badges == ['850 points', '1,686 cells', '2 partitions']
+
+
 def test_partitioned_is_empty(sphere):
     assert PartitionedDataSet().is_empty
     assert not PartitionedDataSet([sphere]).is_empty

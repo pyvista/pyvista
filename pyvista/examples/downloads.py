@@ -193,17 +193,9 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 
 
 def _gltf_loader(name: str) -> _SingleFileDownloadableDatasetLoader:
-    """Return a dataset loader for glTF files.
-
-    The glTF files are hosted in a separate repository from `pyvista/data`, so
-    a separate pooch fetcher is used.
-    """
+    """Return a dataset loader for a glTF sample model hosted outside pyvista/data."""
     paths: dict[str, str] = {
-        'damaged_helmet': 'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf',
         'sheen_chair': 'SheenChair/glTF-Binary/SheenChair.glb',
-        'gearbox': 'GearboxAssy/glTF-Binary/GearboxAssy.glb',
-        'avocado': 'Avocado/glTF-Binary/Avocado.glb',
-        'milk_truck': 'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
     }
     base_url = 'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/'
     fetcher = pooch.create(  # type: ignore[attr-defined]
@@ -8577,7 +8569,9 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     and performance of different techniques, simulators, algorithms, among others.
     See more at https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview
 
-    This dataset is licenced under the Database Contents License: https://opendatacommons.org/licenses/dbcl/1-0/
+    The simulation decks are licensed under the Open Database License
+    (https://opendatacommons.org/licenses/odbl/1-0/) and their contents under the
+    Database Contents License (https://opendatacommons.org/licenses/dbcl/1-0/).
 
     Parameters
     ----------
@@ -8605,17 +8599,29 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
       Y Bounds:     7.477e+06, 7.486e+06
       Z Bounds:     -2.472e+03, -1.577e+03
       Dimensions:   47, 70, 16
-      N Arrays:     6
+      N Arrays:     4
 
+    The ``'BLOCK_I'``, ``'BLOCK_J'`` and ``'BLOCK_K'`` cell arrays are the structured
+    indices of each cell. Plot the grid colored by its layer index ``'BLOCK_K'``.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(dataset, show_edges=True)
+    >>> _ = pl.add_mesh(dataset, scalars='BLOCK_K', show_edges=True)
     >>> camera = pl.camera
     >>> camera.position = (312452, 7474760, 3507)
     >>> camera.focal_point = (314388, 7481520, -2287)
     >>> camera.up = (0.09, 0.63, 0.77)
     >>> camera.distance = 9112
     >>> camera.clipping_range = (595, 19595)
+    >>> pl.show()
+
+    Show the layers in a cross-section, with the elevation exaggerated.
+
+    >>> section = dataset.extract_cells(dataset.cell_data['BLOCK_J'] == 34)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(section, scalars='BLOCK_K', show_edges=True)
+    >>> pl.set_scale(zscale=5)
+    >>> pl.view_xz()
+    >>> pl.camera.zoom(2)
     >>> pl.show()
 
     .. seealso::
@@ -8627,26 +8633,9 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     return _download_dataset(_dataset_reservoir, load=load)
 
 
-def _reservoir_load_func(grid: pv.ExplicitStructuredGrid) -> pv.ExplicitStructuredGrid:
-    # See loading steps from this example:
-    # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
-    grid.ComputeFacesConnectivityFlagsArray()
-    grid.set_active_scalars('ConnectivityFlags')
-
-    # Remove misc data fields stored with the dataset
-    grid.field_data.remove('dimensions')
-    grid.field_data.remove('name')
-    grid.field_data.remove('properties')
-    grid.field_data.remove('filename')
-
-    return grid
-
-
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
-    'reservoir/UNISIM-II-D.zip',
-    target_file='UNISIM-II-D.vtu',
+    'reservoir/UNISIM-II-D.vtu',
     read_func=pv.ExplicitStructuredGrid,
-    load_func=_reservoir_load_func,
 )
 
 
@@ -10116,7 +10105,9 @@ def download_damaged_helmet(
     return _download_dataset(_dataset_damaged_helmet, load=load)
 
 
-_dataset_damaged_helmet = _gltf_loader('damaged_helmet')
+_dataset_damaged_helmet = _SingleFileDownloadableDatasetLoader(
+    'gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf'
+)
 
 
 @overload
@@ -10172,7 +10163,9 @@ def download_gearbox(
     return _download_dataset(_dataset_gearbox, load=load)
 
 
-_dataset_gearbox = _gltf_loader('gearbox')
+_dataset_gearbox = _SingleFileDownloadableDatasetLoader(
+    'gltf/GearboxAssy/glTF-Binary/GearboxAssy.glb'
+)
 
 
 @overload
@@ -10215,7 +10208,7 @@ def download_avocado(
     return _download_dataset(_dataset_avocado, load=load)
 
 
-_dataset_avocado = _gltf_loader('avocado')
+_dataset_avocado = _SingleFileDownloadableDatasetLoader('gltf/Avocado/glTF-Binary/Avocado.glb')
 
 
 @overload
@@ -10263,4 +10256,6 @@ def download_milk_truck(
     return _download_dataset(_dataset_milk_truck, load=load)
 
 
-_dataset_milk_truck = _gltf_loader('milk_truck')
+_dataset_milk_truck = _SingleFileDownloadableDatasetLoader(
+    'gltf/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb'
+)

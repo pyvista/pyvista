@@ -5813,7 +5813,10 @@ class DataSetFilters(DataObjectFilters):
         ... )
         >>> extracted
         MultiBlock[UnstructuredGrid] (...)
+          N Cells:    21
+          N Points:   71
           N Blocks:   3
+          Depth:      1
           X Bounds:   0.000e+00, 1.000e+00
           Y Bounds:   0.000e+00, 1.000e+00
           Z Bounds:   0.000e+00, 5.000e+00

@@ -9,6 +9,8 @@ Decimate a mesh.
 """
 
 # sphinx_gallery_thumbnail_number = 4
+import time
+
 import numpy as np
 import pyvista as pv
 from pyvista import examples
@@ -65,6 +67,70 @@ pv.plot_compare(
 )
 
 # %%
+# Binned Decimation
+# -----------------
+# :func:`pyvista.PolyDataFilters.decimate_binned` splits the bounds of a mesh into
+# a grid of bins and merges the points in each bin into one. It does not preserve
+# topology, but it is orders of magnitude faster than the filters above, which makes
+# it a good fit for previews of very large surfaces.
+#
+# Decimate a larger mesh to roughly 5,000 points.
+
+armadillo = examples.download_armadillo()
+armadillo_cpos = pv.CameraPosition(
+    position=(161.5, 82.1, -330.2), focal_point=(-4.3, 24.5, -1.6), viewup=(-0.1, 1, 0.12)
+)
+binned = armadillo.decimate_binned(target_points=5_000)
+binned.plot(cpos=armadillo_cpos, show_edges=True)
+
+# %%
+# Compare each ``point_generation`` option with uniform and per-axis ``divisions``.
+
+sphere = pv.Sphere(theta_resolution=200, phi_resolution=200)
+point_generations = {}
+for divisions in (8, (4, 8, 16)):
+    for point_generation in ('bin_points', 'bin_centers', 'bin_averages'):
+        label = f'{point_generation}\ndivisions={divisions}'
+        point_generations[label] = sphere.decimate_binned(
+            divisions=divisions, point_generation=point_generation
+        )
+
+# sphinx_gallery_start_ignore
+# labels are missing in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
+pv.plot_compare(
+    point_generations, shape=(2, 3), show_edges=True, cpos='iso', window_size=[1200, 800]
+)
+
+# %%
+# Time each of the three surface decimation filters on the same reduction.
+
+reduction = 1 - 5_000 / armadillo.n_points
+filters = {
+    'decimate': lambda: armadillo.decimate(reduction),
+    'decimate_pro': lambda: armadillo.decimate_pro(reduction),
+    'decimate_binned': lambda: armadillo.decimate_binned(reduction),
+}
+
+results = {}
+for name, run in filters.items():
+    start = time.perf_counter()
+    results[name] = run()
+    print(f'{name}: {time.perf_counter() - start:.3f} s')
+
+# %%
+# Plot the results side by side.
+
+# sphinx_gallery_start_ignore
+# labels are missing in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
+pv.plot_compare(results, cpos=armadillo_cpos, window_size=[1200, 500], show_edges=True)
+
+# %%
 # Decimate PolyLine Mesh
 # ----------------------
 #
@@ -83,57 +149,40 @@ points[:, 1] = r * np.sin(phi)
 spiral = pv.PolyData(points, lines=np.append([n_points], np.arange(n_points)))
 
 # %%
-# Construct a reusable plotting function for future use.
-
-
-def compare_decimation(spiral, decimated):
-    pl = pv.Plotter()
-    pl.add_mesh(spiral, line_width=5, color='r', label='Original')
-    pl.add_mesh(decimated, line_width=3, color='k', label='Decimated')
-    pl.view_xy()
-    pl.add_legend(face='line', size=(0.25, 0.25))
-
-
-# %%
 # Decimate using :func:`pyvista.PolyDataFilters.decimate_polyline` filter by
-# target of 50%.
+# targets of 50% and 80%. To avoid errors of quickly changing features, also
+# use the ``maximum_error`` parameter. It is in units of fraction of the largest
+# length of the bounding box. Note that it limits the level of reduction
+# achieved.
 
-decimated = spiral.decimate_polyline(0.5)
-print(f'Original # of points:  {spiral.n_points}')
-print(f'Decimated # of points: {decimated.n_points}')
-
-# %%
-# The decimation looks OK at this level of reduction.
-
-compare_decimation(spiral, decimated)
-
-# %%
-# Using a larger level of reduction, 80%, leads to a much coarser level of
-# representation.
-
-decimated = spiral.decimate_polyline(0.8)
-print(f'Original # of points:  {spiral.n_points}')
-print(f'Decimated # of points: {decimated.n_points}')
+polylines = {
+    '50%': spiral.decimate_polyline(0.5),
+    '80%': spiral.decimate_polyline(0.8),
+    '80%, maximum_error=0.5': spiral.decimate_polyline(0.8, maximum_error=0.5),
+}
+print(f'Original # of points: {spiral.n_points}')
+for name, decimated in polylines.items():
+    print(f'{name}: {decimated.n_points}')
 
 # %%
-# The structure of the inner part of the spiral is completely
-# lost.
+# Compare each result, in red, with the original spiral, in black. The
+# decimation looks OK at 50%. At 80% the structure of the inner part of the
+# spiral is completely lost, and ``maximum_error`` captures it adequately.
 
-compare_decimation(spiral, decimated)
+# sphinx_gallery_start_ignore
+# labels are missing in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
-# %%
-# To avoid errors of quickly changing features, use the ``maximum_error``
-# parameter. It is in units of fraction of the largest length of the
-# bounding box. Note that it limits the level of reduction achieved.
-
-decimated = spiral.decimate_polyline(0.8, maximum_error=0.5)
-print(f'Original # of points:  {spiral.n_points}')
-print(f'Decimated # of points: {decimated.n_points}')
-
-# %%
-# The structure of the inner part of the spiral is captured adequately.
-
-compare_decimation(spiral, decimated)
+pv.plot_compare(
+    polylines,
+    reference_mesh=spiral,
+    reference_kwargs=dict(color='k', line_width=2),
+    cpos='xy',
+    color='r',
+    line_width=5,
+    window_size=[1200, 400],
+)
 
 # %%
 # .. tags:: filter

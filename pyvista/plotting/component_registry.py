@@ -644,7 +644,7 @@ def _resolve_pending_component(name: str) -> bool:
         return False
     try:
         import_module(module_path)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 - a broken plugin is reported, not fatal
         msg = (
             f'Failed to load {COMPONENT_ENTRY_POINT_GROUP} entry point '
             f'"{name}" from {module_path}: {exc}'
