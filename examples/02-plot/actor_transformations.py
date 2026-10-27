@@ -4,32 +4,26 @@ r"""
 Actor Transformations
 ~~~~~~~~~~~~~~~~~~~~~
 
-Understand how the transform properties of an actor place it in a scene.
+Place actors with a pivot, a rotation, a scale and an offset, and know where they end up.
 
-The properties are :attr:`~pyvista.Prop3D.position`,
-:attr:`~pyvista.Prop3D.orientation`, :attr:`~pyvista.Prop3D.scale`,
-:attr:`~pyvista.Prop3D.origin`, and :attr:`~pyvista.Prop3D.user_matrix`. Every
-:class:`~pyvista.Prop3D`, such as :class:`~pyvista.Actor` or
-:class:`~pyvista.AxesAssembly`, combines these five properties into a single
-transformation. A point ``x`` of the actor's mesh is moved to
+Every :class:`~pyvista.Prop3D`, such as an :class:`~pyvista.Actor` or an
+:class:`~pyvista.AxesAssembly`, has five transform properties:
+:attr:`~pyvista.Prop3D.origin`, :attr:`~pyvista.Prop3D.scale`,
+:attr:`~pyvista.Prop3D.orientation`, :attr:`~pyvista.Prop3D.position`, and
+:attr:`~pyvista.Prop3D.user_matrix`. They work like the pivot, scale, rotation, and
+location of an object in a 3D modelling tool. A point :math:`x` of the mesh is drawn at
 
 .. math::
 
     x' = M \left( R \, S \, (x - o) + o + p \right)
 
-where :math:`o` is the ``origin``, :math:`p` is the ``position``, :math:`S` is the
-``scale``, :math:`R` is the rotation defined by the ``orientation``, and :math:`M` is the
-``user_matrix``. In words, the actor is:
+The ``origin`` :math:`o` is the pivot. The mesh is scaled by :math:`S` and rotated by
+:math:`R` about the pivot, moved by the ``position`` :math:`p`, and finally transformed by
+the ``user_matrix`` :math:`M`. Two consequences follow directly:
 
-#. Translated so that its ``origin`` is at the world origin.
-#. Scaled by ``scale``.
-#. Rotated by ``orientation``: about the y-axis first, then the x-axis, then the z-axis.
-#. Translated back by ``origin``, and then by ``position``.
-#. Transformed by ``user_matrix``.
-
-The ``origin`` is the point that stays fixed while scaling and rotating, and
-``position`` is an offset applied after them. This means the point ``origin`` of
-the mesh ends up at ``origin + position``, and not at ``position``.
+- Rotation and scaling do not move the pivot. The pivot ends up at ``origin + position``.
+- The ``position`` is an offset, not a destination. Only when ``origin`` is zero does the
+  mesh origin land at ``position``.
 
 """
 
@@ -39,65 +33,28 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 import numpy as np
 import pyvista as pv
+from pyvista import examples
+
+# sphinx_gallery_thumbnail_number = 6
 
 # %%
-# Define Helpers
-# ==============
-# Define a function which adds spatial context to a scene: a unit grid on the floor
-# at ``z=0``, grey world axes, and optionally colored markers for the ``origin``, the
-# ``position``, and ``origin + position``. A vertical line drops from each marker to
-# the floor. Markers decrease in size so that markers at the same location stay
-# visible.
-
-MARKERS = {
-    'origin': ('purple', 0.04),
-    'position': ('orange', 0.027),
-    'origin + position': ('cyan', 0.014),
-}
+# Define a helper which adds a unit grid on the floor and small world axes at the
+# origin, and frames the camera on the scene without the floor.
 
 
-def add_context(pl, *, origin=None, position=None, view='iso', bounds=None):
-    if origin is not None:
-        origin = np.array(origin, dtype=float)
-        position = np.array(position, dtype=float)
-        points = [origin, position, origin + position]
-
-        scene = np.array(pl.renderer.bounds if bounds is None else bounds).reshape(3, 2)
-        scene_size = np.linalg.norm(
-            np.maximum(scene[:, 1], np.max(points, axis=0))
-            - np.minimum(scene[:, 0], np.min(points, axis=0))
-        )
-        for index, (name, point) in enumerate(zip(MARKERS, points, strict=True)):
-            color, relative_radius = MARKERS[name]
-            covers_smaller = any(
-                np.allclose(point, other) for other in points[index + 1 :]
-            )
-            pl.add_mesh(
-                pv.Sphere(radius=relative_radius * scene_size, center=point),
-                color=color,
-                opacity=0.4 if covers_smaller else 1.0,
-                label=name,
-            )
-            if point[2] != 0:
-                pl.add_mesh(pv.Line(point, (*point[:2], 0)), color=color, line_width=2)
-        pl.add_legend(face='circle')
-
+def add_context(pl, *, view='iso', bounds=None):
     world_axes = pv.AxesAssembly(
         shaft_radius=0.01,
         tip_radius=0.04,
-        x_color='lightgray',
-        y_color='lightgray',
-        z_color='lightgray',
-        label_color='gray',
-        label_size=30,
-        label_position=1.25,
+        x_color='gray',
+        y_color='gray',
+        z_color='gray',
+        show_labels=False,
     )
     pl.add_actor(world_axes)
-
-    floor = pv.Plane(i_size=40, j_size=40, i_resolution=40, j_resolution=40)
+    floor = pv.Plane(i_size=400, j_size=400, i_resolution=400, j_resolution=400)
     floor_actor = pl.add_mesh(floor, style='wireframe', color='lightgray', lighting=False)
     floor_actor.use_bounds = False
-
     if view == 'top':
         pl.view_vector((0, -1, 1.5), viewup=(0, 1, 0), bounds=bounds)
     else:
@@ -105,214 +62,102 @@ def add_context(pl, *, origin=None, position=None, view='iso', bounds=None):
 
 
 # %%
-# Transform Properties One at a Time
-# ==================================
-# Apply each property on its own to an :class:`~pyvista.AxesAssembly`.
-#
-# - ``position`` moves the axes.
-# - ``orientation`` rotates the axes about the ``origin``.
-# - ``scale`` scales the axes about the ``origin``.
-# - ``origin`` on its own does nothing. It only matters when combined with
-#   ``orientation`` or ``scale``.
+# Rotate About the Pivot
+# ======================
+# Start with a cone which does not sit at the world origin, and rotate it 90 degrees
+# about the z-axis. With the default ``origin``, the cone swings around the world
+# origin. With ``origin`` set to the cone's center, it spins in place. The
+# untransformed cone is shown in grey, and the pivot is marked with a sphere.
 
-properties = {
-    'position': dict(position=(2, 1, 0)),
-    'orientation': dict(orientation=(0, 0, 45)),
-    'scale': dict(scale=(2, 1, 1)),
-    'origin': dict(origin=(1, 1, 0)),
+cone = pv.Cone(center=(3, 0, 0.5), direction=(1, 0, 0), height=2, radius=0.5)
+cases = {
+    'origin=(0, 0, 0)': (0, 0, 0),
+    'origin=cone.center': cone.center,
 }
 
-for name, kwargs in properties.items():
-    pl = pv.Plotter()
-    pl.add_text(f'{name}={kwargs[name]}', font_size=12)
-    pl.add_actor(pv.AxesAssembly(**kwargs))
-    add_context(
-        pl,
-        origin=kwargs.get('origin', (0, 0, 0)),
-        position=kwargs.get('position', (0, 0, 0)),
-        view='top',
-        bounds=(-1, 3, -1, 2, 0, 1),
-    )
-    pl.show()
+pl = pv.Plotter(shape=(1, 2))
+for index, (title, origin) in enumerate(cases.items()):
+    pl.subplot(0, index)
+    pl.add_text(title, font_size=12)
+    pl.add_mesh(cone, color='lightgray', opacity=0.4)
+    actor = pl.add_mesh(cone, color='tan')
+    actor.origin = origin
+    actor.orientation = (0, 0, 90)
+    pl.add_mesh(pv.Sphere(radius=0.15, center=origin), color='purple')
+    add_context(pl)
+pl.link_views()
+pl.show()
 
 # %%
-# The Origin Is a Pivot, the Position Is an Offset
-# ================================================
-# Set both ``origin`` and ``position`` to ``(0, 0, 5)`` and rotate two axes with the
-# same ``orientation``. One axes is scaled by 3. The axes do not end up at
-# ``(0, 0, 5)``, and scaling moves them even further away.
-#
-# To see why, a black line connects each axes to its ``origin``, the point
-# ``(0, 0, 5)`` in the axes' own coordinates. This point is the pivot for scaling and
-# rotation, and it ends up at ``origin + position``, which is ``(0, 0, 10)``.
-# The line is a regular mesh actor with the same transform properties as the axes.
+# Scaling works the same way. It is applied about the pivot, so a cone scaled with the
+# default ``origin`` moves away from the world origin as well as growing.
 
-center = (0, 0, 5)
+pl = pv.Plotter(shape=(1, 2))
+for index, (title, origin) in enumerate(cases.items()):
+    pl.subplot(0, index)
+    pl.add_text(title, font_size=12)
+    pl.add_mesh(cone, color='lightgray', opacity=0.4)
+    actor = pl.add_mesh(cone, color='tan')
+    actor.origin = origin
+    actor.scale = 2
+    pl.add_mesh(pv.Sphere(radius=0.15, center=origin), color='purple')
+    add_context(pl)
+pl.link_views()
+pl.show()
+
+# %%
+# Position Is an Offset
+# =====================
+# A common mistake is to set ``origin`` and ``position`` to the same point, expecting
+# the actor to pivot about that point and end up there. Here two
+# :class:`~pyvista.AxesAssembly` are meant to sit at the orange target ``(0, 0, 5)``.
+# On the left, ``origin`` and ``position`` are both the target, so the axes pivot about
+# their own ``(0, 0, 5)`` point, which lands at ``origin + position = (0, 0, 10)``. The
+# axes themselves land elsewhere, and scaling pushes them further. On the right,
+# ``origin`` is left at zero, so both axes pivot about their own origin and land on the
+# target.
+
+target = (0, 0, 5)
 orientation = (30, 20, 45)
+cases = {
+    'origin=target, position=target': dict(origin=target, position=target),
+    'origin=(0, 0, 0), position=target': dict(position=target),
+}
 
-
-def add_axes_and_pivot_line(pl, scale, labels, **kwargs):
-    transform_properties = dict(orientation=orientation, scale=scale, **kwargs)
-    pl.add_actor(pv.AxesAssembly(labels=labels, label_size=30, **transform_properties))
-
-    origin = transform_properties.get('origin', (0, 0, 0))
-    line = pl.add_mesh(pv.Line((0, 0, 0), origin), color='black', line_width=3)
-    for name, value in transform_properties.items():
-        setattr(line, name, value)
-
-
-pl = pv.Plotter()
-pl.add_text(f'origin=position={center}', font_size=12)
-add_axes_and_pivot_line(
-    pl, scale=1, labels=('X1', 'Y1', 'Z1'), origin=center, position=center
-)
-add_axes_and_pivot_line(
-    pl, scale=3, labels=('X3', 'Y3', 'Z3'), origin=center, position=center
-)
-add_context(pl, origin=center, position=center)
-pl.show()
-
-# %%
-# For axes, the point which should stay fixed is the axes' own origin
-# ``(0, 0, 0)``. So leave ``origin`` at its default and use ``position`` alone to move
-# the axes. Both axes now pivot about their own origin and end up at ``(0, 0, 5)``.
-
-pl = pv.Plotter()
-pl.add_text(f'origin=(0, 0, 0), position={center}', font_size=12)
-add_axes_and_pivot_line(pl, scale=1, labels=('X1', 'Y1', 'Z1'), position=center)
-add_axes_and_pivot_line(pl, scale=3, labels=('X3', 'Y3', 'Z3'), position=center)
-add_context(pl, origin=(0, 0, 0), position=center)
-pl.show()
-
-# %%
-# Place a Mesh at a Point
-# =======================
-# A mesh is usually not centered at ``(0, 0, 0)``. To rotate a mesh about its own
-# center and move that center to a ``target`` point, set ``origin`` to the mesh's
-# center and ``position`` to ``target - origin``.
-
-cone = pv.Cone(center=(3, 0, 0), direction=(1, 0, 0), height=2, resolution=32)
-target = np.array((0, 3, 2))
-
-pl = pv.Plotter()
-pl.add_mesh(cone, color='lightgray', opacity=0.5)
-actor = pl.add_mesh(cone, color='tan')
-actor.origin = cone.center
-actor.position = target - cone.center
-actor.orientation = (0, 0, 90)
-add_context(pl, origin=actor.origin, position=actor.position)
-pl.show()
-
-# %%
-# Scale Before Rotation
-# =====================
-# Scaling is applied before rotation. With a non-uniform scale, the order matters:
-# rotating first and scaling second shears the axes so that they are no longer at
-# right angles.
-#
-# Compare an :class:`~pyvista.AxesAssembly` transformed with properties to two
-# :class:`~pyvista.Transform` objects applied with ``user_matrix``.
-# :class:`~pyvista.Transform` applies its operations in the order they are added.
-
-scale = (3, 1, 1)
-angle = 45
-
-scale_then_rotate = pv.Transform().scale(scale).rotate_z(angle)
-rotate_then_scale = pv.Transform().rotate_z(angle).scale(scale)
-
-pl = pv.Plotter(shape=(1, 3))
-pl.add_text(f'scale={scale}\norientation=(0, 0, {angle})', font_size=10)
-pl.add_actor(pv.AxesAssembly(scale=scale, orientation=(0, 0, angle)))
-add_context(pl, view='top')
-pl.subplot(0, 1)
-pl.add_text('Transform()\n.scale().rotate_z()', font_size=10)
-pl.add_actor(pv.AxesAssembly(user_matrix=scale_then_rotate.matrix))
-add_context(pl, view='top')
-pl.subplot(0, 2)
-pl.add_text('Transform()\n.rotate_z().scale()', font_size=10)
-pl.add_actor(pv.AxesAssembly(user_matrix=rotate_then_scale.matrix))
-add_context(pl, view='top')
-pl.link_views()
-pl.show()
-
-# %%
-# Rotation Order
-# ==============
-# The ``orientation`` angles are given in x-y-z order, but the rotations are applied
-# about the y-axis first, then the x-axis, then the z-axis. Rotating about the x-axis
-# first gives a different result.
-
-orientation = (60, 45, 0)
-
-pl = pv.Plotter(shape=(1, 3))
-pl.add_text(f'orientation={orientation}', font_size=10)
-pl.add_actor(pv.AxesAssembly(orientation=orientation))
-add_context(pl)
-pl.subplot(0, 1)
-pl.add_text('Transform()\n.rotate_y(45).rotate_x(60)', font_size=10)
-transform = pv.Transform().rotate_y(orientation[1]).rotate_x(orientation[0])
-pl.add_actor(pv.AxesAssembly(user_matrix=transform.matrix))
-add_context(pl)
-pl.subplot(0, 2)
-pl.add_text('Transform()\n.rotate_x(60).rotate_y(45)', font_size=10)
-transform = pv.Transform().rotate_x(orientation[0]).rotate_y(orientation[1])
-pl.add_actor(pv.AxesAssembly(user_matrix=transform.matrix))
-add_context(pl)
-pl.link_views()
-pl.show()
-
-# %%
-# User Matrix Last
-# ================
-# The ``user_matrix`` is applied after all other properties, so it also transforms the
-# ``position``. Here, a 90 degree rotation about the z-axis moves the axes from
-# ``position`` to ``(0, 2, 0)``.
-
-position = (2, 0, 0)
-rotation = pv.Transform().rotate_z(90)
-
-pl = pv.Plotter()
-pl.add_actor(pv.AxesAssembly(position=position, labels=('X1', 'Y1', 'Z1')))
-pl.add_actor(
-    pv.AxesAssembly(
-        position=position, user_matrix=rotation.matrix, labels=('X2', 'Y2', 'Z2')
+pl = pv.Plotter(shape=(1, 2))
+for index, (title, kwargs) in enumerate(cases.items()):
+    pl.subplot(0, index)
+    pl.add_text(title, font_size=12)
+    pl.add_actor(
+        pv.AxesAssembly(orientation=orientation, labels=('1', '2', '3'), **kwargs)
     )
-)
-add_context(pl, origin=(0, 0, 0), position=position, view='top')
+    pl.add_actor(
+        pv.AxesAssembly(
+            orientation=orientation, scale=3, labels=('X', 'Y', 'Z'), **kwargs
+        )
+    )
+    pl.add_mesh(pv.Sphere(radius=0.3, center=target), color='orange', label='target')
+    pl.add_legend(face='circle')
+    add_context(pl)
+pl.link_views()
 pl.show()
 
 # %%
-# Equivalent Transforms
-# =====================
-# Build the same transformation in different ways and compare the results. Each
-# scene shows two halves of a sphere: the red top half is transformed with all five
-# properties, and the blue bottom half is transformed with an equivalent
-# :class:`~pyvista.Transform`. When the two transformations are the same, the halves
-# join to form a closed shape.
+# To rotate a mesh about its own center `and` move that center to a target, set
+# ``origin`` to the center and ``position`` to ``target - origin``.
+
+# %%
+# The Same Transform, Written Out
+# ===============================
+# The properties are implicit: the rotation order and the pivot are fixed and hidden.
+# :class:`~pyvista.Transform` makes every step explicit. Build the transform which
+# matches an actor with all five properties set.
 
 position = (-0.5, -0.5, 1)
 orientation = (60, 20, 10)
 scale = (1.5, 2, 2.5)
 origin = (2, 1.5, 1)
 user_matrix = pv.Transform().rotate_vector((1, 2, 3), 30).translate(1, -2, 0).matrix
-
-hemisphere_top = pv.Sphere(start_phi=0, end_phi=90)
-hemisphere_bottom = pv.Sphere(start_phi=90, end_phi=180)
-
-
-def make_top_actor():
-    actor = pv.Actor(mapper=pv.DataSetMapper(hemisphere_top))
-    actor.position = position
-    actor.orientation = orientation
-    actor.scale = scale
-    actor.origin = origin
-    actor.user_matrix = user_matrix
-    actor.prop.color = 'red'
-    return actor
-
-
-# %%
-# Write out each step of the transformation explicitly.
 
 explicit = (
     pv.Transform()
@@ -327,10 +172,10 @@ explicit = (
 )
 
 # %%
-# Use :attr:`~pyvista.Transform.point` instead of the translations to and from
-# ``origin``. Scaling and rotations are then applied about this point. The point is
-# cleared before composing the user matrix so that it is not also applied about the
-# point.
+# Note the rotation order: ``orientation`` is given in x-y-z order, but the rotations are
+# applied about y, then x, then z. :attr:`~pyvista.Transform.point` replaces the two
+# translations to and from the pivot. The point is cleared before composing the user
+# matrix, which is not applied about the pivot.
 
 compact = pv.Transform(point=origin)
 compact.scale(scale)
@@ -342,61 +187,144 @@ compact.point = None
 compact.compose(user_matrix)
 
 # %%
-# Apply the rotations in x-y-z order instead. The halves no longer line up.
+# Compare the two by transforming the two halves of a sphere: the red top half through
+# the actor's properties, the blue bottom half through the transform with
+# :meth:`Transform.apply() <pyvista.Transform.apply>`, which sets its ``user_matrix``.
+# The halves form a closed sphere only when the transforms are the same. Applying the
+# rotations in x-y-z order instead splits them apart.
 
-wrong_order = (
-    pv.Transform(point=origin)
-    .scale(scale)
-    .rotate_x(orientation[0])
-    .rotate_y(orientation[1])
-    .rotate_z(orientation[2])
-    .translate(position)
-)
+wrong_order = pv.Transform(point=origin)
+wrong_order.scale(scale)
+wrong_order.rotate_x(orientation[0])
+wrong_order.rotate_y(orientation[1])
+wrong_order.rotate_z(orientation[2])
+wrong_order.translate(position)
 wrong_order.point = None
 wrong_order.compose(user_matrix)
 
-# %%
-# Plot the comparisons. The bottom half is transformed with
-# :meth:`Transform.apply() <pyvista.Transform.apply>`, which sets the actor's
-# ``user_matrix``. In the third scene, the mesh itself is transformed instead of the
-# actor, which gives the same result.
+hemisphere_top = pv.Sphere(start_phi=0, end_phi=90)
+hemisphere_bottom = pv.Sphere(start_phi=90, end_phi=180)
+cases = {'Rotated y, x, z': compact, 'Rotated x, y, z': wrong_order}
 
-pl = pv.Plotter(shape=(2, 2))
-scenes = {
-    'Explicit steps': explicit,
-    'Transform(point=origin)': compact,
-    'Transformed mesh': compact,
-    'Wrong rotation order': wrong_order,
-}
-for index, (title, transform) in enumerate(scenes.items()):
-    pl.subplot(*divmod(index, 2))
+pl = pv.Plotter(shape=(1, 2))
+for index, (title, transform) in enumerate(cases.items()):
+    pl.subplot(0, index)
     pl.add_text(title, font_size=12)
-    pl.add_actor(make_top_actor())
-    if title == 'Transformed mesh':
-        pl.add_mesh(hemisphere_bottom.transform(transform, inplace=False), color='blue')
-    else:
-        bottom_actor = pv.Actor(mapper=pv.DataSetMapper(hemisphere_bottom))
-        bottom_actor.prop.color = 'blue'
-        pl.add_actor(transform.apply(bottom_actor, 'replace'))
+    top_actor = pl.add_mesh(hemisphere_top, color='red')
+    top_actor.position = position
+    top_actor.orientation = orientation
+    top_actor.scale = scale
+    top_actor.origin = origin
+    top_actor.user_matrix = user_matrix
+    bottom_actor = pl.add_mesh(hemisphere_bottom, color='blue')
+    transform.apply(bottom_actor, 'replace', copy=False)
     add_context(pl)
 pl.link_views()
 pl.show()
 
 # %%
-# Recommendation
-# ==============
-# Setting ``position``, ``orientation``, ``scale``, and ``origin`` together is easy to
-# get wrong, because the result depends on the fixed order shown above. Building a
-# single :class:`~pyvista.Transform` makes the order explicit. Its 4x4
-# :attr:`~pyvista.Transform.matrix` can be set as the ``user_matrix`` of any actor, and
-# the same transform can also be applied to a mesh.
-#
+# Local and Global Frames
+# =======================
+# Meshes from different sources come in different coordinate systems. These three
+# sharks are different sizes, lie along different axes, and one is off-center. Each
+# mesh has a natural local frame, which :meth:`~pyvista.DataSetFilters.align_xyz` finds
+# from the :func:`~pyvista.principal_axes` of its points. The returned matrix is the
+# rotation into that frame, after centering. Show each shark with its local frame.
+
+sharks = {
+    'hammerhead': examples.download_shark(),
+    'great white': examples.download_great_white_shark(),
+    'grey nurse': examples.download_grey_nurse_shark(),
+}
+colors = {'hammerhead': 'tomato', 'great white': 'steelblue', 'grey nurse': 'goldenrod'}
+seeds = {
+    'hammerhead': dict(axis_0_direction='-x', axis_2_direction='z'),
+    'great white': dict(axis_0_direction='z', axis_2_direction='-x'),
+    'grey nurse': dict(axis_0_direction='-x', axis_2_direction='z'),
+}
+frames = {}
+for name, shark in sharks.items():
+    _, matrix = shark.align_xyz(return_matrix=True, **seeds[name])
+    frames[name] = matrix[:3, :3]
+
+pl = pv.Plotter(shape=(1, 3))
+for index, (name, shark) in enumerate(sharks.items()):
+    pl.subplot(0, index)
+    pl.add_text(name, font_size=12)
+    pl.add_mesh(shark, color=colors[name])
+    local_frame = pv.Transform().scale(shark.length / 3).rotate(frames[name].T)
+    local_frame.translate(shark.center)
+    pl.add_actor(pv.AxesAssembly(user_matrix=local_frame.matrix))
+    pl.view_isometric()
+pl.show()
+
+# %%
+# Line the sharks up in the global frame, all the same length and swimming the same
+# way. Each one pivots about its own center, is rotated by its local frame and scaled
+# to a common length, and is offset to a slot on the grid. The meshes are not modified.
+# The grid is 1 unit, so the hammerhead, which is 167 units long in its file, is now 10.
+
+length = 10
+
+
+def line_up(pl, name, slot, **kwargs):
+    shark = sharks[name]
+    actor = pl.add_mesh(shark, **kwargs)
+    actor.origin = shark.center
+    actor.rotation_from(frames[name])
+    actor.scale = length / shark.length
+    actor.position = np.array(slot) - shark.center
+    return actor
+
+
+pl = pv.Plotter()
+for index, name in enumerate(sharks):
+    line_up(pl, name, slot=(0, 12 * (index - 1), 3), color=colors[name], label=name)
+pl.add_legend(face='circle')
+add_context(pl)
+pl.show()
+
+# %%
+# Register One Shark Onto Another
+# ===============================
+# Rigid registration adds one more transform on top. To register the hammerhead onto
+# the grey nurse, run :meth:`~pyvista.DataSetFilters.align` on the meshes `as placed`,
+# so build the equivalent :class:`~pyvista.Transform` for each and apply it to the mesh.
+# The recovered matrix is then applied to the hammerhead actor with
+# :meth:`~pyvista.Prop3D.transform`, which composes it onto the ``user_matrix``. The
+# properties which line it up are untouched. The fit is rough because the two species
+# differ, but the bodies line up.
+
+
+def placement(name, slot):
+    shark = sharks[name]
+    transform = pv.Transform(point=shark.center)
+    transform.scale(length / shark.length)
+    transform.rotate(frames[name])
+    transform.translate(np.array(slot) - shark.center)
+    return transform
+
+
+hammerhead = placement('hammerhead', (0, -12, 3)).apply(sharks['hammerhead'])
+grey_nurse = placement('grey nurse', (0, 12, 3)).apply(sharks['grey nurse'])
+_, registration = hammerhead.align(grey_nurse, return_matrix=True)
+
+pl = pv.Plotter()
+line_up(pl, 'grey nurse', slot=(0, 12, 3), color='lightgray', opacity=0.5)
+actor = line_up(pl, 'hammerhead', slot=(0, -12, 3), color='tomato')
+actor.transform(registration, inplace=True)
+add_context(pl, bounds=(-6, 6, 6, 18, 0, 6))
+pl.show()
+
+# %%
 # .. seealso::
 #
 #     :class:`~pyvista.Prop3D`
-#         Base class with the transform properties of all actors.
+#         The transform properties shared by all actors.
 #     :class:`~pyvista.Transform`
-#         Describe linear transformations via a 4x4 matrix.
+#         Explicit transformations as a 4x4 matrix.
+#     :ref:`icp_registration_example`
+#         Rigid registration with :meth:`~pyvista.DataSetFilters.align`.
 #     :ref:`axes_objects_example`
 #         Overview of axes objects.
 #
