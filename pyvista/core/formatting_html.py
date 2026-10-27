@@ -346,7 +346,7 @@ _KV_WIDE_CHARS = 31
 
 
 def _kv_is_wide(key: str, value: str) -> bool:
-    """Return whether a pair needs a full row, weighting the monospace value wider than the key."""
+    """Return whether a pair needs a full row, counting value characters wider than key ones."""
     return '\n' in value or len(key) + 1.2 * len(value) > _KV_WIDE_CHARS
 
 
