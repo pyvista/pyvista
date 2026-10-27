@@ -228,7 +228,7 @@ def _ensure_entry_points() -> None:
         source = interactor_style_entry_point.value
         try:
             loaded_handler = interactor_style_entry_point.load()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - a broken plugin is reported, not fatal
             msg = (
                 f'Failed to load {INTERACTOR_STYLE_ENTRY_POINT_GROUP} entry point '
                 f'"{interactor_style_entry_point.name}" from {source}: {exc}'

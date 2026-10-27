@@ -47,6 +47,20 @@ docstrings, documentation), and no VTK CamelCase call
 (`mesh.GetBounds()`, `alg.SetInputData(...)`, `obj.Modified()`) where a property or filter
 exists. Inside the package, `from . import _vtk` and then `_vtk.vtkY`.
 
+**Read VTK's issue and merge-request history from
+[vtk-archive.pyvista.org](https://vtk-archive.pyvista.org), not gitlab.kitware.com.** It is
+a read-only mirror of `vtk/vtk` on a CDN; Kitware's server is sized for VTK's developers,
+not for agent traffic. Paths match GitLab exactly, so swap the host on any link you already
+have (`/vtk/vtk/-/issues/<iid>`, `/vtk/vtk/-/merge_requests/<iid>`, `.../diffs`), or pass
+the full GitLab URL to `/?uri=`. Append `.md` to an issue or merge-request URL for Markdown
+with YAML front matter (state, labels, branches, head commit). `/llms.txt` describes the
+URL scheme, `/vtk/vtk/-/labels` lists labels, and `/search` is full-text. Read VTK source
+at `github.com/Kitware/VTK`, which carries the same commit SHAs. Fetch from
+gitlab.kitware.com only to confirm state newer than the archive snapshot, one page at a
+time. When you cite a VTK issue or merge request in code, a docstring, or a pull request,
+write the canonical `gitlab.kitware.com` URL: the original is authoritative and every
+archive page links back to it.
+
 **Filters return a new dataset.** `inplace=False` is the default, so `mesh.clip('y')`
 leaves `mesh` untouched. Capture the return value.
 

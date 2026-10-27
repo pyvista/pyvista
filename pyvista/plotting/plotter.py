@@ -1184,7 +1184,8 @@ class BasePlotter(_BoundsSizeMixin):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except Exception as e:  # noqa: BLE001  # pragma: no cover
+                        except AttributeError as e:  # pragma: no cover
+                            # The mapper has no PyVista dataset
                             log.debug('Failed to rename array during gLTF export: %s', e)
 
         exporter = _vtk.vtkGLTFExporter()
@@ -2698,7 +2699,8 @@ class BasePlotter(_BoundsSizeMixin):
     def render(self) -> None:
         """Render the main window.
 
-        Will not render until ``show`` has been called.
+        Will not render until ``show`` has been called, nor while the
+        render window interactor has rendering disabled.
 
         Any render callbacks added with
         :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
@@ -2724,12 +2726,39 @@ class BasePlotter(_BoundsSizeMixin):
             and not self._first_time
             and not self._suppress_rendering
         ):
-            log.debug('Rendering')
             self.renderers.on_plotter_render()
-            self.render_window.Render()
-            self._rendered = True
+            if self._interactor_render_enabled():
+                log.debug('Rendering')
+                self.render_window.Render()
+                self._rendered = True
         for callback in self._on_render_callbacks:
             callback(self)
+
+    def _interactor_render_enabled(self) -> bool:
+        """Return whether the render window interactor allows rendering."""
+        # The stubs say non-None, but a window without an interactor returns None
+        interactor: _vtk.vtkRenderWindowInteractor | None = cast(
+            '_vtk.vtkRenderWindow', self.render_window
+        ).GetInteractor()
+        return interactor is None or bool(interactor.GetEnableRender())
+
+    @contextlib.contextmanager
+    def _interactor_render_on(self) -> Iterator[None]:
+        """Allow rendering even while the render window interactor has rendering disabled."""
+        if self.render_window is None or self._interactor_render_enabled():
+            yield
+            return
+        interactor = self.render_window.GetInteractor()
+        interactor.EnableRenderOn()
+        try:
+            yield
+        finally:
+            interactor.EnableRenderOff()
+
+    def _render_requested(self) -> None:
+        """Render even while the render window interactor has rendering disabled."""
+        with self._interactor_render_on():
+            self.render()
 
     def add_on_render_callback(
         self,
@@ -6032,9 +6061,12 @@ class BasePlotter(_BoundsSizeMixin):
 
         # end movie
         if self.mwriter is not None:
-            with contextlib.suppress(BaseException):
+            try:
                 self.mwriter.close()
-            self.mwriter = None
+            except Exception as e:  # noqa: BLE001 - finish closing the plotter
+                warn_external(f'Failed to finalize the movie file, it may be incomplete:\n{e}')
+            finally:
+                self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -6485,13 +6517,14 @@ class BasePlotter(_BoundsSizeMixin):
         # before extracting an image
         if self._first_time:
             self._on_first_render_request()
-            self.render()
+            self._render_requested()
 
         if transparent_background is None:
             transparent_background = self.image_transparent_background
         _validate_transparent_background(transparent_background)
         mwriter = self._get_mwriter_not_none()
-        self.update()
+        with self._interactor_render_on():
+            self.update()
         mwriter.append_data(self._image_with_background(transparent_background))
 
     def get_image_depth(
@@ -7512,9 +7545,9 @@ class BasePlotter(_BoundsSizeMixin):
             # before extracting an image
             if self._first_time:
                 self._on_first_render_request()
-                self.render()
+                self._render_requested()
             elif render:
-                self.render()
+                self._render_requested()
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()
@@ -9244,11 +9277,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if jupyter_backend is None or jupyter_backend.lower() != 'none':
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
-        self.render()
+        self._render_requested()
 
         # initial double render needed for certain passes when offscreen
         if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
-            self.render()
+            self._render_requested()
 
         # This has to be after the first render for some reason
         if title is None:
