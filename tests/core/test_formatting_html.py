@@ -15,6 +15,7 @@ from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _data_array_section
 from pyvista.core.formatting_html import _fmt_memory
 from pyvista.core.formatting_html import _key_value_section
+from pyvista.core.formatting_html import _kv_wide_flags
 from pyvista.core.formatting_html import _load_css
 from pyvista.core.formatting_html import _load_mesh_icon
 from pyvista.core.formatting_html import _metadata_html
@@ -421,6 +422,19 @@ def test_key_value_section(value, wide):
     assert "<span class='pv-kv-key'>&lt;k&gt;</span>" in html
     assert "<span class='pv-kv-value pv-kv-muted'>n/a</span>" in html
     assert ('pv-kv-wide' in html) is wide
+
+
+@pytest.mark.parametrize(
+    ('values', 'expected'),
+    [
+        (['x' * 30, 'x', 'x' * 30], [True, True, True]),
+        (['x' * 30, 'x', 'x', 'x' * 30], [True, False, False, True]),
+        (['x'], [True]),
+        (['x', 'x'], [False, False]),
+    ],
+)
+def test_kv_wide_flags(values, expected):
+    assert _kv_wide_flags(values, 3) == expected
 
 
 def test_build_repr_html_empty_mesh_type_has_no_icon():

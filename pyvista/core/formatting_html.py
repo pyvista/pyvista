@@ -343,12 +343,19 @@ def _children_section(
 
 
 _KV_WIDE_CHARS = 31
-_KV_MAX_KEY_CHARS = 15
+_KV_MAX_KEY_CHARS = 20
 
 
-def _kv_is_wide(key: str, value: str, key_chars: int = 0) -> bool:
-    """Return whether a pair needs a full row, counting value characters wider than key ones."""
-    return '\n' in value or max(len(key), key_chars) + 1.2 * len(value) > _KV_WIDE_CHARS
+def _kv_is_wide(value: str, key_chars: int) -> bool:
+    """Return whether a value needs a full row, counting value characters wider than key ones."""
+    return '\n' in value or key_chars + 1.2 * len(value) > _KV_WIDE_CHARS
+
+
+def _kv_wide_flags(values: Sequence[str], key_chars: int) -> list[bool]:
+    """Return which items take a full row, widening a narrow item left alone between full rows."""
+    wide = [_kv_is_wide(value, key_chars) for value in values]
+    edges = [True, *wide, True]
+    return [w or (edges[i] and edges[i + 2]) for i, w in enumerate(wide)]
 
 
 def _max_columns_style(max_columns: int | None) -> str:
@@ -369,13 +376,14 @@ def _key_value_section(
 ) -> str:
     """Build a collapsible section of ``(key, value)`` pairs in a responsive grid."""
     key_chars = min(max((len(key) for key, _ in items), default=0), _KV_MAX_KEY_CHARS)
+    wide = _kv_wide_flags([value for _, value in items], key_chars)
     items_li = ''.join(
-        f"<li class='pv-kv-item{' pv-kv-wide' if _kv_is_wide(key, value, key_chars) else ''}'>"
+        f"<li class='pv-kv-item{' pv-kv-wide' if is_wide else ''}'>"
         f"<span class='pv-kv-key'>{html.escape(key)}</span>"
         f"<span class='pv-kv-value{' pv-kv-muted' if value in muted_values else ''}"
         f"{' pv-kv-multiline' if chr(10) in value else ''}'>"
         f'{html.escape(value)}</span></li>'
-        for key, value in items
+        for (key, value), is_wide in zip(items, wide, strict=True)
     )
     return collapsible_section(
         f'{title}:',
