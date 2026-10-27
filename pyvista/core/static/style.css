@@ -474,8 +474,7 @@ body.vscode-dark {
 
 .pv-kv-item {
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   padding: 2px 4px;
   border-bottom: 1px solid var(--pv-border-color);
 }
@@ -485,12 +484,14 @@ body.vscode-dark {
 }
 
 .pv-kv-key {
+  flex: 0 0 auto;
+  min-width: calc(var(--pv-kv-key-chars, 0) * 0.6em);
   color: var(--pv-font-color2);
   white-space: nowrap;
 }
 
 .pv-kv-value {
-  text-align: right;
+  min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--jp-code-font-family, monospace);
   font-size: 0.92em;

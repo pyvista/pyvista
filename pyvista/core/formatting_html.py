@@ -341,19 +341,20 @@ def _children_section(
 
 
 _KV_WIDE_CHARS = 31
+_KV_MAX_KEY_CHARS = 15
 
 
-def _kv_is_wide(key: str, value: str) -> bool:
+def _kv_is_wide(key: str, value: str, key_chars: int = 0) -> bool:
     """Return whether a pair needs a full row, counting value characters wider than key ones."""
-    return len(key) + 1.2 * len(value) > _KV_WIDE_CHARS
+    return max(len(key), key_chars) + 1.2 * len(value) > _KV_WIDE_CHARS
 
 
 def _max_columns_style(max_columns: int | None) -> str:
-    """Return a ``style`` attribute capping a ``pv-kv-list`` grid at ``max_columns`` columns."""
+    """Return the CSS capping a ``pv-kv-list`` grid at ``max_columns`` columns."""
     if not max_columns:
         return ''
     width = f'calc((100% - {max_columns - 1} * 16px) / {max_columns})'
-    return f" style='grid-template-columns: repeat(auto-fill, minmax(max(16em, {width}), 1fr))'"
+    return f' grid-template-columns: repeat(auto-fill, minmax(max(16em, {width}), 1fr));'
 
 
 def _key_value_section(
@@ -364,8 +365,9 @@ def _key_value_section(
     max_columns: int | None = None,
 ) -> str:
     """Build a collapsible section of ``(key, value)`` pairs in a responsive grid."""
+    key_chars = min(max((len(key) for key, _ in items), default=0), _KV_MAX_KEY_CHARS)
     items_li = ''.join(
-        f"<li class='pv-kv-item{' pv-kv-wide' if _kv_is_wide(key, value) else ''}'>"
+        f"<li class='pv-kv-item{' pv-kv-wide' if _kv_is_wide(key, value, key_chars) else ''}'>"
         f"<span class='pv-kv-key'>{html.escape(key)}</span>"
         f"<span class='pv-kv-value{' pv-kv-muted' if value in muted_values else ''}'>"
         f'{html.escape(value)}</span></li>'
@@ -373,7 +375,10 @@ def _key_value_section(
     )
     return collapsible_section(
         f'{title}:',
-        details=f"<ul class='pv-kv-list'{_max_columns_style(max_columns)}>{items_li}</ul>",
+        details=(
+            f"<ul class='pv-kv-list' style='--pv-kv-key-chars: {key_chars};"
+            f"{_max_columns_style(max_columns)}'>{items_li}</ul>"
+        ),
         n_items=len(items),
         collapsed=False,
     )
