@@ -412,7 +412,7 @@ def test_build_repr_html_header_copy():
     assert "data-copy='a&lt;b'" in html
 
 
-@pytest.mark.parametrize(('value', 'wide'), [('x' * 23, False), ('x' * 24, True)])
+@pytest.mark.parametrize(('value', 'wide'), [('x' * 20, False), ('x' * 21, True)])
 def test_key_value_section(value, wide):
     html = _key_value_section('Info', [('<k>', value), ('m', 'n/a')], muted_values=['n/a'])
     assert 'Info:' in html
