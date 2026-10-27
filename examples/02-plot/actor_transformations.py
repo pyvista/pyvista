@@ -285,38 +285,6 @@ add_context(pl)
 pl.show()
 
 # %%
-# Register One Shark Onto Another
-# ===============================
-# Rigid registration adds one more transform on top. To register the hammerhead onto
-# the grey nurse, run :meth:`~pyvista.DataSetFilters.align` on the meshes `as placed`,
-# so build the equivalent :class:`~pyvista.Transform` for each and apply it to the mesh.
-# The recovered matrix is then applied to the hammerhead actor with
-# :meth:`~pyvista.Prop3D.transform`, which composes it onto the ``user_matrix``. The
-# properties which line it up are untouched. The fit is rough because the two species
-# differ, but the bodies line up.
-
-
-def placement(name, slot):
-    shark = sharks[name]
-    transform = pv.Transform(point=shark.center)
-    transform.scale(length / shark.length)
-    transform.rotate(frames[name])
-    transform.translate(np.array(slot) - shark.center)
-    return transform
-
-
-hammerhead = placement('hammerhead', (0, -12, 3)).apply(sharks['hammerhead'])
-grey_nurse = placement('grey nurse', (0, 12, 3)).apply(sharks['grey nurse'])
-_, registration = hammerhead.align(grey_nurse, return_matrix=True)
-
-pl = pv.Plotter()
-line_up(pl, 'grey nurse', slot=(0, 12, 3), color='lightgray', opacity=0.5)
-actor = line_up(pl, 'hammerhead', slot=(0, -12, 3), color='tomato')
-actor.transform(registration, inplace=True)
-add_context(pl, bounds=(-6, 6, 6, 18, 0, 6))
-pl.show()
-
-# %%
 # .. seealso::
 #
 #     :class:`~pyvista.Prop3D`
@@ -324,7 +292,7 @@ pl.show()
 #     :class:`~pyvista.Transform`
 #         Explicit transformations as a 4x4 matrix.
 #     :ref:`icp_registration_example`
-#         Rigid registration with :meth:`~pyvista.DataSetFilters.align`.
+#         Apply a recovered registration to an actor with ``user_matrix``.
 #     :ref:`axes_objects_example`
 #         Overview of axes objects.
 #
