@@ -62,6 +62,7 @@ from typing import cast
 import numpy as np
 
 from pyvista._warn_external import warn_external
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 
 if TYPE_CHECKING:
     from typing import Self
@@ -87,7 +88,7 @@ class _ForceSlots(type):
         return super_prepared  # type: ignore[return-value]
 
 
-class _ConfigBase(metaclass=_ForceSlots):
+class _ConfigBase(_TextReprHTMLMixin, metaclass=_ForceSlots):
     """Shared base class for PyVista config objects.
 
     Provides dict-style item access, ``from_dict`` / ``to_dict`` serialization,

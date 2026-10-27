@@ -11,7 +11,9 @@ from __future__ import annotations
 import functools
 import html
 from importlib.resources import files as _resources_files
+import re
 from typing import TYPE_CHECKING
+from typing import ClassVar
 import uuid
 
 if TYPE_CHECKING:
@@ -345,7 +347,7 @@ _KV_WIDE_CHARS = 31
 
 def _kv_is_wide(key: str, value: str) -> bool:
     """Return whether a pair needs a full row, weighting the monospace value wider than the key."""
-    return len(key) + 1.2 * len(value) > _KV_WIDE_CHARS
+    return '\n' in value or len(key) + 1.2 * len(value) > _KV_WIDE_CHARS
 
 
 def _max_columns_style(max_columns: int | None) -> str:
@@ -361,13 +363,15 @@ def _key_value_section(
     items: Sequence[tuple[str, str]],
     *,
     muted_values: Collection[str] = (),
+    collapsed: bool = False,
     max_columns: int | None = None,
 ) -> str:
     """Build a collapsible section of ``(key, value)`` pairs in a responsive grid."""
     items_li = ''.join(
         f"<li class='pv-kv-item{' pv-kv-wide' if _kv_is_wide(key, value) else ''}'>"
         f"<span class='pv-kv-key'>{html.escape(key)}</span>"
-        f"<span class='pv-kv-value{' pv-kv-muted' if value in muted_values else ''}'>"
+        f"<span class='pv-kv-value{' pv-kv-muted' if value in muted_values else ''}"
+        f"{' pv-kv-multiline' if chr(10) in value else ''}'>"
         f'{html.escape(value)}</span></li>'
         for key, value in items
     )
@@ -375,8 +379,98 @@ def _key_value_section(
         f'{title}:',
         details=f"<ul class='pv-kv-list'{_max_columns_style(max_columns)}>{items_li}</ul>",
         n_items=len(items),
-        collapsed=False,
+        collapsed=collapsed,
     )
+
+
+_ADDRESS_RE = re.compile(r'\s*\(0x[0-9a-fA-F]+\)$')
+_COLON_ITEM_RE = re.compile(r'^(?P<key>[^:]+?)\s*:(?:\s+(?P<value>.*))?$')
+_GAP_ITEM_RE = re.compile(r'^(?P<key>\S.*?)\s{2,}(?P<value>\S.*)$')
+_MAX_EXPANDED_SECTIONS = 3
+
+
+def _open_brackets(text: str) -> int:
+    """Return the number of brackets opened but not closed in ``text``."""
+    return sum(text.count(c) for c in '([{') - sum(text.count(c) for c in ')]}')
+
+
+def _parse_text_repr(
+    text: str,
+) -> tuple[str, dict[str, list[tuple[str, str]]], list[str]]:
+    """Split a text ``repr`` into its title, named ``(key, value)`` sections and unparsed lines."""
+    entries: list[tuple[int, str | None, str]] = []
+    unparsed: list[str] = []
+    value_column = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or set(stripped) == {'-'}:
+            continue
+        indent = len(line) - len(line.lstrip())
+        if (
+            entries
+            and entries[-1][1] is not None
+            and _open_brackets(entries[-1][2]) > 0
+            and indent >= value_column > 0
+        ):
+            last_indent, last_key, last_value = entries[-1]
+            pad = ' ' * max(indent - value_column, 0)
+            entries[-1] = (last_indent, last_key, f'{last_value}\n{pad}{stripped}')
+            continue
+        match = _COLON_ITEM_RE.match(stripped) or _GAP_ITEM_RE.match(stripped)
+        if match:
+            value = (match['value'] or '').strip()
+            value_column = indent + stripped.rfind(value) if value else 0
+            entries.append((indent, match['key'].strip(), value))
+        elif indent == 0:
+            entries.append((0, None, _ADDRESS_RE.sub('', stripped)))
+        else:
+            unparsed.append(stripped)
+
+    title = ''
+    block = 'Properties'
+    sections: dict[str, list[tuple[str, str]]] = {}
+    groups: list[tuple[int, str]] = []
+    for i, (indent, key, value) in enumerate(entries):
+        if key is None:
+            if title:
+                block = value
+            else:
+                title = value
+            groups = []
+            continue
+        while groups and groups[-1][0] >= indent:
+            groups.pop()
+        parent = groups[-1][1] if groups else block
+        if value:
+            sections.setdefault(parent, []).append((key, value))
+        following = entries[i + 1] if i + 1 < len(entries) else None
+        if following is not None and following[1] is not None and following[0] > indent:
+            groups.append((indent, f'{parent} \u00b7 {key}' if groups else key))
+    return title, sections, unparsed
+
+
+def _text_repr_html(text: str, obj_type: str) -> str:
+    """Render a text ``repr`` as the HTML ``repr``, titled ``obj_type`` if it has no title."""
+    title, parsed, unparsed = _parse_text_repr(text)
+    collapse_rest = len(parsed) > _MAX_EXPANDED_SECTIONS
+    sections = [
+        _key_value_section(name, items, collapsed=collapse_rest and i > 0)
+        for i, (name, items) in enumerate(parsed.items())
+    ]
+    if unparsed:
+        details = f"<pre class='pv-pre'>{html.escape(chr(10).join(unparsed))}</pre>"
+        sections.append(collapsible_section('Details:', details=details, n_items=len(unparsed)))
+    return build_repr_html(title or obj_type, '', sections=sections, text_repr=text)
+
+
+class _TextReprHTMLMixin:
+    """Provide an HTML ``repr`` rendered from the text ``repr``."""
+
+    __slots__: ClassVar[Sequence[str]] = ()
+
+    def _repr_html_(self) -> str:
+        """Return a pretty representation for Jupyter notebooks."""
+        return _text_repr_html(repr(self), type(self).__name__)
 
 
 def _sections_html(sections: list[str]) -> str:
