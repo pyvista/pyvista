@@ -397,7 +397,7 @@ def _open_brackets(text: str) -> int:
 def _parse_text_repr(
     text: str,
 ) -> tuple[str, dict[str, list[tuple[str, str]]], list[str]]:
-    """Split a text ``repr`` into its title, named ``(key, value)`` sections and unparsed lines."""
+    """Split a text ``repr`` into its title, named ``(key, value)`` sections and leftover lines."""
     entries: list[tuple[int, str | None, str]] = []
     unparsed: list[str] = []
     value_column = 0
