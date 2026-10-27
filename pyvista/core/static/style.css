@@ -484,10 +484,9 @@ body.vscode-dark {
 }
 
 .pv-kv-key {
-  flex: 0 0 auto;
-  min-width: calc(var(--pv-kv-key-chars, 0) * 0.6em);
+  flex: 0 0 calc(var(--pv-kv-key-chars) * 0.6em);
   color: var(--pv-font-color2);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .pv-kv-value {
