@@ -15,6 +15,8 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.dataobject import DataObject
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.formatting_html import _key_value_section
+from pyvista.core.formatting_html import build_repr_html
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
@@ -629,6 +631,31 @@ class Texture(DataObject, _vtk.vtkTexture):
     def __repr__(self) -> str:
         """Return the object representation."""
         return pv.DataSet.__repr__(self)  # type: ignore[type-var]
+
+    def _repr_html_(self) -> str:
+        """Return a pretty representation for Jupyter notebooks."""
+        width, height = self.dimensions
+        n_comp = self.n_components
+        badges = [f'{width} x {height}', f'{n_comp} component{"" if n_comp == 1 else "s"}']
+        if self.cube_map:
+            badges.append('cube map')
+        properties = [
+            ('Dimensions', f'{width} x {height}'),
+            ('Components', str(self.n_components)),
+            ('Cube Map', str(self.cube_map)),
+            ('Interpolate', str(self.interpolate)),
+            ('Mipmap', str(self.mipmap)),
+            ('Repeat', str(self.repeat)),
+            ('Wrap', self.wrap.name),
+            ('Color Mode', self.color_mode),
+        ]
+        return build_repr_html(
+            type(self).__name__,
+            'Texture',
+            header_badges=badges,
+            sections=[_key_value_section('Properties', properties)],
+            text_repr=repr(self),
+        )
 
     def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""

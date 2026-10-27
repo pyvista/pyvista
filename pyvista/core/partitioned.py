@@ -173,7 +173,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
         return build_repr_html(
             obj_type=type(self).__name__,
-            mesh_type='ImageData',
+            mesh_type='PartitionedDataSet',
             header_badges=[
                 f'{self.n_points:,} points',
                 f'{self.n_cells:,} cells',

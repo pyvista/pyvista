@@ -353,7 +353,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         return build_repr_html(
             obj_type='Table',
-            mesh_type='ImageData',
+            mesh_type='Table',
             header_badges=[
                 f'{self.n_rows:,} rows',
                 f'{self.n_arrays} arrays',

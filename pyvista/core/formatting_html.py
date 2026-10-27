@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 import uuid
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Sequence
 
 
@@ -42,7 +43,13 @@ _MESH_TYPE_ICONS: dict[str, str] = {
     'ImageData': 'imagedata.svg',
     'RectilinearGrid': 'rectilinear.svg',
     'StructuredGrid': 'structured.svg',
+    'ExplicitStructuredGrid': 'explicit_structured.svg',
     'MultiBlock': 'multiblock.svg',
+    'PartitionedDataSet': 'partitioned.svg',
+    'Report': 'report.svg',
+    'GPUInfo': 'gpu.svg',
+    'Table': 'table.svg',
+    'Texture': 'texture.svg',
 }
 
 
@@ -333,6 +340,45 @@ def _children_section(
     )
 
 
+_KV_WIDE_CHARS = 31
+
+
+def _kv_is_wide(key: str, value: str) -> bool:
+    """Return whether a pair needs a full row, weighting the monospace value wider than the key."""
+    return len(key) + 1.2 * len(value) > _KV_WIDE_CHARS
+
+
+def _max_columns_style(max_columns: int | None) -> str:
+    """Return a ``style`` attribute capping a ``pv-kv-list`` grid at ``max_columns`` columns."""
+    if not max_columns:
+        return ''
+    width = f'calc((100% - {max_columns - 1} * 16px) / {max_columns})'
+    return f" style='grid-template-columns: repeat(auto-fill, minmax(max(16em, {width}), 1fr))'"
+
+
+def _key_value_section(
+    title: str,
+    items: Sequence[tuple[str, str]],
+    *,
+    muted_values: Collection[str] = (),
+    max_columns: int | None = None,
+) -> str:
+    """Build a collapsible section of ``(key, value)`` pairs in a responsive grid."""
+    items_li = ''.join(
+        f"<li class='pv-kv-item{' pv-kv-wide' if _kv_is_wide(key, value) else ''}'>"
+        f"<span class='pv-kv-key'>{html.escape(key)}</span>"
+        f"<span class='pv-kv-value{' pv-kv-muted' if value in muted_values else ''}'>"
+        f'{html.escape(value)}</span></li>'
+        for key, value in items
+    )
+    return collapsible_section(
+        f'{title}:',
+        details=f"<ul class='pv-kv-list'{_max_columns_style(max_columns)}>{items_li}</ul>",
+        n_items=len(items),
+        collapsed=False,
+    )
+
+
 def _sections_html(sections: list[str]) -> str:
     """Wrap sections into a ``<ul>`` CSS grid."""
     items = ''.join(f"<li class='pv-section-item'>{s}</li>" for s in sections)
@@ -347,6 +393,7 @@ def build_repr_html(
     metadata: Sequence[tuple[str, list[tuple[str, str]], str]] = (),
     sections: Sequence[str] = (),
     text_repr: str = '',
+    header_copy: str = '',
 ) -> str:
     """Assemble a complete HTML ``repr`` with header, metadata, sections, and fallback.
 
@@ -355,7 +402,7 @@ def build_repr_html(
     obj_type : str
         Display name (for example, ``'PolyData'``).
     mesh_type : str
-        Key for mesh icon lookup (for example, ``'PolyData'``).
+        Key for mesh icon lookup (for example, ``'PolyData'``). No icon when empty.
     header_badges : Sequence[str]
         Labels shown as small badges in the header (for example, memory size).
     metadata : Sequence[tuple[str, list[tuple[str, str]], str]]
@@ -366,6 +413,8 @@ def build_repr_html(
         List of collapsible-section HTML fragments.
     text_repr : str
         Plain-text fallback for non-HTML environments.
+    header_copy : str
+        Text copied by a clipboard button in the header. No button when empty.
 
     Returns
     -------
@@ -376,14 +425,15 @@ def build_repr_html(
     css = _load_css()
 
     # Mesh icon
-    icon_svg = _load_mesh_icon(mesh_type) or _load_mesh_icon('ImageData') or ''
-    icon_html = f"<span class='pv-logo'>{icon_svg}</span>"
+    icon_svg = (_load_mesh_icon(mesh_type) or _load_mesh_icon('ImageData')) if mesh_type else ''
+    icon_html = f"<span class='pv-logo'>{icon_svg}</span>" if icon_svg else ''
 
     # PyVista brand logo (top-right)
     pv_logo = _load_pyvista_logo()
     pv_logo_html = f"<span class='pv-brand-logo'>{pv_logo}</span>"
 
     # Header badges
+    copy_html = _copy_btn(header_copy) if header_copy else ''
     badges_html = ''.join(
         f" <span class='pv-header-badge'>{html.escape(b)}</span>" for b in header_badges
     )
@@ -394,6 +444,7 @@ def build_repr_html(
         "<div class='pv-header-text'>"
         f"<div class='pv-obj-type'>{html.escape(obj_type)}{badges_html}</div>"
         '</div>'
+        f'{copy_html}'
         f'{pv_logo_html}'
         '</div>'
     )

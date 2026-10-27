@@ -14,6 +14,7 @@ from pyvista.core.formatting_html import _children_section
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _data_array_section
 from pyvista.core.formatting_html import _fmt_memory
+from pyvista.core.formatting_html import _key_value_section
 from pyvista.core.formatting_html import _load_css
 from pyvista.core.formatting_html import _load_mesh_icon
 from pyvista.core.formatting_html import _metadata_html
@@ -393,6 +394,53 @@ def test_build_repr_html_metadata_conditional():
     without_meta = build_repr_html('T', 'PolyData')
     assert 'pv-metadata' in with_meta
     assert 'pv-metadata' not in without_meta.split('</style>')[1]
+
+
+@pytest.mark.parametrize(
+    'mesh_type',
+    ['Report', 'GPUInfo', 'ExplicitStructuredGrid', 'PartitionedDataSet', 'Table', 'Texture'],
+)
+def test_load_mesh_icon_report_types(mesh_type):
+    assert _load_mesh_icon(mesh_type).startswith('<svg')
+
+
+def test_build_repr_html_header_copy():
+    body = build_repr_html('T', 'PolyData').split('</style>')[1]
+    assert 'pv-copy-btn' not in body
+    html = build_repr_html('T', 'PolyData', header_copy='a<b')
+    assert "data-copy='a&lt;b'" in html
+
+
+@pytest.mark.parametrize(('value', 'wide'), [('x' * 23, False), ('x' * 24, True)])
+def test_key_value_section(value, wide):
+    html = _key_value_section('Info', [('<k>', value), ('m', 'n/a')], muted_values=['n/a'])
+    assert 'Info:' in html
+    assert '(2)' in html
+    assert "<span class='pv-kv-key'>&lt;k&gt;</span>" in html
+    assert "<span class='pv-kv-value pv-kv-muted'>n/a</span>" in html
+    assert ('pv-kv-wide' in html) is wide
+
+
+def test_build_repr_html_empty_mesh_type_has_no_icon():
+    assert "class='pv-logo'" not in build_repr_html('T', '')
+
+
+def test_dataset_attributes_repr_html():
+    mesh = pv.Sphere()
+    mesh['s'] = mesh.points[:, 0]
+    mesh.field_data['f'] = [1, 2, 3]
+    html = mesh.point_data._repr_html_()
+    assert 'Point Data:' in html
+    assert "<span class='pv-header-badge'>2 arrays</span>" in html
+    assert 'pv-badge-active' in html
+    assert 'pv-badge-normals' in html
+    html = mesh.field_data._repr_html_()
+    assert 'Field Data:' in html
+    assert "<span class='pv-header-badge'>1 array</span>" in html
+    assert '(3,)' in html
+    html = pv.Table({'a': np.arange(3)}).row_arrays._repr_html_()
+    assert 'Row Data:' in html
+    assert "<span class='pv-header-badge'>row</span>" in html
 
 
 def test_dataset_repr_polydata():
