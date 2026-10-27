@@ -614,6 +614,7 @@ def test_report_env_vars(monkeypatch):
 
 def test_report_repr_html(monkeypatch):
     monkeypatch.setenv('PYVISTA_FOO', '<b>')
+    monkeypatch.setattr(pv.Report, 'date', 'Tue Oct 27 18:46:23 2026 UTC')
     report = pv.Report(gpu=False, env_vars=True, additional=['not_a_real_package'])
     html_ = report._repr_html_()
     assert html.escape(str(report)) in html_
