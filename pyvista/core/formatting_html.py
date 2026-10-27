@@ -342,8 +342,8 @@ def _children_section(
     )
 
 
-_KV_WIDE_CHARS = 31
-_KV_MAX_KEY_CHARS = 20
+_KV_WIDE_CHARS = 28
+_KV_MAX_KEY_CHARS = 15
 
 
 def _kv_is_wide(value: str, key_chars: int) -> bool:

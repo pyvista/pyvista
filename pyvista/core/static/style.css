@@ -490,6 +490,7 @@ body.vscode-dark {
 }
 
 .pv-kv-value {
+  flex: 1 1 0;
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--jp-code-font-family, monospace);
