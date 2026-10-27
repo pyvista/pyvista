@@ -1050,6 +1050,11 @@ def test_download_reservoir():
 
     mesh = examples.download_reservoir()
     assert isinstance(mesh, pv.ExplicitStructuredGrid)
+    assert mesh.active_scalars_name is None
+    assert sorted(mesh.array_names) == ['BLOCK_I', 'BLOCK_J', 'BLOCK_K', 'vtkGhostType']
+    visible = mesh.cell_data['vtkGhostType'] == 0
+    volume = mesh.compute_cell_sizes(length=False, area=False)['Volume']
+    assert np.all(volume[visible] > 0)
 
 
 @parametrize(high_resolution=[True, False])
