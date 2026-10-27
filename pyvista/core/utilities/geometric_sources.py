@@ -4126,7 +4126,10 @@ class CubeFacesSource(CubeSource):
 
     >>> output
     MultiBlock[PolyData] (...)
+      N Cells:    6
+      N Points:   24
       N Blocks:   6
+      Depth:      1
       X Bounds:   -5.000e-01, 5.000e-01
       Y Bounds:   -5.000e-01, 5.000e-01
       Z Bounds:   -5.000e-01, 5.000e-01

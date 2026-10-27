@@ -314,7 +314,7 @@ class Observer(_NoNewAttrMixin):
                 self._event_history_etc.append(message)
             if self.__log:
                 self.log_message(event.kind, event.alert)
-        except Exception:  # noqa: BLE001  # pragma: no cover
+        except Exception:  # noqa: BLE001 - an exception must not propagate into VTK
             try:
                 if len(message) > 120:
                     message = f'{message[:100]!r} ... ({len(message)} characters)'
@@ -324,8 +324,8 @@ class Observer(_NoNewAttrMixin):
                     f'PyVista error in handling VTK error message:\n{message}',
                     file=sys.__stdout__,
                 )
-                traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
-            except Exception as e:  # noqa: BLE001
+                traceback.print_exc(file=sys.__stderr__)
+            except Exception as e:  # noqa: BLE001 - the streams may be unusable, e.g. closed
                 log.debug('Failed to print VTK error message: %s', e)
 
     def has_event_occurred(self) -> bool:  # numpydoc ignore=RT01
@@ -383,12 +383,17 @@ def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
     return obs.observe(error_output)
 
 
+_ABORTING_SIGINT_HANDLERS = (signal.default_int_handler, signal.SIG_DFL)
+
+
 class ProgressMonitor(_NoNewAttrMixin):
     """A standard class for monitoring the progress of a VTK algorithm.
 
-    This must be use in a ``with`` context and it will block keyboard
-    interrupts from happening until the exit event as interrupts will crash
-    the kernel if the VTK algorithm is still executing.
+    This must be used in a ``with`` context. A keyboard interrupt is delayed
+    until the exit event, as interrupts will crash the kernel if the VTK
+    algorithm is still executing. The algorithm is aborted when the previous
+    SIGINT handler raises ``KeyboardInterrupt`` or ends the process, and runs
+    to completion otherwise.
 
     Parameters
     ----------
@@ -415,7 +420,7 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._old_handler: Callable[[int, FrameType | None], object] | int | None = None
         self._progress_bar: tqdm | None = None
 
-    def handler(self, sig: int, frame: FrameType | None) -> None:
+    def handler(self, sig: int, frame: FrameType | None) -> None:  # noqa: ARG002
         """Pass signal to custom interrupt handler.
 
         Parameters
@@ -427,7 +432,7 @@ class ProgressMonitor(_NoNewAttrMixin):
             Current stack frame.
 
         """
-        self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
+        self._interrupt_signal_received = True
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
     def __call__(
@@ -439,7 +444,8 @@ class ProgressMonitor(_NoNewAttrMixin):
 
         On an event occurrence, this function executes.
         """
-        if self._interrupt_signal_received:
+        # Only abort when the restored handler stops the program, so any other gets complete output
+        if self._interrupt_signal_received and self._old_handler in _ABORTING_SIGINT_HANDLERS:
             if (abort := getattr(obj, 'AbortExecuteOn', None)) is not None:
                 abort()
         else:
@@ -452,8 +458,11 @@ class ProgressMonitor(_NoNewAttrMixin):
         """Enter event for ``with`` context."""
         from tqdm import tqdm  # noqa: PLC0415
 
-        # check if in main thread
-        if threading.current_thread().__class__.__name__ == '_MainThread':
+        # Handlers can only be set from the main thread. A handler installed outside
+        # Python cannot be restored, and an ignored SIGINT stays ignored.
+        if threading.current_thread().__class__.__name__ == '_MainThread' and (
+            signal.getsignal(signal.SIGINT) not in (None, signal.SIG_IGN)
+        ):
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
             total=1,
@@ -470,5 +479,13 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._progress_bar.refresh()  # type: ignore[union-attr]
         self._progress_bar.close()  # type: ignore[union-attr]
         self.algorithm.RemoveObservers(self.event_type)
-        if threading.current_thread().__class__.__name__ == '_MainThread':
+        if self._old_handler is not None:
             signal.signal(signal.SIGINT, self._old_handler)
+            self._old_handler = None
+        if self._interrupt_signal_received:
+            self._interrupt_signal_received = False
+            # Let a reused algorithm, such as a reader, execute again
+            if (abort_off := getattr(self.algorithm, 'AbortExecuteOff', None)) is not None:
+                abort_off()
+            # Deliver the interrupt delayed while the algorithm ran to the restored handler
+            signal.raise_signal(signal.SIGINT)

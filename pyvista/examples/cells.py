@@ -2922,7 +2922,10 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
 
         >>> triangle
         MultiBlock[UnstructuredGrid] (...)
+          N Cells:    1
+          N Points:   3
           N Blocks:   1
+          Depth:      1
           X Bounds:   0.000e+00, 1.000e+00
           Y Bounds:   -5.551e-17, 1.000e+00
           Z Bounds:   0.000e+00, 0.000e+00

@@ -332,7 +332,7 @@ class Report(scooby.Report):
         if gpu:
             try:
                 extra_meta = GPUInfo().get_info()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 - the report must not fail
                 extra_meta = [
                     ('GPU Details', 'error'),
                 ]
@@ -344,7 +344,7 @@ class Report(scooby.Report):
         if gpu:
             try:
                 render_window = _get_render_window_class()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 - the report must not fail
                 render_window = 'error'
         else:
             render_window = 'None'
