@@ -612,6 +612,15 @@ def test_report_env_vars(monkeypatch):
     assert 'NOTPYVISTA_VAR' not in repr_
 
 
+@pytest.mark.parametrize('mkl_info', [None, 'Intel(R) oneMKL <2025>'])
+def test_report_repr_html_mkl(monkeypatch, mkl_info):
+    monkeypatch.setattr(pv.Report, 'mkl_info', mkl_info)
+    html_ = pv.Report(gpu=False)._repr_html_()
+    assert ('>MKL<' in html_) is (mkl_info is not None)
+    if mkl_info:
+        assert html.escape(mkl_info) in html_
+
+
 def test_report_repr_html(monkeypatch):
     monkeypatch.setenv('PYVISTA_FOO', '<b>')
     monkeypatch.setattr(pv.Report, 'date', 'Tue Oct 27 18:46:23 2026 UTC')
