@@ -576,6 +576,83 @@ def test_close_releases_render_window_observers(event):
     assert reference() is None
 
 
+def test_render_respects_interactor_enable_render(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    renders = []
+    pl.render_window.AddObserver(_vtk.vtkCommand.StartEvent, lambda *_: renders.append(1))
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+
+    pl.render()
+    assert not renders
+
+    pl.screenshot(return_img=True)
+    assert renders
+    assert not interactor.GetEnableRender()
+
+    interactor.EnableRenderOn()
+    renders.clear()
+    pl.render()
+    assert renders
+    pl.close()
+
+
+def test_key_press_respects_interactor_enable_render(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    renders = []
+    pl.render_window.AddObserver(_vtk.vtkCommand.StartEvent, lambda *_: renders.append(1))
+    callbacks = []
+    pl.add_on_render_callback(callbacks.append)
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+    view_angle = pl.camera.view_angle
+
+    interactor.SetKeySym('Up')
+    interactor.SetKeyCode('\0')
+    interactor.KeyPressEvent()
+    assert pl.camera.view_angle < view_angle
+    assert not renders
+    assert callbacks == [pl]
+    pl.close()
+
+
+def test_render_updates_charts_while_interactor_render_disabled():
+    pl = pv.Plotter()
+    chart = pv.Chart2D()
+    plot = chart.line([0, 1], [0, 1])
+    pl.add_chart(chart)
+    pl.show(auto_close=False)
+    pl.render_window.GetInteractor().EnableRenderOff()
+
+    plot.update([0, 10], [0, 10])
+    pl.render()
+    # The caller that disabled rendering draws the window itself
+    pl.render_window.Render()
+    assert chart.x_range == [0, 10]
+    pl.close()
+
+
+def test_write_frame_renders_while_interactor_render_disabled(mocker: MockerFixture):
+    writer = mocker.Mock()
+    mocker.patch.object(pv.Plotter, '_get_mwriter_not_none', return_value=writer)
+    pl = pv.Plotter(window_size=(50, 50))
+    pl.background_color = 'black'
+    pl.show(auto_close=False)
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+
+    pl.background_color = 'white'
+    pl.write_frame()
+    frame = writer.append_data.call_args.args[0]
+    assert (frame[..., :3] == 255).all()
+    assert not interactor.GetEnableRender()
+    pl.close()
+
+
 def test_show_after_closed_raises():
     pl = pv.Plotter()
     pl.close()
@@ -1460,13 +1537,14 @@ def test_off_screen_background_thread_rendering():
             assert img is not None
             assert img.shape[0] > 0
             pl.close()
-        except Exception as e:  # noqa: BLE001  # pragma: no cover
+        except Exception as e:  # noqa: BLE001 - reported by the assertion below  # pragma: no cover
             errors.append(e)
 
-    t = threading.Thread(target=render_on_thread)
+    t = threading.Thread(target=render_on_thread, daemon=True)
     t.start()
     t.join(timeout=10)
 
+    assert not t.is_alive(), 'Background thread rendering did not finish'
     assert not errors, f'Background thread rendering failed: {errors[0]}'
 
 
@@ -1578,4 +1656,23 @@ def test_backface_params_culling(sphere, value, expected):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, backface_params={'culling': value})
     assert actor.backface_prop.culling == expected
+    pl.close()
+
+
+def test_close_warns_when_movie_writer_fails():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = OSError('disk full')
+    with pytest.warns(UserWarning, match='disk full'):
+        pl.close()
+    assert pl.mwriter is None
+
+
+def test_close_propagates_keyboard_interrupt_from_movie_writer():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = KeyboardInterrupt
+    with pytest.raises(KeyboardInterrupt):
+        pl.close()
+    assert pl.mwriter is None
     pl.close()

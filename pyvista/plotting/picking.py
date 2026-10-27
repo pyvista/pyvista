@@ -1139,7 +1139,7 @@ class PickingComponent(_NoNewAttrMixin):
                             reset_camera=_kwargs.pop('reset_camera', False),
                             **_kwargs,
                         )
-                except Exception as e:  # noqa: BLE001  # pragma: no cover
+                except Exception as e:  # noqa: BLE001 - reported as a warning  # pragma: no cover
                     warn_external(f'Unable to show mesh when picking:\n\n{e}')
 
                 # Reset to the active renderer.

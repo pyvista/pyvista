@@ -214,7 +214,7 @@ def _save_mesh(mesh: DataObject, out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         mesh.save(out_path)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 - reported as a CLI error
         msg = f'Failed to save output file: {out_path}\n{e}'
         print_error_and_exit(msg)
 
