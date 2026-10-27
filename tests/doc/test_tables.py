@@ -249,3 +249,25 @@ def test_dataset_card_reader_field_mixed(tmp_path):
     classes, _ = make_tables.DatasetCard._generate_facet_classes(loader, pv.examples.examples)
     reader_classes = [cls for cls in classes.split() if cls.startswith('reader-')]
     assert reader_classes == ['reader-xml-poly-data-reader', 'reader-pyvista-frd-frd-reader']
+
+
+@pytest.mark.parametrize(
+    ('load_func', 'n_cells', 'n_points', 'depth'),
+    [
+        (pv.Sphere, '``1 680``', '``842``', None),
+        (
+            lambda: pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None]),
+            '``1 686``',
+            '``850``',
+            '``2``',
+        ),
+        (lambda: pv.PartitionedDataSet([pv.Sphere(), pv.Cube()]), '``1 686``', '``850``', None),
+    ],
+)
+def test_dataset_card_counts_and_depth(load_func, n_cells, n_points, depth):
+    """Composite cards show total cells and points, and a MultiBlock card its depth."""
+    loader = _DatasetLoader(load_func)
+    loader.load_and_store_dataset()
+    assert make_tables.DatasetPropsGenerator.generate_n_cells(loader) == n_cells
+    assert make_tables.DatasetPropsGenerator.generate_n_points(loader) == n_points
+    assert make_tables.DatasetPropsGenerator.generate_depth(loader) == depth

@@ -2248,6 +2248,7 @@ class DatasetCard:
             datasource_links,
             n_cells,
             n_points,
+            depth,
             length,
             dimensions,
             spacing,
@@ -2270,6 +2271,7 @@ class DatasetCard:
             celltype_field=celltype_field,
             n_cells=n_cells,
             n_points=n_points,
+            depth=depth,
             length=length,
             dimensions=dimensions,
             spacing=spacing,
@@ -2318,6 +2320,7 @@ class DatasetCard:
         # properties collected directly from the dataset
         n_cells = DatasetPropsGenerator.generate_n_cells(loader)
         n_points = DatasetPropsGenerator.generate_n_points(loader)
+        depth = DatasetPropsGenerator.generate_depth(loader)
         length = DatasetPropsGenerator.generate_length(loader)
         dimensions = DatasetPropsGenerator.generate_dimensions(loader)
         spacing = DatasetPropsGenerator.generate_spacing(loader)
@@ -2335,6 +2338,7 @@ class DatasetCard:
             datasource_links,
             n_cells,
             n_points,
+            depth,
             length,
             dimensions,
             spacing,
@@ -2589,6 +2593,7 @@ class DatasetCard:
         celltype_field,
         n_cells,
         n_points,
+        depth,
         length,
         dimensions,
         spacing,
@@ -2599,6 +2604,7 @@ class DatasetCard:
             ('Cell Type', celltype_field),
             ('N Cells', n_cells),
             ('N Points', n_points),
+            ('Depth', depth),
             ('Length', length),
             ('Dimensions', dimensions),
             ('Spacing', spacing),
@@ -2796,6 +2802,14 @@ class DatasetPropsGenerator:
             DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'),
             fmt='spaced',
         )
+
+    @staticmethod
+    def generate_depth(loader):
+        """Format the nesting depth of a :class:`~pyvista.MultiBlock` dataset."""
+        dataset = loader.dataset
+        if isinstance(dataset, pv.MultiBlock):
+            return DatasetPropsGenerator._generate_number(dataset.depth)
+        return None
 
     @staticmethod
     def generate_length(loader):
