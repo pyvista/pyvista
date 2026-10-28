@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 from type_assert import assert_types
 
 import pyvista as pv
+from tests.typing.meshes import pointset
 
 
 def poly() -> pv.PolyData:
@@ -25,3 +28,6 @@ def multiblock() -> pv.MultiBlock:
 # The slices are collected into a composite, whatever went in
 assert_types(image().slice_along_axis(n=2), pv.MultiBlock)
 assert_types(multiblock().slice_along_axis(n=2), pv.MultiBlock)
+
+# A point cloud cannot be reduced to a surface
+assert_types(pointset().slice_along_axis(n=2), Never)

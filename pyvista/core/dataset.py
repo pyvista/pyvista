@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import NoReturn
 from typing import TypeVar
 from typing import cast
 from typing import overload
@@ -33,6 +34,7 @@ from .datasetattributes import _array_names
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters import _raise_if_pointset
 from .filters import _update_alg
 from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
@@ -2328,6 +2330,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         containing_cells = [locator.FindCell(node) for node in points]
         return containing_cells[0] if singular else np.array(containing_cells)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def find_cells_along_line(self: PointSet, pointa: VectorLikeFloat, pointb: VectorLikeFloat, tolerance: float | None = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def find_cells_along_line(self: DataSet, pointa: VectorLikeFloat, pointb: VectorLikeFloat, tolerance: float | None = ...) -> NDArray[np.int_]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_cells_along_line(
         self: Self,
         pointa: VectorLikeFloat,
@@ -2388,6 +2398,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         [86, 87, 1652, 1653]
 
         """
+        _raise_if_pointset(self)
         if np.array(pointa).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)
@@ -3234,12 +3245,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def point_is_inside_cell(self: PointSet, ind: int, point: VectorLikeFloat | MatrixLikeFloat) -> NoReturn: ...  # type: ignore[misc]
     @overload
-    def point_is_inside_cell(self: Self, ind: int, point: Sequence[float] | _VectorSequence) -> bool: ...
+    def point_is_inside_cell(self: DataSet, ind: int, point: Sequence[float] | _VectorSequence) -> bool: ...
     @overload
-    def point_is_inside_cell(self: Self, ind: int, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]]) -> NDArray[np.bool_]: ...
+    def point_is_inside_cell(self: DataSet, ind: int, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]]) -> NDArray[np.bool_]: ...
     @overload
-    def point_is_inside_cell(self: Self, ind: int, point: VectorLikeFloat | MatrixLikeFloat) -> bool | NDArray[np.bool_]: ...
+    def point_is_inside_cell(self: DataSet, ind: int, point: VectorLikeFloat | MatrixLikeFloat) -> bool | NDArray[np.bool_]: ...
     # ruff: enable[E501]
     # fmt: on
     def point_is_inside_cell(
@@ -3280,6 +3293,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         True
 
         """
+        _raise_if_pointset(self)
         if not isinstance(ind, (int, np.integer)):
             msg = f'ind must be an int, got {type(ind)}'  # type: ignore[unreachable]
             raise TypeError(msg)

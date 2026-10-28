@@ -328,10 +328,10 @@ def test_raise_unsupported(pointset):
         pointset.streamlines()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.streamlines_from_source()
+        pointset.streamlines_from_source(pv.PolyData([0.0, 0.0, 0.0]))
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.find_cells_along_line()
+        pointset.find_cells_along_line([0, 0, 0], [1, 1, 1])
 
     with pytest.raises(PointSetCellOperationError):
         pointset.tessellate()
@@ -343,10 +343,10 @@ def test_raise_unsupported(pointset):
         pointset.slice_along_axis()
 
     with pytest.raises(PointSetDimensionReductionError):
-        pointset.slice_along_line()
+        pointset.slice_along_line(pv.Line())
 
     with pytest.raises(PointSetDimensionReductionError):
-        pointset.slice_implicit()
+        pointset.slice_implicit(_vtk.vtkPlane())
 
     with pytest.raises(PointSetDimensionReductionError):
         pointset.slice_orthogonal()
@@ -358,10 +358,10 @@ def test_raise_unsupported(pointset):
         pointset.separate_cells()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.remove_cells()
+        pointset.remove_cells([0])
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.point_is_inside_cell()
+        pointset.point_is_inside_cell(0, [0.0, 0.0, 0.0])
 
     with pytest.raises(PointSetCellOperationError):
         pointset.extract_surface(algorithm=None)

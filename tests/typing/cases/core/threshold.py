@@ -21,3 +21,4 @@ assert_types(with_arrays(structured()).threshold(0.0, scalars='s'), pv.Unstructu
 assert_types(with_arrays(unstructured()).threshold(0.0, scalars='s'), pv.UnstructuredGrid)
 assert_types(with_arrays(explicit_structured()).threshold(0.0, scalars='s'), pv.UnstructuredGrid)
 assert_types(with_arrays(pointset()).threshold(0.0, scalars='s'), pv.PointSet)
+assert_types(with_arrays(pointset()).threshold([-0.2, 0.2], scalars='s'), pv.PointSet)

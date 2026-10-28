@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import NoReturn
 from typing import TypeVar
 from typing import cast
 from typing import get_args
@@ -29,11 +30,13 @@ from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _match_points_dtype
+from pyvista.core.filters import _raise_if_pointset
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
@@ -1016,6 +1019,14 @@ class DataSetFilters(DataObjectFilters):
                 clipped.set_active_scalars(info.name, preference=info.association)
         return _clip_output(clipped, self)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet
+    def threshold(self: PointSet, value: float | VectorLikeFloat | None = ..., *, scalars: str | None = ..., invert: bool = ..., continuous: bool = ..., preference: PointLiteral | CellLiteral = ..., all_scalars: bool = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., method: Literal['upper', 'lower'] = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def threshold(self: DataSet, value: float | VectorLikeFloat | None = ..., *, scalars: str | None = ..., invert: bool = ..., continuous: bool = ..., preference: PointLiteral | CellLiteral = ..., all_scalars: bool = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., method: Literal['upper', 'lower'] = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def threshold(  # type: ignore[misc]
         self: _DataSetType,
         value: float | VectorLikeFloat | None = None,
@@ -1029,7 +1040,7 @@ class DataSetFilters(DataObjectFilters):
         component: int = 0,
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
-    ) -> UnstructuredGrid:
+    ) -> PointSet | UnstructuredGrid:
         """Apply a :vtk:`vtkThreshold` filter to the input dataset.
 
         This filter will apply a :vtk:`vtkThreshold` filter to the input
@@ -1127,8 +1138,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Dataset containing geometry that meets the threshold requirements.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Dataset containing geometry that meets the threshold requirements. A
+            :class:`~pyvista.PointSet` input returns a ``PointSet``.
 
         Examples
         --------
@@ -1176,6 +1188,24 @@ class DataSetFilters(DataObjectFilters):
         ... )
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return (
+                self.cast_to_polydata(deep=False)
+                .threshold(
+                    value,
+                    scalars=scalars,
+                    invert=invert,
+                    continuous=continuous,
+                    preference=preference,
+                    all_scalars=all_scalars,
+                    component_mode=component_mode,
+                    component=component,
+                    method=method,
+                    progress_bar=progress_bar,
+                )
+                .cast_to_pointset()
+            )
         # set the scalars to threshold on
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
@@ -1226,6 +1256,14 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Thresholding')
         return _get_output(alg, output_type=pv.UnstructuredGrid)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet
+    def threshold_percent(self: PointSet, percent: float = ..., *, scalars: str | None = ..., invert: bool = ..., continuous: bool = ..., preference: PointLiteral | CellLiteral = ..., method: Literal['upper', 'lower'] = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def threshold_percent(self: DataSet, percent: float = ..., *, scalars: str | None = ..., invert: bool = ..., continuous: bool = ..., preference: PointLiteral | CellLiteral = ..., method: Literal['upper', 'lower'] = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def threshold_percent(  # type: ignore[misc]
         self: _DataSetType,
         percent: float = 0.50,
@@ -1236,7 +1274,7 @@ class DataSetFilters(DataObjectFilters):
         preference: PointLiteral | CellLiteral = 'cell',
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
-    ) -> UnstructuredGrid:
+    ) -> PointSet | UnstructuredGrid:
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
         .. warning::
@@ -1287,8 +1325,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Dataset containing geometry that meets the threshold requirements.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Dataset containing geometry that meets the threshold requirements. A
+            :class:`~pyvista.PointSet` input returns a ``PointSet``.
 
         See Also
         --------
@@ -1323,6 +1362,21 @@ class DataSetFilters(DataObjectFilters):
         See :ref:`using_filters_example` for more examples using a similar filter.
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return (
+                self.cast_to_polydata(deep=False)
+                .threshold_percent(
+                    percent,
+                    scalars=scalars,
+                    invert=invert,
+                    continuous=continuous,
+                    preference=preference,
+                    method=method,
+                    progress_bar=progress_bar,
+                )
+                .cast_to_pointset()
+            )
         tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
@@ -1745,6 +1799,14 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message=message)
         return _get_output(alg, output_type=pv.PolyData)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def contour(self: PointSet, isosurfaces: int | Sequence[float] = ..., scalars: str | VectorLikeFloat | None = ..., *, compute_normals: bool = ..., compute_gradients: bool = ..., compute_scalars: bool = ..., rng: VectorLikeFloat | None = ..., preference: PointLiteral | CellLiteral = ..., method: Literal['contour', 'marching_cubes', 'flying_edges'] = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def contour(self: DataSet, isosurfaces: int | Sequence[float] = ..., scalars: str | VectorLikeFloat | None = ..., *, compute_normals: bool = ..., compute_gradients: bool = ..., compute_scalars: bool = ..., rng: VectorLikeFloat | None = ..., preference: PointLiteral | CellLiteral = ..., method: Literal['contour', 'marching_cubes', 'flying_edges'] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def contour(  # type: ignore[misc]
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
@@ -1857,6 +1919,11 @@ class DataSetFilters(DataObjectFilters):
         >>> out.plot(color='lightblue', smooth_shading=True)
 
         """
+        _raise_if_pointset(
+            self,
+            PointSetNotSupported,
+            'Contour and other dimension reducing filters are not supported on PointSets',
+        )
         if method == 'contour':
             alg = _vtk.vtkContourFilter()
         elif method == 'marching_cubes':
@@ -3237,6 +3304,11 @@ class DataSetFilters(DataObjectFilters):
         >>> edges.plot(line_width=5, color='k')
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return self.cast_to_polydata(deep=False).delaunay_3d(
+                alpha=alpha, tol=tol, offset=offset, progress_bar=progress_bar
+            )
         alg = _vtk.vtkDelaunay3D()
         alg.SetInputData(self.cast_to_unstructured_grid() if isinstance(self, pv.Grid) else self)
         alg.SetAlpha(alpha)
@@ -3694,6 +3766,8 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def streamlines(self: PointSet, vectors: str | None = ..., *, source_center: VectorLikeFloat | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLikeFloat | None = ..., return_source: bool = ..., pointa: VectorLikeFloat | None = ..., pointb: VectorLikeFloat | None = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
     @overload  # return_source=False
     def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLikeFloat | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLikeFloat | None = ..., return_source: Literal[False] = ..., pointa: VectorLikeFloat | None = ..., pointb: VectorLikeFloat | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]
     @overload  # return_source=True
@@ -3779,6 +3853,7 @@ class DataSetFilters(DataObjectFilters):
             Only returned if ``return_source=True``.
 
         """
+        _raise_if_pointset(self)
         if source_center is None:
             source_center = self.center
         if source_radius is None:
@@ -3820,6 +3895,14 @@ class DataSetFilters(DataObjectFilters):
             return output, input_source
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def streamlines_from_source(self: PointSet, source: DataSet | _vtk.vtkDataSet, vectors: str | None = ..., *, integrator_type: Literal[45, 2, 4] = ..., integration_direction: Literal['both', 'backward', 'forward'] = ..., surface_streamlines: bool = ..., initial_step_length: float = ..., step_unit: Literal['cl', 'l'] = ..., min_step_length: float = ..., max_step_length: float = ..., max_steps: int = ..., terminal_speed: float = ..., max_error: float = ..., max_time: float | None = ..., compute_vorticity: bool = ..., rotation_scale: float = ..., interpolator_type: Literal['point', 'cell', 'p', 'c'] = ..., progress_bar: bool = ..., max_length: float | None = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def streamlines_from_source(self: DataSet, source: DataSet | _vtk.vtkDataSet, vectors: str | None = ..., *, integrator_type: Literal[45, 2, 4] = ..., integration_direction: Literal['both', 'backward', 'forward'] = ..., surface_streamlines: bool = ..., initial_step_length: float = ..., step_unit: Literal['cl', 'l'] = ..., min_step_length: float = ..., max_step_length: float = ..., max_steps: int = ..., terminal_speed: float = ..., max_error: float = ..., max_time: float | None = ..., compute_vorticity: bool = ..., rotation_scale: float = ..., interpolator_type: Literal['point', 'cell', 'p', 'c'] = ..., progress_bar: bool = ..., max_length: float | None = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def streamlines_from_source(  # type: ignore[misc]
         self: _DataSetType,
         source: DataSet | _vtk.vtkDataSet,
@@ -3941,6 +4024,7 @@ class DataSetFilters(DataObjectFilters):
             streamline-points are stored in the point data.
 
         """
+        _raise_if_pointset(self)
         integration_direction_lower = str(integration_direction).strip().lower()
         if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
             msg = (
@@ -4035,6 +4119,14 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def streamlines_evenly_spaced_2D(self: PointSet, vectors: str | None = ..., *, start_position: VectorLikeFloat | None = ..., integrator_type: Literal[2, 4] = ..., step_length: float = ..., step_unit: Literal['cl', 'l'] = ..., max_steps: int = ..., terminal_speed: float = ..., interpolator_type: Literal['point', 'cell', 'p', 'c'] = ..., separating_distance: float = ..., separating_distance_ratio: float = ..., closed_loop_maximum_distance: float = ..., loop_angle: float = ..., minimum_number_of_loop_points: int = ..., compute_vorticity: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def streamlines_evenly_spaced_2D(self: DataSet, vectors: str | None = ..., *, start_position: VectorLikeFloat | None = ..., integrator_type: Literal[2, 4] = ..., step_length: float = ..., step_unit: Literal['cl', 'l'] = ..., max_steps: int = ..., terminal_speed: float = ..., interpolator_type: Literal['point', 'cell', 'p', 'c'] = ..., separating_distance: float = ..., separating_distance_ratio: float = ..., closed_loop_maximum_distance: float = ..., loop_angle: float = ..., minimum_number_of_loop_points: int = ..., compute_vorticity: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
         vectors: str | None = None,
@@ -4151,6 +4243,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        _raise_if_pointset(self)
         if integrator_type not in [2, 4]:
             msg = 'Integrator type must be one of `2` or `4`.'
             raise ValueError(msg)
@@ -4231,6 +4324,14 @@ class DataSetFilters(DataObjectFilters):
         )
         return _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def decimate_boundary(self: PointSet, target_reduction: float = ..., *, progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def decimate_boundary(self: DataSet, target_reduction: float = ..., *, progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def decimate_boundary(  # type: ignore[misc]
         self: _DataSetType,
         target_reduction: float = 0.5,
@@ -4258,6 +4359,7 @@ class DataSetFilters(DataObjectFilters):
             Decimated boundary.
 
         """
+        _raise_if_pointset(self)
         return (
             self.extract_surface(
                 algorithm=None,
@@ -4955,6 +5057,14 @@ class DataSetFilters(DataObjectFilters):
         if show:  # pragma: no cover
             plt.show()
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def extract_cells(self: PointSet, ind: int | VectorLikeInt | VectorLikeBool, *, invert: bool = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def extract_cells(self: DataSet, ind: int | VectorLikeInt | VectorLikeBool, *, invert: bool = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def extract_cells(  # type: ignore[misc]
         self: _DataSetType,
         ind: int | VectorLikeInt | VectorLikeBool,
@@ -5025,6 +5135,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        _raise_if_pointset(self)
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
         indices = np.flatnonzero(mask).astype(pv.ID_TYPE, copy=False)
 
@@ -5189,6 +5300,8 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def remove_cells(self: PointSet, ind: int | VectorLikeInt | VectorLikeBool, *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # PolyData
     def remove_cells(self: PolyData, ind: int | VectorLikeInt | VectorLikeBool, *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
@@ -5280,6 +5393,7 @@ class DataSetFilters(DataObjectFilters):
         <class 'pyvista.core.pointset.PolyData'>
 
         """
+        _raise_if_pointset(self)
         output = self.extract_cells(
             ind,
             invert=not invert,
@@ -6284,6 +6398,14 @@ class DataSetFilters(DataObjectFilters):
             message=message,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def surface_indices(self: PointSet, *, progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def surface_indices(self: DataSet, *, progress_bar: bool = ...) -> NDArray[np.signedinteger]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def surface_indices(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -6316,6 +6438,7 @@ class DataSetFilters(DataObjectFilters):
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]...)
 
         """
+        _raise_if_pointset(self)
         surf = DataObjectFilters.extract_surface(
             self, algorithm=None, pass_cellid=False, progress_bar=progress_bar
         )
@@ -6693,6 +6816,12 @@ class DataSetFilters(DataObjectFilters):
             raise TypeError(msg) from None
         return self
 
+    # fmt: off
+    @overload  # PointSet, which raises
+    def compute_boundary_mesh_quality(self: PointSet, *, progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def compute_boundary_mesh_quality(self: DataSet, *, progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # fmt: on
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
     ) -> PolyData:
@@ -6744,6 +6873,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        _raise_if_pointset(self)
         if (dimensionality := self.max_cell_dimensionality) < 3:
             msg = (
                 'Boundary faces are only defined for 3D cells, but the input has none. '
@@ -6871,6 +7001,8 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def shrink(self: PointSet, shrink_factor: float = ..., *, progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # PolyData
     def shrink(self: PolyData, shrink_factor: float = ..., *, progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
@@ -6918,6 +7050,7 @@ class DataSetFilters(DataObjectFilters):
         >>> shrunk.plot(show_edges=True, line_width=5)
 
         """
+        _raise_if_pointset(self)
         shrink_factor = _validation.validate_number(
             shrink_factor,
             must_have_dtype=float,
@@ -6934,6 +7067,14 @@ class DataSetFilters(DataObjectFilters):
             )
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def tessellate(self: PointSet, *, max_n_subdivide: int = ..., merge_points: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def tessellate(self: DataSet, *, max_n_subdivide: int = ..., merge_points: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def tessellate(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -6995,6 +7136,7 @@ class DataSetFilters(DataObjectFilters):
         >>> tessellated.plot(show_edges=True, line_width=5)
 
         """
+        _raise_if_pointset(self)
         if isinstance(self, _vtk.vtkPolyData):
             msg = 'Tessellate filter is not supported for PolyData objects.'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -7629,9 +7771,15 @@ class DataSetFilters(DataObjectFilters):
             return alg_output, point, axes  # type: ignore[return-value]
         return alg_output
 
+    # fmt: off
+    @overload  # PointSet
+    def explode(self: PointSet, factor: float = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def explode(self: DataSet, factor: float = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # fmt: on
     def explode(  # type: ignore[misc]
         self: _DataSetType, factor: float = 0.1
-    ) -> UnstructuredGrid:
+    ) -> PointSet | UnstructuredGrid:
         """Push each individual cell away from the center of the dataset.
 
         Parameters
@@ -7643,8 +7791,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid containing the exploded cells.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            UnstructuredGrid containing the exploded cells. A :class:`~pyvista.PointSet`
+            input returns a ``PointSet``.
 
         Notes
         -----
@@ -7663,6 +7812,9 @@ class DataSetFilters(DataObjectFilters):
         >>> exploded.plot(show_edges=True)
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return self.cast_to_polydata(deep=False).explode(factor).cast_to_pointset()
         split: DataSet = self.separate_cells()
         if not isinstance(split, pv.UnstructuredGrid):
             split = split.cast_to_unstructured_grid()
@@ -7672,6 +7824,8 @@ class DataSetFilters(DataObjectFilters):
         return split
 
     # fmt: off
+    @overload  # PointSet, which raises
+    def separate_cells(self: PointSet) -> NoReturn: ...  # type: ignore[misc]
     @overload  # PolyData
     def separate_cells(self: PolyData) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
@@ -7707,8 +7861,17 @@ class DataSetFilters(DataObjectFilters):
         320
 
         """
+        _raise_if_pointset(self)
         return self.shrink(1.0)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def extract_cells_by_type(self: PointSet, cell_types: int | VectorLikeInt, *, progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def extract_cells_by_type(self: _DataSetType, cell_types: int | VectorLikeInt, *, progress_bar: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def extract_cells_by_type(  # type: ignore[misc]
         self: _DataSetType,
         cell_types: int | VectorLikeInt,
@@ -7780,6 +7943,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
+        _raise_if_pointset(self)
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
         valid_cell_types = _validation.validate_arrayN(
@@ -8520,6 +8684,14 @@ class DataSetFilters(DataObjectFilters):
             return output_mesh, mapping
         return output_mesh
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def voxelize_binary_mask(self: PointSet, *, background_value: int | float = ..., foreground_value: int | float = ..., reference_volume: ImageData | None = ..., dimensions: VectorLikeInt | None = ..., spacing: float | VectorLikeFloat | None = ..., target_n_points: int | None = ..., max_n_points: int | None = ..., rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = ..., cell_length_percentile: float | None = ..., cell_length_sample_size: int | None = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]  # noqa: PYI041
+    @overload  # DataSet
+    def voxelize_binary_mask(self: DataSet, *, background_value: int | float = ..., foreground_value: int | float = ..., reference_volume: ImageData | None = ..., dimensions: VectorLikeInt | None = ..., spacing: float | VectorLikeFloat | None = ..., target_n_points: int | None = ..., max_n_points: int | None = ..., rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = ..., cell_length_percentile: float | None = ..., cell_length_sample_size: int | None = ..., progress_bar: bool = ...) -> ImageData: ...  # type: ignore[misc]  # noqa: PYI041
+    # ruff: enable[E501]
+    # fmt: on
     def voxelize_binary_mask(  # type: ignore[misc]
         self: DataSet,
         *,
@@ -8872,6 +9044,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
+        _raise_if_pointset(self)
         surface = _voxelize_surface(self)
         _validate_reference_volume_options(
             reference_volume=reference_volume,
@@ -8978,6 +9151,14 @@ class DataSetFilters(DataObjectFilters):
         )
         return binary_mask.points_to_cells(dimensionality='3D', copy=False)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def voxelize_rectilinear(self: PointSet, *, background_value: int | float = ..., foreground_value: int | float = ..., reference_volume: ImageData | None = ..., dimensions: VectorLikeInt | None = ..., spacing: float | VectorLikeFloat | None = ..., target_n_points: int | None = ..., max_n_points: int | None = ..., rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = ..., cell_length_percentile: float | None = ..., cell_length_sample_size: int | None = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]  # noqa: PYI041
+    @overload  # DataSet
+    def voxelize_rectilinear(self: DataSet, *, background_value: int | float = ..., foreground_value: int | float = ..., reference_volume: ImageData | None = ..., dimensions: VectorLikeInt | None = ..., spacing: float | VectorLikeFloat | None = ..., target_n_points: int | None = ..., max_n_points: int | None = ..., rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = ..., cell_length_percentile: float | None = ..., cell_length_sample_size: int | None = ..., progress_bar: bool = ...) -> RectilinearGrid: ...  # type: ignore[misc]  # noqa: PYI041
+    # ruff: enable[E501]
+    # fmt: on
     def voxelize_rectilinear(  # type: ignore[misc]
         self: DataSet,
         *,
@@ -9193,6 +9374,7 @@ class DataSetFilters(DataObjectFilters):
         >>> slices.plot(scalars='mask', show_edges=True, cpos=cpos)
 
         """
+        _raise_if_pointset(self)
         voxel_cells = self._voxelize_binary_mask_cells(
             background_value=background_value,
             foreground_value=foreground_value,
@@ -9208,6 +9390,14 @@ class DataSetFilters(DataObjectFilters):
         )
         return voxel_cells.cast_to_rectilinear_grid()
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, which raises
+    def voxelize(self: PointSet, *, reference_volume: ImageData | None = ..., dimensions: VectorLikeInt | None = ..., spacing: float | VectorLikeFloat | None = ..., rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = ..., cell_length_percentile: float | None = ..., cell_length_sample_size: int | None = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def voxelize(self: DataSet, *, reference_volume: ImageData | None = ..., dimensions: VectorLikeInt | None = ..., spacing: float | VectorLikeFloat | None = ..., rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = ..., cell_length_percentile: float | None = ..., cell_length_sample_size: int | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def voxelize(  # type: ignore[misc]
         self: DataSet,
         *,
@@ -9373,6 +9563,7 @@ class DataSetFilters(DataObjectFilters):
         >>> vox.plot(show_edges=True)
 
         """
+        _raise_if_pointset(self)
         voxel_cells = self._voxelize_binary_mask_cells(
             reference_volume=reference_volume,
             dimensions=dimensions,

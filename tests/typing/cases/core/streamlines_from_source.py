@@ -35,4 +35,4 @@ assert_types(with_arrays(explicit_structured()).streamlines_from_source(pv.PolyD
 # A bare VTK source is wrapped
 assert_types(with_arrays(poly()).streamlines_from_source(raw_source(), vectors='v'), pv.PolyData)
 
-assert_types(pointset().streamlines_from_source(), Never)
+assert_types(with_arrays(pointset()).streamlines_from_source(pv.PolyData([[0.1, 0.1, 0.1]]), vectors='v'), Never)

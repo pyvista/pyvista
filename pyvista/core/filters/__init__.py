@@ -36,6 +36,8 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.errors import PrecisionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
@@ -83,6 +85,16 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
 DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
+
+def _raise_if_pointset(
+    mesh: object,
+    error: type[PointSetNotSupported] = PointSetCellOperationError,
+    msg: str | None = None,
+) -> None:
+    """Raise ``error``, with ``msg`` when given, if ``mesh`` is a :class:`~pyvista.PointSet`."""
+    if isinstance(mesh, pv.PointSet):
+        raise error() if msg is None else error(msg)
 
 
 def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:

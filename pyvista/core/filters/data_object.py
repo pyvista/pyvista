@@ -40,11 +40,14 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PointSetDimensionReductionError
+from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
+from pyvista.core.filters import _raise_if_pointset
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.helpers import _NormalsLiteral
@@ -1748,6 +1751,20 @@ class DataObjectFilters:
         validation_fields = None if validate is True else validate
         self.validate_mesh(validation_fields, action='error')
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def cell_validator(self: MultiBlock, *, tolerance: float | None = ..., planarity_tolerance: float | None = ..., size_tolerance: float | None = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def cell_validator(self: MultiBlock[PointSet | None], *, tolerance: float | None = ..., planarity_tolerance: float | None = ..., size_tolerance: float | None = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def cell_validator(self: MultiBlock[PointSet], *, tolerance: float | None = ..., planarity_tolerance: float | None = ..., size_tolerance: float | None = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def cell_validator(self: PointSet, *, tolerance: float | None = ..., planarity_tolerance: float | None = ..., size_tolerance: float | None = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def cell_validator(self: _DataSetOrMultiBlockType, *, tolerance: float | None = ..., planarity_tolerance: float | None = ..., size_tolerance: float | None = ...) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def cell_validator(  # type:ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -1942,6 +1959,7 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
+        _raise_if_pointset(self)
         # Use single-precision eps by default (even if points have double precision)
         tol = tolerance if tolerance is not None else float(np.finfo(np.float32).eps)
 
@@ -4026,6 +4044,8 @@ class DataObjectFilters:
     def slice_implicit(self: MultiBlock[_DataSetType], implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock
     def slice_implicit(self: MultiBlock[Any], implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def slice_implicit(self: PointSet, implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # DataSet
     def slice_implicit(self: DataSet, implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     # ruff: enable[E501]
@@ -4114,6 +4134,7 @@ class DataObjectFilters:
         >>> slice.plot(show_edges=True, line_width=5)
 
         """
+        _raise_if_pointset(self, PointSetDimensionReductionError)
         if isinstance(self, pv.MultiBlock):
             return self.generic_filter(
                 'slice_implicit',
@@ -4148,6 +4169,8 @@ class DataObjectFilters:
     def slice(self: MultiBlock[_DataSetType], normal: VectorLikeFloat | _NormalsLiteral | None = ..., *, origin: VectorLikeFloat | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock
     def slice(self: MultiBlock[Any], normal: VectorLikeFloat | _NormalsLiteral | None = ..., *, origin: VectorLikeFloat | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def slice(self: PointSet, normal: VectorLikeFloat | _NormalsLiteral | None = ..., *, origin: VectorLikeFloat | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # DataSet
     def slice(self: DataSet, normal: VectorLikeFloat | _NormalsLiteral | None = ..., *, origin: VectorLikeFloat | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> PolyData: ...  # type: ignore[misc]
     # ruff: enable[E501]
@@ -4268,6 +4291,7 @@ class DataObjectFilters:
         >>> slices.plot(line_width=5)
 
         """
+        _raise_if_pointset(self, PointSetDimensionReductionError)
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
@@ -4301,6 +4325,20 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def slice_orthogonal(self: MultiBlock, *, x: float | None = ..., y: float | None = ..., z: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def slice_orthogonal(self: MultiBlock[PointSet | None], *, x: float | None = ..., y: float | None = ..., z: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def slice_orthogonal(self: MultiBlock[PointSet], *, x: float | None = ..., y: float | None = ..., z: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def slice_orthogonal(self: PointSet, *, x: float | None = ..., y: float | None = ..., z: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def slice_orthogonal(self: _DataSetOrMultiBlockType, *, x: float | None = ..., y: float | None = ..., z: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def slice_orthogonal(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -4378,6 +4416,7 @@ class DataObjectFilters:
         >>> slices.plot(line_width=5)
 
         """
+        _raise_if_pointset(self, PointSetDimensionReductionError)
         # Create the three slices
         if x is None:
             x = self.center[0]
@@ -4424,6 +4463,20 @@ class DataObjectFilters:
         )
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def slice_along_axis(self: MultiBlock, n: int = ..., axis: Literal['x', 'y', 'z', 0, 1, 2] = ..., *, tolerance: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., bounds: VectorLikeFloat | None = ..., center: VectorLikeFloat | None = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def slice_along_axis(self: MultiBlock[PointSet | None], n: int = ..., axis: Literal['x', 'y', 'z', 0, 1, 2] = ..., *, tolerance: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., bounds: VectorLikeFloat | None = ..., center: VectorLikeFloat | None = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def slice_along_axis(self: MultiBlock[PointSet], n: int = ..., axis: Literal['x', 'y', 'z', 0, 1, 2] = ..., *, tolerance: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., bounds: VectorLikeFloat | None = ..., center: VectorLikeFloat | None = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def slice_along_axis(self: PointSet, n: int = ..., axis: Literal['x', 'y', 'z', 0, 1, 2] = ..., *, tolerance: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., bounds: VectorLikeFloat | None = ..., center: VectorLikeFloat | None = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def slice_along_axis(self: _DataSetOrMultiBlockType, n: int = ..., axis: Literal['x', 'y', 'z', 0, 1, 2] = ..., *, tolerance: float | None = ..., generate_triangles: bool = ..., contour: bool = ..., bounds: VectorLikeFloat | None = ..., center: VectorLikeFloat | None = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def slice_along_axis(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         n: int = 5,
@@ -4524,6 +4577,7 @@ class DataObjectFilters:
         >>> slices.plot(line_width=5)
 
         """
+        _raise_if_pointset(self, PointSetDimensionReductionError)
         # parse axis input
         XYZLiteral = Literal['x', 'y', 'z']
         labels: list[XYZLiteral] = ['x', 'y', 'z']
@@ -4594,6 +4648,8 @@ class DataObjectFilters:
     def slice_along_line(self: MultiBlock[_DataSetType], line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock
     def slice_along_line(self: MultiBlock[Any], line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def slice_along_line(self: PointSet, line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # DataSet
     def slice_along_line(self: DataSet, line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     # ruff: enable[E501]
@@ -4687,6 +4743,7 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
+        _raise_if_pointset(self, PointSetDimensionReductionError)
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
             msg = 'Input line must have only one cell.'
@@ -4734,6 +4791,8 @@ class DataObjectFilters:
     def extract_all_edges(self: MultiBlock[_DataSetType], *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock
     def extract_all_edges(self: MultiBlock[Any], *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def extract_all_edges(self: PointSet, *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # DataSet
     def extract_all_edges(self: DataSet, *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     # ruff: enable[E501]
@@ -4791,6 +4850,7 @@ class DataObjectFilters:
         >>> edges.plot(line_width=5, color='k')
 
         """
+        _raise_if_pointset(self)
         if use_all_points is not None:
             warn_external(
                 "Parameter 'use_all_points' is deprecated since VTK < 9.2 is no longer "
@@ -4816,6 +4876,20 @@ class DataObjectFilters:
             output.clear_data()
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def extract_surface(self: MultiBlock, *, pass_pointid: bool = ..., pass_cellid: bool = ..., nonlinear_subdivision: int | None = ..., algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def extract_surface(self: MultiBlock[PointSet | None], *, pass_pointid: bool = ..., pass_cellid: bool = ..., nonlinear_subdivision: int | None = ..., algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def extract_surface(self: MultiBlock[PointSet], *, pass_pointid: bool = ..., pass_cellid: bool = ..., nonlinear_subdivision: int | None = ..., algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def extract_surface(self: PointSet, *, pass_pointid: bool = ..., pass_cellid: bool = ..., nonlinear_subdivision: int | None = ..., algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def extract_surface(self: DataSet | MultiBlock[Any], *, pass_pointid: bool = ..., pass_cellid: bool = ..., nonlinear_subdivision: int | None = ..., algorithm: _ExtractSurfaceOptions | type[_SENTINEL] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def extract_surface(  # type: ignore[misc]
         self: DataSet | MultiBlock[Any],
         *,
@@ -4936,6 +5010,7 @@ class DataObjectFilters:
         each surface cell extracted.
 
         """
+        _raise_if_pointset(self)
 
         def warn_future() -> None:
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
@@ -5237,6 +5312,20 @@ class DataObjectFilters:
             output.point_data.active_scalars_name = self.point_data.active_scalars_name
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def compute_cell_sizes(self: MultiBlock, *, length: bool = ..., area: bool = ..., volume: bool = ..., progress_bar: bool = ..., vertex_count: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def compute_cell_sizes(self: MultiBlock[PointSet | None], *, length: bool = ..., area: bool = ..., volume: bool = ..., progress_bar: bool = ..., vertex_count: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def compute_cell_sizes(self: MultiBlock[PointSet], *, length: bool = ..., area: bool = ..., volume: bool = ..., progress_bar: bool = ..., vertex_count: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def compute_cell_sizes(self: PointSet, *, length: bool = ..., area: bool = ..., volume: bool = ..., progress_bar: bool = ..., vertex_count: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def compute_cell_sizes(self: _DataSetOrMultiBlockType, *, length: bool = ..., area: bool = ..., volume: bool = ..., progress_bar: bool = ..., vertex_count: bool = ...) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def compute_cell_sizes(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5316,6 +5405,7 @@ class DataObjectFilters:
         pyvista_ndarray([0., 0., 0., 1.])
 
         """
+        _raise_if_pointset(self)
 
         def ensure_arrays_if_empty(dataset: DataSet) -> None:
             if vertex_count:
@@ -5427,6 +5517,20 @@ class DataObjectFilters:
         )
         return _get_output(alg, output_type=(pv.PolyData, pv.MultiBlock))
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def cell_data_to_point_data(self: MultiBlock, *, pass_cell_data: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def cell_data_to_point_data(self: MultiBlock[PointSet | None], *, pass_cell_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def cell_data_to_point_data(self: MultiBlock[PointSet], *, pass_cell_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def cell_data_to_point_data(self: PointSet, *, pass_cell_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def cell_data_to_point_data(self: _DataSetOrMultiBlockType, *, pass_cell_data: bool = ..., progress_bar: bool = ...) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def cell_data_to_point_data(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5487,6 +5591,7 @@ class DataObjectFilters:
         >>> surf.plot(scalars='Area')
 
         """
+        _raise_if_pointset(self, PointSetNotSupported, 'PointSets contain no cells or cell data.')
         # Convert block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return cast(
@@ -5512,6 +5617,20 @@ class DataObjectFilters:
             output.cell_data.VTKObject.ShallowCopy(self.cell_data.VTKObject)
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def ctp(self: MultiBlock, *, pass_cell_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def ctp(self: MultiBlock[PointSet | None], *, pass_cell_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def ctp(self: MultiBlock[PointSet], *, pass_cell_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def ctp(self: PointSet, *, pass_cell_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def ctp(self: _DataSetOrMultiBlockType, *, pass_cell_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def ctp(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5554,6 +5673,20 @@ class DataObjectFilters:
             ),
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def point_data_to_cell_data(self: MultiBlock, *, pass_point_data: bool = ..., categorical: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def point_data_to_cell_data(self: MultiBlock[PointSet | None], *, pass_point_data: bool = ..., categorical: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def point_data_to_cell_data(self: MultiBlock[PointSet], *, pass_point_data: bool = ..., categorical: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def point_data_to_cell_data(self: PointSet, *, pass_point_data: bool = ..., categorical: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def point_data_to_cell_data(self: _DataSetOrMultiBlockType, *, pass_point_data: bool = ..., categorical: bool = ..., progress_bar: bool = ...) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def point_data_to_cell_data(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5627,6 +5760,7 @@ class DataObjectFilters:
         >>> sphere.plot()
 
         """
+        _raise_if_pointset(self, PointSetNotSupported, 'PointSets contain no cells or cell data.')
         # Convert block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return cast(
@@ -5654,6 +5788,20 @@ class DataObjectFilters:
             output.point_data.VTKObject.ShallowCopy(self.point_data.VTKObject)
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def ptc(self: MultiBlock, *, pass_point_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def ptc(self: MultiBlock[PointSet | None], *, pass_point_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def ptc(self: MultiBlock[PointSet], *, pass_point_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def ptc(self: PointSet, *, pass_point_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def ptc(self: _DataSetOrMultiBlockType, *, pass_point_data: bool = ..., progress_bar: bool = ..., **kwargs: Any) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def ptc(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5714,6 +5862,8 @@ class DataObjectFilters:
     def triangulate(self: MultiBlock[_DataSetType], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock[UnstructuredGrid]: ...  # type: ignore[misc]
     @overload  # MultiBlock
     def triangulate(self: MultiBlock[Any], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def triangulate(self: PointSet, *, inplace: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # DataSet
     def triangulate(self: DataSet, *, inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
@@ -5761,6 +5911,7 @@ class DataObjectFilters:
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        _raise_if_pointset(self)
         # Triangulate block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return self.generic_filter('triangulate', inplace=inplace, progress_bar=progress_bar)
@@ -6012,6 +6163,20 @@ class DataObjectFilters:
         )
         return _get_output(alg, output_type=type(self))
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def cell_quality(self: MultiBlock, quality_measure: Literal['all', 'all_valid'] | _CellQualityLiteral | Sequence[_CellQualityLiteral] = ..., *, null_value: float = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def cell_quality(self: MultiBlock[PointSet | None], quality_measure: Literal['all', 'all_valid'] | _CellQualityLiteral | Sequence[_CellQualityLiteral] = ..., *, null_value: float = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet], which raises
+    def cell_quality(self: MultiBlock[PointSet], quality_measure: Literal['all', 'all_valid'] | _CellQualityLiteral | Sequence[_CellQualityLiteral] = ..., *, null_value: float = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # PointSet, which raises
+    def cell_quality(self: PointSet, quality_measure: Literal['all', 'all_valid'] | _CellQualityLiteral | Sequence[_CellQualityLiteral] = ..., *, null_value: float = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    @overload  # DataSet or MultiBlock
+    def cell_quality(self: _DataSetOrMultiBlockType, quality_measure: Literal['all', 'all_valid'] | _CellQualityLiteral | Sequence[_CellQualityLiteral] = ..., *, null_value: float = ..., progress_bar: bool = ...) -> _DataSetOrMultiBlockType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         quality_measure: Literal['all', 'all_valid']
@@ -6115,6 +6280,7 @@ class DataObjectFilters:
          'shape_and_size']
 
         """
+        _raise_if_pointset(self)
         # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         keep_valid_only = quality_measure == 'all_valid'
@@ -6132,15 +6298,8 @@ class DataObjectFilters:
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
-        def _call_dataset_cell_quality(dataset: DataSet, **kwargs: Any) -> DataSet:
-            # Dispatch through the instance (rather than binding directly to
-            # `DataObjectFilters._dataset_cell_quality`) so that a block-level
-            # override, e.g. PointSet's, is honored when this runs per-block
-            # through `generic_filter`.
-            return dataset._dataset_cell_quality(**kwargs)
-
         cell_quality = functools.partial(
-            _call_dataset_cell_quality,
+            DataObjectFilters._dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
             keep_valid_only=keep_valid_only,
@@ -6163,6 +6322,7 @@ class DataObjectFilters:
         progress_bar: bool,
     ) -> _DataSetType:
         """Compute cell quality of a DataSet (internal method)."""
+        _raise_if_pointset(self)
         CELL_QUALITY = 'CellQuality'
 
         alg = _vtk.vtkCellQuality()
