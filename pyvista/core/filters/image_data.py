@@ -860,7 +860,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_mask(
             *, mask_: str | ImageData | VectorLikeFloat | MatrixLikeFloat | bool
-        ) -> VectorLikeInt:
+        ) -> NDArray[np.signedinteger]:
             """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
             # Validate scalars
@@ -924,7 +924,9 @@ class ImageDataFilters(DataSetFilters):
             # Clip voi so it doesn't extend beyond the image's extent
             return ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
 
-        def _voi_from_normalized_bounds(normalized_bounds_: VectorLikeFloat) -> VectorLikeInt:
+        def _voi_from_normalized_bounds(
+            normalized_bounds_: VectorLikeFloat,
+        ) -> NDArray[np.signedinteger]:
             """Return the volume of interest for bounds relative to the image size."""
             _raise_error_kwargs_not_none('normalized_bounds')
             bounds = _validation.validate_arrayN(
@@ -952,9 +954,9 @@ class ImageDataFilters(DataSetFilters):
             xmin, ymin, zmin = starts + offset
             xmax, ymax, zmax = stops + offset
 
-            return xmin, xmax, ymin, ymax, zmin, zmax
+            return np.array([xmin, xmax, ymin, ymax, zmin, zmax])
 
-        def _voi_from_extent(extent_: VectorLikeInt) -> VectorLikeInt:
+        def _voi_from_extent(extent_: VectorLikeInt) -> NDArray[np.signedinteger]:
             """Return the volume of interest for an explicit extent."""
             _raise_error_kwargs_not_none('extent')
             return _validation.validate_arrayN(
@@ -965,7 +967,7 @@ class ImageDataFilters(DataSetFilters):
                 name='extent',
             )
 
-        def _voi_from_factor(factor_: float | VectorLikeFloat) -> VectorLikeInt:
+        def _voi_from_factor(factor_: float | VectorLikeFloat) -> NDArray[np.signedinteger]:
             """Return the volume of interest for a fraction of the image size."""
             _raise_error_kwargs_not_none('factor')
             valid_factor = _validation.validate_array3(
@@ -985,9 +987,9 @@ class ImageDataFilters(DataSetFilters):
             # Offset to center the new cropped region around the original center
             new_offset = center - ((new_dimensions - 1) // 2)
 
-            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return np.array(pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent)
 
-        def _voi_from_dimensions(dimensions_: VectorLikeInt) -> VectorLikeInt:
+        def _voi_from_dimensions(dimensions_: VectorLikeInt) -> NDArray[np.signedinteger]:
             """Return the volume of interest centered on the image with the given dimensions."""
             valid_dims = _validation.validate_array3(
                 dimensions_,
@@ -1008,9 +1010,9 @@ class ImageDataFilters(DataSetFilters):
             half_size = (new_dimensions - 1) // 2
             new_offset = center - half_size
 
-            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return np.array(pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent)
 
-        def _voi_from_margin(margin_: int | VectorLikeInt) -> VectorLikeInt:
+        def _voi_from_margin(margin_: int | VectorLikeInt) -> NDArray[np.signedinteger]:
             """Return the volume of interest left after removing a border."""
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
@@ -1022,7 +1024,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_dimensions_or_offset(
             dimensions_: VectorLikeInt | None, offset_: VectorLikeInt | None
-        ) -> VectorLikeInt:
+        ) -> NDArray[np.signedinteger]:
             """Return the volume of interest for explicit dimensions and offset."""
             _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
             if dimensions_ is None:
@@ -1031,7 +1033,7 @@ class ImageDataFilters(DataSetFilters):
             elif offset_ is None:
                 return _voi_from_dimensions(dimensions_)
             else:
-                return pv.ImageData(dimensions=dimensions, offset=offset).extent
+                return np.array(pv.ImageData(dimensions=dimensions, offset=offset).extent)
 
         if factor is not None:
             voi = _voi_from_factor(factor)

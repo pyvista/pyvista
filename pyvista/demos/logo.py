@@ -193,8 +193,8 @@ def logo_basic() -> PolyData:
 
     Returns
     -------
-    pyvista.UnstructuredGrid
-        Grid containing the pyvista letters.
+    pyvista.PolyData
+        Mesh containing the pyvista letters.
 
     Examples
     --------

@@ -262,7 +262,7 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cone.
 
@@ -525,7 +525,7 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
 
@@ -1511,7 +1511,7 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Location in ``[x, y, z]``.
 
         """
@@ -1535,7 +1535,7 @@ class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Location in ``[x, y, z]``.
 
         """
@@ -2095,7 +2095,7 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Normal in ``[x, y, z]``.
 
         """
@@ -2406,7 +2406,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Origin in ``[x, y, z]``.
 
         """
@@ -2430,7 +2430,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Location in ``[x, y, z]``.
 
         """
@@ -2454,7 +2454,7 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Location in ``[x, y, z]``.
 
         """
@@ -2559,7 +2559,7 @@ class ArrowSource(_AlgorithmSource, _vtk.vtkArrowSource):
 
         Returns
         -------
-        int
+        float
             The length of the tip.
 
         """
@@ -2583,7 +2583,7 @@ class ArrowSource(_AlgorithmSource, _vtk.vtkArrowSource):
 
         Returns
         -------
-        int
+        float
             The radius of the tip.
 
         """
@@ -2655,7 +2655,7 @@ class ArrowSource(_AlgorithmSource, _vtk.vtkArrowSource):
 
         Returns
         -------
-        int
+        float
             The radius of the shaft.
 
         """
@@ -2894,7 +2894,7 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Scale factors of the superquadric in ``[x, y, z]``.
 
         """

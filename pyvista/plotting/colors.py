@@ -2550,7 +2550,7 @@ def get_cycler(
 
     Returns
     -------
-    Cycler
+    cycler.Cycler | None
         The color cycler corresponding to the input value.
 
     Raises

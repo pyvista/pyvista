@@ -188,7 +188,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             NumPy array of the row.
 
         """
@@ -200,7 +200,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         Returns
         -------
-        int
+        pyvista.DataSetAttributes
             The all row arrays.
 
         """

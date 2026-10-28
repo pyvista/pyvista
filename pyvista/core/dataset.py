@@ -73,7 +73,6 @@ if TYPE_CHECKING:
 
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import VectorLikeFloat
-    from ._typing_core import VectorLikeInt
     from ._typing_core import _AnyArrayLike
     from ._typing_core import _ArrayLikeOrScalar
 
@@ -367,7 +366,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active tensor array.
 
         """
@@ -391,7 +390,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active vectors array.
 
         Examples
@@ -427,7 +426,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active scalars.
 
         Examples
@@ -568,7 +567,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.PolyData
+        pyvista.PolyData | None
             Active vectors represented as arrows.
 
         Examples
@@ -614,7 +613,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
-    ) -> tuple[FieldAssociation, pyvista_ndarray | None]:
+    ) -> tuple[FieldAssociation, pyvista_ndarray]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -677,9 +676,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfoTuple(field, name)
 
         if field == FieldAssociation.POINT:
-            return field, self.point_data.active_scalars
+            return field, self.point_data[name]
         else:  # must be cell
-            return field, self.cell_data.active_scalars
+            return field, self.cell_data[name]
 
     def set_active_vectors(
         self: Self,
@@ -875,7 +874,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista_ndarray
+        pyvista_ndarray | None
             Active normals of this dataset.
 
         Notes
@@ -1232,8 +1231,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
-             Number of cells in the entire dataset.
+        int
+            Number of cells in the entire dataset.
 
         Notes
         -----
@@ -1259,8 +1258,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
-             Number of points.
+        int
+            Number of points.
 
         """
         return self.GetNumberOfPoints()
@@ -1271,8 +1270,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
-             Number of cells.
+        int
+            Number of cells.
 
         """
         return self.GetNumberOfCells()
@@ -2016,12 +2015,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pset
 
     # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLikeInt: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> NDArray[np.int_]: ...
+    # ruff: enable[E501]
     # fmt: on
-    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLikeInt:
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = 1
+    ) -> int | NDArray[np.int_]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2045,8 +2048,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int
-            The index of the point in this mesh that is closest to the given point.
+        int | numpy.ndarray
+            Index of the closest point, or indices of the ``n`` closest points.
 
         See Also
         --------

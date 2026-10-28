@@ -1290,8 +1290,8 @@ The tests can be executed with:
 
 Writing a Case
 """"""""""""""
-Cases live in ``tests/typing/cases``, under ``core`` or ``plotting`` after the
-subpackage of the callable they exercise. A case is one line: an expression, and
+Cases live in ``tests/typing/cases``, under ``core``, ``plotting`` or ``examples``
+after the subpackage of the callable they exercise. A case is one line: an expression, and
 the type it should have.
 
 .. code-block:: python
@@ -1318,6 +1318,8 @@ Each file holds the cases of one callable and is named after it: ``clip_scalar.p
 the bare name would not identify it, as for dunders (``multiblock_getitem.py``,
 ``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
 A file carries all the setup it needs, even when another file has the same helper.
+The dataset download functions share one overload pattern, so
+``examples/download_loaders.py`` covers them together.
 
 The directory carries its own ``ruff.toml`` raising the line length, so a case stays
 on one line however long it gets.

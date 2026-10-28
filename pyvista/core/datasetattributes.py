@@ -1481,7 +1481,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        pyvista_ndarray
+        pyvista_ndarray | None
             Normals of this dataset attribute. ``None`` if no normals have been
             set.
 
@@ -1569,7 +1569,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        str
+        str | None
             Name of the active normals array.
 
         Examples
@@ -1622,7 +1622,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pyvista.pyvista_ndarray | None
             Array of the active texture coordinates.
 
         Examples

@@ -678,7 +678,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
 
     Returns
     -------
-    numpy.ndarray
+    pyvista.pyvista_ndarray | None
         Wrapped array.
 
     """

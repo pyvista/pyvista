@@ -973,7 +973,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        StringIO
+        StringIO | None
             If filename is None, returns the HTML as a StringIO object.
 
         Notes
@@ -1441,7 +1441,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        :vtk:`vtkLegendBoxActor`
+        :vtk:`vtkLegendBoxActor` | None
             Legend actor.
 
         """
@@ -2147,7 +2147,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(
         self, *args, **kwargs
-    ) -> list[VectorLikeFloat]:  # numpydoc ignore=PR01,RT01
+    ) -> list[tuple[float, float, float]]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 

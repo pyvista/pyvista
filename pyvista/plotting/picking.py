@@ -436,7 +436,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        sequence
+        tuple[int, int, int, int]
             Picked position or area as ``(x0, y0, x1, y1)``.
 
         """
@@ -1088,11 +1088,6 @@ class PickingComponent(_NoNewAttrMixin):
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
-
-        Returns
-        -------
-        :vtk:`vtkPropPicker`
-            Property picker.
 
         Examples
         --------

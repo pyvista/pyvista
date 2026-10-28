@@ -3136,10 +3136,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.reset_camera(render=render)
         self.Modified()
 
-    def get_default_cam_pos(self, *, negative: bool = False) -> list[VectorLikeFloat]:
+    def get_default_cam_pos(self, *, negative: bool = False) -> list[tuple[float, float, float]]:
         """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
+
+        .. versionchanged:: 0.50
+            Every element is a tuple of floats.
 
         Parameters
         ----------
@@ -3148,7 +3151,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        list
+        list[tuple[float, float, float]]
             List of camera position:
 
             * Position
@@ -3163,7 +3166,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        return [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
+        return [
+            _validation.validate_array3(vector, dtype_out=float, to_tuple=True)
+            for vector in (position + np.array(focal_pt), focal_pt, self._theme.camera.viewup)
+        ]
 
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
@@ -3666,11 +3672,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def enable_eye_dome_lighting(self) -> None:
         """Enable eye dome lighting (EDL).
 
-        Returns
-        -------
-        :vtk:`vtkOpenGLRenderer`
-            VTK renderer with eye dome lighting pass.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -3802,7 +3803,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        tuple
+        tuple[int, int, int, int]
             Pick position as ``x0, y0, x1, y1``.
 
         """

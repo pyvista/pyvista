@@ -20,6 +20,7 @@ from pyvista import examples
 from pyvista.examples import _get_example
 from pyvista.examples import downloads
 from pyvista.examples import planets
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
@@ -286,6 +287,50 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
         all(p.default is not p.empty for p in inspect.signature(o).parameters.values())
         for o in overloads
     ), f'no overload of {function.__name__} accepts a plain call'
+
+
+def _expected_return_types(loader, dataset):
+    """Return the dataset type an example loads and the type ``load=False`` gives back."""
+    dataset_type = (
+        dataset.inferred_type if isinstance(dataset, pv.MultiBlock) else type(dataset).__name__
+    )
+    # `_download_dataset` collapses to a bare path only when there is one to return
+    loadable = getattr(loader, 'loadable_paths', ())
+    return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
+
+
+@pytest.mark.needs_download
+@pytest.mark.needs_vtk_version(9, 7, 0, reason='Annotations describe what the newest VTK loads')
+@pytest.mark.parametrize('name', _all_example_names())
+def test_example_function_annotations_match_the_loaded_dataset(name):
+    """The function and its ``load=False`` overload are annotated with what they return."""
+    if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:  # pragma: no cover -- Windows only
+        pytest.skip('Error loading on Windows')
+    loader, _, function = _get_dataset_loader(name)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+        try:
+            if isinstance(loader, _DOWNLOADABLE_TYPES):
+                loader.download()
+            dataset = loader.load()
+        except pv.VTKVersionError:  # pragma: no cover -- only on older VTK
+            pytest.skip('VTK version not supported.')
+    dataset_type, path_type = _expected_return_types(loader, dataset)
+
+    signature = inspect.signature(function)
+    expected = {dataset_type}
+    if 'texture' in signature.parameters:
+        expected.add('Texture')
+    if 'load' in signature.parameters:
+        expected.add(path_type)
+    assert set(_split_union(str(signature.return_annotation))) == expected
+
+    for overload in get_overloads(function):
+        overload_signature = inspect.signature(overload)
+        load = overload_signature.parameters.get('load')
+        if load is not None and 'Literal[False]' in str(load.annotation):
+            assert overload_signature.return_annotation == path_type
 
 
 def test_example_name_literal_lists_every_example():
