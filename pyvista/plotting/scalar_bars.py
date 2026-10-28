@@ -27,6 +27,10 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from collections.abc import ValuesView
 
+    from pyvista.plotting.lookup_table import LookupTable
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.plotting.themes import Theme
+
     from ._typing import ColorLike
     from ._typing import ColormapOptions
 
@@ -623,7 +627,7 @@ class ScalarBars(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, plotter: pv.Plotter) -> None:
+    def __init__(self, plotter: Plotter) -> None:
         """Initialize ScalarBars."""
         self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges: dict[str, Sequence[float]] = {}
@@ -1114,7 +1118,7 @@ class ScalarBars(_NoNewAttrMixin):
         title: str = '',
         *,
         mapper: _vtk.vtkMapper | None = None,
-        lookup_table: _vtk.vtkLookupTable | pv.LookupTable | None = None,
+        lookup_table: _vtk.vtkLookupTable | LookupTable | None = None,
         cmap: ColormapOptions | list[str] | None = None,
         clim: Sequence[float] | None = None,
         n_labels: int = 5,
@@ -1145,7 +1149,7 @@ class ScalarBars(_NoNewAttrMixin):
         n_colors: int | None = None,
         fill: bool = False,
         render: bool = False,
-        theme: pv.plotting.themes.Theme | None = None,
+        theme: Theme | None = None,
         unconstrained_font_size: bool = False,
         unique_bar: bool = False,
     ) -> _vtk.vtkScalarBarActor | None:

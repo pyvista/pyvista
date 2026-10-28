@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Annotated
 
 from cyclopts import Parameter
@@ -22,6 +23,9 @@ from .utils import print_error_and_exit
 from .utils import read_mesh
 from .utils import skip_unreadable
 from .utils import validate_paths
+
+if TYPE_CHECKING:
+    from pyvista import DataObject
 
 
 def _is_extension_only(file_out: str) -> bool:
@@ -202,7 +206,7 @@ def _build_output_map(
     return result, renames
 
 
-def _save_mesh(mesh: pv.DataObject, out_path: Path) -> None:
+def _save_mesh(mesh: DataObject, out_path: Path) -> None:
     """Save ``mesh`` to ``out_path``, creating parent directories as needed.
 
     Raises a console error on failure.

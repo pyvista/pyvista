@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import DataSet
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _AnyArrayLike
     from pyvista.core._typing_core import _Real
@@ -636,7 +637,7 @@ class _BaseDataSetMapper(_BaseMapper):
             return self._input_dataset
         # Fall back to the VTK pipeline input when the mapper was wired up
         # with a vtkAlgorithm rather than a direct DataSet assignment.
-        return cast('pv.DataSet | None', wrap(_mapper_get_data_set_input(self)))
+        return cast('DataSet | None', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
     def dataset(
@@ -750,7 +751,7 @@ class _BaseDataSetMapper(_BaseMapper):
         return dataset
 
     @property
-    def _mapped_scalars(self) -> pv.pyvista_ndarray | None:
+    def _mapped_scalars(self) -> pyvista_ndarray | None:
         """Return the scalars this mapper is configured to display.
 
         When an :class:`ActiveScalarsAlgorithm` is managing the active

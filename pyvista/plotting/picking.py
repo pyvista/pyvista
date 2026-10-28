@@ -41,7 +41,10 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
+    from pyvista.core.pointset import UnstructuredGrid
 
     from ._typing import ColorLike
     from ._typing import StyleOptions
@@ -107,7 +110,7 @@ class RectangleSelection(_NoNewAttrMixin):
         return self._frustum
 
     @property
-    def frustum_mesh(self) -> pv.PolyData:  # numpydoc ignore=RT01
+    def frustum_mesh(self) -> PolyData:  # numpydoc ignore=RT01
         """Get the frustum as a PyVista mesh."""
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()
@@ -160,7 +163,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
     def picker(self, picker: _DataSetPicker) -> None:
         self._picker_ = weakref.ref(picker)
 
-    def get_mesh(self) -> pv.DataSet | None:
+    def get_mesh(self) -> DataSet | None:
         """Get the picked mesh.
 
         Returns
@@ -174,7 +177,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             return pv.wrap(ds)
         return None
 
-    def get_cell(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
+    def get_cell(self, picked_point: VectorLikeFloat) -> UnstructuredGrid | None:
         """Get the picked cell of the picked mesh.
 
         Parameters
@@ -197,7 +200,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
 
-    def get_face(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
+    def get_face(self, picked_point: VectorLikeFloat) -> UnstructuredGrid | None:
         """Get the picked face of the picked cell.
 
         Parameters
@@ -234,7 +237,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
 
         return face
 
-    def get_edge(self, picked_point: VectorLikeFloat) -> pv.UnstructuredGrid | None:
+    def get_edge(self, picked_point: VectorLikeFloat) -> UnstructuredGrid | None:
         """Get the picked edge of the picked cell.
 
         Parameters
@@ -285,7 +288,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         picked = mesh.extract_points(pid, adjacent_cells=False, include_cells=False)
         return picked.cast_to_poly_points()
 
-    def _get_mesh_not_none(self) -> pv.DataSet:
+    def _get_mesh_not_none(self) -> DataSet:
         """Return the picked mesh, raising when the pick missed every mesh."""
         mesh = self.get_mesh()
         if mesh is None:  # pragma: no cover
@@ -300,7 +303,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         if mesh is None:
             return  # No selected mesh (point not on surface of mesh)
 
-        picked: pv.DataSet | None
+        picked: DataSet | None
         if self.mode == ElementType.MESH:
             picked = mesh
         elif self.mode == ElementType.CELL:
@@ -359,21 +362,21 @@ class PickingComponent(_NoNewAttrMixin):
         self._picked_point: NDArray[np.float64] | None = None
         # Mesh-aware picking state
         self._picked_actor: _vtk.vtkActor | None = None
-        self._picked_mesh: pv.DataSet | None = None
-        self._picked_cell: pv.UnstructuredGrid | pv.MultiBlock | None = None
+        self._picked_mesh: DataSet | None = None
+        self._picked_cell: UnstructuredGrid | MultiBlock | None = None
         self._picking_text: CornerAnnotation | None = None
         self._picked_block_index: int | None = None
         # Path / geodesic / horizon state
-        self.picked_path: pv.PolyData | None = None
-        self.picked_geodesic: pv.PolyData | None = None
-        self.picked_horizon: pv.PolyData | None = None
+        self.picked_path: PolyData | None = None
+        self.picked_geodesic: PolyData | None = None
+        self.picked_horizon: PolyData | None = None
         self._last_picked_idx: int | None = None
 
     # =========================================================================
     # Lifecycle
     # =========================================================================
 
-    def _get_picked_mesh_not_none(self) -> pv.DataSet:
+    def _get_picked_mesh_not_none(self) -> DataSet:
         """Return the picked mesh, raising when nothing has been picked."""
         if self._picked_mesh is None:  # pragma: no cover
             msg = 'No mesh has been picked.'
@@ -403,12 +406,12 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_actor
 
     @property
-    def picked_mesh(self) -> pv.DataSet | None:  # numpydoc ignore=RT01
+    def picked_mesh(self) -> DataSet | None:  # numpydoc ignore=RT01
         """Return the picked mesh."""
         return self._picked_mesh
 
     @property
-    def picked_cells(self) -> pv.UnstructuredGrid | pv.MultiBlock | None:
+    def picked_cells(self) -> UnstructuredGrid | MultiBlock | None:
         r"""Return the cell-picked object.
 
         Returns
@@ -978,7 +981,7 @@ class PickingComponent(_NoNewAttrMixin):
                         component._clear_picking_representations()
                 return
             component._picked_actor = picker.GetActor()
-            component._picked_mesh = cast('pv.DataSet | None', picker.GetDataSet())
+            component._picked_mesh = cast('DataSet | None', picker.GetDataSet())
 
             if show_point:
                 with plotter._get_iren_not_none().poked_subplot():
@@ -1224,7 +1227,7 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
+        def finalize(picked: UnstructuredGrid | MultiBlock | None) -> None:
             component = self_()
             if component is None:
                 return
@@ -1277,7 +1280,7 @@ class PickingComponent(_NoNewAttrMixin):
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 component._picked_cell = None
             elif picked.n_blocks == 1:
-                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
+                component._picked_cell = cast('UnstructuredGrid', picked[0])
             else:
                 component._picked_cell = picked
 
@@ -1351,7 +1354,7 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
+        def finalize(picked: UnstructuredGrid | MultiBlock | None) -> None:
             component = self_()
             if component is None:
                 return
@@ -1429,7 +1432,7 @@ class PickingComponent(_NoNewAttrMixin):
             if len(picked) == 0 or picked.combine().n_cells < 1:
                 component._picked_cell = None
             elif len(picked) == 1:
-                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
+                component._picked_cell = cast('UnstructuredGrid', picked[0])
             else:
                 component._picked_cell = picked
 
@@ -1631,7 +1634,7 @@ class PickingComponent(_NoNewAttrMixin):
         mode = ElementType.from_any(mode)
         self_ = weakref.ref(self)
 
-        def _end_handler(picked: pv.DataSet) -> None:
+        def _end_handler(picked: DataSet) -> None:
             component = self_()
             if component is None:
                 return
@@ -1640,7 +1643,7 @@ class PickingComponent(_NoNewAttrMixin):
                 _poked_context_callback(plotter, callback, picked)
 
             if mode == ElementType.CELL:
-                component._picked_cell = cast('pv.UnstructuredGrid', picked)
+                component._picked_cell = cast('UnstructuredGrid', picked)
 
             if show:
                 if mode == ElementType.CELL:
@@ -2175,7 +2178,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self._plotter.add_key_event('c', _clear_horizon_event_watcher)
 
-        def _the_callback(path: pv.PolyData) -> None:
+        def _the_callback(path: PolyData) -> None:
             component = self_()
             if component is None:
                 return

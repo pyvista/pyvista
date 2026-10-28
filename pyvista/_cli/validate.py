@@ -33,6 +33,8 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
+    from pyvista import DataObject
+
 fields_help = """
 Fields to validate. Specify individual fields or groups of fields:
 
@@ -243,7 +245,7 @@ def _check_mesh_type(mesh: object, path: Path) -> None:
 
 
 def _validate_one(
-    mesh: pv.DataObject,
+    mesh: DataObject,
     path: Path,
     *,
     fields: list[_LiteralMeshValidationFields] | None,

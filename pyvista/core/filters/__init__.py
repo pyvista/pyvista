@@ -43,6 +43,7 @@ from pyvista.core.utilities.observers import ProgressMonitor
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from pyvista.core.dataobject import DataObject
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
@@ -239,8 +240,8 @@ def _get_output(
     keep_pointset: bool = True,
 ) -> Any:
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
-    data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
+    ido = cast('DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
+    data = cast('DataObject', wrap(algorithm.GetOutputDataObject(oport)))
     _match_points_dtype(data, ido, algorithm=algorithm)
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
