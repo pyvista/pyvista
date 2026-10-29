@@ -12,6 +12,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 _OPENCV_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
-class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters

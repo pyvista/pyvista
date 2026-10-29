@@ -12,6 +12,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
@@ -53,7 +54,7 @@ _check_specular = _checker('specular', [0.0, 1.0])
 _check_specular_power = _checker('specular_power', [0.0, 128.0])
 
 
-class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
+class Property(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.

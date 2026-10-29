@@ -17,6 +17,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
@@ -552,7 +553,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         self.Update()
 
 
-class _BaseDataSetMapper(_BaseMapper):
+class _BaseDataSetMapper(_TextReprHTMLMixin, _BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
 
     .. note::

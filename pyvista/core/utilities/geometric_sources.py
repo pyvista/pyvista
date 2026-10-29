@@ -29,6 +29,7 @@ from pyvista.core.filters import DOUBLE_PRECISION
 from pyvista.core.filters import SINGLE_PRECISION
 from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _requested_points_precision
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -3191,7 +3192,7 @@ def _build_axes_part(
             dst[vectors_name] = scaled.astype(vectors.dtype, copy=False)
 
 
-class AxesGeometrySource(_NoNewAttrMixin):
+class AxesGeometrySource(_TextReprHTMLMixin, _NoNewAttrMixin):
     """Create axes geometry source.
 
     Source for generating fully 3-dimensional axes shaft and tip geometry.

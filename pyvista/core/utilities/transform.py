@@ -16,6 +16,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -56,6 +57,7 @@ def _is_nested_sequence(
 
 
 class Transform(
+    _TextReprHTMLMixin,
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     vtkPyVistaOverride,

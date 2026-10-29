@@ -12,6 +12,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.misc import _resolve_line_style
 from pyvista.plotting.utilities.algorithms import set_algorithm_input
@@ -139,7 +140,7 @@ if (((1 << int(mod(abs(dashArc), 16.0))) & dashPattern) == 0)
 """
 
 
-class Actor(Prop3D, _vtk.vtkActor):
+class Actor(_TextReprHTMLMixin, Prop3D, _vtk.vtkActor):
     """Wrap :vtk:`vtkActor`.
 
     This class represents the geometry & properties in a rendered
