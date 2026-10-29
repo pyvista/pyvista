@@ -155,7 +155,7 @@ def test_tensor_preset(sphere):
     sphere.point_data['direct'] = tensors
     assert np.array_equal(sphere.point_data['direct'], sphere.point_data['tensors'])
 
-    sphere.point_data['scalars'] = np.arange(sphere.n_points)
+    sphere.point_data.reshaped.using('tensor')['scalars'] = np.arange(sphere.n_points)
     assert sphere.point_data.reshaped.using('tensor')['scalars'].shape == (sphere.n_points,)
 
 
@@ -174,6 +174,10 @@ def test_flat_input_passes_through():
     grid = _image()
     grid.point_data.reshaped['flat'] = np.arange(grid.n_points)
     grid.point_data.reshaped['vectors'] = grid.points
+    grid.point_data.reshaped.using(pv.GridReshaper(squeeze=True))['squeezed'] = np.arange(
+        grid.n_points
+    )
+    assert grid.point_data['squeezed'].shape == (grid.n_points,)
     assert grid.point_data['flat'].shape == (grid.n_points,)
     assert np.array_equal(grid.point_data['vectors'], grid.points)
 
@@ -185,6 +189,8 @@ def test_wrong_shape_raises():
         grid.point_data.reshaped['data'] = np.zeros((2, 2))
     with pytest.raises(ValueError, match='does not fit'):
         grid.point_data.reshaped['data'] = np.zeros((*DIMENSIONS, 3, 3))
+    with pytest.raises(ValueError, match='does not fit'):
+        grid.point_data.reshaped['data'] = np.zeros((5, 3, 2))
 
 
 def test_grid_preset_on_non_grid_raises(sphere):
