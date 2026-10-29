@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
 
+    from ._array_reshaping import ReshapedArrays
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import _AnyArrayLike
 
@@ -344,6 +345,68 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def __len__(self: Self) -> int:
         """Return the number of arrays."""
         return self.VTKObject.GetNumberOfArrays()
+
+    @property
+    def reshaped(self: Self) -> ReshapedArrays:
+        """Return a view of these arrays with their data reshaped.
+
+        The layout is set by :attr:`pyvista.global_config.array_reshaping
+        <pyvista.core.config.Config.array_reshaping>`, or per access with
+        :meth:`~pyvista.core._array_reshaping.ReshapedArrays.using`.
+
+        .. versionadded:: 0.50
+
+        Returns
+        -------
+        pyvista.core._array_reshaping.ReshapedArrays
+            Shaped view of the arrays.
+
+        See Also
+        --------
+        :ref:`reshape_data_arrays_example`
+            Reshaping arrays from NumPy, imaging and medical imaging libraries.
+
+        Examples
+        --------
+        Set a 3D NumPy array as point data of an image, indexed along x, y and z.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> x, y, z = np.meshgrid(
+        ...     np.arange(4), np.arange(3), np.arange(2), indexing='ij'
+        ... )
+        >>> image = pv.ImageData(dimensions=(4, 3, 2))
+        >>> image.point_data.reshaped['x'] = x
+        >>> image.point_data.reshaped['x'].shape
+        (4, 3, 2)
+
+        The stored array is flat.
+
+        >>> image.point_data['x'].shape
+        (24,)
+
+        Vectors keep their components on the last axis.
+
+        >>> image.point_data['vectors'] = image.points
+        >>> image.point_data.reshaped['vectors'].shape
+        (4, 3, 2, 3)
+
+        Cell data takes the cell dimensions.
+
+        >>> image.cell_data['ids'] = range(image.n_cells)
+        >>> image.cell_data.reshaped['ids'].shape
+        (3, 2, 1)
+
+        The reshaped arrays are views, so editing them edits the dataset.
+
+        >>> image.point_data.reshaped['x'][0, 0, 0] = 99
+        >>> int(image.point_data['x'][0])
+        99
+
+        """
+        from ._array_reshaping import ReshapedArrays  # noqa: PLC0415
+
+        return ReshapedArrays(self)
 
     @property
     def active_scalars(self: Self) -> pyvista_ndarray | None:

@@ -41,6 +41,20 @@ arrays associated with cells, points, and the DataSet in general (fields).
    pyvista.core.utilities.arrays.FieldAssociation
 
 
+Reshaped Arrays
+---------------
+:attr:`pyvista.DataSetAttributes.reshaped` gets and sets arrays in a shaped
+layout, set by :attr:`pyvista.global_config.array_reshaping
+<pyvista.core.config.Config.array_reshaping>`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.ArrayReshaper
+   pyvista.GridReshaper
+   pyvista.core._array_reshaping.ReshapedArrays
+
+
 Shared Base Classes
 -------------------
 This class is not used directly. It is documented because it defines the
