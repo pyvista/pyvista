@@ -1,4 +1,4 @@
-name: Unit Testing and Deployment
+name: Unit Tests
 
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
@@ -70,7 +70,7 @@ jobs:
     with:
       runs-on: "ubuntu-22.04"
 
-  # Check names render as `macOS / Unit Testing (3.11)`, and are required status checks on main.
+  # Check names render as `macOS / 3.11`, and are required status checks on main.
   macOS:
     # The merge queue runs this suite against the exact tree that lands, and
     # nothing downstream of a push to `main` consumes its output, so it is only
@@ -107,20 +107,20 @@ jobs:
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       rows: >-
         [
-          {"python": "3.11", "vtk": "9.3.1", "numpy": "latest"},
-          {"python": "3.11", "vtk": "9.4.2", "numpy": "latest"},
-          {"python": "3.12", "vtk": "9.5.2", "numpy": "latest"},
-          {"python": "3.13", "vtk": "9.6.2", "numpy": "latest"},
-          {"python": "3.14", "vtk": "latest", "numpy": "latest"}
+          {"python": "3.11", "vtk": "9.3.1"},
+          {"python": "3.11", "vtk": "9.4.2"},
+          {"python": "3.12", "vtk": "9.5.2"},
+          {"python": "3.13", "vtk": "9.6.2"},
+          {"python": "3.14", "vtk": "latest"}
         ]
 
-  windows:
+  Windows:
     # Repeated for a tag only, for the same reason as the macOS suite.
     if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     needs: cache-github-hosted
     uses: $/.github/workflows/unit-tests.yml
     with:
-      label: windows
+      label: Windows
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       timeout-minutes: 80
@@ -209,7 +209,7 @@ jobs:
   release:
     name: Release
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    needs: [Linux, windows, macOS, check-package]
+    needs: [Linux, Windows, macOS, check-package]
     runs-on: ubuntu-24.04
     environment:
       name: pypi

@@ -65,7 +65,11 @@ env:
 
 jobs:
   test:
-    name: Unit Testing (${{ matrix.python }}${{ matrix.vtk && format(', {0}', matrix.vtk) || '' }}${{ matrix.numpy && format(', {0}', matrix.numpy) || '' }})
+    name: >-
+      ${{ format('{0}{1}{2}',
+        matrix.python,
+        matrix.vtk && format(', vtk {0}', matrix.vtk) || '',
+        matrix.numpy && format(', numpy {0}', matrix.numpy) || '') }}
     runs-on: ${{ inputs.os }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     strategy:
@@ -73,7 +77,13 @@ jobs:
       matrix:
         include: ${{ fromJSON(inputs.rows) }}
     env:
-      TOX_ENV: py${{ matrix.python }}${{ matrix.numpy && format('-numpy_{0}', matrix.numpy) || '' }}${{ matrix.vtk && format('-vtk_{0}', matrix.vtk) || '' }}${{ inputs.vtk-wheel && '-vtk_local' || '' }}${{ inputs.coverage && '-cov' || '' }}
+      TOX_ENV: >-
+        ${{ format('py{0}{1}{2}{3}{4}',
+          matrix.python,
+          matrix.numpy && format('-numpy_{0}', matrix.numpy) || '',
+          matrix.vtk && format('-vtk_{0}', matrix.vtk) || '',
+          inputs.vtk-wheel && '-vtk_local' || '',
+          inputs.coverage && '-cov' || '') }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -145,7 +155,12 @@ jobs:
         if: failure() && inputs.vtk-wheel
         uses: $/.github/actions/vtk-master-failure-summary
         with:
-          job-name: ${{ inputs.label }} / Unit Testing (${{ matrix.python }}${{ matrix.vtk && format(', {0}', matrix.vtk) || '' }}${{ matrix.numpy && format(', {0}', matrix.numpy) || '' }})
+          job-name: >-
+            ${{ format('{0} / {1}{2}{3}',
+              inputs.label,
+              matrix.python,
+              matrix.vtk && format(', vtk {0}', matrix.vtk) || '',
+              matrix.numpy && format(', numpy {0}', matrix.numpy) || '') }}
           artifact-suffix: ${{ inputs.label }}-${{ env.TOX_ENV }}
 
       - name: Upload Images for Failed Tests

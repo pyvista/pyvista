@@ -224,32 +224,32 @@ jobs:
     with:
       runs-on: "ubuntu-22.04"
 
-  test-linux:
+  Linux:
     needs: [check-should-run, build-vtk, cache-github-hosted]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     uses: $/.github/workflows/unit-tests.yml
     with:
-      label: test-linux
+      label: Linux
       os: ubuntu-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       vtk-wheel: true
 
-  test-macOS:
+  macOS:
     needs: [check-should-run, build-vtk, cache-github-hosted]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     uses: $/.github/workflows/unit-tests.yml
     with:
-      label: test-macOS
+      label: macOS
       os: macos-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       vtk-wheel: true
 
-  test-windows:
+  Windows:
     needs: [check-should-run, build-vtk, cache-github-hosted]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     uses: $/.github/workflows/unit-tests.yml
     with:
-      label: test-windows
+      label: Windows
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       vtk-wheel: true
@@ -259,14 +259,7 @@ jobs:
 
   alert-on-failure:
     needs:
-      [
-        check-should-run,
-        build-vtk,
-        cache-github-hosted,
-        test-linux,
-        test-macOS,
-        test-windows,
-      ]
+      [check-should-run, build-vtk, cache-github-hosted, Linux, macOS, Windows]
     if: >-
       failure() &&
       needs.check-should-run.outputs.run == 'true' &&
