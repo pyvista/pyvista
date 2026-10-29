@@ -187,7 +187,7 @@ def store_records(
 
 
 def main(reply_fd: int) -> None:  # pragma: no cover
-    """Serve render jobs read from stdin, one JSON message per line, replying on ``reply_fd``."""
+    """Serve render jobs read from standard input, one JSON line each, replying on ``reply_fd``."""
     from pyvista.ext.plot_directive import PlotError  # noqa: PLC0415
     from pyvista.ext.plot_directive import _execute_pieces  # noqa: PLC0415
 
