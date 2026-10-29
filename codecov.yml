@@ -10,6 +10,9 @@ coverage:
   status:
     project:
       default:
+        flags:
+          - package
+          - tests
         target: auto
         threshold: 0.5%
         if_not_found: failure
@@ -40,6 +43,9 @@ coverage:
         if_no_uploads: error
     patch:
       default:
+        flags:
+          - package
+          - tests
         target: auto
         threshold: 0.5%
         if_not_found: failure
