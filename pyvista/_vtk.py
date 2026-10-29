@@ -765,6 +765,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPropCollection',
         'vtkPropPicker',
         'vtkProperty',
+        'vtkProperty2D',
         'vtkRenderWindow',
         'vtkRenderWindowInteractor',
         'vtkRenderedAreaPicker',

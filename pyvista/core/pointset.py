@@ -263,7 +263,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
 
     Parameters
     ----------
-    var_inp : :vtk:`vtkPointSet`, MatrixLikeFloat, optional
+    var_inp : PointSet, :vtk:`vtkPointSet`, MatrixLikeFloat, optional
         Flexible input type. Can be a :vtk:`vtkPointSet`, in which case
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -308,7 +308,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
 
     def __init__(
         self,
-        var_inp: MatrixLikeFloat | VectorLikeFloat | _vtk.vtkPointSet | None = None,
+        var_inp: PointSet | _vtk.vtkPointSet | MatrixLikeFloat | VectorLikeFloat | None = None,
         *,
         deep: bool = False,
         force_float: bool = True,
@@ -643,7 +643,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     Parameters
     ----------
-    var_inp : :vtk:`vtkPolyData`, str, sequence, optional
+    var_inp : PolyData, :vtk:`vtkPolyData`, str, sequence, optional
         Flexible input type. Can be a :vtk:`vtkPolyData`, in which case
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -844,7 +844,13 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     def __init__(
         self,
-        var_inp: _vtk.vtkPolyData | str | Path | MatrixLikeFloat | VectorLikeFloat | None = None,
+        var_inp: PolyData
+        | _vtk.vtkPolyData
+        | str
+        | Path
+        | MatrixLikeFloat
+        | VectorLikeFloat
+        | None = None,
         faces: CellArrayLike | None = None,
         *,
         lines: CellArrayLike | None = None,
@@ -3883,7 +3889,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
         alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
         alg.Update()
-        grid = _get_output(alg)
+        grid = _get_output(alg, output_type=pv.ExplicitStructuredGrid)
         grid.cell_data.remove('ConnectivityFlags')  # unrequired
         return grid
 
@@ -3903,7 +3909,7 @@ class StructuredGrid(
 
     Parameters
     ----------
-    uinput : str, Path, :vtk:`vtkStructuredGrid`, numpy.ndarray, optional
+    uinput : str, Path, StructuredGrid, :vtk:`vtkStructuredGrid`, numpy.ndarray, optional
         Filename, dataset, or array to initialize the structured grid from. If
         a filename is passed, pyvista will attempt to load it as a
         :class:`StructuredGrid`. If passed a :vtk:`vtkStructuredGrid`, it will
@@ -3986,7 +3992,12 @@ class StructuredGrid(
 
     def __init__(
         self,
-        uinput: ArrayLikeFloat | _vtk.vtkStructuredGrid | str | Path | None = None,
+        uinput: StructuredGrid
+        | _vtk.vtkStructuredGrid
+        | ArrayLikeFloat
+        | str
+        | Path
+        | None = None,
         y: ArrayLikeFloat | None = None,
         z: ArrayLikeFloat | None = None,
         *,
@@ -4574,7 +4585,7 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
         alg = _vtk.vtkExplicitStructuredGridToUnstructuredGrid()
         alg.SetInputDataObject(grid)
         alg.Update()
-        ugrid = _get_output(alg)
+        ugrid = _get_output(alg, output_type=pv.UnstructuredGrid)
         ugrid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
@@ -4864,6 +4875,16 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
         else:
             return self.bounds
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def cell_id(self, coords: Sequence[int] | Sequence[np.integer | np.bool_]) -> int | None: ...
+    @overload
+    def cell_id(self, coords: Sequence[Sequence[int]] | Sequence[Sequence[np.integer | np.bool_]]) -> NDArray[np.intp] | None: ...
+    @overload
+    def cell_id(self, coords: ArrayLikeInt) -> int | NDArray[np.intp] | None: ...
+    # ruff: enable[E501]
+    # fmt: on
     def cell_id(self, coords: ArrayLikeInt) -> int | NDArray[np.intp] | None:
         """Return the cell ID.
 

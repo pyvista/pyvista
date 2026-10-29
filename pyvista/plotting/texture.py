@@ -143,7 +143,9 @@ class Texture(DataObject, _vtk.vtkTexture):
     def __init__(
         self,
         uinput: str
+        | Texture
         | _vtk.vtkTexture
+        | ImageData
         | _vtk.vtkImageData
         | NDArray[_Scalar]
         | Sequence[ImageData]

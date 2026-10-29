@@ -4331,7 +4331,7 @@ def _kitchen_split_load_func(mesh: StructuredGrid) -> MultiBlock:
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = _get_output(alg)
+        result = _get_output(alg, output_type=pv.PolyData)
         kitchen[key] = result
     return kitchen
 
@@ -8870,7 +8870,7 @@ class _WholeBodyCTUtilities:
 
 
         """
-        segmentations = cast('MultiBlock', dataset['segmentations'])
+        segmentations: MultiBlock[ImageData] = dataset['segmentations']
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
@@ -8880,7 +8880,7 @@ class _WholeBodyCTUtilities:
         dataset.user_dict['ids_to_colors'] = {str(id_): color for id_, color in ids_to_colors}
 
     @staticmethod
-    def label_map_from_masks(masks: MultiBlock[Any]) -> ImageData:
+    def label_map_from_masks(masks: MultiBlock[ImageData]) -> ImageData:
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
         """Create a label map image from segmentation masks.
@@ -8897,17 +8897,17 @@ class _WholeBodyCTUtilities:
 
 
         """
-        n_points = cast('ImageData', masks[0]).n_points
+        n_points = masks[0].n_points
         # Initialize array with background values (zeros)
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
-            mask = cast('ImageData', masks[name])
+            mask = masks[name]
             label_map_array[mask.active_scalars == 1] = i + 1
 
         # Add scalars to a new image
         label_map_image = pv.ImageData()
-        label_map_image.copy_structure(cast('ImageData', masks[0]))
+        label_map_image.copy_structure(masks[0])
         label_map_image['label_map'] = label_map_array
         return label_map_image
 

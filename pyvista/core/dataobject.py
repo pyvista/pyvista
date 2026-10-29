@@ -51,6 +51,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
+    from pyvista import DataSet
     from pyvista import MultiBlock
 
     from ._typing_core import _AnyArrayLike
@@ -859,12 +860,12 @@ class DataObject(
         """
         self.CopyStructure(dataset) if dataset is not self else None
 
-    def copy_attributes(self: Self, dataset: Self) -> None:
+    def copy_attributes(self: Self, dataset: DataSet | _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pyvista.DataSet | :vtk:`vtkDataSet`
             Dataset to copy the data attributes from.
 
         Examples
@@ -1067,7 +1068,7 @@ class DataObject(
 
         # copy data
         self.copy_structure(mesh)  # type: ignore[arg-type]
-        self.copy_attributes(mesh)  # type: ignore[arg-type]
+        self.copy_attributes(mesh)
 
     @property
     @abstractmethod

@@ -1278,9 +1278,8 @@ class MultiBlock(
 
         """
         # apply reduction of min and max over each block
-        # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
         blocks: Sequence[_TypeMultiBlockLeaf] = self
-        all_bounds = [cast('list[float]', block.bounds) for block in blocks if block]
+        all_bounds = [list(block.bounds) for block in blocks if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = (0.0, 0.0, 0.0)
@@ -2305,7 +2304,7 @@ class MultiBlock(
 
     def shallow_copy(  # type: ignore[override]
         self,
-        to_copy: _vtk.vtkMultiBlockDataSet,
+        to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet,
         *,
         recursive: bool = False,
     ) -> None:
@@ -2342,7 +2341,9 @@ class MultiBlock(
         self._sync_user_dict()
         self.wrap_nested()
 
-    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
+    def deep_copy(  # type: ignore[override]
+        self, to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet
+    ) -> None:
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
 
         Parameters

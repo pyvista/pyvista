@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import overload
@@ -94,6 +95,8 @@ _RegionAssignmentMode = Literal['ascending', 'descending', 'unspecified']
 
 _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
 _CONNECTIVITY_SCALARS = '__pyvista_connectivity_scalars'
+
+_ExtractedT = TypeVar('_ExtractedT', bound='DataSet')
 
 
 def _points_inside_surface(image: ImageData, surface: PolyData) -> NDArray[np.bool_]:
@@ -179,7 +182,9 @@ def _points_of_cells_cut_by_sign(
     to_cells.ProcessAllArraysOff()
     to_cells.AddPointDataArray(_CLIP_SURFACE_SCALARS)
     _update_alg(to_cells, message='Finding Cells Cut by the Surface')
-    fraction = np.asarray(_get_output(to_cells).cell_data[_CLIP_SURFACE_SCALARS])
+    fraction = np.asarray(
+        _get_output(to_cells, output_type=pv.DataSet).cell_data[_CLIP_SURFACE_SCALARS]
+    )
     cut = dataset.extract_cells(
         np.flatnonzero((fraction > 0) & (fraction < 1)), pass_point_ids=True, pass_cell_ids=False
     )
@@ -199,6 +204,17 @@ class _ExtractValuesInputs(NamedTuple):
     array_name: str
     association: FieldAssociation
     component_logic: Callable[[NDArray[np.bool_]], NDArray[np.bool_]] | None
+
+
+def _outline_corners_filter(
+    mesh: _vtk.vtkDataObject, *, factor: float, progress_bar: bool
+) -> _vtk.vtkOutlineCornerFilter:
+    """Return an updated outline corner filter run on ``mesh``."""
+    alg = _vtk.vtkOutlineCornerFilter()
+    alg.SetInputDataObject(mesh)
+    alg.SetCornerFactor(factor)
+    _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
+    return alg
 
 
 @abstract_class
@@ -827,7 +843,7 @@ class DataSetFilters(DataObjectFilters):
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
         # Activate the scalars on a shallow copy so the input's active scalars are untouched
-        source = cast('DataSet', _clip_input(self)).copy(deep=False)
+        source = _clip_input(self).copy(deep=False)
         if scalars is None:
             set_default_active_scalars(source)
         else:
@@ -838,7 +854,10 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0 = _remove_unused_points_post_clip(_clip_output(_get_output(alg), self), self)
+        result0 = _remove_unused_points_post_clip(
+            _clip_output(_get_output(alg, output_type=(pv.PolyData, pv.UnstructuredGrid)), self),
+            self,
+        )
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
@@ -847,7 +866,10 @@ class DataSetFilters(DataObjectFilters):
             result0 = inplace_target
         if both:
             result1 = _remove_unused_points_post_clip(
-                _clip_output(_get_output(alg, oport=1), self), self
+                _clip_output(
+                    _get_output(alg, output_type=(pv.PolyData, pv.UnstructuredGrid), oport=1), self
+                ),
+                self,
             )
             return result0, result1
         return result0
@@ -944,9 +966,9 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
         """
-        surface_ = cast('PolyData', wrap(surface))
+        surface_ = wrap(surface)
         if not isinstance(surface_, pv.PolyData):
-            surface_ = surface_.extract_surface(  # type: ignore[unreachable]
+            surface_ = surface_.extract_surface(
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
         function = _vtk.vtkImplicitPolyDataDistance()
@@ -1202,7 +1224,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Run the threshold
         _update_alg(alg, progress_bar=progress_bar, message='Thresholding')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def threshold_percent(  # type: ignore[misc]
         self: _DataSetType,
@@ -1523,7 +1545,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     def outline_corners(  # type: ignore[misc]
-        self: _DataObjectType,
+        self: _DataSetType,
         *,
         factor: float = 0.2,
         progress_bar: bool = False,
@@ -1555,11 +1577,8 @@ class DataSetFilters(DataObjectFilters):
         >>> pv.plot([sphere, corners], line_width=5)
 
         """
-        alg = _vtk.vtkOutlineCornerFilter()
-        alg.SetInputDataObject(self)
-        alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
-        return _get_output(alg, keep_pointset=False)
+        alg = _outline_corners_filter(self, factor=factor, progress_bar=progress_bar)
+        return _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
@@ -1635,7 +1654,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetSampleDimensions(list(dimensions_))
         message = 'Splatting Points with Gaussian Distribution'
         _update_alg(alg, progress_bar=progress_bar, message=message)
-        return _get_output(alg, keep_pointset=False)
+        return _get_output(alg, output_type=pv.ImageData, keep_pointset=False)
 
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
@@ -1724,7 +1743,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar=progress_bar, message=message)
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.PolyData)
 
     def contour(  # type: ignore[misc]
         self: _DataSetType,
@@ -1901,7 +1920,7 @@ class DataSetFilters(DataObjectFilters):
                 alg.SetValue(i, val)
 
         _update_alg(alg, progress_bar=progress_bar, message='Computing Contour')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
 
         # some of these filters fail to correctly name the array
         if scalars_name not in output.point_data and 'Unnamed_0' in output.point_data:
@@ -1984,7 +2003,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetPoint2(*point_v)  # TOP LEFT CORNER
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message='Texturing Map to Plane')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.DataSet)
         if not inplace:
             return _as_input_class(output, self)
         texture_coordinates = output.GetPointData().GetTCoords()
@@ -2055,7 +2074,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message='Mapping texture to sphere')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.DataSet)
         if not inplace:
             return _as_input_class(output, self)
         texture_coordinates = output.GetPointData().GetTCoords()
@@ -2075,7 +2094,7 @@ class DataSetFilters(DataObjectFilters):
         orient: bool | str = True,
         scale: bool | str = True,
         factor: float = 1.0,
-        geom: _vtk.vtkDataSet | DataSet | Sequence[_vtk.vtkDataSet | DataSet] | None = None,
+        geom: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet] | None = None,
         indices: VectorLikeInt | None = None,
         tolerance: float | None = None,
         absolute: bool = False,
@@ -2108,7 +2127,7 @@ class DataSetFilters(DataObjectFilters):
         factor : float, default: 1.0
             Scale factor applied to scaling array.
 
-        geom : :vtk:`vtkDataSet` | tuple[:vtk:`vtkDataSet`], optional
+        geom : pyvista.DataSet | :vtk:`vtkDataSet` | sequence[pyvista.DataSet], optional
             The geometry to use for the glyph. If missing, an arrow glyph
             is used. If a sequence, the datasets inside define a table of
             geometries to choose from based on scalars or vectors. In this
@@ -2346,7 +2365,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Glyphs always produce cell geometry (e.g. arrows), so the output
         # should remain PolyData even if the input was a cell-less PointSet.
-        output = _get_output(alg, keep_pointset=False)
+        output = _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
         # Storing geom on the algorithm, for later use in legends.
         output._glyph_geom = geoms
@@ -2611,7 +2630,7 @@ class DataSetFilters(DataObjectFilters):
             )
             extraction_mode = 'largest'
 
-        def _extract_and_cast(mesh: _DataSetType, **extract_kwargs: Any) -> _DataSetType:
+        def _extract_and_cast(mesh: _ExtractedT, **extract_kwargs: Any) -> _ExtractedT:
             """Extract a subset of a mesh and cast the result back to the mesh's type."""
             extracted = DataSetFilters.extract_values(
                 mesh,
@@ -2709,16 +2728,14 @@ class DataSetFilters(DataObjectFilters):
         input_mesh = self.copy(deep=False)
         if scalar_range is not None:
             if scalars is None:
-                set_default_active_scalars(input_mesh)
+                field, name = set_default_active_scalars(input_mesh)
             else:
                 input_mesh.set_active_scalars(scalars)
-            field, name = input_mesh.active_scalars_info
+                field, name = input_mesh.active_scalars_info.association, scalars
             if field == FieldAssociation.CELL:
                 # The filter reads the active point scalars
                 converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
-                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[
-                    cast('str', name)
-                ]
+                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[name]
                 input_mesh.set_active_scalars(_CONNECTIVITY_SCALARS, preference='point')
 
             if extraction_mode in ('all', 'specified', 'closest'):
@@ -2771,7 +2788,7 @@ class DataSetFilters(DataObjectFilters):
                 'ignore',
                 category=pv.InvalidMeshWarning,
             )
-            output = _get_output(alg)
+            output = _get_output(alg, output_type=(pv.PolyData, pv.UnstructuredGrid))
 
         if extraction_mode == 'specified':
             output = _extract_and_cast(
@@ -2822,13 +2839,9 @@ class DataSetFilters(DataObjectFilters):
         output.cell_data.pop('vtkOriginalCellIds', None)
         output.point_data.pop('vtkOriginalPointIds', None)
 
-        if inplace:
-            try:
-                self.copy_from(output, deep=False)
-            except TypeError:
-                pass
-            else:
-                output = self
+        if inplace and isinstance(self, type(output)):
+            self.copy_from(output, deep=False)
+            output = self
         # Make sure buggy scalars have been fixed
         _warn_if_invalid_data(output)
         return output
@@ -3062,7 +3075,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetNormal(*normal)
             alg.SetUseNormal(True)
         _update_alg(alg, progress_bar=progress_bar, message='Warping by Scalar')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=(pv.StructuredGrid, type(self)))
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
                 msg = 'This filter cannot be applied inplace for this mesh type.'  # type: ignore[unreachable]
@@ -3162,7 +3175,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors_)
         alg.SetScaleFactor(factor)
         _update_alg(alg, progress_bar=progress_bar, message='Warping by Vector')
-        warped_mesh = _get_output(alg)
+        warped_mesh = _get_output(alg, output_type=(pv.StructuredGrid, type(self)))
         if inplace:
             self.copy_from(warped_mesh, deep=False)
             return self
@@ -3230,7 +3243,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
         _update_alg(alg, progress_bar=progress_bar, message='Computing 3D Triangulation')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def select_enclosed_points(  # type: ignore[misc]
         self: _DataSetType,
@@ -3358,7 +3371,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
         _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
-        return _get_output(alg)['SelectedPoints']
+        return _get_output(alg, output_type=pv.DataSet)['SelectedPoints']
 
     def select_interior_points(  # type:ignore[misc]
         self: _DataSetType,
@@ -3677,7 +3690,7 @@ class DataSetFilters(DataObjectFilters):
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar=progress_bar, message='Interpolating')
-        return _as_input_class(_get_output(interpolator), self)
+        return _as_input_class(_get_output(interpolator, output_type=pv.DataSet), self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -3809,7 +3822,7 @@ class DataSetFilters(DataObjectFilters):
 
     def streamlines_from_source(  # type: ignore[misc]
         self: _DataSetType,
-        source: _vtk.vtkDataSet,
+        source: DataSet | _vtk.vtkDataSet,
         vectors: str | None = None,
         *,
         integrator_type: Literal[45, 2, 4] = 45,
@@ -3839,7 +3852,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        source : pyvista.DataSet
+        source : pyvista.DataSet | :vtk:`vtkDataSet`
             The points of the source provide the starting points of the
             streamlines. This will override both sphere and line sources.
 
@@ -4020,7 +4033,7 @@ class DataSetFilters(DataObjectFilters):
 
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
-        return _get_output(alg, keep_pointset=False)
+        return _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
@@ -4216,7 +4229,7 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
             message='Generating Evenly Spaced Streamlines on a 2D Dataset',
         )
-        return _get_output(alg, keep_pointset=False)
+        return _get_output(alg, output_type=pv.PolyData, keep_pointset=False)
 
     def decimate_boundary(  # type: ignore[misc]
         self: _DataSetType,
@@ -5034,14 +5047,16 @@ class DataSetFilters(DataObjectFilters):
         extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         output = _finish_extraction(
-            _get_output(extract), pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            _get_output(extract, output_type=pv.UnstructuredGrid),
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
         )
 
         # Make active scalars match input
         association, name = self.active_scalars_info
         if name is None or name in output.array_names:
             output.set_active_scalars(name, cast('PointLiteral | CellLiteral', association))
-        return cast('UnstructuredGrid', output)
+        return output
 
     # fmt: off
     # ruff: disable[E501]
@@ -5163,7 +5178,7 @@ class DataSetFilters(DataObjectFilters):
         extract_sel.SetInputData(0, self.copy(deep=False))
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
-        output = _get_output(extract_sel)
+        output = _get_output(extract_sel, output_type=pv.UnstructuredGrid)
         if not pass_point_ids:
             output.point_data.pop('vtkOriginalPointIds', None)
         if not pass_cell_ids:
@@ -6227,7 +6242,7 @@ class DataSetFilters(DataObjectFilters):
         surf_filter.SetPassThroughCellIds(pass_cellid)
         surf_filter.SetNonlinearSubdivisionLevel(nonlinear_subdivision)
         _update_alg(surf_filter, progress_bar=progress_bar, message=message)
-        return _get_output(surf_filter)
+        return _get_output(surf_filter, output_type=pv.PolyData)
 
     def _extract_surface(  # type: ignore[misc]
         self: _DataSetType,
@@ -6386,7 +6401,7 @@ class DataSetFilters(DataObjectFilters):
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         _update_alg(featureEdges, progress_bar=progress_bar, message='Extracting Feature Edges')
-        output = _get_output(featureEdges)
+        output = _get_output(featureEdges, output_type=pv.PolyData)
         if clear_data:
             output.clear_data()
         return output
@@ -6513,7 +6528,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        grid : :vtk:`vtkUnstructuredGrid` | list[:vtk:`vtkUnstructuredGrid`], optional
+        grid : pyvista.DataSet | :vtk:`vtkDataSet` | pyvista.MultiBlock | sequence, optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True
@@ -6609,7 +6624,9 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar=progress_bar, message='Merging')
-        merged: PointSet | UnstructuredGrid = _get_output(append_filter, keep_pointset=False)
+        merged: PointSet | UnstructuredGrid = _get_output(
+            append_filter, output_type=pv.UnstructuredGrid, keep_pointset=False
+        )
         # Only a merge of point clouds is still a point cloud
         if isinstance(self, pv.PointSet):
             others = (
@@ -6738,7 +6755,7 @@ class DataSetFilters(DataObjectFilters):
             self.cast_to_unstructured_grid() if isinstance(self, pv.PolyData) else self
         )
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.PolyData)
 
     def compute_derivative(  # type: ignore[misc]
         self: _DataSetType,
@@ -6850,7 +6867,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars_)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
-        return _as_input_class(_get_output(alg), self)
+        return _as_input_class(_get_output(alg, output_type=pv.DataSet), self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -6910,7 +6927,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
         _update_alg(alg, progress_bar=progress_bar, message='Shrinking Mesh')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.UnstructuredGrid)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_cellid=False, pass_pointid=False
@@ -6986,7 +7003,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar=progress_bar, message='Tessellating Mesh')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def integrate_data(  # type: ignore[misc]
         self: _DataSetType,
@@ -7032,7 +7049,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
         _update_alg(alg, progress_bar=progress_bar, message='Integrating Variables')
-        return _get_output(alg, keep_pointset=False)
+        return _get_output(alg, output_type=pv.UnstructuredGrid, keep_pointset=False)
 
     # fmt: off
     # ruff: disable[E501]
@@ -7773,7 +7790,7 @@ class DataSetFilters(DataObjectFilters):
         for cell_type in valid_cell_types:
             alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar=progress_bar, message='Extracting cell types')
-        return _as_input_class(_get_output(alg), self)
+        return _as_input_class(_get_output(alg, output_type=pv.DataSet), self)
 
     def sort_labels(  # type: ignore[misc]
         self: _DataSetType,
@@ -7980,7 +7997,7 @@ class DataSetFilters(DataObjectFilters):
         alg.PassCellDataOn()
         alg.PassPointDataOn()
         _update_alg(alg, progress_bar=progress_bar, message='Packing labels')
-        result = _get_output(alg)
+        result = _get_output(alg, output_type=pv.DataSet)
 
         if output_scalars is not scalars:
             # vtkPackLabels does not pass un-packed labels through to the

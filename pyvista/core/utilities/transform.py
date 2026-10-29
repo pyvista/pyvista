@@ -716,14 +716,11 @@ class Transform(
                [ 0.,  0.,  0.,  1.]])
 
         """
-        valid_normal = cast(
-            'tuple[float, float, float]',
-            _validation.validate_array3(
-                normal,  # type: ignore[arg-type]
-                dtype_out=float,
-                to_tuple=True,
-                name='reflection normal',
-            ),
+        valid_normal = _validation.validate_array3(
+            normal,  # type: ignore[arg-type]
+            dtype_out=float,
+            to_tuple=True,
+            name='reflection normal',
         )
         transform = reflection(valid_normal)
         return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)

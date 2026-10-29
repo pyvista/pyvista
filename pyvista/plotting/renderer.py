@@ -10,7 +10,9 @@ import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import TypeVar
 from typing import cast
+from typing import overload
 import weakref
 
 import numpy as np
@@ -63,6 +65,7 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
+    from ._property import Property
     from ._typing import CameraPositionOptions
     from ._typing import Chart
     from ._typing import ColorLike
@@ -70,6 +73,11 @@ if TYPE_CHECKING:
     from .lights import Light
     from .plotter import BasePlotter
     from .texture import Texture
+
+_PropT = TypeVar('_PropT', bound=_vtk.vtkProp)
+_ActorT = TypeVar('_ActorT', bound=_vtk.vtkActor)
+_VolumeT = TypeVar('_VolumeT', bound=_vtk.vtkVolume)
+_Actor2DT = TypeVar('_Actor2DT', bound=_vtk.vtkActor2D)
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -1165,6 +1173,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             return {}
         return dict(self._actors.items())
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_actor(self, actor: _vtk.vtkMapper, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[Actor, Property]: ...
+    @overload
+    def add_actor(self, actor: _ActorT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_ActorT, _vtk.vtkProperty]: ...
+    @overload
+    def add_actor(self, actor: _VolumeT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_VolumeT, _vtk.vtkVolumeProperty]: ...
+    @overload
+    def add_actor(self, actor: _Actor2DT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_Actor2DT, _vtk.vtkProperty2D]: ...
+    @overload
+    def add_actor(self, actor: _PropT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_PropT, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def add_actor(
         self,
         actor: _vtk.vtkProp | _vtk.vtkMapper,
@@ -1175,7 +1197,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         pickable: bool = True,
         render: bool = True,
         remove_existing_actor: bool = True,
-    ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None]:
+    ) -> tuple[
+        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None
+    ]:
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -2702,12 +2726,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._cube_axes_follow_scene = True
             self.Modified()
 
-    def add_light(self, light: _vtk.vtkLight | Light) -> None:
+    def add_light(self, light: Light | _vtk.vtkLight) -> None:
         """Add a light to the renderer.
 
         Parameters
         ----------
-        light : :vtk:`vtkLight` | Light
+        light : Light | :vtk:`vtkLight`
             Light to add.
 
         """

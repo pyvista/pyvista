@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import VectorLikeInt
@@ -1951,7 +1950,7 @@ class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
             points = out.points
             out.points = np.vstack((points, points[seam_point_ids]))
 
-            normals = cast('pyvista_ndarray', out.active_normals)
+            normals = out.point_data['Normals']
             out.point_data.active_normals = np.vstack((normals, normals[seam_point_ids]))
 
             texture_coordinates = _compute_texture_coordinates()
@@ -3868,7 +3867,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         self: OrthogonalPlanesSource,
     ) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the sign of the plane's normal vectors."""
-        return cast('tuple[str, str, str]', self._normal_sign)
+        return self._normal_sign
 
     @normal_sign.setter
     def normal_sign(
@@ -3887,7 +3886,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
             _validation.check_length(sign, exact_length=3)
             [_check_sign(s) for s in sign]  # type: ignore[func-returns-value]
             valid_sign = sign
-        self._normal_sign = tuple(valid_sign)
+        self._normal_sign = (valid_sign[0], valid_sign[1], valid_sign[2])
 
         # Modify sources
         for source, axis_vector, sign_ in zip(self.sources, np.eye(3), valid_sign, strict=True):
@@ -3976,7 +3975,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
-        valid_names = cast('tuple[str, str, str]', tuple(names))
+        valid_names = (names[0], names[1], names[2])
         self._names = valid_names
 
         output = self._output
@@ -4399,7 +4398,7 @@ class CubeFacesSource(CubeSource):
         _validation.check_iterable_items(names, str, name=name)
         _validation.check_length(names, exact_length=[3, 6], name=name)
         valid_names = (
-            tuple(names)
+            (names[0], names[1], names[2], names[3], names[4], names[5])
             if len(names) == 6
             else (
                 '+' + names[0],
@@ -4410,7 +4409,7 @@ class CubeFacesSource(CubeSource):
                 '-' + names[2],
             )
         )
-        self._names = cast('tuple[str, str, str, str, str, str]', valid_names)
+        self._names = valid_names
 
     def update(self: CubeFacesSource) -> None:
         """Update the output of the source."""

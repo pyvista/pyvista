@@ -122,8 +122,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         usually an instance of :vtk:`vtkCellData`, :vtk:`vtkPointData`, or
         :vtk:`vtkFieldData`.
 
-    dataset : :vtk:`vtkDataSet`
-        The :vtk:`vtkDataSet` containing the ``vtkobject``.
+    dataset : DataSet | :vtk:`vtkDataSet`
+        The dataset containing the ``vtkobject``.
 
     association : FieldAssociation
         The array association type of the ``vtkobject``.
@@ -190,7 +190,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def __init__(
         self: Self,
         vtkobject: _vtk.vtkFieldData,
-        dataset: _vtk.vtkDataSet | DataSet,
+        dataset: DataSet | _vtk.vtkDataSet,
         association: FieldAssociation,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""

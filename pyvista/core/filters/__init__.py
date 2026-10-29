@@ -29,7 +29,7 @@ import contextlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
-from typing import cast
+from typing import overload
 
 import numpy as np
 
@@ -229,19 +229,38 @@ def _apply_points_dtype(
     return mesh
 
 
+_OutputT = TypeVar('_OutputT', bound='DataObject')
+_OutputT2 = TypeVar('_OutputT2', bound='DataObject')
+
+
+# fmt: off
+# ruff: disable[E501]
+@overload
+def _get_output(algorithm: _vtk.vtkAlgorithm, *, output_type: type[_OutputT], iport: int = ..., iconnection: int = ..., oport: int = ..., active_scalars: str | None = ..., active_scalars_field: PointLiteral | CellLiteral = ..., keep_pointset: bool = ...) -> _OutputT: ...
+@overload
+def _get_output(algorithm: _vtk.vtkAlgorithm, *, output_type: tuple[type[_OutputT], type[_OutputT2]], iport: int = ..., iconnection: int = ..., oport: int = ..., active_scalars: str | None = ..., active_scalars_field: PointLiteral | CellLiteral = ..., keep_pointset: bool = ...) -> _OutputT | _OutputT2: ...
+# ruff: enable[E501]
+# fmt: on
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
     *,
+    output_type: type[DataObject] | tuple[type[DataObject], type[DataObject]],
     iport: int = 0,
     iconnection: int = 0,
     oport: int = 0,
     active_scalars: str | None = None,
     active_scalars_field: PointLiteral | CellLiteral = 'point',
     keep_pointset: bool = True,
-) -> Any:
-    """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = cast('DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
-    data = cast('DataObject', wrap(algorithm.GetOutputDataObject(oport)))
+) -> DataObject:
+    """Get the algorithm's output of type ``output_type`` and copy input's pyvista meta info."""
+    ido: DataObject = wrap(algorithm.GetInputDataObject(iport, iconnection))
+    data: DataObject = wrap(algorithm.GetOutputDataObject(oport))
+    # A subclass passes for its PyVista base class, which is what VTK outputs wrap as
+    output_types = output_type if isinstance(output_type, tuple) else (output_type,)
+    if not any(issubclass(type(data), t) or issubclass(t, type(data)) for t in output_types):
+        names = ' | '.join(t.__name__ for t in output_types)
+        msg = f'{_producer_name(algorithm)} output is {type(data).__name__}, not {names}.'
+        raise TypeError(msg)
     _match_points_dtype(data, ido, algorithm=algorithm)
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
