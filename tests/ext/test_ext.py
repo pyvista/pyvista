@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import importlib
+from io import StringIO
 import os
 import re
 import subprocess
@@ -631,7 +632,50 @@ def test_render_figures_raises_plot_error_from_the_render_process(monkeypatch, t
 
 def test_embed_py_file_downloads_in_a_subprocess_in_a_forked_worker(monkeypatch):
     monkeypatch.setattr(_embed_py_file, 'in_forked_worker', lambda: True)
-    run = MagicMock(return_value=SimpleNamespace(stdout='noise\n["one.py"]\n'))
+    run = MagicMock(return_value=SimpleNamespace(stdout='["one.py"]'))
     monkeypatch.setattr(_embed_py_file.subprocess, 'run', run)
     assert _embed_py_file._download('name') == ['one.py']
     assert run.call_args.args[0][-1] == 'name'
+
+
+def test_embed_py_file_reports_non_json_download_output(monkeypatch):
+    monkeypatch.setattr(_embed_py_file, 'in_forked_worker', lambda: True)
+    run = MagicMock(return_value=SimpleNamespace(stdout='Downloading...\n'))
+    monkeypatch.setattr(_embed_py_file.subprocess, 'run', run)
+    with pytest.raises(RuntimeError, match=r"non-JSON output: 'Downloading"):
+        _embed_py_file._download('name')
+
+
+def test_render_process_reports_a_non_json_reply():
+    process = _plot_subprocess.RenderProcess.__new__(_plot_subprocess.RenderProcess)
+    process._stdout = StringIO('Downloading...\n')
+    with pytest.raises(RuntimeError, match=r"not JSON: 'Downloading"):
+        process._recv()
+
+
+def test_render_process_keeps_snippet_output_off_the_protocol(monkeypatch, tmp_path):
+    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    process = _plot_subprocess.RenderProcess()
+    code = '>>> print("to stdout")\n>>> __import__("os").write(1, b"to fd 1\\n")\n'
+    results, _warnings, _records = process.run(_job(code, tmp_path), want_records=False)
+    process.close()
+    assert len(results) == 1
+
+
+def test_render_process_ends_the_interpreter_when_its_setup_fails(monkeypatch):
+    def fail():
+        msg = 'setup failed'
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(_plot_subprocess, '_error_output_file', fail)
+    close = _plot_subprocess.RenderProcess.close
+    exit_codes = []
+
+    def spy(self):
+        close(self)
+        exit_codes.append(self._proc.returncode)
+
+    monkeypatch.setattr(_plot_subprocess.RenderProcess, 'close', spy)
+    with pytest.raises(RuntimeError, match='setup failed'):
+        _plot_subprocess.RenderProcess()
+    assert exit_codes == [0]

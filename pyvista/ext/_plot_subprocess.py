@@ -62,22 +62,36 @@ def _error_output_file() -> str | None:
     return None
 
 
+#: The render process writes its stdout to the worker's stderr.
+_STDERR_FD = 2
+
+
 class RenderProcess:
     """A spawned interpreter that renders the snippets of one Sphinx worker."""
 
     def __init__(self) -> None:
         """Start the interpreter and send it this process's theme, paths, and warning filters."""
+        reply_read, reply_write = os.pipe()
         self._proc = subprocess.Popen(
-            [sys.executable, '-c', 'from pyvista.ext._plot_subprocess import main; main()'],
+            [sys.executable, '-m', 'pyvista.ext._plot_subprocess', str(reply_write)],
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
+            stdout=_STDERR_FD,
+            pass_fds=(reply_write,),
             text=True,
             env={**os.environ, 'PYTHONPATH': os.pathsep.join(p for p in sys.path if p)},
         )
+        os.close(reply_write)
         self._stdin = cast('IO[str]', self._proc.stdin)
-        self._stdout = cast('IO[str]', self._proc.stdout)
+        self._stdout = os.fdopen(reply_read)
+        try:
+            self._send_init()
+        except BaseException:
+            self.close()
+            raise
+
+    def _send_init(self) -> None:
+        """Send this process's theme, paths, and warning filters, then wait for the ready reply."""
         theme = pv.global_theme.to_dict()
-        theme['trame'].pop('jupyter_extension_available')
         self._send(
             {
                 'warning_filters': [
@@ -112,7 +126,11 @@ class RenderProcess:
         line = self._stdout.readline()
         if not line:
             self._raise_exited()
-        return json.loads(line)
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError:
+            msg = f'The pyvista-plot render process sent a line that is not JSON: {line[:500]!r}'
+            raise RuntimeError(msg) from None
 
     def _raise_exited(self) -> None:
         """Raise an error saying that the render process exited."""
@@ -168,22 +186,22 @@ def store_records(
     _store_records(env, env.docname, [_from_jsonable(e) for e in records], category=category)
 
 
-def main() -> None:  # pragma: no cover
-    """Serve render jobs over stdin/stdout, one JSON message per line."""
+def main(reply_fd: int) -> None:  # pragma: no cover
+    """Serve render jobs read from stdin, one JSON message per line, replying on ``reply_fd``."""
     from pyvista.ext.plot_directive import PlotError  # noqa: PLC0415
     from pyvista.ext.plot_directive import _execute_pieces  # noqa: PLC0415
 
-    # keep the original stdout for the protocol and send fd 1 to stderr
-    protocol = os.fdopen(os.dup(sys.stdout.fileno()), 'w')
-    sys.stdout.flush()
-    os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+    protocol = os.fdopen(reply_fd, 'w')
 
     def reply(message: dict[str, Any]) -> None:
         """Write one JSON message to the worker."""
         protocol.write(json.dumps(message) + '\n')
         protocol.flush()
 
-    init = json.loads(sys.stdin.readline())
+    init_line = sys.stdin.readline()
+    if not init_line:
+        return
+    init = json.loads(init_line)
     warnings.resetwarnings()
     for action, message, category, module, lineno in init['warning_filters']:
         warnings.filterwarnings(
@@ -217,3 +235,7 @@ def main() -> None:  # pragma: no cover
             reply({'error': str(error)})
         except Exception:  # noqa: BLE001
             reply({'error': traceback.format_exc()})
+
+
+if __name__ == '__main__':  # pragma: no cover
+    main(int(sys.argv[1]))

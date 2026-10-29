@@ -29,14 +29,20 @@ def _download(name: str) -> str | list[str]:
     if not in_forked_worker():
         return download_file(name)
     code = (
-        'import json, sys\n'
+        'import json, os, sys\n'
+        'result_fd = os.dup(1)\n'
+        'os.dup2(2, 1)\n'
         'from pyvista.examples.downloads import download_file\n'
-        'print(json.dumps(download_file(sys.argv[1])))'
+        'os.write(result_fd, json.dumps(download_file(sys.argv[1])).encode())\n'
     )
     result = subprocess.run(
         [sys.executable, '-c', code, name], check=True, capture_output=True, text=True
     )
-    return json.loads(result.stdout.splitlines()[-1])
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        msg = f'The embed-py-file download process sent non-JSON output: {result.stdout[:500]!r}'
+        raise RuntimeError(msg) from None
 
 
 class EmbedPyFileDirective(Directive):
