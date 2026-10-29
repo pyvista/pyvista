@@ -1,4 +1,4 @@
-name: VTK Dev Testing
+name: Unit Tests VTK Dev
 
 on:
   pull_request:
@@ -33,6 +33,24 @@ jobs:
       os: ubuntu-22.04
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       coverage: true
+      rows: '[{"python": "3.14", "vtk": "dev"}]'
+
+  macOS:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: macOS
+      os: macos-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: '[{"python": "3.14", "vtk": "dev"}]'
+
+  Windows:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Windows
+      os: windows-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
       rows: '[{"python": "3.14", "vtk": "dev"}]'
 
   # Uploads under its own flags, apart from the unit testing coverage.
