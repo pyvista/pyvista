@@ -251,6 +251,8 @@ logo.point_data['rgba'].shape
 np.array_equal(logo.point_data['rgba'], pv.read(examples.logofile).point_data['PNGImage'])
 
 # %%
+# Plot the image.
+
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
