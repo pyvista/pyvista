@@ -188,7 +188,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make docs              # build the full documentation via tox (matches CI)
     make docs-test-build   # sanity-check the built documentation via tox (matches CI)
     make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista/numpy-nightly
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
@@ -1111,7 +1111,7 @@ default and is tested on every pull request; cvista is tested at **integration c
 
 .. code-block:: shell
 
-    make integration PROJECT=cvista
+    tox run -e py3.13-vtk_cvista
 
 It is not on the per-PR fast path because it is a full extra run of the suite against a second VTK build, and because a
 failure there is rarely a reason to block an unrelated PR.
