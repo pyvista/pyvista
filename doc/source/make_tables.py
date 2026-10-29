@@ -28,7 +28,6 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
-from typing import get_overloads
 
 import cmcrameri
 import cmocean
@@ -2248,6 +2247,7 @@ class DatasetCard:
             datasource_links,
             n_cells,
             n_points,
+            depth,
             length,
             dimensions,
             spacing,
@@ -2270,6 +2270,7 @@ class DatasetCard:
             celltype_field=celltype_field,
             n_cells=n_cells,
             n_points=n_points,
+            depth=depth,
             length=length,
             dimensions=dimensions,
             spacing=spacing,
@@ -2318,6 +2319,7 @@ class DatasetCard:
         # properties collected directly from the dataset
         n_cells = DatasetPropsGenerator.generate_n_cells(loader)
         n_points = DatasetPropsGenerator.generate_n_points(loader)
+        depth = DatasetPropsGenerator.generate_depth(loader)
         length = DatasetPropsGenerator.generate_length(loader)
         dimensions = DatasetPropsGenerator.generate_dimensions(loader)
         spacing = DatasetPropsGenerator.generate_spacing(loader)
@@ -2335,6 +2337,7 @@ class DatasetCard:
             datasource_links,
             n_cells,
             n_points,
+            depth,
             length,
             dimensions,
             spacing,
@@ -2589,6 +2592,7 @@ class DatasetCard:
         celltype_field,
         n_cells,
         n_points,
+        depth,
         length,
         dimensions,
         spacing,
@@ -2599,6 +2603,7 @@ class DatasetCard:
             ('Cell Type', celltype_field),
             ('N Cells', n_cells),
             ('N Points', n_points),
+            ('Depth', depth),
             ('Length', length),
             ('Dimensions', dimensions),
             ('Spacing', spacing),
@@ -2798,6 +2803,14 @@ class DatasetPropsGenerator:
         )
 
     @staticmethod
+    def generate_depth(loader):
+        """Format the nesting depth of a :class:`~pyvista.MultiBlock` dataset."""
+        dataset = loader.dataset
+        if isinstance(dataset, pv.MultiBlock):
+            return DatasetPropsGenerator._generate_number(dataset.depth)
+        return None
+
+    @staticmethod
     def generate_length(loader):
         return DatasetPropsGenerator._generate_number(
             DatasetPropsGenerator._try_getattr(loader.dataset, 'length'),
@@ -2884,7 +2897,6 @@ class _DatasetCardResult:
     dataset_name: str
     rst: str
     facet_labels: dict[str, str]
-    type_mismatch: str | None
 
 
 def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResult:
@@ -2913,11 +2925,10 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
         rst = _pad_lines(card.generate(), pad_left='   ')
         facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
 
-        type_mismatch = _validate_function_annotation(card)
         dataset_loader.clear_dataset()
     _raise_for_vtk_output(dataset_name, catcher.events)
 
-    return _DatasetCardResult(dataset_name, rst, facet_labels, type_mismatch)
+    return _DatasetCardResult(dataset_name, rst, facet_labels)
 
 
 def _raise_for_vtk_output(dataset_name: str, events: list[pv.VtkEvent]) -> None:
@@ -2961,19 +2972,11 @@ class DatasetCardFetcher:
                 ]
                 results = [future.result() for future in futures]
 
-        type_mismatches: dict[str, str] = {}
         for result in results:
             cls.DATASET_CARDS_RST[result.dataset_name] = result.rst
             cls.FACET_LABELS.update(result.facet_labels)
-            if result.type_mismatch:
-                type_mismatches[result.dataset_name] = result.type_mismatch
 
         cls.DATASET_CARDS_RST = dict(sorted(cls.DATASET_CARDS_RST.items()))
-
-        if type_mismatches:
-            mismatches = '\n'.join(sorted(type_mismatches.values()))
-            msg = f'Type mismatches:\n{mismatches}'
-            raise RuntimeError(msg)
 
     @classmethod
     def generate_filter_toolbar(cls) -> str:
@@ -3102,11 +3105,6 @@ def _split_union(annotation: str) -> list[str]:
     return members
 
 
-def _union_members(annotation: str) -> set[str]:
-    """Split a return annotation into its union members, so order does not matter."""
-    return set(_split_union(annotation))
-
-
 def _annotated_dataset_type(function: FunctionType) -> str:
     """Return the dataset part of a function's return annotation, without path or texture types."""
     annotation = _annotation_str(inspect.signature(function).return_annotation)
@@ -3200,59 +3198,6 @@ def _annotation_rst(annotation: str) -> str:
     if len(rst_lines) == 1 or all(indent == 0 for indent, _ in rst_lines):
         return ' '.join(text for _, text in rst_lines)
     return '\n'.join('| ' + ' ' * indent + text for indent, text in rst_lines)
-
-
-def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
-    """Return the dataset type an example loads and the type ``load=False`` gives back."""
-    dataset = card.loader.dataset
-    dataset_type = (
-        dataset.inferred_type if isinstance(dataset, pv.MultiBlock) else type(dataset).__name__
-    )
-    # `_download_dataset` collapses to a bare path only when there is one to return
-    loadable = getattr(card.loader, 'loadable_paths', ())
-    return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
-
-
-def _validate_function_annotation(card: DatasetCard) -> str | None:
-    """Return a message if a download/load function's return annotations are wrong.
-
-    Every ``@overload`` is checked as well as the implementation, because the overloads
-    are what a caller and a type checker actually see; an implementation annotated as a
-    union says nothing about which branch returns which half.
-    """
-    if card.module not in DATASET_GALLERY_MODULES:
-        return None
-
-    function = card.function
-    signature = inspect.signature(function)
-    dataset_type, path_type = _expected_return_types(card)
-
-    expected = {dataset_type}
-    if 'texture' in signature.parameters:
-        expected.add('Texture')
-    if 'load' in signature.parameters:
-        expected.add(path_type)
-
-    problems = []
-    actual = _annotation_str(signature.return_annotation)
-    if _union_members(actual) != expected:
-        problems.append(f'annotated {actual!r}, expected {" | ".join(sorted(expected))!r}')
-
-    for overload in get_overloads(function):
-        overload_signature = inspect.signature(overload)
-        load = overload_signature.parameters.get('load')
-        if load is None or 'Literal[False]' not in _annotation_str(load.annotation):
-            continue
-        returns = _annotation_str(overload_signature.return_annotation)
-        if _union_members(returns) != {path_type}:
-            problems.append(
-                f'`load=False` overload returns {returns!r}, expected {path_type!r}',
-            )
-
-    if problems:
-        joined = '\n\t'.join(problems)
-        return f'{function.__name__!r}:\n\t{joined}'
-    return None
 
 
 def make_dataset_carousel(jobs: int = 1) -> str:  # noqa: D103

@@ -13,10 +13,11 @@ from pyvista import _vtk
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from pyvista import CellArray
     from pyvista import PolyData
 
 
-def _cells(connectivity: NDArray[np.int64], sizes: NDArray[np.int64]) -> pv.CellArray:
+def _cells(connectivity: NDArray[np.int64], sizes: NDArray[np.int64]) -> CellArray:
     """Return a cell array holding cells given by their point ids and sizes."""
     return pv.CellArray.from_arrays(np.concatenate([[0], np.cumsum(sizes)]), connectivity)
 

@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import MissingDataError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
@@ -141,7 +143,7 @@ class RectilinearGridFilters:
 
         alg.SetInputData(mesh)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
-        out = _get_output(alg)
+        out = _get_output(alg, output_type=pv.UnstructuredGrid)
 
         if pass_data:
             # algorithm stores original cell ids in active scalars
@@ -167,10 +169,11 @@ class RectilinearGridFilters:
 
         if alg.GetRememberVoxelId():
             # original cell_ids are not named and are the active scalars
-            out.cell_data.set_array(
-                out.cell_data.pop(out.cell_data.active_scalars_name),
-                'vtkOriginalCellIds',
-            )
+            voxel_ids_name = out.cell_data.active_scalars_name
+            if voxel_ids_name is None:  # pragma: no cover
+                msg = 'The tetrahedralized grid has no voxel ids.'
+                raise MissingDataError(msg)
+            out.cell_data.set_array(out.cell_data.pop(voxel_ids_name), 'vtkOriginalCellIds')
 
         if pass_data:
             # Now reset active scalars in cast the original mesh had data with active scalars

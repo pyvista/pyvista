@@ -221,7 +221,7 @@ def _map_extensions(*classes: _FileIOT) -> dict[str, _FileIOT]:
     return mapping
 
 
-def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+def _warn_multiblock_nested_field_data(mesh: DataObject) -> None:
     if not isinstance(mesh, pv.MultiBlock):
         return
     iterator = mesh.recursive_iterator('all', node_type='parent')
@@ -461,7 +461,7 @@ def read(
 
     Returns
     -------
-    pyvista.DataSet | pyvista.MultiBlock
+    pyvista.DataObject
         Wrapped PyVista dataset. When ``cls`` is given, an instance of
         ``cls`` is returned instead.
 

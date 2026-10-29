@@ -61,20 +61,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CCACHE_DIR: ${{ github.workspace }}/compiler-cache
       CCACHE_MAXSIZE: 1G
-      # Version string, not mtime: survives a runner-image update that keeps the compiler.
-      CCACHE_COMPILERCHECK: "%compiler% --version"
-      SCCACHE_DIR: ${{ github.workspace }}/compiler-cache
       SCCACHE_CACHE_SIZE: 1G
 
     steps:
-      - name: Checkout PyVista build script
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-          sparse-checkout: .github/scripts
-
       - name: Checkout VTK master (pinned to nightly date-stamp commit)
         shell: bash
         run: |
@@ -135,7 +125,6 @@ jobs:
           path: vtk-commit-range.md
 
       - name: Setup Python
-        if: runner.os != 'Linux'
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
@@ -144,31 +133,12 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ccache
 
-      - name: Install NASM (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          # The pinned download VTK's own Windows wheel builds use, for libjpeg-turbo's SIMD code.
-          cd vtk-src
-          CMAKE_CONFIGURATION=windows cmake -P .gitlab/ci/download_nasm.cmake
-          cygpath -w "$PWD/.gitlab/nasm" >> "$GITHUB_PATH"
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
-      - name: Install build tools
-        if: runner.os != 'Linux'
+      - name: Install pyvista-build
         shell: bash
-        run: |
-          python -m pip install --upgrade pip wheel setuptools ninja
-          if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
-          if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
-
-      - name: Set compiler launcher
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            echo "COMPILER_LAUNCHER=sccache" >> "$GITHUB_ENV"
-          else
-            echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
-          fi
+        run: uv pip install --system "pyvista-build[tools]==0.4.0"
 
       # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
       # once-a-day entry before the next nightly can restore it.
@@ -208,41 +178,17 @@ jobs:
         if: runner.os == 'Windows'
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
 
-      - name: Start manylinux container (Linux)
-        if: runner.os == 'Linux'
+      - name: Build VTK wheel
+        shell: bash
+        # --manylinux (Linux) builds inside the manylinux_2_28 container.
         env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
+          MANYLINUX: ${{ runner.os == 'Linux' && '--manylinux' || '' }}
+          FORCE_COLOR: "1"
         run: |
-          # VTK's own x86_64 wheels build on this image (glibc 2.17), so auditwheel tags
-          # ours manylinux2014 as well. The steps below run through $RUN_IN, which stays
-          # empty on macOS and Windows.
-          py="cp${PYTHON_VERSION//./}"
-          docker run --detach --name manylinux \
-            --volume "$GITHUB_WORKSPACE:/work" --workdir /work \
-            --env RUNNER_OS=Linux --env VTK_NIGHTLY_SHA --env COMPILER_LAUNCHER \
-            --env CCACHE_DIR=/work/compiler-cache --env CCACHE_MAXSIZE --env CCACHE_COMPILERCHECK \
-            --env PYTHON="/opt/python/${py}-${py}/bin/python" \
-            quay.io/pypa/manylinux2014_x86_64 sleep infinity
-          docker exec manylinux bash -euxo pipefail -c '
-            yum install -y --setopt=install_weak_deps=False libX11-devel libXcursor-devel mesa-libGL-devel
-            "$PYTHON" -m pip install --upgrade pip wheel setuptools ninja cmake
-            curl -sSfL -o /tmp/ccache.tar.xz https://github.com/ccache/ccache/releases/download/v4.14/ccache-4.14-linux-x86_64-musl-static.tar.xz
-            echo "888eaf9697919d6eba77be797e9d9c9e40e734d11d67d25a79b075c3f79f6c77  /tmp/ccache.tar.xz" | sha256sum --check
-            tar -xJf /tmp/ccache.tar.xz -C /usr/local/bin --strip-components=1 ccache-4.14-linux-x86_64-musl-static/ccache
-          '
-          echo "RUN_IN=docker exec manylinux" >> "$GITHUB_ENV"
-
-      - name: Configure
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh configure
-
-      - name: Build
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh build
-
-      - name: Show compiler cache statistics
-        shell: bash
-        run: $RUN_IN $COMPILER_LAUNCHER --show-stats
+          pyvista-build vtk $MANYLINUX --yes --verbose \
+            --source vtk-src \
+            --build-dir vtk-build \
+            --cache-dir compiler-cache
 
       - name: Upload compiler cache
         # Never from a pull request: the nightly restores whichever upload is newest.
@@ -253,14 +199,6 @@ jobs:
           path: compiler-cache
           compression-level: 0
           retention-days: 7
-
-      - name: Build wheel
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh wheel
-
-      - name: Repair wheel
-        shell: bash
-        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh repair
 
       - name: Upload VTK wheel
         uses: actions/upload-artifact@v7

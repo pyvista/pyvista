@@ -56,7 +56,7 @@ class EmbedPyFileDirective(Directive):
                 raise TypeError(msg)
             path = Path(downloaded)
             text = path.read_text(encoding='utf-8')
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001 - reported as a Sphinx warning
             logger.warning(f'Failed to embed {name}: {e}')
             return []
 

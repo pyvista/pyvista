@@ -1099,6 +1099,10 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
     The PR either needs a new commit, for example updating the branch from ``main``, or to be
     closed/re-opened to rerun the CI with the label applied.
 
+The same build is available locally with `pyvista-build <https://pyvista.github.io/pyvista-build/>`_:
+``pyvista-build vtk --ref master`` clones VTK, configures it as CI does, and writes a wheel. Run it again after
+editing the checkout under ``vtk-build/src`` for an incremental rebuild. See :ref:`building_vtk`.
+
 Testing Against the ``cvista`` Backend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyVista also runs against `cvista <https://github.com/pyvista/cvista>`_, a community fork of VTK. Stock VTK is the
@@ -1286,8 +1290,8 @@ The tests can be executed with:
 
 Writing a Case
 """"""""""""""
-Cases live in ``tests/typing/cases``, under ``core`` or ``plotting`` after the
-subpackage of the callable they exercise. A case is one line: an expression, and
+Cases live in ``tests/typing/cases``, under ``core``, ``plotting`` or ``examples``
+after the subpackage of the callable they exercise. A case is one line: an expression, and
 the type it should have.
 
 .. code-block:: python
@@ -1314,6 +1318,8 @@ Each file holds the cases of one callable and is named after it: ``clip_scalar.p
 the bare name would not identify it, as for dunders (``multiblock_getitem.py``,
 ``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
 A file carries all the setup it needs, even when another file has the same helper.
+The dataset download functions share one overload pattern, so
+``examples/download_loaders.py`` covers them together.
 
 The directory carries its own ``ruff.toml`` raising the line length, so a case stays
 on one line however long it gets.

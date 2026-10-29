@@ -11,10 +11,13 @@ from __future__ import annotations
 import functools
 import html
 from importlib.resources import files as _resources_files
+import re
 from typing import TYPE_CHECKING
+from typing import ClassVar
 import uuid
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from collections.abc import Sequence
 
 
@@ -42,7 +45,13 @@ _MESH_TYPE_ICONS: dict[str, str] = {
     'ImageData': 'imagedata.svg',
     'RectilinearGrid': 'rectilinear.svg',
     'StructuredGrid': 'structured.svg',
+    'ExplicitStructuredGrid': 'explicit_structured.svg',
     'MultiBlock': 'multiblock.svg',
+    'PartitionedDataSet': 'partitioned.svg',
+    'Report': 'report.svg',
+    'GPUInfo': 'gpu.svg',
+    'Table': 'table.svg',
+    'Texture': 'texture.svg',
 }
 
 
@@ -333,6 +342,150 @@ def _children_section(
     )
 
 
+_KV_WIDE_CHARS = 28
+_KV_MAX_KEY_CHARS = 15
+
+
+def _kv_is_wide(value: str, key_chars: int) -> bool:
+    """Return whether a value needs a full row, counting value characters wider than key ones."""
+    return '\n' in value or key_chars + 1.2 * len(value) > _KV_WIDE_CHARS
+
+
+def _kv_wide_flags(values: Sequence[str], key_chars: int) -> list[bool]:
+    """Return which items take a full row, widening a narrow item left alone between full rows."""
+    wide = [_kv_is_wide(value, key_chars) for value in values]
+    edges = [True, *wide, True]
+    return [w or (edges[i] and edges[i + 2]) for i, w in enumerate(wide)]
+
+
+def _max_columns_style(max_columns: int | None) -> str:
+    """Return the CSS capping a ``pv-kv-list`` grid at ``max_columns`` columns."""
+    if not max_columns:
+        return ''
+    width = f'calc((100% - {max_columns - 1} * 16px) / {max_columns})'
+    return f' grid-template-columns: repeat(auto-fill, minmax(max(16em, {width}), 1fr));'
+
+
+def _key_value_section(
+    title: str,
+    items: Sequence[tuple[str, str]],
+    *,
+    muted_values: Collection[str] = (),
+    collapsed: bool = False,
+    max_columns: int | None = None,
+) -> str:
+    """Build a collapsible section of ``(key, value)`` pairs in a responsive grid."""
+    key_chars = min(max((len(key) for key, _ in items), default=0), _KV_MAX_KEY_CHARS)
+    wide = _kv_wide_flags([value for _, value in items], key_chars)
+    items_li = ''.join(
+        f"<li class='pv-kv-item{' pv-kv-wide' if is_wide else ''}'>"
+        f"<span class='pv-kv-key'>{html.escape(key)}</span>"
+        f"<span class='pv-kv-value{' pv-kv-muted' if value in muted_values else ''}"
+        f"{' pv-kv-multiline' if chr(10) in value else ''}'>"
+        f'{html.escape(value)}</span></li>'
+        for (key, value), is_wide in zip(items, wide, strict=True)
+    )
+    return collapsible_section(
+        f'{title}:',
+        details=(
+            f"<ul class='pv-kv-list' style='--pv-kv-key-chars: {key_chars};"
+            f"{_max_columns_style(max_columns)}'>{items_li}</ul>"
+        ),
+        n_items=len(items),
+        collapsed=collapsed,
+    )
+
+
+_ADDRESS_RE = re.compile(r'\s*\(0x[0-9a-fA-F]+\)$')
+_COLON_ITEM_RE = re.compile(r'^(?P<key>[^:]+?)\s*:(?:\s+(?P<value>.*))?$')
+_GAP_ITEM_RE = re.compile(r'^(?P<key>\S.*?)\s{2,}(?P<value>\S.*)$')
+_MAX_EXPANDED_SECTIONS = 3
+
+
+def _open_brackets(text: str) -> int:
+    """Return the number of brackets opened but not closed in ``text``."""
+    return sum(text.count(c) for c in '([{') - sum(text.count(c) for c in ')]}')
+
+
+def _parse_text_repr(
+    text: str,
+) -> tuple[str, dict[str, list[tuple[str, str]]], list[str]]:
+    """Split a text ``repr`` into its title, named ``(key, value)`` sections and leftover lines."""
+    entries: list[tuple[int, str | None, str]] = []
+    unparsed: list[str] = []
+    value_column = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or set(stripped) == {'-'}:
+            continue
+        indent = len(line) - len(line.lstrip())
+        if (
+            entries
+            and entries[-1][1] is not None
+            and _open_brackets(entries[-1][2]) > 0
+            and indent >= value_column > 0
+        ):
+            last_indent, last_key, last_value = entries[-1]
+            pad = ' ' * max(indent - value_column, 0)
+            entries[-1] = (last_indent, last_key, f'{last_value}\n{pad}{stripped}')
+            continue
+        match = _COLON_ITEM_RE.match(stripped) or _GAP_ITEM_RE.match(stripped)
+        if match:
+            value = (match['value'] or '').strip()
+            value_column = indent + stripped.rfind(value) if value else 0
+            entries.append((indent, match['key'].strip(), value))
+        elif indent == 0:
+            entries.append((0, None, _ADDRESS_RE.sub('', stripped)))
+        else:
+            unparsed.append(stripped)
+
+    title = ''
+    block = 'Properties'
+    sections: dict[str, list[tuple[str, str]]] = {}
+    groups: list[tuple[int, str]] = []
+    for i, (indent, key, value) in enumerate(entries):
+        if key is None:
+            if title:
+                block = value
+            else:
+                title = value
+            groups = []
+            continue
+        while groups and groups[-1][0] >= indent:
+            groups.pop()
+        parent = groups[-1][1] if groups else block
+        if value:
+            sections.setdefault(parent, []).append((key, value))
+        following = entries[i + 1] if i + 1 < len(entries) else None
+        if following is not None and following[1] is not None and following[0] > indent:
+            groups.append((indent, f'{parent} \u00b7 {key}' if groups else key))
+    return title, sections, unparsed
+
+
+def _text_repr_html(text: str, obj_type: str) -> str:
+    """Render a text ``repr`` as the HTML ``repr``, titled ``obj_type`` if it has no title."""
+    title, parsed, unparsed = _parse_text_repr(text)
+    collapse_rest = len(parsed) > _MAX_EXPANDED_SECTIONS
+    sections = [
+        _key_value_section(name, items, collapsed=collapse_rest and i > 0)
+        for i, (name, items) in enumerate(parsed.items())
+    ]
+    if unparsed:
+        details = f"<pre class='pv-pre'>{html.escape(chr(10).join(unparsed))}</pre>"
+        sections.append(collapsible_section('Details:', details=details, n_items=len(unparsed)))
+    return build_repr_html(title or obj_type, '', sections=sections, text_repr=text)
+
+
+class _TextReprHTMLMixin:
+    """Provide an HTML ``repr`` rendered from the text ``repr``."""
+
+    __slots__: ClassVar[Sequence[str]] = ()
+
+    def _repr_html_(self) -> str:
+        """Return a pretty representation for Jupyter notebooks."""
+        return _text_repr_html(repr(self), type(self).__name__)
+
+
 def _sections_html(sections: list[str]) -> str:
     """Wrap sections into a ``<ul>`` CSS grid."""
     items = ''.join(f"<li class='pv-section-item'>{s}</li>" for s in sections)
@@ -347,6 +500,7 @@ def build_repr_html(
     metadata: Sequence[tuple[str, list[tuple[str, str]], str]] = (),
     sections: Sequence[str] = (),
     text_repr: str = '',
+    header_copy: str = '',
 ) -> str:
     """Assemble a complete HTML ``repr`` with header, metadata, sections, and fallback.
 
@@ -355,7 +509,7 @@ def build_repr_html(
     obj_type : str
         Display name (for example, ``'PolyData'``).
     mesh_type : str
-        Key for mesh icon lookup (for example, ``'PolyData'``).
+        Key for mesh icon lookup (for example, ``'PolyData'``). No icon when empty.
     header_badges : Sequence[str]
         Labels shown as small badges in the header (for example, memory size).
     metadata : Sequence[tuple[str, list[tuple[str, str]], str]]
@@ -366,6 +520,8 @@ def build_repr_html(
         List of collapsible-section HTML fragments.
     text_repr : str
         Plain-text fallback for non-HTML environments.
+    header_copy : str
+        Text copied by a clipboard button in the header. No button when empty.
 
     Returns
     -------
@@ -376,14 +532,15 @@ def build_repr_html(
     css = _load_css()
 
     # Mesh icon
-    icon_svg = _load_mesh_icon(mesh_type) or _load_mesh_icon('ImageData') or ''
-    icon_html = f"<span class='pv-logo'>{icon_svg}</span>"
+    icon_svg = (_load_mesh_icon(mesh_type) or _load_mesh_icon('ImageData')) if mesh_type else ''
+    icon_html = f"<span class='pv-logo'>{icon_svg}</span>" if icon_svg else ''
 
     # PyVista brand logo (top-right)
     pv_logo = _load_pyvista_logo()
     pv_logo_html = f"<span class='pv-brand-logo'>{pv_logo}</span>"
 
     # Header badges
+    copy_html = _copy_btn(header_copy) if header_copy else ''
     badges_html = ''.join(
         f" <span class='pv-header-badge'>{html.escape(b)}</span>" for b in header_badges
     )
@@ -394,6 +551,7 @@ def build_repr_html(
         "<div class='pv-header-text'>"
         f"<div class='pv-obj-type'>{html.escape(obj_type)}{badges_html}</div>"
         '</div>'
+        f'{copy_html}'
         f'{pv_logo_html}'
         '</div>'
     )

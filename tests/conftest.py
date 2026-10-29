@@ -596,6 +596,7 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
+        'typing/cases/examples/download_loaders.py',
         'typing/cases/plotting/add_actor.py',
         'typing/cases/plotting/add_axes.py',
         'typing/cases/plotting/add_axes_at_origin.py',
@@ -607,11 +608,14 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/add_mesh.py',
         'typing/cases/plotting/add_north_arrow_widget.py',
         'typing/cases/plotting/add_orientation_widget.py',
+        'typing/cases/plotting/add_plane_widget.py',
         'typing/cases/plotting/add_ruler.py',
         'typing/cases/plotting/add_scalar_bar.py',
+        'typing/cases/plotting/add_sphere_widget.py',
         'typing/cases/plotting/add_text.py',
         'typing/cases/plotting/add_title.py',
         'typing/cases/plotting/add_volume.py',
+        'typing/cases/plotting/add_volume_clip_plane.py',
         'typing/cases/plotting/compute_bounds.py',
         'typing/cases/plotting/enable_depth_peeling.py',
         'typing/cases/plotting/get_default_cam_pos.py',
@@ -619,6 +623,7 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/image.py',
         'typing/cases/plotting/image_from_window.py',
         'typing/cases/plotting/map_value.py',
+        'typing/cases/plotting/plot_logo.py',
         'typing/cases/plotting/plotter_set_chart_interaction.py',
         'typing/cases/plotting/property_culling.py',
         'typing/cases/plotting/remove_actor.py',
@@ -638,6 +643,13 @@ _RENDERING_MODULES = frozenset(
         'core/test_utilities.py',
     }
 )
+
+# Typing case files whose runtime halves read downloaded example files, mapped to the
+# text naming those cases (empty matches every case in the file).
+_DOWNLOAD_CASES = {
+    'typing/cases/examples/download_loaders.py': '',
+    'typing/cases/examples/get_example.py': "'electronics_cooling'",
+}
 
 # Subset of ``_RENDERING_MODULES`` importing rendering at module scope, so on a
 # rendering-free backend they must be skipped at collection time (a marker is too late).
@@ -686,10 +698,10 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
 
 
 def pytest_collection_modifyitems(config, items):  # noqa: ARG001
-    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` markers.
+    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` / ``needs_download`` markers.
 
-    See ``_RENDERING_*`` and ``_IO_EXTRA_*`` above. The ``needs_io_extra``
-    marking only fires when the relevant ``HAS_IO_*`` probe reports the module
+    See ``_RENDERING_*``, ``_IO_EXTRA_*`` and ``_DOWNLOAD_CASES`` above. The
+    ``needs_io_extra`` marking only fires when the relevant ``HAS_IO_*`` probe reports the module
     absent, so it is a no-op on a full VTK build.
     """
     tests_root = Path(__file__).parent
@@ -714,6 +726,14 @@ def pytest_collection_modifyitems(config, items):  # noqa: ARG001
             item.add_marker(mark)
         if _name_needs_io_extra(item):
             item.add_marker(io_extra_mark)
+        # Only the runtime half reads files; the static half checks without them
+        download_text = _DOWNLOAD_CASES.get(rel)
+        if (
+            download_text is not None
+            and download_text in item.name
+            and item.name.endswith('[runtime]')
+        ):
+            item.add_marker(pytest.mark.needs_download)
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):

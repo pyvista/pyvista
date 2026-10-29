@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import html
+from importlib.metadata import version
 import importlib.util
 import inspect
+from io import StringIO
 import itertools
 import json
 import operator
@@ -14,6 +17,7 @@ import pickle
 import platform
 import re
 import shutil
+import signal
 import sys
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -552,6 +556,18 @@ def test_is_inside_bounds_raises():
         is_inside_bounds(point=None, bounds=(0,))
 
 
+def test_report_gpu_errors(monkeypatch):
+    def fail(*_):
+        msg = 'no GPU'
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr('pyvista.report.GPUInfo.get_info', fail)
+    monkeypatch.setattr('pyvista.report._get_render_window_class', fail)
+    report = repr(pv.Report(gpu=True))
+    assert 'GPU Details : error' in report
+    assert 'Render Window : error' in report
+
+
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
@@ -595,6 +611,45 @@ def test_report_env_vars(monkeypatch):
     repr_ = repr(pv.Report(gpu=False, env_vars=True))
     assert 'PYVISTA_FOO : bar' in repr_
     assert 'NOTPYVISTA_VAR' not in repr_
+
+
+@pytest.mark.parametrize('mkl_info', [None, 'Intel(R) oneMKL <2025>'])
+def test_report_repr_html_mkl(monkeypatch, mkl_info):
+    monkeypatch.setattr(pv.Report, 'mkl_info', mkl_info)
+    html_ = pv.Report(gpu=False)._repr_html_()
+    assert ('>MKL<' in html_) is (mkl_info is not None)
+    if mkl_info:
+        assert html.escape(mkl_info) in html_
+
+
+def test_report_repr_html(monkeypatch):
+    monkeypatch.setenv('PYVISTA_FOO', '<b>')
+    monkeypatch.setattr(pv.Report, 'date', 'Tue Oct 27 18:46:23 2026 UTC')
+    report = pv.Report(gpu=False, env_vars=True, additional=['not_a_real_package'])
+    html_ = report._repr_html_()
+    assert html.escape(str(report)) in html_
+    assert "<span class='pv-kv-key'>numpy</span>" in html_
+    assert f"<span class='pv-kv-value'>{version('numpy')}</span>" in html_
+    assert "<span class='pv-kv-value pv-kv-muted'>Module not found</span>" in html_
+    assert "<span class='pv-kv-value'>&lt;b&gt;</span>" in html_
+    assert "class='pv-copy-btn'" in html_
+    assert 'id="pv-rp-g1"' in html_
+    assert '<table' not in html_
+
+
+@pytest.mark.parametrize('ncol', [1, 5])
+def test_report_repr_html_ncol(ncol):
+    html_ = pv.Report(gpu=False, ncol=ncol)._repr_html_()
+    width = f'calc((100% - {ncol - 1} * 16px) / {ncol})'
+    assert html_.count(f'minmax(max(16em, {width}), 1fr)') == 2
+
+
+def test_gpu_info_repr_html(monkeypatch):
+    monkeypatch.setattr('pyvista.report.GPUInfo.get_info', lambda _: [('GPU Vendor', 'Acme & Co')])
+    html_ = pv.GPUInfo()._repr_html_()
+    assert "<span class='pv-kv-key'>GPU Vendor</span>" in html_
+    assert 'Acme &amp; Co' in html_
+    assert '<table' not in html_
 
 
 def test_line_segments_from_points():
@@ -773,13 +828,118 @@ def test_progress_monitor_interrupt_without_abort_execute():
     algorithm = _vtk.vtkSphereSource()
     monitor = ProgressMonitor(algorithm)
     monitor._interrupt_signal_received = True
+    monitor._old_handler = signal.default_int_handler
     monitor(algorithm)
     assert algorithm.GetAbortExecute()
 
     reader = _PVDReader()
     monitor = ProgressMonitor(reader)
     monitor._interrupt_signal_received = True
+    monitor._old_handler = signal.default_int_handler
     monitor(reader)
+
+
+def _send_sigint_on_start(alg):
+    """Make ``alg`` send SIGINT to the process the first time it starts executing."""
+
+    def send_sigint(*_):
+        alg.RemoveObservers(_vtk.vtkCommand.StartEvent)
+        handler = signal.getsignal(signal.SIGINT)
+        # An interrupt that reaches a VTK callback unhandled exits the process
+        if isinstance(getattr(handler, '__self__', None), ProgressMonitor):  # pragma: no branch
+            signal.raise_signal(signal.SIGINT)
+
+    alg.AddObserver(_vtk.vtkCommand.StartEvent, send_sigint)
+
+
+def _interrupting_elevation_filter():
+    """Return an elevation filter that sends SIGINT to the process when it starts."""
+    alg = _vtk.vtkElevationFilter()
+    alg.SetInputData(pv.Sphere(theta_resolution=400, phi_resolution=400))
+    _send_sigint_on_start(alg)
+    return alg
+
+
+@pytest.fixture
+def restore_sigint():
+    """Restore the SIGINT handler a test replaces."""
+    old_handler = signal.getsignal(signal.SIGINT)
+    yield
+    signal.signal(signal.SIGINT, old_handler)
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_interrupt_raises():
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    alg = _interrupting_elevation_filter()
+    with pytest.raises(KeyboardInterrupt), ProgressMonitor(alg):
+        alg.Update()
+    assert pv.wrap(alg.GetOutput()).n_points == 0
+    assert not alg.GetAbortExecute()
+    assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_interrupt_calls_previous_handler():
+    received = []
+
+    def previous_handler(sig, _frame):
+        received.append(sig)
+
+    signal.signal(signal.SIGINT, previous_handler)
+    alg = _interrupting_elevation_filter()
+    with ProgressMonitor(alg):
+        alg.Update()
+    assert pv.wrap(alg.GetOutput()).n_points == pv.wrap(alg.GetInput()).n_points
+    assert not alg.GetAbortExecute()
+    assert signal.getsignal(signal.SIGINT) is previous_handler
+    assert received == [signal.SIGINT]
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_interrupt_without_abort_execute_off():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    received = []
+
+    def previous_handler(sig, _frame):
+        received.append(sig)
+
+    signal.signal(signal.SIGINT, previous_handler)
+    with ProgressMonitor(_PVDReader()):
+        signal.raise_signal(signal.SIGINT)
+    assert received == [signal.SIGINT]
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_reader_reads_again_after_interrupt(tmp_path):
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    path = tmp_path / 'sphere.vtp'
+    sphere = pv.Sphere(theta_resolution=400, phi_resolution=400)
+    sphere.save(path)
+    reader = pv.get_reader(path)
+    reader.show_progress()
+    _send_sigint_on_start(reader.reader)
+    with pytest.raises(KeyboardInterrupt):
+        reader.read()
+    assert reader.read().n_points == sphere.n_points
+
+
+@pytest.mark.usefixtures('restore_sigint')
+def test_progress_monitor_keeps_ignored_sigint():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    with ProgressMonitor(_vtk.vtkSphereSource()):
+        assert signal.getsignal(signal.SIGINT) is signal.SIG_IGN
+    assert signal.getsignal(signal.SIGINT) is signal.SIG_IGN
+
+
+def test_progress_monitor_keeps_handler_installed_outside_python(monkeypatch):
+    monkeypatch.setattr(signal, 'getsignal', lambda _sig: None)
+    set_handler = MagicMock()
+    monkeypatch.setattr(signal, 'signal', set_handler)
+    with ProgressMonitor(_vtk.vtkSphereSource()):
+        pass
+    set_handler.assert_not_called()
 
 
 def test_observer():
@@ -810,6 +970,37 @@ def test_observer():
     obs.observe(alg)
     with pytest.raises(RuntimeError, match='algorithm'):
         obs.observe(alg)
+
+
+def test_observer_prints_traceback_of_handling_error(monkeypatch):
+    def parse_message(_message):
+        msg = 'parse failure'
+        raise ValueError(msg)
+
+    obs = Observer()
+    monkeypatch.setattr(obs, 'parse_message', parse_message)
+    stdout, stderr = StringIO(), StringIO()
+    monkeypatch.setattr(sys, '__stdout__', stdout)
+    monkeypatch.setattr(sys, '__stderr__', stderr)
+    obs(None, None, 'foo')
+    assert "'foo'" in stdout.getvalue()
+    assert 'parse_message' in stderr.getvalue()
+    assert 'ValueError: parse failure' in stderr.getvalue()
+
+
+def test_observer_survives_unusable_streams(monkeypatch, caplog):
+    def parse_message(_message):
+        msg = 'parse failure'
+        raise ValueError(msg)
+
+    obs = Observer()
+    monkeypatch.setattr(obs, 'parse_message', parse_message)
+    closed = StringIO()
+    closed.close()
+    monkeypatch.setattr(sys, '__stdout__', closed)
+    with caplog.at_level('DEBUG', logger='pyvista.core.utilities.observers'):
+        obs(None, None, 'foo')
+    assert 'Failed to print VTK error message' in caplog.text
 
 
 def test_observer_default_event():
@@ -3693,7 +3884,7 @@ def test_writer_data_mode_mixin(writer_cls):
 def test_fileio_extensions(cls):
     if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('Needs vtk 9.4')
-    if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
+    if cls == pv.OpenFOAMReader:
         # These classes are not associated with any extensions
         pytest.xfail()
     assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
@@ -3789,7 +3980,7 @@ def test_file_formats_unique_and_used():
             pv.ExplicitStructuredGrid,
             {'.vtk': pv.UnstructuredGridWriter, '.vtu': pv.XMLUnstructuredGridWriter},
         ),
-        (pv.PointSet, {'.xyz': pv.SimplePointsWriter}),
+        (pv.PointSet, {'.txt': pv.SimplePointsWriter, '.xyz': pv.SimplePointsWriter}),
         (
             pv.MultiBlock,
             {

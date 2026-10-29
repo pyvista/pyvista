@@ -433,7 +433,10 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     assert multi._repr_html_() is not None
     pattern = (
         r'MultiBlock\[.+\] \(0x[0-9a-fA-F]+\)'
+        r'\s+N Cells:\s{4}\d+'
+        r'\s+N Points:\s{3}\d+'
         r'\s+N Blocks:\s{3}\d+'
+        r'\s+Depth:\s{6}\d+'
         r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Z Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
@@ -443,6 +446,45 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     assert str(multi) == match.string
 
 
+@pytest.mark.parametrize(
+    ('blocks', 'depth'),
+    [
+        ([], 1),
+        ([None], 1),
+        ([pv.Sphere()], 1),
+        ([pv.MultiBlock()], 2),
+        ([pv.Sphere(), pv.MultiBlock([None, pv.Cube()])], 2),
+        ([pv.MultiBlock([pv.MultiBlock()]), pv.MultiBlock([pv.Cube()])], 3),
+        ([pv.Cube(), pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock()])], 3),
+    ],
+)
+def test_multi_block_counts(blocks, depth):
+    multi = pv.MultiBlock(blocks)
+    leaves = list(multi.recursive_iterator(skip_none=True))
+    assert multi.n_points == sum(leaf.n_points for leaf in leaves)
+    assert multi.n_cells == sum(leaf.n_cells for leaf in leaves)
+    assert isinstance(multi.n_points, int)
+    assert isinstance(multi.n_cells, int)
+    assert multi.depth == depth
+    assert multi.is_nested == (depth > 1)
+
+
+def test_multi_block_counts_values():
+    multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+    assert multi.n_points == 850
+    assert multi.n_cells == 1686
+    assert multi.depth == 2
+    lines = repr(multi).splitlines()
+    assert lines[1:5] == [
+        '  N Cells:    1686',
+        '  N Points:   850',
+        '  N Blocks:   3',
+        '  Depth:      2',
+    ]
+    badges = re.findall(r"<span class='pv-header-badge'>([^<]*)</span>", multi._repr_html_())
+    assert badges[:4] == ['850 points', '1,686 cells', '3 blocks', 'depth 2']
+
+
 def test_multi_block_repr_bounds():
     empty_poly = pv.PolyData().extract_cells([])
     poly_x_bounds = repr(empty_poly).splitlines()[3]
@@ -450,9 +492,9 @@ def test_multi_block_repr_bounds():
     poly_z_bounds = repr(empty_poly).splitlines()[5]
 
     empty_multiblock = pv.MultiBlock([empty_poly])
-    multi_x_bounds = repr(empty_multiblock).splitlines()[2]
-    multi_y_bounds = repr(empty_multiblock).splitlines()[3]
-    multi_z_bounds = repr(empty_multiblock).splitlines()[4]
+    multi_x_bounds = repr(empty_multiblock).splitlines()[5]
+    multi_y_bounds = repr(empty_multiblock).splitlines()[6]
+    multi_z_bounds = repr(empty_multiblock).splitlines()[7]
 
     assert multi_x_bounds == poly_x_bounds
     assert multi_y_bounds == poly_y_bounds
