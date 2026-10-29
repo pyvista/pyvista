@@ -66,6 +66,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
+    from pyvista import Grid
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
@@ -604,7 +605,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
         if exclude_fields:
 
-            def exclude(left: Sequence[_T], right: Sequence[_T]) -> Sequence[_T]:
+            def exclude(left: Sequence[_T], right: Sequence[_T]) -> list[_T]:
                 return [val for val in left if val not in right]
 
             return (
@@ -846,7 +847,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             ]
 
         name_norm = _MeshValidator._normalize_field_name(name)
-        ctype = cast('pv.CellType', cell_type)
+        ctype = cast('CellType', cell_type)
         if ctype and name_norm in ['zero size', 'negative size']:
             if ctype.dimension == 1:
                 size = 'length'
@@ -1979,7 +1980,7 @@ class DataObjectFilters:
                     planarity_tolerance if planarity_tolerance is not None else 0.1
                 )
             cell_validator.Update()
-            output = _get_output(cell_validator)
+            output = _get_output(cell_validator, output_type=type(self))
 
         def post_process(mesh: DataSet) -> None:
             # Make scalars 64-bit, rename, and make them active
@@ -2009,7 +2010,7 @@ class DataObjectFilters:
         def set_pyvista_validity_state(mesh: DataSet) -> None:
             state = mesh.cell_data['validity_state']
             # Grids are checked from their geometry, other meshes from their cells
-            ugrid: pv.UnstructuredGrid | None = None
+            ugrid: UnstructuredGrid | None = None
             if not isinstance(mesh, pv.Grid):
                 ugrid = (
                     mesh
@@ -2064,7 +2065,7 @@ class DataObjectFilters:
 
             # COINCIDENT_POINTS
             if ugrid is None:
-                grid = cast('pv.Grid', mesh)
+                grid = cast('Grid', mesh)
                 state[_grid_coincident_cells(grid, tol)] |= CellStatus.COINCIDENT_POINTS
                 # Grid connectivity is implicit, so skip the invalid point reference check below
                 return
@@ -2321,24 +2322,25 @@ class DataObjectFilters:
                 alg.SetTransformAllInputVectors(transform_all_input_vectors)
 
                 _update_alg(alg, progress_bar=progress_bar, message='Transforming')
-                vtk_filter_output = _get_output(alg)
+                vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
             else:
                 vtk_filter_output = self
 
-            if isinstance(output, pv.ImageData):
-                _orient_image_structure(output, cast('pv.ImageData', self), t)
+            # The output has the class of this mesh
+            if isinstance(output, pv.ImageData) and isinstance(self, pv.ImageData):
+                _orient_image_structure(output, self, t)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
-            elif isinstance(output, pv.RectilinearGrid):
-                components = cast(
-                    '_RectilinearComponents',
-                    rectilinear_components,
-                )
-                dataset = cast('pv.RectilinearGrid', self)
+            elif (
+                isinstance(output, pv.RectilinearGrid)
+                and isinstance(self, pv.RectilinearGrid)
+                and rectilinear_components is not None
+            ):
+                components = rectilinear_components
                 # Captured before the axes are permuted, which is in place when inplace=True
-                dimensions = dataset.dimensions
-                offset = dataset.offset
-                _transform_rectilinear_axes(output, dataset, components)
+                dimensions = self.dimensions
+                offset = self.offset
+                _transform_rectilinear_axes(output, self, components)
                 output.offset = _transform_rectilinear_offset(offset, dimensions, components)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
@@ -3430,12 +3432,18 @@ class DataObjectFilters:
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
-            a = _keep_array_structure(_get_output(alg, oport=0), source)
-            b = _keep_array_structure(_get_output(alg, oport=1), source)
+            a = _keep_array_structure(
+                _get_output(alg, output_type=(pv.DataSet, pv.MultiBlock), oport=0), source
+            )
+            b = _keep_array_structure(
+                _get_output(alg, output_type=(pv.DataSet, pv.MultiBlock), oport=1), source
+            )
             if crinkle:
                 a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
-        clipped = _keep_array_structure(_get_output(alg), source)
+        clipped = _keep_array_structure(
+            _get_output(alg, output_type=(pv.DataSet, pv.MultiBlock)), source
+        )
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
@@ -4119,7 +4127,7 @@ class DataObjectFilters:
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
         alg.SetGenerateTriangles(generate_triangles)
         _update_alg(alg, progress_bar=progress_bar, message='Slicing')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         # There is nothing to contour when the plane misses, and the cutter can leave
         # an empty output with no arrays for the contour to read
         if contour and output.n_cells:
@@ -4592,7 +4600,7 @@ class DataObjectFilters:
     # fmt: on
     def slice_along_line(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        line: pv.PolyData,
+        line: PolyData,
         *,
         generate_triangles: bool = False,
         contour: bool = False,
@@ -4705,7 +4713,7 @@ class DataObjectFilters:
         if not generate_triangles:
             alg.GenerateTrianglesOff()
         _update_alg(alg, progress_bar=progress_bar, message='Slicing along Line')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         # There is nothing to contour when the plane misses, and the cutter can leave
         # an empty output with no arrays for the contour to read
         if contour and output.n_cells:
@@ -4801,7 +4809,7 @@ class DataObjectFilters:
         # Always use all points since VTK >= 9.2 is required
         alg.SetUseAllPoints(True)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.PolyData)
         if clear_data:
             output.clear_data()
         return output
@@ -4974,7 +4982,7 @@ class DataObjectFilters:
             for poly in multi_polys.recursive_iterator(skip_empty=True, skip_none=True):
                 append.AddInputData(poly)
             _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
-            return _get_output(append)
+            return _get_output(append, output_type=pv.PolyData)
 
         if nonlinear_subdivision is None:
             nonlinear_subdivision = 1
@@ -5221,7 +5229,7 @@ class DataObjectFilters:
         alg.SetHighPoint(high_point_)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Elevation')
         # Decide on updating active scalars array
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=type(self))
         if not set_active:
             # 'Elevation' is automatically made active by the VTK filter
             output.point_data.active_scalars_name = self.point_data.active_scalars_name
@@ -5345,7 +5353,7 @@ class DataObjectFilters:
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(vertex_count)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
-        return _get_output(alg)
+        return _get_output(alg, output_type=type(self))
 
     # fmt: off
     # ruff: disable[E501]
@@ -5415,7 +5423,7 @@ class DataObjectFilters:
         _update_alg(
             alg, progress_bar=progress_bar, message='Generating Points at the Center of the Cells'
         )
-        return _get_output(alg)
+        return _get_output(alg, output_type=(pv.PolyData, pv.MultiBlock))
 
     def cell_data_to_point_data(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -5497,7 +5505,7 @@ class DataObjectFilters:
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming cell data into point data.'
         )
-        output = _get_output(alg, active_scalars=self.active_scalars_name)
+        output = _get_output(alg, output_type=type(self), active_scalars=self.active_scalars_name)
         if filtered is not None and pass_cell_data:
             output.cell_data.VTKObject.ShallowCopy(self.cell_data.VTKObject)
         return output
@@ -5639,7 +5647,7 @@ class DataObjectFilters:
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming point data into cell data'
         )
-        output = _get_output(alg, active_scalars=self.active_scalars_name)
+        output = _get_output(alg, output_type=type(self), active_scalars=self.active_scalars_name)
         if filtered is not None and pass_point_data:
             output.point_data.VTKObject.ShallowCopy(self.point_data.VTKObject)
         return output
@@ -5761,7 +5769,7 @@ class DataObjectFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
 
-        mesh = _get_output(alg)
+        mesh = _get_output(alg, output_type=pv.UnstructuredGrid)
         if inplace_target is not None:
             inplace_target.copy_from(mesh, deep=False)
             return inplace_target
@@ -6000,7 +6008,7 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             message='Resampling array Data from a Passed Mesh onto Mesh',
         )
-        return _get_output(alg)
+        return _get_output(alg, output_type=type(self))
 
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -6189,7 +6197,7 @@ class DataObjectFilters:
             )
 
             # Store the cell quality array with the output
-            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+            cell_quality_array = _get_output(alg, output_type=pv.DataSet).cell_data[CELL_QUALITY]
             if keep_valid_only and (
                 np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
             ):
@@ -6644,7 +6652,7 @@ def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
     return cell_types
 
 
-def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_]:
+def _cells_with_non_finite_points(grid: UnstructuredGrid) -> NDArray[np.bool_]:
     """Return a mask of the cells of a grid that reference a non-finite point."""
     non_finite = ~np.isfinite(grid.points).all(axis=1)
     if not non_finite.any():
@@ -6655,7 +6663,7 @@ def _cells_with_non_finite_points(grid: pv.UnstructuredGrid) -> NDArray[np.bool_
     return count[offsets[1:]] > count[offsets[:-1]]
 
 
-def _grid_coincident_cells(grid: pv.Grid, tolerance: float) -> NDArray[np.bool_]:
+def _grid_coincident_cells(grid: Grid, tolerance: float) -> NDArray[np.bool_]:
     """Return a mask of the cells of a grid with two points within ``tolerance``.
 
     This uses the grid geometry rather than building every cell. Cells with non-finite points,
@@ -6955,11 +6963,11 @@ def _exclude_string_arrays(
 
 def _box_planes(
     bounds: NDArray[np.floating],
-) -> list[tuple[VectorLikeFloat, VectorLikeFloat]]:
+) -> list[tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
-    planes: list[tuple[VectorLikeFloat, VectorLikeFloat]] = []
+    planes: list[tuple[NDArray[np.floating], NDArray[np.floating]]] = []
     for axis in range(3):
         for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
             normal = np.zeros(3)
@@ -7283,6 +7291,12 @@ def _blank_invalid_points(image: ImageData) -> ImageData:
     return image
 
 
+@overload
+def _clip_input(mesh: _MultiBlockType) -> _MultiBlockType: ...
+@overload
+def _clip_input(mesh: DataSet) -> DataSet: ...
+@overload
+def _clip_input(mesh: DataSet | MultiBlock[Any]) -> DataSet | MultiBlock[Any]: ...
 def _clip_input(mesh: DataSet | MultiBlock[Any]) -> DataSet | MultiBlock[Any]:
     """Return the mesh as a class the table-based clipper clips without tetrahedralizing."""
     if isinstance(mesh, pv.ExplicitStructuredGrid) and pv.vtk_version_info < (9, 5):
@@ -7323,7 +7337,7 @@ def _weld_points(mesh: DataSet) -> DataSet:
     alg.SetAbsoluteTolerance(0.0)
     alg.RemoveUnusedPointsOn()
     alg.Update()
-    return _get_output(alg)
+    return _get_output(alg, output_type=pv.UnstructuredGrid)
 
 
 def _clip_by_box_planes(
@@ -7367,7 +7381,7 @@ def _clip_by_box_planes(
     for piece in outside:
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
-    return _get_output(append)
+    return _get_output(append, output_type=pv.UnstructuredGrid)
 
 
 def _validate_triangulate_inplace(mesh: DataSet) -> UnstructuredGrid:

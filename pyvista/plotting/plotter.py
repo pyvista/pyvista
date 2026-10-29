@@ -52,6 +52,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _wraps
+from pyvista.core.utilities.misc import _wraps_overloaded
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -92,6 +93,10 @@ from .prop_collection import _PropCollection
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
 from .renderer import Renderer
+from .renderer import _Actor2DT
+from .renderer import _ActorT
+from .renderer import _PropT
+from .renderer import _VolumeT
 from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
@@ -134,6 +139,8 @@ if TYPE_CHECKING:
     from trame_pyvista.jupyter import Widget
 
     from pyvista import DataSet
+    from pyvista import ImageData
+    from pyvista import Light
     from pyvista import LookupTable
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -972,7 +979,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        StringIO
+        StringIO | None
             If filename is None, returns the HTML as a StringIO object.
 
         Notes
@@ -1440,7 +1447,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        :vtk:`vtkLegendBoxActor`
+        :vtk:`vtkLegendBoxActor` | None
             Legend actor.
 
         """
@@ -1747,14 +1754,28 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderers.set_chart_interaction``."""
         return self.renderers.set_chart_interaction(*args, **kwargs)
 
-    @_wraps(Renderer.add_actor)
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_actor(self, actor: _vtk.vtkMapper, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[Actor, Property]: ...
+    @overload
+    def add_actor(self, actor: _ActorT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_ActorT, _vtk.vtkProperty]: ...
+    @overload
+    def add_actor(self, actor: _VolumeT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_VolumeT, _vtk.vtkVolumeProperty]: ...
+    @overload
+    def add_actor(self, actor: _Actor2DT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_Actor2DT, _vtk.vtkProperty2D]: ...
+    @overload
+    def add_actor(self, actor: _PropT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_PropT, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None]: ...
+    # ruff: enable[E501]
+    # fmt: on
+    @_wraps_overloaded(Renderer.add_actor)
     def add_actor(
-        self, *args, **kwargs
+        self, actor: _vtk.vtkProp | _vtk.vtkMapper, **kwargs: Any
     ) -> tuple[
-        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None
+        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None
     ]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
-        return self.renderer.add_actor(*args, **kwargs)
+        return self.renderer.add_actor(actor, **kwargs)
 
     @_wraps(Renderer.enable_parallel_projection)
     def enable_parallel_projection(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -2146,7 +2167,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(
         self, *args, **kwargs
-    ) -> list[VectorLikeFloat]:  # numpydoc ignore=PR01,RT01
+    ) -> list[tuple[float, float, float]]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
@@ -3673,7 +3694,6 @@ class BasePlotter(_BoundsSizeMixin):
         self.mapper = mapper
 
         actor, _ = self.add_actor(mapper, render=False)
-        actor = cast('Actor', actor)
         actor.force_opaque = force_opaque
 
         prop = Property(
@@ -5353,7 +5373,7 @@ class BasePlotter(_BoundsSizeMixin):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast('pv.ImageData', wrap(volume))
+                volume = cast('ImageData', wrap(volume))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -5453,7 +5473,7 @@ class BasePlotter(_BoundsSizeMixin):
             )
             raise TypeError(msg)
 
-        volume = cast('pv.DataSet', volume)
+        volume = cast('DataSet', volume)
         if opacity_unit_distance is None and not isinstance(volume, pv.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -5605,7 +5625,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
-        return cast('Volume', actor)
+        return actor
 
     def add_silhouette(
         self,
@@ -5701,12 +5721,11 @@ class BasePlotter(_BoundsSizeMixin):
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop = cast('Property', prop)
         prop.SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
         prop.SetOpacity(opacity)
         prop.SetLineWidth(line_width)
 
-        return cast('Actor', actor)
+        return actor
 
     def update_scalar_bar_range(
         self, clim: float | Sequence[float], name: str | None = None
@@ -6697,7 +6716,7 @@ class BasePlotter(_BoundsSizeMixin):
             msg = 'Input should be an array of point segments'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        lines_polydata: pv.PolyData = (
+        lines_polydata: PolyData = (
             pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
         )
 
@@ -7594,7 +7613,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points: int = 20,
         viewup: VectorLikeFloat | None = None,
         shift: float = 0.0,
-    ) -> pv.PolyData:
+    ) -> PolyData:
         """Generate an orbital path around the data scene.
 
         Parameters
@@ -7670,7 +7689,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def orbit_on_path(
         self,
-        path: pv.PolyData | None = None,
+        path: PolyData | None = None,
         *,
         focus: VectorLikeFloat | None = None,
         step: float = 0.5,
@@ -7835,7 +7854,7 @@ class BasePlotter(_BoundsSizeMixin):
         exporter.Write()
 
     @property
-    def _datasets(self) -> list[pv.DataSet]:
+    def _datasets(self) -> list[DataSet]:
         """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
@@ -7958,7 +7977,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         self.renderer.ResetCameraClippingRange()
 
-    def add_light(self, light: _vtk.vtkLight, *, only_active: bool = False) -> None:
+    def add_light(self, light: Light | _vtk.vtkLight, *, only_active: bool = False) -> None:
         """Add a Light to the scene.
 
         Parameters
@@ -9479,7 +9498,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         focal_point: Sequence[float] = (0.0, 0.0, 0.0),
         color: ColorLike | None = None,
-    ) -> _vtk.vtkActor:
+    ) -> Actor:
         """Add a cursor of a PyVista or VTK dataset to the scene.
 
         Parameters
@@ -9503,8 +9522,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the 2D cursor.
+        pyvista.Actor
+            Actor of the 2D cursor.
 
         Examples
         --------
@@ -9522,15 +9541,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         alg.AllOn()
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
-        actor, prop = self.add_actor(mapper)
-        cast('_vtk.vtkProperty', prop).SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
+        actor = Actor(mapper=mapper)
+        self.add_actor(actor)
+        actor.prop.color = color
 
-        return cast('_vtk.vtkActor', actor)
+        return actor
 
     @property
     def meshes(
         self,
-    ) -> list[pv.DataSet | pv.MultiBlock[Any]]:  # numpydoc ignore=RT01
+    ) -> list[DataSet | MultiBlock[Any]]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns
@@ -9572,7 +9592,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                         input_alg.Update()
                     meshes.append(pv.wrap(dataset))
 
-        meshes: list[pv.DataSet | pv.MultiBlock[Any]] = []
+        meshes: list[DataSet | MultiBlock[Any]] = []
         for actor in self.actors.values():
             for leaf in _iter_leaf_props(actor):
                 _append_actor_dataset(leaf)

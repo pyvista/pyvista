@@ -428,6 +428,13 @@ def test_chart_common(pl, chart_f, request):
     chart.loc = (0.25, 0.25)
     assert chart.size == (0.5, 0.5)
     assert chart.loc == (0.25, 0.25)
+    chart.size = [1, 1]
+    chart.loc = np.array([0, 0])
+    for value in (chart.size, chart.loc):
+        assert type(value) is tuple
+        assert all(type(v) is float for v in value)
+    assert chart.size == (1.0, 1.0)
+    assert chart.loc == (0.0, 0.0)
 
     # Check geometry and resizing
     w, h = pl.window_size

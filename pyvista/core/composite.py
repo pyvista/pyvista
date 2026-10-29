@@ -1278,9 +1278,8 @@ class MultiBlock(
 
         """
         # apply reduction of min and max over each block
-        # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
         blocks: Sequence[_TypeMultiBlockLeaf] = self
-        all_bounds = [cast('list[float]', block.bounds) for block in blocks if block]
+        all_bounds = [list(block.bounds) for block in blocks if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = (0.0, 0.0, 0.0)
@@ -1498,14 +1497,14 @@ class MultiBlock(
     def __getitem__(self, index: slice) -> MultiBlock[_BlockType]: ...  # pragma: no cover
     # fmt: on
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | str | slice) -> _BlockType | MultiBlock[_BlockType]:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
 
         """
         if isinstance(index, slice):
-            multi = MultiBlock()
+            multi: MultiBlock[_BlockType] = MultiBlock()
             for i in range(self.n_blocks)[index]:
                 multi.append(self[i], self.get_block_name(i))
             return multi
@@ -1518,7 +1517,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))
+        return cast('_BlockType', wrap(self.GetBlock(index)))
 
     # fmt: off
     # ruff: disable[E501]
@@ -2305,7 +2304,7 @@ class MultiBlock(
 
     def shallow_copy(  # type: ignore[override]
         self,
-        to_copy: _vtk.vtkMultiBlockDataSet,
+        to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet,
         *,
         recursive: bool = False,
     ) -> None:
@@ -2342,7 +2341,9 @@ class MultiBlock(
         self._sync_user_dict()
         self.wrap_nested()
 
-    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
+    def deep_copy(  # type: ignore[override]
+        self, to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet
+    ) -> None:
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
 
         Parameters
@@ -2400,7 +2401,7 @@ class MultiBlock(
         pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             An array from the dataset matching ``name``.
 
         Notes
@@ -2419,11 +2420,7 @@ class MultiBlock(
                     )
                 else:
                     try:
-                        field, scalars_out = block.set_active_scalars(name, preference=preference)
-                        if scalars_out is None:
-                            field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
-                        else:
-                            scalars = scalars_out
+                        field, scalars = block.set_active_scalars(name, preference=preference)
                     except KeyError:
                         if not allow_missing:
                             raise

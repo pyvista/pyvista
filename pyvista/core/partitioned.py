@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import overload
@@ -20,7 +21,6 @@ from .utilities.writer import _HDF_WRITERS
 from .utilities.writer import XMLPartitionedDataSetWriter
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from typing import Any
     from typing import ClassVar
     from typing import Self
@@ -97,7 +97,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     @overload
     def __getitem__(self, index: slice) -> PartitionedDataSet: ...  # pragma: no cover
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> DataSet | PartitionedDataSet | None:
         """Get a partition by its index."""
         if isinstance(index, slice):
             return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
@@ -121,10 +121,13 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def __setitem__(
         self,
         index: int | slice,
-        data,
-    ):
+        data: DataSet | Iterable[DataSet | None] | None,
+    ) -> None:
         """Set a partition with a VTK data object."""
         if isinstance(index, slice):
+            if not isinstance(data, Iterable):
+                msg = 'Setting a slice requires an iterable of datasets.'
+                raise TypeError(msg)
             for i, d in zip(range(self.n_partitions)[index], data, strict=True):
                 self.SetPartition(i, d)
         else:
@@ -133,7 +136,10 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
                 raise IndexError(msg)
             if index < 0:
                 index = self.n_partitions + index
-            self.SetPartition(index, data)
+            if data is not None and not isinstance(data, _vtk.vtkDataSet):
+                msg = 'Setting an index requires a dataset or None.'
+                raise TypeError(msg)
+            self.SetPartition(index, data)  # type: ignore[arg-type]  # VTK accepts None
 
     def __delitem__(self, index: int | slice) -> None:
         """Remove a partition at the specified index are not supported."""
@@ -173,7 +179,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
         return build_repr_html(
             obj_type=type(self).__name__,
-            mesh_type='ImageData',
+            mesh_type='PartitionedDataSet',
             header_badges=[
                 f'{self.n_points:,} points',
                 f'{self.n_cells:,} cells',

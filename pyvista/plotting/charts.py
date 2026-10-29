@@ -1373,8 +1373,11 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
-    def size(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
+    def size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
@@ -1400,12 +1403,15 @@ class _Chart(DocSubs):
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             msg = f'Invalid size {val}.'
             raise ValueError(msg)
-        self._size = val
+        self._size = (float(val[0]), float(val[1]))
 
     @property
     @doc_subs
-    def loc(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
+    def loc(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         This denotes the location of the chart's bottom left corner.
 
@@ -1431,7 +1437,7 @@ class _Chart(DocSubs):
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             msg = f'Invalid loc {val}.'
             raise ValueError(msg)
-        self._loc = val
+        self._loc = (float(val[0]), float(val[1]))
 
     @property
     @doc_subs
@@ -4488,8 +4494,11 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return self._plot
 
     @property
-    def size(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
+    def size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
@@ -4515,8 +4524,11 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
-    def loc(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
+    def loc(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         This denotes the location of the chart's bottom left corner.
 
@@ -4772,8 +4784,11 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return self._plot
 
     @property
-    def size(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
+    def size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         A size of ``(1, 1)`` occupies the whole renderer.
 
@@ -4799,8 +4814,11 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
-    def loc(self) -> VectorLikeFloat:  # numpydoc ignore=RT01
+    def loc(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
+
+        .. versionchanged:: 0.50
+            Returns a tuple of floats.
 
         This denotes the location of the chart's bottom left corner.
 

@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
     from pyvista import DataObject
+    from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid
     from pyvista import ImageData
     from pyvista import MultiBlock
@@ -274,7 +275,7 @@ def download_file(filename: str) -> str | list[str]:
 
     Returns
     -------
-    output : str | list
+    output : str | list[str]
         A single path if the file is not an archive. A ``list`` of paths if the
         file is an archive.
 
@@ -457,8 +458,8 @@ def download_masonry_texture(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    output : pyvista.DataSet | str
-        DataSet or filename depending on ``load``.
+    output : pyvista.Texture | str
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -500,8 +501,8 @@ def download_usa_texture(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    output : pyvista.DataSet | str
-        DataSet or filename depending on ``load``.
+    output : pyvista.Texture | str
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -545,8 +546,8 @@ def download_puppy_texture(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    output : pyvista.DataSet | str
-        DataSet or filename depending on ``load``.
+    output : pyvista.Texture | str
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -629,7 +630,7 @@ def download_usa(*, load: bool = True) -> PolyData | str:
 
     Returns
     -------
-    output : pyvista.DataSet | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -779,7 +780,7 @@ def download_bunny_coarse(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_bunny_coarse, load=load)
 
 
-def _bunny_coarse_load_func(mesh: pv.PolyData) -> pv.PolyData:
+def _bunny_coarse_load_func(mesh: PolyData) -> PolyData:
     mesh.verts = np.array([], dtype=np.int32)
     return mesh
 
@@ -1519,13 +1520,24 @@ def download_nefertiti(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    .. pyvista-plot::
-        :force_static:
+    Downloading the dataset warns about its license.
+
+    .. code-block:: python
 
         from pyvista import examples
 
         dataset = examples.download_nefertiti()
         dataset.plot(cpos='xz')
+
+    Plot the CC0 Washington bust instead.
+
+    .. pyvista-plot::
+        :force_static:
+
+        from pyvista import examples
+
+        dataset = examples.download_washington_bust()
+        dataset.plot()
 
     .. seealso::
 
@@ -1720,7 +1732,7 @@ def download_blood_vessels(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_blood_vessels, load=load)
 
 
-def _blood_vessels_load_func(obj: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
+def _blood_vessels_load_func(obj: UnstructuredGrid) -> UnstructuredGrid:
     obj.set_active_vectors('velocity')
     return obj
 
@@ -1881,7 +1893,7 @@ def download_sparse_points(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_sparse_points, load=load)
 
 
-def _sparse_points_reader(saved_file: str) -> pv.PolyData:
+def _sparse_points_reader(saved_file: str) -> PolyData:
     points_reader = _vtk.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
@@ -2069,7 +2081,7 @@ def download_bird_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -2186,7 +2198,7 @@ def download_horse(*, load: bool = True) -> PolyData | str:
 
     Returns
     -------
-    output : pyvista.DataSet | str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -2263,7 +2275,7 @@ def download_cake_easy_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -2395,8 +2407,8 @@ def download_gourds_texture(*, zoom: bool = False, load: bool = True) -> Texture
 
     Returns
     -------
-    output : pyvista.DataSet | str
-        DataSet or filename depending on ``load``.
+    output : pyvista.Texture | str
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -3138,7 +3150,7 @@ def download_emoji_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -3501,7 +3513,7 @@ def download_sky_box_nz_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -3682,7 +3694,7 @@ def download_tri_quadratic_hexahedron(*, load: bool = True) -> UnstructuredGrid 
     return _download_dataset(_dataset_tri_quadratic_hexahedron, load=load)
 
 
-def _tri_quadratic_hexahedron_load_func(dataset: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
+def _tri_quadratic_hexahedron_load_func(dataset: UnstructuredGrid) -> UnstructuredGrid:
     dataset.clear_data()
     return dataset
 
@@ -3845,7 +3857,7 @@ def download_carotid(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_carotid, load=load)
 
 
-def _carotid_load_func(mesh: pv.ImageData) -> pv.ImageData:
+def _carotid_load_func(mesh: ImageData) -> ImageData:
     mesh.set_active_scalars('scalars')
     mesh.set_active_vectors('vectors')
     return mesh
@@ -4293,7 +4305,7 @@ def download_kitchen(*, split: bool = False, load: bool = True) -> StructuredGri
         return _download_dataset(_dataset_kitchen, load=load)
 
 
-def _kitchen_split_load_func(mesh: pv.StructuredGrid) -> pv.MultiBlock:
+def _kitchen_split_load_func(mesh: StructuredGrid) -> MultiBlock:
     extents = {
         'door': (27, 27, 14, 18, 0, 11),
         'window1': (0, 0, 9, 18, 6, 12),
@@ -4319,7 +4331,7 @@ def _kitchen_split_load_func(mesh: pv.StructuredGrid) -> pv.MultiBlock:
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
-        result = _get_output(alg)
+        result = _get_output(alg, output_type=pv.PolyData)
         kitchen[key] = result
     return kitchen
 
@@ -4372,11 +4384,11 @@ def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock[UnstructuredGrid]
 def _tetra_dc_mesh_files_func() -> tuple[
     _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
 ]:
-    def _fwd_load_func(mesh: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
+    def _fwd_load_func(mesh: UnstructuredGrid) -> UnstructuredGrid:
         mesh.set_active_scalars('Resistivity(log10)-fwd')
         return mesh
 
-    def _inv_load_func(mesh: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
+    def _inv_load_func(mesh: UnstructuredGrid) -> UnstructuredGrid:
         mesh.set_active_scalars('Resistivity(log10)')
         return mesh
 
@@ -4640,7 +4652,7 @@ def download_crater_imagery(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -4766,7 +4778,7 @@ def download_damavand_volcano(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_damavand_volcano, load=load)
 
 
-def _damavand_volcano_load_func(volume: pv.ImageData) -> pv.ImageData:
+def _damavand_volcano_load_func(volume: ImageData) -> ImageData:
     volume.rename_array('None', 'data')
     return volume
 
@@ -4849,7 +4861,7 @@ def download_embryo(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_embryo, load=load)
 
 
-def _embryo_load_func(dataset: pv.ImageData) -> pv.ImageData:
+def _embryo_load_func(dataset: ImageData) -> ImageData:
     # This file's RLE stream is one byte short on every plane, and vtkSLCReader copies a full
     # plane out of an uninitialized buffer, so the last voxel of each plane is heap garbage.
     # It varies per read and lands in the z=75 slice used by the slice_orthogonal example,
@@ -4994,7 +5006,7 @@ def download_rgba_texture(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -5036,7 +5048,7 @@ def download_vtk_logo(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -5149,7 +5161,7 @@ def download_cubemap_park(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    pyvista.Texture
+    pyvista.Texture | str
         Texture containing a skybox.
 
     Examples
@@ -5210,7 +5222,7 @@ def download_cubemap_space_4k(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    pyvista.Texture
+    pyvista.Texture | str
         Texture containing a skybox.
 
     Examples
@@ -5272,7 +5284,7 @@ def download_cubemap_space_16k(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    pyvista.Texture
+    pyvista.Texture | str
         Texture containing a skybox.
 
     Notes
@@ -6084,7 +6096,7 @@ def download_lshape(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | str:
 
 
 def _lshape_files_func() -> tuple[_SingleFileDownloadableDatasetLoader | _DownloadableFile, ...]:
-    def read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
+    def read_func(filename: str) -> DataSet | MultiBlock:
         reader = pv.get_reader(filename)
         reader.set_active_time_set(1)
         reader.set_active_time_value(1.0)
@@ -6364,7 +6376,7 @@ def download_openfoam_tubes(
     return _download_dataset(_dataset_openfoam_tubes, load=load)
 
 
-def _openfoam_tubes_read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
+def _openfoam_tubes_read_func(filename: str) -> DataSet | MultiBlock:
     reader = pv.OpenFOAMReader(filename)
     reader.set_active_time_value(1000)
     return reader.read()
@@ -6866,7 +6878,7 @@ def download_cgns_multi(*, load: bool = True) -> MultiBlock[MultiBlock[Structure
     return _download_dataset(_dataset_cgns_multi, load=load)
 
 
-def _cgns_multi_read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
+def _cgns_multi_read_func(filename: str) -> DataSet | MultiBlock:
     reader = pv.get_reader(filename)
     # Disable reading the boundary patch. This generates messages like
     # "Skipping BC_t node: BC_t type 'BCFarfield' not supported yet."
@@ -6976,7 +6988,7 @@ def download_parched_canal_4k(*, load: bool = True) -> Texture | str:
     Returns
     -------
     output : pyvista.Texture | str
-        DataSet or filename depending on ``load``.
+        Texture or filename depending on ``load``.
 
     Examples
     --------
@@ -8160,7 +8172,7 @@ def download_dikhololo_night(*, load: bool = True) -> Texture | str:
 
     Returns
     -------
-    pyvista.Texture
+    pyvista.Texture | str
         HDR Texture.
 
     Examples
@@ -8484,7 +8496,7 @@ def download_meshio_xdmf(*, load: bool = True) -> MultiBlock[UnstructuredGrid] |
 
     Returns
     -------
-    output : pyvista.UnstructuredGrid or str
+    output : pyvista.MultiBlock | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8529,7 +8541,7 @@ def download_victorian_goblet_face_illusion(*, load: bool = True) -> PolyData | 
 
     Returns
     -------
-    output : pyvista.UnstructuredGrid or str
+    output : pyvista.PolyData | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8858,7 +8870,7 @@ class _WholeBodyCTUtilities:
 
 
         """
-        segmentations = cast('pv.MultiBlock', dataset['segmentations'])
+        segmentations: MultiBlock[ImageData] = dataset['segmentations']
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
@@ -8868,7 +8880,7 @@ class _WholeBodyCTUtilities:
         dataset.user_dict['ids_to_colors'] = {str(id_): color for id_, color in ids_to_colors}
 
     @staticmethod
-    def label_map_from_masks(masks: MultiBlock[Any]) -> ImageData:
+    def label_map_from_masks(masks: MultiBlock[ImageData]) -> ImageData:
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
         """Create a label map image from segmentation masks.
@@ -8885,22 +8897,22 @@ class _WholeBodyCTUtilities:
 
 
         """
-        n_points = cast('pv.ImageData', masks[0]).n_points
+        n_points = masks[0].n_points
         # Initialize array with background values (zeros)
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
-            mask = cast('pv.ImageData', masks[name])
+            mask = masks[name]
             label_map_array[mask.active_scalars == 1] = i + 1
 
         # Add scalars to a new image
         label_map_image = pv.ImageData()
-        label_map_image.copy_structure(cast('pv.ImageData', masks[0]))
+        label_map_image.copy_structure(masks[0])
         label_map_image['label_map'] = label_map_array
         return label_map_image
 
     @staticmethod
-    def load_func(files: Any) -> pv.MultiBlock:
+    def load_func(files: Any) -> MultiBlock:
         """Load the dataset and add its label map and metadata.
 
         Parameters
@@ -9191,8 +9203,8 @@ def download_room_cff(*, load: bool = True) -> MultiBlock[UnstructuredGrid] | st
 
     Returns
     -------
-    output : pyvista.MultiBlock or tuple
-        DataSet or tuple of filenames depending on ``load``.
+    output : pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
 
     Examples
     --------
@@ -9541,7 +9553,7 @@ def download_particles(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_particles, load=load)
 
 
-def _particles_read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
+def _particles_read_func(filename: str) -> DataSet | MultiBlock:
     reader = pv.get_reader(filename)
     reader.reader.SetDataByteOrderToBigEndian()
     reader.reader.Update()

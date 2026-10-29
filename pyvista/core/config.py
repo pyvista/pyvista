@@ -63,6 +63,7 @@ from typing import get_args
 import numpy as np
 
 from pyvista._warn_external import warn_external
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 
 if TYPE_CHECKING:
     from typing import Self
@@ -89,7 +90,7 @@ class _ForceSlots(type):
         return super_prepared  # type: ignore[return-value]
 
 
-class _ConfigBase(metaclass=_ForceSlots):
+class _ConfigBase(_TextReprHTMLMixin, metaclass=_ForceSlots):
     """Shared base class for PyVista config objects.
 
     Provides dict-style item access, ``from_dict`` / ``to_dict`` serialization,
@@ -110,8 +111,8 @@ class _ConfigBase(metaclass=_ForceSlots):
 
     __slots__: ClassVar[list[str]] = []
 
-    # Slot names (without the leading underscore) that should be omitted from
-    # ``to_dict`` output even though they live in ``__slots__``. Subclasses may
+    # Slot names (without the leading underscore) that ``to_dict`` omits and
+    # ``from_dict`` ignores even though they live in ``__slots__``. Subclasses may
     # override this with their own ``frozenset``.
     _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset()
 
@@ -125,9 +126,10 @@ class _ConfigBase(metaclass=_ForceSlots):
             Mapping of public attribute name to value, as produced by
             :meth:`to_dict`. Nested config objects are recursively
             reconstructed via their own ``from_dict``. A key that is not a
-            valid attribute of ``cls`` is skipped with a warning instead of
-            raising, so a dict saved by a different pyvista version can
-            still be loaded.
+            valid attribute of ``cls``, or whose value its setter rejects, is
+            skipped with a warning instead of raising, so a dict saved by a
+            different pyvista version or on a different machine can still be
+            loaded.
 
         Returns
         -------
@@ -135,17 +137,33 @@ class _ConfigBase(metaclass=_ForceSlots):
             New instance of ``cls`` populated from ``dict_``.
 
         """
+        return cls._from_dict(dict_, strict=False)
+
+    @classmethod
+    def _from_dict(cls, dict_: dict[str, Any], *, strict: bool) -> Self:
+        """Create an instance from ``dict_``, raising a setter's rejection when ``strict``."""
         inst = cls()
+        skip = cls._TO_DICT_SKIP
         for key, value in dict_.items():
+            if key in skip:
+                continue
             if not hasattr(inst, key):
                 msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
                 warn_external(msg)
                 continue
             attr = getattr(inst, key)
-            if hasattr(attr, 'from_dict'):
-                setattr(inst, key, attr.from_dict(value))
-            else:
-                setattr(inst, key, value)
+            try:
+                if isinstance(attr, _ConfigBase):
+                    setattr(inst, key, attr._from_dict(value, strict=strict))
+                elif hasattr(attr, 'from_dict'):
+                    setattr(inst, key, attr.from_dict(value))
+                else:
+                    setattr(inst, key, value)
+            except (ImportError, OSError, TypeError, ValueError) as exc:
+                if strict:
+                    raise
+                msg = f'{cls.__name__!r} cannot set {key!r} to {value!r}. Ignoring it.\n{exc}'
+                warn_external(msg)
         return inst
 
     def to_dict(self) -> dict[str, Any]:

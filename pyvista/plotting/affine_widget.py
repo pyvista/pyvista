@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import Actor
+    from pyvista import PolyData
     from pyvista import Renderer
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
@@ -71,7 +72,7 @@ def _check_callable(func: _CallableT, name: str = 'callback') -> _CallableT:
     return func
 
 
-def _make_quarter_arc() -> pv.PolyData:
+def _make_quarter_arc() -> PolyData:
     """Make a quarter circle centered at the origin."""
     circ = pv.Circle(resolution=100)
     circ.faces = np.empty(0, dtype=int)

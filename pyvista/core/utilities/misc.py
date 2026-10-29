@@ -181,6 +181,19 @@ def _wraps(
     return decorate
 
 
+_F = TypeVar('_F', bound='Callable[..., Any]')
+
+
+def _wraps_overloaded(target: Callable[..., Any]) -> Callable[[_F], _F]:
+    """Give an overloaded forwarding method ``target``'s docstring, name and signature."""
+
+    def decorate(method: _F) -> _F:
+        functools.update_wrapper(method, target)
+        return method
+
+    return decorate
+
+
 class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 

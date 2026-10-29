@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import html
+from importlib.metadata import version
 import importlib.util
 import inspect
 from io import StringIO
@@ -608,6 +610,45 @@ def test_report_env_vars(monkeypatch):
     repr_ = repr(pv.Report(gpu=False, env_vars=True))
     assert 'PYVISTA_FOO : bar' in repr_
     assert 'NOTPYVISTA_VAR' not in repr_
+
+
+@pytest.mark.parametrize('mkl_info', [None, 'Intel(R) oneMKL <2025>'])
+def test_report_repr_html_mkl(monkeypatch, mkl_info):
+    monkeypatch.setattr(pv.Report, 'mkl_info', mkl_info)
+    html_ = pv.Report(gpu=False)._repr_html_()
+    assert ('>MKL<' in html_) is (mkl_info is not None)
+    if mkl_info:
+        assert html.escape(mkl_info) in html_
+
+
+def test_report_repr_html(monkeypatch):
+    monkeypatch.setenv('PYVISTA_FOO', '<b>')
+    monkeypatch.setattr(pv.Report, 'date', 'Tue Oct 27 18:46:23 2026 UTC')
+    report = pv.Report(gpu=False, env_vars=True, additional=['not_a_real_package'])
+    html_ = report._repr_html_()
+    assert html.escape(str(report)) in html_
+    assert "<span class='pv-kv-key'>numpy</span>" in html_
+    assert f"<span class='pv-kv-value'>{version('numpy')}</span>" in html_
+    assert "<span class='pv-kv-value pv-kv-muted'>Module not found</span>" in html_
+    assert "<span class='pv-kv-value'>&lt;b&gt;</span>" in html_
+    assert "class='pv-copy-btn'" in html_
+    assert 'id="pv-rp-g1"' in html_
+    assert '<table' not in html_
+
+
+@pytest.mark.parametrize('ncol', [1, 5])
+def test_report_repr_html_ncol(ncol):
+    html_ = pv.Report(gpu=False, ncol=ncol)._repr_html_()
+    width = f'calc((100% - {ncol - 1} * 16px) / {ncol})'
+    assert html_.count(f'minmax(max(16em, {width}), 1fr)') == 2
+
+
+def test_gpu_info_repr_html(monkeypatch):
+    monkeypatch.setattr('pyvista.report.GPUInfo.get_info', lambda _: [('GPU Vendor', 'Acme & Co')])
+    html_ = pv.GPUInfo()._repr_html_()
+    assert "<span class='pv-kv-key'>GPU Vendor</span>" in html_
+    assert 'Acme &amp; Co' in html_
+    assert '<table' not in html_
 
 
 def test_line_segments_from_points():
@@ -4210,7 +4251,7 @@ def test_writer_data_mode_mixin(writer_cls):
 def test_fileio_extensions(cls):
     if cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):
         pytest.xfail('Needs vtk 9.4')
-    if cls in [pv.OpenFOAMReader, pv.MultiBlockPlot3DReader]:
+    if cls == pv.OpenFOAMReader:
         # These classes are not associated with any extensions
         pytest.xfail()
     assert len(cls.extensions) > 0 or len(cls.extension_patterns) > 0
@@ -4306,7 +4347,7 @@ def test_file_formats_unique_and_used():
             pv.ExplicitStructuredGrid,
             {'.vtk': pv.UnstructuredGridWriter, '.vtu': pv.XMLUnstructuredGridWriter},
         ),
-        (pv.PointSet, {'.xyz': pv.SimplePointsWriter}),
+        (pv.PointSet, {'.txt': pv.SimplePointsWriter, '.xyz': pv.SimplePointsWriter}),
         (
             pv.MultiBlock,
             {
