@@ -231,6 +231,11 @@ documentation cache, build and test jobs to the Blacksmith runners the merge
 queue uses, which finish sooner but are paid for by the project. The label
 takes effect on the next push to the pull request.
 
+The ``vtk-dev-testing``, ``vtk-master-testing``, ``integration-testing`` and
+``docker`` labels each start a job a pull request does not otherwise run, as
+soon as the label is added. Apply one only when the change touches what it
+covers; `Testing Against VTK Master`_ describes the two VTK labels.
+
 Before you push:
 
 #. Run ``make lint``. It runs ``pre-commit`` on all files and catches most of
@@ -1093,12 +1098,6 @@ that build. This provides the most up-to-date compatibility testing and is recom
 development.
 
 The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and may be applied separately or together.
-
-.. note::
-
-    Adding the ``vtk-master-testing`` label starts its job right away. The ``vtk-dev-testing`` label needs a new
-    commit, for example updating the branch from ``main``, or the PR to be closed/re-opened to rerun the CI with the
-    label applied.
 
 The same build is available locally with `pyvista-build <https://pyvista.github.io/pyvista-build/>`_:
 ``pyvista-build vtk --ref master`` clones VTK, configures it as CI does, and writes a wheel. Run it again after

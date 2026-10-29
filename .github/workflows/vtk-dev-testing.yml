@@ -1,0 +1,91 @@
+name: VTK Dev Testing
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+concurrency:
+  # Adding any other label starts a run that skips, so it gets its own group and cannot cancel a real run.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'vtk-dev-testing' && '-other-label' || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  id-token: none
+
+jobs:
+  # For PRs, run when the 'vtk-dev-testing' label is applied, and right away when it is added
+  check-should-run:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        env:
+          RUN: >-
+            ${{ github.event_name != 'pull_request' ||
+            (contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing') &&
+            (github.event.action != 'labeled' || github.event.label.name == 'vtk-dev-testing')) }}
+        run: echo "run=$RUN" >> "$GITHUB_OUTPUT"
+
+  cache-github-hosted:
+    needs: check-should-run
+    if: needs.check-should-run.outputs.run == 'true'
+    name: Cache pyvista/data
+    uses: $/.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
+
+  Linux:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Linux
+      os: ubuntu-22.04
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      coverage: true
+      rows: '[{"name": "3.14, dev", "python": "3.14", "tox": "py3.14-vtk_dev"}]'
+
+  # Uploads under its own flags, apart from the unit testing coverage.
+  upload-coverage:
+    name: Upload coverage reports
+    runs-on: ubuntu-22.04
+    needs: Linux
+    permissions:
+      id-token: write # Codecov OIDC upload
+      contents: read
+    steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage_reports-*
+          path: coverage_reports
+
+      - name: Sort reports by flag
+        run: |
+          mkdir -p flag_package flag_tests
+          find coverage_reports -name 'coverage_package_*.xml' -exec mv {} flag_package/ \;
+          find coverage_reports -name 'coverage_tests_*.xml' -exec mv {} flag_tests/ \;
+          ls flag_package flag_tests
+
+      - name: Upload pyvista coverage from VTK dev to CodeCov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
+        with:
+          directory: flag_package
+          flags: package-vtk-dev
+          fail_ci_if_error: true
+          use_oidc: true
+
+      - name: Upload test coverage from VTK dev to CodeCov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
+        with:
+          directory: flag_tests
+          flags: tests-vtk-dev
+          fail_ci_if_error: true
+          use_oidc: true
