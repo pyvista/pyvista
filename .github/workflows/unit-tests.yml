@@ -13,8 +13,8 @@ on: # zizmor: ignore[cache-poisoning]
         required: true
         type: string
       rows:
-        description: JSON list of matrix rows, each with `name`, `python` and the `tox` env prefix.
-        required: true
+        description: JSON list of matrix rows, each with `python` and optionally the `vtk` and `numpy` tox factor versions.
+        default: '[{"python": "3.14"}]'
         type: string
       data-key:
         description: Cache key output by cache-pyvista-data.yml.
@@ -65,7 +65,7 @@ env:
 
 jobs:
   test:
-    name: Unit Testing (${{ matrix.name }})
+    name: Unit Testing (${{ matrix.python }}${{ matrix.vtk && format(', {0}', matrix.vtk) || '' }}${{ matrix.numpy && format(', {0}', matrix.numpy) || '' }})
     runs-on: ${{ inputs.os }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     strategy:
@@ -73,7 +73,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(inputs.rows) }}
     env:
-      TOX_ENV: ${{ matrix.tox }}${{ inputs.coverage && '-cov' || '' }}
+      TOX_ENV: py${{ matrix.python }}${{ matrix.numpy && format('-numpy_{0}', matrix.numpy) || '' }}${{ matrix.vtk && format('-vtk_{0}', matrix.vtk) || '' }}${{ inputs.vtk-wheel && '-vtk_local' || '' }}${{ inputs.coverage && '-cov' || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -145,27 +145,27 @@ jobs:
         if: failure() && inputs.vtk-wheel
         uses: $/.github/actions/vtk-master-failure-summary
         with:
-          job-name: ${{ inputs.label }} / Unit Testing (${{ matrix.name }})
-          artifact-suffix: ${{ inputs.label }}-${{ matrix.tox }}
+          job-name: ${{ inputs.label }} / Unit Testing (${{ matrix.python }}${{ matrix.vtk && format(', {0}', matrix.vtk) || '' }}${{ matrix.numpy && format(', {0}', matrix.numpy) || '' }})
+          artifact-suffix: ${{ inputs.label }}-${{ env.TOX_ENV }}
 
       - name: Upload Images for Failed Tests
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: failed_test_images-${{ inputs.label }}-${{ matrix.tox }}
+          name: failed_test_images-${{ inputs.label }}-${{ env.TOX_ENV }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: generated_test_images-${{ inputs.label }}-${{ matrix.tox }}
+          name: generated_test_images-${{ inputs.label }}-${{ env.TOX_ENV }}
           path: _generated_test_images
 
       - name: Upload coverage reports
         if: always() && inputs.coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage_reports-${{ inputs.label }}-${{ matrix.tox }}
+          name: coverage_reports-${{ inputs.label }}-${{ env.TOX_ENV }}
           path: coverage*.xml
           if-no-files-found: error

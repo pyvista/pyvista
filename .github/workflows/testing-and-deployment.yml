@@ -88,8 +88,8 @@ jobs:
       # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
       rows: >-
         [
-          {"name": "3.11", "python": "3.11", "tox": "py3.11"},
-          {"name": "3.14", "python": "3.14", "tox": "py3.14"}
+          {"python": "3.11"},
+          {"python": "3.14"}
         ]
 
   Linux:
@@ -107,11 +107,11 @@ jobs:
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       rows: >-
         [
-          {"name": "3.11, 9.3.1, latest", "python": "3.11", "tox": "py3.11-numpy_latest-vtk_9.3.1"},
-          {"name": "3.11, 9.4.2, latest", "python": "3.11", "tox": "py3.11-numpy_latest-vtk_9.4.2"},
-          {"name": "3.12, 9.5.2, latest", "python": "3.12", "tox": "py3.12-numpy_latest-vtk_9.5.2"},
-          {"name": "3.13, 9.6.2, latest", "python": "3.13", "tox": "py3.13-numpy_latest-vtk_9.6.2"},
-          {"name": "3.14, latest, latest", "python": "3.14", "tox": "py3.14-numpy_latest-vtk_latest"}
+          {"python": "3.11", "vtk": "9.3.1", "numpy": "latest"},
+          {"python": "3.11", "vtk": "9.4.2", "numpy": "latest"},
+          {"python": "3.12", "vtk": "9.5.2", "numpy": "latest"},
+          {"python": "3.13", "vtk": "9.6.2", "numpy": "latest"},
+          {"python": "3.14", "vtk": "latest", "numpy": "latest"}
         ]
 
   windows:
@@ -129,10 +129,10 @@ jobs:
       plotting-timeout: 30
       rows: >-
         [
-          {"name": "3.11", "python": "3.11", "tox": "py3.11"},
-          {"name": "3.12", "python": "3.12", "tox": "py3.12"},
-          {"name": "3.13", "python": "3.13", "tox": "py3.13"},
-          {"name": "3.14", "python": "3.14", "tox": "py3.14"}
+          {"python": "3.11"},
+          {"python": "3.12"},
+          {"python": "3.13"},
+          {"python": "3.14"}
         ]
 
   check-package:

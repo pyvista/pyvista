@@ -44,7 +44,7 @@ jobs:
       os: ubuntu-22.04
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       coverage: true
-      rows: '[{"name": "3.14, dev", "python": "3.14", "tox": "py3.14-vtk_dev"}]'
+      rows: '[{"python": "3.14", "vtk": "dev"}]'
 
   # Uploads under its own flags, apart from the unit testing coverage.
   upload-coverage:

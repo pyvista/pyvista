@@ -233,7 +233,6 @@ jobs:
       os: ubuntu-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       vtk-wheel: true
-      rows: '[{"name": "3.14", "python": "3.14", "tox": "py3.14-vtk_local"}]'
 
   test-macOS:
     needs: [check-should-run, build-vtk, cache-github-hosted]
@@ -244,7 +243,6 @@ jobs:
       os: macos-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       vtk-wheel: true
-      rows: '[{"name": "3.14", "python": "3.14", "tox": "py3.14-vtk_local"}]'
 
   test-windows:
     needs: [check-should-run, build-vtk, cache-github-hosted]
@@ -258,7 +256,6 @@ jobs:
       retries: 3
       core-timeout: 12
       plotting-timeout: 30
-      rows: '[{"name": "3.14", "python": "3.14", "tox": "py3.14-vtk_local"}]'
 
   alert-on-failure:
     needs:
