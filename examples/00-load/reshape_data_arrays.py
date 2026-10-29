@@ -51,6 +51,9 @@ image.cell_data['value']
 
 # %%
 labels = [f'id {cell_id}\nvalue {value}' for cell_id, value in enumerate(image['value'])]
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 pl = pv.Plotter()
 pl.add_mesh(
     image,
@@ -109,6 +112,9 @@ plane = pv.ImageData(dimensions=(60, 30, 1), spacing=(2 / 59, 1 / 29, 1))
 plane.point_data.reshaped['reshaped'] = field
 plane.point_data['ravel'] = field.ravel()
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 pl = pv.Plotter(shape=(1, 2), window_size=(1000, 300))
 for index, name in enumerate(['reshaped', 'ravel']):
     pl.subplot(0, index)
@@ -130,8 +136,8 @@ plt.show()
 # The default ``'grid'`` preset matches :func:`numpy.meshgrid` with
 # ``indexing='ij'``: ``array[i, j, k]`` is the value at index ``i`` along x,
 # ``j`` along y, and ``k`` along z, the order of
-# :attr:`~pyvista.ImageData.dimensions`. The same layout is used by
-# ``nibabel`` volumes.
+# :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`.
+# The same layout is used by ``nibabel`` volumes.
 x, y, z = np.meshgrid(
     np.linspace(-1, 1, 40), np.linspace(-1, 1, 30), np.linspace(-1, 1, 20), indexing='ij'
 )

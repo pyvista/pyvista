@@ -110,7 +110,7 @@ class ArrayReshaper(_NoNewAttrMixin):
         dataset : pyvista.DataObject
             Dataset that owns the array.
 
-        association : pyvista.FieldAssociation
+        association : pyvista.core.utilities.arrays.FieldAssociation
             Association of the array.
 
         Returns
@@ -134,7 +134,7 @@ class ArrayReshaper(_NoNewAttrMixin):
         dataset : pyvista.DataObject
             Dataset the array is set on.
 
-        association : pyvista.FieldAssociation
+        association : pyvista.core.utilities.arrays.FieldAssociation
             Association of the array.
 
         Returns
@@ -160,7 +160,7 @@ class GridReshaper(ArrayReshaper):
     axes : str, default: 'xyz'
         Index order of the shaped array. With ``'xyz'``, ``array[i, j, k]``
         is the value at index ``i`` along x, ``j`` along y, and ``k`` along z,
-        matching :attr:`~pyvista.ImageData.dimensions` and
+        matching :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` and
         ``numpy.meshgrid(..., indexing='ij')``. With ``'zyx'``, the order is
         reversed to ``array[k, j, i]``, as used by many image libraries.
 
@@ -330,7 +330,7 @@ class GridReshaper(ArrayReshaper):
         dataset : pyvista.DataObject
             Structured grid that owns the array.
 
-        association : pyvista.FieldAssociation
+        association : pyvista.core.utilities.arrays.FieldAssociation
             Association of the array.
 
         Returns
@@ -364,7 +364,7 @@ class GridReshaper(ArrayReshaper):
         dataset : pyvista.DataObject
             Structured grid the array is set on.
 
-        association : pyvista.FieldAssociation
+        association : pyvista.core.utilities.arrays.FieldAssociation
             Association of the array.
 
         Returns
