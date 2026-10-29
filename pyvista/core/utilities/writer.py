@@ -483,7 +483,7 @@ class STLWriter(BaseWriter, _DataFormatMixin):
 
 
 class SimplePointsWriter(BaseWriter, _DataFormatMixin):
-    """Writer for the XYZ Point Cloud format (``.xyz``).
+    """Writer for the XYZ Point Cloud format (``.txt``, ``.xyz``).
 
     Wraps :vtk:`vtkSimplePointsWriter`.
 
