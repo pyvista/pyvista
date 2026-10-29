@@ -15,6 +15,8 @@ from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
+from .formatting_html import _data_array_section
+from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _warn_scalar_array
@@ -227,6 +229,48 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
+
+    def _html_array_info(
+        self: Self, *, show_shape: bool = False, show_range: bool = False
+    ) -> list[tuple[str, int, str, str, str]]:
+        """Return ``(name, n_components, dtype, shape, range)`` rows for the HTML ``repr``."""
+        import pyvista as pv  # noqa: PLC0415
+
+        fmt = pv.FLOAT_FORMAT
+        result: list[tuple[str, int, str, str, str]] = []
+        for name, arr in self.items():
+            ncomp = arr.shape[1] if arr.ndim > 1 else 1
+            shape = str(tuple(arr.shape)) if show_shape else ''
+            range_str = ''
+            if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                range_str = f'[{fmt.format(np.nanmin(arr))}, {fmt.format(np.nanmax(arr))}]'
+            result.append((name, ncomp, str(arr.dtype), shape, range_str))
+        return result
+
+    def _repr_html_(self: Self) -> str:
+        """Return a pretty representation for Jupyter notebooks."""
+        kind = (
+            'field' if self.association == FieldAssociation.NONE else self.association.name.lower()
+        )
+        title = f'{kind.capitalize()} Data'
+        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+            section = _data_array_section(
+                title,
+                self._html_array_info(show_range=True),
+                active_scalars=self.active_scalars_name,
+                active_vectors=self.active_vectors_name,
+                active_normals=self.active_normals_name,
+                active_tcoords=self.active_texture_coordinates_name,
+            )
+        else:
+            section = _data_array_section(title, self._html_array_info(show_shape=True))
+        return build_repr_html(
+            type(self).__name__,
+            '',
+            header_badges=[kind, f'{len(self)} array{"" if len(self) == 1 else "s"}'],
+            sections=[section],
+            text_repr=repr(self),
+        )
 
     # fmt: off
     @overload

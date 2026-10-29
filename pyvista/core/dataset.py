@@ -1733,25 +1733,6 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         cell_normals = self.cell_data.active_normals_name if self.cell_data else None
         pt_tcoords = self.point_data.active_texture_coordinates_name if self.point_data else None
 
-        def _array_info(
-            attrs: DataSetAttributes,
-            *,
-            show_shape: bool = False,
-            show_range: bool = False,
-        ) -> list[tuple[str, int, str, str, str]]:
-            fmt = pv.FLOAT_FORMAT
-            result: list[tuple[str, int, str, str, str]] = []
-            for name, arr in attrs.items():
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                shape = str(tuple(arr.shape)) if show_shape else ''
-                range_str = ''
-                if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
-                    lo = fmt.format(np.nanmin(arr))
-                    hi = fmt.format(np.nanmax(arr))
-                    range_str = f'[{lo}, {hi}]'
-                result.append((name, ncomp, str(arr.dtype), shape, range_str))
-            return result
-
         vec_assoc = self.active_vectors_info.association
         pt_vectors = active_vectors if vec_assoc == FieldAssociation.POINT else None
         cell_vectors = active_vectors if vec_assoc == FieldAssociation.CELL else None
@@ -1761,7 +1742,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             sections.append(
                 _data_array_section(
                     'Point Data',
-                    _array_info(self.point_data, show_range=True),
+                    self.point_data._html_array_info(show_range=True),
                     active_scalars=active_pt_scalars,
                     active_vectors=pt_vectors,
                     active_normals=pt_normals,
@@ -1774,7 +1755,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             sections.append(
                 _data_array_section(
                     'Cell Data',
-                    _array_info(self.cell_data, show_range=True),
+                    self.cell_data._html_array_info(show_range=True),
                     active_scalars=active_cell_scalars,
                     active_vectors=cell_vectors,
                     active_normals=cell_normals,
@@ -1786,7 +1767,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             sections.append(
                 _data_array_section(
                     'Field Data',
-                    _array_info(self.field_data, show_shape=True),
+                    self.field_data._html_array_info(show_shape=True),
                 )
             )
 
