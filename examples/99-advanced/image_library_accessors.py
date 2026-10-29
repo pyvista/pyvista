@@ -68,6 +68,9 @@ class PillowAccessor:
 # Read the PyVista logo and blur it with a Pillow filter.
 logo = pv.read(examples.logofile)
 blurred = logo.pil.filter(ImageFilter.GaussianBlur(8))
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 blurred.plot(rgb=True, cpos='xy', background='white')
 
 # %%
@@ -85,6 +88,9 @@ height = logo.pil.apply(
 )
 height.point_data['PNGImage'] = height.point_data['PNGImage'] / 255
 relief = height.warp_by_scalar('PNGImage', factor=60)
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 pl = pv.Plotter()
 pl.add_mesh(
     relief, scalars=logo.point_data['PNGImage'][:, :3], rgb=True, smooth_shading=True
