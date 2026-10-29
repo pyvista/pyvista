@@ -10,6 +10,7 @@ from typing import Literal
 from typing import cast
 from typing import get_args
 from typing import overload
+import weakref
 
 import numpy as np
 import pyvista_validation as _validation
@@ -195,6 +196,7 @@ class WidgetComponent(_NoNewAttrMixin):
         """Initialize the widget component."""
         self._plotter = plotter
         self.camera_widgets: list[_vtk.vtkCameraOrientationWidget] = []
+        self._camera_widget_observers: list[tuple[_vtk.vtkRenderer, int]] = []
         self.box_widgets: list[_vtk.vtkBoxWidget] = []
         self.box_clipped_meshes: list[DataSet] = []
         self.plane_widgets: list[_PlaneWidget] = []
@@ -3133,11 +3135,36 @@ class WidgetComponent(_NoNewAttrMixin):
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
+        widget_ref = weakref.ref(widget)
+
+        def _update_viewport(renderer: _vtk.vtkRenderer, _event: str) -> None:
+            """Anchor the widget to its parent after VTK's window-relative layout."""
+            camera_widget = widget_ref()
+            if camera_widget is None or camera_widget.GetParentRenderer() is None:
+                return
+            camera_widget.SquareResize()
+            parent = camera_widget.GetParentRenderer().GetViewport()
+            representation = cast(
+                '_vtk.vtkCameraOrientationRepresentation', camera_widget.GetRepresentation()
+            )
+            anchor = representation.GetAnchorPosition()
+            corners = representation.AnchorType
+            dx = parent[0] if anchor in (corners.LowerLeft, corners.UpperLeft) else parent[2] - 1
+            dy = parent[1] if anchor in (corners.LowerLeft, corners.LowerRight) else parent[3] - 1
+            xmin, ymin, xmax, ymax = renderer.GetViewport()
+            renderer.SetViewport(xmin + dx, ymin + dy, xmax + dx, ymax + dy)
+
+        renderer = widget.GetCurrentRenderer()
+        observer = renderer.AddObserver(_vtk.vtkCommand.StartEvent, _update_viewport)
+        self._camera_widget_observers.append((renderer, observer))
         self.camera_widgets.append(widget)
         return widget
 
     def clear_camera_widgets(self) -> None:
         """Remove all of the camera widgets."""
+        for renderer, observer in self._camera_widget_observers:
+            renderer.RemoveObserver(observer)
+        self._camera_widget_observers.clear()
         for camera_widget in self.camera_widgets:
             camera_widget.Off()
         self.camera_widgets.clear()

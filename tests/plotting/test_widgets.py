@@ -646,6 +646,103 @@ def test_add_camera_orientation_widget():
     assert not pl.widgets.camera_widgets
 
 
+def _assert_camera_widget_viewport(widget, anchor):
+    """Check the widget's pixel size and padding within its parent viewport."""
+    renderer = widget.GetParentRenderer()
+    window_size = np.array(renderer.GetRenderWindow().GetActualSize())
+    parent = np.array(renderer.GetViewport()) * np.tile(window_size, 2)
+    representation = widget.GetRepresentation()
+    size = max(representation.GetSize())
+    pad_x, pad_y = representation.GetPadding()
+    x = parent[0] + pad_x if anchor.endswith('Left') else parent[2] - pad_x - size
+    y = parent[1] + pad_y if anchor.startswith('Lower') else parent[3] - pad_y - size
+    actual = np.array(widget.GetCurrentRenderer().GetViewport()) * np.tile(window_size, 2)
+    assert np.allclose(actual, (x, y, x + size, y + size))
+
+
+@pytest.mark.parametrize('shape', [(1, 1), (1, 2), (2, 1), (2, 2)])
+@pytest.mark.parametrize('anchor', ['LowerLeft', 'LowerRight', 'UpperLeft', 'UpperRight'])
+def test_camera_orientation_widget_subplots(shape, anchor):
+    """Keep each widget in its own subplot during native renders and resizes."""
+    pl = pv.Plotter(shape=shape, window_size=(800, 600))
+    camera_widgets = []
+    for index in np.ndindex(shape):
+        pl.subplot(*index)
+        pl.add_mesh(pv.Cone())
+        widget = pl.add_camera_orientation_widget()
+        representation = widget.GetRepresentation()
+        getattr(representation, f'AnchorTo{anchor}')()
+        representation.SetSize(90, 60)
+        representation.SetPadding(7, 11)
+        camera_widgets.append(widget)
+    pl.show(auto_close=False, interactive=False)
+    for size in [(800, 600), (1000, 800)]:
+        pl.window_size = size
+        for _ in range(2):
+            pl.render_window.Render()
+            for widget in camera_widgets:
+                _assert_camera_widget_viewport(widget, anchor)
+    pl.close()
+
+
+def test_camera_orientation_widget_viewport_changes():
+    """Honor changes to the parent viewport and the representation anchor."""
+    pl = pv.Plotter(window_size=(800, 600))
+    widget = pl.add_camera_orientation_widget()
+    pl.show(auto_close=False, interactive=False)
+    pl.renderer.viewport = (0.1, 0.2, 0.6, 0.8)
+    pl.render_window.Render()
+    _assert_camera_widget_viewport(widget, 'UpperRight')
+    widget.GetRepresentation().AnchorToLowerLeft()
+    pl.render_window.Render()
+    _assert_camera_widget_viewport(widget, 'LowerLeft')
+    pl.close()
+
+
+def test_camera_orientation_widget_clear():
+    """Stop updating a retained widget after clearing camera widgets."""
+    pl = pv.Plotter(shape=(1, 2))
+    widget = pl.add_camera_orientation_widget()
+    renderer = widget.GetCurrentRenderer()
+    pl.clear_camera_widgets()
+    renderer.SetViewport(0, 0, 1, 1)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    assert renderer.GetViewport() == (0, 0, 1, 1)
+    assert not widget.GetEnabled()
+    pl.close()
+
+
+def test_camera_orientation_widget_detached():
+    """Leave the viewport alone after detaching the parent renderer."""
+    pl = pv.Plotter()
+    widget = pl.add_camera_orientation_widget()
+    renderer = widget.GetCurrentRenderer()
+    widget.SetParentRenderer(None)
+    renderer.SetViewport(0, 0, 1, 1)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    assert renderer.GetViewport() == (0, 0, 1, 1)
+    pl.close()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_camera_orientation_widget_subplots_image():
+    """Render independently placed camera widgets over distinct subplot scenes."""
+    pl = pv.Plotter(shape=(1, 2), window_size=(400, 400))
+    pl.add_mesh(pv.Cone(direction=(1, 2, 1)), color='tomato', show_edges=True)
+    left_widget = pl.add_camera_orientation_widget()
+    pl.camera_position = 'iso'
+    pl.reset_camera()
+    pl.subplot(0, 1)
+    pl.add_mesh(pv.Arrow(direction=(0.5, 1, 2)), color='royalblue', show_edges=True)
+    right_widget = pl.add_camera_orientation_widget()
+    pl.camera_position = 'xy'
+    pl.reset_camera()
+    pl.render_window.Render()
+    _assert_camera_widget_viewport(left_widget, 'UpperRight')
+    _assert_camera_widget_viewport(right_widget, 'UpperRight')
+    pl.show()
+
+
 def test_plot_algorithm_widgets():
     algo = _vtk.vtkRTAnalyticSource()
 
