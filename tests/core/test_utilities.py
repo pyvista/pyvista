@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import html
+from importlib.metadata import version
 import importlib.util
 import inspect
 from io import StringIO
@@ -628,7 +629,7 @@ def test_report_repr_html(monkeypatch):
     html_ = report._repr_html_()
     assert html.escape(str(report)) in html_
     assert "<span class='pv-kv-key'>numpy</span>" in html_
-    assert f"<span class='pv-kv-value'>{np.__version__}</span>" in html_
+    assert f"<span class='pv-kv-value'>{version('numpy')}</span>" in html_
     assert "<span class='pv-kv-value pv-kv-muted'>Module not found</span>" in html_
     assert "<span class='pv-kv-value'>&lt;b&gt;</span>" in html_
     assert "class='pv-copy-btn'" in html_
