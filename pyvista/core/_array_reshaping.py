@@ -13,6 +13,7 @@ import numpy as np
 from ._structured_data import _grid_shape
 from ._structured_data import _StructuredDataMixin
 from .utilities.arrays import FieldAssociation
+from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
             """Convert ``array``."""
 
 
-class ArrayReshaper:
+class ArrayReshaper(_NoNewAttrMixin):
     """Convert data arrays between their flat VTK layout and a shaped layout.
 
     Used by :attr:`DataSetAttributes.reshaped <pyvista.DataSetAttributes.reshaped>`.
@@ -461,7 +462,7 @@ def _resolve_reshaper(reshaper: str | ArrayReshaper) -> ArrayReshaper:
     raise TypeError(msg)
 
 
-class ReshapedArrays(MutableMapping[str, Any]):
+class ReshapedArrays(_NoNewAttrMixin, MutableMapping[str, Any]):
     """Shaped view of the data arrays of a :class:`~pyvista.DataSetAttributes`.
 
     Getting an array returns it reshaped, and setting an array flattens it first.
