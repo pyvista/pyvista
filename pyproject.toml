@@ -59,7 +59,7 @@ pinned = [ # Pinned versions of core dependencies
   'filelock<4.3.0', # not a core dep; serializes parallel example downloads
   'matplotlib<3.11.3',
   'numpy<2.5.4',
-  'pillow<12.4.0',
+  'pillow>=13.0.0,<13.1.0', # GHSA-pchr-8j38-3x4p, GHSA-58r4-6rv3-gfh8, GHSA-p4wg-p73j-c528, GHSA-q45j-58j2-45rg, GHSA-8g5g-8vmr-9782: <13.0.0 vulnerable, patched in 13.0.0
   'pooch<1.10.0',
   'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
   'scooby>=0.11.2,<0.13.0',
