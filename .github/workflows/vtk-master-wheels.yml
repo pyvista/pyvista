@@ -251,9 +251,6 @@ jobs:
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       rows: '[{"python": "3.14", "vtk": "local"}]'
-      retries: 3
-      core-timeout: 12
-      plotting-timeout: 30
 
   alert-on-failure:
     needs:

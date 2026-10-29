@@ -132,7 +132,6 @@ jobs:
       label: Linux
       os: ubuntu-22.04
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      timeout-minutes: 80
       rows: >-
         [
           {"python": "3.13", "vtk": "cvista"},

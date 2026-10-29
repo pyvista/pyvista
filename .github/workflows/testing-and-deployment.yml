@@ -69,9 +69,6 @@ jobs:
       label: macOS
       os: macos-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      # macOS runner minutes bill at ten times the Linux rate, so a hung job is
-      # expensive at the 360-minute default. The suite finishes in ~15.
-      timeout-minutes: 80
       # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
       rows: >-
         [
@@ -110,10 +107,6 @@ jobs:
       label: Windows
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      timeout-minutes: 80
-      retries: 3
-      core-timeout: 12
-      plotting-timeout: 30
       rows: >-
         [
           {"python": "3.11"},

@@ -26,22 +26,6 @@ on: # zizmor: ignore[cache-poisoning]
         description: Run the `cov` tox factor and upload the coverage reports as artifacts.
         default: false
         type: boolean
-      retries:
-        description: Attempts per test step when it times out.
-        default: 1
-        type: number
-      core-timeout:
-        description: Minutes per core test attempt when `retries` is above 1.
-        default: 60
-        type: number
-      plotting-timeout:
-        description: Minutes per plotting test attempt when `retries` is above 1.
-        default: 120
-        type: number
-      timeout-minutes:
-        description: Minutes for the whole job.
-        default: 360
-        type: number
 
 env:
   ALLOW_PLOTTING: true
@@ -70,7 +54,7 @@ jobs:
         matrix.vtk && format(', vtk {0}', matrix.vtk) || '',
         matrix.numpy && format(', numpy {0}', matrix.numpy) || '') }}
     runs-on: ${{ inputs.os }}
-    timeout-minutes: ${{ inputs.timeout-minutes }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -129,36 +113,17 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      # Teed for the failure summary. The retry variants run only when `retries` is above 1.
+      # Teed for the failure summary.
       - name: Core Testing (no GL)
-        if: inputs.retries == 1
+        timeout-minutes: 15
         shell: bash
         run: tox run -e "$TOX_ENV-core" 2>&1 | tee core-test.log
 
-      - name: Core Testing (no GL)
-        if: inputs.retries > 1
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: ${{ inputs.core-timeout }}
-          max_attempts: ${{ inputs.retries }}
-          retry_on: timeout
-          shell: bash # this action's Windows default is PowerShell
-          command: tox run -e "$TOX_ENV-core" 2>&1 | tee core-test.log
-
       - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() && inputs.retries == 1 }}
+        if: ${{ !cancelled() }}
+        timeout-minutes: 20
         shell: bash
         run: tox run -e "$TOX_ENV-plotting" 2>&1 | tee plotting-test.log
-
-      - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() && inputs.retries > 1 }}
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: ${{ inputs.plotting-timeout }}
-          max_attempts: ${{ inputs.retries }}
-          retry_on: timeout
-          shell: bash # this action's Windows default is PowerShell
-          command: tox run -e "$TOX_ENV-plotting" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
         if: failure() && matrix.vtk == 'local'
