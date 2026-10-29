@@ -1,7 +1,6 @@
 name: Unit Tests
 
-# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
-on: # zizmor: ignore[cache-poisoning]
+on:
   pull_request:
   merge_group:
   workflow_dispatch:
@@ -20,19 +19,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
-  ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  TOX_COLORED: "yes"
-  USE_CACHE: ${{
-    (
-    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
-    (github.event_name == 'pull_request') ||
-    (github.event_name == 'push')
-    ) &&
-    !startsWith(github.ref, 'refs/tags/v') &&
-    !startsWith(github.ref, 'refs/heads/release/') &&
-    !startsWith(github.ref, 'refs/heads/main')
-    }}
 
 permissions:
   id-token: none
@@ -137,6 +124,7 @@ jobs:
 
   check-package:
     name: Check package
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
@@ -157,53 +145,13 @@ jobs:
   # triggered via workflow_run, so fork PR CI is never blocked on deployment
   # approval.
 
-  upload-coverage-:
+  upload-coverage:
     name: Upload coverage reports
-    runs-on: ubuntu-22.04
     needs: Linux
-    # Run on push/merge_group as well as pull_request so Codecov's
-    # main-branch baseline keeps advancing with every merge.
     permissions:
-      # id-token: write authorizes OIDC token minting so codecov-action can
-      # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
-      id-token: write
+      id-token: write # Codecov OIDC upload
       contents: read
-    steps:
-      # Needs to checkout only for codecov to match file names
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v8
-        with:
-          pattern: coverage_reports-*
-          path: coverage_reports
-
-      # Each matrix cell contributes one report per side, each uploaded under its own flag.
-      - name: Sort reports by flag
-        run: |
-          mkdir -p flag_package flag_tests
-          find coverage_reports -name 'coverage_package_*.xml' -exec mv {} flag_package/ \;
-          find coverage_reports -name 'coverage_tests_*.xml' -exec mv {} flag_tests/ \;
-          ls flag_package flag_tests
-
-      - name: Upload pyvista coverage to CodeCov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
-        with:
-          directory: flag_package
-          flags: package
-          fail_ci_if_error: true
-          use_oidc: true
-
-      - name: Upload test coverage to CodeCov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
-        with:
-          directory: flag_tests
-          flags: tests
-          fail_ci_if_error: true
-          use_oidc: true
+    uses: $/.github/workflows/codecov-upload.yml
 
   # Publish to PyPI using trusted publishing
   release:

@@ -13,19 +13,17 @@ on: # zizmor: ignore[cache-poisoning]
         required: true
         type: string
       rows:
-        description: JSON list of matrix rows, each with `python` and optionally the `vtk` and `numpy` tox factor versions.
-        default: '[{"python": "3.14"}]'
+        description: >-
+          JSON list of matrix rows, each with `python` and optionally the `vtk` and `numpy`
+          tox factor versions. A `vtk` of `local` installs the VTK wheel built earlier in the run.
+        required: true
         type: string
       data-key:
         description: Cache key output by cache-pyvista-data.yml.
         required: true
         type: string
       coverage:
-        description: Run the `cov` tox factor and upload the coverage reports.
-        default: false
-        type: boolean
-      vtk-wheel:
-        description: Install the VTK wheel built earlier in the run and upload failure summaries.
+        description: Run the `cov` tox factor and upload the coverage reports as artifacts.
         default: false
         type: boolean
       retries:
@@ -51,7 +49,7 @@ env:
   TOX_COLORED: "yes"
   PARALLEL: "-n auto" # Use all available cores on the selected runner
   CI_WINDOWS: ${{ startsWith(inputs.os, 'windows') }}
-  VTK_WHEEL_DIR: ${{ inputs.vtk-wheel && format('{0}/vtk-wheel', github.workspace) || '' }}
+  VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -65,6 +63,7 @@ env:
 
 jobs:
   test:
+    # The failure summary's `job-name` below repeats this expression and must match it.
     name: >-
       ${{ format('{0}{1}{2}',
         matrix.python,
@@ -78,11 +77,10 @@ jobs:
         include: ${{ fromJSON(inputs.rows) }}
     env:
       TOX_ENV: >-
-        ${{ format('py{0}{1}{2}{3}{4}',
+        ${{ format('py{0}{1}{2}{3}',
           matrix.python,
           matrix.numpy && format('-numpy_{0}', matrix.numpy) || '',
           matrix.vtk && format('-vtk_{0}', matrix.vtk) || '',
-          inputs.vtk-wheel && '-vtk_local' || '',
           inputs.coverage && '-cov' || '') }}
     steps:
       - uses: actions/checkout@v7
@@ -97,7 +95,7 @@ jobs:
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Download VTK wheel artifact
-        if: inputs.vtk-wheel
+        if: matrix.vtk == 'local'
         id: download-wheel
         uses: actions/download-artifact@v8
         continue-on-error: true
@@ -106,7 +104,7 @@ jobs:
           path: vtk-wheel
 
       - name: Skip if wheel build failed
-        if: inputs.vtk-wheel && steps.download-wheel.outcome != 'success'
+        if: matrix.vtk == 'local' && steps.download-wheel.outcome != 'success'
         env:
           PYTHON_VERSION: ${{ matrix.python }}
         run: |
@@ -152,7 +150,7 @@ jobs:
           command: tox run -e "$TOX_ENV-plotting" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
-        if: failure() && inputs.vtk-wheel
+        if: failure() && matrix.vtk == 'local'
         uses: $/.github/actions/vtk-master-failure-summary
         with:
           job-name: >-

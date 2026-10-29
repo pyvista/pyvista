@@ -18,9 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  TOX_COLORED: "yes"
 
 jobs:
   check-should-run:
@@ -232,7 +230,7 @@ jobs:
       label: Linux
       os: ubuntu-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      vtk-wheel: true
+      rows: '[{"python": "3.14", "vtk": "local"}]'
 
   macOS:
     needs: [check-should-run, build-vtk, cache-github-hosted]
@@ -242,7 +240,7 @@ jobs:
       label: macOS
       os: macos-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      vtk-wheel: true
+      rows: '[{"python": "3.14", "vtk": "local"}]'
 
   Windows:
     needs: [check-should-run, build-vtk, cache-github-hosted]
@@ -252,7 +250,7 @@ jobs:
       label: Windows
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      vtk-wheel: true
+      rows: '[{"python": "3.14", "vtk": "local"}]'
       retries: 3
       core-timeout: 12
       plotting-timeout: 30

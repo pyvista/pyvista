@@ -27,7 +27,7 @@ them is Claude-specific.
 
 **Do not use CI as your test runner.** Every push to an open pull request starts the unit
 test matrix on three operating systems and five Python versions, a separate VTK matrix,
-the documentation build, and the integration tests. You have a shell and the same `make`
+and the documentation build. You have a shell and the same `make`
 targets CI runs, so run them: `make lint`, `make docstyle`, `make doctest`, and
 `make test-core` or `make test-plotting` scoped to what you touched. Run the style and
 docstring gates before you call a change finished, not only when the diff looks related

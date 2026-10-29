@@ -220,7 +220,7 @@ Continuous Integration Etiquette
 Opening a pull request, and every push to it afterwards, starts the full
 continuous integration suite: unit tests on Linux, macOS, and Windows across
 every supported Python version, a separate VTK version matrix, the
-documentation build, the integration tests, type checking, and the style and
+documentation build, type checking, and the style and
 docstring jobs. Every one of those runs costs runner time. Push when the
 change is ready, and use the local gates rather than CI to find out whether it
 works.
