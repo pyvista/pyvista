@@ -158,7 +158,7 @@ class GridReshaper(ArrayReshaper):
     ----------
     axes : str, default: 'xyz'
         Index order of the shaped array. With ``'xyz'``, ``array[i, j, k]``
-        is the value at index ``i`` along x, ``j`` along y and ``k`` along z,
+        is the value at index ``i`` along x, ``j`` along y, and ``k`` along z,
         matching :attr:`~pyvista.ImageData.dimensions` and
         ``numpy.meshgrid(..., indexing='ij')``. With ``'zyx'``, the order is
         reversed to ``array[k, j, i]``, as used by many image libraries.
@@ -216,7 +216,7 @@ class GridReshaper(ArrayReshaper):
                      [ 4,  5,  6,  7],
                      [ 0,  1,  2,  3]])
 
-    Read multimodal scans stored as ``(channel, z, y, x)``, as in PyTorch or MONAI.
+    Read scans with several modalities stored as ``(channel, z, y, x)``, as in PyTorch or MONAI.
 
     >>> image = pv.ImageData(dimensions=(4, 3, 2))
     >>> reshaper = pv.GridReshaper(axes='zyx', components='first')

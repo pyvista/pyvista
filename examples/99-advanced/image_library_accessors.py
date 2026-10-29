@@ -1,7 +1,7 @@
 """
 .. _image_library_accessors_example:
 
-Extend Images with Pillow and SciPy
+Extend Images With Pillow and SciPy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add Pillow and SciPy filters to :class:`~pyvista.ImageData` as dataset accessors.
@@ -10,9 +10,9 @@ The accessors are registered with :func:`~pyvista.register_dataset_accessor`, an
 :attr:`~pyvista.DataSetAttributes.reshaped` passes arrays between the libraries.
 
 Each library expects its own array layout. Pillow uses ``(row, column,
-channel)`` with the top row first, read and written by the ``'image'``
-preset. :mod:`scipy.ndimage` takes volumes indexed along x, y and z, read and
-written by the default ``'grid'`` preset. With the reshaping handled, each
+channel)`` with the top row first, the layout of the ``'image'`` preset.
+:mod:`scipy.ndimage` takes volumes indexed along x, y, and z, the layout of
+the default ``'grid'`` preset. With the reshaping handled, each
 accessor method is a few lines, and its output chains with PyVista filters.
 See :ref:`reshape_data_arrays_example` for every preset and
 :ref:`extending-pyvista` for accessors.
@@ -28,7 +28,7 @@ from pyvista import examples
 from scipy import ndimage
 
 # %%
-# A Pillow accessor
+# A Pillow Accessor
 # +++++++++++++++++
 # ``to_pil`` reads an array in Pillow's layout and ``apply`` writes the result
 # of any Pillow function back to an image with the same origin and spacing.
@@ -94,7 +94,7 @@ pl.camera.elevation = -50
 pl.show()
 
 # %%
-# A SciPy accessor
+# A SciPy Accessor
 # ++++++++++++++++
 # :mod:`scipy.ndimage` filters work on volumes of any dimension, indexed like
 # the default ``'grid'`` preset. Convert the filter sizes from physical units

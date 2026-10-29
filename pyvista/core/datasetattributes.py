@@ -368,7 +368,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Examples
         --------
-        Set a 3D NumPy array as point data of an image, indexed along x, y and z.
+        Set a 3D NumPy array as point data of an image, indexed along x, y, and z.
 
         >>> import numpy as np
         >>> import pyvista as pv

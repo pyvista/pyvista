@@ -22,7 +22,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# How arrays are indexed in space
+# How Arrays Are Indexed in Space
 # +++++++++++++++++++++++++++++++
 # A NumPy image is indexed ``array[row, column]``. Matplotlib draws row 0 at
 # the top, rows run down and columns run right.
@@ -77,7 +77,7 @@ pl.show()
 image.cell_data.reshaped.using('image')['value']
 
 # %%
-# ``'grid'`` indexes the same values as ``array[i, j, k]`` along x, y and z,
+# ``'grid'`` indexes the same values as ``array[i, j, k]`` along x, y, and z,
 # so ``array[0, 0, 0]`` is pixel 0 at the origin, and ``array[i, j, 0]`` is
 # the pixel at ``x = i`` and ``y = j``.
 image.cell_data.reshaped['value'][:, :, 0]
@@ -88,7 +88,7 @@ image.cell_data.reshaped['value'][:, :, 0]
 image.cell_data.reshaped.using('zyx')['value'][0]
 
 # %%
-# Compare with Matplotlib
+# Compare With Matplotlib
 # +++++++++++++++++++++++
 # Sample a 2D field on a grid of 60 by 30 points and plot it with Matplotlib.
 xx, yy = np.meshgrid(np.linspace(0, 2, 60), np.linspace(0, 1, 30), indexing='ij')
@@ -125,11 +125,11 @@ ax.set_aspect('equal')
 plt.show()
 
 # %%
-# Volumes indexed along x, y and z
-# ++++++++++++++++++++++++++++++++
+# Volumes in XYZ Order
+# +++++++++++++++++++++
 # The default ``'grid'`` preset matches :func:`numpy.meshgrid` with
 # ``indexing='ij'``: ``array[i, j, k]`` is the value at index ``i`` along x,
-# ``j`` along y and ``k`` along z, the order of
+# ``j`` along y, and ``k`` along z, the order of
 # :attr:`~pyvista.ImageData.dimensions`. The same layout is used by
 # ``nibabel`` volumes.
 x, y, z = np.meshgrid(
@@ -161,7 +161,7 @@ grid.point_data.reshaped['values'][0, 0, 0] = 10.0
 grid.point_data['values'][0]
 
 # %%
-# Vector fields
+# Vector Fields
 # +++++++++++++
 # Multi-component arrays keep their components on the last axis.
 grid.point_data['coordinates'] = grid.points
@@ -185,8 +185,8 @@ glyphs = grid.extract_subset((0, 39, 0, 29, 10, 10), rate=(3, 3, 1)).glyph(
 glyphs.plot(cmap='coolwarm', cpos='xy')
 
 # %%
-# Volumes indexed along z, y and x
-# ++++++++++++++++++++++++++++++++
+# Volumes in ZYX Order
+# +++++++++++++++++++++
 # Many imaging libraries index volumes the other way round, as
 # ``array[k, j, i]``: ``SimpleITK.GetArrayFromImage``, scikit-image,
 # ``tifffile`` and image stacks read slice by slice. The ``'zyx'`` preset
@@ -200,12 +200,12 @@ volume.point_data.reshaped.using('zyx')['values'] = zyx_volume
 np.array_equal(volume.point_data.reshaped['values'], values)
 
 # %%
-# Multimodal scans
-# ++++++++++++++++
-# Deep learning frameworks such as PyTorch and MONAI store multimodal scans
+# Scans With Several Modalities
+# +++++++++++++++++++++++++++++
+# Deep learning frameworks such as PyTorch and MONAI store scans with several modalities
 # channels first, as ``(channel, z, y, x)``. Build a reshaper for that layout
 # with :class:`~pyvista.GridReshaper`. Here two synthetic modalities stand in
-# for, say, T1 and T2 weighted MRI.
+# for T1-weighted and T2-weighted MRI.
 t1 = np.exp(-(x**2 + y**2 + z**2) * 3)
 t2 = 1 - t1
 scan = np.stack([t1, t2]).transpose(0, 3, 2, 1)
@@ -224,7 +224,7 @@ mri.point_data['T2'] = mri.point_data['scan'][:, 1]
 mri.slice_orthogonal().plot(scalars='T1', cmap='bone')
 
 # %%
-# 2D images
+# 2D Images
 # +++++++++
 # Pillow, OpenCV, imageio and :func:`matplotlib.pyplot.imread` return images
 # as ``(row, column, channel)`` arrays whose first row is the top of the
@@ -248,7 +248,7 @@ np.array_equal(logo.point_data['rgba'], pv.read(examples.logofile).point_data['P
 logo.plot(rgb=True, cpos='xy', background='white')
 
 # %%
-# Custom reshapers
+# Custom Reshapers
 # ++++++++++++++++
 # Any layout can be read and written with an :class:`~pyvista.ArrayReshaper`
 # built from two functions. OpenCV returns color images as BGR rather than RGB,
@@ -277,7 +277,7 @@ logo.point_data.reshaped.using(opencv)['from_opencv'] = bgr
 np.array_equal(logo.point_data['from_opencv'], logo.point_data['rgba'][:, :3])
 
 # %%
-# Animation frames
+# Animation Frames
 # ++++++++++++++++
 # A stack of frames, as ``(frame, row, column, channel)``, is a volume with
 # time along z. The ``'image'`` preset reads and writes it the same way as a
@@ -314,7 +314,7 @@ sphere.point_data['outer'].shape
 sphere.point_data.reshaped.using('tensor')['outer'].shape
 
 # %%
-# Changing the default
+# Changing the Default
 # ++++++++++++++++++++
 # Set :attr:`pyvista.global_config.array_reshaping
 # <pyvista.core.config.Config.array_reshaping>` to use a layout everywhere.

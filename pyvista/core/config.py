@@ -498,7 +498,7 @@ class Config(_ConfigBase):
 
         ``'grid'``
             The default. Arrays of structured grids take the grid shape, indexed
-            ``array[i, j, k]`` along x, y and z, with any component axis last.
+            ``array[i, j, k]`` along x, y, and z, with any component axis last.
 
         ``'zyx'``
             As ``'grid'``, indexed ``array[k, j, i]``.
