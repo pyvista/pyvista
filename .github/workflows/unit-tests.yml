@@ -31,11 +31,11 @@ on: # zizmor: ignore[cache-poisoning]
         default: 1
         type: number
       core-timeout:
-        description: Minutes per core test attempt.
+        description: Minutes per core test attempt when `retries` is above 1.
         default: 60
         type: number
       plotting-timeout:
-        description: Minutes per plotting test attempt.
+        description: Minutes per plotting test attempt when `retries` is above 1.
         default: 120
         type: number
       timeout-minutes:
@@ -129,24 +129,35 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      # `shell: bash`: this action's Windows default is PowerShell. Teed for the failure summary.
+      # Teed for the failure summary. The retry variants run only when `retries` is above 1.
       - name: Core Testing (no GL)
+        if: inputs.retries == 1
+        shell: bash
+        run: tox run -e "$TOX_ENV-core" 2>&1 | tee core-test.log
+
+      - name: Core Testing (no GL)
+        if: inputs.retries > 1
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
           timeout_minutes: ${{ inputs.core-timeout }}
           max_attempts: ${{ inputs.retries }}
           retry_on: timeout
-          shell: bash
+          shell: bash # this action's Windows default is PowerShell
           command: tox run -e "$TOX_ENV-core" 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.retries == 1 }}
+        shell: bash
+        run: tox run -e "$TOX_ENV-plotting" 2>&1 | tee plotting-test.log
+
+      - name: Plotting Testing (uses GL)
+        if: ${{ !cancelled() && inputs.retries > 1 }}
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
           timeout_minutes: ${{ inputs.plotting-timeout }}
           max_attempts: ${{ inputs.retries }}
           retry_on: timeout
-          shell: bash
+          shell: bash # this action's Windows default is PowerShell
           command: tox run -e "$TOX_ENV-plotting" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
