@@ -9,6 +9,7 @@ imported on first access. We import from ``vtkmodules`` instead of
 
 from __future__ import annotations
 
+import functools
 import importlib
 import importlib.util
 import os
@@ -338,6 +339,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkAppendArcLength',
         'vtkAppendFilter',
         'vtkAppendPolyData',
+        'vtkBinnedDecimation',
         'vtkCellCenters',
         'vtkCellDataToPointData',
         'vtkCenterOfMass',
@@ -763,6 +765,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPropCollection',
         'vtkPropPicker',
         'vtkProperty',
+        'vtkProperty2D',
         'vtkRenderWindow',
         'vtkRenderWindowInteractor',
         'vtkRenderedAreaPicker',
@@ -807,7 +810,6 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
 #     ImportError: libGL.so.1: cannot open shared object file: No such file or directory
 _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
     'vtkRenderingOpenGL2': (
-        'vtkCameraPass',
         'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
         'vtkDepthOfFieldPass',
         'vtkEDLShading',
@@ -821,7 +823,6 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkPBRIrradianceTexture',
         'vtkPBRLUTTexture',
         'vtkPBRPrefilterTexture',
-        'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
         'vtkShader',
@@ -991,25 +992,29 @@ def _import_vtkCellTypeUtilities() -> type[Any]:  # noqa: N802
         return _import_from('vtkCommonDataModel', 'vtkCellTypes')
 
 
-def _import_vtkRenderPassCollection() -> type[Any]:  # noqa: N802
-    try:  # Moved in VTK 10.0.0
-        return _import_from('vtkRenderingCore', 'vtkRenderPassCollection')
+def _import_moved_to_rendering_core(name: str) -> type[Any]:
+    """Import a render pass class VTK 10.0.0 moved from RenderingOpenGL2 to RenderingCore."""
+    try:
+        return _import_from('vtkRenderingCore', name)
     except ImportError:
-        return _import_from('vtkRenderingOpenGL2', 'vtkRenderPassCollection')
+        return _import_from('vtkRenderingOpenGL2', name)
 
 
-def _import_vtkSequencePass() -> type[Any]:  # noqa: N802
-    try:  # Moved in VTK 10.0.0
-        return _import_from('vtkRenderingCore', 'vtkSequencePass')
-    except ImportError:
-        return _import_from('vtkRenderingOpenGL2', 'vtkSequencePass')
+_MOVED_TO_RENDERING_CORE = (
+    'vtkCameraPass',
+    'vtkRenderPassCollection',
+    'vtkRenderStepsPass',
+    'vtkSequencePass',
+)
 
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkPythonItem': _import_vtkPythonItem,
     'vtkCellTypeUtilities': _import_vtkCellTypeUtilities,
-    'vtkRenderPassCollection': _import_vtkRenderPassCollection,
-    'vtkSequencePass': _import_vtkSequencePass,
+    **{
+        name: functools.partial(_import_moved_to_rendering_core, name)
+        for name in _MOVED_TO_RENDERING_CORE
+    },
 }
 
 

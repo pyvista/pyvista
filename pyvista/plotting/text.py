@@ -689,7 +689,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
         Returns
         -------
-        bool:
+        bool
             If shows the frame.
 
         """

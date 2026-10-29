@@ -18,7 +18,9 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
+from ._structured_data import _StructuredDataMixin
 from .datasetattributes import DataSetAttributes
+from .formatting_html import _TextReprHTMLMixin
 from .utilities.accessor_registry import _clear_accessor_cache
 from .utilities.accessor_registry import _pending_accessor_names
 from .utilities.accessor_registry import _resolve_pending_accessor
@@ -49,6 +51,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
+    from pyvista import DataSet
     from pyvista import MultiBlock
 
     from ._typing_core import _AnyArrayLike
@@ -81,6 +84,7 @@ def _raise_unexpected_writer_kwargs(
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
 class DataObject(
+    _TextReprHTMLMixin,
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     vtkPyVistaOverride,
@@ -445,15 +449,6 @@ class DataObject(
             fmt += row.format('N Arrays:', self.n_arrays)
         return fmt.strip()
 
-    def _repr_html_(self: Self) -> str:  # pragma: no cover
-        """Return a pretty representation for Jupyter notebooks.
-
-        This includes header details and information about all arrays.
-
-        """
-        msg = 'Called only by the inherited class'
-        raise NotImplementedError(msg)
-
     def copy_meta_from(self: Self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
@@ -526,6 +521,8 @@ class DataObject(
                 equal_attrs.append('celltypes')
                 equal_attrs.append('polyhedron_faces')
                 equal_attrs.append('polyhedron_face_locations')
+            elif issubclass(type(self), _StructuredDataMixin):
+                equal_attrs.append('extent')
 
         for attr in equal_attrs:
             # Only check equality for attributes defined by PyVista
@@ -863,12 +860,12 @@ class DataObject(
         """
         self.CopyStructure(dataset) if dataset is not self else None
 
-    def copy_attributes(self: Self, dataset: Self) -> None:
+    def copy_attributes(self: Self, dataset: DataSet | _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
         ----------
-        dataset : pyvista.DataSet
+        dataset : pyvista.DataSet | :vtk:`vtkDataSet`
             Dataset to copy the data attributes from.
 
         Examples
@@ -1071,7 +1068,7 @@ class DataObject(
 
         # copy data
         self.copy_structure(mesh)  # type: ignore[arg-type]
-        self.copy_attributes(mesh)  # type: ignore[arg-type]
+        self.copy_attributes(mesh)
 
     @property
     @abstractmethod

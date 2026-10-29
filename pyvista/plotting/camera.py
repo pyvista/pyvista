@@ -12,6 +12,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core.pointset import PolyData
 
     from .helpers import _ViewOptions
     from .renderer import Renderer
@@ -32,7 +34,7 @@ if TYPE_CHECKING:
 _OPENCV_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
-class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
@@ -877,7 +879,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         """
         return self.GetDirectionOfProjection()
 
-    def view_frustum(self, aspect: float = 1.0) -> pv.PolyData:
+    def view_frustum(self, aspect: float = 1.0) -> PolyData:
         """Get the view frustum.
 
         Parameters

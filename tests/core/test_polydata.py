@@ -1012,6 +1012,262 @@ def test_decimate_pro(sphere):
         mesh.decimate_pro(0.5)
 
 
+@pytest.fixture
+def fine_sphere():
+    mesh = pv.Sphere(theta_resolution=200, phi_resolution=200, center=(1.0, 2.0, 3.0))
+    mesh.point_data['point_ids'] = np.arange(mesh.n_points)
+    mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
+    return mesh
+
+
+@pytest.mark.parametrize(('target', 'rtol'), [(500, 0.2), (2000, 0.05), (20000, 0.05)])
+def test_decimate_binned_target_points(fine_sphere, target, rtol):
+    mesh = fine_sphere.decimate_binned(target_points=target)
+    assert mesh.n_points == pytest.approx(target, rel=rtol)
+    assert mesh.is_all_triangles
+    assert mesh.n_points == np.unique(mesh.faces.reshape(-1, 4)[:, 1:]).size
+
+
+def _binned_test_shape(name):
+    if name == 'tube':
+        grid = pv.CylinderStructured(
+            radius=0.5, height=60.0, theta_resolution=40, z_resolution=2500
+        )
+        return grid.extract_surface(algorithm='dataset_surface').triangulate()
+    if name == 'sheet':
+        return pv.Plane(i_resolution=300, j_resolution=300).triangulate()
+    spheres = [pv.Sphere(radius=r, theta_resolution=60, phi_resolution=60) for r in range(1, 21)]
+    return pv.merge(spheres)
+
+
+@pytest.mark.parametrize('shape', ['tube', 'sheet', 'shells'])
+def test_decimate_binned_target_points_shapes(shape):
+    mesh = _binned_test_shape(shape)
+    decimated = mesh.decimate_binned(target_points=10_000)
+    assert decimated.n_points == pytest.approx(10_000, rel=0.1)
+
+
+def test_decimate_binned_empty_probe():
+    small = pv.Sphere(radius=0.05, theta_resolution=100, phi_resolution=100)
+    mesh = small + small.translate((10.0, 10.0, 10.0))
+    assert mesh.decimate_binned(divisions=50).n_points == 0
+    decimated = mesh.decimate_binned(target_points=300)
+    assert decimated.n_points == pytest.approx(300, rel=0.1)
+
+
+def test_decimate_binned_bin_limit(fine_sphere, monkeypatch):
+    monkeypatch.setattr('pyvista.core.filters.poly_data._MAX_BINS', 1000)
+    divisions = []
+    update_alg = pv.core.filters.poly_data._update_alg
+
+    def spy(alg, **kwargs):
+        divisions.append(alg.GetNumberOfDivisions())
+        update_alg(alg, **kwargs)
+
+    monkeypatch.setattr('pyvista.core.filters.poly_data._update_alg', spy)
+    with pytest.warns(UserWarning, match='of the 20000 target points'):
+        mesh = fine_sphere.decimate_binned(target_points=20_000)
+    assert all(np.prod(divs) <= 1000 for divs in divisions)
+    assert 0 < mesh.n_points < 1000
+
+
+def test_decimate_binned_keeps_data(fine_sphere):
+    fine_sphere.points = fine_sphere.points.astype(np.float64)
+    mesh = fine_sphere.decimate_binned(target_points=2000)
+    point_ids = mesh.point_data['point_ids']
+    cell_ids = mesh.cell_data['cell_ids']
+    assert point_ids.dtype == cell_ids.dtype == np.int_
+    assert np.unique(point_ids).size == mesh.n_points
+    assert np.unique(cell_ids).size == mesh.n_cells
+    assert mesh.points.dtype == np.float64
+    assert np.array_equal(mesh.points, fine_sphere.points[point_ids])
+    shift = mesh.cell_centers().points - fine_sphere.cell_centers().points[cell_ids]
+    bin_size = mesh.length / np.sqrt(mesh.n_points)
+    assert np.linalg.norm(shift, axis=1).max() < 2 * bin_size
+    assert np.array_equal(mesh['Normals'], fine_sphere['Normals'][point_ids])
+
+
+@pytest.mark.parametrize('point_generation', ['bin_points', 'bin_centers', 'bin_averages'])
+def test_decimate_binned_array_types(fine_sphere, point_generation):
+    fine_sphere.point_data['labels'] = np.arange(fine_sphere.n_points).astype(str)
+    fine_sphere.point_data['mask'] = np.arange(fine_sphere.n_points) % 2 == 0
+    fine_sphere.cell_data['labels'] = np.arange(fine_sphere.n_cells).astype(str)
+    fine_sphere.cell_data['mask'] = np.arange(fine_sphere.n_cells) % 2 == 0
+    fine_sphere.field_data['note'] = ['kept']
+    fine_sphere.point_data.active_scalars_name = 'point_ids'
+    fine_sphere.cell_data.active_scalars_name = 'cell_ids'
+
+    mesh = fine_sphere.decimate_binned(divisions=20, point_generation=point_generation)
+    cell_ids = mesh.cell_data['cell_ids']
+    assert np.array_equal(mesh.cell_data['labels'], cell_ids.astype(str))
+    assert np.array_equal(mesh.cell_data['mask'], cell_ids % 2 == 0)
+    assert mesh.cell_data.active_scalars_name == 'cell_ids'
+    assert mesh.point_data.active_scalars_name == 'point_ids'
+    assert mesh.point_data.active_normals_name == 'Normals'
+    assert mesh.field_data['note'] == ['kept']
+    assert fine_sphere.point_data['mask'].dtype == np.bool_
+
+    if point_generation == 'bin_averages':
+        assert 'labels' not in mesh.point_data
+        assert 'mask' not in mesh.point_data
+        assert mesh.point_data['point_ids'].dtype == np.float64
+    else:
+        point_ids = mesh.point_data['point_ids']
+        assert np.array_equal(mesh.point_data['labels'], point_ids.astype(str))
+        assert np.array_equal(mesh.point_data['mask'], point_ids % 2 == 0)
+
+
+def test_decimate_binned_point_generation(fine_sphere):
+    divisions = 10
+    centers = fine_sphere.decimate_binned(divisions=divisions, point_generation='bin_centers')
+    lower = np.array(fine_sphere.bounds)[::2]
+    spacing = np.ptp(np.reshape(fine_sphere.bounds, (3, 2)), axis=1) / divisions
+    offsets = (centers.points - lower) / spacing - 0.5
+    assert np.allclose(offsets, np.round(offsets), atol=1e-4)
+
+    averages = fine_sphere.decimate_binned(divisions=divisions, point_generation='bin_averages')
+    assert averages.n_points == centers.n_points
+    assert not np.isin(averages.points, fine_sphere.points).all(axis=1).any()
+    ids = averages.point_data['point_ids']
+    assert not np.array_equal(ids, np.round(ids))
+
+
+def test_decimate_binned_divisions(fine_sphere):
+    ellipsoid = fine_sphere.scale((4.0, 2.0, 1.0))
+    scalar = ellipsoid.decimate_binned(divisions=20)
+    assert scalar == ellipsoid.decimate_binned(divisions=(20, 10, 5))
+    assert scalar != ellipsoid.decimate_binned(divisions=(20, 20, 20))
+    assert scalar.n_points < ellipsoid.n_points
+
+    single_bin = fine_sphere.decimate_binned(divisions=1)
+    assert single_bin.n_cells == 0
+
+
+def test_decimate_binned_flat():
+    plane = pv.Plane(i_resolution=300, j_resolution=300).triangulate()
+    mesh = plane.decimate_binned(target_points=5000)
+    assert mesh.n_points == pytest.approx(5000, rel=0.05)
+    assert np.allclose(mesh.points[:, 2], 0.0)
+
+    mesh = plane.decimate_binned(divisions=10)
+    assert mesh.n_points == 10 * 10
+
+
+def test_decimate_binned_coincident_points():
+    points = np.zeros((3, 3))
+    with pytest.warns(UserWarning, match='kept 0 of the 100 target points'):
+        mesh = pv.PolyData(points, faces=[3, 0, 1, 2]).decimate_binned(target_points=100)
+    assert mesh.n_cells == 0
+
+
+def test_decimate_binned_unused_points(fine_sphere):
+    points = np.vstack([fine_sphere.points, [[100.0, 100.0, 100.0]]])
+    mesh = pv.PolyData(points, faces=fine_sphere.faces)
+    mesh.point_data['point_ids'] = np.arange(mesh.n_points)
+    decimated = mesh.decimate_binned(target_points=2000)
+    assert decimated.n_points == pytest.approx(2000, rel=0.1)
+    assert np.array_equal(decimated.points, mesh.points[decimated['point_ids']])
+
+
+def test_decimate_binned_warns_out_of_reach():
+    small = pv.Sphere(radius=0.05, theta_resolution=100, phi_resolution=100)
+    mesh = small + small.translate((100.0, 100.0, 100.0))
+    with pytest.warns(UserWarning, match=r'kept \d+ of the 2000 target points'):
+        mesh.decimate_binned(target_points=2000)
+
+
+@pytest.mark.parametrize(
+    ('target_reduction', 'rtol'), [(0.0, 0.1), (0.5, 0.05), (0.9, 0.05), (0.99, 0.2)]
+)
+def test_decimate_binned_target_reduction(fine_sphere, target_reduction, rtol):
+    target = round(fine_sphere.n_points * (1 - target_reduction))
+    mesh = fine_sphere.decimate_binned(target_reduction)
+    assert mesh.n_points == pytest.approx(target, rel=rtol)
+    assert mesh == fine_sphere.decimate_binned(target_points=target)
+
+
+@pytest.mark.parametrize('kwargs', [{'target_points': 2000}, {'divisions': 30}])
+def test_decimate_binned_inplace(fine_sphere, kwargs):
+    expected = fine_sphere.decimate_binned(**kwargs)
+    output = fine_sphere.decimate_binned(**kwargs, inplace=True)
+    assert output is fine_sphere
+    assert fine_sphere == expected
+
+
+@pytest.mark.parametrize('kwargs', [{'target_points': 2000}, {'divisions': 30}])
+def test_decimate_binned_progress_bar(fine_sphere, kwargs):
+    with patch('pyvista.core.filters.poly_data._update_alg') as update_alg:
+        update_alg.side_effect = lambda alg, **_: alg.Update()
+        fine_sphere.decimate_binned(**kwargs, progress_bar=True)
+    assert update_alg.call_count >= 1
+    assert all(call.kwargs['progress_bar'] for call in update_alg.call_args_list)
+
+
+def test_decimate_binned_unset_active_scalars(fine_sphere):
+    fine_sphere.point_data.active_scalars_name = None
+    fine_sphere.cell_data.active_scalars_name = None
+    for point_generation in ('bin_points', 'bin_averages'):
+        mesh = fine_sphere.decimate_binned(divisions=20, point_generation=point_generation)
+        assert mesh.point_data.active_scalars_name is None
+        assert mesh.cell_data.active_scalars_name is None
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'error', 'match'),
+    [
+        ({}, ValueError, 'exactly one'),
+        ({'target_points': 100, 'divisions': 10}, ValueError, 'exactly one'),
+        ({'target_reduction': 0.5, 'target_points': 100}, ValueError, 'exactly one'),
+        ({'target_reduction': 0.5, 'divisions': 10}, ValueError, 'exactly one'),
+        ({'target_reduction': 1.0}, ValueError, 'target_reduction'),
+        ({'target_reduction': -0.1}, ValueError, 'target_reduction'),
+        ({'target_points': 0}, ValueError, 'target_points'),
+        ({'target_points': 10.5}, TypeError, 'target_points'),
+        ({'divisions': 0}, ValueError, 'divisions'),
+        ({'divisions': (10, 0, 10)}, ValueError, 'divisions'),
+        ({'divisions': (10, 10)}, ValueError, 'divisions'),
+        ({'divisions': 2.5}, TypeError, 'divisions'),
+        ({'divisions': 10, 'point_generation': 'input_points'}, ValueError, 'point_generation'),
+    ],
+)
+def test_decimate_binned_raises(fine_sphere, kwargs, error, match):
+    with pytest.raises(error, match=match):
+        fine_sphere.decimate_binned(**kwargs)
+
+
+def _with_strip(mesh):
+    mesh.strips = [5, 0, 1, 2, 3, 4]
+    return mesh
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        pv.Plane,
+        pv.Cylinder,
+        lambda: pv.Sphere() + pv.Plane(center=(3.0, 0.0, 0.0)),
+        lambda: pv.Line(resolution=10),
+        lambda: pv.PolyData(np.eye(3)),
+        lambda: pv.Sphere() + pv.Line(),
+        lambda: pv.Sphere().strip(),
+        lambda: _with_strip(pv.Sphere()),
+    ],
+    ids=[
+        'quads',
+        'polygons',
+        'triangles_and_quads',
+        'lines',
+        'vertices',
+        'triangles_and_lines',
+        'strips',
+        'triangles_and_strips',
+    ],
+)
+def test_decimate_binned_not_all_triangles(make_mesh):
+    with pytest.raises(NotAllTrianglesError, match='triangulate'):
+        make_mesh().decimate_binned(target_points=100)
+
+
 def test_compute_normals(sphere):
     sphere_normals = sphere
     sphere_normals.compute_normals(inplace=True)
@@ -1037,6 +1293,153 @@ def test_compute_normals_raises(sphere):
     assert lines.n_lines == lines.n_cells
     with pytest.raises(TypeError, match=re.escape(msg)):
         lines.compute_normals()
+
+
+@pytest.fixture
+def sphere_stale_normals():
+    sphere = pv.Sphere().compute_normals()
+    sphere.point_data['Normals'][:] = (1.0, 0.0, 0.0)
+    sphere.cell_data['Normals'][:] = (1.0, 0.0, 0.0)
+    return sphere
+
+
+@pytest.mark.parametrize('flip_normals', [True, False])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_compute_normals_recompute(sphere_stale_normals, flip_normals, inplace):
+    expected = pv.Sphere()
+    expected.clear_data()
+    expected = expected.compute_normals(flip_normals=flip_normals)
+
+    stale_point_normals = sphere_stale_normals.point_data['Normals'].copy()
+    mesh = sphere_stale_normals.compute_normals(flip_normals=flip_normals, inplace=inplace)
+
+    assert (mesh is sphere_stale_normals) == inplace
+    assert mesh.point_data.active_normals_name == 'Normals'
+    assert mesh.cell_data.active_normals_name == 'Normals'
+    assert np.allclose(mesh.point_data['Normals'], expected.point_data['Normals'])
+    assert np.allclose(mesh.cell_data['Normals'], expected.cell_data['Normals'])
+    if not inplace:
+        assert sphere_stale_normals.point_data.active_normals_name == 'Normals'
+        assert sphere_stale_normals.cell_data.active_normals_name == 'Normals'
+        assert np.array_equal(sphere_stale_normals.point_data['Normals'], stale_point_normals)
+
+
+def _clean_sphere_normals(**kwargs):
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    return sphere.compute_normals(**kwargs)
+
+
+def test_compute_normals_recompute_skipped_normals_untouched(sphere_stale_normals):
+    expected = _clean_sphere_normals(point_normals=False)
+    mesh = sphere_stale_normals.compute_normals(point_normals=False)
+    assert mesh.point_data.active_normals_name == 'Normals'
+    assert np.allclose(mesh.point_data['Normals'], (1.0, 0.0, 0.0))
+    assert np.allclose(mesh.cell_data['Normals'], expected.cell_data['Normals'])
+
+
+def test_compute_normals_recompute_neither_requested(sphere_stale_normals):
+    mesh = sphere_stale_normals.compute_normals(point_normals=False, cell_normals=False)
+    for data in (mesh.point_data, mesh.cell_data):
+        assert data.active_normals_name == 'Normals'
+        assert np.allclose(data['Normals'], (1.0, 0.0, 0.0))
+
+
+def test_compute_normals_recompute_stale_cell_normals_not_reused(sphere_stale_normals):
+    expected = pv.Sphere()
+    expected.clear_data()
+    expected = expected.compute_normals(cell_normals=False)
+
+    mesh = sphere_stale_normals.compute_normals(cell_normals=False)
+    assert np.allclose(mesh.point_data['Normals'], expected.point_data['Normals'])
+    assert mesh.cell_data.active_normals_name == 'Normals'
+    assert np.allclose(mesh.cell_data['Normals'], (1.0, 0.0, 0.0))
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_compute_normals_recompute_keeps_custom_name_inactive(sphere_stale_normals, dtype):
+    unflipped = _clean_sphere_normals()
+    mesh = sphere_stale_normals
+    for data in (mesh.point_data, mesh.cell_data):
+        data['CustomNormals'] = data.pop('Normals').astype(dtype)
+        data.active_normals_name = 'CustomNormals'
+
+    result = mesh.compute_normals(flip_normals=True)
+    for data, unflipped_data in (
+        (result.point_data, unflipped.point_data),
+        (result.cell_data, unflipped.cell_data),
+    ):
+        assert data.active_normals_name == 'Normals'
+        assert np.allclose(data['Normals'], -unflipped_data['Normals'])
+        assert data['CustomNormals'].dtype == dtype
+        assert np.allclose(data['CustomNormals'], (1.0, 0.0, 0.0))
+
+
+def _sphere_custom_normals(dtype, *, point=True, cell=True):
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    for data, n, add in (
+        (sphere.point_data, sphere.n_points, point),
+        (sphere.cell_data, sphere.n_cells, cell),
+    ):
+        if add:
+            data['CustomNormals'] = np.tile((1.0, 0.0, 0.0), (n, 1)).astype(dtype)
+            data.active_normals_name = 'CustomNormals'
+    return sphere
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize('plain_normals', [True, False])
+def test_compute_normals_recompute_false_keeps_existing(dtype, inplace, plain_normals):
+    sphere = _sphere_custom_normals(dtype)
+    if plain_normals:
+        sphere.point_data['Normals'] = np.zeros((sphere.n_points, 3), dtype=np.float32)
+    mesh = sphere.compute_normals(
+        recompute=False, flip_normals=True, split_vertices=True, inplace=inplace
+    )
+    assert (mesh is sphere) == inplace
+    assert mesh.n_points == sphere.n_points
+    assert 'pyvistaOriginalPointIds' not in mesh.point_data
+    for data in (mesh.point_data, mesh.cell_data):
+        assert data.active_normals_name == 'CustomNormals'
+        assert data['CustomNormals'].dtype == dtype
+        assert np.allclose(data['CustomNormals'], (1.0, 0.0, 0.0))
+
+
+def test_compute_normals_recompute_false_checks_requested_only():
+    sphere = _sphere_custom_normals(np.float32, cell=False)
+    mesh = sphere.compute_normals(recompute=False, cell_normals=False, flip_normals=True)
+    assert mesh.point_data.active_normals_name == 'CustomNormals'
+    assert np.allclose(mesh.point_data['CustomNormals'], (1.0, 0.0, 0.0))
+    assert mesh.cell_data.keys() == []
+
+
+@pytest.mark.parametrize(('point', 'cell'), [(True, False), (False, True), (False, False)])
+def test_compute_normals_recompute_false_otherwise_recomputes_all(point, cell):
+    unflipped = _clean_sphere_normals()
+    sphere = _sphere_custom_normals(np.float32, point=point, cell=cell)
+    mesh = sphere.compute_normals(recompute=False, flip_normals=True)
+    for data, unflipped_data, had_custom in (
+        (mesh.point_data, unflipped.point_data, point),
+        (mesh.cell_data, unflipped.cell_data, cell),
+    ):
+        assert data.active_normals_name == 'Normals'
+        assert np.allclose(data['Normals'], -unflipped_data['Normals'])
+        assert ('CustomNormals' in data) == had_custom
+
+
+@pytest.mark.parametrize('recompute', [True, False])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_compute_normals_no_polygons_keeps_existing(recompute, inplace):
+    cloud = pv.PolyData(pv.Sphere().points)
+    cloud.point_data['CustomNormals'] = np.tile((1.0, 0.0, 0.0), (cloud.n_points, 1))
+    cloud.point_data.active_normals_name = 'CustomNormals'
+    mesh = cloud.compute_normals(recompute=recompute, inplace=inplace)
+    assert (mesh is cloud) == inplace
+    assert mesh.point_data.keys() == ['CustomNormals']
+    assert mesh.point_data.active_normals_name == 'CustomNormals'
+    assert mesh.cell_data.keys() == []
 
 
 def test_compute_normals_inplace(sphere):
@@ -1450,6 +1853,48 @@ def test_is_all_triangles():
     assert not mesh.is_all_triangles
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
+
+    mesh.strips = [4, 0, 1, 2, 3]
+    assert not mesh.is_all_triangles
+    assert mesh.triangulate().is_all_triangles
+
+
+@pytest.mark.parametrize(
+    'run',
+    [
+        lambda mesh: mesh.decimate(0.5),
+        lambda mesh: mesh.decimate_pro(0.5),
+        lambda mesh: mesh.decimate_binned(target_points=100),
+        lambda mesh: mesh.subdivide(1),
+        lambda mesh: mesh.subdivide_adaptive(),
+        lambda mesh: mesh.geodesic(0, 10),
+        lambda mesh: mesh.multi_ray_trace([[0.0, 0.0, 0.0]], [[1.0, 0.0, 0.0]]),
+        lambda mesh: mesh.boolean_union(pv.Sphere(center=(0.3, 0.0, 0.0))),
+    ],
+    ids=[
+        'decimate',
+        'decimate_pro',
+        'decimate_binned',
+        'subdivide',
+        'subdivide_adaptive',
+        'geodesic',
+        'multi_ray_trace',
+        'boolean_union',
+    ],
+)
+def test_triangle_filters_reject_strips(run):
+    mesh = _with_strip(pv.Sphere())
+    with pytest.raises(NotAllTrianglesError, match='must be all triangles'):
+        run(mesh)
+
+
+def test_remove_points_tuple_rejects_strips():
+    mesh = _with_strip(pv.Sphere())
+    with (
+        pytest.warns(pv.PyVistaDeprecationWarning),
+        pytest.raises(NotAllTrianglesError, match='must be all triangles'),
+    ):
+        mesh.remove_points([0])
 
 
 def test_extrude():

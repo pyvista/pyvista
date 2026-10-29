@@ -14,6 +14,7 @@ from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLikeInt
+    from pyvista.core.pointset import StructuredGrid
 
 
 @abstract_class
@@ -26,7 +27,7 @@ class StructuredGridFilters(DataSetFilters):
         rate: VectorLikeInt = (1, 1, 1),
         *,
         boundary: bool = False,
-    ) -> pv.StructuredGrid:
+    ) -> StructuredGrid:
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max
@@ -88,7 +89,7 @@ class StructuredGridFilters(DataSetFilters):
         alg.SetSampleRate(rate)  # type: ignore[arg-type]
         alg.SetIncludeBoundary(boundary)
         alg.Update()
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.StructuredGrid)
         rates = [int(r) for r in rate]
         if any(r != 1 for r in rates):
             # VTK rebases a sampled axis to 0. Divide its extent by the rate instead, as for
@@ -101,8 +102,8 @@ class StructuredGridFilters(DataSetFilters):
         return output
 
     def concatenate(
-        self, other: pv.StructuredGrid, axis: int, tolerance: float = 0.0
-    ) -> pv.StructuredGrid:
+        self, other: StructuredGrid, axis: int, tolerance: float = 0.0
+    ) -> StructuredGrid:
         """Concatenate a structured grid to this grid.
 
         Joins structured grids into a single structured grid. Grids

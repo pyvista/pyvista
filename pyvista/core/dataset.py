@@ -68,12 +68,15 @@ if TYPE_CHECKING:
     from pyvista import Cell
     from pyvista import CellType
     from pyvista import PointSet
+    from pyvista import PolyData
+    from pyvista import UnstructuredGrid
 
     from ._typing_core import MatrixLikeFloat
     from ._typing_core import VectorLikeFloat
-    from ._typing_core import VectorLikeInt
     from ._typing_core import _AnyArrayLike
     from ._typing_core import _ArrayLikeOrScalar
+    from ._typing_core import _NumericScalar
+    from ._typing_core import _VectorSequence
 
     _Dimensionality = Literal[0, 1, 2, 3]
 
@@ -365,7 +368,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active tensor array.
 
         """
@@ -389,7 +392,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active vectors array.
 
         Examples
@@ -425,7 +428,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        str
+        str | None
             Name of the active scalars.
 
         Examples
@@ -554,7 +557,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     @property
     def arrows(
         self: Self,
-    ) -> pv.PolyData | None:
+    ) -> PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points or cells of the mesh and
@@ -566,7 +569,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista.PolyData
+        pyvista.PolyData | None
             Active vectors represented as arrows.
 
         Examples
@@ -612,7 +615,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral | FieldAssociation = 'cell',
-    ) -> tuple[FieldAssociation, pyvista_ndarray | None]:
+    ) -> tuple[FieldAssociation, pyvista_ndarray]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -675,9 +678,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfoTuple(field, name)
 
         if field == FieldAssociation.POINT:
-            return field, self.point_data.active_scalars
+            return field, self.point_data[name]
         else:  # must be cell
-            return field, self.cell_data.active_scalars
+            return field, self.cell_data[name]
 
     def set_active_vectors(
         self: Self,
@@ -873,7 +876,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        pyvista_ndarray
+        pyvista_ndarray | None
             Active normals of this dataset.
 
         Notes
@@ -1230,8 +1233,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
-             Number of cells in the entire dataset.
+        int
+            Number of cells in the entire dataset.
 
         Notes
         -----
@@ -1257,8 +1260,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
-             Number of points.
+        int
+            Number of points.
 
         """
         return self.GetNumberOfPoints()
@@ -1269,8 +1272,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int :
-             Number of cells.
+        int
+            Number of cells.
 
         """
         return self.GetNumberOfCells()
@@ -1732,25 +1735,6 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         cell_normals = self.cell_data.active_normals_name if self.cell_data else None
         pt_tcoords = self.point_data.active_texture_coordinates_name if self.point_data else None
 
-        def _array_info(
-            attrs: DataSetAttributes,
-            *,
-            show_shape: bool = False,
-            show_range: bool = False,
-        ) -> list[tuple[str, int, str, str, str]]:
-            fmt = pv.FLOAT_FORMAT
-            result: list[tuple[str, int, str, str, str]] = []
-            for name, arr in attrs.items():
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                shape = str(tuple(arr.shape)) if show_shape else ''
-                range_str = ''
-                if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
-                    lo = fmt.format(np.nanmin(arr))
-                    hi = fmt.format(np.nanmax(arr))
-                    range_str = f'[{lo}, {hi}]'
-                result.append((name, ncomp, str(arr.dtype), shape, range_str))
-            return result
-
         vec_assoc = self.active_vectors_info.association
         pt_vectors = active_vectors if vec_assoc == FieldAssociation.POINT else None
         cell_vectors = active_vectors if vec_assoc == FieldAssociation.CELL else None
@@ -1760,7 +1744,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             sections.append(
                 _data_array_section(
                     'Point Data',
-                    _array_info(self.point_data, show_range=True),
+                    self.point_data._html_array_info(show_range=True),
                     active_scalars=active_pt_scalars,
                     active_vectors=pt_vectors,
                     active_normals=pt_normals,
@@ -1773,7 +1757,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             sections.append(
                 _data_array_section(
                     'Cell Data',
-                    _array_info(self.cell_data, show_range=True),
+                    self.cell_data._html_array_info(show_range=True),
                     active_scalars=active_cell_scalars,
                     active_vectors=cell_vectors,
                     active_normals=cell_normals,
@@ -1785,7 +1769,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             sections.append(
                 _data_array_section(
                     'Field Data',
-                    _array_info(self.field_data, show_shape=True),
+                    self.field_data._html_array_info(show_shape=True),
                 )
             )
 
@@ -1810,12 +1794,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, *, deep: bool = True) -> None:
+    def copy_from(self: Self, mesh: DataSet | _vtk.vtkDataSet, *, deep: bool = True) -> None:
         """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
         ----------
-        mesh : :vtk:`vtkDataSet`
+        mesh : DataSet | :vtk:`vtkDataSet`
             The overwriting mesh.
 
         deep : bool, default: True
@@ -1841,14 +1825,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                 f'compatible with the one being overwritten {type(self)}'
             )
             raise TypeError(msg)
-        if deep:  # type: ignore[unreachable]
+        if deep:
             self.deep_copy(mesh)
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def cast_to_unstructured_grid(self: Self) -> pv.UnstructuredGrid:
+    def cast_to_unstructured_grid(self: Self) -> UnstructuredGrid:
         """Get a new representation of this object as a :class:`~pyvista.UnstructuredGrid`.
 
         .. note::
@@ -1910,7 +1894,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         _update_alg(alg)
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def cast_to_pointset(self: Self, *, pass_cell_data: bool = False) -> PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
@@ -1951,7 +1935,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             pset.active_scalars_name = name
         return pset
 
-    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> pv.PolyData:
+    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -2014,12 +1998,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return pset
 
     # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLikeInt: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> NDArray[np.int_]: ...
+    # ruff: enable[E501]
     # fmt: on
-    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLikeInt:
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = 1
+    ) -> int | NDArray[np.int_]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2043,8 +2031,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Returns
         -------
-        int
-            The index of the point in this mesh that is closest to the given point.
+        int | numpy.ndarray
+            Index of the closest point, or indices of the ``n`` closest points.
 
         See Also
         --------
@@ -2090,6 +2078,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[float] | _VectorSequence, *, return_closest_point: Literal[False] = False) -> int: ...
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[float] | _VectorSequence, *, return_closest_point: Literal[True]) -> tuple[int, NDArray[np.float64]]: ...
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]], *, return_closest_point: Literal[False] = False) -> NDArray[np.int_]: ...
+    @overload
+    def find_closest_cell(self: Self, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]], *, return_closest_point: Literal[True]) -> tuple[NDArray[np.int_], NDArray[np.float64]]: ...
     @overload
     def find_closest_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat, *, return_closest_point: Literal[False] = False) -> int | NDArray[np.int_]: ...
     @overload
@@ -2235,6 +2231,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def find_containing_cell(self: Self, point: Sequence[float] | _VectorSequence) -> int: ...
+    @overload
+    def find_containing_cell(self: Self, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]]) -> NDArray[np.int_]: ...
+    @overload
+    def find_containing_cell(self: Self, point: VectorLikeFloat | MatrixLikeFloat) -> int | NDArray[np.int_]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_containing_cell(
         self: Self,
         point: VectorLikeFloat | MatrixLikeFloat,
@@ -3207,6 +3213,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return out[::-1]
         return out
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def point_is_inside_cell(self: Self, ind: int, point: Sequence[float] | _VectorSequence) -> bool: ...
+    @overload
+    def point_is_inside_cell(self: Self, ind: int, point: Sequence[Sequence[float]] | Sequence[Sequence[_NumericScalar]]) -> NDArray[np.bool_]: ...
+    @overload
+    def point_is_inside_cell(self: Self, ind: int, point: VectorLikeFloat | MatrixLikeFloat) -> bool | NDArray[np.bool_]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def point_is_inside_cell(
         self: Self,
         ind: int,
