@@ -37,7 +37,6 @@ coverage:
       tests:
         flags:
           - tests
-          - tests-vtk-dev
         target: auto
         threshold: 0%
         if_not_found: success
@@ -53,7 +52,6 @@ coverage:
       tests:
         flags:
           - tests
-          - tests-vtk-dev
         target: 100%
         threshold: 0%
         if_not_found: success
@@ -71,8 +69,7 @@ flag_management:
         - tests/
     # Flagged apart from the two above so the flag-scoped statuses compare a fixed set of
     # jobs. Not carried forward: a stale upload from an older tree lands its hits on the
-    # wrong lines, on the base the `tests` statuses compare against and on the head the
-    # unfiltered patch status reads.
+    # wrong lines of the head the unfiltered patch status reads.
     - name: package-vtk-dev
       paths:
         - pyvista/
