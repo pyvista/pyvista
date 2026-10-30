@@ -575,7 +575,7 @@ def _run_code(
     try:
         if pv.PLOT_DIRECTIVE_THEME is not None:
             pv.set_plot_theme(pv.PLOT_DIRECTIVE_THEME)  # pragma: no cover
-        exec(code, ns)  # noqa: S102
+        exec(compile(code, '<pyvista-plot>', 'exec'), ns)  # noqa: S102
         if function_name is not None:
             ns[function_name]()
     except (Exception, SystemExit) as err:  # pragma: no cover

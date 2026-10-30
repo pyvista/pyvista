@@ -62,8 +62,14 @@ def _error_output_file() -> str | None:
     return None
 
 
-#: The render process writes its stdout to the worker's stderr.
-_STDERR_FD = 2
+#: Runs in the render process: keeps the reply stream and sends fd 1 to stderr before any import.
+_BOOTSTRAP = (
+    'import os\n'
+    'reply_fd = os.dup(1)\n'
+    'os.dup2(2, 1)\n'
+    'from pyvista.ext._plot_subprocess import main\n'
+    'main(reply_fd)\n'
+)
 
 
 class RenderProcess:
@@ -71,18 +77,15 @@ class RenderProcess:
 
     def __init__(self) -> None:
         """Start the interpreter and send it this process's theme, paths, and warning filters."""
-        reply_read, reply_write = os.pipe()
         self._proc = subprocess.Popen(
-            [sys.executable, '-m', 'pyvista.ext._plot_subprocess', str(reply_write)],
+            [sys.executable, '-c', _BOOTSTRAP],
             stdin=subprocess.PIPE,
-            stdout=_STDERR_FD,
-            pass_fds=(reply_write,),
+            stdout=subprocess.PIPE,
             text=True,
             env={**os.environ, 'PYTHONPATH': os.pathsep.join(p for p in sys.path if p)},
         )
-        os.close(reply_write)
         self._stdin = cast('IO[str]', self._proc.stdin)
-        self._stdout = os.fdopen(reply_read)
+        self._stdout = cast('IO[str]', self._proc.stdout)
         try:
             self._send_init()
         except BaseException:
@@ -235,7 +238,3 @@ def main(reply_fd: int) -> None:  # pragma: no cover
             reply({'error': str(error)})
         except Exception:  # noqa: BLE001
             reply({'error': traceback.format_exc()})
-
-
-if __name__ == '__main__':  # pragma: no cover
-    main(int(sys.argv[1]))
