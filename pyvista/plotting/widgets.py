@@ -1493,9 +1493,9 @@ class WidgetComponent(_NoNewAttrMixin):
         ----------
         callback : callable
             The method called every time the slider is updated. This should take
-            a single parameter: the float value of the slider.
+            a single parameter: the selected string from ``data``.
 
-        data : list
+        data : list[str]
             The list of possible values displayed on the slider bar.
 
         value : float, optional
@@ -1533,6 +1533,19 @@ class WidgetComponent(_NoNewAttrMixin):
         -------
         :vtk:`vtkSliderWidget`
             The VTK slider widget configured to display text.
+
+        Examples
+        --------
+        Record the selected text in a callback. The callback is also called
+        when the widget is created.
+
+        >>> import pyvista as pv
+        >>> selected = []
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> _ = pl.add_text_slider_widget(selected.append, ['low', 'high'], value=0)
+        >>> selected
+        ['low']
+        >>> pl.close()
 
         """
         if not isinstance(data, list):
