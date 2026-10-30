@@ -2962,11 +2962,52 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         vtkcells = cells if isinstance(cells, _vtk.vtkCellArray) else CellArray(np.asarray(cells))
         if cell_type_array.dtype != np.uint8:
             cell_type_array = cell_type_array.astype(np.uint8)
+        if np.any(cell_type_array == CellType.POLYHEDRON):
+            self._validate_polyhedron_cells(vtkcells, cell_type_array)
         vtk_cell_types = _vtk.numpy_to_vtk(cell_type_array, deep=deep)
 
         self.SetPoints(vtk_points(point_array, deep=deep, force_float=force_float))
 
         self.SetCells(vtk_cell_types, vtkcells)
+
+    @staticmethod
+    def _validate_polyhedron_cells(
+        cells: _vtk.vtkCellArray, cell_types: NDArray[np.uint8]
+    ) -> None:
+        """Validate the face stream of each polyhedron before passing it to VTK."""
+        if cell_types.ndim not in (0, 1, 2) or (cell_types.ndim == 2 and cell_types.shape[1] != 1):
+            msg = 'Cell types must be a scalar, one-dimensional array, or column vector.'
+            raise ValueError(msg)
+        n_cells = cells.GetNumberOfCells()
+        if cell_types.size != n_cells:
+            msg = (
+                f'Number of cell types ({cell_types.size}) must match '
+                f'the number of cells ({n_cells})'
+            )
+            raise ValueError(msg)
+
+        offsets = _get_offset_array(cells)
+        connectivity = _get_connectivity_array(cells)
+        for cell_index in np.flatnonzero(cell_types == CellType.POLYHEDRON):
+            start, stop = offsets[cell_index : cell_index + 2]
+            stream = connectivity[start:stop]
+            if stream.size and stream[0] > 0:
+                offset = 1
+                for _ in range(int(stream[0])):
+                    if offset >= stream.size or stream[offset] < 0:
+                        break
+                    offset += 1 + int(stream[offset])
+                    if offset > stream.size:
+                        break
+                else:
+                    if offset == stream.size:
+                        continue
+
+            msg = (
+                f'Invalid polyhedron face stream for cell {cell_index}. '
+                'Expected [n_faces, n_points, point_ids..., ...] with one record per face.'
+            )
+            raise CellSizeError(msg)
 
     def _check_for_consistency(self) -> None:
         """Check if size of offsets and ``celltypes`` match the number of cells.

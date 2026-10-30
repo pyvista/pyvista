@@ -356,6 +356,136 @@ def test_init_from_dict_variable_length():
     assert grid.get_cell(1).point_ids == [1, 2, 3, 4]
 
 
+@pytest.mark.parametrize(
+    'stream',
+    [
+        pytest.param([], id='empty'),
+        pytest.param([0], id='zero-faces'),
+        pytest.param([-1], id='negative-faces'),
+        pytest.param([1], id='missing-face-size'),
+        pytest.param([1, -1], id='negative-face-size'),
+        pytest.param([1, 4, 0, 1, 2], id='truncated-face'),
+        pytest.param([2, 3, 0, 1, 2], id='too-many-faces'),
+        pytest.param([1, 3, 0, 1, 2, 0], id='trailing-data'),
+        pytest.param([3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3], id='missing-face-count'),
+    ],
+)
+def test_init_polyhedron_invalid_face_stream(stream, mocker: MockerFixture):
+    set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
+    with pytest.raises(CellSizeError, match=r'Invalid polyhedron face stream for cell 0'):
+        pv.UnstructuredGrid([len(stream), *stream], [CellType.POLYHEDRON], np.zeros((4, 3)))
+    set_cells.assert_not_called()
+
+
+@pytest.mark.parametrize('cell_index', [0, 1, 2])
+def test_init_polyhedron_invalid_face_stream_in_mixed_grid(cell_index, mocker: MockerFixture):
+    cells = [[4, 0, 1, 2, 3] for _ in range(3)]
+    cells[cell_index] = [4, 1, 3, 0, 1]
+    celltypes = [CellType.TETRA] * 3
+    celltypes[cell_index] = CellType.POLYHEDRON
+    set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
+    with pytest.raises(CellSizeError, match=f'polyhedron face stream for cell {cell_index}'):
+        pv.UnstructuredGrid([item for cell in cells for item in cell], celltypes, np.zeros((4, 3)))
+    set_cells.assert_not_called()
+
+
+def test_init_second_polyhedron_invalid_face_stream(mocker: MockerFixture):
+    faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    cells = [len(faces) + 1, 4, *faces, 4, 0, 1, 2, 3, 4, 1, 3, 0, 1]
+    celltypes = [CellType.POLYHEDRON, CellType.TETRA, CellType.POLYHEDRON]
+    set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
+    with pytest.raises(CellSizeError, match='polyhedron face stream for cell 2'):
+        pv.UnstructuredGrid(cells, celltypes, np.zeros((4, 3)))
+    set_cells.assert_not_called()
+
+
+def test_init_polyhedron_missing_face_count_issue_8234(mocker: MockerFixture):
+    faces = [
+        [21, 20, 0, 1, 4],
+        [14, 15, 16],
+        [14, 15, 4, 1, 7, 8, 3],
+        [8, 7, 13, 11],
+        [3, 8, 11, 10],
+        [7, 1, 0, 2, 12, 13],
+        [12, 9, 10, 11, 13],
+        [9, 6, 18, 17, 16, 14, 3, 10],
+        [2, 5, 6, 9, 12],
+        [17, 21, 4, 15, 16],
+        [0, 20, 19, 5, 2],
+        [20, 21, 17, 18, 19],
+        [19, 18, 6, 5],
+    ]
+    stream = [value for face in faces for value in [len(face), *face]]
+    points = np.zeros((22, 3))
+    grid = pv.UnstructuredGrid(
+        [len(stream) + 1, len(faces), *stream], [CellType.POLYHEDRON], points
+    )
+    assert grid.get_cell(0).n_faces == len(faces)
+
+    set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
+    with pytest.raises(CellSizeError, match=r'polyhedron.*face'):
+        pv.UnstructuredGrid([len(stream), *stream], [CellType.POLYHEDRON], points)
+    set_cells.assert_not_called()
+
+
+@pytest.mark.parametrize('column_vector', [True, False])
+@pytest.mark.parametrize('polyhedron_first', [True, False])
+def test_init_multiple_polyhedra_with_other_cells(polyhedron_first, column_vector):
+    faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    other_faces = [3, 4, 6, 5, 3, 4, 5, 7, 3, 4, 7, 6, 3, 5, 6, 7]
+    polyhedron = [len(faces) + 1, 4, *faces]
+    other_polyhedron = [len(other_faces) + 1, 4, *other_faces]
+    tetrahedron = [4, 0, 1, 2, 3]
+    if polyhedron_first:
+        connectivity = [*polyhedron, *tetrahedron, *other_polyhedron]
+        celltypes = [CellType.POLYHEDRON, CellType.TETRA, CellType.POLYHEDRON]
+    else:
+        connectivity = [*tetrahedron, *polyhedron, *other_polyhedron]
+        celltypes = [CellType.TETRA, CellType.POLYHEDRON, CellType.POLYHEDRON]
+    points = np.vstack([np.zeros((4, 3)), np.ones((4, 3))])
+    input_types = np.asarray(celltypes).reshape(-1, 1) if column_vector else celltypes
+    grid = pv.UnstructuredGrid(connectivity, input_types, points)
+
+    assert grid.celltypes.tolist() == celltypes
+    for cell_index, cell_type in enumerate(celltypes):
+        cell = grid.get_cell(cell_index)
+        assert cell.type == cell_type
+        assert cell.n_faces == 4
+        assert set(cell.point_ids) == ({4, 5, 6, 7} if cell_index == 2 else {0, 1, 2, 3})
+    assert grid.polyhedron_faces.tolist() == [*faces, *other_faces]
+
+
+@pytest.mark.parametrize('shape', [(1, 2), (1, 2, 1)])
+def test_init_polyhedron_rejects_multicomponent_cell_types(shape, mocker: MockerFixture):
+    faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    cells = [len(faces) + 1, 4, *faces, 4, 0, 1, 2, 3]
+    celltypes = np.array([CellType.POLYHEDRON, CellType.TETRA]).reshape(shape)
+    set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
+    with pytest.raises(ValueError, match='Cell types must be a scalar, one-dimensional array'):
+        pv.UnstructuredGrid(cells, celltypes, np.zeros((4, 3)))
+    set_cells.assert_not_called()
+
+
+def test_init_polyhedron_scalar_cell_type():
+    faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    cells = [len(faces) + 1, 4, *faces]
+    grid = pv.UnstructuredGrid(cells, np.array(CellType.POLYHEDRON), np.zeros((4, 3)))
+    assert grid.get_cell(0).type == CellType.POLYHEDRON
+    assert grid.get_cell(0).n_faces == 4
+
+
+@pytest.mark.parametrize('too_many_types', [True, False])
+def test_init_polyhedron_cell_types_count_mismatch(too_many_types, mocker: MockerFixture):
+    faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    polyhedron = [len(faces) + 1, 4, *faces]
+    cells = polyhedron if too_many_types else [*polyhedron, 4, 0, 1, 2, 3]
+    celltypes = [CellType.POLYHEDRON, CellType.TETRA] if too_many_types else [CellType.POLYHEDRON]
+    set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
+    with pytest.raises(ValueError, match=r'Number of cell types.*must match the number of cells'):
+        pv.UnstructuredGrid(cells, celltypes, np.zeros((4, 3)))
+    set_cells.assert_not_called()
+
+
 def test_init_polyhedron():
     polyhedron_nodes = [
         [0.02, 0.0, 0.02],  # 17
