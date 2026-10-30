@@ -53,9 +53,10 @@ jobs:
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       rows: '[{"python": "3.14", "vtk": "dev"}]'
 
-  # Uploads under its own flags, apart from the unit testing coverage.
+  # Pull requests only, so a dispatch on main never leaves the dev flags on a main commit.
   upload-coverage:
     name: Upload coverage reports
+    if: github.event_name == 'pull_request'
     needs: Linux
     permissions:
       id-token: write # Codecov OIDC upload
