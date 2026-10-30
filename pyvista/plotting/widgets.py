@@ -3138,21 +3138,32 @@ class WidgetComponent(_NoNewAttrMixin):
         widget_ref = weakref.ref(widget)
 
         def _update_viewport(renderer: _vtk.vtkRenderer, _event: str) -> None:
-            """Anchor the widget to its parent after VTK's window-relative layout."""
+            """Anchor the widget's pixel size and padding to its parent viewport."""
             camera_widget = widget_ref()
             if camera_widget is None or camera_widget.GetParentRenderer() is None:
                 return
-            camera_widget.SquareResize()
             parent = camera_widget.GetParentRenderer().GetViewport()
             representation = cast(
                 '_vtk.vtkCameraOrientationRepresentation', camera_widget.GetRepresentation()
             )
+            width, height = renderer.GetRenderWindow().GetActualSize()
+            if width == 0 or height == 0:
+                return
+            size = max(representation.GetSize())
+            pad_x, pad_y = representation.GetPadding()
             anchor = representation.GetAnchorPosition()
             corners = representation.AnchorType
-            dx = parent[0] if anchor in (corners.LowerLeft, corners.UpperLeft) else parent[2] - 1
-            dy = parent[1] if anchor in (corners.LowerLeft, corners.LowerRight) else parent[3] - 1
-            xmin, ymin, xmax, ymax = renderer.GetViewport()
-            renderer.SetViewport(xmin + dx, ymin + dy, xmax + dx, ymax + dy)
+            xmin = (
+                parent[0] + pad_x / width
+                if anchor in (corners.LowerLeft, corners.UpperLeft)
+                else parent[2] - (pad_x + size) / width
+            )
+            ymin = (
+                parent[1] + pad_y / height
+                if anchor in (corners.LowerLeft, corners.LowerRight)
+                else parent[3] - (pad_y + size) / height
+            )
+            renderer.SetViewport(xmin, ymin, xmin + size / width, ymin + size / height)
 
         renderer = widget.GetCurrentRenderer()
         observer = renderer.AddObserver(_vtk.vtkCommand.StartEvent, _update_viewport)

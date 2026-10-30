@@ -676,7 +676,7 @@ def test_camera_orientation_widget_subplots(shape, anchor):
         representation.SetPadding(7, 11)
         camera_widgets.append(widget)
     pl.show(auto_close=False, interactive=False)
-    for size in [(800, 600), (1000, 800)]:
+    for size in [(800, 600), (600, 800), (1000, 800)]:
         pl.window_size = size
         for _ in range(2):
             pl.render_window.Render()
@@ -697,6 +697,23 @@ def test_camera_orientation_widget_viewport_changes():
     pl.render_window.Render()
     _assert_camera_widget_viewport(widget, 'LowerLeft')
     pl.close()
+
+
+@pytest.mark.parametrize('window_size', [(0, 0), (0, 600), (800, 0)])
+def test_camera_orientation_widget_zero_window_size(window_size, capsys):
+    """Keep the viewport until the render window has a nonzero size."""
+    pl = pv.Plotter(window_size=(800, 600))
+    widget = pl.add_camera_orientation_widget()
+    renderer = widget.GetCurrentRenderer()
+    viewport = renderer.GetViewport()
+    pl.render_window.SetSize(*window_size)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    assert not capsys.readouterr().err
+    assert renderer.GetViewport() == viewport
+    pl.render_window.SetSize(800, 600)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    _assert_camera_widget_viewport(widget, 'UpperRight')
+    pl.show()
 
 
 def test_camera_orientation_widget_clear():
