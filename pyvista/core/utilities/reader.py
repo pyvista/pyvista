@@ -20,6 +20,7 @@ from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import get_origin
+import warnings
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -2849,10 +2850,22 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
     _format = _formats.AVS_UCD
 
 
-class HDFReader(BaseReader['DataObject']):
+class HDFReader(BaseReader['DataObject'], TimeReader):
     """Reader for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFReader`.
+
+    Temporal files expose their physical time values through :attr:`time_values`.
+    Select a frame with :meth:`set_active_time_point` or :meth:`set_active_time_value`
+    before calling :meth:`read`. Selection reads no mesh data. Static files have
+    no time points and can be read normally. VTK may treat a file with a single
+    time step as static, in which case it exposes no time points.
+
+    Successive frames may share geometry buffers with each other, so copy a
+    frame before modifying its points or cells.
+
+    .. versionadded:: 0.50
+        Support for the :class:`TimeReader` interface.
 
     Examples
     --------
@@ -2877,6 +2890,94 @@ class HDFReader(BaseReader['DataObject']):
         'PartitionedDataSet',
         'MultiBlock',
     )
+
+    def _update_information(self) -> None:
+        """Reset the time selection when opening a file."""
+        self.reader.SetStep(0)
+        self.reader.GetOutputInformation(0).Remove(
+            _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP()
+        )
+        super()._update_information()
+        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
+            self.reader.GetOutputDataObject(0), _vtk.vtkImageData
+        ):
+            # The cache can return a previously read ImageData time step. Fixed in
+            # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13773
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=DeprecationWarning)
+                self.reader.SetUseCache(False)
+
+    @property
+    def time_values(self) -> list[float]:
+        """Physical time values, or an empty list for a static file."""
+        info = self.reader.GetOutputInformation(0)
+        values = info.Get(_vtk.vtkStreamingDemandDrivenPipeline.TIME_STEPS())
+        return [] if values is None else list(values)
+
+    @property
+    def number_time_points(self) -> int:
+        """Return the number of available time points."""
+        return len(self.time_values)
+
+    def time_point_value(self, time_point: int) -> float:
+        """Return the physical time at an index.
+
+        Parameters
+        ----------
+        time_point : int
+            Zero-based time point index.
+
+        Returns
+        -------
+        float
+            Physical time value.
+
+        """
+        if isinstance(time_point, bool) or not isinstance(time_point, (int, np.integer)):
+            msg = f'Time point must be an integer, got {type(time_point).__name__}.'
+            raise TypeError(msg)
+        if time_point < 0 or time_point >= self.number_time_points:
+            msg = f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
+            raise ValueError(msg)
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self) -> float:
+        """Return the selected physical time, raising ValueError for a static file."""
+        if not self.number_time_points:
+            msg = 'No time points available in this file.'
+            raise ValueError(msg)
+        return self.time_point_value(self.reader.GetStep())
+
+    def set_active_time_point(self, time_point: int) -> None:
+        """Select a time point without reading mesh data.
+
+        Parameters
+        ----------
+        time_point : int
+            Zero-based time point index.
+
+        """
+        time_value = self.time_point_value(time_point)
+        self.reader.SetStep(time_point)
+        # A pipeline time request takes precedence over SetStep in vtkHDFReader.
+        self.reader.GetOutputInformation(0).Set(
+            _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP(), time_value
+        )
+
+    def set_active_time_value(self, time_value: float) -> None:
+        """Select a physical time without reading mesh data.
+
+        Parameters
+        ----------
+        time_value : float
+            One of the values in :attr:`time_values`.
+
+        """
+        if time_value not in self.time_values:
+            msg = f'Not a valid time {time_value} from available time values: {self.time_values}'
+            raise ValueError(msg)
+        self.set_active_time_point(self.time_values.index(time_value))
 
 
 class GLTFReader(BaseReader['MultiBlock']):

@@ -86,6 +86,7 @@ test = [
   'colorcet<3.3.0',
   'embreex<4.4.1',
   'fsspec<2026.10.0',
+  'h5py<3.17.0',
   'hypothesis<6.170.1',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.39.0',
