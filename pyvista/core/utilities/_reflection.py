@@ -26,9 +26,6 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
 
-# Reflected meshes and block cells take the mirroring reorder of their index axes that
-# keeps the reflected axes closest to the original ones
-
 
 def _mirroring_reorders() -> tuple[NDArray[np.intp], NDArray[np.bool_], NDArray[np.float64]]:
     """Return the source axes, reversals, and score weights of each mirroring axis reorder."""
@@ -292,23 +289,44 @@ def _mirror_explicit_structured(mesh: ExplicitStructuredGrid, matrix: NDArray[np
         mesh.compute_connectivity(inplace=True)
 
 
+_AXIS_ALIGNED_TYPES = [CellType.VOXEL, CellType.PIXEL]
+
+
 def _check_axis_aligned_cells(mesh: UnstructuredGrid, matrix: NDArray[np.float64]) -> None:
-    """Raise if a reflection would turn voxels or pixels away from the axes."""
+    """Raise if a transformation would turn voxels or pixels away from the axes."""
     linear = matrix[:3, :3]
-    # An axis-aligned reflection maps each axis onto a single axis
-    columns = linear / np.linalg.norm(linear, axis=0)
+    if not np.isfinite(linear).all():
+        return
+    # A transformation that keeps cells on the axes maps each axis onto a single axis
+    with np.errstate(invalid='ignore', divide='ignore'):
+        columns = linear / np.linalg.norm(linear, axis=0)
     if np.all(np.count_nonzero(~np.isclose(columns, 0, atol=1e-8), axis=0) == 1):
         return
-    axis_aligned_types = [CellType.VOXEL, CellType.PIXEL]
-    if np.isin(mesh.celltypes, axis_aligned_types).any():
+    if np.isin(mesh.celltypes, _AXIS_ALIGNED_TYPES).any():
         msg = (
-            'Cannot reflect VOXEL or PIXEL cells across a plane that is not normal to an axis, '
-            'since these cells must stay aligned with the axes.\nConvert them to HEXAHEDRON or '
-            'QUAD cells first, e.g. with `to_hexahedra`, `to_quads` or '
-            '`cast_to_structured_grid` instead of `cast_to_unstructured_grid` on the image or '
-            'rectilinear grid they come from.'
+            'Cannot transform VOXEL or PIXEL cells off the axes, since these cells must stay '
+            'aligned with them.\nConvert them to HEXAHEDRON or QUAD cells first, for example '
+            'with `to_hexahedra`, `to_quads` or `cast_to_structured_grid` instead of '
+            '`cast_to_unstructured_grid` on the image or rectilinear grid they come from.'
         )
         raise ValueError(msg)
+
+
+def _copy_cells(mesh: UnstructuredGrid) -> UnstructuredGrid:
+    """Return a grid with a deep copy of the mesh's cells and no points."""
+    structure = pv.UnstructuredGrid()
+    structure.copy_structure(mesh)
+    structure.SetPoints(_vtk.vtkPoints())
+    copied = pv.UnstructuredGrid()
+    copied.DeepCopy(structure)
+    return copied
+
+
+def _set_cells(mesh: UnstructuredGrid, source: UnstructuredGrid) -> None:
+    """Give the mesh the cells of another grid, keeping its own points."""
+    points = mesh.GetPoints()
+    mesh.copy_structure(source)
+    mesh.SetPoints(points)
 
 
 def _mirror_unstructured(mesh: UnstructuredGrid, matrix: NDArray[np.float64]) -> None:
@@ -320,29 +338,63 @@ def _mirror_unstructured(mesh: UnstructuredGrid, matrix: NDArray[np.float64]) ->
         _vtk.vtk_to_numpy(input_cells.GetConnectivityArray()),
     )
     celltypes = _vtk.vtk_to_numpy(mesh._get_cell_types_array())
-    structure = pv.UnstructuredGrid()
-    structure.copy_structure(mesh)
     if np.isin(celltypes, list(_BLOCK_CORNERS)).all():
         # Copy the cells, which the mesh shares with the input, to reorder them like a grid
-        structure.SetPoints(_vtk.vtkPoints())
-        reordered = pv.UnstructuredGrid()
-        reordered.DeepCopy(structure)
+        reordered = _copy_cells(mesh)
     else:
         # Take the cells vtkReflectionFilter reorders, then reorder the block cells like a grid
+        structure = pv.UnstructuredGrid()
+        structure.copy_structure(mesh)
         alg = _vtk.vtkReflectionFilter()
         alg.SetInputData(structure)
         alg.SetCopyInput(False)
         _update_alg(alg)
         reordered = _get_output(alg, output_type=pv.UnstructuredGrid)
-    points = mesh.GetPoints()
-    mesh.copy_structure(reordered)
-    mesh.SetPoints(points)
+    _set_cells(mesh, reordered)
     cells = mesh.GetCells()
     reflected = (
         _vtk.vtk_to_numpy(cells.GetOffsetsArray()),
         _vtk.vtk_to_numpy(cells.GetConnectivityArray()),
     )
     _mirror_block_cells(mesh, celltypes, original=original, reflected=reflected, matrix=matrix)
+    cells.GetConnectivityArray().Modified()
+
+
+def _align_voxels_and_pixels(mesh: UnstructuredGrid, matrix: NDArray[np.float64]) -> None:
+    """Reorder the corners of voxels and pixels that a rotation turned onto other axes."""
+    # Cells whose axes stay in place are still valid, even with their axes reversed
+    if np.all(np.diagonal(matrix[:3, :3]) != 0):
+        return
+    celltypes = _vtk.vtk_to_numpy(mesh._get_cell_types_array())
+    if not np.isin(celltypes, _AXIS_ALIGNED_TYPES).any():
+        return
+
+    # Copy the cells, which the mesh shares with the input, to reorder them
+    _set_cells(mesh, _copy_cells(mesh))
+    cells = mesh.GetCells()
+    offsets = _vtk.vtk_to_numpy(cells.GetOffsetsArray())
+    connectivity = _vtk.vtk_to_numpy(cells.GetConnectivityArray())
+    points = mesh.points
+    for cell_type in _AXIS_ALIGNED_TYPES:
+        ids = np.flatnonzero(celltypes == cell_type)
+        if ids.size == 0:
+            continue
+        rows = offsets[ids, np.newaxis] + np.arange(len(_BLOCK_CORNERS[cell_type]))
+        point_ids = connectivity[rows]
+        corners = points[point_ids]
+        # A corner is at the upper end of each axis along which it lies past the cell's center
+        upper = (corners > corners.mean(axis=1, keepdims=True)).astype(int)
+        if cell_type == CellType.VOXEL:
+            index = upper @ [1, 2, 4]
+        else:
+            # A pixel's corners vary along the two axes its plane spans, in order
+            normal = np.argmin(np.ptp(corners, axis=1), axis=-1)
+            spanned = np.array([[1, 2], [0, 2], [0, 1]])[normal]
+            index = np.take_along_axis(upper, spanned[:, np.newaxis, :], axis=2) @ [1, 2]
+        # Voxels and pixels list their corners along x first, then y, then z
+        ordered = np.empty_like(point_ids)
+        np.put_along_axis(ordered, index, point_ids, axis=1)
+        connectivity[rows] = ordered
     cells.GetConnectivityArray().Modified()
 
 

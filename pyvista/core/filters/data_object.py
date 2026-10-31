@@ -49,6 +49,7 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities._cell_lengths import _cell_length_percentile
+from pyvista.core.utilities._reflection import _align_voxels_and_pixels
 from pyvista.core.utilities._reflection import _check_axis_aligned_cells
 from pyvista.core.utilities._reflection import _mirror_cells
 from pyvista.core.utilities._reflection import _mirror_structured
@@ -2134,6 +2135,12 @@ class DataObjectFilters:
             :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`, points and
             arrays are ordered to match.
 
+        .. versionchanged:: 0.50
+            A reflection reorders the cells so they keep their orientation instead of
+            turning inside out. Transforming the :attr:`~pyvista.CellType.VOXEL` or
+            :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
+            off the axes raises a ``ValueError`` instead of returning invalid cells.
+
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously
             defaulted to ``True``.
@@ -2279,7 +2286,7 @@ class DataObjectFilters:
         # A matrix with non-finite values has no orientation
         with np.errstate(invalid='ignore'):
             reflects = np.linalg.det(t.matrix[:3, :3]) < 0
-        if reflects and isinstance(self, pv.UnstructuredGrid):
+        if isinstance(self, pv.UnstructuredGrid):
             _check_axis_aligned_cells(self, t.matrix)
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
@@ -2297,6 +2304,8 @@ class DataObjectFilters:
                 vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
                 if reflects and not isinstance(output, pv.Grid):
                     vtk_filter_output = _mirror_cells(vtk_filter_output, t.matrix)
+                elif isinstance(vtk_filter_output, pv.UnstructuredGrid):
+                    _align_voxels_and_pixels(vtk_filter_output, t.matrix)
             else:
                 vtk_filter_output = self
 
@@ -2350,6 +2359,13 @@ class DataObjectFilters:
         progress_bar: bool = False,
     ) -> _MeshType_co:
         """Reflect a dataset across a plane.
+
+        .. versionchanged:: 0.50
+            The cells are reordered so they keep their orientation instead of turning
+            inside out. Reflecting the :attr:`~pyvista.CellType.VOXEL` or
+            :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
+            across a plane that is not normal to an axis raises a ``ValueError`` instead
+            of returning invalid cells.
 
         Parameters
         ----------
