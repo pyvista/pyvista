@@ -6151,3 +6151,12 @@ def test_color_labels_int_colormap_named_colors():
     labels['labels'] = [0, 1]
     colored = labels.color_labels(ListedColormap(['red', 'blue']))
     assert np.array_equal(colored['labels_rgb'], [[255, 0, 0], [0, 0, 255]])
+
+
+def test_voxelize_generalize_cells():
+    mesh = pv.Sphere()
+    voxels = mesh.voxelize(spacing=0.1)
+    hexahedra = mesh.voxelize(spacing=0.1, generalize_cells=True)
+    assert voxels.distinct_cell_types == {pv.CellType.VOXEL}
+    assert hexahedra == voxels.generalize_cells()
+    hexahedra.rotate_z(30).validate_mesh(action='error')

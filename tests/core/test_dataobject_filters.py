@@ -3210,15 +3210,15 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
 
     cast_mesh = _CASTS[cast](mesh)
     voxels = source != 'structured' and cast == 'unstructured' and image.dimensionality > 1
-    if transform == 'reflect_oblique' and voxels:
-        # Voxels and pixels cannot be reflected off the axes
+    if transform in _OBLIQUE and voxels:
+        # Voxels and pixels cannot be turned off the axes
         with pytest.raises(ValueError, match='generalize_cells'):
             _CAST_TRANSFORMS[transform](cast_mesh)
         return
     after = _CAST_TRANSFORMS[transform](cast_mesh)
 
-    # Off-axis voxels and pixels are invalid, and VTK before 9.7 flags every one of them
-    if not voxels or (transform not in _OBLIQUE and pv.vtk_version_info >= (9, 7)):
+    # VTK before 9.7 flags every voxel and pixel as invalid
+    if not voxels or pv.vtk_version_info >= (9, 7):
         before.validate_mesh(action='error')
         after.validate_mesh(action='error')
 
@@ -3235,12 +3235,30 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
         assert np.array_equal(before.cell_data['ids'], after.cell_data['ids'])
 
 
-def test_reflect_voxels_off_axes_raises():
-    grid = pv.ImageData(dimensions=(2, 3, 4)).cast_to_unstructured_grid()
+@pytest.mark.parametrize(
+    'transform', [lambda grid: grid.reflect((1, 1, 1)), lambda grid: grid.rotate_z(30)]
+)
+@pytest.mark.parametrize('dimensions', [(2, 3, 4), (2, 3, 1)])
+def test_transform_voxels_off_axes_raises(transform, dimensions):
+    grid = pv.ImageData(dimensions=dimensions).cast_to_unstructured_grid()
     original = grid.copy()
     with pytest.raises(ValueError, match='Convert them to HEXAHEDRON and QUAD cells first'):
-        grid.reflect((1, 1, 1), inplace=True)
+        transform(grid)
     assert grid == original
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 7), reason='VTK flags every voxel as invalid')
+@pytest.mark.parametrize('angle', [90, 180, 270])
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
+@pytest.mark.parametrize('dimensions', [(2, 3, 4), (2, 3, 1), (2, 1, 4), (1, 3, 4)])
+def test_rotate_voxels_quarter_turns(dimensions, axis, angle):
+    grid = pv.ImageData(dimensions=dimensions).cast_to_unstructured_grid()
+    sibling = grid.copy(deep=False)
+    before = grid.copy()
+    rotated = getattr(grid, f'rotate_{axis}')(angle)
+    rotated.validate_mesh(action='error')
+    assert rotated.volume == pytest.approx(grid.volume)
+    assert sibling == before
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
