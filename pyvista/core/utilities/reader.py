@@ -2927,8 +2927,12 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
             self.reader.SetUseCache(False)
 
     def _enable_array(self, association: Literal['Point', 'Cell'], name: str) -> None:
-        getattr(self.reader, f'Get{association}DataArraySelection')().EnableArray(name)
-        if (9, 7) <= pv.vtk_version_info < (9, 8):
+        selection = getattr(self.reader, f'Get{association}DataArraySelection')()
+        if selection.ArrayIsEnabled(name):
+            return
+        selection.EnableArray(name)
+        output = self.reader.GetOutputDataObject(0)
+        if (9, 7) <= pv.vtk_version_info < (9, 8) and output.GetUpdateTime() > 0:
             # The cache keeps returning data without a re-enabled array. Fixed in
             # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13790
             self._disable_cache()

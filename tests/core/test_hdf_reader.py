@@ -300,3 +300,52 @@ def test_hdf_reenable_array(fixture, request):
     mesh = reader.read()
     assert mesh.point_data.keys() == reader.point_array_names
     assert np.array_equal(mesh[name], expected)
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 4))
+@pytest.mark.skipif(
+    pv.vtk_version_info[:2] == (9, 6),
+    reason='VTK 9.6 logs an invalid initial extent for temporal images inside composites.',
+)
+def test_hdf_composite_image_revisit(hdf_image_file, tmp_path):
+    """Return the selected image frame inside a composite output."""
+    path = tmp_path / 'composite.vtkhdf'
+    with h5py.File(hdf_image_file, 'r') as source, h5py.File(path, 'w') as target:
+        group = target.create_group('VTKHDF', track_order=True)
+        group.attrs['Version'] = source['VTKHDF'].attrs['Version']
+        group.attrs['Type'] = np.bytes_('MultiBlockDataSet')
+        source.copy('VTKHDF', group, name='image')
+        group.create_group('Assembly', track_order=True)['image'] = h5py.SoftLink('/VTKHDF/image')
+    reader = pv.HDFReader(path)
+    assert reader.time_values == [0.0, 10.0, 20.0, 30.0]
+    for index in [0, 1, 2, 3, 0, 2]:
+        reader.set_active_time_point(index)
+        mesh = reader.read()
+        assert isinstance(mesh, pv.MultiBlock)
+        assert len(mesh) == 1
+        assert isinstance(mesh[0], pv.ImageData)
+        assert np.array_equal(mesh[0]['step'], np.full(60, float(index)))
+
+
+@pytest.mark.parametrize(('association', 'name'), [('point', 'temperature'), ('cell', 'pressure')])
+@pytest.mark.parametrize('read_first', [False, True])
+@pytest.mark.parametrize('disable_first', [False, True])
+def test_hdf_array_configuration_preserves_cache(
+    hdf_file, association, name, read_first, disable_first, mocker
+):
+    """Preserve geometry caching for no-op enables and selection before reading."""
+    reader = pv.HDFReader(hdf_file)
+    disable_cache = mocker.spy(reader, '_disable_cache')
+    if read_first:
+        reader.read()
+    if disable_first:
+        getattr(reader, f'disable_{association}_array')(name)
+    getattr(reader, f'enable_{association}_array')(name)
+    needs_workaround = read_first and disable_first and (9, 7) <= pv.vtk_version_info < (9, 8)
+    assert disable_cache.call_count == int(needs_workaround)
+    first = reader.read()
+    reader.set_active_time_point(1)
+    second = reader.read()
+    assert name in getattr(second, f'{association}_data')
+    if (9, 7) <= pv.vtk_version_info < (9, 8) and not needs_workaround:
+        assert np.shares_memory(first.points, second.points)
