@@ -1610,7 +1610,7 @@ See `pytest-pyvista`_ for more details.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-The build needs ``pandoc`` (https://pandoc.org) on ``PATH`` (``brew install pandoc`` or ``apt install pandoc``).
+The build needs ``pandoc`` (https://pandoc.org) on ``PATH`` (``brew install pandoc``, ``apt install pandoc``, or ``winget install pandoc``).
 Documentation can be build either directly (that is, using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
 
 .. tab-set::
