@@ -90,6 +90,42 @@ def _load_current_config(
     conftest.unlink()
 
 
+def test_vtk_messages_without_context(pytester: pytest.Pytester):
+    # A fresh process without the autouse fixture, so no vtk_messages context is active
+    pytester.makeconftest('')
+    p = pytester.makepyfile(
+        """
+        import logging
+
+        import pytest
+
+        import pyvista as pv
+        from pyvista import _vtk
+        from pyvista.core.utilities.observers import _vtk_event_dispatcher
+
+
+        def _generate_vtk_err():
+            _vtk.vtkDataWriter().Write()
+
+
+        def test_raise_degrades_to_warn():
+            assert not _vtk_event_dispatcher._contexts
+            pv.global_config.vtk_errors = 'raise'
+            with pytest.warns(pv.VTKExecutionWarning, match='No input provided!'):
+                _generate_vtk_err()
+
+
+        @pytest.mark.filterwarnings('error::pyvista.VTKExecutionWarning')
+        def test_raising_warning_filter_falls_back_to_log(caplog):
+            pv.global_config.vtk_errors = 'warn'
+            with caplog.at_level(logging.ERROR, logger='pyvista.vtk'):
+                _generate_vtk_err()
+            assert 'No input provided!' in caplog.text
+        """
+    )
+    pytester.runpytest_subprocess(p).assert_outcomes(passed=2)
+
+
 @pytest.mark.parametrize(
     ('sources', 'raises'),
     [(None, False), ([True], False), (['pyvista', 'tests'], False), (['pyvista.ext'], True)],
@@ -749,6 +785,7 @@ def test_vtksz_file_size_exceptions(request, test_name, expected):
     assert test_case.max_vtksz_file_size == expected
 
 
+@pytest.mark.expect_vtk_output('cannot be added as a block', reason='the inner tests log it')
 def test_vtk_output_fails_the_test(
     pytester: pytest.Pytester,
     results_parser: PytesterStdoutParser,
