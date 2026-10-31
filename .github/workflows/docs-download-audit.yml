@@ -1,0 +1,200 @@
+name: Docs Download Audit
+
+# Runs every example download of the latest `main` docs build and files an issue on failure.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 2 * *" # the day after the monthly docs build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: none # each job grants its own
+
+jobs:
+  find-build:
+    name: Find the latest docs build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # to list docs runs and their artifacts
+    outputs:
+      run-id: ${{ steps.find.outputs.run-id }}
+      sha: ${{ steps.find.outputs.sha }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      # A push that reuses a merge queue build uploads only `docs-build`.
+      - name: Find the newest successful run with docs-build-light
+        id: find
+        run: |
+          runs=$(gh api "repos/${GH_REPO}/actions/workflows/docs.yml/runs?branch=main&status=success&per_page=30" \
+            --jq '.workflow_runs[]
+              | select(.event != "pull_request" and .head_repository.full_name == env.GH_REPO)
+              | [.id, .head_sha] | @tsv')
+          while IFS=$'\t' read -r id sha; do
+            [ -n "$id" ] || continue
+            found=$(gh api "repos/${GH_REPO}/actions/runs/${id}/artifacts?name=docs-build-light" \
+              --jq '[.artifacts[] | select(.expired | not)] | length')
+            if [ "$found" -gt 0 ]; then
+              echo "Using docs run ${id} at ${sha}"
+              echo "run-id=${id}" >> "$GITHUB_OUTPUT"
+              echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done <<< "$runs"
+          echo "::error::no successful docs run on main has a docs-build-light artifact"
+          exit 1
+
+  cache-pyvista-data:
+    name: Cache pyvista/data
+    uses: $/.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: ubuntu-22.04
+
+  audit:
+    name: Audit ${{ matrix.format }} downloads
+    needs: [find-build, cache-pyvista-data]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    permissions:
+      actions: read # to download the artifact of another run
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [python, jupyter, marimo]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.14
+
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4 # v5.2.0
+
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
+        with:
+          packages: libosmesa6-dev libgl1-mesa-dev
+          version: 3.0
+
+      - name: Restore pyvista/data cache
+        uses: $/.github/actions/restore-pyvista-data
+        with:
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
+
+      - name: Download the docs build
+        uses: actions/download-artifact@v8
+        with:
+          name: docs-build-light
+          path: docs-html
+          run-id: ${{ needs.find-build.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Install the docs environment
+        run: |
+          pip install uv
+          uv pip install --system . --group docs ipykernel marimo nbconvert
+
+      - name: Run the ${{ matrix.format }} downloads
+        env:
+          FORMAT: ${{ matrix.format }}
+        run: >-
+          python .github/scripts/docs_download_audit.py run docs-html/_downloads
+          --format "$FORMAT" --output "results-${FORMAT}.jsonl"
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: docs-download-audit-${{ matrix.format }}
+          path: results-${{ matrix.format }}.jsonl
+
+  report:
+    name: Report
+    needs: [find-build, audit]
+    if: ${{ !cancelled() && needs.find-build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # to file the failure report
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Merge the results into one artifact
+        uses: actions/upload-artifact/merge@v7
+        with:
+          name: docs-download-audit
+          pattern: docs-download-audit-*
+          delete-merged: true
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: docs-download-audit
+          path: results
+
+      - name: Summarize the results
+        id: report
+        run: |
+          shopt -s nullglob
+          python3 .github/scripts/docs_download_audit.py report results/*.jsonl --output report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report docs download failure
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (steps.report.outputs.format-failures != '0' || needs.audit.result != 'success')
+        env:
+          AUDIT_RESULT: ${{ needs.audit.result }}
+          DOCS_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ needs.find-build.outputs.run-id }}
+          DOCS_SHA: ${{ needs.find-build.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create docs-download-failure \
+            --color cbb230 \
+            --description "Tracks example downloads in the docs that fail to run" \
+            --force || true
+
+          note=""
+          if [ "$AUDIT_RESULT" != "success" ]; then
+            note="⚠️ At least one audit job did not finish (\`${AUDIT_RESULT}\`), so the results below are incomplete."$'\n'
+          fi
+
+          # Stay under GitHub's 65536 character limit for an issue body.
+          body=$(cat <<EOF
+          ### Documentation Download Failure
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Run:** ${RUN_URL}
+          **Docs build:** ${DOCS_RUN_URL} at \`${DOCS_SHA:0:8}\`
+
+          ${note}
+          $(head -c 60000 report.md)
+          EOF
+          )
+
+          existing=$(gh issue list --label "docs-download-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Documentation download failure" --label "docs-download-failure" --body "$body"
+          fi
+
+      - name: Fail on format-specific failures
+        if: steps.report.outputs.format-failures != '0' || needs.audit.result != 'success'
+        env:
+          FORMAT_FAILURES: ${{ steps.report.outputs.format-failures }}
+        run: |
+          echo "::error::${FORMAT_FAILURES} format-specific failures; see the job summary"
+          exit 1
