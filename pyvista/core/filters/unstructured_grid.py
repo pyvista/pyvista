@@ -208,6 +208,7 @@ class UnstructuredGridFilters(DataSetFilters):
         pyvista.Grid.to_hexahedra
         pyvista.Grid.to_quads
         pyvista.DataSetFilters.voxelize
+        pyvista.UnstructuredGrid.linear_copy
 
         Examples
         --------
