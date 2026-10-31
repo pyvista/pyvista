@@ -326,7 +326,9 @@ class _XYZAssembly(  # numpydoc ignore=PR01
 class AxesAssembly(_XYZAssembly):
     """Assembly of arrow-style axes parts.
 
-    The axes may be used as a widget or added to a scene.
+    The axes may be used as a widget or added to a scene. See
+    :ref:`actor_transformations_example` for how ``position``, ``orientation``,
+    ``scale``, and ``origin`` combine.
 
     Parameters
     ----------
