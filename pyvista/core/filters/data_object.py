@@ -186,6 +186,20 @@ def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) 
     _copy_active_attributes(filtered, output)
 
 
+def _mirror_cells(grid: UnstructuredGrid) -> None:
+    """Reorder each cell's points in place so a reflected cell keeps its orientation."""
+    # Any reflection reverses a cell the same way, so take the reordered cells of one
+    structure = pv.UnstructuredGrid()
+    structure.copy_structure(grid)
+    alg = _vtk.vtkReflectionFilter()
+    alg.SetInputData(structure)
+    alg.SetCopyInput(False)
+    _update_alg(alg)
+    points = grid.GetPoints()
+    grid.copy_structure(_get_output(alg, output_type=pv.UnstructuredGrid))
+    grid.SetPoints(points)
+
+
 def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
     """Give an image the structure of another, oriented by a transformation."""
     # vtkTransformFilter returns a StructuredGrid, so the structure is transformed here
@@ -1824,7 +1838,7 @@ class DataObjectFilters:
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
             The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
-            :class:`numpy.finfo`.
+            :class:`numpy.finfo`, or of ``float`` for integer points.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
 
@@ -2020,11 +2034,12 @@ class DataObjectFilters:
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
-                # Use points dtype eps by default
+                # Use points dtype eps by default, and double eps for integer points
+                points_dtype = mesh.points.dtype
                 size_tol: float = (
                     size_tolerance
                     if size_tolerance is not None
-                    else np.finfo(mesh.points.dtype).eps
+                    else np.finfo(points_dtype if points_dtype.kind == 'f' else float).eps
                 )
                 measured = mesh
                 if isinstance(
@@ -2310,6 +2325,10 @@ class DataObjectFilters:
             point_vectors, cell_vectors
         )
 
+        # A matrix with non-finite values has no orientation
+        with np.errstate(invalid='ignore'):
+            reflects = np.linalg.det(t.matrix[:3, :3]) < 0
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
         self.set_active_scalars(None)
@@ -2323,6 +2342,8 @@ class DataObjectFilters:
 
                 _update_alg(alg, progress_bar=progress_bar, message='Transforming')
                 vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
+                if isinstance(vtk_filter_output, pv.UnstructuredGrid) and reflects:
+                    _mirror_cells(vtk_filter_output)
             else:
                 vtk_filter_output = self
 
