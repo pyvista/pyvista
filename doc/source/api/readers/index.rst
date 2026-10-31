@@ -547,3 +547,49 @@ Enumerations are available to simplify inputs to certain readers.
     :maxdepth: 2
 
     enums
+
+Temporal VTKHDF Data
+~~~~~~~~~~~~~~~~~~~~
+
+:class:`HDFReader` reads one selected frame at a time. The file's physical time
+values may be nonuniform. Inspecting these values and selecting a frame reads
+metadata without loading every mesh in the simulation.
+
+For a file with fixed coordinates and connectivity and a point field named
+``temperature``, keep one display mesh and update its values:
+
+.. code-block:: python
+
+    import pyvista as pv
+
+    reader = pv.get_reader('simulation.vtkhdf')
+    print(reader.time_values)
+    reader.set_active_time_point(0)
+    display = reader.read().copy()
+    pl = pv.Plotter()
+    pl.add_mesh(display, scalars='temperature', clim=(0, 100))
+    pl.show(auto_close=False, interactive_update=True)
+
+    for time in reader.time_values:
+        reader.set_active_time_value(time)
+        frame = reader.read()
+        display.point_data['temperature'][:] = frame.point_data[
+            'temperature'
+        ]
+        pl.update()
+
+    pl.close()
+
+The color limits stay fixed throughout playback. The slice assignment updates
+an existing array and retains the mesh and actor. The same approach applies to
+cell fields and vector arrays of matching shape and type. The explicit copy
+is required. Frames returned by :meth:`HDFReader.read` may share geometry
+buffers, so modifying one frame in place can change other frames.
+
+This example assumes that geometry, topology, array shape, and array type stay
+constant. When they change, replace the display mesh with the new frame instead.
+Each :meth:`HDFReader.read` still returns a complete frame; attribute-only disk
+reads are outside this interface. PyVista does not retain all frames. VTK
+controls any internal geometry caching, whose capabilities depend on the VTK
+version and dataset type. Static files have an empty list of time values and
+support the usual :meth:`HDFReader.read` call.
