@@ -196,7 +196,7 @@ def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) 
 
 
 def _mirroring_reorders() -> tuple[NDArray[np.intp], NDArray[np.bool_], NDArray[np.float64]]:
-    """Return the source axes, reversals and score weights of each mirroring axis reorder."""
+    """Return the source axes, reversals, and score weights of each mirroring axis reorder."""
     axes, flips = [], []
     for permutation in itertools.permutations(range(3)):
         for reversed_axes in itertools.product((False, True), repeat=3):
