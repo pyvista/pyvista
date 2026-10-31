@@ -27,7 +27,7 @@ them is Claude-specific.
 
 **Do not use CI as your test runner.** Every push to an open pull request starts the unit
 test matrix on three operating systems and five Python versions, a separate VTK matrix,
-the documentation build, and the integration tests. You have a shell and the same `make`
+and the documentation build. You have a shell and the same `make`
 targets CI runs, so run them: `make lint`, `make docstyle`, `make doctest`, and
 `make test-core` or `make test-plotting` scoped to what you touched. Run the style and
 docstring gates before you call a change finished, not only when the diff looks related
@@ -38,7 +38,7 @@ Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
 `Continuous Integration Etiquette`. Some jobs run only when a label asks for them
 (`vtk-dev-testing`, `vtk-master-testing`, `integration-testing`, `docker`) -- see
 `.claude/skills/pyvista-pr/SKILL.md` for which to suggest, and say so when you hand the
-change over, since `vtk-dev-testing` applied after the last push does nothing until the next one.
+change over.
 
 **Stay in PyVista.** PyVista wraps essentially all of VTK. Reaching for VTK almost always
 means the PyVista name was missed, so check `dir(obj)` first. No bare `import vtk`
