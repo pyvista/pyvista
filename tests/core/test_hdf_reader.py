@@ -265,3 +265,38 @@ def test_hdf_composite_image_revisit(hdf_image_file, tmp_path):
         assert len(mesh) == 1
         assert isinstance(mesh[0], pv.ImageData)
         assert np.array_equal(mesh[0]['step'], np.full(60, float(index)))
+
+
+def test_hdf_array_selection(hdf_file):
+    """Read only enabled arrays and keep the selection across time steps."""
+    reader = pv.HDFReader(hdf_file)
+    assert isinstance(reader, pv.PointCellDataSelection)
+    assert reader.point_array_names == ['temperature', 'velocity']
+    assert reader.cell_array_names == ['pressure']
+    assert reader.all_point_arrays_status == {'temperature': True, 'velocity': True}
+    reader.disable_point_array('velocity')
+    reader.disable_all_cell_arrays()
+    assert reader.all_point_arrays_status == {'temperature': True, 'velocity': False}
+    assert not reader.cell_array_status('pressure')
+    for index in [2, 0, 1]:
+        reader.set_active_time_point(index)
+        mesh = reader.read()
+        assert mesh.point_data.keys() == ['temperature']
+        assert mesh.cell_data.keys() == []
+        assert np.array_equal(mesh['temperature'], np.arange(4) + index * 4)
+
+
+@pytest.mark.parametrize('fixture', ['hdf_file', 'hdf_image_file'])
+def test_hdf_reenable_array(fixture, request):
+    """Restore an array enabled again after a read without it."""
+    path = request.getfixturevalue(fixture)
+    reader = pv.HDFReader(path)
+    name = reader.point_array_names[0]
+    reader.set_active_time_point(1)
+    expected = reader.read()[name].copy()
+    reader.disable_all_point_arrays()
+    assert reader.read().point_data.keys() == []
+    reader.enable_all_point_arrays()
+    mesh = reader.read()
+    assert mesh.point_data.keys() == reader.point_array_names
+    assert np.array_equal(mesh[name], expected)
