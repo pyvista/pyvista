@@ -1245,6 +1245,43 @@ def _get_connectivity(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     return array
 
 
+def _invalid_polyhedron_face_streams(
+    offsets: NDArray[np.signedinteger],
+    connectivity: NDArray[np.signedinteger],
+    cell_types: NDArray[np.uint8],
+) -> NDArray[np.bool_]:
+    """Return a mask over all cells, ``True`` where a polyhedron's face stream is malformed.
+
+    A face stream is ``[n_faces, n_points, point_ids..., ...]`` with one record per face
+    and no bytes left over. All polyhedra are walked together, one face per pass.
+    """
+    invalid = np.zeros(cell_types.size, dtype=bool)
+    poly = np.flatnonzero(cell_types == CellType.POLYHEDRON)
+    if poly.size == 0:
+        return invalid
+    start = offsets[poly]
+    stop = offsets[poly + 1]
+    bad = start >= stop
+    n_faces = np.zeros(poly.size, dtype=connectivity.dtype)
+    n_faces[~bad] = connectivity[start[~bad]]
+    bad |= n_faces <= 0
+    pos = start + 1
+    last = connectivity.size - 1
+    active = np.flatnonzero(~bad)
+    while active.size:
+        pos_active = pos[active]
+        face_size = connectivity[np.minimum(pos_active, last)]
+        ok = (pos_active < stop[active]) & (face_size >= 0)
+        bad[active[~ok]] = True
+        active = active[ok]
+        pos[active] = pos_active[ok] + 1 + face_size[ok]
+        n_faces[active] -= 1
+        active = active[n_faces[active] > 0]
+    bad |= pos != stop
+    invalid[poly] = bad
+    return invalid
+
+
 def _validate_offsets_connectivity(offsets: _NumericArray, connectivity: _NumericArray) -> None:
     """Raise if ``offsets`` and ``connectivity`` do not describe a valid cell array."""
     for name, array in (('Offsets', offsets), ('Connectivity', connectivity)):

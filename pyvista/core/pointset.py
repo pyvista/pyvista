@@ -36,6 +36,7 @@ from .cell import _get_irregular_cells
 from .cell import _get_offset_array
 from .cell import _get_offsets
 from .cell import _get_regular_cells
+from .cell import _invalid_polyhedron_face_streams
 from .cell import _make_cell_array
 from .celltype import CellType
 from .dataset import DataSet
@@ -2956,14 +2957,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """
         # convert to arrays upfront
         cell_type_array = np.asarray(cell_type)
+        if cell_type_array.ndim == 2 and cell_type_array.shape[1] == 1:
+            cell_type_array = cell_type_array.ravel()
+        cell_type_array = _validation.validate_arrayN(
+            cell_type_array, dtype_out=np.uint8, name='cell_type'
+        )
         point_array = np.asarray(points)
 
         # Convert to vtk arrays
         vtkcells = cells if isinstance(cells, _vtk.vtkCellArray) else CellArray(np.asarray(cells))
-        if cell_type_array.dtype != np.uint8:
-            cell_type_array = cell_type_array.astype(np.uint8)
-        if np.any(cell_type_array == CellType.POLYHEDRON):
-            self._validate_polyhedron_cells(vtkcells, cell_type_array)
+        self._check_polyhedron_face_streams(vtkcells, cell_type_array)
         vtk_cell_types = _vtk.numpy_to_vtk(cell_type_array, deep=deep)
 
         self.SetPoints(vtk_points(point_array, deep=deep, force_float=force_float))
@@ -2971,13 +2974,10 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self.SetCells(vtk_cell_types, vtkcells)
 
     @staticmethod
-    def _validate_polyhedron_cells(
+    def _check_polyhedron_face_streams(
         cells: _vtk.vtkCellArray, cell_types: NDArray[np.uint8]
     ) -> None:
-        """Validate the face stream of each polyhedron before passing it to VTK."""
-        if cell_types.ndim not in (0, 1, 2) or (cell_types.ndim == 2 and cell_types.shape[1] != 1):
-            msg = 'Cell types must be a scalar, one-dimensional array, or column vector.'
-            raise ValueError(msg)
+        """Raise before VTK parses a malformed polyhedron face stream."""
         n_cells = cells.GetNumberOfCells()
         if cell_types.size != n_cells:
             msg = (
@@ -2985,26 +2985,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 f'the number of cells ({n_cells})'
             )
             raise ValueError(msg)
-
-        offsets = _get_offset_array(cells)
-        connectivity = _get_connectivity_array(cells)
-        for cell_index in np.flatnonzero(cell_types == CellType.POLYHEDRON):
-            start, stop = offsets[cell_index : cell_index + 2]
-            stream = connectivity[start:stop]
-            if stream.size and stream[0] > 0:
-                offset = 1
-                for _ in range(int(stream[0])):
-                    if offset >= stream.size or stream[offset] < 0:
-                        break
-                    offset += 1 + int(stream[offset])
-                    if offset > stream.size:
-                        break
-                else:
-                    if offset == stream.size:
-                        continue
-
+        if n_cells == 0 or cell_types.max() < CellType.POLYHEDRON:
+            return
+        invalid = _invalid_polyhedron_face_streams(
+            _get_offset_array(cells), _get_connectivity_array(cells), cell_types
+        )
+        if invalid.any():
             msg = (
-                f'Invalid polyhedron face stream for cell {cell_index}. '
+                f'Invalid polyhedron face stream for cell {np.flatnonzero(invalid)[0]}. '
                 'Expected [n_faces, n_points, point_ids..., ...] with one record per face.'
             )
             raise CellSizeError(msg)

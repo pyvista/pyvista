@@ -18,6 +18,7 @@ from pyvista import _vtk
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
+from pyvista.core.cell import _invalid_polyhedron_face_streams
 from pyvista.core.cell import _set_cell_array_data
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
@@ -1216,3 +1217,52 @@ def test_create_mixed_cells_variable_size():
     types, cells = create_mixed_cells({pv.CellType.POLYGON: cells_in}, nr_points=10)
     assert types.tolist() == [pv.CellType.POLYGON] * 2
     assert cells.tolist() == [3, 0, 1, 2, 4, 3, 4, 5, 6]
+
+
+def test_invalid_polyhedron_face_streams():
+    tetra_faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
+    hex_faces = [
+        4,
+        0,
+        1,
+        2,
+        3,
+        4,
+        4,
+        5,
+        6,
+        7,
+        4,
+        0,
+        1,
+        5,
+        4,
+        4,
+        1,
+        2,
+        6,
+        5,
+        4,
+        2,
+        3,
+        7,
+        6,
+        4,
+        3,
+        0,
+        4,
+        7,
+    ]
+    tetra = [4, *tetra_faces]
+    hexa = [6, *hex_faces]
+    truncated = [6, *hex_faces[:-1]]
+    trailing = [4, *tetra_faces, 0]
+    streams = [tetra, hexa, truncated, [4, 0, 1, 2, 3], trailing, [0], [], [1, -1], tetra]
+    types = [CellType.POLYHEDRON] * len(streams)
+    types[3] = CellType.TETRA
+    cells = [value for stream in streams for value in [len(stream), *stream]]
+    cellarr = pv.CellArray(cells)
+    invalid = _invalid_polyhedron_face_streams(
+        cellarr.cell_offsets, cellarr.cell_connectivity, np.array(types, dtype=np.uint8)
+    )
+    assert invalid.tolist() == [False, False, True, False, True, True, True, True, False]

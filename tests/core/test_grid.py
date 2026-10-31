@@ -455,13 +455,13 @@ def test_init_multiple_polyhedra_with_other_cells(polyhedron_first, column_vecto
     assert grid.polyhedron_faces.tolist() == [*faces, *other_faces]
 
 
-@pytest.mark.parametrize('shape', [(1, 2), (1, 2, 1)])
+@pytest.mark.parametrize('shape', [(1, 2, 1), (2, 1, 1)])
 def test_init_polyhedron_rejects_multicomponent_cell_types(shape, mocker: MockerFixture):
     faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     cells = [len(faces) + 1, 4, *faces, 4, 0, 1, 2, 3]
     celltypes = np.array([CellType.POLYHEDRON, CellType.TETRA]).reshape(shape)
     set_cells = mocker.patch.object(pv.UnstructuredGrid, 'SetCells')
-    with pytest.raises(ValueError, match='Cell types must be a scalar, one-dimensional array'):
+    with pytest.raises(ValueError, match=r'cell_type has shape .* which is not allowed'):
         pv.UnstructuredGrid(cells, celltypes, np.zeros((4, 3)))
     set_cells.assert_not_called()
 
