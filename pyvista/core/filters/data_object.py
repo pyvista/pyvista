@@ -2141,7 +2141,9 @@ class DataObjectFilters:
             its dimensions, offset and, for :class:`~pyvista.ImageData`, direction
             matrix can change. Transforming the :attr:`~pyvista.CellType.VOXEL` or
             :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
-            off the axes raises a ``ValueError`` instead of returning invalid cells.
+            off the axes raises a ``ValueError`` instead of returning invalid cells. Call
+            :meth:`~pyvista.UnstructuredGridFilters.generalize_cells` first to transform
+            them as hexahedra and quads.
 
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously
@@ -2369,7 +2371,9 @@ class DataObjectFilters:
             can change. Reflecting the :attr:`~pyvista.CellType.VOXEL` or
             :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
             across a plane that turns them off the axes raises a ``ValueError`` instead
-            of returning invalid cells.
+            of returning invalid cells. Call
+            :meth:`~pyvista.UnstructuredGridFilters.generalize_cells` first to reflect
+            them as hexahedra and quads.
 
         Parameters
         ----------

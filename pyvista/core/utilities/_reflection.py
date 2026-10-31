@@ -314,9 +314,8 @@ def _check_axis_aligned_cells(mesh: UnstructuredGrid, matrix: NDArray[np.float64
     if np.isin(mesh.celltypes, _AXIS_ALIGNED_TYPES).any():
         msg = (
             'Cannot transform VOXEL or PIXEL cells off the axes, since these cells must stay '
-            'aligned with them.\nConvert them to HEXAHEDRON or QUAD cells first, for example '
-            'with `to_hexahedra`, `to_quads` or `cast_to_structured_grid` instead of '
-            '`cast_to_unstructured_grid` on the image or rectilinear grid they come from.'
+            'aligned with them.\nConvert them to HEXAHEDRON and QUAD cells first with '
+            '`generalize_cells`.'
         )
         raise ValueError(msg)
 
@@ -338,9 +337,11 @@ def _set_cells(mesh: UnstructuredGrid, source: UnstructuredGrid) -> None:
     mesh.SetPoints(points)
 
 
-def _replace_cells(mesh: UnstructuredGrid, cells: pv.CellArray) -> None:
-    """Give the mesh new cells of the same types, keeping its polyhedron faces."""
-    types = _vtk.numpy_to_vtk(mesh.celltypes, deep=True)
+def _replace_cells(
+    mesh: UnstructuredGrid, cells: pv.CellArray, celltypes: NDArray[np.uint8] | None = None
+) -> None:
+    """Give the mesh new cells, of the same types by default, keeping its polyhedron faces."""
+    types = _vtk.numpy_to_vtk(mesh.celltypes if celltypes is None else celltypes, deep=True)
     if _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS:
         faces = (mesh.GetPolyhedronFaceLocations(), mesh.GetPolyhedronFaces())
         mesh.SetPolyhedralCells(types, cells, *faces)

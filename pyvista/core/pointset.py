@@ -3789,6 +3789,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             UnstructuredGrid containing only linear cells when
             ``deep=False``.
 
+        See Also
+        --------
+        pyvista.UnstructuredGridFilters.generalize_cells
+            Convert voxels and pixels to hexahedra and quads.
+
         """
         lgrid = self.copy(deep=deep)
 
