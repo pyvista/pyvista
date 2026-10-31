@@ -6153,10 +6153,17 @@ def test_color_labels_int_colormap_named_colors():
     assert np.array_equal(colored['labels_rgb'], [[255, 0, 0], [0, 0, 255]])
 
 
-def test_voxelize_generalize_cells():
+@pytest.mark.parametrize('cell_type', ['hex', 'hexahedron', pv.CellType.HEXAHEDRON])
+def test_voxelize_cell_type(cell_type):
     mesh = pv.Sphere()
     voxels = mesh.voxelize(spacing=0.1)
-    hexahedra = mesh.voxelize(spacing=0.1, generalize_cells=True)
     assert voxels.distinct_cell_types == {pv.CellType.VOXEL}
+    assert mesh.voxelize(spacing=0.1, cell_type=pv.CellType.VOXEL) == voxels
+    hexahedra = mesh.voxelize(spacing=0.1, cell_type=cell_type)
     assert hexahedra == voxels.generalize_cells()
     hexahedra.rotate_z(30).validate_mesh(action='error')
+
+
+def test_voxelize_cell_type_raises():
+    with pytest.raises(ValueError, match='cell_type'):
+        pv.Sphere().voxelize(cell_type='quad')

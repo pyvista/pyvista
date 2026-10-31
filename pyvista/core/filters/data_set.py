@@ -61,6 +61,7 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from pyvista import CellType
     from pyvista import Color
     from pyvista import DataSet
     from pyvista import ImageData
@@ -9217,7 +9218,7 @@ class DataSetFilters(DataObjectFilters):
         rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
-        generalize_cells: bool = False,
+        cell_type: Literal['voxel', 'hex', 'hexahedron'] | CellType = 'voxel',
         progress_bar: bool = False,
     ) -> UnstructuredGrid:
         """Voxelize mesh to UnstructuredGrid.
@@ -9309,11 +9310,11 @@ class DataSetFilters(DataObjectFilters):
             Maximum number of cells to use when computing the ``cell_length_percentile``.
             ``100 000`` cells are used by default.
 
-        generalize_cells : bool, default: False
-            Output :attr:`~pyvista.CellType.HEXAHEDRON` cells instead of
-            :attr:`~pyvista.CellType.VOXEL` cells. Voxels must stay aligned with the axes,
-            so set this to rotate or reflect the output off the axes. See
-            :meth:`~pyvista.UnstructuredGridFilters.generalize_cells`.
+        cell_type : str | CellType, default: 'voxel'
+            Type of the output cells: ``'voxel'`` or :attr:`~pyvista.CellType.VOXEL`, or
+            ``'hex'``, ``'hexahedron'`` or :attr:`~pyvista.CellType.HEXAHEDRON`. Voxels must
+            stay aligned with the axes, so output hexahedra to rotate or reflect the output
+            off the axes. See :meth:`~pyvista.UnstructuredGridFilters.generalize_cells`.
 
             .. versionadded:: 0.50
 
@@ -9323,8 +9324,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         UnstructuredGrid
-            Voxelized unstructured grid of the original mesh, with
-            :attr:`~pyvista.CellType.VOXEL` cells by default.
+            Voxelized unstructured grid of the original mesh, with cells of ``cell_type``.
 
         See Also
         --------
@@ -9387,12 +9387,17 @@ class DataSetFilters(DataObjectFilters):
 
         Output hexahedra to rotate the voxelized mesh off the axes.
 
-        >>> vox = mesh.voxelize(dimensions=cell_dimensions + 1, generalize_cells=True)
+        >>> vox = mesh.voxelize(dimensions=cell_dimensions + 1, cell_type='hexahedron')
         >>> vox.distinct_cell_types
         {<CellType.HEXAHEDRON: 12>}
         >>> vox = vox.rotate_z(30)
 
         """
+        _validation.check_contains(
+            ['voxel', 'hex', 'hexahedron', pv.CellType.VOXEL, pv.CellType.HEXAHEDRON],
+            must_contain=cell_type,
+            name='cell_type',
+        )
         voxel_cells = self._voxelize_binary_mask_cells(
             reference_volume=reference_volume,
             dimensions=dimensions,
@@ -9406,7 +9411,7 @@ class DataSetFilters(DataObjectFilters):
         )
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
-        if generalize_cells:
+        if cell_type not in ('voxel', pv.CellType.VOXEL):
             # Converting after the threshold leaves the background cells out of the work
             ugrid.generalize_cells(inplace=True)
         return ugrid

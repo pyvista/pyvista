@@ -188,8 +188,8 @@ class UnstructuredGridFilters(DataSetFilters):
         after a rotation or a reflection across a plane that is not normal to an axis. The
         points and data are unchanged, and other cells are kept as they are.
 
-        :meth:`~pyvista.DataSetFilters.voxelize` outputs voxels too, and converts them itself
-        with ``generalize_cells=True``.
+        :meth:`~pyvista.DataSetFilters.voxelize` outputs voxels too, and outputs hexahedra
+        instead with ``cell_type='hexahedron'``.
 
         .. versionadded:: 0.50
 
