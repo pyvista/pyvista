@@ -131,7 +131,9 @@ from .observers import Observer as Observer
 from .observers import ProgressMonitor as ProgressMonitor
 from .observers import VtkErrorCatcher as VtkErrorCatcher
 from .observers import send_errors_to_logging as send_errors_to_logging
+from .observers import set_error_output as set_error_output
 from .observers import set_error_output_file as set_error_output_file
+from .observers import set_warning_output as set_warning_output
 from .parametric_objects import KochanekSpline as KochanekSpline
 from .parametric_objects import ParametricBohemianDome as ParametricBohemianDome
 from .parametric_objects import ParametricBour as ParametricBour
