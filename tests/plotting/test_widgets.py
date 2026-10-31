@@ -679,7 +679,7 @@ def test_camera_orientation_widget_subplots(shape, anchor):
     for size in [(800, 600), (600, 800), (1000, 800)]:
         pl.window_size = size
         for _ in range(2):
-            pl.render_window.Render()
+            pl.render()
             for widget in camera_widgets:
                 _assert_camera_widget_viewport(widget, anchor)
     pl.close()
@@ -691,10 +691,10 @@ def test_camera_orientation_widget_viewport_changes():
     widget = pl.add_camera_orientation_widget()
     pl.show(auto_close=False, interactive=False)
     pl.renderer.viewport = (0.1, 0.2, 0.6, 0.8)
-    pl.render_window.Render()
+    pl.render()
     _assert_camera_widget_viewport(widget, 'UpperRight')
     widget.GetRepresentation().AnchorToLowerLeft()
-    pl.render_window.Render()
+    pl.render()
     _assert_camera_widget_viewport(widget, 'LowerLeft')
     pl.close()
 
@@ -713,7 +713,7 @@ def test_camera_orientation_widget_zero_window_size(window_size, capsys):
     pl.render_window.SetSize(800, 600)
     renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
     _assert_camera_widget_viewport(widget, 'UpperRight')
-    pl.show()
+    pl.close()
 
 
 def test_camera_orientation_widget_clear():
