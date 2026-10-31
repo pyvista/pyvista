@@ -77,7 +77,7 @@ jobs:
         run: echo "retry_test_timeout=$(( TIMEOUT / 2 ))" | tee -a "$GITHUB_OUTPUT"
         id: set_timeout
 
-      - uses: pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4
+      - uses: pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4 # v5.2.0
         with:
           qt: ${{matrix.project == 'pyvistaqt' || matrix.project == 'mne'}}
           pyvista: ${{matrix.project != 'pyvistaqt' && matrix.project != 'mne' && matrix.project != 'geovista'}}
