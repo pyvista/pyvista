@@ -695,6 +695,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkButtonWidget',
         'vtkCamera3DRepresentation',
         'vtkCamera3DWidget',
+        'vtkCameraOrientationRepresentation',
         'vtkCameraOrientationWidget',
         'vtkDistanceRepresentation3D',
         'vtkDistanceWidget',
