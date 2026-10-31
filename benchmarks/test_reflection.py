@@ -38,6 +38,8 @@ OBLIQUE_MESHES = [name for name in MESHES if name not in ('rectilinear', 'voxels
 def test_reflect_axis(name, benchmark):
     """Reflect a mesh across a plane normal to an axis."""
     mesh = MESHES[name]()
+    # Reflect once first, so the benchmarks' random order cannot move first-call costs
+    mesh.reflect((1, 0, 0))
     assert benchmark(mesh.reflect, (1, 0, 0)).n_cells == mesh.n_cells
 
 
@@ -45,4 +47,6 @@ def test_reflect_axis(name, benchmark):
 def test_reflect_oblique(name, benchmark):
     """Reflect a mesh across a plane that is not normal to an axis."""
     mesh = MESHES[name]()
+    # Reflect once first, so the benchmarks' random order cannot move first-call costs
+    mesh.reflect((1, 2, 3))
     assert benchmark(mesh.reflect, (1, 2, 3)).n_cells == mesh.n_cells
