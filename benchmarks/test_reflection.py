@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -17,6 +18,14 @@ def _hexahedra():
     return _image().cast_to_structured_grid().cast_to_unstructured_grid()
 
 
+def _warped_quads():
+    """Return an unstructured grid of 8100 quads whose cells each face another way."""
+    mesh = pv.Plane(i_resolution=90, j_resolution=90).cast_to_unstructured_grid()
+    x, y = mesh.points[:, 0], mesh.points[:, 1]
+    mesh.points[:, 2] = 0.1 * np.sin(5 * x) * np.cos(5 * y)
+    return mesh
+
+
 MESHES = {
     'image': _image,
     'rectilinear': lambda: _image().cast_to_rectilinear_grid(),
@@ -25,6 +34,7 @@ MESHES = {
     'voxels': lambda: _image().cast_to_unstructured_grid(),
     'hexahedra': _hexahedra,
     'quads': lambda: pv.Plane(i_resolution=90, j_resolution=90).cast_to_unstructured_grid(),
+    'warped_quads': _warped_quads,
     'lines': lambda: pv.ImageData(dimensions=(8001, 1, 1)).cast_to_unstructured_grid(),
     'tetrahedra': lambda: _hexahedra().triangulate(),
     'polydata': lambda: pv.Sphere(theta_resolution=90, phi_resolution=90),

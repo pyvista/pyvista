@@ -97,13 +97,20 @@ def _map_frames(linear: NDArray[np.float64], frames: NDArray[np.float64]) -> NDA
 
 
 def _mirror_choice(
-    frames: NDArray[np.float64], real: NDArray[np.bool_], matrix: NDArray[np.float64]
+    frames: NDArray[np.float64],
+    real: NDArray[np.bool_],
+    matrix: NDArray[np.float64],
+    *,
+    atol: float = 0.0,
 ) -> NDArray[np.intp]:
-    """Return the mirroring reorder that keeps each frame of reflected index axes closest."""
+    """Return the mirroring reorder that keeps each frame of reflected index axes closest.
+
+    Frames that differ by at most ``atol`` count as matching.
+    """
     # Frames that all match, like the cells of a regular grid, share one choice
     if frames.ndim == 3 and len(frames) > 1:
         spread = np.abs(frames - frames[0]).max()
-        if spread <= 1e-8 * np.abs(frames[0]).max():
+        if spread <= max(1e-8 * np.abs(frames[0]).max(), atol):
             return np.full(len(frames), _mirror_choice(frames[0], real, matrix))
 
     linear = matrix[:3, :3]
@@ -212,6 +219,9 @@ def _mirror_block_cells(
     """
     inverse: NDArray[np.float64] = np.linalg.inv(matrix[:3, :3])
     points = mesh.points
+    # Frames of a regular grid differ by the rounding of its points
+    precision = np.finfo(np.result_type(points.dtype, np.float32)).eps
+    atol = 4 * precision * float(np.abs(points).max(initial=0))
     for cell_type, local in _BLOCK_CORNERS.items():
         ids = np.flatnonzero(celltypes == cell_type)
         if ids.size == 0:
@@ -254,7 +264,7 @@ def _mirror_block_cells(
             placed = np.zeros((np.count_nonzero(subset), 3, 3))
             placed[..., axes] = frames[selected][..., :n_axes]
             real = np.isin(range(3), axes)
-            choices = _mirror_choice(placed, real, matrix)
+            choices = _mirror_choice(placed, real, matrix, atol=atol)
             orders = _block_corner_orders(local, axes)
             unique_choices = np.unique(choices)
             for choice in unique_choices:
