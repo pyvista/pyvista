@@ -35,6 +35,8 @@ from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._version import version_info
 from pyvista._warn_external import warn_external
+from pyvista.core._structured_data import _reorder_extent
+from pyvista.core._structured_data import _reorder_structured_arrays
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import AmbiguousDataError
@@ -47,6 +49,10 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities._cell_lengths import _cell_length_percentile
+from pyvista.core.utilities._reflection import _align_voxels_and_pixels
+from pyvista.core.utilities._reflection import _check_axis_aligned_cells
+from pyvista.core.utilities._reflection import _mirror_cells
+from pyvista.core.utilities._reflection import _mirror_structured
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
@@ -212,45 +218,6 @@ def _transform_rectilinear_axes(
         array[::-1] if factor < 0 else array
         for array, factor in zip(transformed, scale, strict=True)
     )
-
-
-def _transform_rectilinear_offset(
-    offset: tuple[int, int, int],
-    dimensions: tuple[int, int, int],
-    components: _RectilinearComponents,
-) -> list[int]:
-    """Return a grid's offset permuted and reflected with its axes."""
-    _, scale, axes = components
-    # A reversed axis mirrors its extent about index zero
-    return [
-        offset[axis] if factor > 0 else -(offset[axis] + dimensions[axis] - 1)
-        for axis, factor in zip(axes, scale, strict=True)
-    ]
-
-
-def _permute_rectilinear_arrays(
-    output: RectilinearGrid,
-    dimensions: tuple[int, int, int],
-    components: _RectilinearComponents,
-) -> None:
-    """Reorder a grid's arrays to match the permutation and reversal of its axes."""
-    _, scale, axes = components
-    reversed_axes = np.flatnonzero(scale < 0)
-    if np.array_equal(axes, [0, 1, 2]) and reversed_axes.size == 0:
-        return
-
-    # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
-    order = (*(2 - axes[::-1]), 3)
-    flip = tuple(int(axis) for axis in 2 - reversed_axes)
-    point_dimensions = np.array(dimensions)
-    cell_dimensions = np.maximum(point_dimensions - 1, 1)
-    for attributes, dims in (
-        (output.point_data, point_dimensions),
-        (output.cell_data, cell_dimensions),
-    ):
-        for name, array in attributes.items():
-            permuted = np.flip(array.reshape(*dims[::-1], -1).transpose(order), axis=flip)
-            attributes[name] = permuted.reshape(array.shape)
 
 
 class _CellStatusTuple(NamedTuple):
@@ -2168,6 +2135,14 @@ class DataObjectFilters:
             :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`, points and
             arrays are ordered to match.
 
+        .. versionchanged:: 0.50
+            A reflection reorders the cells so they keep their orientation instead of
+            turning inside out. The points of a structured mesh are reordered too, so
+            its dimensions, offset and, for :class:`~pyvista.ImageData`, direction
+            matrix can change. Transforming the :attr:`~pyvista.CellType.VOXEL` or
+            :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
+            off the axes raises a ``ValueError`` instead of returning invalid cells.
+
         .. versionchanged:: 0.48.0
             The parameter ``inplace`` must be specified whereas it previously
             defaulted to ``True``.
@@ -2310,6 +2285,12 @@ class DataObjectFilters:
             point_vectors, cell_vectors
         )
 
+        # A matrix with non-finite values has no orientation
+        with np.errstate(invalid='ignore'):
+            reflects = np.linalg.det(t.matrix[:3, :3]) < 0
+        if isinstance(self, pv.UnstructuredGrid):
+            _check_axis_aligned_cells(self, t.matrix)
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
         self.set_active_scalars(None)
@@ -2323,6 +2304,10 @@ class DataObjectFilters:
 
                 _update_alg(alg, progress_bar=progress_bar, message='Transforming')
                 vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
+                if reflects and not isinstance(output, pv.Grid):
+                    vtk_filter_output = _mirror_cells(vtk_filter_output, t.matrix)
+                elif isinstance(vtk_filter_output, pv.UnstructuredGrid):
+                    _align_voxels_and_pixels(vtk_filter_output, t.matrix)
             else:
                 vtk_filter_output = self
 
@@ -2331,20 +2316,23 @@ class DataObjectFilters:
                 _orient_image_structure(output, self, t)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+                if reflects:
+                    _mirror_structured(output, t.matrix)
             elif (
                 isinstance(output, pv.RectilinearGrid)
                 and isinstance(self, pv.RectilinearGrid)
                 and rectilinear_components is not None
             ):
-                components = rectilinear_components
+                _, scale, axes = rectilinear_components
+                flips = scale < 0
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = self.dimensions
                 offset = self.offset
-                _transform_rectilinear_axes(output, self, components)
-                output.offset = _transform_rectilinear_offset(offset, dimensions, components)
+                _transform_rectilinear_axes(output, self, rectilinear_components)
+                output.offset = _reorder_extent(dimensions, offset, axes=axes, flips=flips)[::2]
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
-                _permute_rectilinear_arrays(output, dimensions, components)
+                _reorder_structured_arrays(output, dimensions, axes=axes, flips=flips)
             else:
                 # A shallow copy leaves the output sharing everything but the points with
                 # the filter's own output, which is only safe when transforming in place
@@ -2373,6 +2361,15 @@ class DataObjectFilters:
         progress_bar: bool = False,
     ) -> _MeshType_co:
         """Reflect a dataset across a plane.
+
+        .. versionchanged:: 0.50
+            The cells are reordered so they keep their orientation instead of turning
+            inside out. The points of a structured mesh are reordered too, so its
+            dimensions, offset and, for :class:`~pyvista.ImageData`, direction matrix
+            can change. Reflecting the :attr:`~pyvista.CellType.VOXEL` or
+            :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
+            across a plane that turns them off the axes raises a ``ValueError`` instead
+            of returning invalid cells.
 
         Parameters
         ----------
