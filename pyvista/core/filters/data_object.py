@@ -2137,7 +2137,9 @@ class DataObjectFilters:
 
         .. versionchanged:: 0.50
             A reflection reorders the cells so they keep their orientation instead of
-            turning inside out. Transforming the :attr:`~pyvista.CellType.VOXEL` or
+            turning inside out. The points of a structured mesh are reordered too, so
+            its dimensions, offset and, for :class:`~pyvista.ImageData`, direction
+            matrix can change. Transforming the :attr:`~pyvista.CellType.VOXEL` or
             :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
             off the axes raises a ``ValueError`` instead of returning invalid cells.
 
@@ -2327,7 +2329,7 @@ class DataObjectFilters:
                 dimensions = self.dimensions
                 offset = self.offset
                 _transform_rectilinear_axes(output, self, rectilinear_components)
-                output.extent = _reorder_extent(dimensions, offset, axes=axes, flips=flips)
+                output.offset = _reorder_extent(dimensions, offset, axes=axes, flips=flips)[::2]
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 _reorder_structured_arrays(output, dimensions, axes=axes, flips=flips)
@@ -2362,9 +2364,11 @@ class DataObjectFilters:
 
         .. versionchanged:: 0.50
             The cells are reordered so they keep their orientation instead of turning
-            inside out. Reflecting the :attr:`~pyvista.CellType.VOXEL` or
+            inside out. The points of a structured mesh are reordered too, so its
+            dimensions, offset and, for :class:`~pyvista.ImageData`, direction matrix
+            can change. Reflecting the :attr:`~pyvista.CellType.VOXEL` or
             :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
-            across a plane that is not normal to an axis raises a ``ValueError`` instead
+            across a plane that turns them off the axes raises a ``ValueError`` instead
             of returning invalid cells.
 
         Parameters

@@ -3099,6 +3099,33 @@ def _mixed_grid():
     return pv.merge([examples.load_hexbeam(), tetrahedra])
 
 
+def _strip(n_points):
+    """Return a triangle strip of ``n_points`` points."""
+    ids = np.arange(n_points)
+    points = np.column_stack((ids // 2, ids % 2, np.zeros(n_points))).astype(float)
+    return pv.UnstructuredGrid({pv.CellType.TRIANGLE_STRIP: ids[np.newaxis]}, points)
+
+
+def _other_cells():
+    """Return a grid of cells reversed apart from block cells, followed by block cells."""
+    cells = [
+        _strip(8),
+        _strip(7),
+        examples.cells.BiQuadraticTriangle(),
+        examples.cells.QuadraticPolygon(),
+        examples.cells.PolyLine(),
+    ]
+    polyhedron = examples.cells.Polyhedron()
+    # VTK 9.3 flags this polyhedron as inverted before any reflection
+    if polyhedron.validate_mesh().is_valid:
+        cells.append(polyhedron)
+    cells.append(examples.load_hexbeam())
+    grid = pv.merge([cell.translate((5 * i, 0, 0)) for i, cell in enumerate(cells)])
+    # VTK 9.3 cannot validate hexahedra with single precision points
+    grid.points = grid.points.astype(float)
+    return grid
+
+
 _REFLECTED_MESHES = [
     examples.load_hexbeam,
     examples.load_tetbeam,
@@ -3113,7 +3140,7 @@ _REFLECTED_MESHES = [
 
 @pytest.mark.parametrize('normal', [(1, 0, 0), (1, 1, 0)])
 @pytest.mark.parametrize('inplace', [True, False])
-@pytest.mark.parametrize('load', _REFLECTED_MESHES)
+@pytest.mark.parametrize('load', [*_REFLECTED_MESHES, _other_cells])
 def test_reflect_keeps_cells_valid(load, inplace, normal):
     reflected = load().reflect(normal, inplace=inplace)
     reflected.validate_mesh(action='error')
@@ -3129,10 +3156,22 @@ def test_reflect_keeps_cells_valid(load, inplace, normal):
         assert np.array_equal(restored[name], original[name])
 
 
-@pytest.mark.parametrize('mesh_type', [pv.ExplicitStructuredGrid, pv.UnstructuredGrid])
+@pytest.mark.parametrize(
+    'mesh_type',
+    [
+        pv.ExplicitStructuredGrid,
+        pv.UnstructuredGrid,
+        pv.StructuredGrid,
+        pv.RectilinearGrid,
+        pv.ImageData,
+        pv.PolyData,
+    ],
+)
 def test_reflect_empty(mesh_type):
     mesh = mesh_type()
-    assert mesh.reflect((1, 1, 0)).n_cells == mesh.n_cells
+    assert type(mesh.reflect((1, 1, 0))) is mesh_type
+    assert type(mesh.rotate_z(90)) is mesh_type
+    assert type(pv.MultiBlock([mesh]).reflect((1, 0, 0))[0]) is mesh_type
 
 
 def _n_outward_faces(mesh):
@@ -3259,6 +3298,22 @@ def test_rotate_voxels_quarter_turns(dimensions, axis, angle):
     rotated.validate_mesh(action='error')
     assert rotated.volume == pytest.approx(grid.volume)
     assert sibling == before
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 7), reason='VTK flags every voxel as invalid')
+def test_rotate_voxels_onto_other_axes():
+    grid = pv.ImageData(dimensions=(2, 3, 4)).cast_to_unstructured_grid()
+    # A turn about the diagonal swaps the axes, up to rounding
+    rotated = grid.rotate_vector((1, 1, 1), 120)
+    rotated.validate_mesh(action='error')
+    assert rotated.volume == pytest.approx(grid.volume)
+
+
+def test_scale_voxels_to_zero():
+    grid = pv.ImageData(dimensions=(2, 3, 4)).cast_to_unstructured_grid()
+    transform = pv.Transform().scale(0, 1, 1).rotate_z(90)
+    collapsed = grid.transform(transform, inplace=False)
+    assert np.array_equal(np.sort(collapsed.cell_connectivity), np.sort(grid.cell_connectivity))
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
