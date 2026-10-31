@@ -2530,10 +2530,10 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
         scale = (sx, sy, sz)
         expected_points = dataset.points * scale
-        # A rectilinear grid reverses the axes a negative scale would make descend, so
-        # match the points of both meshes before comparing their arrays
+        # A grid reverses the axes a negative scale would make descend, so match the
+        # points of both meshes before comparing their arrays
         order, expected_order = _matching_orders(transformed.points, expected_points)
-        if not isinstance(dataset, pv.RectilinearGrid):
+        if not isinstance(dataset, (pv.Grid, pv.StructuredGrid)):
             assert np.array_equal(order, expected_order)
         assert np.allclose(transformed.points[order], expected_points[expected_order])
 
@@ -2952,7 +2952,7 @@ def test_reflect_mesh_about_point(datasets):
         assert reflected.n_points == dataset.n_points
         expected_points = dataset.points * (-1, 1, 1) + (2 * x_plane, 0, 0)
         order, expected_order = _matching_orders(reflected.points, expected_points)
-        if not isinstance(dataset, pv.RectilinearGrid):
+        if not isinstance(dataset, (pv.Grid, pv.StructuredGrid)):
             assert np.array_equal(order, expected_order)
         assert np.allclose(reflected.points[order], expected_points[expected_order])
 
@@ -2986,7 +2986,7 @@ def test_reflect_mesh_with_vectors(datasets):
         reflection = (-1, 1, 1)
         expected_points = dataset.points * reflection
         order, expected_order = _matching_orders(reflected.points, expected_points)
-        if not isinstance(dataset, pv.RectilinearGrid):
+        if not isinstance(dataset, (pv.Grid, pv.StructuredGrid)):
             assert np.array_equal(order, expected_order)
         assert np.allclose(reflected.points[order], expected_points[expected_order])
 
@@ -3029,19 +3029,59 @@ def test_reflect_inplace(dataset):
     dataset.reflect((1, 0, 0), inplace=True, progress_bar=True)
     assert dataset.n_cells == orig.n_cells
     assert dataset.n_points == orig.n_points
-    assert np.allclose(dataset.points[:, 0], -orig.points[:, 0])
-    assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
+    expected_points = orig.points * (-1, 1, 1)
+    order, expected_order = _matching_orders(dataset.points, expected_points)
+    assert np.allclose(dataset.points[order], expected_points[expected_order])
+
+
+def _image():
+    """Return an image with point and cell data."""
+    image = pv.ImageData(dimensions=(2, 3, 4))
+    image.point_data['ids'] = np.arange(image.n_points)
+    image.cell_data['ids'] = np.arange(image.n_cells)
+    return image
+
+
+def _structured_grid():
+    """Return a 3D structured grid with point and cell data."""
+    return _image().cast_to_structured_grid()
+
+
+def _sphere():
+    """Return a sphere without the normals a reflection rounds."""
+    sphere = pv.Sphere()
+    sphere.clear_point_data()
+    return sphere
+
+
+_REFLECTED_MESHES = [
+    examples.load_hexbeam,
+    examples.load_tetbeam,
+    examples.load_explicit_structured,
+    _structured_grid,
+    _image,
+    _sphere,
+]
 
 
 @pytest.mark.parametrize('inplace', [True, False])
-@pytest.mark.parametrize('load', [examples.load_hexbeam, examples.load_tetbeam])
+@pytest.mark.parametrize('load', _REFLECTED_MESHES)
 def test_reflect_keeps_cells_valid(load, inplace):
-    mesh = load()
-    connectivity = mesh.cell_connectivity.copy()
-    reflected = mesh.reflect((1, 0, 0), inplace=inplace)
+    reflected = load().reflect((1, 0, 0), inplace=inplace)
     reflected.validate_mesh(action='error')
-    assert not np.array_equal(reflected.cell_connectivity, connectivity)
-    assert np.array_equal(reflected.reflect((1, 0, 0)).cell_connectivity, connectivity)
+    assert reflected.reflect((1, 0, 0)) == load()
+
+
+def _n_outward_faces(mesh):
+    """Return how many faces of a mesh's surface point away from its center."""
+    surface = mesh.extract_surface(algorithm=None).triangulate()
+    outward = surface.cell_centers().points - surface.center
+    return np.count_nonzero(np.sum(surface.face_normals * outward, axis=1) > 0)
+
+
+@pytest.mark.parametrize('load', _REFLECTED_MESHES)
+def test_reflect_keeps_surface_outward(load):
+    assert _n_outward_faces(load().reflect((1, 0, 0))) == _n_outward_faces(load())
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
@@ -3748,6 +3788,14 @@ def test_validate_mesh_cell_status():
     report_enum = mesh.validate_mesh(['unused_points', pv.CellStatus.DEGENERATE_FACES])
     report_str = mesh.validate_mesh(['unused_points', 'degenerate_faces'])
     assert str(report_enum) == str(report_str)
+
+
+@pytest.mark.parametrize('cell_type', [pv.CellType.LAGRANGE_WEDGE, pv.CellType.BEZIER_WEDGE])
+def test_validate_mesh_order_one_wedge(cell_type):
+    mesh = examples.cells.generate_cell_blocks(cell_type, 'parametric')[0]
+    assert mesh.validate_mesh().is_valid
+    mesh.points[[1, 2, 4, 5]] = mesh.points[[2, 1, 5, 4]]
+    assert 'inverted_faces' in mesh.validate_mesh().invalid_fields
 
 
 def test_validate_mesh_integer_points():

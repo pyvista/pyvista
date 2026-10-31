@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import RotationLike
@@ -186,18 +187,92 @@ def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) 
     _copy_active_attributes(filtered, output)
 
 
-def _mirror_cells(grid: UnstructuredGrid) -> None:
-    """Reorder each cell's points in place so a reflected cell keeps its orientation."""
-    # Any reflection reverses a cell the same way, so take the reordered cells of one
-    structure = pv.UnstructuredGrid()
-    structure.copy_structure(grid)
-    alg = _vtk.vtkReflectionFilter()
-    alg.SetInputData(structure)
-    alg.SetCopyInput(False)
-    _update_alg(alg)
-    points = grid.GetPoints()
-    grid.copy_structure(_get_output(alg, output_type=pv.UnstructuredGrid))
-    grid.SetPoints(points)
+def _mirror_cells(mesh: DataSet) -> DataSet:
+    """Return a reflected mesh with its cells reordered so they keep their orientation."""
+    if isinstance(mesh, pv.UnstructuredGrid):
+        # Any reflection reverses a cell the same way, so take the reordered cells of one
+        structure = pv.UnstructuredGrid()
+        structure.copy_structure(mesh)
+        alg = _vtk.vtkReflectionFilter()
+        alg.SetInputData(structure)
+        alg.SetCopyInput(False)
+        _update_alg(alg)
+        points = mesh.GetPoints()
+        mesh.copy_structure(_get_output(alg, output_type=pv.UnstructuredGrid))
+        mesh.SetPoints(points)
+    elif isinstance(mesh, pv.PolyData):
+        mesh = mesh._reverse_sense(
+            reverse_cells=True, reverse_normals=False, inplace=False, progress_bar=False
+        )
+    elif isinstance(mesh, pv.ExplicitStructuredGrid):
+        # Reverse the cells along i, and swap each hexahedron's points along i to match
+        cell_ids = _flipped_ids(np.array(mesh.dimensions) - 1, axis=0)
+        connectivity = mesh.GetCells().GetConnectivityArray()
+        hexahedra = _vtk.vtk_to_numpy(connectivity).reshape(-1, 8)
+        hexahedra = hexahedra[cell_ids][:, [1, 0, 3, 2, 5, 4, 7, 6]]
+        mesh.SetCells(pv.CellArray.from_regular_cells(hexahedra))
+        _permute_arrays(mesh.cell_data, cell_ids)
+        if 'ConnectivityFlags' in mesh.cell_data:
+            mesh.compute_connectivity(inplace=True)
+    elif isinstance(mesh, pv.StructuredGrid) and mesh.dimensionality > 1:
+        # A structured grid's cells follow its point order, so reverse the points
+        dimensions = np.array(mesh.dimensions)
+        axis = int(np.argmax(dimensions > 1))
+        mesh.points = mesh.points[_flipped_ids(dimensions, axis=axis)]
+        _flip_structured_arrays(mesh, axis=axis)
+    return mesh
+
+
+def _mirror_image(image: ImageData) -> None:
+    """Reverse a reflected image along one axis in place so its cells keep their orientation."""
+    dimensions = np.array(image.dimensions)
+    if image.dimensionality < 2:
+        return
+    axis = int(np.argmax(dimensions > 1))
+    flip = np.eye(4)
+    flip[axis, axis] = -1
+    flip[axis, 3] = 2 * image.offset[axis] + dimensions[axis] - 1
+    image.index_to_physical_matrix = image.index_to_physical_matrix @ flip
+    _flip_structured_arrays(image, axis=axis)
+
+
+def _flipped_ids(dimensions: NDArray[np.integer], *, axis: int) -> NDArray[np.intp]:
+    """Return the ids of a structured block reversed along one axis."""
+    ids = np.arange(np.prod(dimensions)).reshape(dimensions[::-1])
+    return np.flip(ids, axis=2 - axis).ravel()
+
+
+def _flip_structured_arrays(mesh: ImageData | StructuredGrid, *, axis: int) -> None:
+    """Reverse the point and cell arrays of a structured mesh along one axis in place."""
+    dimensions = np.array(mesh.dimensions)
+    _permute_arrays(mesh.point_data, _flipped_ids(dimensions, axis=axis))
+    _permute_arrays(mesh.cell_data, _flipped_ids(np.maximum(dimensions - 1, 1), axis=axis))
+
+
+def _permute_arrays(attributes: DataSetAttributes, ids: NDArray[np.intp]) -> None:
+    """Reorder every array of point or cell data in place."""
+    for name in attributes.keys():
+        attributes[name] = attributes[name][ids]
+
+
+def _validate_order_one_wedges(
+    mesh: UnstructuredGrid,
+    validated: DataSet,
+    run_cell_validator: Callable[[DataSet], DataSet],
+) -> None:
+    """Validate 6-point higher-order wedges, which vtkCellValidator rejects, as linear wedges."""
+    wedge = np.isin(mesh.celltypes, [CellType.LAGRANGE_WEDGE, CellType.BEZIER_WEDGE])
+    ids = np.flatnonzero(wedge & (np.diff(mesh.cell_offsets) == 6))
+    if ids.size:
+        wedges = mesh.cell_connectivity[mesh.cell_offsets[ids, np.newaxis] + np.arange(6)]
+        if pv.vtk_version_info < (9, 7):
+            # Linear wedges wind their triangles the other way before VTK 9.7
+            wedges = wedges[:, [0, 2, 1, 3, 5, 4]]
+        linear = pv.UnstructuredGrid({CellType.WEDGE: wedges}, mesh.points)
+        # The validator's array is implicit, so writes to it need a copy
+        states = np.array(validated.cell_data['ValidityState'])
+        states[ids] = run_cell_validator(linear).cell_data['ValidityState']
+        validated.cell_data['ValidityState'] = states
 
 
 def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
@@ -1981,11 +2056,10 @@ class DataObjectFilters:
 
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
         skip_validator = isinstance(self, pv.Grid) or invalid_references
-        if skip_validator:
-            output = self.copy(deep=False)
-        else:
+
+        def run_cell_validator(mesh: DataSet) -> Any:
             cell_validator = _vtk.vtkCellValidator()
-            cell_validator.SetInputData(self)
+            cell_validator.SetInputData(mesh)
             cell_validator.SetTolerance(tol)
             if pv.vtk_version_info >= (9, 6, 0):
                 # vtkCellValidator stores PlanarityTolerance as static class state, so we must
@@ -1994,7 +2068,14 @@ class DataObjectFilters:
                     planarity_tolerance if planarity_tolerance is not None else 0.1
                 )
             cell_validator.Update()
-            output = _get_output(cell_validator, output_type=type(self))
+            return _get_output(cell_validator, output_type=type(mesh))
+
+        if skip_validator:
+            output = self.copy(deep=False)
+        else:
+            output = run_cell_validator(self)
+            if isinstance(self, pv.UnstructuredGrid):
+                _validate_order_one_wedges(self, output, run_cell_validator)
 
         def post_process(mesh: DataSet) -> None:
             # Make scalars 64-bit, rename, and make them active
@@ -2342,8 +2423,8 @@ class DataObjectFilters:
 
                 _update_alg(alg, progress_bar=progress_bar, message='Transforming')
                 vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
-                if isinstance(vtk_filter_output, pv.UnstructuredGrid) and reflects:
-                    _mirror_cells(vtk_filter_output)
+                if reflects and not isinstance(output, pv.Grid):
+                    vtk_filter_output = _mirror_cells(vtk_filter_output)
             else:
                 vtk_filter_output = self
 
@@ -2352,6 +2433,8 @@ class DataObjectFilters:
                 _orient_image_structure(output, self, t)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+                if reflects:
+                    _mirror_image(output)
             elif (
                 isinstance(output, pv.RectilinearGrid)
                 and isinstance(self, pv.RectilinearGrid)
