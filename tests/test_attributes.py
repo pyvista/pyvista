@@ -284,6 +284,11 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['vtkobject'] = dataset.GetPointData()
         kwargs['dataset'] = dataset
         kwargs['association'] = pv.FieldAssociation.POINT
+    elif pyvista_class is pv.ArrayReshaper:
+        kwargs['reshape'] = np.ravel
+        kwargs['flatten'] = np.ravel
+    elif pyvista_class is pv.core._array_reshaping.ReshapedArrays:
+        kwargs['attributes'] = pv.ImageData().point_data
     elif pyvista_class is pv.ProgressMonitor:
         kwargs['algorithm'] = pv.plotting.utilities.algorithms.CrinkleAlgorithm
     elif pyvista_class is pv.plotting.lookup_table.lookup_table_ndarray:

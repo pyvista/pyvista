@@ -16,6 +16,12 @@ def _extent_from(offset: VectorLikeInt, dims: VectorLikeInt) -> list[int]:
     return [int(n) for o, d in zip(offset, dims, strict=True) for n in (o, o + d - 1)]
 
 
+def _grid_shape(dimensions: VectorLikeInt, *, cells: bool) -> tuple[int, int, int]:
+    """Return the shape of the point or cell arrays of a grid with these dimensions."""
+    nx, ny, nz = (max(int(n) - 1, 1) if cells else int(n) for n in dimensions)
+    return nx, ny, nz
+
+
 class _StructuredDataMixin:
     """Add ``dimensions``, ``extent`` and ``offset`` properties to structured datasets.
 
