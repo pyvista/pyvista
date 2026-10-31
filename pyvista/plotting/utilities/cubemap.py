@@ -91,6 +91,7 @@ def cubemap_from_filenames(image_paths: Sequence[str | Path]) -> Texture:
     --------
     Load a skybox given a list of image paths.
 
+    >>> import pyvista as pv
     >>> image_paths = [
     ...     '/home/user/_px.jpg',
     ...     '/home/user/_nx.jpg',
