@@ -187,72 +187,277 @@ def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) 
     _copy_active_attributes(filtered, output)
 
 
-def _mirror_cells(mesh: DataSet) -> DataSet:
+def _signed_permutations() -> tuple[NDArray[np.intp], NDArray[np.bool_]]:
+    """Return each mirroring reorder of three axes as its source axes and reversals."""
+    axes, flips = [], []
+    for permutation in itertools.permutations(range(3)):
+        for reversed_axes in itertools.product((False, True), repeat=3):
+            matrix = np.zeros((3, 3))
+            matrix[permutation, range(3)] = np.where(reversed_axes, -1, 1)
+            if np.linalg.det(matrix) < 0:
+                axes.append(permutation)
+                flips.append(reversed_axes)
+    return np.array(axes), np.array(flips)
+
+
+# The source axis and reversal of each new index axis, for every reorder that mirrors them
+_MIRROR_AXES, _MIRROR_FLIPS = _signed_permutations()
+
+# The local index of each corner of the linear cells whose points form a structured block
+_BLOCK_CORNERS = {
+    CellType.LINE: [[0], [1]],
+    CellType.PIXEL: [[0, 0], [1, 0], [0, 1], [1, 1]],
+    CellType.QUAD: [[0, 0], [1, 0], [1, 1], [0, 1]],
+    CellType.VOXEL: [[i, j, k] for k in (0, 1) for j in (0, 1) for i in (0, 1)],
+    CellType.HEXAHEDRON: [
+        [0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]
+    ],
+}  # fmt: skip
+
+
+def _complete_frames(frames: NDArray[np.float64], real: NDArray[np.bool_]) -> NDArray[np.float64]:
+    """Return unit index axes, filling the axes without extent to make a right-handed frame."""
+    frames = frames.copy()
+    columns = np.flatnonzero(real)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        frames[..., columns] /= np.linalg.norm(frames[..., columns], axis=-2, keepdims=True)
+        # A collapsed axis has no direction
+        frames = np.nan_to_num(frames)
+        if columns.size == 0:
+            frames[:] = np.eye(3)
+        elif columns.size == 1:
+            # Take the next global axis, or the one after if the only axis lies along it
+            axis = columns[0]
+            first = frames[..., axis]
+            candidates = np.eye(3)[[(axis + 1) % 3, (axis + 2) % 3]]
+            # Round so that rounding error cannot break a tie between axes
+            alignment = np.round(np.abs(first @ candidates.T), 8)
+            other = candidates[np.argmin(alignment, axis=-1)]
+            other -= np.sum(other * first, axis=-1, keepdims=True) * first
+            frames[..., (axis + 1) % 3] = other / np.linalg.norm(other, axis=-1, keepdims=True)
+            missing = (axis + 2) % 3
+        elif columns.size == 2:
+            missing = int(np.flatnonzero(~real)[0])
+        if 0 < columns.size < 3:
+            frames[..., missing] = np.cross(
+                frames[..., (missing + 1) % 3], frames[..., (missing + 2) % 3]
+            )
+    return np.nan_to_num(frames)
+
+
+def _mirror_choice(
+    frames: NDArray[np.float64], real: NDArray[np.bool_], matrix: NDArray[np.float64]
+) -> NDArray[np.intp]:
+    """Return the reorder of each frame of reflected index axes that keeps them closest."""
+    linear = matrix[:3, :3]
+    # Undo the reflection to compare each axis with where it went
+    original = _complete_frames(np.linalg.inv(linear) @ frames, real)
+    relative = np.linalg.pinv(original) @ linear @ original
+    signs = np.where(_MIRROR_FLIPS, -1, 1)
+    scores = np.sum(relative[..., _MIRROR_AXES, range(3)] * signs, axis=-1)
+    return np.argmax(np.round(scores, 8), axis=-1)
+
+
+def _reorder_block(
+    array: NDArray[Any],
+    dimensions: VectorLikeInt,
+    *,
+    axes: NDArray[np.intp],
+    flips: NDArray[np.bool_],
+) -> NDArray[Any]:
+    """Return an array over a structured block with its axes permuted and reversed."""
+    # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
+    order = (*(2 - axes[::-1]), 3)
+    reversed_axes = tuple(int(axis) for axis in 2 - np.flatnonzero(flips))
+    block = array.reshape(*np.asarray(dimensions)[::-1], -1).transpose(order)
+    # Reversing every axis gives a view of the input, which assigning back to it would corrupt
+    return np.flip(block, axis=reversed_axes).reshape(array.shape).copy()
+
+
+def _reorder_extent(
+    dimensions: VectorLikeInt,
+    offset: VectorLikeInt,
+    *,
+    axes: NDArray[np.intp],
+    flips: NDArray[np.bool_],
+) -> tuple[int, int, int, int, int, int]:
+    """Return the extent of a structured mesh with its axes permuted and reversed."""
+    dimensions = np.asarray(dimensions)[axes]
+    offset = np.asarray(offset)[axes]
+    # A reversed axis mirrors its extent about index zero
+    offset = np.where(flips, -(offset + dimensions - 1), offset)
+    extent = np.column_stack([offset, offset + dimensions - 1]).ravel()
+    return cast('tuple[int, int, int, int, int, int]', tuple(int(i) for i in extent))
+
+
+def _reorder_structured_arrays(
+    mesh: DataSet, dimensions: VectorLikeInt, *, axes: NDArray[np.intp], flips: NDArray[np.bool_]
+) -> None:
+    """Reorder a structured mesh's point and cell arrays in place."""
+    point_dimensions = np.asarray(dimensions)
+    cell_dimensions = np.maximum(point_dimensions - 1, 1)
+    for attributes, block in (
+        (mesh.point_data, point_dimensions),
+        (mesh.cell_data, cell_dimensions),
+    ):
+        for name in attributes.keys():
+            attributes[name] = _reorder_block(attributes[name], block, axes=axes, flips=flips)
+
+
+def _block_cell_frames(
+    points: NDArray[np.float64], corners: NDArray[np.int_]
+) -> NDArray[np.float64]:
+    """Return the mean edge along each local axis of cells whose points form a block."""
+    frames = np.zeros((len(points), 3, 3))
+    lookup = {tuple(corner): i for i, corner in enumerate(corners)}
+    for axis in np.flatnonzero(corners.any(axis=0)):
+        upper = np.flatnonzero(corners[:, axis])
+        lower = [lookup[tuple(corners[i] - np.eye(3, dtype=int)[axis])] for i in upper]
+        frames[:, :, axis] = np.mean(points[:, upper] - points[:, lower], axis=1)
+    return frames
+
+
+def _block_corner_orders(corners: NDArray[np.int_]) -> NDArray[np.intp]:
+    """Return the old corner of each new corner of a cell, for every mirroring reorder."""
+    real = corners.any(axis=0)
+    lookup = {tuple(corner): i for i, corner in enumerate(corners)}
+    orders = np.empty((len(_MIRROR_AXES), len(corners)), dtype=np.intp)
+    for choice, (axes, flips) in enumerate(zip(_MIRROR_AXES, _MIRROR_FLIPS, strict=True)):
+        # The cell's own axes are the new axes that carry one of its axes, in order
+        carried = [axis for axis in range(3) if real[axes[axis]]]
+        for i, corner in enumerate(corners):
+            old = np.zeros(3, dtype=int)
+            for index, axis in zip(corner[real], carried, strict=True):
+                old[axes[axis]] = 1 - index if flips[axis] else index
+            orders[choice, i] = lookup[tuple(old)]
+    return orders
+
+
+def _structured_frame(mesh: ImageData | StructuredGrid) -> NDArray[np.float64]:
+    """Return the mean step along each index axis of a structured mesh."""
+    if isinstance(mesh, pv.ImageData):
+        return mesh.index_to_physical_matrix[:3, :3]
+    dimensions = np.array(mesh.dimensions)
+    points = mesh.points.reshape(*dimensions[::-1], 3)
+    frame = np.zeros((3, 3))
+    for axis in np.flatnonzero(dimensions > 1):
+        frame[:, axis] = np.diff(points, axis=2 - axis).reshape(-1, 3).mean(axis=0)
+    return frame
+
+
+def _mirror_structured(mesh: ImageData | StructuredGrid, matrix: NDArray[np.float64]) -> None:
+    """Reorder a reflected image or structured grid in place to keep its cells' orientation."""
+    dimensions = np.array(mesh.dimensions)
+    choice = _mirror_choice(_structured_frame(mesh), dimensions > 1, matrix)
+    axes, flips = _MIRROR_AXES[choice], _MIRROR_FLIPS[choice]
+    if isinstance(mesh, pv.ImageData):
+        # Map each new index onto the old one, which leaves the origin in place
+        index_map = np.eye(4)
+        index_map[:3, :3] = 0
+        index_map[axes, range(3)] = np.where(flips, -1, 1)
+        index_to_physical = mesh.index_to_physical_matrix @ index_map
+        mesh.extent = _reorder_extent(dimensions, mesh.offset, axes=axes, flips=flips)
+        mesh.index_to_physical_matrix = index_to_physical
+    else:
+        points = _reorder_block(mesh.points, dimensions, axes=axes, flips=flips)
+        mesh.extent = _reorder_extent(dimensions, mesh.offset, axes=axes, flips=flips)
+        mesh.points = points
+    _reorder_structured_arrays(mesh, dimensions, axes=axes, flips=flips)
+
+
+def _place_corners(local: NDArray[np.int_], axes: VectorLikeInt) -> NDArray[np.int_]:
+    """Return a cell's local corner indices along the given index axes of a block."""
+    corners = np.zeros((len(local), 3), dtype=int)
+    corners[:, axes] = local
+    return corners
+
+
+def _block_cell_axes(frames: NDArray[np.float64], n_axes: int) -> NDArray[np.intp]:
+    """Return the index axes that a flat cell's axes take in the axis-aligned grid it fits."""
+    # A grid's flat axis is the one its cells are normal to, or its only axis for a line
+    if n_axes == 1:
+        return np.argmax(np.round(np.abs(frames[..., 0]), 8), axis=-1)
+    normals = np.cross(frames[..., 0], frames[..., 1])
+    return np.argmax(np.round(np.abs(normals), 8), axis=-1)
+
+
+def _mirror_block_cells(
+    mesh: UnstructuredGrid, original: UnstructuredGrid, matrix: NDArray[np.float64]
+) -> None:
+    """Reorder the points of reflected cells that form a block, like a reflected grid's cells."""
+    connectivity = _vtk.vtk_to_numpy(mesh.GetCells().GetConnectivityArray())
+    inverse: NDArray[np.float64] = np.linalg.inv(matrix[:3, :3])
+    for cell_type, block_corners in _BLOCK_CORNERS.items():
+        ids = np.flatnonzero(mesh.celltypes == cell_type)
+        if ids.size == 0:
+            continue
+        local: NDArray[np.int_] = np.array(block_corners)
+        n_corners, n_axes = local.shape
+        rows = mesh.cell_offsets[ids, np.newaxis] + np.arange(n_corners)
+        cells = original.cell_connectivity[
+            original.cell_offsets[ids, np.newaxis] + np.arange(n_corners)
+        ]
+        points = mesh.points[cells]
+        if n_axes == 3:
+            placements = np.zeros(len(ids), dtype=int)
+        else:
+            # Flat cells take the index axes of the grid they would come from
+            frames = inverse @ _block_cell_frames(points, _place_corners(local, range(n_axes)))
+            placements = _block_cell_axes(frames, n_axes)
+        for placement in np.unique(placements):
+            axes = {
+                1: [placement],
+                2: [axis for axis in range(3) if axis != placement],
+                3: [0, 1, 2],
+            }[n_axes]
+            corners = _place_corners(local, axes)
+            subset = placements == placement
+            choice = _mirror_choice(
+                _block_cell_frames(points[subset], corners), corners.any(axis=0), matrix
+            )
+            orders = _block_corner_orders(corners)[choice]
+            connectivity[rows[subset]] = np.take_along_axis(cells[subset], orders, axis=1)
+    mesh.GetCells().GetConnectivityArray().Modified()
+
+
+def _mirror_cells(mesh: DataSet, matrix: NDArray[np.float64]) -> DataSet:
     """Return a reflected mesh with its cells reordered so they keep their orientation."""
     if isinstance(mesh, pv.UnstructuredGrid):
-        # Any reflection reverses a cell the same way, so take the reordered cells of one
-        structure = pv.UnstructuredGrid()
-        structure.copy_structure(mesh)
+        # Take the cells vtkReflectionFilter reorders, then reorder the block cells like a grid
+        original = pv.UnstructuredGrid()
+        original.copy_structure(mesh)
         alg = _vtk.vtkReflectionFilter()
-        alg.SetInputData(structure)
+        alg.SetInputData(original)
         alg.SetCopyInput(False)
         _update_alg(alg)
         points = mesh.GetPoints()
         mesh.copy_structure(_get_output(alg, output_type=pv.UnstructuredGrid))
         mesh.SetPoints(points)
+        _mirror_block_cells(mesh, original, matrix)
     elif isinstance(mesh, pv.PolyData):
         mesh = mesh._reverse_sense(
             reverse_cells=True, reverse_normals=False, inplace=False, progress_bar=False
         )
     elif isinstance(mesh, pv.ExplicitStructuredGrid):
-        # Reverse the cells along i, and swap each hexahedron's points along i to match
-        cell_ids = _flipped_ids(np.array(mesh.dimensions) - 1, axis=0)
+        corners = np.array(_BLOCK_CORNERS[CellType.HEXAHEDRON])
         connectivity = mesh.GetCells().GetConnectivityArray()
         hexahedra = _vtk.vtk_to_numpy(connectivity).reshape(-1, 8)
-        hexahedra = hexahedra[cell_ids][:, [1, 0, 3, 2, 5, 4, 7, 6]]
+        frame = _block_cell_frames(mesh.points[hexahedra], corners).mean(axis=0)
+        choice = _mirror_choice(frame, np.ones(3, dtype=bool), matrix)
+        axes, flips = _MIRROR_AXES[choice], _MIRROR_FLIPS[choice]
+        cell_dimensions = np.array(mesh.dimensions) - 1
+        cell_ids = _reorder_block(np.arange(mesh.n_cells), cell_dimensions, axes=axes, flips=flips)
+        hexahedra = hexahedra[cell_ids][:, _block_corner_orders(corners)[choice]]
+        # The extent property keeps the dimensions, which the new cells change
+        mesh.SetExtent(*_reorder_extent(mesh.dimensions, mesh.offset, axes=axes, flips=flips))
         mesh.SetCells(pv.CellArray.from_regular_cells(hexahedra))
-        _permute_arrays(mesh.cell_data, cell_ids)
+        for name in mesh.cell_data.keys():
+            mesh.cell_data[name] = mesh.cell_data[name][cell_ids]
         if 'ConnectivityFlags' in mesh.cell_data:
             mesh.compute_connectivity(inplace=True)
-    elif isinstance(mesh, pv.StructuredGrid) and mesh.dimensionality > 1:
-        # A structured grid's cells follow its point order, so reverse the points
-        dimensions = np.array(mesh.dimensions)
-        axis = int(np.argmax(dimensions > 1))
-        mesh.points = mesh.points[_flipped_ids(dimensions, axis=axis)]
-        _flip_structured_arrays(mesh, axis=axis)
+    elif isinstance(mesh, pv.StructuredGrid):
+        _mirror_structured(mesh, matrix)
     return mesh
-
-
-def _mirror_image(image: ImageData) -> None:
-    """Reverse a reflected image along one axis in place so its cells keep their orientation."""
-    dimensions = np.array(image.dimensions)
-    if image.dimensionality < 2:
-        return
-    axis = int(np.argmax(dimensions > 1))
-    flip = np.eye(4)
-    flip[axis, axis] = -1
-    flip[axis, 3] = 2 * image.offset[axis] + dimensions[axis] - 1
-    image.index_to_physical_matrix = image.index_to_physical_matrix @ flip
-    _flip_structured_arrays(image, axis=axis)
-
-
-def _flipped_ids(dimensions: NDArray[np.integer], *, axis: int) -> NDArray[np.intp]:
-    """Return the ids of a structured block reversed along one axis."""
-    ids = np.arange(np.prod(dimensions)).reshape(dimensions[::-1])
-    return np.flip(ids, axis=2 - axis).ravel()
-
-
-def _flip_structured_arrays(mesh: ImageData | StructuredGrid, *, axis: int) -> None:
-    """Reverse the point and cell arrays of a structured mesh along one axis in place."""
-    dimensions = np.array(mesh.dimensions)
-    _permute_arrays(mesh.point_data, _flipped_ids(dimensions, axis=axis))
-    _permute_arrays(mesh.cell_data, _flipped_ids(np.maximum(dimensions - 1, 1), axis=axis))
-
-
-def _permute_arrays(attributes: DataSetAttributes, ids: NDArray[np.intp]) -> None:
-    """Reorder every array of point or cell data in place."""
-    for name in attributes.keys():
-        attributes[name] = attributes[name][ids]
 
 
 def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
@@ -281,45 +486,6 @@ def _transform_rectilinear_axes(
         array[::-1] if factor < 0 else array
         for array, factor in zip(transformed, scale, strict=True)
     )
-
-
-def _transform_rectilinear_offset(
-    offset: tuple[int, int, int],
-    dimensions: tuple[int, int, int],
-    components: _RectilinearComponents,
-) -> list[int]:
-    """Return a grid's offset permuted and reflected with its axes."""
-    _, scale, axes = components
-    # A reversed axis mirrors its extent about index zero
-    return [
-        offset[axis] if factor > 0 else -(offset[axis] + dimensions[axis] - 1)
-        for axis, factor in zip(axes, scale, strict=True)
-    ]
-
-
-def _permute_rectilinear_arrays(
-    output: RectilinearGrid,
-    dimensions: tuple[int, int, int],
-    components: _RectilinearComponents,
-) -> None:
-    """Reorder a grid's arrays to match the permutation and reversal of its axes."""
-    _, scale, axes = components
-    reversed_axes = np.flatnonzero(scale < 0)
-    if np.array_equal(axes, [0, 1, 2]) and reversed_axes.size == 0:
-        return
-
-    # Arrays are ordered with the first axis varying fastest, so the array's axes are reversed
-    order = (*(2 - axes[::-1]), 3)
-    flip = tuple(int(axis) for axis in 2 - reversed_axes)
-    point_dimensions = np.array(dimensions)
-    cell_dimensions = np.maximum(point_dimensions - 1, 1)
-    for attributes, dims in (
-        (output.point_data, point_dimensions),
-        (output.cell_data, cell_dimensions),
-    ):
-        for name, array in attributes.items():
-            permuted = np.flip(array.reshape(*dims[::-1], -1).transpose(order), axis=flip)
-            attributes[name] = permuted.reshape(array.shape)
 
 
 class _CellStatusTuple(NamedTuple):
@@ -2397,7 +2563,7 @@ class DataObjectFilters:
                 _update_alg(alg, progress_bar=progress_bar, message='Transforming')
                 vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
                 if reflects and not isinstance(output, pv.Grid):
-                    vtk_filter_output = _mirror_cells(vtk_filter_output)
+                    vtk_filter_output = _mirror_cells(vtk_filter_output, t.matrix)
             else:
                 vtk_filter_output = self
 
@@ -2407,21 +2573,22 @@ class DataObjectFilters:
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 if reflects:
-                    _mirror_image(output)
+                    _mirror_structured(output, t.matrix)
             elif (
                 isinstance(output, pv.RectilinearGrid)
                 and isinstance(self, pv.RectilinearGrid)
                 and rectilinear_components is not None
             ):
-                components = rectilinear_components
+                _, scale, axes = rectilinear_components
+                flips = scale < 0
                 # Captured before the axes are permuted, which is in place when inplace=True
                 dimensions = self.dimensions
                 offset = self.offset
-                _transform_rectilinear_axes(output, self, components)
-                output.offset = _transform_rectilinear_offset(offset, dimensions, components)
+                _transform_rectilinear_axes(output, self, rectilinear_components)
+                output.extent = _reorder_extent(dimensions, offset, axes=axes, flips=flips)
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
-                _permute_rectilinear_arrays(output, dimensions, components)
+                _reorder_structured_arrays(output, dimensions, axes=axes, flips=flips)
             else:
                 # A shallow copy leaves the output sharing everything but the points with
                 # the filter's own output, which is only safe when transforming in place

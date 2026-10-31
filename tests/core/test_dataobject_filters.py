@@ -3079,6 +3079,11 @@ def _structured_grid():
     return _image().cast_to_structured_grid()
 
 
+def _explicit_structured_grid():
+    """Return an explicit structured grid with cell connectivity flags."""
+    return examples.load_explicit_structured().compute_connectivity()
+
+
 def _sphere():
     """Return a sphere without the normals a reflection rounds."""
     sphere = pv.Sphere()
@@ -3089,19 +3094,29 @@ def _sphere():
 _REFLECTED_MESHES = [
     examples.load_hexbeam,
     examples.load_tetbeam,
-    examples.load_explicit_structured,
+    _explicit_structured_grid,
     _structured_grid,
     _image,
     _sphere,
 ]
 
 
+@pytest.mark.parametrize('normal', [(1, 0, 0), (1, 1, 0)])
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize('load', _REFLECTED_MESHES)
-def test_reflect_keeps_cells_valid(load, inplace):
-    reflected = load().reflect((1, 0, 0), inplace=inplace)
+def test_reflect_keeps_cells_valid(load, inplace, normal):
+    reflected = load().reflect(normal, inplace=inplace)
     reflected.validate_mesh(action='error')
-    assert reflected.reflect((1, 0, 0)) == load()
+
+    # Reflecting again restores the mesh up to rounding
+    restored, original = reflected.reflect(normal), load()
+    assert np.allclose(restored.points, original.points)
+    assert np.array_equal(
+        restored.cast_to_unstructured_grid().cell_connectivity,
+        original.cast_to_unstructured_grid().cell_connectivity,
+    )
+    for name in original.array_names:
+        assert np.array_equal(restored[name], original[name])
 
 
 def _n_outward_faces(mesh):
@@ -3114,6 +3129,52 @@ def _n_outward_faces(mesh):
 @pytest.mark.parametrize('load', _REFLECTED_MESHES)
 def test_reflect_keeps_surface_outward(load):
     assert _n_outward_faces(load().reflect((1, 0, 0))) == _n_outward_faces(load())
+
+
+_CASTS = {
+    'rectilinear': lambda mesh: mesh.cast_to_rectilinear_grid(),
+    'structured': lambda mesh: mesh.cast_to_structured_grid(),
+    'unstructured': lambda mesh: mesh.cast_to_unstructured_grid(),
+}
+
+
+def _canonical_cells(mesh):
+    """Return a mesh's cells and arrays independent of how its points and cells are numbered."""
+    points = [tuple(point) for point in np.round(mesh.points, 6)]
+    cells = sorted(
+        (int(cell.type), tuple(points[i] for i in cell.point_ids), int(cell_id))
+        for cell, cell_id in zip(mesh.cell, mesh.cell_data['ids'], strict=True)
+    )
+    return cells, sorted(zip(points, mesh.point_data['ids'].tolist(), strict=True))
+
+
+@pytest.mark.parametrize(
+    ('source', 'cast', 'normal'),
+    [
+        (source, cast, normal)
+        for source, cast in itertools.combinations(['image', *_CASTS], 2)
+        for normal in [(1, 0, 0), (0, 0, 1), (1, 1, 0), (1, 2, 3)]
+        # A rectilinear grid only takes axis-aligned transformations
+        if 'rectilinear' not in (source, cast) or normal != (1, 2, 3)
+    ],
+)
+@pytest.mark.parametrize('dimensions', [(2, 3, 4), (2, 3, 1), (2, 1, 4), (1, 3, 1), (1, 1, 1)])
+def test_reflect_commutes_with_cast(source, cast, normal, dimensions):
+    image = pv.ImageData(dimensions=dimensions, spacing=(1, 2, 3), origin=(1, 2, 3))
+    image.point_data['ids'] = np.arange(image.n_points)
+    image.cell_data['ids'] = np.arange(image.n_cells)
+    mesh = image if source == 'image' else _CASTS[source](image)
+
+    before = _CASTS[cast](mesh.reflect(normal, point=(0.5, 1, 2)))
+    after = _CASTS[cast](mesh).reflect(normal, point=(0.5, 1, 2))
+    if cast == 'unstructured':
+        assert _canonical_cells(before) == _canonical_cells(after)
+    else:
+        assert before.dimensions == after.dimensions
+        assert before.offset == after.offset
+        assert np.allclose(before.points, after.points)
+        assert np.array_equal(before.point_data['ids'], after.point_data['ids'])
+        assert np.array_equal(before.cell_data['ids'], after.cell_data['ids'])
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
