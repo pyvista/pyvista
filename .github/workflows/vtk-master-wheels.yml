@@ -9,9 +9,11 @@ on:
     - cron: "0 7 * * *"
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Adding any other label starts a run that skips, so it gets its own group and cannot cancel a real run.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'vtk-master-testing' && '-other-label' || '' }}
   # A pushed-over pull request run is cancelled; nightly and manual runs queue instead.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -26,10 +28,13 @@ jobs:
     outputs:
       run: ${{ steps.check.outputs.run }}
     steps:
-      # For PRs, only run this job if the 'vtk-master-testing' label is applied
+      # For PRs, run when the 'vtk-master-testing' label is applied, and right away when it is added
       - id: check
         env:
-          RUN: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}
+          RUN: >-
+            ${{ github.event_name != 'pull_request' ||
+            (contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') &&
+            (github.event.action != 'labeled' || github.event.label.name == 'vtk-master-testing')) }}
         run: echo "run=$RUN" >> "$GITHUB_OUTPUT"
 
   # Seconds, and gates the hours-long build: a broken report would otherwise only show

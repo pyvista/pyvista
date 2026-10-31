@@ -1096,8 +1096,9 @@ The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and ma
 
 .. note::
 
-    The PR either needs a new commit, for example updating the branch from ``main``, or to be
-    closed/re-opened to rerun the CI with the label applied.
+    Adding the ``vtk-master-testing`` label starts its job right away. The ``vtk-dev-testing`` label needs a new
+    commit, for example updating the branch from ``main``, or the PR to be closed/re-opened to rerun the CI with the
+    label applied.
 
 The same build is available locally with `pyvista-build <https://pyvista.github.io/pyvista-build/>`_:
 ``pyvista-build vtk --ref master`` clones VTK, configures it as CI does, and writes a wheel. Run it again after

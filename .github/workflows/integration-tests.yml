@@ -3,6 +3,7 @@ name: Integration Tests
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
@@ -13,7 +14,8 @@ on: # zizmor: ignore[cache-poisoning]
       - "maint/integration*"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Adding any other label starts a run that skips, so it gets its own group and cannot cancel a real run.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'integration-testing' && '-other-label' || '' }}
   # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
   # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
   cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
@@ -38,10 +40,11 @@ permissions:
 
 jobs:
   Integration:
-    # For PRs, only run when the 'integration-testing' label is applied
+    # For PRs, run when the 'integration-testing' label is applied, and right away when it is added
     if: >-
       github.event_name != 'pull_request' ||
-      contains(github.event.pull_request.labels.*.name, 'integration-testing')
+      (contains(github.event.pull_request.labels.*.name, 'integration-testing') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'integration-testing'))
     name: ${{matrix.project}}
     strategy:
       fail-fast: false
