@@ -2394,6 +2394,18 @@ class WidgetComponent(_NoNewAttrMixin):
         pyvista.Actor
             Actor of the mesh.
 
+        Examples
+        --------
+        Slice a mesh interactively with a spline widget.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter()
+        >>> mesh = examples.load_channels()
+        >>> _ = pl.add_mesh(mesh.outline())
+        >>> _ = pl.add_mesh_slice_spline(mesh)
+        >>> pl.show()
+
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         name = kwargs.get('name')
