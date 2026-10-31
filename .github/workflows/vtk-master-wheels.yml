@@ -18,9 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  TOX_COLORED: "yes"
 
 jobs:
   check-should-run:
@@ -224,284 +222,39 @@ jobs:
     with:
       runs-on: "ubuntu-22.04"
 
-  test-linux:
+  Linux:
     needs: [check-should-run, build-vtk, cache-github-hosted]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.14"]
-    runs-on: ${{ matrix.os }}
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Linux
+      os: ubuntu-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: '[{"python": "3.14", "vtk": "local"}]'
 
-    env:
-      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
-      PARALLEL: "-n auto" # Use all available cores on the selected runner
-
-    steps:
-      - name: Checkout PyVista
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-
-      - name: Download VTK wheel artifact
-        id: download-wheel
-        uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
-          path: vtk-wheel
-
-      - name: Skip if wheel build failed
-        if: steps.download-wheel.outcome != 'success'
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-        run: |
-          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
-          exit 1
-
-      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
-      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
-
-      - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
-
-      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
-        with:
-          packages: libosmesa6
-          version: 3.0
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      # Teed to a file for the failure-summary upload below.
-      - name: Core Testing (no GL)
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-core-vtk_local
-        run: tox run -e "$TOX_ENV" 2>&1 | tee core-test.log
-
-      - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() }}
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
-        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
-
-      - name: Upload failure summary
-        if: failure()
-        uses: $/.github/actions/vtk-master-failure-summary
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
-
-  test-macOS:
+  macOS:
     needs: [check-should-run, build-vtk, cache-github-hosted]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest]
-        python-version: ["3.14"]
-    runs-on: ${{ matrix.os }}
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: macOS
+      os: macos-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: '[{"python": "3.14", "vtk": "local"}]'
 
-    env:
-      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
-      PARALLEL: "-n auto" # Use all available cores on the selected runner
-
-    steps:
-      - name: Checkout PyVista
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-
-      - name: Download VTK wheel artifact
-        id: download-wheel
-        uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
-          path: vtk-wheel
-
-      - name: Skip if wheel build failed
-        if: steps.download-wheel.outcome != 'success'
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-        run: |
-          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
-          exit 1
-
-      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
-      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      # Teed to a file for the failure-summary upload below.
-      - name: Core Testing (no GL)
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-core-vtk_local
-        run: tox run -e "$TOX_ENV" 2>&1 | tee core-test.log
-
-      - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() }}
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
-        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
-
-      - name: Upload failure summary
-        if: failure()
-        uses: $/.github/actions/vtk-master-failure-summary
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
-
-  test-windows:
+  Windows:
     needs: [check-should-run, build-vtk, cache-github-hosted]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest]
-        python-version: ["3.14"]
-    runs-on: ${{ matrix.os }}
-
-    env:
-      VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
-      PARALLEL: "-n auto" # Use all available cores on the selected runner
-
-    steps:
-      - name: Checkout PyVista
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-
-      - name: Download VTK wheel artifact
-        id: download-wheel
-        uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
-          path: vtk-wheel
-
-      - name: Skip if wheel build failed
-        if: steps.download-wheel.outcome != 'success'
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-        run: |
-          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
-          exit 1
-
-      # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
-      # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      # `shell: bash`: this action's Windows default is PowerShell, which `tee` needs to avoid.
-      - name: Core Testing (no GL)
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: 12
-          max_attempts: 3
-          retry_on: timeout
-          shell: bash
-          command: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
-
-      - name: Plotting Testing (uses GL)
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        if: ${{ !cancelled() }}
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          retry_on: timeout
-          shell: bash
-          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
-
-      - name: Upload failure summary
-        if: failure()
-        uses: $/.github/actions/vtk-master-failure-summary
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Windows
+      os: windows-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: '[{"python": "3.14", "vtk": "local"}]'
 
   alert-on-failure:
     needs:
-      [
-        check-should-run,
-        build-vtk,
-        cache-github-hosted,
-        test-linux,
-        test-macOS,
-        test-windows,
-      ]
+      [check-should-run, build-vtk, cache-github-hosted, Linux, macOS, Windows]
     if: >-
       failure() &&
       needs.check-should-run.outputs.run == 'true' &&
