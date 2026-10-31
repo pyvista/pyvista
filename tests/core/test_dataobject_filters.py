@@ -3212,7 +3212,7 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
     voxels = source != 'structured' and cast == 'unstructured' and image.dimensionality > 1
     if transform == 'reflect_oblique' and voxels:
         # Voxels and pixels cannot be reflected off the axes
-        with pytest.raises(ValueError, match='to_hexahedra'):
+        with pytest.raises(ValueError, match='generalize_cells'):
             _CAST_TRANSFORMS[transform](cast_mesh)
         return
     after = _CAST_TRANSFORMS[transform](cast_mesh)
@@ -3238,7 +3238,7 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
 def test_reflect_voxels_off_axes_raises():
     grid = pv.ImageData(dimensions=(2, 3, 4)).cast_to_unstructured_grid()
     original = grid.copy()
-    with pytest.raises(ValueError, match='Convert them to HEXAHEDRON or QUAD cells first'):
+    with pytest.raises(ValueError, match='Convert them to HEXAHEDRON and QUAD cells first'):
         grid.reflect((1, 1, 1), inplace=True)
     assert grid == original
 

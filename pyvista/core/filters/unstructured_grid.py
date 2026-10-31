@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.celltype import CellType
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -19,6 +20,13 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
     from pyvista.core.pointset import PolyData
+
+
+# The general cell of each axis-aligned cell, and its corners in the general cell's order
+_GENERAL_CELLS = {
+    CellType.VOXEL: (CellType.HEXAHEDRON, [0, 1, 3, 2, 4, 5, 7, 6]),
+    CellType.PIXEL: (CellType.QUAD, [0, 1, 3, 2]),
+}
 
 
 @abstract_class
@@ -166,6 +174,79 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetAveragePointData(average_point_data)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg, output_type=pv.UnstructuredGrid)
+
+    def generalize_cells(  # type: ignore[misc]
+        self: _UnstructuredGridType,
+        *,
+        inplace: bool = False,
+    ) -> _UnstructuredGridType:
+        """Convert voxels to hexahedra and pixels to quads.
+
+        :attr:`~pyvista.CellType.VOXEL` and :attr:`~pyvista.CellType.PIXEL` cells must stay
+        aligned with the axes. Their :attr:`~pyvista.CellType.HEXAHEDRON` and
+        :attr:`~pyvista.CellType.QUAD` counterparts can take any orientation, for example
+        after a rotation or a reflection across a plane that is not normal to an axis. The
+        points and data are unchanged, and other cells are kept as they are.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        Returns
+        -------
+        UnstructuredGrid
+            Mesh with hexahedra and quads in place of voxels and pixels.
+
+        See Also
+        --------
+        pyvista.Grid.to_hexahedra
+        pyvista.Grid.to_quads
+
+        Examples
+        --------
+        Convert the voxels of an image cast to an unstructured grid.
+
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(3, 3, 3)).cast_to_unstructured_grid()
+        >>> grid.distinct_cell_types
+        {<CellType.VOXEL: 11>}
+        >>> grid.generalize_cells().distinct_cell_types
+        {<CellType.HEXAHEDRON: 12>}
+
+        The hexahedra stay valid after a reflection that would turn the voxels away from
+        the axes.
+
+        >>> reflected = grid.generalize_cells().reflect((1, 1, 1))
+        >>> reflected.validate_mesh().is_valid
+        True
+
+        """
+        output = self if inplace else self.copy(deep=False)
+        celltypes = self.celltypes
+        if not np.isin(celltypes, list(_GENERAL_CELLS)).any():
+            return output
+
+        offsets = self.cell_offsets
+        connectivity = self.cell_connectivity.copy()
+        general_types = celltypes.copy()
+        for cell_type, (general_type, order) in _GENERAL_CELLS.items():
+            ids = np.flatnonzero(celltypes == cell_type)
+            rows = offsets[ids, np.newaxis] + np.arange(len(order))
+            connectivity[rows] = connectivity[rows][:, order]
+            general_types[ids] = general_type
+
+        cells = pv.CellArray.from_arrays(offsets, connectivity)
+        vtk_cell_types = _vtk.numpy_to_vtk(general_types, deep=True)
+        if pv.vtk_version_info >= (9, 5):
+            face_locations = self.GetPolyhedronFaceLocations()
+            faces = self.GetPolyhedronFaces()
+            output.SetPolyhedralCells(vtk_cell_types, cells, face_locations, faces)
+        else:
+            output.SetCells(vtk_cell_types, self.GetCellLocationsArray(), cells)
+        return output
 
     def remove_unused_points(  # type: ignore[misc]
         self: _UnstructuredGridType,

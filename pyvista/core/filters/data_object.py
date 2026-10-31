@@ -468,10 +468,8 @@ def _check_axis_aligned_cells(mesh: UnstructuredGrid, matrix: NDArray[np.float64
     if np.isin(mesh.celltypes, axis_aligned_types).any():
         msg = (
             'Cannot reflect VOXEL or PIXEL cells across a plane that is not normal to an axis, '
-            'since these cells must stay aligned with the axes.\nConvert them to HEXAHEDRON or '
-            'QUAD cells first, e.g. with `to_hexahedra`, `to_quads` or '
-            '`cast_to_structured_grid` instead of `cast_to_unstructured_grid` on the image or '
-            'rectilinear grid they come from.'
+            'since these cells must stay aligned with the axes.\nConvert them to HEXAHEDRON and '
+            'QUAD cells first with `generalize_cells`.'
         )
         raise ValueError(msg)
 
