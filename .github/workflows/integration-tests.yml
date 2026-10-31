@@ -60,13 +60,7 @@ jobs:
             timeout: 16 # usually takes ~5
           - project: playwright
             timeout: 6 # usually takes ~2
-          - project: cvista
-            timeout: 80
-            runner: ubuntu-22.04
-          - project: numpy-nightly
-            timeout: 80 # runs the whole suite, like cvista
-            runner: ubuntu-22.04
-    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
@@ -120,8 +114,32 @@ jobs:
           max_attempts: 2
           command: tox run -e integration-${{matrix.project}}
 
+  cache-github-hosted:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (contains(github.event.pull_request.labels.*.name, 'integration-testing') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'integration-testing'))
+    name: Cache pyvista/data
+    uses: $/.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
+
+  # PyVista's own suite against the cvista backend and the nightly numpy and matplotlib wheels.
+  Linux:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Linux
+      os: ubuntu-22.04
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: >-
+        [
+          {"python": "3.13", "vtk": "cvista"},
+          {"python": "3.14", "numpy": "nightly"}
+        ]
+
   alert-on-failure:
-    needs: Integration
+    needs: [Integration, Linux]
     if: >-
       failure() &&
       (github.event_name == 'schedule' ||
@@ -154,7 +172,7 @@ jobs:
             [numpy-nightly]="@user27182"
           )
 
-          # The matrix job names are just the project names (see `name:` above)
+          # Integration job names are the project names; suite jobs read `Linux / 3.13, vtk cvista`
           failed=$(gh run view "$RUN_ID" --json jobs \
             --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
 
@@ -162,6 +180,10 @@ jobs:
           pings=""
           while IFS=$'\t' read -r project url; do
             [ -n "$project" ] || continue
+            case "$project" in
+              "Linux / "*cvista*) project=cvista ;;
+              "Linux / "*nightly*) project=numpy-nightly ;;
+            esac
             who="${maintainers[$project]:-}"
             projects+="- [\`${project}\`](${url})${who:+ — ${who}}"$'\n'
             case " $pings " in
