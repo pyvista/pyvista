@@ -187,11 +187,7 @@ def test_ruled_surface():
 
 def _mixed_strip_mesh():
     """Return a vert, lines out of order, a polyline, two triangles, two polygons and a strip."""
-    xy = [(x, -1) for x in range(6)] + [
-        (4, 0), (3.5, 2), (0.5, 1), (2, 1), (3, 1), (5, 1),
-        (1.5, 2), (2.5, 2.8), (2, 0), (1, 0), (4.2, 0), (5, 0),
-    ]  # fmt: skip
-    points = np.column_stack([xy, np.zeros(len(xy))])
+    points = np.array([[x, y, 0.0] for y in (0, 1, 2) for x in range(6)])
     mesh = pv.PolyData(
         points,
         verts=[1, 11],

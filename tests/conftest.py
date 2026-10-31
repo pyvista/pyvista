@@ -312,7 +312,6 @@ def struct_grid():
         np.arange(-10, 10, 2, dtype=np.float32),
         np.arange(-10, 10, 2, dtype=np.float32),
         np.arange(-10, 10, 2, dtype=np.float32),
-        indexing='ij',
     )
     return pv.StructuredGrid(x, y, z)
 

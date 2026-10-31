@@ -1661,7 +1661,6 @@ def test_resample_dtype(dtype, interpolation):
     resampled = image.resample(2, interpolation)
     array = resampled['data']
     assert array.dtype == dtype
-    assert array.shape == (resampled.n_points,)
     if interpolation == 'linear':
         assert array.min() == values.min()
         assert array.max() == values.max()

@@ -569,9 +569,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Return the array viewed as ``bool`` or ``complex``."""
         name = vtk_arr.GetName()
         association_name = association.name
-        # A filter output inherits the input's names, so the array may no longer hold bytes
-        bitarray_names = dataset._association_bitarray_names[association_name]  # type: ignore[union-attr]
-        if name in bitarray_names and narray.dtype == np.uint8:
+        if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
             return narray.view(np.bool_)  # type: ignore[return-value]
         if name in dataset._association_complex_names[association_name]:  # type: ignore[union-attr]
             if narray.dtype == np.float32:

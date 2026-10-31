@@ -255,26 +255,6 @@ def _permute_arrays(attributes: DataSetAttributes, ids: NDArray[np.intp]) -> Non
         attributes[name] = attributes[name][ids]
 
 
-def _validate_order_one_wedges(
-    mesh: UnstructuredGrid,
-    validated: DataSet,
-    run_cell_validator: Callable[[DataSet], DataSet],
-) -> None:
-    """Validate 6-point higher-order wedges, which vtkCellValidator rejects, as linear wedges."""
-    wedge = np.isin(mesh.celltypes, [CellType.LAGRANGE_WEDGE, CellType.BEZIER_WEDGE])
-    ids = np.flatnonzero(wedge & (np.diff(mesh.cell_offsets) == 6))
-    if ids.size:
-        wedges = mesh.cell_connectivity[mesh.cell_offsets[ids, np.newaxis] + np.arange(6)]
-        if pv.vtk_version_info < (9, 7):
-            # Linear wedges wind their triangles the other way before VTK 9.7
-            wedges = wedges[:, [0, 2, 1, 3, 5, 4]]
-        linear = pv.UnstructuredGrid({CellType.WEDGE: wedges}, mesh.points)
-        # The validator's array is implicit, so writes to it need a copy
-        states = np.array(validated.cell_data['ValidityState'])
-        states[ids] = run_cell_validator(linear).cell_data['ValidityState']
-        validated.cell_data['ValidityState'] = states
-
-
 def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
     """Give an image the structure of another, oriented by a transformation."""
     # vtkTransformFilter returns a StructuredGrid, so the structure is transformed here
@@ -1913,7 +1893,7 @@ class DataObjectFilters:
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
             The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
-            :class:`numpy.finfo`, or of ``float`` for integer points.
+            :class:`numpy.finfo`.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
 
@@ -2056,10 +2036,11 @@ class DataObjectFilters:
 
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
         skip_validator = isinstance(self, pv.Grid) or invalid_references
-
-        def run_cell_validator(mesh: DataSet) -> Any:
+        if skip_validator:
+            output = self.copy(deep=False)
+        else:
             cell_validator = _vtk.vtkCellValidator()
-            cell_validator.SetInputData(mesh)
+            cell_validator.SetInputData(self)
             cell_validator.SetTolerance(tol)
             if pv.vtk_version_info >= (9, 6, 0):
                 # vtkCellValidator stores PlanarityTolerance as static class state, so we must
@@ -2068,14 +2049,7 @@ class DataObjectFilters:
                     planarity_tolerance if planarity_tolerance is not None else 0.1
                 )
             cell_validator.Update()
-            return _get_output(cell_validator, output_type=type(mesh))
-
-        if skip_validator:
-            output = self.copy(deep=False)
-        else:
-            output = run_cell_validator(self)
-            if isinstance(self, pv.UnstructuredGrid):
-                _validate_order_one_wedges(self, output, run_cell_validator)
+            output = _get_output(cell_validator, output_type=type(self))
 
         def post_process(mesh: DataSet) -> None:
             # Make scalars 64-bit, rename, and make them active
@@ -2115,12 +2089,11 @@ class DataObjectFilters:
 
             # A cell's size cannot be computed when its points do not exist
             if not invalid_references:
-                # Use points dtype eps by default, and double eps for integer points
-                points_dtype = mesh.points.dtype
+                # Use points dtype eps by default
                 size_tol: float = (
                     size_tolerance
                     if size_tolerance is not None
-                    else np.finfo(points_dtype if points_dtype.kind == 'f' else float).eps
+                    else np.finfo(mesh.points.dtype).eps
                 )
                 measured = mesh
                 if isinstance(

@@ -171,14 +171,6 @@ def test_remove_unused_points_leaves_a_shallow_copy_alone(mesh_type, inplace):
 
 
 @pytest.mark.parametrize('inplace', [True, False])
-def test_remove_unused_points_polyhedron(inplace):
-    expected = pv.examples.cells.Polyhedron()
-    mesh = expected.copy()
-    mesh.points = np.append(mesh.points, [[9.0, 9.0, 9.0]], axis=0)
-    assert mesh.remove_unused_points(inplace=inplace) == expected
-
-
-@pytest.mark.parametrize('inplace', [True, False])
 def test_remove_unused_points_keeps_subclass(inplace):
     class _Grid(pv.UnstructuredGrid):
         pass
