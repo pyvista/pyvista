@@ -13,6 +13,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
+from pyvista.core.utilities._reflection import _replace_cells
 from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 
@@ -229,7 +230,7 @@ class UnstructuredGridFilters(DataSetFilters):
         True
 
         """
-        output = self if inplace else self.copy(deep=False)
+        output = self if inplace else self.copy()
         celltypes = self.celltypes
         if not np.isin(celltypes, list(_GENERAL_CELLS)).any():
             return output
@@ -243,14 +244,7 @@ class UnstructuredGridFilters(DataSetFilters):
             connectivity[rows] = connectivity[rows][:, order]
             general_types[ids] = general_type
 
-        cells = pv.CellArray.from_arrays(offsets, connectivity)
-        vtk_cell_types = _vtk.numpy_to_vtk(general_types, deep=True)
-        if pv.vtk_version_info >= (9, 5):
-            face_locations = self.GetPolyhedronFaceLocations()
-            faces = self.GetPolyhedronFaces()
-            output.SetPolyhedralCells(vtk_cell_types, cells, face_locations, faces)
-        else:
-            output.SetCells(vtk_cell_types, self.GetCellLocationsArray(), cells)
+        _replace_cells(output, pv.CellArray.from_arrays(offsets, connectivity), general_types)
         return output
 
     def remove_unused_points(  # type: ignore[misc]

@@ -337,9 +337,11 @@ def _set_cells(mesh: UnstructuredGrid, source: UnstructuredGrid) -> None:
     mesh.SetPoints(points)
 
 
-def _replace_cells(mesh: UnstructuredGrid, cells: pv.CellArray) -> None:
-    """Give the mesh new cells of the same types, keeping its polyhedron faces."""
-    types = _vtk.numpy_to_vtk(mesh.celltypes, deep=True)
+def _replace_cells(
+    mesh: UnstructuredGrid, cells: pv.CellArray, celltypes: NDArray[np.uint8] | None = None
+) -> None:
+    """Give the mesh new cells, of the same types by default, keeping its polyhedron faces."""
+    types = _vtk.numpy_to_vtk(mesh.celltypes if celltypes is None else celltypes, deep=True)
     if _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS:
         faces = (mesh.GetPolyhedronFaceLocations(), mesh.GetPolyhedronFaces())
         mesh.SetPolyhedralCells(types, cells, *faces)

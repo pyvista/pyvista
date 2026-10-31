@@ -199,10 +199,13 @@ def test_generalize_cells_matches_grid_cast(dimensions, to_general):
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_generalize_cells_leaves_other_cells_alone(inplace):
-    cells = [examples.cells.Voxel(), examples.cells.Tetrahedron(), examples.cells.Pixel()]
+    cells = [
+        examples.cells.Voxel(),
+        examples.cells.Polyhedron(),
+        examples.cells.Tetrahedron(),
+        examples.cells.Pixel(),
+    ]
     grid = pv.merge(cells, merge_points=False)
-    if pv.vtk_version_info >= (9, 5):
-        grid = pv.merge([grid, examples.cells.Polyhedron()], merge_points=False)
     sibling = grid.copy(deep=False)
     before = grid.copy()
 
@@ -218,8 +221,14 @@ def test_generalize_cells_leaves_other_cells_alone(inplace):
     for cell_id in np.flatnonzero(~np.isin(before.celltypes, list(general_types))):
         assert general.get_cell(cell_id) == before.get_cell(cell_id)
     assert np.array_equal(general.points, before.points)
+    assert set(general.validate_mesh().invalid_fields) <= set(
+        before.validate_mesh().invalid_fields
+    )
     assert sibling == before
     if not inplace:
+        assert grid == before
+        # The output does not share its points with the input
+        general.points += 1
         assert grid == before
 
 

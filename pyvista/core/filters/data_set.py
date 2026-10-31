@@ -9218,7 +9218,9 @@ class DataSetFilters(DataObjectFilters):
         rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
-        cell_type: Literal['voxel', 'hex', 'hexahedron'] | CellType = 'voxel',
+        cell_type: Literal[
+            'voxel', 'hex', 'hexahedron', CellType.VOXEL, CellType.HEXAHEDRON
+        ] = 'voxel',
         progress_bar: bool = False,
     ) -> UnstructuredGrid:
         """Voxelize mesh to UnstructuredGrid.
