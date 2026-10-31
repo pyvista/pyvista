@@ -6,6 +6,7 @@ import atexit
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
 from pathlib import Path
+import re
 import shutil
 import tempfile
 from typing import TYPE_CHECKING
@@ -34,6 +35,7 @@ from pyvista.core.utilities.reader import BaseReader
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
 
 
@@ -42,6 +44,13 @@ class ReaderHandler(Protocol):
 
     def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
         """Read ``path`` and return the resulting dataset."""
+
+
+class SchemeHandler(Protocol):
+    """Callable that reads ``uri`` and returns a dataset or :class:`pyvista.MultiBlock`."""
+
+    def __call__(self, uri: str, /, **kwargs: Any) -> DataSet | MultiBlock:
+        """Read ``uri`` and return the resulting dataset."""
 
 
 # A bare callable, or a BaseReader subclass.
@@ -58,6 +67,11 @@ READER_GROUP = 'pyvista.readers'
 # Declaring the intent in metadata is what separates a deliberate replacement
 # from an accidental one, so this group is silent and the other is an error.
 READER_OVERRIDE_GROUP = 'pyvista.readers.override'
+
+SCHEME_GROUP = 'pyvista.schemes'
+
+# RFC 3986 scheme grammar, lowercased.
+_SCHEME_PATTERN = re.compile(r'[a-z][a-z0-9+.-]*')
 
 
 class ReaderRegistration(NamedTuple):
@@ -112,6 +126,9 @@ class _RegistryState(TypedDict):
     sources: dict[str, str]
     overrides: set[str]
     pending: dict[str, list[EntryPoint]]
+    schemes: dict[str, SchemeHandler]
+    scheme_sources: dict[str, str]
+    pending_schemes: dict[str, list[EntryPoint]]
     entry_points_loaded: bool
 
 
@@ -151,6 +168,11 @@ _override_ext_readers: set[str] = set()
 # ``pv.read``/``pv.save`` calls for built-in formats free of third-party
 # plugin import cost.
 _pending_ext_readers: dict[str, list[EntryPoint]] = {}
+# Keyed by lowercase scheme without ``://``. Pending entries are imported only
+# when a URI with that scheme is read.
+_custom_scheme_readers: dict[str, SchemeHandler] = {}
+_custom_scheme_sources: dict[str, str] = {}
+_pending_scheme_readers: dict[str, list[EntryPoint]] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 _temp_dirs: list[str] = []
@@ -177,6 +199,9 @@ def _save_registry_state() -> _RegistryState:
         'sources': _custom_ext_reader_sources.copy(),
         'overrides': _override_ext_readers.copy(),
         'pending': {k: list(v) for k, v in _pending_ext_readers.items()},
+        'schemes': _custom_scheme_readers.copy(),
+        'scheme_sources': _custom_scheme_sources.copy(),
+        'pending_schemes': {k: list(v) for k, v in _pending_scheme_readers.items()},
         'entry_points_loaded': _entry_points_loaded,
     }
 
@@ -194,6 +219,12 @@ def _restore_registry_state(state: _RegistryState) -> None:
     _override_ext_readers.update(state['overrides'])
     _pending_ext_readers.clear()
     _pending_ext_readers.update({k: list(v) for k, v in state['pending'].items()})
+    _custom_scheme_readers.clear()
+    _custom_scheme_readers.update(state['schemes'])
+    _custom_scheme_sources.clear()
+    _custom_scheme_sources.update(state['scheme_sources'])
+    _pending_scheme_readers.clear()
+    _pending_scheme_readers.update({k: list(v) for k, v in state['pending_schemes'].items()})
     _entry_points_loaded = state['entry_points_loaded']
 
 
@@ -456,6 +487,163 @@ def _register(
     _custom_ext_reader_sources[key] = source if source is not None else handler_source(handler)
 
 
+_T_Scheme = TypeVar('_T_Scheme', bound=SchemeHandler)
+
+
+# fmt: off
+# ruff: disable[E501]
+@overload
+def register_scheme(scheme: str, handler: None = None, *, override: bool = False) -> Callable[[_T_Scheme], _T_Scheme]: ...
+@overload
+def register_scheme(scheme: str, handler: SchemeHandler, *, override: bool = False) -> None: ...
+# ruff: enable[E501]
+# fmt: on
+
+
+def register_scheme(
+    scheme: str,
+    handler: SchemeHandler | None = None,
+    *,
+    override: bool = False,
+) -> Callable[[_T_Scheme], _T_Scheme] | None:
+    """Register a reader for every URI with a given scheme.
+
+    :func:`pyvista.read` hands a URI such as ``'myscheme://bucket/mesh'`` to
+    this handler before consulting its extension or downloading it.
+    :func:`pyvista.get_reader` raises :class:`ValueError` for such a URI.
+    Can be used as a plain call or as a decorator.
+
+    .. versionadded:: 0.50
+
+    Parameters
+    ----------
+    scheme : str
+        URI scheme, case-insensitive. ``'myscheme'``, ``'myscheme:'`` and
+        ``'myscheme://'`` all name the same scheme.
+
+    handler : callable, optional
+        Called as ``handler(uri, force_ext=..., file_format=...,
+        progress_bar=..., validate=..., **kwargs)`` with the values of
+        that :func:`pyvista.read` call, and returns a
+        :class:`pyvista.DataSet` or :class:`pyvista.MultiBlock`. When
+        omitted the function acts as a decorator and returns the
+        decorated callable unchanged.
+
+    override : bool, default: False
+        If ``True``, replace a handler already registered for ``scheme``.
+
+    Returns
+    -------
+    callable or None
+        When used as a decorator (``handler`` omitted), returns the
+        decorated callable. Otherwise returns ``None``.
+
+    Raises
+    ------
+    ValueError
+        If ``scheme`` is not a valid URI scheme, or if a handler is
+        already registered for it and ``override`` is ``False``.
+
+    See Also
+    --------
+    pyvista.register_reader
+        Register a reader for a file extension.
+    pyvista.registered_schemes
+        Introspect every registered scheme handler.
+
+    Examples
+    --------
+    Register a handler for ``myscheme://`` URIs.
+
+    >>> import pyvista as pv
+    >>> def read_myscheme(uri, **kwargs):
+    ...     return pv.Sphere()
+    >>> pv.register_scheme('myscheme', read_myscheme)  # doctest: +SKIP
+    >>> pv.read('myscheme://bucket/mesh')  # doctest: +SKIP
+
+    Use as a decorator.
+
+    >>> @pv.register_scheme('myotherscheme')  # doctest: +SKIP
+    ... def read_myotherscheme(uri, **kwargs): ...
+
+    """
+    if handler is None:
+
+        def _decorator(obj: _T_Scheme) -> _T_Scheme:
+            _register_scheme(scheme, obj, override=override)
+            return obj
+
+        return _decorator
+
+    _register_scheme(scheme, handler, override=override)
+    return None
+
+
+def _normalize_scheme(scheme: str) -> str:
+    """Return ``scheme`` lowercased, without a trailing ``:`` or ``://``."""
+    key = scheme.lower()
+    key = key.removesuffix('://') if key.endswith('://') else key.removesuffix(':')
+    if not _SCHEME_PATTERN.fullmatch(key):
+        msg = (
+            f'Invalid URI scheme {scheme!r}. A scheme is a letter followed by letters, '
+            f'digits, "+", "-" or ".", given as "name", "name:" or "name://".'
+        )
+        raise ValueError(msg)
+    return key
+
+
+def _register_scheme(scheme: str, handler: SchemeHandler, *, override: bool) -> None:
+    """Register ``handler`` for ``scheme`` in the scheme registry."""
+    key = _normalize_scheme(scheme)
+    if not override and key in _custom_scheme_readers:
+        msg = (
+            f'A handler for "{key}://" URIs is already registered from '
+            f'{_custom_scheme_sources[key]}. Use override=True to replace it.'
+        )
+        raise ValueError(msg)
+    # Registering in code takes precedence over an entry point declaring the scheme.
+    _pending_scheme_readers.pop(key, None)
+    _custom_scheme_readers[key] = handler
+    _custom_scheme_sources[key] = handler_source(handler)
+
+
+def _get_scheme_handler(uri: str) -> SchemeHandler | None:
+    """Look up the handler for the scheme of ``uri``, importing its plugin lazily."""
+    scheme = uri.split('://', maxsplit=1)[0].lower()
+    if scheme not in _custom_scheme_readers:
+        _ensure_entry_points()
+        _resolve_pending_scheme(scheme)
+    return _custom_scheme_readers.get(scheme)
+
+
+def _resolve_pending_scheme(scheme: str) -> None:
+    """Import the plugin claiming ``scheme``, if any.
+
+    A plugin that fails to import emits a ``UserWarning`` and is dropped,
+    so the scheme falls through to the ordinary URI path.
+    """
+    eps = _pending_scheme_readers.pop(scheme, None)
+    if not eps:
+        return
+    winner = eps[0]
+    try:
+        # Third-party import machinery can raise anything.
+        handler = winner.load()
+    except Exception as err:  # noqa: BLE001
+        warn_external(
+            f'Failed to load {SCHEME_GROUP} entry point "{winner.value}" for "{scheme}": {err}'
+        )
+        return
+    _custom_scheme_readers[scheme] = handler
+    _custom_scheme_sources[scheme] = winner.value
+    if len(eps) > 1:
+        providers = ', '.join(ep.value for ep in eps)
+        warn_external(
+            f'Multiple {SCHEME_GROUP} entry points registered for '
+            f'"{scheme}": {providers}. Using {winner.value}.'
+        )
+
+
 def _get_ext_handler(ext: str) -> ReaderHandler | None:
     """Look up a custom extension *callable*, importing the plugin lazily.
 
@@ -516,11 +704,11 @@ def _resolve_ext(ext: str) -> None:
 def _ensure_entry_points() -> None:
     """Scan the reader entry-point metadata once.
 
-    Reads both :data:`READER_GROUP` and :data:`READER_OVERRIDE_GROUP`,
+    Reads :data:`READER_GROUP`, :data:`READER_OVERRIDE_GROUP` and :data:`SCHEME_GROUP`,
     recording which extensions were declared with the intent to replace a
     built-in. Populates :data:`_pending_ext_readers` with every extension
     declared by an installed plugin. The plugin modules themselves are
-    **not** imported here; the cost is two
+    **not** imported here; the cost is three
     ``importlib.metadata.entry_points`` calls. Plugin imports are
     deferred to :func:`_resolve_pending_reader`, which runs only when a
     reader for that specific extension is actually requested.
@@ -551,6 +739,19 @@ def _ensure_entry_points() -> None:
             if is_override:
                 _override_ext_readers.add(key)
             _pending_ext_readers.setdefault(key, []).append(ep)
+
+    for ep in entry_points(group=SCHEME_GROUP):
+        identity = (str(ep.name), str(ep.value))
+        if identity in seen:
+            continue
+        seen.add(identity)
+        try:
+            key = _normalize_scheme(ep.name)
+        except ValueError as err:
+            warn_external(f'Ignoring {SCHEME_GROUP} entry point "{ep.value}": {err}')
+            continue
+        if key not in _custom_scheme_readers:
+            _pending_scheme_readers.setdefault(key, []).append(ep)
 
 
 def _entry_point_package(ep: EntryPoint) -> str:
@@ -715,3 +916,32 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
         )
         for ext, handler, is_class in registered
     )
+
+
+def registered_schemes() -> dict[str, str]:
+    """Return every registered URI scheme handler and where it came from.
+
+    Imports every pending ``pyvista.schemes`` plugin. One that fails to
+    import emits a ``UserWarning`` and is left out.
+
+    .. versionadded:: 0.50
+
+    Returns
+    -------
+    dict[str, str]
+        Maps each lowercase scheme to its source: ``'module.qualname'``
+        for a handler registered in code, or the entry-point value.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> def read_demo(uri, **kwargs): ...
+    >>> pv.register_scheme('demo', read_demo)
+    >>> 'demo' in pv.registered_schemes()
+    True
+
+    """
+    _ensure_entry_points()
+    for scheme in list(_pending_scheme_readers):
+        _resolve_pending_scheme(scheme)
+    return dict(_custom_scheme_sources)

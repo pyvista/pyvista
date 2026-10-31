@@ -257,6 +257,47 @@ URIs.
 .. autoclass:: pyvista.LocalFileRequiredError
 .. autofunction:: pyvista.has_scheme
 
+**URI scheme readers**
+
+A reader can also claim every URI with a given scheme, whatever its
+extension. :func:`pyvista.read` hands such a URI to the scheme's handler
+before it consults any extension reader or tries a download, and returns
+the handler's result. URIs with any other scheme read exactly as above.
+
+.. code-block:: python
+
+    import pyvista as pv
+
+
+    @pv.register_scheme('myscheme')
+    def read_myscheme(uri, /, **kwargs):
+        return fetch_and_convert(uri)
+
+
+    mesh = pv.read('myscheme://bucket/mesh')
+
+The handler is called as ``handler(uri, force_ext=..., file_format=...,
+progress_bar=..., validate=..., **kwargs)``: every argument of that
+:func:`pyvista.read` call except ``cls`` is passed with its value, default
+or not, and ``cls`` is then checked against the returned mesh.
+:func:`pyvista.get_reader` raises :class:`ValueError` for a URI whose scheme
+has a handler.
+
+A scheme may be given as ``'myscheme'``, ``'myscheme:'`` or
+``'myscheme://'``, in any case. Registering a scheme that already has a
+handler raises :class:`ValueError` unless ``override=True``. Packages
+declare scheme handlers in the ``pyvista.schemes`` entry-point group; the
+plugin is imported only when a URI with its scheme is read, and a handler
+registered in code takes precedence over an entry point:
+
+.. code-block:: toml
+
+   [project.entry-points."pyvista.schemes"]
+   myscheme = "my_package:read_myscheme"
+
+.. autofunction:: pyvista.register_scheme
+.. autofunction:: pyvista.registered_schemes
+
 
 Custom Writers
 ~~~~~~~~~~~~~~

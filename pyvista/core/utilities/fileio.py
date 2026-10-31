@@ -564,6 +564,7 @@ def _read_dispatch(  # noqa: PLR0911
     from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _get_scheme_handler  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _missing_reader_message  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
 
@@ -572,6 +573,15 @@ def _read_dispatch(  # noqa: PLR0911
         uri_ext = get_ext(urllib.parse.urlparse(filename).path)
         if uri_ext.lower() in _PICKLE_FILE_EXT:
             _raise_pickle_removed()
+        if (scheme_handler := _get_scheme_handler(filename)) is not None:
+            return scheme_handler(
+                filename,
+                force_ext=force_ext,
+                file_format=file_format,
+                progress_bar=progress_bar,
+                validate=validate,
+                **kwargs,
+            )
         # If a custom reader is registered for this extension, try it
         # with the raw URI first, the reader may handle cloud paths
         # natively (e.g. zarr stores on S3). If it fails, fall back to

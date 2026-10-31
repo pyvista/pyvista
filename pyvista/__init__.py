@@ -47,7 +47,9 @@ from pyvista.core.utilities.reader_registry import LocalFileRequiredError as Loc
 from pyvista.core.utilities.reader_registry import ReaderRegistration as ReaderRegistration
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
 from pyvista.core.utilities.reader_registry import register_reader as register_reader
+from pyvista.core.utilities.reader_registry import register_scheme as register_scheme
 from pyvista.core.utilities.reader_registry import registered_readers as registered_readers
+from pyvista.core.utilities.reader_registry import registered_schemes as registered_schemes
 from pyvista.core.utilities.writer_registry import WriterRegistration as WriterRegistration
 from pyvista.core.utilities.writer_registry import register_writer as register_writer
 from pyvista.core.utilities.writer_registry import registered_writers as registered_writers
