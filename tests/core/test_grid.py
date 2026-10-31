@@ -399,7 +399,8 @@ def test_init_second_polyhedron_invalid_face_stream(mocker: MockerFixture):
     set_cells.assert_not_called()
 
 
-def test_init_polyhedron_missing_face_count_issue_8234(mocker: MockerFixture):
+def test_init_polyhedron_missing_face_count_real_stream(mocker: MockerFixture):
+    # Faces from pyvista/pyvista#8234
     faces = [
         [21, 20, 0, 1, 4],
         [14, 15, 16],

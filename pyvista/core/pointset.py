@@ -2957,16 +2957,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """
         # convert to arrays upfront
         cell_type_array = np.asarray(cell_type)
-        if cell_type_array.ndim == 2 and cell_type_array.shape[1] == 1:
+        if cell_type_array.ndim == 2 and 1 in cell_type_array.shape:
             cell_type_array = cell_type_array.ravel()
-        cell_type_array = _validation.validate_arrayN(
+        cell_type_array = _validation.validate_arrayN_unsigned(
             cell_type_array, dtype_out=np.uint8, name='cell_type'
         )
         point_array = np.asarray(points)
 
         # Convert to vtk arrays
         vtkcells = cells if isinstance(cells, _vtk.vtkCellArray) else CellArray(np.asarray(cells))
-        self._check_polyhedron_face_streams(vtkcells, cell_type_array)
+        self._check_cell_arrays(vtkcells, cell_type_array)
         vtk_cell_types = _vtk.numpy_to_vtk(cell_type_array, deep=deep)
 
         self.SetPoints(vtk_points(point_array, deep=deep, force_float=force_float))
@@ -2974,10 +2974,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self.SetCells(vtk_cell_types, vtkcells)
 
     @staticmethod
-    def _check_polyhedron_face_streams(
-        cells: _vtk.vtkCellArray, cell_types: NDArray[np.uint8]
-    ) -> None:
-        """Raise before VTK parses a malformed polyhedron face stream."""
+    def _check_cell_arrays(cells: _vtk.vtkCellArray, cell_types: NDArray[np.uint8]) -> None:
+        """Raise before VTK sees a cell type count mismatch or a malformed polyhedron."""
         n_cells = cells.GetNumberOfCells()
         if cell_types.size != n_cells:
             msg = (

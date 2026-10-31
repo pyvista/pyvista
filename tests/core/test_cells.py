@@ -1222,36 +1222,16 @@ def test_create_mixed_cells_variable_size():
 def test_invalid_polyhedron_face_streams():
     tetra_faces = [3, 0, 2, 1, 3, 0, 1, 3, 3, 0, 3, 2, 3, 1, 2, 3]
     hex_faces = [
-        4,
-        0,
-        1,
-        2,
-        3,
-        4,
-        4,
-        5,
-        6,
-        7,
-        4,
-        0,
-        1,
-        5,
-        4,
-        4,
-        1,
-        2,
-        6,
-        5,
-        4,
-        2,
-        3,
-        7,
-        6,
-        4,
-        3,
-        0,
-        4,
-        7,
+        value
+        for face in (
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [0, 1, 5, 4],
+            [1, 2, 6, 5],
+            [2, 3, 7, 6],
+            [3, 0, 4, 7],
+        )
+        for value in [4, *face]
     ]
     tetra = [4, *tetra_faces]
     hexa = [6, *hex_faces]

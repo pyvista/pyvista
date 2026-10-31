@@ -1253,7 +1253,7 @@ def _invalid_polyhedron_face_streams(
     """Return a mask over all cells, ``True`` where a polyhedron's face stream is malformed.
 
     A face stream is ``[n_faces, n_points, point_ids..., ...]`` with one record per face
-    and no bytes left over. All polyhedra are walked together, one face per pass.
+    and no values left over. All polyhedra are walked together, one face per pass.
     """
     invalid = np.zeros(cell_types.size, dtype=bool)
     poly = np.flatnonzero(cell_types == CellType.POLYHEDRON)
