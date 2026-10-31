@@ -50,3 +50,11 @@ def test_reflect_oblique(name, benchmark):
     # Reflect once first, so the benchmarks' random order cannot move first-call costs
     mesh.reflect((1, 2, 3))
     assert benchmark(mesh.reflect, (1, 2, 3)).n_cells == mesh.n_cells
+
+
+def test_rotate_voxels_quarter_turn(benchmark):
+    """Rotate voxels a quarter turn, which reorders their corners."""
+    mesh = MESHES['voxels']()
+    # Rotate once first, so the benchmarks' random order cannot move first-call costs
+    mesh.rotate_z(90)
+    assert benchmark(mesh.rotate_z, 90).n_cells == mesh.n_cells

@@ -1082,6 +1082,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def cast_to_rectilinear_grid(self: Self) -> RectilinearGrid:
         """Cast this uniform grid to a rectilinear grid.
 
+        .. versionchanged:: 0.50
+            An axis with a negative direction is reversed so its coordinates ascend, with
+            the offset and arrays reordered to match.
+
         Returns
         -------
         pyvista.RectilinearGrid
