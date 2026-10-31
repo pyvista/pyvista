@@ -11,14 +11,14 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  id-token: none
+  id-token: none # each job grants its own
 
 jobs:
   find-build:
     name: Find the latest docs build
     runs-on: ubuntu-latest
     permissions:
-      actions: read
+      actions: read # to list docs runs and their artifacts
     outputs:
       run-id: ${{ steps.find.outputs.run-id }}
       sha: ${{ steps.find.outputs.sha }}
@@ -30,8 +30,10 @@ jobs:
       - name: Find the newest successful run with docs-build-light
         id: find
         run: |
-          runs=$(gh run list --workflow docs.yml --branch main --status success --limit 30 \
-            --json databaseId,headSha --jq '.[] | [.databaseId, .headSha] | @tsv')
+          runs=$(gh api "repos/${GH_REPO}/actions/workflows/docs.yml/runs?branch=main&status=success&per_page=30" \
+            --jq '.workflow_runs[]
+              | select(.event != "pull_request" and .head_repository.full_name == env.GH_REPO)
+              | [.id, .head_sha] | @tsv')
           while IFS=$'\t' read -r id sha; do
             [ -n "$id" ] || continue
             found=$(gh api "repos/${GH_REPO}/actions/runs/${id}/artifacts?name=docs-build-light" \
@@ -68,7 +70,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-          ref: ${{ needs.find-build.outputs.sha }}
 
       - uses: actions/setup-python@v7
         with:
@@ -120,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: write
+      issues: write # to file the failure report
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
