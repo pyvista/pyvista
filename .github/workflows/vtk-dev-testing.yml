@@ -1,0 +1,66 @@
+name: Unit Tests VTK Dev
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+concurrency:
+  # Adding any other label starts a run that skips, so it gets its own group and cannot cancel a real run.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'vtk-dev-testing' && '-other-label' || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  id-token: none
+
+jobs:
+  # For PRs, run when the 'vtk-dev-testing' label is applied, and right away when it is added
+  cache-github-hosted:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'vtk-dev-testing'))
+    name: Cache pyvista/data
+    uses: $/.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
+
+  Linux:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Linux
+      os: ubuntu-22.04
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      coverage: true
+      rows: '[{"python": "3.14", "vtk": "dev"}]'
+
+  macOS:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: macOS
+      os: macos-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: '[{"python": "3.14", "vtk": "dev"}]'
+
+  Windows:
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Windows
+      os: windows-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: '[{"python": "3.14", "vtk": "dev"}]'
+
+  # Pull requests only, so a dispatch on main never leaves the dev flags on a main commit.
+  upload-coverage:
+    name: Upload coverage reports
+    if: github.event_name == 'pull_request'
+    needs: Linux
+    permissions:
+      id-token: write # Codecov OIDC upload
+      contents: read
+    uses: $/.github/workflows/codecov-upload.yml
+    with:
+      flag-suffix: -vtk-dev

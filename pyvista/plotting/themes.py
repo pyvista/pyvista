@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     import cycler
 
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.plotting.plotter import Plotter
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
@@ -1499,6 +1500,9 @@ class _TrameConfig(_ConfigBase):
 
     """
 
+    # Detected from the environment, so never serialized.
+    _TO_DICT_SKIP: ClassVar[frozenset[str]] = frozenset({'jupyter_extension_available'})
+
     __slots__ = [
         '_default_mode',
         '_interactive_ratio',
@@ -1645,7 +1649,11 @@ class _TrameConfig(_ConfigBase):
     @jupyter_extension_enabled.setter
     def jupyter_extension_enabled(self, enabled: bool) -> None:
         if enabled and not self.jupyter_extension_available:
-            msg = 'The trame_jupyter_extension is not available'
+            msg = (
+                'jupyter_extension_enabled requires the trame_jupyter_extension, which was '
+                'not detected. Install it with `pip install trame_jupyter_extension` and '
+                'restart Jupyter.'
+            )
             raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
@@ -1998,7 +2006,7 @@ class Theme(_ConfigBase):
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
-        self._before_close_callback: Callable[[pyvista.Plotter], None] | None = None
+        self._before_close_callback: Callable[[Plotter], None] | None = None
         self._allow_empty_mesh = False
 
         # Grab system flag for anti-aliasing
@@ -2385,7 +2393,7 @@ class Theme(_ConfigBase):
     @camera.setter
     def camera(self, camera: _CameraConfig | dict[str, Any]) -> None:
         if isinstance(camera, dict):
-            self._camera = _CameraConfig.from_dict(camera)
+            self._camera = _CameraConfig._from_dict(camera, strict=True)
         elif isinstance(camera, _CameraConfig):
             self._camera = camera
         else:
@@ -3279,14 +3287,14 @@ class Theme(_ConfigBase):
     @property
     def before_close_callback(
         self,
-    ) -> Callable[[pyvista.Plotter], None] | None:  # numpydoc ignore=RT01
+    ) -> Callable[[Plotter], None] | None:  # numpydoc ignore=RT01
         """Return the default callback function to run before the plotter closes."""
         return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
         self,
-        value: Callable[[pyvista.Plotter], None] | None,
+        value: Callable[[Plotter], None] | None,
     ) -> None:
         self._before_close_callback = value
 

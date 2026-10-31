@@ -36,6 +36,7 @@ from .cell import _get_irregular_cells
 from .cell import _get_offset_array
 from .cell import _get_offsets
 from .cell import _get_regular_cells
+from .cell import _invalid_polyhedron_face_streams
 from .cell import _make_cell_array
 from .celltype import CellType
 from .dataset import DataSet
@@ -74,6 +75,7 @@ from .utilities.writer import UnstructuredGridWriter
 from .utilities.writer import XMLPolyDataWriter
 from .utilities.writer import XMLStructuredGridWriter
 from .utilities.writer import XMLUnstructuredGridWriter
+from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
 
 if TYPE_CHECKING:
     from typing import Any
@@ -263,7 +265,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
 
     Parameters
     ----------
-    var_inp : :vtk:`vtkPointSet`, MatrixLikeFloat, optional
+    var_inp : PointSet, :vtk:`vtkPointSet`, MatrixLikeFloat, optional
         Flexible input type. Can be a :vtk:`vtkPointSet`, in which case
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -308,7 +310,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
 
     def __init__(
         self,
-        var_inp: MatrixLikeFloat | VectorLikeFloat | _vtk.vtkPointSet | None = None,
+        var_inp: PointSet | _vtk.vtkPointSet | MatrixLikeFloat | VectorLikeFloat | None = None,
         *,
         deep: bool = False,
         force_float: bool = True,
@@ -368,7 +370,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         pdata._sync_user_dict()
         return pdata
 
-    def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
+    def cast_to_unstructured_grid(self) -> UnstructuredGrid:
         """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
 
         A deep copy of the points and point data is made.
@@ -438,6 +440,45 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
     def reconstruct_surface(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and reconstruct the surface."""
         return self.cast_to_polydata(deep=False).reconstruct_surface(*args, **kwargs)
+
+    def save(
+        self,
+        filename: Path | str,
+        *,
+        binary: bool = True,
+        texture: NDArray[np.uint8] | str | None = None,
+        compression: _CompressionOptions = 'zlib',
+        **writer_kwargs: Any,
+    ) -> None:  # numpydoc ignore=PR01
+        """Save this point set to file.
+
+        See :meth:`pyvista.DataObject.save` for the parameters.
+
+        .. deprecated:: 0.50
+            Saving to ``.xyz`` is deprecated. Use ``.txt`` for the same
+            plain list of points.
+
+        """
+        file_ext = get_ext(Path(filename).expanduser())
+        if file_ext == '.xyz' and _get_writer_ext_handler(file_ext) is None:
+            warn_external(
+                'Saving a PointSet to `.xyz` is deprecated, since `.xyz` is the PLOT3D '
+                'grid extension. Use `.txt` for the same plain list of points.',
+                PyVistaDeprecationWarning,
+            )
+            if _is_deprecation_due((0, 53)):  # pragma: no cover
+                msg = 'Convert this deprecation warning into an error.'
+                raise RuntimeError(msg)
+            if pv.version_info >= (0, 54):  # pragma: no cover
+                msg = "Remove '.xyz' from the PointSet writers."
+                raise RuntimeError(msg)
+        super().save(
+            filename,
+            binary=binary,
+            texture=texture,
+            compression=compression,
+            **writer_kwargs,
+        )
 
     @property
     def area(self) -> float:  # numpydoc ignore=RT01
@@ -643,7 +684,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     Parameters
     ----------
-    var_inp : :vtk:`vtkPolyData`, str, sequence, optional
+    var_inp : PolyData, :vtk:`vtkPolyData`, str, sequence, optional
         Flexible input type. Can be a :vtk:`vtkPolyData`, in which case
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -844,7 +885,13 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
     def __init__(
         self,
-        var_inp: _vtk.vtkPolyData | str | Path | MatrixLikeFloat | VectorLikeFloat | None = None,
+        var_inp: PolyData
+        | _vtk.vtkPolyData
+        | str
+        | Path
+        | MatrixLikeFloat
+        | VectorLikeFloat
+        | None = None,
         faces: CellArrayLike | None = None,
         *,
         lines: CellArrayLike | None = None,
@@ -2424,7 +2471,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def point_normals(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
         The active point normals are returned if they exist. Otherwise, they
@@ -2458,7 +2505,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         return normals
 
     @property
-    def cell_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def cell_normals(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         The active cell normals are returned if they exist. Otherwise, they
@@ -2492,7 +2539,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         return normals
 
     @property
-    def face_normals(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def face_normals(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
@@ -2910,17 +2957,43 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """
         # convert to arrays upfront
         cell_type_array = np.asarray(cell_type)
+        if cell_type_array.ndim == 2 and 1 in cell_type_array.shape:
+            cell_type_array = cell_type_array.ravel()
+        cell_type_array = _validation.validate_arrayN_unsigned(
+            cell_type_array, dtype_out=np.uint8, name='cell_type'
+        )
         point_array = np.asarray(points)
 
         # Convert to vtk arrays
         vtkcells = cells if isinstance(cells, _vtk.vtkCellArray) else CellArray(np.asarray(cells))
-        if cell_type_array.dtype != np.uint8:
-            cell_type_array = cell_type_array.astype(np.uint8)
+        self._check_cell_arrays(vtkcells, cell_type_array)
         vtk_cell_types = _vtk.numpy_to_vtk(cell_type_array, deep=deep)
 
         self.SetPoints(vtk_points(point_array, deep=deep, force_float=force_float))
 
         self.SetCells(vtk_cell_types, vtkcells)
+
+    @staticmethod
+    def _check_cell_arrays(cells: _vtk.vtkCellArray, cell_types: NDArray[np.uint8]) -> None:
+        """Raise before VTK sees a cell type count mismatch or a malformed polyhedron."""
+        n_cells = cells.GetNumberOfCells()
+        if cell_types.size != n_cells:
+            msg = (
+                f'Number of cell types ({cell_types.size}) must match '
+                f'the number of cells ({n_cells})'
+            )
+            raise ValueError(msg)
+        if n_cells == 0 or cell_types.max() < CellType.POLYHEDRON:
+            return
+        invalid = _invalid_polyhedron_face_streams(
+            _get_offset_array(cells), _get_connectivity_array(cells), cell_types
+        )
+        if invalid.any():
+            msg = (
+                f'Invalid polyhedron face stream for cell {np.flatnonzero(invalid)[0]}. '
+                'Expected [n_faces, n_points, point_ids..., ...] with one record per face.'
+            )
+            raise CellSizeError(msg)
 
     def _check_for_consistency(self) -> None:
         """Check if size of offsets and ``celltypes`` match the number of cells.
@@ -3883,7 +3956,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
         alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
         alg.Update()
-        grid = _get_output(alg)
+        grid = _get_output(alg, output_type=pv.ExplicitStructuredGrid)
         grid.cell_data.remove('ConnectivityFlags')  # unrequired
         return grid
 
@@ -3903,7 +3976,7 @@ class StructuredGrid(
 
     Parameters
     ----------
-    uinput : str, Path, :vtk:`vtkStructuredGrid`, numpy.ndarray, optional
+    uinput : str, Path, StructuredGrid, :vtk:`vtkStructuredGrid`, numpy.ndarray, optional
         Filename, dataset, or array to initialize the structured grid from. If
         a filename is passed, pyvista will attempt to load it as a
         :class:`StructuredGrid`. If passed a :vtk:`vtkStructuredGrid`, it will
@@ -3986,7 +4059,12 @@ class StructuredGrid(
 
     def __init__(
         self,
-        uinput: ArrayLikeFloat | _vtk.vtkStructuredGrid | str | Path | None = None,
+        uinput: StructuredGrid
+        | _vtk.vtkStructuredGrid
+        | ArrayLikeFloat
+        | str
+        | Path
+        | None = None,
         y: ArrayLikeFloat | None = None,
         z: ArrayLikeFloat | None = None,
         *,
@@ -4574,7 +4652,7 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
         alg = _vtk.vtkExplicitStructuredGridToUnstructuredGrid()
         alg.SetInputDataObject(grid)
         alg.Update()
-        ugrid = _get_output(alg)
+        ugrid = _get_output(alg, output_type=pv.UnstructuredGrid)
         ugrid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
@@ -4864,6 +4942,16 @@ class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitSt
         else:
             return self.bounds
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def cell_id(self, coords: Sequence[int] | Sequence[np.integer | np.bool_]) -> int | None: ...
+    @overload
+    def cell_id(self, coords: Sequence[Sequence[int]] | Sequence[Sequence[np.integer | np.bool_]]) -> NDArray[np.intp] | None: ...
+    @overload
+    def cell_id(self, coords: ArrayLikeInt) -> int | NDArray[np.intp] | None: ...
+    # ruff: enable[E501]
+    # fmt: on
     def cell_id(self, coords: ArrayLikeInt) -> int | NDArray[np.intp] | None:
         """Return the cell ID.
 

@@ -8,13 +8,16 @@ import weakref
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from pyvista import LookupTable
 
 
-class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
+class VolumeProperty(
+    _TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumeProperty
+):
     """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume

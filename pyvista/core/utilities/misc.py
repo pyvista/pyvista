@@ -181,6 +181,19 @@ def _wraps(
     return decorate
 
 
+_F = TypeVar('_F', bound='Callable[..., Any]')
+
+
+def _wraps_overloaded(target: Callable[..., Any]) -> Callable[[_F], _F]:
+    """Give an overloaded forwarding method ``target``'s docstring, name and signature."""
+
+    def decorate(method: _F) -> _F:
+        functools.update_wrapper(method, target)
+        return method
+
+    return decorate
+
+
 class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 
@@ -427,7 +440,7 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
     """
     try:
         func(*args)
-    except Exception:  # noqa: BLE001  # pragma: no cover
+    except Exception:  # noqa: BLE001 - reported as a warning  # pragma: no cover
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(

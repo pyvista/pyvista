@@ -188,7 +188,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         Returns
         -------
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             NumPy array of the row.
 
         """
@@ -200,7 +200,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         Returns
         -------
-        int
+        pyvista.DataSetAttributes
             The all row arrays.
 
         """
@@ -353,7 +353,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         return build_repr_html(
             obj_type='Table',
-            mesh_type='ImageData',
+            mesh_type='Table',
             header_badges=[
                 f'{self.n_rows:,} rows',
                 f'{self.n_arrays} arrays',

@@ -459,7 +459,8 @@ todo_include_todos = False
 from sphinx_gallery.sorting import FileNameSortKey
 
 
-def _filter_sphinx_gallery_warnings():
+def _filter_warnings():
+    """Treat every warning except the known-noisy ones as an error."""
     import warnings
 
     # Ignore specific warnings
@@ -480,6 +481,10 @@ def _filter_sphinx_gallery_warnings():
     warnings.simplefilter('error', append=True)
 
 
+# Install the filter in the Sphinx process so forked read workers inherit it.
+_filter_warnings()
+
+
 # Examples whose VTK warnings are noise: VTK 9.7 intermittently logs Jacobi
 # eigenvalue warnings while importing this VRML scene.
 _VTK_OUTPUT_TOLERATED = frozenset({'load_vrml.py'})
@@ -498,7 +503,7 @@ class ResetPyVista:
         """
         if when == 'after':
             self._raise_for_vtk_output(fname)
-        _filter_sphinx_gallery_warnings()
+        _filter_warnings()
         import matplotlib as mpl  # must import before pyvista
 
         # clear all mpl figures, force non-interactive backend, and reset defaults
@@ -551,8 +556,6 @@ reset_pyvista = ResetPyVista()
 
 sphinx_gallery_conf = {
     'abort_on_example_error': True,  # Fail early
-    # convert rst to md for ipynb
-    'pypandoc': True,
     # path to your examples scripts
     'examples_dirs': ['../../examples/'],
     # path where to save gallery generated examples
@@ -571,7 +574,8 @@ sphinx_gallery_conf = {
     'doc_module': 'pyvista',
     # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
     'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
-    'first_notebook_cell': '%matplotlib inline',
+    # sphinx_examples_as_code writes the downloads, so skip sphinx-gallery's notebooks
+    'notebook_extensions': set(),
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
     'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),

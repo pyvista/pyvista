@@ -15,16 +15,30 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-_ActorAndProperty = tuple[_vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None]
-
-
 def an_actor() -> pv.Actor:
     """Return an actor drawing a cube."""
     return pv.Actor(mapper=pv.DataSetMapper(pv.Cube()))
 
 
-assert_types(a_plotter().add_actor(an_actor()), _ActorAndProperty)
-assert_types(a_plotter().add_actor(an_actor(), name='cube', reset_camera=True), _ActorAndProperty)
+# A mapper is wrapped in a new actor
+assert_types(a_plotter().add_actor(pv.DataSetMapper(pv.Cube())), tuple[pv.Actor, pv.Property])
+
+# An actor comes back as given, with its surface property
+assert_types(a_plotter().add_actor(an_actor()), tuple[pv.Actor, _vtk.vtkProperty])
+assert_types(
+    a_plotter().add_actor(an_actor(), name='cube', reset_camera=True),
+    tuple[pv.Actor, _vtk.vtkProperty],
+)
+assert_types(a_plotter().add_actor(_vtk.vtkActor()), tuple[_vtk.vtkActor, _vtk.vtkProperty])
 
 # A volume carries a volume property
-assert_types(a_plotter().add_actor(pv.Volume()), _ActorAndProperty)
+assert_types(a_plotter().add_actor(pv.Volume()), tuple[pv.Volume, _vtk.vtkVolumeProperty])
+
+# A 2D actor carries a 2D property
+assert_types(a_plotter().add_actor(pv.Text('a')), tuple[pv.Text, _vtk.vtkProperty2D])
+
+# Any other prop may have no property
+assert_types(
+    a_plotter().add_actor(pv.AxesAssembly()),
+    tuple[pv.AxesAssembly, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None],
+)
