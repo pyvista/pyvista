@@ -10,6 +10,7 @@ from pytest_cases import case
 from pytest_cases import filters as ft
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
+from pytest_pyvista import pytest_pyvista as pytest_pyvista_plugin
 
 import pyvista as pv
 from tests.conftest import _VTKSZ_SIZE_EXCEPTIONS_MB
@@ -88,6 +89,17 @@ def _load_current_config(
     yield
     toml.unlink()
     conftest.unlink()
+
+
+@pytest.fixture(autouse=True)
+def _keep_image_cache_names():
+    # In-process pytester runs load pytest-pyvista, whose terminal summary clears the
+    # module-level image names this session records for ``--disallow_unused_cache``.
+    visited = set(pytest_pyvista_plugin.VISITED_CACHED_IMAGE_NAMES)
+    skipped = set(pytest_pyvista_plugin.SKIPPED_CACHED_IMAGE_NAMES)
+    yield
+    pytest_pyvista_plugin.VISITED_CACHED_IMAGE_NAMES.update(visited)
+    pytest_pyvista_plugin.SKIPPED_CACHED_IMAGE_NAMES.update(skipped)
 
 
 @pytest.mark.parametrize(
