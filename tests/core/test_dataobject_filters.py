@@ -3091,9 +3091,19 @@ def _sphere():
     return sphere
 
 
+def _mixed_grid():
+    """Return an unstructured grid of hexahedra and tetrahedra."""
+    tetrahedra = examples.load_tetbeam().translate((2, 0, 0))
+    # VTK 9.3 cannot validate hexahedra with single precision points
+    tetrahedra.points = tetrahedra.points.astype(float)
+    return pv.merge([examples.load_hexbeam(), tetrahedra])
+
+
 _REFLECTED_MESHES = [
     examples.load_hexbeam,
     examples.load_tetbeam,
+    _mixed_grid,
+    examples.load_explicit_structured,
     _explicit_structured_grid,
     _structured_grid,
     _image,
@@ -3119,6 +3129,12 @@ def test_reflect_keeps_cells_valid(load, inplace, normal):
         assert np.array_equal(restored[name], original[name])
 
 
+@pytest.mark.parametrize('mesh_type', [pv.ExplicitStructuredGrid, pv.UnstructuredGrid])
+def test_reflect_empty(mesh_type):
+    mesh = mesh_type()
+    assert mesh.reflect((1, 1, 0)).n_cells == mesh.n_cells
+
+
 def _n_outward_faces(mesh):
     """Return how many faces of a mesh's surface point away from its center."""
     surface = mesh.extract_surface(algorithm=None).triangulate()
@@ -3131,43 +3147,85 @@ def test_reflect_keeps_surface_outward(load):
     assert _n_outward_faces(load().reflect((1, 0, 0))) == _n_outward_faces(load())
 
 
+def _to_hexahedra(mesh):
+    """Return a grid as hexahedra or quads, or as other cells when it is flatter."""
+    if mesh.dimensionality == 3:
+        return mesh.to_hexahedra()
+    if mesh.dimensionality == 2:
+        return mesh.to_quads()
+    return mesh.cast_to_unstructured_grid()
+
+
 _CASTS = {
     'rectilinear': lambda mesh: mesh.cast_to_rectilinear_grid(),
     'structured': lambda mesh: mesh.cast_to_structured_grid(),
     'unstructured': lambda mesh: mesh.cast_to_unstructured_grid(),
+    'hexahedra': _to_hexahedra,
 }
 
+_CAST_TRANSFORMS = {
+    'flip_x': lambda mesh: mesh.flip_x(),
+    'reflect_z': lambda mesh: mesh.reflect((0, 0, 1), point=(0.5, 1, 2)),
+    'reflect_diagonal': lambda mesh: mesh.reflect((1, 1, 0), point=(0.5, 1, 2)),
+    'reflect_oblique': lambda mesh: mesh.reflect((1, 2, 3), point=(0.5, 1, 2)),
+    'rotate_half_turn': lambda mesh: mesh.rotate_z(180, point=(0.5, 1, 2)),
+    'rotate_oblique': lambda mesh: mesh.rotate_vector((1, 2, 3), 30, point=(0.5, 1, 2)),
+}
+_OBLIQUE = ('reflect_oblique', 'rotate_oblique')
 
-def _canonical_cells(mesh):
+
+def _canonical_cells(mesh, *, ordered=True):
     """Return a mesh's cells and arrays independent of how its points and cells are numbered."""
     points = [tuple(point) for point in np.round(mesh.points, 6)]
+    order = tuple if ordered else sorted
     cells = sorted(
-        (int(cell.type), tuple(points[i] for i in cell.point_ids), int(cell_id))
+        (int(cell.type), tuple(order(points[i] for i in cell.point_ids)), int(cell_id))
         for cell, cell_id in zip(mesh.cell, mesh.cell_data['ids'], strict=True)
     )
     return cells, sorted(zip(points, mesh.point_data['ids'].tolist(), strict=True))
 
 
 @pytest.mark.parametrize(
-    ('source', 'cast', 'normal'),
+    ('source', 'cast', 'transform'),
     [
-        (source, cast, normal)
-        for source, cast in itertools.combinations(['image', *_CASTS], 2)
-        for normal in [(1, 0, 0), (0, 0, 1), (1, 1, 0), (1, 2, 3)]
+        (source, cast, transform)
+        for source, casts in {
+            'image': ['rectilinear', 'structured', 'unstructured', 'hexahedra'],
+            'rectilinear': ['structured', 'unstructured', 'hexahedra'],
+            'structured': ['unstructured'],
+        }.items()
+        for cast in casts
+        for transform in _CAST_TRANSFORMS
         # A rectilinear grid only takes axis-aligned transformations
-        if 'rectilinear' not in (source, cast) or normal != (1, 2, 3)
+        if 'rectilinear' not in (source, cast) or transform not in _OBLIQUE
     ],
 )
 @pytest.mark.parametrize('dimensions', [(2, 3, 4), (2, 3, 1), (2, 1, 4), (1, 3, 1), (1, 1, 1)])
-def test_reflect_commutes_with_cast(source, cast, normal, dimensions):
+def test_transform_commutes_with_cast(source, cast, transform, dimensions):
     image = pv.ImageData(dimensions=dimensions, spacing=(1, 2, 3), origin=(1, 2, 3))
     image.point_data['ids'] = np.arange(image.n_points)
     image.cell_data['ids'] = np.arange(image.n_cells)
     mesh = image if source == 'image' else _CASTS[source](image)
+    before = _CASTS[cast](_CAST_TRANSFORMS[transform](mesh))
 
-    before = _CASTS[cast](mesh.reflect(normal, point=(0.5, 1, 2)))
-    after = _CASTS[cast](mesh).reflect(normal, point=(0.5, 1, 2))
-    if cast == 'unstructured':
+    cast_mesh = _CASTS[cast](mesh)
+    voxels = source != 'structured' and cast == 'unstructured' and image.dimensionality > 1
+    if transform == 'reflect_oblique' and voxels:
+        # Voxels and pixels cannot be reflected off the axes
+        with pytest.raises(ValueError, match='to_hexahedra'):
+            _CAST_TRANSFORMS[transform](cast_mesh)
+        return
+    after = _CAST_TRANSFORMS[transform](cast_mesh)
+
+    # Off-axis voxels and pixels are invalid, and VTK before 9.7 flags every one of them
+    if not voxels or (transform not in _OBLIQUE and pv.vtk_version_info >= (9, 7)):
+        before.validate_mesh(action='error')
+        after.validate_mesh(action='error')
+
+    if source == 'rectilinear' and transform.startswith('rotate'):
+        # A rectilinear grid reverses the axes a rotation makes descend, unlike the others
+        assert _canonical_cells(before, ordered=False) == _canonical_cells(after, ordered=False)
+    elif isinstance(before, pv.UnstructuredGrid):
         assert _canonical_cells(before) == _canonical_cells(after)
     else:
         assert before.dimensions == after.dimensions
@@ -3175,6 +3233,14 @@ def test_reflect_commutes_with_cast(source, cast, normal, dimensions):
         assert np.allclose(before.points, after.points)
         assert np.array_equal(before.point_data['ids'], after.point_data['ids'])
         assert np.array_equal(before.cell_data['ids'], after.cell_data['ids'])
+
+
+def test_reflect_voxels_off_axes_raises():
+    grid = pv.ImageData(dimensions=(2, 3, 4)).cast_to_unstructured_grid()
+    original = grid.copy()
+    with pytest.raises(ValueError, match='Convert them to HEXAHEDRON or QUAD cells first'):
+        grid.reflect((1, 1, 1), inplace=True)
+    assert grid == original
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)

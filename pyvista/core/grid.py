@@ -29,6 +29,8 @@ from pyvista.core.utilities.writer import XMLImageDataWriter
 from pyvista.core.utilities.writer import XMLRectilinearGridWriter
 
 from ._structured_data import _extent_from
+from ._structured_data import _reorder_extent
+from ._structured_data import _reorder_structured_arrays
 from ._structured_data import _StructuredDataMixin
 from .dataset import DataSet
 from .filters import ImageDataFilters
@@ -1087,11 +1089,20 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         rectilinear_coords = self._generate_rectilinear_coords()
-        grid = pv.RectilinearGrid(*rectilinear_coords)
-        grid.offset = self.offset
+        # A negative direction makes coordinates descend, so reverse those axes to ascend
+        axes, flips = np.arange(3), np.diagonal(self.direction_matrix) < 0
+        grid = pv.RectilinearGrid(
+            *(
+                coords[::-1] if flip else coords
+                for coords, flip in zip(rectilinear_coords, flips, strict=True)
+            )
+        )
+        grid.extent = _reorder_extent(self.dimensions, self.offset, axes=axes, flips=flips)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
+        if flips.any():
+            _reorder_structured_arrays(grid, self.dimensions, axes=axes, flips=flips)
         grid.copy_meta_from(self, deep=True)
         return grid
 
