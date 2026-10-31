@@ -2899,8 +2899,9 @@ class HDFReader(BaseReader['DataObject'], TimeReader):
         )
         super()._update_information()
         if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
-            self.reader.GetOutputDataObject(0), _vtk.vtkImageData
+            self.reader.GetOutputDataObject(0), (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
         ):
+            # Composite outputs may contain images whose blocks are not loaded yet.
             # The cache can return a previously read ImageData time step. Fixed in
             # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13773
             with warnings.catch_warnings():
