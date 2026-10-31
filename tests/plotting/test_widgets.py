@@ -741,6 +741,13 @@ def test_camera_orientation_widget_detached():
     pl.close()
 
 
+def test_camera_orientation_widget_closed_plotter():
+    pl = pv.Plotter()
+    pl.close()
+    with pytest.raises(RuntimeError, match=r'Cannot add a widget to a closed plotter.'):
+        pl.add_camera_orientation_widget()
+
+
 @pytest.mark.usefixtures('verify_image_cache')
 def test_camera_orientation_widget_subplots_image():
     """Render independently placed camera widgets over distinct subplot scenes."""

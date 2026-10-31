@@ -3130,6 +3130,7 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
+        self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
         widget = _vtk.vtkCameraOrientationWidget()
         widget.SetParentRenderer(self._plotter.renderer)
         widget.SetAnimate(animate)
