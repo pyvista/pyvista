@@ -21,7 +21,11 @@ def _clean_custom_writers():
     """Reset the writer registry to its pre-discovery state around every test."""
     state = _reg_mod._save_registry_state()
     _reg_mod._restore_registry_state(
-        {'ext': {}, 'sources': {}, 'pending': {}, 'entry_points_loaded': False}
+        {
+            'explicit': {'handlers': {}, 'sources': {}},
+            'discovered': {'handlers': {}, 'sources': {}},
+            'plugins': {'loaded': False, 'pending': {}, 'failed': {}},
+        }
     )
     yield
     _reg_mod._restore_registry_state(state)
@@ -51,14 +55,13 @@ def test_initial_module_state():
     # plugins (e.g. pyvista_zarr) that register at import time and
     # pollute the live module's registry dicts.
     module = _load_module_copy('writer_registry_test_copy', _reg_mod.__file__)
-    assert module._custom_ext_writers == {}
-    assert module._custom_ext_writer_sources == {}
-    assert module._entry_points_loaded is False
+    assert not module._custom_ext_writers
+    assert module._plugins.loaded is False
 
 
 def test_register_extension():
     pv.register_writer('.myformat', _noop_writer)
-    assert _reg_mod._custom_ext_writers['.myformat'] is _noop_writer
+    assert _reg_mod._custom_ext_writers.get('.myformat') is _noop_writer
 
 
 def test_register_extension_without_dot():
@@ -78,7 +81,7 @@ def test_register_builtin_collision():
 
 def test_register_builtin_override():
     pv.register_writer('.vtp', _noop_writer, override=True)
-    assert _reg_mod._custom_ext_writers['.vtp'] is _noop_writer
+    assert _reg_mod._custom_ext_writers.get('.vtp') is _noop_writer
 
 
 def test_register_as_decorator():
@@ -86,7 +89,7 @@ def test_register_as_decorator():
     def my_writer(_dataset, _path):
         return None
 
-    assert _reg_mod._custom_ext_writers['.decorated'] is my_writer
+    assert _reg_mod._custom_ext_writers.get('.decorated') is my_writer
 
 
 def test_register_decorator_stacked():
@@ -95,8 +98,8 @@ def test_register_decorator_stacked():
     def my_writer(_dataset, _path):
         return None
 
-    assert _reg_mod._custom_ext_writers['.ext1'] is my_writer
-    assert _reg_mod._custom_ext_writers['.ext2'] is my_writer
+    assert _reg_mod._custom_ext_writers.get('.ext1') is my_writer
+    assert _reg_mod._custom_ext_writers.get('.ext2') is my_writer
 
 
 def test_get_ext_handler():
@@ -121,7 +124,7 @@ def test_entry_point_discovery_extension(ep_name):
     mock_ep.value = 'package:ep'
     mock_ep.load.return_value = _noop_writer
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         assert _reg_mod._get_ext_handler('.discovered') is _noop_writer
 
 
@@ -137,10 +140,10 @@ def test_entry_point_duplicate_warns_and_uses_first_handler():
 
     with (
         patch(
-            'pyvista.core.utilities.writer_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[first, second],
         ),
-        patch('pyvista.core.utilities.writer_registry.warn_external') as warn,
+        patch('pyvista.core.utilities._registry.warn_external') as warn,
     ):
         handler = _reg_mod._get_ext_handler('.discovered')
 
@@ -162,7 +165,7 @@ def test_entry_point_does_not_override_explicit():
     mock_ep.value = 'package:ep'
     mock_ep.load.return_value = other_handler
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         assert _reg_mod._get_ext_handler('.myext') is _noop_writer
     other_handler.assert_not_called()
 
@@ -174,8 +177,8 @@ def test_entry_point_load_failure_warns_and_returns_none():
     broken.load.side_effect = RuntimeError('broken plugin')
 
     with (
-        patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[broken]),
-        patch('pyvista.core.utilities.writer_registry.warn_external') as warn,
+        patch('pyvista.core.utilities._registry.entry_points', return_value=[broken]),
+        patch('pyvista.core.utilities._registry.warn_external') as warn,
     ):
         assert _reg_mod._get_ext_handler('.broken') is None
 
@@ -186,24 +189,24 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
-def test_entry_points_loaded_persists_across_lookups():
+def test_scan_persists_across_lookups():
     with patch(
-        'pyvista.core.utilities.writer_registry.entry_points', return_value=[]
+        'pyvista.core.utilities._registry.entry_points', return_value=[]
     ) as entry_points_mock:
         _reg_mod._get_ext_handler('.nothing')
         _reg_mod._get_ext_handler('.nothing-else')
     entry_points_mock.assert_called_once_with(group='pyvista.writers')
 
 
-def test_save_registry_state_snapshots_entry_points_loaded():
+def test_save_registry_state_snapshots_loaded_flag():
     state = _reg_mod._save_registry_state()
-    assert state['entry_points_loaded'] is _reg_mod._entry_points_loaded
+    assert state['plugins']['loaded'] is _reg_mod._plugins.loaded
 
     # Mutate the module then restore; the flag must round-trip.
-    original = _reg_mod._entry_points_loaded
-    _reg_mod._entry_points_loaded = not original
+    original = _reg_mod._plugins.loaded
+    _reg_mod._plugins.loaded = not original
     _reg_mod._restore_registry_state(state)
-    assert _reg_mod._entry_points_loaded is original
+    assert _reg_mod._plugins.loaded is original
 
 
 def test_save_with_custom_extension(tmp_path):
@@ -409,7 +412,7 @@ def test_registered_writers_includes_entry_point_source():
     mock_ep.value = 'package.module:writer_func'
     mock_ep.load.return_value = _noop_writer
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         records = pv.registered_writers()
 
     matches = [r for r in records if r.extension == '.discovered_src']
@@ -423,9 +426,9 @@ def test_register_custom_collision_warns_and_replaces():
     def replacement(_ds, _path):
         return None
 
-    with pytest.warns(UserWarning, match='replaces an existing custom writer'):
+    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
         pv.register_writer('.collide', replacement)
-    assert _reg_mod._custom_ext_writers['.collide'] is replacement
+    assert _reg_mod._custom_ext_writers.get('.collide') is replacement
 
 
 def test_register_custom_collision_override_silent():
@@ -437,20 +440,20 @@ def test_register_custom_collision_override_silent():
     with warnings.catch_warnings():
         warnings.simplefilter('error')
         pv.register_writer('.collide', replacement, override=True)
-    assert _reg_mod._custom_ext_writers['.collide'] is replacement
+    assert _reg_mod._custom_ext_writers.get('.collide') is replacement
 
 
 def test_metadata_scan_does_not_load_plugin():
-    """``_ensure_entry_points`` records metadata without importing plugins."""
+    """``_plugins.ensure_scanned`` records metadata without importing plugins."""
     mock_ep = MagicMock()
     mock_ep.name = '.lazy'
     mock_ep.value = 'lazy_pkg:writer'
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
-        _reg_mod._ensure_entry_points()
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
+        _reg_mod._plugins.ensure_scanned()
 
     mock_ep.load.assert_not_called()
-    assert '.lazy' in _reg_mod._pending_ext_writers
+    assert '.lazy' in _reg_mod._plugins.pending
     assert '.lazy' not in _reg_mod._custom_ext_writers
 
 
@@ -460,11 +463,11 @@ def test_save_builtin_extension_does_not_load_plugin(tmp_path):
     plugin_ep.name = '.someplugin'
     plugin_ep.value = 'someplugin:writer'
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[plugin_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[plugin_ep]):
         pv.Sphere().save(tmp_path / 'out.vtp')
 
     plugin_ep.load.assert_not_called()
-    assert '.someplugin' in _reg_mod._pending_ext_writers
+    assert '.someplugin' in _reg_mod._plugins.pending
 
 
 def test_matching_extension_loads_only_its_plugin():
@@ -479,7 +482,7 @@ def test_matching_extension_loads_only_its_plugin():
     other.value = 'other_pkg:writer'
 
     with patch(
-        'pyvista.core.utilities.writer_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[wanted, other],
     ):
         handler = _reg_mod._get_ext_handler('.wanted')
@@ -487,7 +490,7 @@ def test_matching_extension_loads_only_its_plugin():
     assert handler is _noop_writer
     wanted.load.assert_called_once()
     other.load.assert_not_called()
-    assert '.other' in _reg_mod._pending_ext_writers
+    assert '.other' in _reg_mod._plugins.pending
 
 
 def test_list_custom_exts_includes_pending_without_loading():
@@ -496,7 +499,7 @@ def test_list_custom_exts_includes_pending_without_loading():
     mock_ep.name = '.discoverable'
     mock_ep.value = 'discoverable_pkg:writer'
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         exts = _reg_mod._list_custom_exts()
 
     assert '.discoverable' in exts
@@ -510,10 +513,51 @@ def test_registered_writers_forces_full_discovery():
     mock_ep.value = 'eager_pkg:writer'
     mock_ep.load.return_value = _noop_writer
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         records = pv.registered_writers()
 
     matches = [r for r in records if r.extension == '.eager']
     assert len(matches) == 1
     assert matches[0].handler is _noop_writer
     mock_ep.load.assert_called_once()
+
+
+def test_broken_plugin_warns_once_and_stays_pending():
+    """A failed load warns once, falls through later without re-importing, and stays pending."""
+    broken = MagicMock()
+    broken.name = '.broken'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[broken]):
+        with pytest.warns(UserWarning, match='Failed to load pyvista.writers entry point'):
+            assert _reg_mod._get_ext_handler('.broken') is None
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            for _ in range(3):
+                assert _reg_mod._get_ext_handler('.broken') is None
+        assert '.broken' not in _reg_mod._list_custom_exts()
+        with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
+            pv.Sphere().save('mesh.broken')
+
+    assert broken.load.call_count == 1
+    assert '.broken' in _reg_mod._plugins.pending
+    assert list(_reg_mod._plugins.failed) == ['.broken']
+    assert '.broken' not in str(excinfo.value).split('Must be one of')[1]
+
+
+def test_registered_writers_retries_a_recovered_plugin():
+    recovered = MagicMock()
+    recovered.name = '.recovers'
+    recovered.value = 'package:recovers'
+    recovered.load.side_effect = [RuntimeError('missing dep'), _noop_writer]
+
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[recovered]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.recovers') is None
+        assert '.recovers' in {r.extension for r in pv.registered_writers()}
+        assert _reg_mod._get_ext_handler('.recovers') is _noop_writer
+
+    assert recovered.load.call_count == 2
+    assert '.recovers' not in _reg_mod._plugins.pending
+    assert _reg_mod._plugins.failed == {}

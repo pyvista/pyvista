@@ -89,7 +89,7 @@ def test_init_subclass_duplicate_name_replaces_existing():
     class OriginalTheme(Theme):
         _default_name: ClassVar[str] = 'dup_name'
 
-    with pytest.warns(UserWarning, match='replaces an existing registration'):
+    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
 
         class DupTheme(Theme):
             _default_name: ClassVar[str] = 'dup_name'
@@ -97,7 +97,7 @@ def test_init_subclass_duplicate_name_replaces_existing():
     # Last registration wins, mirroring every other PyVista plugin registry.
     resolved = _reg_mod._resolve_theme('dup_name')
     assert isinstance(resolved, DupTheme)
-    assert _reg_mod._registered_theme_classes['dup_name'] is DupTheme
+    assert _reg_mod._registered_theme_classes.get('dup_name') is DupTheme
 
 
 def test_set_plot_theme_does_not_mutate_class_registration():
@@ -159,8 +159,7 @@ def test_entry_point_subclass_registered_via_init_subclass_resolves():
         _default_name: ClassVar[str] = 'self_registering'
 
     # Clear the explicit registration so we exercise the entry-point path.
-    _reg_mod._registered_theme_classes.pop('self_registering', None)
-    _reg_mod._registered_theme_classes_sources.pop('self_registering', None)
+    _reg_mod._registered_theme_classes.pop('self_registering')
 
     # Simulate an entry point whose load() re-imports the module and
     # re-triggers __init_subclass__ on SelfRegistering.
@@ -177,9 +176,9 @@ def test_entry_point_subclass_registered_via_init_subclass_resolves():
     ep.value = 'pkg:SelfRegistering'
     ep.load.side_effect = fake_load
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         resolved = _reg_mod._resolve_theme('self_registering')
@@ -192,17 +191,16 @@ def test_entry_point_class_discovery():
         _default_name: ClassVar[str] = 'ep_registered'
 
     # Clear explicit registration so discovery path is exercised
-    _reg_mod._registered_theme_classes.pop('ep_registered', None)
-    _reg_mod._registered_theme_classes_sources.pop('ep_registered', None)
+    _reg_mod._registered_theme_classes.pop('ep_registered')
 
     ep = MagicMock()
     ep.name = 'ep_registered'
     ep.value = 'pkg:EpTheme'
     ep.load.return_value = EpTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         resolved = _reg_mod._resolve_theme('ep_registered')
@@ -219,9 +217,9 @@ def test_entry_point_instance_discovery():
     ep.value = 'pkg:theme_instance'
     ep.load.return_value = ep_theme_instance
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         resolved = _reg_mod._resolve_theme('ep_instance')
@@ -238,17 +236,16 @@ def test_entry_point_mapping_discovery():
 
     # Clear explicit registrations so the entry-point mapping path is used
     for key in ('map_a', 'map_b'):
-        _reg_mod._registered_theme_classes.pop(key, None)
-        _reg_mod._registered_theme_classes_sources.pop(key, None)
+        _reg_mod._registered_theme_classes.pop(key)
 
     ep = MagicMock()
     ep.name = 'bulk'
     ep.value = 'pkg:THEMES'
     ep.load.return_value = {'map_a': MapATheme, 'map_b': MapBTheme}
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         assert isinstance(_reg_mod._resolve_theme('map_a'), MapATheme)
@@ -259,17 +256,16 @@ def test_entry_point_discovery_is_cached():
     class CachedTheme(Theme):
         _default_name: ClassVar[str] = 'cached_theme'
 
-    _reg_mod._registered_theme_classes.pop('cached_theme', None)
-    _reg_mod._registered_theme_classes_sources.pop('cached_theme', None)
+    _reg_mod._registered_theme_classes.pop('cached_theme')
 
     ep = MagicMock()
     ep.name = 'cached_theme'
     ep.value = 'pkg:CachedTheme'
     ep.load.return_value = CachedTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         _reg_mod._resolve_theme('cached_theme')
@@ -295,9 +291,9 @@ def test_entry_point_explicit_wins_silently():
     ep.value = 'pkg:EntryPointTheme'
     ep.load.return_value = EntryPointTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         resolved = _reg_mod._resolve_theme('explicit_wins')
@@ -311,10 +307,10 @@ def test_entry_point_load_failure_warns():
     ep.value = 'pkg:broken'
     ep.load.side_effect = ImportError('missing dependency')
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.theme_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[ep],
         ),
         pytest.warns(UserWarning, match='Failed to load'),
@@ -328,10 +324,10 @@ def test_entry_point_non_theme_warns():
     ep.value = 'pkg:not_theme'
     ep.load.return_value = 'not a theme'
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.theme_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[ep],
         ),
         pytest.warns(UserWarning, match='not a pyvista Theme'),
@@ -345,8 +341,7 @@ def test_entry_point_duplicate_provider_warns():
     class DupTheme(Theme):
         _default_name: ClassVar[str] = '__dup_source__'
 
-    _reg_mod._registered_theme_classes.pop('dup_theme', None)
-    _reg_mod._registered_theme_classes_sources.pop('dup_theme', None)
+    _reg_mod._registered_theme_classes.pop('dup_theme')
 
     ep1 = MagicMock()
     ep1.name = 'dup_theme'
@@ -358,13 +353,13 @@ def test_entry_point_duplicate_provider_warns():
     ep2.value = 'pkg_b:theme'
     ep2.load.return_value = DupTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.theme_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[ep1, ep2],
         ),
-        pytest.warns(UserWarning, match='Multiple .* providers'),
+        pytest.warns(UserWarning, match='Multiple .* entry points'),
     ):
         _reg_mod._resolve_theme('dup_theme')
 
@@ -378,10 +373,10 @@ def test_entry_point_mapping_non_string_key_warns():
     ep.value = 'pkg:THEMES'
     ep.load.return_value = {123: MappingTheme}
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.theme_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[ep],
         ),
         pytest.warns(UserWarning, match='theme names must be strings'),
@@ -446,17 +441,16 @@ def test_registered_themes_reports_entry_point_source():
     class EpListedTheme(Theme):
         _default_name: ClassVar[str] = '__ep_listed__'
 
-    _reg_mod._registered_theme_classes.pop('ep_listed', None)
-    _reg_mod._registered_theme_classes_sources.pop('ep_listed', None)
+    _reg_mod._registered_theme_classes.pop('ep_listed')
 
     ep = MagicMock()
     ep.name = 'ep_listed'
     ep.value = 'some_plugin.pkg:EpListedTheme'
     ep.load.return_value = EpListedTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         registered = pv.registered_themes()
@@ -479,7 +473,7 @@ def test_registered_themes_is_sorted():
 
 
 def test_metadata_scan_does_not_load_theme_plugin():
-    """``_ensure_entry_points`` records metadata without importing plugin modules."""
+    """``_plugins.ensure_scanned`` records metadata without importing plugin modules."""
 
     class ScanTheme(Theme):
         _default_name: ClassVar[str] = '__scan_source__'
@@ -489,15 +483,15 @@ def test_metadata_scan_does_not_load_theme_plugin():
     ep.value = 'pkg:ScanTheme'
     ep.load.return_value = ScanTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_scanned()
 
     ep.load.assert_not_called()
-    assert 'scan_only' in _reg_mod._pending_ep_themes
+    assert 'scan_only' in _reg_mod._plugins.pending
     assert 'scan_only' in _reg_mod._available_theme_names()
 
 
@@ -516,9 +510,9 @@ def test_lookup_builtin_does_not_load_plugin():
     ep.value = 'pkg:OtherTheme'
     ep.load.return_value = OtherTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         resolved = _reg_mod._resolve_theme('dark')
@@ -527,7 +521,7 @@ def test_lookup_builtin_does_not_load_plugin():
     ep.load.assert_not_called()
     # 'dark' short-circuits before the EP scan runs, so the EP never
     # even gets recorded as pending.
-    assert _reg_mod._entry_points_loaded is False
+    assert _reg_mod._plugins.loaded is False
 
 
 def test_lookup_matching_theme_loads_only_its_plugin():
@@ -539,8 +533,8 @@ def test_lookup_matching_theme_loads_only_its_plugin():
     class SiblingTheme(Theme):
         _default_name: ClassVar[str] = '__sibling_source__'
 
-    _reg_mod._registered_theme_classes.pop('wanted', None)
-    _reg_mod._registered_theme_classes.pop('sibling', None)
+    _reg_mod._registered_theme_classes.pop('wanted')
+    _reg_mod._registered_theme_classes.pop('sibling')
 
     ep_wanted = MagicMock()
     ep_wanted.name = 'wanted'
@@ -552,9 +546,9 @@ def test_lookup_matching_theme_loads_only_its_plugin():
     ep_sibling.value = 'pkg_b:SiblingTheme'
     ep_sibling.load.return_value = SiblingTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep_wanted, ep_sibling],
     ):
         resolved = _reg_mod._resolve_theme('wanted')
@@ -562,7 +556,7 @@ def test_lookup_matching_theme_loads_only_its_plugin():
     assert isinstance(resolved, WantedTheme)
     ep_wanted.load.assert_called_once()
     ep_sibling.load.assert_not_called()
-    assert 'sibling' in _reg_mod._pending_ep_themes
+    assert 'sibling' in _reg_mod._plugins.pending
 
 
 def test_registered_themes_forces_full_discovery():
@@ -574,8 +568,8 @@ def test_registered_themes_forces_full_discovery():
     class AllBTheme(Theme):
         _default_name: ClassVar[str] = '__all_b_source__'
 
-    _reg_mod._registered_theme_classes.pop('all_a', None)
-    _reg_mod._registered_theme_classes.pop('all_b', None)
+    _reg_mod._registered_theme_classes.pop('all_a')
+    _reg_mod._registered_theme_classes.pop('all_b')
 
     ep_a = MagicMock()
     ep_a.name = 'all_a'
@@ -587,9 +581,9 @@ def test_registered_themes_forces_full_discovery():
     ep_b.value = 'pkg_b:AllBTheme'
     ep_b.load.return_value = AllBTheme
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep_a, ep_b],
     ):
         names = {r.name for r in pv.registered_themes()}
@@ -598,7 +592,7 @@ def test_registered_themes_forces_full_discovery():
     assert 'all_b' in names
     ep_a.load.assert_called_once()
     ep_b.load.assert_called_once()
-    assert _reg_mod._pending_ep_themes == {}
+    assert _reg_mod._plugins.pending == {}
 
 
 def test_mapping_ep_loads_when_any_of_its_themes_requested():
@@ -613,17 +607,16 @@ def test_mapping_ep_loads_when_any_of_its_themes_requested():
         _default_name: ClassVar[str] = '__map_y_source__'
 
     for key in ('map_x', 'map_y'):
-        _reg_mod._registered_theme_classes.pop(key, None)
-        _reg_mod._registered_theme_classes_sources.pop(key, None)
+        _reg_mod._registered_theme_classes.pop(key)
 
     ep = MagicMock()
     ep.name = 'bulk_pack'
     ep.value = 'pkg:THEMES'
     ep.load.return_value = {'map_x': MapXTheme, 'map_y': MapYTheme}
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.theme_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[ep],
     ):
         # Request a name that does NOT match ep.name. Resolution should
@@ -632,3 +625,47 @@ def test_mapping_ep_loads_when_any_of_its_themes_requested():
 
     assert isinstance(resolved, MapYTheme)
     ep.load.assert_called_once()
+
+
+def test_broken_plugin_warns_once_and_stays_pending():
+    """A failed load warns once, is hidden from the name list, and stays pending."""
+    ep = MagicMock()
+    ep.name = 'broken_theme'
+    ep.value = 'pkg:broken'
+    ep.load.side_effect = ImportError('missing dependency')
+
+    _reg_mod._plugins.reset()
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[ep]):
+        assert 'broken_theme' in _reg_mod._available_theme_names()
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._resolve_theme('broken_theme') is None
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            for _ in range(3):
+                assert _reg_mod._resolve_theme('broken_theme') is None
+        assert 'broken_theme' not in _reg_mod._available_theme_names()
+
+    assert ep.load.call_count == 1
+    assert 'broken_theme' in _reg_mod._plugins.pending
+    assert list(_reg_mod._plugins.failed) == ['broken_theme']
+
+
+def test_registered_themes_retries_a_recovered_plugin():
+    class RecoveredTheme(pv.plotting.themes.Theme):
+        """Theme supplied by a plugin that recovers on retry."""
+
+    ep = MagicMock()
+    ep.name = 'recovered_theme'
+    ep.value = 'pkg:recovered'
+    ep.load.side_effect = [ImportError('missing dependency'), RecoveredTheme]
+
+    _reg_mod._plugins.reset()
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[ep]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._resolve_theme('recovered_theme') is None
+        assert 'recovered_theme' in {r.name for r in pv.registered_themes()}
+        assert isinstance(_reg_mod._resolve_theme('recovered_theme'), RecoveredTheme)
+
+    assert ep.load.call_count == 2
+    assert _reg_mod._plugins.failed == {}
+    assert 'recovered_theme' not in _reg_mod._plugins.pending

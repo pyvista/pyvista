@@ -59,25 +59,24 @@ def test_module_import_registers_cleanup_handler():
         module = _load_module_copy('reader_registry_test_copy', _reg_mod.__file__)
 
     register.assert_called_once_with(module._cleanup_temp_files)
-    assert module._custom_ext_readers == {}
-    assert module._custom_ext_reader_sources == {}
-    assert module._entry_points_loaded is False
+    assert not module._custom_readers
+    assert module._plugins.loaded is False
     assert module._temp_files == []
 
 
 def test_register_extension():
     pv.register_reader('.myformat', _mock_reader)
-    assert '.myformat' in _reg_mod._custom_ext_readers
+    assert '.myformat' in _reg_mod._custom_readers
 
 
 def test_register_extension_without_dot():
     pv.register_reader('myformat', _mock_reader)
-    assert '.myformat' in _reg_mod._custom_ext_readers
+    assert '.myformat' in _reg_mod._custom_readers
 
 
 def test_register_extension_case_insensitive():
     pv.register_reader('.MyFormat', _mock_reader)
-    assert '.myformat' in _reg_mod._custom_ext_readers
+    assert '.myformat' in _reg_mod._custom_readers
 
 
 def test_register_builtin_collision():
@@ -87,7 +86,7 @@ def test_register_builtin_collision():
 
 def test_register_builtin_override():
     pv.register_reader('.vtk', _mock_reader, override=True)
-    assert '.vtk' in _reg_mod._custom_ext_readers
+    assert '.vtk' in _reg_mod._custom_readers
 
 
 def test_register_as_decorator():
@@ -95,8 +94,8 @@ def test_register_as_decorator():
     def my_reader(_path, **__):
         return pv.PolyData()
 
-    assert '.decorated' in _reg_mod._custom_ext_readers
-    assert _reg_mod._custom_ext_readers['.decorated'] is my_reader
+    assert '.decorated' in _reg_mod._custom_readers
+    assert _reg_mod._custom_readers.get('.decorated') is my_reader
 
 
 def test_register_decorator_stacked():
@@ -105,8 +104,8 @@ def test_register_decorator_stacked():
     def my_reader(_path, **__):
         return pv.PolyData()
 
-    assert _reg_mod._custom_ext_readers['.ext1'] is my_reader
-    assert _reg_mod._custom_ext_readers['.ext2'] is my_reader
+    assert _reg_mod._custom_readers.get('.ext1') is my_reader
+    assert _reg_mod._custom_readers.get('.ext2') is my_reader
 
 
 def test_get_ext_handler():
@@ -119,19 +118,19 @@ def test_get_ext_handler_returns_none():
 
 
 def test_entry_point_discovery_extension():
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
 
     mock_ep = MagicMock()
     mock_ep.name = '.discovered'
     mock_ep.load.return_value = _mock_reader
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         handler = _reg_mod._get_ext_handler('.discovered')
         assert handler is _mock_reader
 
 
 def test_entry_point_duplicate_warns_and_uses_first_handler():
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
 
     first = MagicMock()
     first.name = 'discovered'
@@ -144,10 +143,10 @@ def test_entry_point_duplicate_warns_and_uses_first_handler():
 
     with (
         patch(
-            'pyvista.core.utilities.reader_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[first, second],
         ),
-        patch('pyvista.core.utilities.reader_registry.warn_external') as warn,
+        patch('pyvista.core.utilities._registry.warn_external') as warn,
     ):
         handler = _reg_mod._get_ext_handler('.discovered')
 
@@ -162,20 +161,20 @@ def test_entry_point_duplicate_warns_and_uses_first_handler():
 
 def test_entry_point_does_not_override_explicit():
     pv.register_reader('.myext', _mock_reader)
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
 
     other_handler = MagicMock(return_value=pv.PolyData())
     mock_ep = MagicMock()
     mock_ep.name = '.myext'
     mock_ep.load.return_value = other_handler
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         handler = _reg_mod._get_ext_handler('.myext')
         assert handler is _mock_reader  # original registration wins
 
 
 def test_entry_point_load_failure_warns_and_returns_none():
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
 
     broken = MagicMock()
     broken.name = '.broken'
@@ -183,8 +182,8 @@ def test_entry_point_load_failure_warns_and_returns_none():
     broken.load.side_effect = RuntimeError('broken plugin')
 
     with (
-        patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]),
-        patch('pyvista.core.utilities.reader_registry.warn_external') as warn,
+        patch('pyvista.core.utilities._registry.entry_points', return_value=[broken]),
+        patch('pyvista.core.utilities._registry.warn_external') as warn,
     ):
         assert _reg_mod._get_ext_handler('.broken') is None
 
@@ -538,14 +537,14 @@ def test_registered_readers_returns_record_with_source():
 
 
 def test_registered_readers_includes_entry_point_source():
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
 
     mock_ep = MagicMock()
     mock_ep.name = '.discovered_src'
     mock_ep.value = 'package.module:reader_func'
     mock_ep.load.return_value = _mock_reader
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         records = pv.registered_readers()
 
     matches = [r for r in records if r.extension == '.discovered_src']
@@ -559,9 +558,9 @@ def test_register_custom_collision_warns_and_replaces():
     def replacement(_path, **__):
         return pv.PolyData()
 
-    with pytest.warns(UserWarning, match='replaces an existing custom reader'):
+    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
         pv.register_reader('.collide', replacement)
-    assert _reg_mod._custom_ext_readers['.collide'] is replacement
+    assert _reg_mod._custom_readers.get('.collide') is replacement
 
 
 def test_register_custom_collision_override_silent():
@@ -576,36 +575,34 @@ def test_register_custom_collision_override_silent():
         # vtkmodules triggers returning from a real read.
         warnings.simplefilter('error', UserWarning)
         pv.register_reader('.collide', replacement, override=True)
-    assert _reg_mod._custom_ext_readers['.collide'] is replacement
+    assert _reg_mod._custom_readers.get('.collide') is replacement
 
 
 def test_metadata_scan_does_not_load_plugin():
-    """``_ensure_entry_points`` records metadata without importing plugins."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    """``_plugins.ensure_scanned`` records metadata without importing plugins."""
+    _reg_mod._plugins.reset()
 
     mock_ep = MagicMock()
     mock_ep.name = '.lazy'
     mock_ep.value = 'lazy_pkg:reader'
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[mock_ep]):
-        _reg_mod._ensure_entry_points()
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
+        _reg_mod._plugins.ensure_scanned()
 
     mock_ep.load.assert_not_called()
-    assert '.lazy' in _reg_mod._pending_ext_readers
-    assert '.lazy' not in _reg_mod._custom_ext_readers
+    assert '.lazy' in _reg_mod._plugins.pending
+    assert '.lazy' not in _reg_mod._custom_readers
 
 
 def test_unrelated_extension_does_not_load_plugin():
     """Looking up an extension *no plugin claims* never imports any plugin."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._plugins.reset()
 
     plugin_ep = MagicMock()
     plugin_ep.name = '.someplugin'
     plugin_ep.value = 'someplugin:reader'
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[plugin_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[plugin_ep]):
         # Built-in extensions like ``.vtp`` resolve via the VTK class
         # readers, never via the entry-point registry. The lookup must
         # not load any plugin.
@@ -613,13 +610,12 @@ def test_unrelated_extension_does_not_load_plugin():
 
     plugin_ep.load.assert_not_called()
     # Pending plugin extension is still recorded for later resolution
-    assert '.someplugin' in _reg_mod._pending_ext_readers
+    assert '.someplugin' in _reg_mod._plugins.pending
 
 
 def test_matching_extension_loads_only_its_plugin():
     """Looking up an extension a plugin claims loads *only* that plugin."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._plugins.reset()
 
     wanted = MagicMock()
     wanted.name = '.wanted'
@@ -631,7 +627,7 @@ def test_matching_extension_loads_only_its_plugin():
     other.value = 'other_pkg:reader'
 
     with patch(
-        'pyvista.core.utilities.reader_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[wanted, other],
     ):
         handler = _reg_mod._get_ext_handler('.wanted')
@@ -640,19 +636,18 @@ def test_matching_extension_loads_only_its_plugin():
     wanted.load.assert_called_once()
     other.load.assert_not_called()
     # The other plugin remains pending — still discoverable, still not loaded
-    assert '.other' in _reg_mod._pending_ext_readers
+    assert '.other' in _reg_mod._plugins.pending
 
 
 def test_list_custom_exts_includes_pending_without_loading():
     """``_list_custom_exts`` reports pending extensions without loading."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._plugins.reset()
 
     mock_ep = MagicMock()
     mock_ep.name = '.discoverable'
     mock_ep.value = 'discoverable_pkg:reader'
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         exts = _reg_mod._list_custom_exts()
 
     assert '.discoverable' in exts
@@ -661,15 +656,14 @@ def test_list_custom_exts_includes_pending_without_loading():
 
 def test_registered_readers_forces_full_discovery():
     """``registered_readers`` resolves every pending plugin so callers see all."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._plugins.reset()
 
     mock_ep = MagicMock()
     mock_ep.name = '.eager'
     mock_ep.value = 'eager_pkg:reader'
     mock_ep.load.return_value = _mock_reader
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[mock_ep]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]):
         records = pv.registered_readers()
 
     matches = [r for r in records if r.extension == '.eager']
@@ -742,8 +736,8 @@ def custom_file(tmp_path):
 
 def test_register_reader_class_lands_in_class_registry():
     pv.register_reader('.myclassfmt', _MockReader)
-    assert _reg_mod._custom_class_readers['.myclassfmt'] is _MockReader
-    assert '.myclassfmt' not in _reg_mod._custom_ext_readers
+    assert _reg_mod._get_ext_reader_class('.myclassfmt') is _MockReader
+    assert _reg_mod._get_ext_handler('.myclassfmt') is None
 
 
 def test_register_reader_class_as_decorator():
@@ -751,7 +745,7 @@ def test_register_reader_class_as_decorator():
     class Decorated(pv.BaseReader['PolyData']):
         _class_reader = _MockVTKReader
 
-    assert _reg_mod._custom_class_readers['.decoratedcls'] is Decorated
+    assert _reg_mod._custom_readers.get('.decoratedcls') is Decorated
 
 
 def test_get_reader_resolves_registered_class(custom_file):
@@ -834,12 +828,12 @@ def test_reregistering_switches_between_forms():
     """An extension resolves to exactly one reader, whichever form is last."""
     pv.register_reader('.myclassfmt', _MockReader)
     pv.register_reader('.myclassfmt', _mock_reader, override=True)
-    assert '.myclassfmt' not in _reg_mod._custom_class_readers
-    assert _reg_mod._custom_ext_readers['.myclassfmt'] is _mock_reader
+    assert _reg_mod._get_ext_reader_class('.myclassfmt') is None
+    assert _reg_mod._get_ext_handler('.myclassfmt') is _mock_reader
 
     pv.register_reader('.myclassfmt', _MockReader, override=True)
-    assert '.myclassfmt' not in _reg_mod._custom_ext_readers
-    assert _reg_mod._custom_class_readers['.myclassfmt'] is _MockReader
+    assert _reg_mod._get_ext_reader_class('.myclassfmt') is _MockReader
+    assert _reg_mod._get_ext_handler('.myclassfmt') is None
 
 
 def test_registered_readers_marks_reader_class():
@@ -854,9 +848,9 @@ def test_registered_readers_marks_reader_class():
 def test_registry_state_roundtrips_class_registrations():
     pv.register_reader('.snapshotfmt', _MockReader)
     state = _reg_mod._save_registry_state()
-    _reg_mod._custom_class_readers.clear()
+    _reg_mod._custom_readers.clear()
     _reg_mod._restore_registry_state(state)
-    assert _reg_mod._custom_class_readers['.snapshotfmt'] is _MockReader
+    assert _reg_mod._custom_readers.get('.snapshotfmt') is _MockReader
 
 
 def _fake_entry_point(name, module_name, attr, obj):
@@ -873,15 +867,14 @@ def _fake_entry_point(name, module_name, attr, obj):
 def test_entry_point_resolving_to_class_reaches_get_reader(tmp_path, monkeypatch):
     ep, module = _fake_entry_point('.eprfmt', 'fake_reader_plugin', 'PluginReader', _MockReader)
     monkeypatch.setitem(sys.modules, 'fake_reader_plugin', module)
-    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    monkeypatch.setattr('pyvista.core.utilities._registry.entry_points', lambda **_: [ep])
+    _reg_mod._plugins.reset()
 
     path = tmp_path / 'data.eprfmt'
     path.touch()
     reader = pv.get_reader(path)
     assert isinstance(reader, _MockReader)
-    assert _reg_mod._custom_class_readers['.eprfmt'] is _MockReader
+    assert _reg_mod._custom_readers.get('.eprfmt') is _MockReader
     record = next(r for r in pv.registered_readers() if r.extension == '.eprfmt')
     assert record.reader_class is True
     assert record.source == 'fake_reader_plugin:PluginReader'
@@ -890,12 +883,11 @@ def test_entry_point_resolving_to_class_reaches_get_reader(tmp_path, monkeypatch
 def test_entry_point_resolving_to_callable_still_lands_in_handler_table(monkeypatch):
     ep, module = _fake_entry_point('.epffmt', 'fake_func_plugin', 'read', _mock_reader)
     monkeypatch.setitem(sys.modules, 'fake_func_plugin', module)
-    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    monkeypatch.setattr('pyvista.core.utilities._registry.entry_points', lambda **_: [ep])
+    _reg_mod._plugins.reset()
 
     assert _reg_mod._get_ext_handler('.epffmt') is _mock_reader
-    assert '.epffmt' not in _reg_mod._custom_class_readers
+    assert _reg_mod._get_ext_reader_class('.epffmt') is None
 
 
 def test_get_reader_does_not_import_plugins_for_builtin_extensions(tmp_path, monkeypatch):
@@ -908,9 +900,8 @@ def test_get_reader_does_not_import_plugins_for_builtin_extensions(tmp_path, mon
             return _MockReader
 
     ep = _CountingEntryPoint(name='.neverloaded', value='x:y', group='pyvista.readers')
-    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    monkeypatch.setattr('pyvista.core.utilities._registry.entry_points', lambda **_: [ep])
+    _reg_mod._plugins.reset()
 
     mesh_file = tmp_path / 'mesh.vtp'
     pv.Sphere().save(mesh_file)
@@ -947,11 +938,10 @@ def _install_plugin(monkeypatch, *, readers=(), overrides=()):
             groups[group].append(EntryPoint(name=ext, value=f'{module_name}:{attr}', group=group))
 
     monkeypatch.setattr(
-        'pyvista.core.utilities.reader_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         lambda group: groups.get(group, []),
     )
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._plugins.reset()
     _reg_mod._override_ext_readers.clear()
 
 
@@ -1019,7 +1009,7 @@ def test_declared_override_accepts_a_callable_too(tmp_path, monkeypatch):
     with warnings.catch_warnings():
         warnings.simplefilter('error', UserWarning)
         assert isinstance(pv.read(mesh_file), pv.PolyData)
-    assert _reg_mod._custom_ext_readers['.vtp'] is _mock_reader
+    assert _reg_mod._custom_readers.get('.vtp') is _mock_reader
 
 
 def test_ordinary_group_accepts_a_reader_class_for_a_new_extension(tmp_path, monkeypatch):
@@ -1093,7 +1083,7 @@ def test_registered_readers_warns_instead_of_raising_on_a_refused_plugin(monkeyp
     assert '.vtp' not in extensions  # the refused one did not register
     # Still pending, so reading a .vtp keeps raising rather than silently
     # falling back to the built-in after an introspection call.
-    assert '.vtp' in _reg_mod._pending_ext_readers
+    assert '.vtp' in _reg_mod._plugins.pending
 
 
 def test_registry_state_roundtrips_overrides():
@@ -1134,10 +1124,10 @@ def test_direct_registration_beats_entry_point_metadata(monkeypatch):
     _install_plugin(
         monkeypatch, readers=[('.bothways', 'bothways_plugin', 'PluginReader', _MockReader)]
     )
-    _reg_mod._ensure_entry_points()
+    _reg_mod._plugins.ensure_scanned()
 
-    assert '.bothways' not in _reg_mod._pending_ext_readers
-    assert _reg_mod._custom_ext_readers['.bothways'] is in_code
+    assert '.bothways' not in _reg_mod._plugins.pending
+    assert _reg_mod._custom_readers.get('.bothways') is in_code
 
 
 def test_error_names_the_distribution_when_the_entry_point_has_one():
@@ -1155,7 +1145,7 @@ def test_error_names_the_distribution_when_the_entry_point_has_one():
 
 
 def test_resolving_an_extension_no_plugin_claimed_loads_nothing():
-    """``_resolve_pending_reader`` reports False rather than raising."""
-    _reg_mod._pending_ext_readers.pop('.nopluginclaims', None)
+    """``_plugins.resolve`` reports False rather than raising."""
+    _reg_mod._plugins.pending.pop('.nopluginclaims', None)
 
-    assert _reg_mod._resolve_pending_reader('.nopluginclaims') is False
+    assert _reg_mod._plugins.resolve('.nopluginclaims') is False

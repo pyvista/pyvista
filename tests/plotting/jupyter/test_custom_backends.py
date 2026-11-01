@@ -13,7 +13,6 @@ import pytest
 import pyvista as pv
 from pyvista import jupyter as jupyter_mod
 from pyvista.jupyter import ALLOWED_BACKENDS
-from pyvista.jupyter import _custom_backend_sources
 from pyvista.jupyter import _custom_backends
 from pyvista.jupyter import _get_custom_backend_handler
 from pyvista.jupyter import _resolve_backend
@@ -29,34 +28,22 @@ skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython p
 @contextlib.contextmanager
 def _without_custom_backends():
     """Run a test without any custom backend registrations or entry points."""
-    saved = _custom_backends.copy()
-    saved_sources = _custom_backend_sources.copy()
-    saved_loaded = jupyter_mod._entry_points_loaded
+    state = jupyter_mod._save_registry_state()
     _custom_backends.clear()
-    _custom_backend_sources.clear()
-    jupyter_mod._entry_points_loaded = True
+    jupyter_mod._plugins.reset()
+    jupyter_mod._plugins.loaded = True
     try:
         yield
     finally:
-        _custom_backends.clear()
-        _custom_backends.update(saved)
-        _custom_backend_sources.clear()
-        _custom_backend_sources.update(saved_sources)
-        jupyter_mod._entry_points_loaded = saved_loaded
+        jupyter_mod._restore_registry_state(state)
 
 
 @pytest.fixture(autouse=True)
 def _clean_custom_backends():
     """Remove any custom backends registered during tests."""
-    original = _custom_backends.copy()
-    original_sources = _custom_backend_sources.copy()
-    original_loaded = jupyter_mod._entry_points_loaded
+    state = jupyter_mod._save_registry_state()
     yield
-    _custom_backends.clear()
-    _custom_backends.update(original)
-    _custom_backend_sources.clear()
-    _custom_backend_sources.update(original_sources)
-    jupyter_mod._entry_points_loaded = original_loaded
+    jupyter_mod._restore_registry_state(state)
 
 
 def _mock_handler(plotter, **kwargs):
@@ -121,7 +108,7 @@ def test_registered_jupyter_backends_returns_record_with_source():
 
 
 def test_registered_jupyter_backends_includes_entry_point_source():
-    jupyter_mod._entry_points_loaded = False
+    jupyter_mod._plugins.reset()
 
     mock_ep = MagicMock()
     mock_ep.name = 'discovered_backend'
@@ -130,9 +117,9 @@ def test_registered_jupyter_backends_includes_entry_point_source():
 
     with (
         _without_custom_backends(),
-        patch('pyvista.jupyter.entry_points', return_value=[mock_ep]),
+        patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]),
     ):
-        jupyter_mod._entry_points_loaded = False
+        jupyter_mod._plugins.reset()
         records = pv.registered_jupyter_backends()
 
     matches = [r for r in records if r.name == 'discovered_backend']
@@ -148,9 +135,9 @@ def test_entry_point_load_failure_warns_and_continues():
 
     with (
         _without_custom_backends(),
-        patch('pyvista.jupyter.entry_points', return_value=[broken]),
+        patch('pyvista.core.utilities._registry.entry_points', return_value=[broken]),
     ):
-        jupyter_mod._entry_points_loaded = False
+        jupyter_mod._plugins.reset()
         with pytest.warns(
             UserWarning, match='Failed to load pyvista.jupyter_backends entry point'
         ):
@@ -168,10 +155,10 @@ def test_entry_point_uses_renamed_group():
 
     with (
         _without_custom_backends(),
-        patch('pyvista.jupyter.entry_points', side_effect=fake_entry_points),
+        patch('pyvista.core.utilities._registry.entry_points', side_effect=fake_entry_points),
     ):
-        jupyter_mod._entry_points_loaded = False
-        jupyter_mod._ensure_entry_points()
+        jupyter_mod._plugins.reset()
+        jupyter_mod._plugins.ensure_loaded()
 
     assert captured['group'] == 'pyvista.jupyter_backends'
 
@@ -217,9 +204,9 @@ def test_entry_point_discovery():
 
     with (
         _without_custom_backends(),
-        patch('pyvista.jupyter.entry_points', return_value=[mock_ep]),
+        patch('pyvista.core.utilities._registry.entry_points', return_value=[mock_ep]),
     ):
-        jupyter_mod._entry_points_loaded = False
+        jupyter_mod._plugins.reset()
         handler = _get_custom_backend_handler('discovered')
         assert handler is _mock_handler
 

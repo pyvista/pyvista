@@ -322,7 +322,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         # need not force entry-point discovery.
         from pyvista.core.utilities.reader_registry import _custom_class_readers  # noqa: PLC0415
 
-        return [_CLASS_READERS, _custom_class_readers]
+        return [_CLASS_READERS, _custom_class_readers()]
 
     @classmethod
     def _get_extension_pattern_mappings(
