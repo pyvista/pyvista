@@ -426,7 +426,7 @@ def test_register_custom_collision_warns_and_replaces():
     def replacement(_ds, _path):
         return None
 
-    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+    with pytest.warns(UserWarning, match='replaces an existing registration from'):
         pv.register_writer('.collide', replacement)
     assert _reg_mod._custom_ext_writers.get('.collide') is replacement
 

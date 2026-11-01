@@ -83,7 +83,7 @@ def test_register_builtin_override_allowed():
 @skip_no_ipython
 def test_register_custom_collision_warns_and_replaces():
     register_jupyter_backend('mycollide', _mock_handler)
-    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+    with pytest.warns(UserWarning, match='replaces an existing registration from'):
         register_jupyter_backend('mycollide', _replacement_handler)
     assert _get_custom_backend_handler('mycollide') is _replacement_handler
 
@@ -143,6 +143,31 @@ def test_entry_point_load_failure_warns_and_continues():
         ):
             handler = _get_custom_backend_handler('broken_backend')
         assert handler is None
+
+
+def test_broken_backend_warns_once_and_registered_backends_recovers():
+    backend = MagicMock()
+    recovered = MagicMock()
+    recovered.name = 'recovers_backend'
+    recovered.value = 'package:recovers'
+    recovered.load.side_effect = [RuntimeError('missing dep'), backend]
+
+    with (
+        _without_custom_backends(),
+        patch('pyvista.core.utilities._registry.entry_points', return_value=[recovered]),
+    ):
+        jupyter_mod._plugins.reset()
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _get_custom_backend_handler('recovers_backend') is None
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            assert _get_custom_backend_handler('recovers_backend') is None
+        assert 'recovers_backend' not in jupyter_mod._registry.keys()
+        names = {record.name for record in pv.registered_jupyter_backends()}
+        assert 'recovers_backend' in names
+        assert _get_custom_backend_handler('recovers_backend') is backend
+
+    assert recovered.load.call_count == 2
 
 
 def test_entry_point_uses_renamed_group():

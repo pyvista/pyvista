@@ -10,6 +10,7 @@ import threading
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
+from typing import Protocol
 from typing import TypedDict
 from typing import TypeVar
 from typing import cast
@@ -21,7 +22,23 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 _V = TypeVar('_V')
-_R = TypeVar('_R', bound=tuple[Any, ...])
+
+
+class _Record(Protocol):
+    """What a descriptor registry needs from each registration record."""
+
+    @property
+    def name(self) -> str:
+        """Return the attribute name."""
+        ...  # pragma: no cover
+
+    @property
+    def target(self) -> type:
+        """Return the class the attribute is attached to."""
+        ...  # pragma: no cover
+
+
+_R = TypeVar('_R', bound=_Record)
 
 # Marks an attribute that did not exist before a descriptor replaced it.
 _MISSING: Any = object()
@@ -121,12 +138,13 @@ class _HandlerTable(Generic[_V]):
                 f'{self._builtin_label}. Use override=True to replace it.'
             )
             raise ValueError(msg)
+        new_source = handler_source(handler) if source is None else source
         if not override and key in self._handlers:
             warn_external(
-                f'Registering {self.label} "{key}" replaces an existing custom '
-                f'registration from {self.source(key)}.',
+                f'Registering {self.label} "{key}" from {new_source} replaces an '
+                f'existing registration from {self.source(key)}.',
             )
-        self.set(key, handler, handler_source(handler) if source is None else source)
+        self.set(key, handler, new_source)
 
     def snapshot(self) -> _HandlerTableState[_V]:
         """Copy the table for :meth:`restore`."""
@@ -191,7 +209,7 @@ class _EntryPointLoader:
         self._loading: dict[str, tuple[int, threading.Event]] = {}
 
     def ensure_scanned(self) -> None:
-        """Read the group's metadata once, importing nothing."""
+        """Read the groups' metadata once, importing nothing."""
         if not self.loaded:
             with self.lock:
                 self._scan()
@@ -199,6 +217,7 @@ class _EntryPointLoader:
     def _scan(self) -> None:
         """Fill the pending map from the groups' metadata, under the lock."""
         if not self.loaded:
+            pending: dict[str, list[EntryPoint]] = {}
             seen: set[tuple[str, str]] = set()
             for group in self.groups:
                 for ep in entry_points(group=group):
@@ -208,7 +227,8 @@ class _EntryPointLoader:
                     seen.add(identity)
                     key = self._key(ep, group)
                     if key is not None:
-                        self.pending.setdefault(key, []).append(ep)
+                        pending.setdefault(key, []).append(ep)
+            self.pending.update(pending)
             self.loaded = True
 
     def pending_keys(self) -> tuple[str, ...]:
@@ -228,23 +248,24 @@ class _EntryPointLoader:
     def resolve(self, key: str) -> bool:  # numpydoc ignore=PR01,RT01
         """Load the plugin pending under ``key``; ``False`` when this call loaded nothing.
 
-        The plugin imports outside the lock, so a plugin that reaches back into
-        the registry while importing cannot deadlock against the import lock.
-        Another thread asking for the same key waits for that import to finish.
+        The plugin imports outside the registry lock. Another thread asking for
+        the same key waits for that import to finish, unless it is itself
+        loading a plugin, which returns ``False`` at once instead.
         """
         self.ensure_scanned()
+        me = threading.get_ident()
         with self.lock:
             eps = self.pending.get(key)
             if not eps or key in self.failed:
                 return False
             loading = self._loading.get(key)
             if loading is not None:
-                thread, done = loading
-                if thread == threading.get_ident():
+                if any(thread == me for thread, _ in self._loading.values()):
                     return False
+                _, done = loading
             else:
                 done = threading.Event()
-                self._loading[key] = (threading.get_ident(), done)
+                self._loading[key] = (me, done)
         if loading is not None:
             done.wait()
             return False
@@ -371,6 +392,8 @@ class _HandlerRegistry(Generic[_V]):
         Returns why a discovered handler cannot serve its key, or ``None`` to accept it.
     separate_discovered : bool
         Keep entry-point handlers in their own table so explicit ones always win.
+    unpack_mappings : bool
+        Read a mapping an entry point loads as several ``name: handler`` pairs.
 
     """
 
@@ -384,8 +407,10 @@ class _HandlerRegistry(Generic[_V]):
         builtin_label: str = 'a built-in',
         accept: Callable[[str, object], str | None] = lambda _key, _handler: None,
         separate_discovered: bool = False,
+        unpack_mappings: bool = False,
     ) -> None:  # numpydoc ignore=PR01
         self.normalize = normalize
+        self._unpack_mappings = unpack_mappings
         self._builtin = builtin
         self._accept = accept
         self.explicit: _HandlerTable[_V] = _HandlerTable(
@@ -415,9 +440,12 @@ class _HandlerRegistry(Generic[_V]):
         """Load the first entry point and record every handler it contributes."""
         winner = eps[0]
         loaded = load_entry_point(eps)
-        for name, handler in discovered_items(
-            self.group, winner, loaded, label=self.explicit.label
-        ):
+        items = (
+            discovered_items(self.group, winner, loaded, label=self.explicit.label)
+            if self._unpack_mappings
+            else [(winner.name, loaded)]
+        )
+        for name, handler in items:
             self.discover(name, handler, winner.value)
 
     def discover(self, name: str, handler: object, source: str) -> None:  # numpydoc ignore=PR01
@@ -662,8 +690,7 @@ class _DescriptorRegistry(Generic[_R]):
     def snapshot(self) -> _DescriptorRegistryState:
         """Copy the registry state for :meth:`restore`."""
         attached = {
-            (r.target, r.name): r.target.__dict__.get(r.name, _MISSING)  # type: ignore[attr-defined]
-            for r in self.registrations
+            (r.target, r.name): r.target.__dict__.get(r.name, _MISSING) for r in self.registrations
         }
         return {
             'registrations': list(self.registrations),
@@ -674,17 +701,17 @@ class _DescriptorRegistry(Generic[_R]):
 
     def restore(self, state: _DescriptorRegistryState) -> None:  # numpydoc ignore=PR01
         """Detach what was added since the :meth:`snapshot` and re-attach what was removed."""
-        current = {(r.target, r.name) for r in self.registrations}  # type: ignore[attr-defined]
+        current = {(r.target, r.name) for r in self.registrations}
         snapshot = {(r.target, r.name) for r in state['registrations']}
         for record in self.registrations:
-            key = (record.target, record.name)  # type: ignore[attr-defined]
+            key = (record.target, record.name)
             if key in snapshot:
                 continue
-            if isinstance(record.target.__dict__.get(record.name), self._descriptor):  # type: ignore[attr-defined]
-                delattr(record.target, record.name)  # type: ignore[attr-defined]
+            if isinstance(record.target.__dict__.get(record.name), self._descriptor):
+                delattr(record.target, record.name)
             prior = self.prior.pop(key, _MISSING)
             if prior is not _MISSING:
-                setattr(record.target, record.name, prior)  # type: ignore[attr-defined]
+                setattr(record.target, record.name, prior)
         for record in state['registrations']:
             key = (record.target, record.name)
             attached = state['attached'].get(key, _MISSING)
@@ -701,9 +728,7 @@ class _DescriptorRegistry(Generic[_R]):
     def _forget(self, target_cls: type, name: str) -> None:
         """Drop the registration record for ``(target_cls, name)``."""
         self.registrations[:] = [
-            r
-            for r in self.registrations
-            if not (r.target is target_cls and r.name == name)  # type: ignore[attr-defined]
+            r for r in self.registrations if not (r.target is target_cls and r.name == name)
         ]
 
     @staticmethod

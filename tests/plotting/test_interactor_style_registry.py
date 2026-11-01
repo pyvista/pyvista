@@ -53,7 +53,7 @@ def test_register_interactor_style_custom_collision_warns_and_replaces():
     def replacement(_interactor):
         return _vtk.vtkInteractorStyleTrackballCamera()
 
-    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+    with pytest.warns(UserWarning, match='replaces an existing registration from'):
         pv.register_interactor_style('mycollide', replacement)
     assert _get_interactor_style_handler('mycollide') is replacement
 
@@ -159,6 +159,11 @@ def test_entry_point_load_failure_warns():
         pytest.warns(UserWarning, match='Failed to load'),
     ):
         _reg_mod._plugins.ensure_loaded()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert not _reg_mod._has_interactor_style('broken_style')
+    assert 'broken_style' not in _reg_mod._available_interactor_style_names()
+    mock_entry_point.load.assert_called_once()
 
 
 def test_entry_point_non_callable_handler_warns():
@@ -197,9 +202,29 @@ def test_entry_point_duplicate_provider_warns():
             'pyvista.core.utilities._registry.entry_points',
             return_value=[ep1, ep2],
         ),
-        pytest.warns(UserWarning, match='Multiple .* entry points'),
+        pytest.warns(UserWarning, match='Multiple .* providers'),
     ):
         _reg_mod._plugins.ensure_loaded()
+    ep1.load.assert_called_once()
+    ep2.load.assert_called_once()
+    assert _reg_mod._discovered_entry_point_styles.source('dup_style') == 'package_a:style'
+
+
+def test_explicit_style_does_not_block_the_rest_of_an_entry_point():
+    """An entry point sharing a name with an explicit style still provides its other styles."""
+    ep = MagicMock()
+    ep.name = 'explicit_style'
+    ep.value = 'package:STYLES'
+    ep.load.return_value = {
+        'explicit_style': _mock_style_factory,
+        'companion_style': _mock_style_factory,
+    }
+
+    pv.register_interactor_style('explicit_style', _mock_style_factory)
+    _reg_mod._plugins.reset()
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[ep]):
+        assert _reg_mod._has_interactor_style('companion_style')
+    assert _reg_mod._custom_interactor_styles.source('explicit_style') != 'package:STYLES'
 
 
 def test_entry_point_builtin_collision_warns():

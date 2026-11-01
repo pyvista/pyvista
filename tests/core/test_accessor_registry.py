@@ -6,6 +6,8 @@ import contextlib
 import gc
 import pickle
 import sys
+import threading
+import time
 from types import ModuleType
 from unittest.mock import MagicMock
 import warnings
@@ -361,6 +363,24 @@ def test_accessor_vs_accessor_collision_warns_and_replaces():
                 return 'second'
 
     assert pv.Sphere().clashing.who() == 'second'
+
+
+def test_override_replaces_a_registered_accessor_silently():
+    @pv.register_dataset_accessor('quiet_clash', pv.PolyData)
+    class FirstAccessor:
+        def __init__(self, mesh):
+            self._mesh = mesh
+
+    assert isinstance(pv.Sphere().quiet_clash, FirstAccessor)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+
+        @pv.register_dataset_accessor('quiet_clash', pv.PolyData, override=True)
+        class SecondAccessor:
+            def __init__(self, mesh):
+                self._mesh = mesh
+
+    assert isinstance(pv.Sphere().quiet_clash, SecondAccessor)
 
 
 def test_re_register_same_class_is_silent_noop(recwarn):
@@ -847,6 +867,79 @@ def test_class_level_access_triggers_plugin_load(monkeypatch):
     finally:
         with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('class_demo', pv.PolyData)
+        sys.modules.pop(plugin_name, None)
+
+
+def test_concurrent_class_level_access_returns_the_accessor_to_every_thread(monkeypatch):
+    """Two threads reading a pending accessor off the class at once both get it."""
+    plugin_name = 'fake_ep_plugin_class_race'
+    load_accessor = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('class_race', pv.PolyData)\n"
+        'class ClassRaceAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n',
+    )
+
+    def _slow_import(path):
+        time.sleep(0.2)
+        return load_accessor(path)
+
+    ep = MagicMock()
+    ep.name = 'class_race'
+    ep.value = plugin_name
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr('pyvista.core.utilities._registry.import_module', _slow_import)
+
+    barrier = threading.Barrier(2)
+    found = []
+
+    def _access():
+        barrier.wait()
+        found.append(getattr(getattr(pv.PolyData, 'class_race', None), '__name__', None))
+
+    threads = [threading.Thread(target=_access) for _ in range(2)]
+    try:
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert found == ['ClassRaceAccessor', 'ClassRaceAccessor']
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('class_race', pv.PolyData)
+        sys.modules.pop(plugin_name, None)
+
+
+def test_duplicate_entry_points_import_the_first_and_warn(monkeypatch):
+    plugin_name = 'fake_ep_plugin_dup_first'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('dup_acc', pv.PolyData)\n"
+        'class DupAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n',
+    )
+    first, second = MagicMock(), MagicMock()
+    first.name = second.name = 'dup_acc'
+    first.value = plugin_name
+    second.value = 'fake_ep_plugin_dup_second'
+    _reset_entry_point_state(monkeypatch, [first, second])
+    monkeypatch.setattr('pyvista.core.utilities._registry.import_module', fake_import)
+
+    try:
+        with pytest.warns(
+            UserWarning,
+            match=r'Multiple pyvista\.accessors entry points registered for "dup_acc": '
+            r'fake_ep_plugin_dup_first, fake_ep_plugin_dup_second\. '
+            r'Using fake_ep_plugin_dup_first\.',
+        ):
+            assert type(pv.Sphere().dup_acc).__name__ == 'DupAccessor'
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('dup_acc', pv.PolyData)
         sys.modules.pop(plugin_name, None)
 
 

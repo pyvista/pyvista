@@ -280,6 +280,10 @@ def register_dataset_accessor(
 
     .. versionadded:: 0.48.0
 
+    .. versionchanged:: 0.50.0
+        ``override=True`` also silences the warning when replacing a
+        registered accessor.
+
     Parameters
     ----------
     name : str
@@ -298,7 +302,8 @@ def register_dataset_accessor(
         If ``True``, allow registering a name that shadows an existing
         built-in attribute on ``target_cls`` (a filter method, property,
         or any other non-accessor attribute). The prior attribute is
-        restored on :func:`~pyvista.unregister_dataset_accessor`.
+        restored on :func:`~pyvista.unregister_dataset_accessor`. It also
+        replaces a registered accessor of the same name without a warning.
 
     Returns
     -------
@@ -322,7 +327,8 @@ def register_dataset_accessor(
         If ``name`` already refers to a registered accessor on
         ``target_cls`` or any ancestor. Emitting a warning rather than
         raising matches pandas' behavior and avoids hard-failing when
-        two plugins collide.
+        two plugins collide. Pass ``override=True`` to silence the
+        warning when replacement is intentional.
 
     See Also
     --------

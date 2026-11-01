@@ -89,7 +89,11 @@ def test_init_subclass_duplicate_name_replaces_existing():
     class OriginalTheme(Theme):
         _default_name: ClassVar[str] = 'dup_name'
 
-    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+    with pytest.warns(
+        UserWarning,
+        match=r'Registering theme "dup_name" from .*DupTheme replaces an existing '
+        r'registration from .*OriginalTheme\.',
+    ):
 
         class DupTheme(Theme):
             _default_name: ClassVar[str] = 'dup_name'

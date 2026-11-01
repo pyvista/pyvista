@@ -12,6 +12,7 @@ import pyvista as pv
 from pyvista.core.utilities._optional_formats import _WRITE
 from pyvista.core.utilities._optional_formats import _missing_message
 from pyvista.core.utilities._registry import _HandlerRegistry
+from pyvista.core.utilities.reader_registry import _normalize_ext
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -53,12 +54,6 @@ class WriterRegistration(NamedTuple):
 
 
 WRITER_GROUP = 'pyvista.writers'
-
-
-def _normalize_ext(key: str) -> str:
-    """Return ``key`` in lowercase, with a leading dot."""
-    key = key.lower()
-    return key if key.startswith('.') else f'.{key}'
 
 
 _registry: _HandlerRegistry[WriterHandler] = _HandlerRegistry(

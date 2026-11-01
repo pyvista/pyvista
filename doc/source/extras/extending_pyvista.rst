@@ -204,7 +204,8 @@ Two collision cases are handled differently:
 - **Accessor-vs-accessor** (two plugins register the same name on
   the same target): emits :class:`UserWarning` and replaces the
   previous accessor. Matches pandas' behavior so a collision does not
-  hard-break user scripts.
+  hard-break user scripts. Pass ``override=True`` to replace it
+  without the warning.
 - **Accessor shadowing a built-in attribute** (a filter method, a
   property, or any other non-accessor attribute on the target or one
   of its ancestors): raises :class:`ValueError` unless

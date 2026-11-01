@@ -206,6 +206,83 @@ def test_concurrent_first_scan_runs_once():
     assert entry_points.call_count == 1
 
 
+def test_second_thread_waits_until_the_load_finishes():
+    started, release = threading.Event(), threading.Event()
+
+    def _load(_name, _eps):
+        started.set()
+        release.wait(5)
+
+    loader, _, patcher = _loader([_entry_point('a')], load=_load)
+    with patcher:
+        first = threading.Thread(target=loader.resolve, args=('a',))
+        first.start()
+        started.wait(5)
+        waiter = threading.Thread(target=loader.resolve, args=('a',))
+        waiter.start()
+        waiter.join(0.2)
+        assert waiter.is_alive()
+        release.set()
+        first.join()
+        waiter.join()
+    assert loader.pending == {}
+
+
+def test_another_key_resolves_while_a_plugin_imports():
+    other = []
+
+    def _load(name, _eps):
+        if name == 'a':
+            thread = threading.Thread(target=lambda: other.append(loader.resolve('b')))
+            thread.start()
+            thread.join(5)
+
+    loader, _, patcher = _loader([_entry_point('a'), _entry_point('b')], load=_load)
+    with patcher:
+        assert loader.resolve('a') is True
+    assert other == [True]
+
+
+def test_loads_that_need_each_other_return_instead_of_waiting():
+    results = []
+    stuck = []
+
+    def _load(name, _eps):
+        if name == 'a':
+            thread = threading.Thread(target=lambda: results.append(loader.resolve('b')))
+            thread.start()
+            thread.join(5)
+            stuck.append(thread.is_alive())
+        else:
+            results.append(loader.resolve('a'))
+
+    loader, _, patcher = _loader([_entry_point('a'), _entry_point('b')], load=_load)
+    with patcher:
+        assert loader.resolve('a') is True
+    assert stuck == [False]
+    assert results == [False, True]
+
+
+def test_scan_that_raises_leaves_nothing_to_duplicate():
+    raised = []
+
+    def _key(ep, _group):
+        if ep.name == 'bad' and not raised:
+            raised.append(ep)
+            msg = 'bad metadata'
+            raise ValueError(msg)
+        return ep.name
+
+    eps = [_entry_point('a'), _entry_point('bad')]
+    loader, _, patcher = _loader(eps, key=_key)
+    with patcher:
+        with pytest.raises(ValueError, match='bad metadata'):
+            loader.ensure_scanned()
+        assert loader.pending == {}
+        loader.ensure_scanned()
+    assert loader.pending == {'a': [eps[0]], 'bad': [eps[1]]}
+
+
 def test_resolve_warns_when_several_entry_points_claim_a_key():
     eps = [_entry_point('a', value='pkg:first'), _entry_point('a', value='pkg:second')]
     loader, loaded, patcher = _loader(eps)
@@ -249,7 +326,8 @@ def test_handler_table_records_sources_and_warns_on_replacement():
     assert table.source('missing') == '<unknown>'
     with pytest.warns(
         UserWarning,
-        match='Registering demo "a" replaces an existing custom registration from pkg:one',
+        match='Registering demo "a" from pyvista.core.utilities._registry.handler_source '
+        'replaces an existing registration from pkg:one',
     ):
         table.register('a', handler_source)
     assert table.source('a') == 'pyvista.core.utilities._registry.handler_source'

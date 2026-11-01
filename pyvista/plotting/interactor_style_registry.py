@@ -8,6 +8,7 @@ from pyvista.core.utilities._registry import _HandlerRegistry
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from importlib.metadata import EntryPoint
     from typing import Any
 
     InteractorStyleHandler = Callable[..., Any]
@@ -35,20 +36,30 @@ def _normalize_interactor_style_name(name: str) -> str:
     return name.strip().lower()
 
 
-_registry: _HandlerRegistry[InteractorStyleHandler] = _HandlerRegistry(
+def _accept_style(key: str, handler: object) -> str | None:
+    """Return why ``handler`` cannot serve as interactor style ``key``, or ``None``."""
+    if key in _BUILTIN_INTERACTOR_STYLE_METHODS:
+        return 'collides with a built-in interactor style.'
+    return None if callable(handler) else 'handler is not callable.'
+
+
+class _InteractorStyleRegistry(_HandlerRegistry['InteractorStyleHandler']):
+    """Interactor style registry: every entry point loads, since one may provide several styles."""
+
+    def pending_key(self, ep: EntryPoint, group: str) -> str | None:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Key each entry point on its own, so same-named ones from different packages all load."""
+        return f'{ep.name}={ep.value}'
+
+
+_registry = _InteractorStyleRegistry(
     INTERACTOR_STYLE_ENTRY_POINT_GROUP,
     label='interactor style',
     normalize=_normalize_interactor_style_name,
     builtin=lambda name: name in _BUILTIN_INTERACTOR_STYLE_METHODS,
     builtin_label='a built-in interactor style',
-    accept=lambda key, handler: (
-        'collides with a built-in interactor style.'
-        if key in _BUILTIN_INTERACTOR_STYLE_METHODS
-        else None
-        if callable(handler)
-        else 'handler is not callable.'
-    ),
+    accept=_accept_style,
     separate_discovered=True,
+    unpack_mappings=True,
 )
 _custom_interactor_styles = _registry.explicit
 _discovered_entry_point_styles = _registry.discovered

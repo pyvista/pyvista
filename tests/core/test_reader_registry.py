@@ -159,6 +159,25 @@ def test_entry_point_duplicate_warns_and_uses_first_handler():
     )
 
 
+def test_entry_point_mapping_is_one_handler_not_several():
+    """A mapping from a reader entry point stays one handler and claims no other extension."""
+    _reg_mod._plugins.reset()
+    ep = MagicMock()
+    ep.name = '.mapfmt'
+    ep.value = 'package:READERS'
+    ep.load.return_value = {'.vtp': _mock_reader}
+
+    with patch(
+        'pyvista.core.utilities._registry.entry_points',
+        side_effect=lambda *, group: [ep] if group == _reg_mod.READER_GROUP else [],
+    ):
+        records = {record.extension: record for record in pv.registered_readers()}
+
+    assert '.vtp' not in records
+    assert records['.mapfmt'].source == 'package:READERS'
+    assert _reg_mod._get_ext_handler('.vtp') is None
+
+
 def test_entry_point_does_not_override_explicit():
     pv.register_reader('.myext', _mock_reader)
     _reg_mod._plugins.reset()
@@ -192,6 +211,55 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'Failed to load pyvista.readers entry point' in message
     assert 'package:broken' in message
     assert 'broken plugin' in message
+
+
+def _only_reader_group(*eps):
+    """Return an ``entry_points`` stand-in that serves ``eps`` for the plain reader group."""
+    return lambda *, group: list(eps) if group == _reg_mod.READER_GROUP else []
+
+
+def test_broken_plugin_warns_once_and_registered_readers_recovers():
+    _reg_mod._plugins.reset()
+    recovered = MagicMock()
+    recovered.name = '.recovers'
+    recovered.value = 'package:recovers'
+    recovered.load.side_effect = [RuntimeError('missing dep'), _mock_reader]
+
+    with patch(
+        'pyvista.core.utilities._registry.entry_points',
+        side_effect=_only_reader_group(recovered),
+    ):
+        with pytest.warns(UserWarning, match='Failed to load pyvista.readers entry point'):
+            assert _reg_mod._get_ext_handler('.recovers') is None
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            assert _reg_mod._get_ext_handler('.recovers') is None
+        assert '.recovers' not in _reg_mod._list_custom_exts()
+        assert '.recovers' in {record.extension for record in pv.registered_readers()}
+        assert _reg_mod._get_ext_handler('.recovers') is _mock_reader
+
+    assert recovered.load.call_count == 2
+
+
+def test_failed_plugin_falls_back_to_the_optional_companion():
+    _reg_mod._plugins.reset()
+    broken = MagicMock()
+    broken.name = '.companionfmt'
+    broken.value = 'package:broken'
+    broken.load.side_effect = ImportError('missing dep')
+    companion = MagicMock(return_value=True)
+
+    with (
+        patch(
+            'pyvista.core.utilities._registry.entry_points',
+            side_effect=_only_reader_group(broken),
+        ),
+        patch.object(_reg_mod, '_resolve_optional_reader', companion),
+        pytest.warns(UserWarning, match='Failed to load'),
+    ):
+        _reg_mod._resolve_ext('.companionfmt')
+
+    companion.assert_called_once_with('.companionfmt')
 
 
 def test_read_with_custom_extension(tmp_path):
@@ -558,7 +626,7 @@ def test_register_custom_collision_warns_and_replaces():
     def replacement(_path, **__):
         return pv.PolyData()
 
-    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+    with pytest.warns(UserWarning, match='replaces an existing registration from'):
         pv.register_reader('.collide', replacement)
     assert _reg_mod._custom_readers.get('.collide') is replacement
 

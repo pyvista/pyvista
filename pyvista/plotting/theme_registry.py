@@ -81,6 +81,7 @@ _registry: _HandlerRegistry[type[Theme] | Theme] = _HandlerRegistry(
     normalize=_normalize_theme_name,
     accept=_accept_theme,
     separate_discovered=True,
+    unpack_mappings=True,
 )
 _registered_theme_classes = _registry.explicit
 _discovered_entry_point_themes = _registry.discovered
