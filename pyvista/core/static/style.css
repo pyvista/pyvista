@@ -57,12 +57,11 @@ body.vscode-dark {
   --pv-badge-tcoords: #b39ddb;
 }
 
-/* OS-level dark mode fallback: applies when no explicit data-theme is set.
- * Keep these values identical to the explicit dark block above, and hardcoded
- * for the same reason.
+/* OS-level dark mode fallback, skipped when html or body sets a light data-theme.
+ * Keep these values identical to the explicit dark block above, and hardcoded.
  */
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme="light"]) {
+  html:not([data-theme="light"]) body:not([data-theme="light"]) {
     --pv-font-color0: rgba(255, 255, 255, 1);
     --pv-font-color2: rgba(255, 255, 255, 0.6);
     --pv-font-color3: rgba(255, 255, 255, 0.55);
