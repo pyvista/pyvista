@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from pyvista.core.pointset import PolyData
 
 
-# The general cell of each axis-aligned cell, and its corners in the general cell's order
-_GENERAL_CELLS = {
+# The cell each axis-aligned cell converts to, and its corners in the converted cell's order
+_AXIS_ALIGNED_CELLS = {
     CellType.VOXEL: (CellType.HEXAHEDRON, [0, 1, 3, 2, 4, 5, 7, 6]),
     CellType.PIXEL: (CellType.QUAD, [0, 1, 3, 2]),
 }
@@ -176,7 +176,7 @@ class UnstructuredGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg, output_type=pv.UnstructuredGrid)
 
-    def generalize_cells(  # type: ignore[misc]
+    def convert_axis_aligned_cells(  # type: ignore[misc]
         self: _UnstructuredGridType,
         *,
         inplace: bool = False,
@@ -219,32 +219,32 @@ class UnstructuredGridFilters(DataSetFilters):
         >>> grid = pv.ImageData(dimensions=(3, 3, 3)).cast_to_unstructured_grid()
         >>> grid.distinct_cell_types
         {<CellType.VOXEL: 11>}
-        >>> grid.generalize_cells().distinct_cell_types
+        >>> grid.convert_axis_aligned_cells().distinct_cell_types
         {<CellType.HEXAHEDRON: 12>}
 
         The hexahedra stay valid after a reflection that would turn the voxels away from
         the axes.
 
-        >>> reflected = grid.generalize_cells().reflect((1, 1, 1))
+        >>> reflected = grid.convert_axis_aligned_cells().reflect((1, 1, 1))
         >>> reflected.validate_mesh().is_valid
         True
 
         """
         output = self if inplace else self.copy()
         celltypes = self.celltypes
-        if not np.isin(celltypes, list(_GENERAL_CELLS)).any():
+        if not np.isin(celltypes, list(_AXIS_ALIGNED_CELLS)).any():
             return output
 
         offsets = self.cell_offsets
         connectivity = self.cell_connectivity.copy()
-        general_types = celltypes.copy()
-        for cell_type, (general_type, order) in _GENERAL_CELLS.items():
+        converted_types = celltypes.copy()
+        for cell_type, (converted_type, order) in _AXIS_ALIGNED_CELLS.items():
             ids = np.flatnonzero(celltypes == cell_type)
             rows = offsets[ids, np.newaxis] + np.arange(len(order))
             connectivity[rows] = connectivity[rows][:, order]
-            general_types[ids] = general_type
+            converted_types[ids] = converted_type
 
-        _replace_cells(output, pv.CellArray.from_arrays(offsets, connectivity), general_types)
+        _replace_cells(output, pv.CellArray.from_arrays(offsets, connectivity), converted_types)
         return output
 
     def remove_unused_points(  # type: ignore[misc]

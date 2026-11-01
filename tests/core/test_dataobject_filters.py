@@ -3318,7 +3318,7 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
     voxels = source != 'structured' and cast == 'unstructured' and image.dimensionality > 1
     if transform in _OBLIQUE and voxels:
         # Voxels and pixels cannot be turned off the axes
-        with pytest.raises(ValueError, match='generalize_cells'):
+        with pytest.raises(ValueError, match='convert_axis_aligned_cells'):
             _CAST_TRANSFORMS[transform](cast_mesh)
         return
     after = _CAST_TRANSFORMS[transform](cast_mesh)

@@ -182,23 +182,23 @@ def test_remove_unused_points_keeps_subclass(inplace):
 
 
 @pytest.mark.parametrize(
-    ('dimensions', 'to_general'),
+    ('dimensions', 'grid_conversion'),
     [((2, 3, 4), 'to_hexahedra'), ((2, 3, 1), 'to_quads'), ((1, 3, 4), 'to_quads')],
 )
-def test_generalize_cells_matches_grid_cast(dimensions, to_general):
+def test_convert_axis_aligned_cells_matches_grid_cast(dimensions, grid_conversion):
     image = pv.ImageData(dimensions=dimensions)
     image.cell_data['ids'] = np.arange(image.n_cells)
     grid = image.cast_to_unstructured_grid()
-    general = grid.generalize_cells()
-    expected = getattr(image, to_general)()
-    assert np.array_equal(general.celltypes, expected.celltypes)
-    assert np.array_equal(general.cell_connectivity, expected.cell_connectivity)
-    assert np.array_equal(general.cell_data['ids'], image.cell_data['ids'])
-    general.validate_mesh(action='error')
+    converted = grid.convert_axis_aligned_cells()
+    expected = getattr(image, grid_conversion)()
+    assert np.array_equal(converted.celltypes, expected.celltypes)
+    assert np.array_equal(converted.cell_connectivity, expected.cell_connectivity)
+    assert np.array_equal(converted.cell_data['ids'], image.cell_data['ids'])
+    converted.validate_mesh(action='error')
 
 
 @pytest.mark.parametrize('inplace', [True, False])
-def test_generalize_cells_leaves_other_cells_alone(inplace):
+def test_convert_axis_aligned_cells_leaves_other_cells_alone(inplace):
     cells = [
         examples.cells.Voxel(),
         examples.cells.Polyhedron(),
@@ -209,29 +209,29 @@ def test_generalize_cells_leaves_other_cells_alone(inplace):
     sibling = grid.copy(deep=False)
     before = grid.copy()
 
-    general = grid.generalize_cells(inplace=inplace)
+    converted = grid.convert_axis_aligned_cells(inplace=inplace)
 
-    assert (general is grid) == inplace
-    general_types = {
+    assert (converted is grid) == inplace
+    conversions = {
         pv.CellType.VOXEL: pv.CellType.HEXAHEDRON,
         pv.CellType.PIXEL: pv.CellType.QUAD,
     }
-    expected = [general_types.get(cell_type, cell_type) for cell_type in before.celltypes]
-    assert np.array_equal(general.celltypes, expected)
-    for cell_id in np.flatnonzero(~np.isin(before.celltypes, list(general_types))):
-        assert general.get_cell(cell_id) == before.get_cell(cell_id)
-    assert np.array_equal(general.points, before.points)
-    assert set(general.validate_mesh().invalid_fields) <= set(
+    expected = [conversions.get(cell_type, cell_type) for cell_type in before.celltypes]
+    assert np.array_equal(converted.celltypes, expected)
+    for cell_id in np.flatnonzero(~np.isin(before.celltypes, list(conversions))):
+        assert converted.get_cell(cell_id) == before.get_cell(cell_id)
+    assert np.array_equal(converted.points, before.points)
+    assert set(converted.validate_mesh().invalid_fields) <= set(
         before.validate_mesh().invalid_fields
     )
     assert sibling == before
     if not inplace:
         assert grid == before
         # The output does not share its points with the input
-        general.points += 1
+        converted.points += 1
         assert grid == before
 
 
-def test_generalize_cells_without_voxels_or_pixels():
+def test_convert_axis_aligned_cells_without_voxels_or_pixels():
     grid = examples.load_tetbeam()
-    assert grid.generalize_cells() == grid
+    assert grid.convert_axis_aligned_cells() == grid

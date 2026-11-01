@@ -305,7 +305,7 @@ def _check_axis_aligned_cells(mesh: UnstructuredGrid, matrix: NDArray[np.float64
         msg = (
             'Cannot transform VOXEL or PIXEL cells off the axes, since these cells must stay '
             'aligned with them.\nConvert them to HEXAHEDRON and QUAD cells first with '
-            '`generalize_cells`.'
+            '`convert_axis_aligned_cells`.'
         )
         raise ValueError(msg)
 

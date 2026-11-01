@@ -6160,7 +6160,7 @@ def test_voxelize_cell_type(cell_type):
     assert voxels.distinct_cell_types == {pv.CellType.VOXEL}
     assert mesh.voxelize(spacing=0.1, cell_type=pv.CellType.VOXEL) == voxels
     hexahedra = mesh.voxelize(spacing=0.1, cell_type=cell_type)
-    assert hexahedra == voxels.generalize_cells()
+    assert hexahedra == voxels.convert_axis_aligned_cells()
     # VTK 9.3 and 9.4 flag hexahedra with single precision points as invalid
     hexahedra.points_to_double().rotate_z(30).validate_mesh(action='error')
 

@@ -2142,7 +2142,7 @@ class DataObjectFilters:
             matrix can change. Transforming the :attr:`~pyvista.CellType.VOXEL` or
             :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
             off the axes raises a ``ValueError`` instead of returning invalid cells. Call
-            :meth:`~pyvista.UnstructuredGridFilters.generalize_cells` first to transform
+            :meth:`~pyvista.UnstructuredGridFilters.convert_axis_aligned_cells` first to transform
             them as hexahedra and quads.
 
         .. versionchanged:: 0.48.0
@@ -2373,7 +2373,7 @@ class DataObjectFilters:
             :attr:`~pyvista.CellType.PIXEL` cells of an :class:`~pyvista.UnstructuredGrid`
             across a plane that turns them off the axes raises a ``ValueError`` instead
             of returning invalid cells. Call
-            :meth:`~pyvista.UnstructuredGridFilters.generalize_cells` first to reflect
+            :meth:`~pyvista.UnstructuredGridFilters.convert_axis_aligned_cells` first to reflect
             them as hexahedra and quads.
 
         Parameters

@@ -3791,7 +3791,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         See Also
         --------
-        pyvista.UnstructuredGridFilters.generalize_cells
+        pyvista.UnstructuredGridFilters.convert_axis_aligned_cells
             Convert voxels and pixels to hexahedra and quads.
 
         """

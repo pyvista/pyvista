@@ -9316,7 +9316,7 @@ class DataSetFilters(DataObjectFilters):
             Type of the output cells: ``'voxel'`` or :attr:`~pyvista.CellType.VOXEL`, or
             ``'hex'``, ``'hexahedron'`` or :attr:`~pyvista.CellType.HEXAHEDRON`. Voxels must
             stay aligned with the axes, so output hexahedra to rotate or reflect the output
-            off the axes. See :meth:`~pyvista.UnstructuredGridFilters.generalize_cells`.
+            off the axes. See :meth:`~pyvista.UnstructuredGridFilters.convert_axis_aligned_cells`.
 
             .. versionadded:: 0.50
 
@@ -9342,7 +9342,7 @@ class DataSetFilters(DataObjectFilters):
             and fills the voxels its cells or points reach rather than a closed
             surface's interior.
 
-        pyvista.UnstructuredGridFilters.generalize_cells
+        pyvista.UnstructuredGridFilters.convert_axis_aligned_cells
             Convert the voxels to hexahedra.
 
         Examples
@@ -9415,7 +9415,7 @@ class DataSetFilters(DataObjectFilters):
         del ugrid.cell_data['mask']
         if cell_type not in ('voxel', pv.CellType.VOXEL):
             # Converting after the threshold leaves the background cells out of the work
-            ugrid.generalize_cells(inplace=True)
+            ugrid.convert_axis_aligned_cells(inplace=True)
         return ugrid
 
 
