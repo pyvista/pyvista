@@ -4720,16 +4720,19 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         Compute the collision between a sphere and the back faces of a
-        cube and output the number of collisions. The order of the cell
-        indices in ``"ContactCells"`` can differ between platforms.
+        cube and output the indices of the colliding cells. The order of
+        ``"ContactCells"`` can differ between platforms, so sort it first.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> mesh_a = pv.Sphere(radius=0.5)
         >>> mesh_b = pv.Cube(center=(0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
-        >>> ncol
-        315
+        >>> contact_cells = np.unique(collision['ContactCells'])
+        >>> contact_cells.size
+        125
+        >>> contact_cells[:10]
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]...)
 
         Plot the collisions by creating a collision mask with the
         ``"ContactCells"`` field data. Cells with a collision are
