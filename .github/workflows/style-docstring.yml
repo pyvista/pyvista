@@ -28,6 +28,10 @@ jobs:
             python-version: "3.14" # Should be the latest version supported
           - os: windows-latest
             python-version: "3.11" # Should be the oldest version supported
+          - os: macos-latest
+            python-version: "3.14"
+            # Apple's software renderer is slow, so skip rendering in show()
+            skip-show: true
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -65,6 +69,8 @@ jobs:
 
       - name: Test Package Docstrings
         run: tox run -e doctest-modules
+        env:
+          _PYVISTA_DOCTEST_SKIP_SHOW: ${{ matrix.skip-show || false }}
 
   doctest-names:
     name: Doctest Names
