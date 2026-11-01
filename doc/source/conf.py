@@ -244,6 +244,7 @@ _UNDOCUMENTED_TYPES = [
     'ReaderProvider',
     'RowLiteral',
     'ScalarBarArgs',
+    'SchemeHandler',
     'ShaftType',
     'SilhouetteArgs',
     'SmoothShadingAlgorithm',
