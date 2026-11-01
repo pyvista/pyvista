@@ -605,7 +605,10 @@ def test_concurrent_first_access_loads_plugin_for_every_thread(monkeypatch):
     """Two threads touching a pending component at once both get it."""
     plugin_name = 'fake_pc_concurrent'
 
+    imports = []
+
     def _slow_import(path):
+        imports.append(path)
         time.sleep(0.2)
         module = ModuleType(path)
         sys.modules[path] = module
@@ -631,14 +634,11 @@ def test_concurrent_first_access_loads_plugin_for_every_thread(monkeypatch):
 
     plotters = [pv.Plotter() for _ in range(2)]
     barrier = threading.Barrier(len(plotters))
-    errors = []
+    found = []
 
     def _access(pl):
         barrier.wait()
-        try:
-            _ = pl.concurrent
-        except AttributeError as exc:
-            errors.append(exc)
+        found.append(type(getattr(pl, 'concurrent', None)).__name__)
 
     threads = [threading.Thread(target=_access, args=(pl,)) for pl in plotters]
     try:
@@ -646,8 +646,11 @@ def test_concurrent_first_access_loads_plugin_for_every_thread(monkeypatch):
             thread.start()
         for thread in threads:
             thread.join()
-        assert errors == []
+        assert found == ['ConcurrentComponent', 'ConcurrentComponent']
+        assert imports == [plugin_name]
     finally:
+        for pl in plotters:
+            pl.close()
         with contextlib.suppress(ValueError):
             pv.unregister_plotter_component('concurrent')
         sys.modules.pop(plugin_name, None)
