@@ -3099,17 +3099,56 @@ def _mixed_grid():
     return pv.merge([examples.load_hexbeam(), tetrahedra])
 
 
-def _strip(n_points):
-    """Return a triangle strip of ``n_points`` points."""
+def _strip(n_points, *, repeat_first=False, polydata=False):
+    """Return a triangle strip of ``n_points`` points whose triangles face down."""
     ids = np.arange(n_points)
     points = np.column_stack((ids // 2, ids % 2, np.zeros(n_points))).astype(float)
-    return pv.UnstructuredGrid({pv.CellType.TRIANGLE_STRIP: ids[np.newaxis]}, points)
+    cell = np.concatenate(([0], ids)) if repeat_first else ids
+    if polydata:
+        return pv.PolyData(points, strips=[len(cell), *cell])
+    return pv.UnstructuredGrid({pv.CellType.TRIANGLE_STRIP: cell[np.newaxis]}, points)
+
+
+def _triangle_directions(mesh):
+    """Return which way each triangle of a mesh of strips faces along z, and 0 if collapsed."""
+    surface = (
+        mesh.extract_surface(algorithm=None) if isinstance(mesh, pv.UnstructuredGrid) else mesh
+    )
+    normals = surface.triangulate().compute_normals(
+        cell_normals=True, point_normals=False, auto_orient_normals=False, consistent_normals=False
+    )['Normals']
+    return np.round(np.nan_to_num(normals[:, 2]))
+
+
+@pytest.mark.parametrize('n_points', [3, 4, 5, 6])
+@pytest.mark.parametrize('repeat_first', [False, True])
+@pytest.mark.parametrize('polydata', [False, True])
+def test_reflect_strips(n_points, repeat_first, polydata):
+    mesh = _strip(n_points, repeat_first=repeat_first, polydata=polydata)
+    # A repeated first point shifts the triangles, which turns them over
+    direction = 1 if repeat_first else -1
+    assert set(_triangle_directions(mesh)) <= {direction, 0}
+
+    reflected = mesh.reflect((1, 0, 0))
+    directions = _triangle_directions(reflected)
+    assert set(directions) <= {direction, 0}
+    assert np.count_nonzero(directions) == n_points - 2
+    # A reversed strip of an even number of points repeats its first point
+    repeated = (n_points + repeat_first) % 2 == 0
+    expected = {'coincident_points'} if repeated else set()
+    assert set(reflected.validate_mesh().invalid_fields) == expected
+
+    restored = reflected.reflect((1, 0, 0))
+    if polydata:
+        assert np.array_equal(restored.strips, mesh.strips)
+    else:
+        assert np.array_equal(restored.cell_connectivity, mesh.cell_connectivity)
 
 
 def _other_cells():
     """Return a grid of cells reversed apart from block cells, followed by block cells."""
     cells = [
-        _strip(8),
+        _strip(9),
         _strip(7),
         examples.cells.BiQuadraticTriangle(),
         examples.cells.QuadraticPolygon(),
@@ -3154,6 +3193,34 @@ def test_reflect_keeps_cells_valid(load, inplace, normal):
     )
     for name in original.array_names:
         assert np.array_equal(restored[name], original[name])
+
+
+def _sheared_hexahedra():
+    """Return hexahedra sheared along two axes."""
+    shear = np.array([[1, 0.9, 0.3, 0], [0, 1, 0.8, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    return examples.load_hexbeam().points_to_double().transform(shear, inplace=False)
+
+
+def _turned_quads():
+    """Return quads turned to a generic angle."""
+    plane = pv.Plane(i_resolution=4, j_resolution=5).cast_to_unstructured_grid()
+    return plane.rotate_vector((1, 2, 3), 40)
+
+
+def _random_lines():
+    """Return lines in random directions."""
+    rng = np.random.default_rng(0)
+    points = rng.random((40, 3))
+    return pv.UnstructuredGrid({pv.CellType.LINE: np.arange(40).reshape(-1, 2)}, points)
+
+
+@pytest.mark.parametrize('normal', [(1, 1, 0), (1, 2, 3)])
+@pytest.mark.parametrize('load', [_sheared_hexahedra, _turned_quads, _random_lines])
+def test_reflect_twice_restores_turned_cells(load, normal):
+    mesh = load()
+    restored = mesh.reflect(normal).reflect(normal)
+    assert np.array_equal(restored.cell_connectivity, mesh.cell_connectivity)
+    assert np.allclose(restored.points, mesh.points)
 
 
 @pytest.mark.parametrize(
@@ -3261,8 +3328,8 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
         before.validate_mesh(action='error')
         after.validate_mesh(action='error')
 
-    if source == 'rectilinear' and transform.startswith('rotate'):
-        # A rectilinear grid reverses the axes a rotation makes descend, unlike the others
+    if source == 'rectilinear' and transform in ('rotate_half_turn', 'reflect_diagonal'):
+        # A rectilinear grid reverses or swaps axes to keep them along the global axes
         assert _canonical_cells(before, ordered=False) == _canonical_cells(after, ordered=False)
     elif isinstance(before, pv.UnstructuredGrid):
         assert _canonical_cells(before) == _canonical_cells(after)

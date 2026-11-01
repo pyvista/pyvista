@@ -2287,11 +2287,12 @@ class DataObjectFilters:
             point_vectors, cell_vectors
         )
 
+        matrix = t.matrix
         # A matrix with non-finite values has no orientation
         with np.errstate(invalid='ignore'):
-            reflects = np.linalg.det(t.matrix[:3, :3]) < 0
+            reflects = np.linalg.det(matrix[:3, :3]) < 0
         if isinstance(self, pv.UnstructuredGrid):
-            _check_axis_aligned_cells(self, t.matrix)
+            _check_axis_aligned_cells(self, matrix)
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -2307,9 +2308,9 @@ class DataObjectFilters:
                 _update_alg(alg, progress_bar=progress_bar, message='Transforming')
                 vtk_filter_output = _get_output(alg, output_type=pv.DataSet)
                 if reflects and not isinstance(output, pv.Grid):
-                    vtk_filter_output = _mirror_cells(vtk_filter_output, t.matrix)
+                    vtk_filter_output = _mirror_cells(vtk_filter_output, matrix)
                 elif isinstance(vtk_filter_output, pv.UnstructuredGrid):
-                    _align_voxels_and_pixels(vtk_filter_output, t.matrix)
+                    _align_voxels_and_pixels(vtk_filter_output, matrix)
             else:
                 vtk_filter_output = self
 
@@ -2319,7 +2320,7 @@ class DataObjectFilters:
                 if filter_needed or not inplace:
                     _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
                 if reflects:
-                    _mirror_structured(output, t.matrix)
+                    _mirror_structured(output, matrix)
             elif (
                 isinstance(output, pv.RectilinearGrid)
                 and isinstance(self, pv.RectilinearGrid)
