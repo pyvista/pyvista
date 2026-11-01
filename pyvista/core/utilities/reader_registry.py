@@ -118,6 +118,32 @@ class ReaderRegistration(NamedTuple):
     override: bool = False
 
 
+class SchemeRegistration(NamedTuple):
+    """Describe one registered URI scheme handler.
+
+    Returned by :func:`~pyvista.registered_schemes`.
+
+    .. versionadded:: 0.50.0
+
+    Attributes
+    ----------
+    scheme : str
+        Lowercase URI scheme the handler claims, without ``://`` (for
+        example, ``'myscheme'``).
+    handler : callable
+        The scheme handler.
+    source : str
+        Human-readable origin in the form ``'module.qualname'`` for
+        explicit registrations or the entry-point ``value`` for
+        plugin-discovered registrations.
+
+    """
+
+    scheme: str
+    handler: SchemeHandler
+    source: str
+
+
 class _RegistryState(TypedDict):
     """Mutable state of the reader registry."""
 
@@ -513,13 +539,14 @@ def register_scheme(
     :func:`pyvista.get_reader` raises :class:`ValueError` for such a URI.
     Can be used as a plain call or as a decorator.
 
-    .. versionadded:: 0.50
+    .. versionadded:: 0.50.0
 
     Parameters
     ----------
     scheme : str
-        URI scheme, case-insensitive. ``'myscheme'``, ``'myscheme:'`` and
-        ``'myscheme://'`` all name the same scheme.
+        URI scheme, case-insensitive. ``'myscheme'`` and ``'myscheme://'``
+        name the same scheme. Only URIs of the form ``myscheme://...``
+        are dispatched to the handler.
 
     handler : callable, optional
         Called as ``handler(uri, force_ext=..., file_format=...,
@@ -530,7 +557,8 @@ def register_scheme(
         decorated callable unchanged.
 
     override : bool, default: False
-        If ``True``, replace a handler already registered for ``scheme``.
+        If ``True``, silence the warning that fires when replacing a
+        handler already registered for ``scheme``.
 
     Returns
     -------
@@ -541,8 +569,14 @@ def register_scheme(
     Raises
     ------
     ValueError
-        If ``scheme`` is not a valid URI scheme, or if a handler is
-        already registered for it and ``override`` is ``False``.
+        If ``scheme`` is not a valid URI scheme.
+
+    Warns
+    -----
+    UserWarning
+        If ``scheme`` already has a registered handler. The new
+        registration replaces the old one (last wins); pass
+        ``override=True`` to silence the warning.
 
     See Also
     --------
@@ -580,13 +614,12 @@ def register_scheme(
 
 
 def _normalize_scheme(scheme: str) -> str:
-    """Return ``scheme`` lowercased, without a trailing ``:`` or ``://``."""
-    key = scheme.lower()
-    key = key.removesuffix('://') if key.endswith('://') else key.removesuffix(':')
+    """Return ``scheme`` in lowercase, without a trailing ``://``."""
+    key = scheme.lower().removesuffix('://')
     if not _SCHEME_PATTERN.fullmatch(key):
         msg = (
             f'Invalid URI scheme {scheme!r}. A scheme is a letter followed by letters, '
-            f'digits, "+", "-" or ".", given as "name", "name:" or "name://".'
+            f'digits, "+", "-" or ".", given as "name" or "name://".'
         )
         raise ValueError(msg)
     return key
@@ -596,11 +629,10 @@ def _register_scheme(scheme: str, handler: SchemeHandler, *, override: bool) -> 
     """Register ``handler`` for ``scheme`` in the scheme registry."""
     key = _normalize_scheme(scheme)
     if not override and key in _custom_scheme_readers:
-        msg = (
-            f'A handler for "{key}://" URIs is already registered from '
-            f'{_custom_scheme_sources[key]}. Use override=True to replace it.'
+        warn_external(
+            f'Registering a handler for "{key}://" URIs replaces the existing '
+            f'handler from {_custom_scheme_sources[key]}.'
         )
-        raise ValueError(msg)
     # Registering in code takes precedence over an entry point declaring the scheme.
     _pending_scheme_readers.pop(key, None)
     _custom_scheme_readers[key] = handler
@@ -740,11 +772,13 @@ def _ensure_entry_points() -> None:
                 _override_ext_readers.add(key)
             _pending_ext_readers.setdefault(key, []).append(ep)
 
+    # Its own set: a package may declare one name as both an extension and a scheme.
+    seen_schemes: set[tuple[str, str]] = set()
     for ep in entry_points(group=SCHEME_GROUP):
         identity = (str(ep.name), str(ep.value))
-        if identity in seen:
+        if ep.group != SCHEME_GROUP or identity in seen_schemes:
             continue
-        seen.add(identity)
+        seen_schemes.add(identity)
         try:
             key = _normalize_scheme(ep.name)
         except ValueError as err:
@@ -918,30 +952,33 @@ def registered_readers() -> tuple[ReaderRegistration, ...]:
     )
 
 
-def registered_schemes() -> dict[str, str]:
-    """Return every registered URI scheme handler and where it came from.
+def registered_schemes() -> tuple[SchemeRegistration, ...]:
+    """Return every registered URI scheme handler.
 
     Imports every pending ``pyvista.schemes`` plugin. One that fails to
     import emits a ``UserWarning`` and is left out.
 
-    .. versionadded:: 0.50
+    .. versionadded:: 0.50.0
 
     Returns
     -------
-    dict[str, str]
-        Maps each lowercase scheme to its source: ``'module.qualname'``
-        for a handler registered in code, or the entry-point value.
+    tuple[SchemeRegistration, ...]
+        One record per registered scheme. Each record exposes
+        ``scheme``, ``handler``, and ``source``.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> def read_demo(uri, **kwargs): ...
     >>> pv.register_scheme('demo', read_demo)
-    >>> 'demo' in pv.registered_schemes()
-    True
+    >>> [r.scheme for r in pv.registered_schemes() if r.scheme == 'demo']
+    ['demo']
 
     """
     _ensure_entry_points()
     for scheme in list(_pending_scheme_readers):
         _resolve_pending_scheme(scheme)
-    return dict(_custom_scheme_sources)
+    return tuple(
+        SchemeRegistration(scheme=scheme, handler=handler, source=_custom_scheme_sources[scheme])
+        for scheme, handler in _custom_scheme_readers.items()
+    )

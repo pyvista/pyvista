@@ -283,9 +283,13 @@ or not, and ``cls`` is then checked against the returned mesh.
 :func:`pyvista.get_reader` raises :class:`ValueError` for a URI whose scheme
 has a handler.
 
-A scheme may be given as ``'myscheme'``, ``'myscheme:'`` or
-``'myscheme://'``, in any case. Registering a scheme that already has a
-handler raises :class:`ValueError` unless ``override=True``. Packages
+A scheme may be given as ``'myscheme'`` or ``'myscheme://'``, in any
+case, and only URIs of the form ``myscheme://...`` reach the handler.
+A URI ending in ``.pkl`` or ``.pickle``, or read with
+``force_ext='.pkl'`` or ``'.pickle'``, is refused before any handler
+runs.
+Registering a scheme that already has a
+handler replaces it and warns unless ``override=True``. Packages
 declare scheme handlers in the ``pyvista.schemes`` entry-point group; the
 plugin is imported only when a URI with its scheme is read, and a handler
 registered in code takes precedence over an entry point:
@@ -297,6 +301,7 @@ registered in code takes precedence over an entry point:
 
 .. autofunction:: pyvista.register_scheme
 .. autofunction:: pyvista.registered_schemes
+.. autoclass:: pyvista.SchemeRegistration
 
 
 Custom Writers

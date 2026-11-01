@@ -15,8 +15,8 @@ from pyvista import MultiBlock
 class Handler:
     """Read a URI and return a dataset."""
 
-    def __call__(self, uri: str, /, **kwargs: Any) -> DataSet | MultiBlock:  # pragma: no cover
-        """Read ``uri`` as a mesh."""
+    def __call__(self, _uri: str, /, **_kwargs: Any) -> DataSet | MultiBlock:  # pragma: no cover
+        """Read a URI as a mesh."""
         return pv.Sphere()
 
 
@@ -26,3 +26,5 @@ with skip_runtime(reason='registering a scheme mutates the process-wide registry
 
     # Passing the handler outright registers it and returns nothing
     assert_types(pv.register_scheme('typeassert', Handler(), override=True), None)
+
+assert_types(pv.registered_schemes(), tuple[pv.SchemeRegistration, ...])

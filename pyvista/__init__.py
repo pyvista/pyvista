@@ -45,6 +45,7 @@ from pyvista.core.utilities.accessor_registry import (
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
 from pyvista.core.utilities.reader_registry import ReaderRegistration as ReaderRegistration
+from pyvista.core.utilities.reader_registry import SchemeRegistration as SchemeRegistration
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
 from pyvista.core.utilities.reader_registry import register_reader as register_reader
 from pyvista.core.utilities.reader_registry import register_scheme as register_scheme
