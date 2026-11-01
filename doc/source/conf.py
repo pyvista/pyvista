@@ -556,8 +556,6 @@ reset_pyvista = ResetPyVista()
 
 sphinx_gallery_conf = {
     'abort_on_example_error': True,  # Fail early
-    # convert rst to md for ipynb
-    'pypandoc': True,
     # path to your examples scripts
     'examples_dirs': ['../../examples/'],
     # path where to save gallery generated examples
@@ -576,7 +574,8 @@ sphinx_gallery_conf = {
     'doc_module': 'pyvista',
     # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
     'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
-    'first_notebook_cell': '%matplotlib inline',
+    # sphinx_examples_as_code writes the downloads, so skip sphinx-gallery's notebooks
+    'notebook_extensions': set(),
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
     'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
