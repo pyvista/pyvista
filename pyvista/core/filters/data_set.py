@@ -9411,7 +9411,7 @@ class DataSetFilters(DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         if cell_type not in ('voxel', pv.CellType.VOXEL):
-            # Converting after the threshold leaves the background cells out of the work
+            # Converting the kept cells beats to_hexahedra before the threshold below 40% kept
             ugrid.convert_axis_aligned_cells(inplace=True)
         return ugrid
 
