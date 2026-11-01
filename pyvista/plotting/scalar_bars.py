@@ -27,6 +27,11 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from collections.abc import ValuesView
 
+    from pyvista.plotting.lookup_table import LookupTable
+    from pyvista.plotting.mapper import _BaseMapper
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.plotting.themes import Theme
+
     from ._typing import ColorLike
     from ._typing import ColormapOptions
 
@@ -623,7 +628,7 @@ class ScalarBars(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, plotter: pv.Plotter) -> None:
+    def __init__(self, plotter: Plotter) -> None:
         """Initialize ScalarBars."""
         self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges: dict[str, Sequence[float]] = {}
@@ -1113,8 +1118,8 @@ class ScalarBars(_NoNewAttrMixin):
         self,
         title: str = '',
         *,
-        mapper: _vtk.vtkMapper | None = None,
-        lookup_table: _vtk.vtkLookupTable | pv.LookupTable | None = None,
+        mapper: _BaseMapper | None = None,
+        lookup_table: LookupTable | None = None,
         cmap: ColormapOptions | list[str] | None = None,
         clim: Sequence[float] | None = None,
         n_labels: int = 5,
@@ -1145,7 +1150,7 @@ class ScalarBars(_NoNewAttrMixin):
         n_colors: int | None = None,
         fill: bool = False,
         render: bool = False,
-        theme: pv.plotting.themes.Theme | None = None,
+        theme: Theme | None = None,
         unconstrained_font_size: bool = False,
         unique_bar: bool = False,
     ) -> _vtk.vtkScalarBarActor | None:
@@ -1159,13 +1164,13 @@ class ScalarBars(_NoNewAttrMixin):
         title : str, default: ""
             Title of the scalar bar. Default is rendered as an empty title.
 
-        mapper : :vtk:`vtkMapper`, optional
+        mapper : pyvista.DataSetMapper, optional
             Mapper used for the scalar bar. Defaults to the last mapper created
             by the plotter if neither ``mapper``, ``lookup_table``, or
             ``cmap`` is provided. Raises ValueError if more than one of
             ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 
-        lookup_table : :vtk:`vtkLookupTable`, optional
+        lookup_table : pyvista.LookupTable, optional
             Lookup table used for the scalar bar. Raises ValueError if more
             than one of ``mapper``, ``lookup_table``, or ``cmap`` is provided.
 

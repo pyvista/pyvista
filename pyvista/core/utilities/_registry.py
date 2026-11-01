@@ -252,7 +252,7 @@ class _EntryPointLoader:
             self._load(key, eps)
         except EntryPointRefusedError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - a broken plugin is reported, not fatal
             winner = eps[0]
             msg = (
                 f'Failed to load {self.group} entry point '

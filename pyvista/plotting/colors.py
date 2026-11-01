@@ -2317,7 +2317,7 @@ def _validate_color_sequence(
         n_colors = 1 if n_colors is None else n_colors
         return tuple(color_list * n_colors)
     except ValueError:
-        if isinstance(color, (tuple, list)):
+        if isinstance(color, (tuple, list, np.ndarray)):
             try:
                 color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
                 if len(color_list) == 1:
@@ -2550,7 +2550,7 @@ def get_cycler(
 
     Returns
     -------
-    Cycler
+    cycler.Cycler | None
         The color cycler corresponding to the input value.
 
     Raises

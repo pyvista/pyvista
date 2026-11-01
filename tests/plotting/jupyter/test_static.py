@@ -97,6 +97,16 @@ def test_show_return_values(sphere: pv.PolyData):
     assert isinstance(viewer, Image)
 
 
+@skip_no_ipython
+@pytest.mark.skip_plotting
+def test_static_renders_while_interactor_render_disabled():
+    pl = pv.Plotter(notebook=True, window_size=(50, 50))
+    pl.background_color = 'white'
+    pl.render_window.GetInteractor().EnableRenderOff()
+    image = pl.show(jupyter_backend='static', return_viewer=True)
+    assert (np.asarray(image)[..., :3] == 255).all()
+
+
 def test_set_jupyter_backend_unused_args_deprecated():
     """The unused `name` and `**kwargs` warn instead of being silently ignored."""
     try:

@@ -129,10 +129,9 @@ A fifth label, `blacksmith`, starts nothing extra: it moves the documentation ca
 build and test jobs onto the paid Blacksmith runners the merge queue uses, which finish
 sooner. Ask for it when the documentation build is what the pull request is waiting on.
 
-A label only takes effect on the next run, so it goes on before the final push, or the
-branch gets pushed again afterwards; `CONTRIBUTING.rst` says the same for the VTK labels.
-You cannot apply labels yourself, so name the ones the change warrants when you hand the
-pull request over.
+`Continuous Integration Etiquette` in `CONTRIBUTING.rst` says when each label takes effect.
+You cannot apply labels yourself, so name the ones the change warrants when you hand the pull
+request over.
 
 ## Before opening
 

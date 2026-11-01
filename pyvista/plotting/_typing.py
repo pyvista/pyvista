@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .colors import _COLORCET_CMAPS_LITERAL
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
+    from .mapper import _BaseMapper
 
 PlottableType: TypeAlias = _MeshLike | str | Path
 
@@ -159,7 +160,7 @@ class ScalarBarArgs(TypedDict, total=False):
     """Keyword arguments accepted by :meth:`~pyvista.Plotter.add_scalar_bar`."""
 
     title: str
-    mapper: _vtk.vtkMapper
+    mapper: _BaseMapper
     n_labels: int
     tick_locations: Sequence[float]
     italic: bool

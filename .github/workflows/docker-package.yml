@@ -7,10 +7,11 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Adding any other label starts a run that skips, so it gets its own group and cannot cancel a real run.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.event.action == 'labeled' && github.event.label.name != 'docker' && '-other-label' || '' }}
   # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
   # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
   cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
@@ -34,6 +35,7 @@ jobs:
     if: github.event_name == 'push' ||
       ( github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      ( github.event.action != 'labeled' || github.event.label.name == 'docker' ) &&
       ( startsWith(github.event.pull_request.head.ref, 'docker') ||
       contains(github.event.pull_request.labels.*.name, 'docker')
       ))

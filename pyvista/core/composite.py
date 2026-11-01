@@ -1177,6 +1177,78 @@ class MultiBlock(
         return self.n_blocks == 0
 
     @property
+    def n_points(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of points in all blocks.
+
+        Nested blocks are counted recursively and ``None`` blocks count as zero.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+        >>> multi.n_points
+        850
+
+        This is the sum over all leaf datasets.
+
+        >>> sum(block.n_points for block in multi.recursive_iterator(skip_none=True))
+        850
+
+        """
+        return self.GetNumberOfPoints()
+
+    @property
+    def n_cells(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of cells in all blocks.
+
+        Nested blocks are counted recursively and ``None`` blocks count as zero.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+        >>> multi.n_cells
+        1686
+
+        This is the sum over all leaf datasets.
+
+        >>> sum(block.n_cells for block in multi.recursive_iterator(skip_none=True))
+        1686
+
+        """
+        return self.GetNumberOfCells()
+
+    @property
+    def depth(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of :class:`MultiBlock` levels, including this one.
+
+        A :class:`MultiBlock` with no nested :class:`MultiBlock` blocks has a depth of 1.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        is_nested
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere()])
+        >>> multi.depth
+        1
+
+        >>> nested = pv.MultiBlock([multi, pv.MultiBlock([multi])])
+        >>> nested.depth
+        3
+
+        """
+        return 1 + max((block.depth for block in self if isinstance(block, MultiBlock)), default=0)
+
+    @property
     def bounds(self) -> BoundsTuple:
         """Find min/max for bounds across blocks.
 
@@ -1206,9 +1278,8 @@ class MultiBlock(
 
         """
         # apply reduction of min and max over each block
-        # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
         blocks: Sequence[_TypeMultiBlockLeaf] = self
-        all_bounds = [cast('list[float]', block.bounds) for block in blocks if block]
+        all_bounds = [list(block.bounds) for block in blocks if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = (0.0, 0.0, 0.0)
@@ -1426,14 +1497,14 @@ class MultiBlock(
     def __getitem__(self, index: slice) -> MultiBlock[_BlockType]: ...  # pragma: no cover
     # fmt: on
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | str | slice) -> _BlockType | MultiBlock[_BlockType]:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
 
         """
         if isinstance(index, slice):
-            multi = MultiBlock()
+            multi: MultiBlock[_BlockType] = MultiBlock()
             for i in range(self.n_blocks)[index]:
                 multi.append(self[i], self.get_block_name(i))
             return multi
@@ -1446,7 +1517,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))
+        return cast('_BlockType', wrap(self.GetBlock(index)))
 
     # fmt: off
     # ruff: disable[E501]
@@ -2094,7 +2165,10 @@ class MultiBlock(
     def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
+        attrs.append(('N Cells:', self.n_cells, '{}'))
+        attrs.append(('N Points:', self.n_points, '{}'))
         attrs.append(('N Blocks:', self.n_blocks, '{}'))
+        attrs.append(('Depth:', self.depth, '{}'))
         bds = self.bounds
         attrs.append(('X Bounds:', (bds.x_min, bds.x_max), '{:.3e}, {:.3e}'))
         attrs.append(('Y Bounds:', (bds.y_min, bds.y_max), '{:.3e}, {:.3e}'))
@@ -2147,7 +2221,10 @@ class MultiBlock(
             obj_type=type(self).__name__,
             mesh_type='MultiBlock',
             header_badges=[
+                f'{self.n_points:,} points',
+                f'{self.n_cells:,} cells',
                 f'{self.n_blocks} blocks',
+                f'depth {self.depth}',
                 _fmt_memory(self.actual_memory_size),
             ],
             metadata=meta,
@@ -2227,7 +2304,7 @@ class MultiBlock(
 
     def shallow_copy(  # type: ignore[override]
         self,
-        to_copy: _vtk.vtkMultiBlockDataSet,
+        to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet,
         *,
         recursive: bool = False,
     ) -> None:
@@ -2264,7 +2341,9 @@ class MultiBlock(
         self._sync_user_dict()
         self.wrap_nested()
 
-    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
+    def deep_copy(  # type: ignore[override]
+        self, to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet
+    ) -> None:
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
 
         Parameters
@@ -2322,7 +2401,7 @@ class MultiBlock(
         pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             An array from the dataset matching ``name``.
 
         Notes
@@ -2341,11 +2420,7 @@ class MultiBlock(
                     )
                 else:
                     try:
-                        field, scalars_out = block.set_active_scalars(name, preference=preference)
-                        if scalars_out is None:
-                            field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
-                        else:
-                            scalars = scalars_out
+                        field, scalars = block.set_active_scalars(name, preference=preference)
                     except KeyError:
                         if not allow_missing:
                             raise

@@ -570,7 +570,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         alg = _vtk.vtkRectilinearGridToPointSet()
         alg.SetInputData(self)
         alg.Update()
-        out = _get_output(alg)
+        out = _get_output(alg, output_type=pv.StructuredGrid)
         out.offset = self.offset
         return out
 
@@ -1072,7 +1072,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         alg = _vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
-        out = _get_output(alg)
+        out = _get_output(alg, output_type=pv.StructuredGrid)
         out.offset = self.offset
         out.set_active_scalars(self.active_scalars_name)
         return out

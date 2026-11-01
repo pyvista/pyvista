@@ -9,6 +9,8 @@ from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
+from typing import overload
+import weakref
 
 import numpy as np
 import pyvista_validation as _validation
@@ -47,10 +49,12 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core._typing_core import _VectorSequence
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.helpers import _NormalsLiteral
@@ -192,6 +196,7 @@ class WidgetComponent(_NoNewAttrMixin):
         """Initialize the widget component."""
         self._plotter = plotter
         self.camera_widgets: list[_vtk.vtkCameraOrientationWidget] = []
+        self._camera_widget_observers: list[tuple[_vtk.vtkRenderer, int]] = []
         self.box_widgets: list[_vtk.vtkBoxWidget] = []
         self.box_clipped_meshes: list[DataSet] = []
         self.plane_widgets: list[_PlaneWidget] = []
@@ -353,7 +358,7 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_clip_box(
         self,
         /,
-        mesh: DataSet | _vtk.vtkAlgorithm,
+        mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkAlgorithm,
         *,
         invert: bool = False,
         rotation_enabled: bool = True,
@@ -375,7 +380,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Parameters
         ----------
-        mesh : DataSet | :vtk:`vtkAlgorithm`
+        mesh : DataSet | :vtk:`vtkDataSet` | :vtk:`vtkAlgorithm`
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
@@ -425,8 +430,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the mesh.
+        pyvista.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -461,9 +466,9 @@ class WidgetComponent(_NoNewAttrMixin):
 
         if crinkle:
             crinkler = crinkle_algorithm(clipper.GetOutputPort(port), algo)
-            box_clipped_mesh = _get_output(crinkler)
+            box_clipped_mesh = _get_output(crinkler, output_type=pv.UnstructuredGrid)
         else:
-            box_clipped_mesh = _get_output(clipper, oport=port)
+            box_clipped_mesh = _get_output(clipper, output_type=pv.UnstructuredGrid, oport=port)
 
         self.box_clipped_meshes.append(box_clipped_mesh)
 
@@ -476,10 +481,11 @@ class WidgetComponent(_NoNewAttrMixin):
 
             clipper.SetBoxClip(*bounds)
             clipper.Update()
+            clipped: DataSet
             if crinkle:
                 clipped = pv.wrap(crinkler.GetOutputDataObject(0))
             else:
-                clipped = _get_output(clipper, oport=port)
+                clipped = _get_output(clipper, output_type=pv.UnstructuredGrid, oport=port)
             box_clipped_mesh.shallow_copy(clipped)
 
         self.add_box_widget(
@@ -497,6 +503,16 @@ class WidgetComponent(_NoNewAttrMixin):
             return self._plotter.add_mesh(crinkler, reset_camera=False, **kwargs)
         return self._plotter.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_plane_widget(self, callback: Callable[..., object] | None, *, normal: VectorLikeFloat | _NormalsLiteral = ..., origin: VectorLikeFloat | None = ..., bounds: VectorLikeFloat | None = ..., factor: float = ..., color: ColorLike | None = ..., assign_to_axis: str | int | None = ..., tubing: bool = ..., outline_translation: bool = ..., origin_translation: bool = ..., implicit: Literal[True] = ..., pass_widget: bool = ..., test_callback: bool = ..., normal_rotation: bool = ..., interaction_event: InteractionEventType = ..., outline_opacity: bool | float | None = ...) -> _vtk.vtkImplicitPlaneWidget: ...
+    @overload
+    def add_plane_widget(self, callback: Callable[..., object] | None, *, normal: VectorLikeFloat | _NormalsLiteral = ..., origin: VectorLikeFloat | None = ..., bounds: VectorLikeFloat | None = ..., factor: float = ..., color: ColorLike | None = ..., assign_to_axis: str | int | None = ..., tubing: bool = ..., outline_translation: bool = ..., origin_translation: bool = ..., implicit: Literal[False], pass_widget: bool = ..., test_callback: bool = ..., normal_rotation: bool = ..., interaction_event: InteractionEventType = ..., outline_opacity: bool | float | None = ...) -> _vtk.vtkPlaneWidget: ...
+    @overload
+    def add_plane_widget(self, callback: Callable[..., object] | None, *, normal: VectorLikeFloat | _NormalsLiteral = ..., origin: VectorLikeFloat | None = ..., bounds: VectorLikeFloat | None = ..., factor: float = ..., color: ColorLike | None = ..., assign_to_axis: str | int | None = ..., tubing: bool = ..., outline_translation: bool = ..., origin_translation: bool = ..., implicit: bool = ..., pass_widget: bool = ..., test_callback: bool = ..., normal_rotation: bool = ..., interaction_event: InteractionEventType = ..., outline_opacity: bool | float | None = ...) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget: ...
+    # ruff: enable[E501]
+    # fmt: on
     def add_plane_widget(
         self,
         callback: Callable[..., object] | None,
@@ -754,7 +770,7 @@ class WidgetComponent(_NoNewAttrMixin):
     def add_mesh_clip_plane(
         self,
         /,
-        mesh: DataSet | _vtk.vtkAlgorithm,
+        mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkAlgorithm,
         *,
         normal: VectorLikeFloat | _NormalsLiteral = 'x',
         invert: bool = False,
@@ -783,7 +799,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Parameters
         ----------
-        mesh : DataSet or :vtk:`vtkAlgorithm`
+        mesh : DataSet | :vtk:`vtkDataSet` | :vtk:`vtkAlgorithm`
             The input dataset to add to the scene and clip or algorithm that
             produces said mesh.
 
@@ -858,8 +874,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the mesh.
+        pyvista.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -898,11 +914,14 @@ class WidgetComponent(_NoNewAttrMixin):
         clipper.SetValue(value)
         clipper.SetInsideOut(invert)  # invert the clip if needed
 
+        plane_clipped_mesh: DataSet
         if crinkle:
             crinkler = crinkle_algorithm(clipper, algo)
-            plane_clipped_mesh = _get_output(crinkler)
+            plane_clipped_mesh = _get_output(crinkler, output_type=pv.UnstructuredGrid)
         else:
-            plane_clipped_mesh = _get_output(clipper)
+            plane_clipped_mesh = _get_output(
+                clipper, output_type=(pv.PolyData, pv.UnstructuredGrid)
+            )
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(plane_normal: VectorLikeFloat, loc: VectorLikeFloat) -> None:
@@ -936,6 +955,16 @@ class WidgetComponent(_NoNewAttrMixin):
             return self._plotter.add_mesh(crinkler, **kwargs)
         return self._plotter.add_mesh(clipper, **kwargs)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_volume_clip_plane(self, /, volume: Volume | ImageData | RectilinearGrid, *, normal: VectorLikeFloat | _NormalsLiteral = ..., invert: bool = ..., widget_color: ColorLike | None = ..., value: float = ..., factor: float = ..., assign_to_axis: str | int | None = ..., tubing: bool = ..., origin_translation: bool = ..., outline_translation: bool = ..., implicit: Literal[True] = ..., normal_rotation: bool = ..., interaction_event: InteractionEventType = ..., origin: VectorLikeFloat | None = ..., outline_opacity: bool | float | None = ..., **kwargs: Any) -> _vtk.vtkImplicitPlaneWidget: ...
+    @overload
+    def add_volume_clip_plane(self, /, volume: Volume | ImageData | RectilinearGrid, *, normal: VectorLikeFloat | _NormalsLiteral = ..., invert: bool = ..., widget_color: ColorLike | None = ..., value: float = ..., factor: float = ..., assign_to_axis: str | int | None = ..., tubing: bool = ..., origin_translation: bool = ..., outline_translation: bool = ..., implicit: Literal[False], normal_rotation: bool = ..., interaction_event: InteractionEventType = ..., origin: VectorLikeFloat | None = ..., outline_opacity: bool | float | None = ..., **kwargs: Any) -> _vtk.vtkPlaneWidget: ...
+    @overload
+    def add_volume_clip_plane(self, /, volume: Volume | ImageData | RectilinearGrid, *, normal: VectorLikeFloat | _NormalsLiteral = ..., invert: bool = ..., widget_color: ColorLike | None = ..., value: float = ..., factor: float = ..., assign_to_axis: str | int | None = ..., tubing: bool = ..., origin_translation: bool = ..., outline_translation: bool = ..., implicit: bool = ..., normal_rotation: bool = ..., interaction_event: InteractionEventType = ..., origin: VectorLikeFloat | None = ..., outline_opacity: bool | float | None = ..., **kwargs: Any) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget: ...
+    # ruff: enable[E501]
+    # fmt: on
     def add_volume_clip_plane(
         self,
         /,
@@ -1173,8 +1202,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the mesh.
+        pyvista.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -1761,7 +1790,26 @@ class WidgetComponent(_NoNewAttrMixin):
         return slider_widget
 
     def clear_slider_widgets(self) -> None:
-        """Remove all of the slider widgets."""
+        """Remove all of the slider widgets.
+
+        Examples
+        --------
+        Add a slider that controls a mesh's opacity, then clear it.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(off_screen=True)
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> def set_opacity(value):
+        ...     actor.prop.opacity = value
+        >>> _ = pl.add_slider_widget(set_opacity, [0, 1], title='Opacity')
+        >>> len(pl.widgets.slider_widgets)
+        1
+        >>> pl.clear_slider_widgets()
+        >>> len(pl.widgets.slider_widgets)
+        0
+        >>> pl.close()
+
+        """
         for slider_widget in self.slider_widgets:
             slider_widget.Off()
         self.slider_widgets.clear()
@@ -1859,8 +1907,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the mesh.
+        pyvista.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -2030,8 +2078,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the mesh.
+        pyvista.Actor
+            Actor of the mesh.
 
         Examples
         --------
@@ -2343,8 +2391,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the mesh.
+        pyvista.Actor
+            Actor of the mesh.
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
@@ -2368,7 +2416,7 @@ class WidgetComponent(_NoNewAttrMixin):
         spline_sliced_mesh = pv.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline: pv.PolyData) -> None:
+        def callback(spline: PolyData) -> None:
             polyline = cast('_vtk.vtkPolyLine', spline.GetCell(0))
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
@@ -2475,6 +2523,14 @@ class WidgetComponent(_NoNewAttrMixin):
             distance_widget.Off()
         self.distance_widgets.clear()
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_sphere_widget(self, callback: Callable[..., object] | None, *, center: Sequence[float] | _VectorSequence = ..., radius: float = ..., theta_resolution: int = ..., phi_resolution: int = ..., color: ColorLike | Sequence[ColorLike] | None = ..., style: _SphereStyleOptions = ..., selected_color: ColorLike = ..., indices: Sequence[int] | None = ..., pass_widget: bool = ..., test_callback: bool = ..., interaction_event: InteractionEventType = ...) -> _vtk.vtkSphereWidget: ...
+    @overload
+    def add_sphere_widget(self, callback: Callable[..., object] | None, *, center: VectorLikeFloat | MatrixLikeFloat = ..., radius: float = ..., theta_resolution: int = ..., phi_resolution: int = ..., color: ColorLike | Sequence[ColorLike] | None = ..., style: _SphereStyleOptions = ..., selected_color: ColorLike = ..., indices: Sequence[int] | None = ..., pass_widget: bool = ..., test_callback: bool = ..., interaction_event: InteractionEventType = ...) -> _vtk.vtkSphereWidget | list[_vtk.vtkSphereWidget]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def add_sphere_widget(
         self,
         callback: Callable[..., object] | None,
@@ -2556,8 +2612,8 @@ class WidgetComponent(_NoNewAttrMixin):
         Returns
         -------
         :vtk:`vtkSphereWidget` | list[:vtk:`vtkSphereWidget`]
-            The sphere widget, or the list of widgets when more than one center
-            is given.
+            The sphere widget, or the list of widgets when ``center`` holds more than
+            one point.
 
         """
         sphere_color = pv.global_theme.color.float_rgb if color is None else color
@@ -2792,7 +2848,7 @@ class WidgetComponent(_NoNewAttrMixin):
             color3: ColorLike,
             *,
             dims: tuple[int, int, int] = (size, size, 1),
-        ) -> pv.ImageData:
+        ) -> ImageData:
             rgb1 = np.array(Color(color1).int_rgb)
             rgb2 = np.array(Color(color2).int_rgb)
             rgb3 = np.array(Color(color3).int_rgb)
@@ -2957,7 +3013,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         def create_radio_button(  # noqa: PLR0917
             fg_color: Color, bg_color: Color, size: int = size, smooth: int = 2
-        ) -> pv.ImageData:
+        ) -> ImageData:
             fg_rgb = np.array(fg_color.int_rgb)
             bg_rgb = np.array(bg_color.int_rgb)
 
@@ -3074,16 +3130,53 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
+        self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
         widget = _vtk.vtkCameraOrientationWidget()
         widget.SetParentRenderer(self._plotter.renderer)
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
+        widget_ref = weakref.ref(widget)
+
+        def _update_viewport(renderer: _vtk.vtkRenderer, _event: str) -> None:
+            """Anchor the widget's pixel size and padding to its parent viewport."""
+            camera_widget = widget_ref()
+            if camera_widget is None or camera_widget.GetParentRenderer() is None:
+                return
+            parent = camera_widget.GetParentRenderer().GetViewport()
+            representation = cast(
+                '_vtk.vtkCameraOrientationRepresentation', camera_widget.GetRepresentation()
+            )
+            width, height = renderer.GetRenderWindow().GetActualSize()
+            if width == 0 or height == 0:
+                return
+            size = max(representation.GetSize())
+            pad_x, pad_y = representation.GetPadding()
+            anchor = representation.GetAnchorPosition()
+            corners = representation.AnchorType
+            xmin = (
+                parent[0] + pad_x / width
+                if anchor in (corners.LowerLeft, corners.UpperLeft)
+                else parent[2] - (pad_x + size) / width
+            )
+            ymin = (
+                parent[1] + pad_y / height
+                if anchor in (corners.LowerLeft, corners.LowerRight)
+                else parent[3] - (pad_y + size) / height
+            )
+            renderer.SetViewport(xmin, ymin, xmin + size / width, ymin + size / height)
+
+        renderer = widget.GetCurrentRenderer()
+        observer = renderer.AddObserver(_vtk.vtkCommand.StartEvent, _update_viewport)
+        self._camera_widget_observers.append((renderer, observer))
         self.camera_widgets.append(widget)
         return widget
 
     def clear_camera_widgets(self) -> None:
         """Remove all of the camera widgets."""
+        for renderer, observer in self._camera_widget_observers:
+            renderer.RemoveObserver(observer)
+        self._camera_widget_observers.clear()
         for camera_widget in self.camera_widgets:
             camera_widget.Off()
         self.camera_widgets.clear()
