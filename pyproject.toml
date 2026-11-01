@@ -52,7 +52,7 @@ io = [
 ]
 io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['trame-pyvista[jupyter]']
-marimo = ['trame-pyvista[marimo]>=0.3.0']
+marimo = ['trame-pyvista[marimo]>=0.3.1']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
@@ -185,7 +185,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-pyvista==0.3.0',
+  'trame-pyvista==0.3.1',
   'trimesh==5.2.0',
   { include-group = 'pinned' },
 ]
@@ -194,7 +194,7 @@ docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
-  'trame-pyvista==0.3.0',
+  'trame-pyvista==0.3.1',
   'type-assert==0.5.0', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
