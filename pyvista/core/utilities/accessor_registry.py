@@ -28,23 +28,16 @@ pyvista.registered_accessors
 
 from __future__ import annotations
 
-import contextlib
-
-# ICN003 waived: tests patch this module-level name to intercept plugin
-# imports. Patching `importlib.import_module` instead would apply globally,
-# for every importer, for the duration of the test.
-from importlib import import_module  # noqa: ICN003
-from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import NamedTuple
 from typing import Protocol
-from typing import TypedDict
 from typing import runtime_checkable
 import weakref
 
 from pyvista import _vtk
-from pyvista._warn_external import warn_external
+from pyvista.core.utilities._registry import _MISSING
+from pyvista.core.utilities._registry import _DescriptorRegistry
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -120,34 +113,6 @@ class AccessorRegistration(NamedTuple):
     source: str
 
 
-class _AccessorRegistryState(TypedDict):
-    """Stored registry state used for test isolation.
-
-    Records every ``(target_cls, name)`` the registry has touched along
-    with the value that was present on the class dictionary before the
-    accessor replaced it (sentinel if the attribute did not exist).
-    """
-
-    registrations: list[AccessorRegistration]
-    # Per (target, name), the exact attribute that was in target.__dict__
-    # before registration, or _MISSING if no attribute existed.
-    prior: dict[tuple[type, str], Any]
-    # Snapshot of each target class's current binding for each registered
-    # name so restore can diff against "live" state.
-    attached: dict[tuple[type, str], Any]
-    # Whether entry-point metadata has already been scanned. Tests that
-    # mock ``entry_points`` reset this to force a re-scan.
-    entry_points_loaded: bool
-    # Accessor names declared via entry points that have not yet had
-    # their plugin module imported. Populated by ``_ensure_entry_points``
-    # and consumed by ``_resolve_pending_accessor`` on first attribute
-    # miss.
-    pending: dict[str, str]
-    # Pending names whose import failed, mapped to the failure message. Hidden
-    # from ``__dir__``; retried only by ``registered_accessors``.
-    failed: dict[str, str]
-
-
 # Cached-accessor bookkeeping lives in the instance dict under this prefix. It is
 # stripped from the pickled state (see ``pyvista.core.dataobject``): a weak reference
 # cannot be pickled, and a cache is not state worth carrying to another process.
@@ -215,19 +180,19 @@ class _CachedAccessor:
     def __init__(self, name: str, accessor_cls: type) -> None:
         self._name = name
         self._cache_key = _ACCESSOR_CACHE_PREFIX + name
-        self._accessor_cls = accessor_cls
+        self._cls = accessor_cls
 
     def __repr__(self) -> str:  # pragma: no cover - trivial
-        return f'<_CachedAccessor name={self._name!r} cls={self._accessor_cls!r}>'
+        return f'<_CachedAccessor name={self._name!r} cls={self._cls!r}>'
 
     def __get__(self, obj: Any, objtype: type | None = None) -> Any:
         if obj is None:
             # Class-level access returns the accessor class itself so
             # ``help(cls.<name>)`` shows the accessor docstring.
-            return self._accessor_cls
+            return self._cls
         obj_dict = getattr(obj, '__dict__', None)
         if obj_dict is None:
-            return self._accessor_cls(obj)
+            return self._cls(obj)
         if self._name in obj_dict:
             # A value assigned over the accessor wins, as it did when this was a
             # non-data descriptor and the instance dict shadowed it.
@@ -241,7 +206,7 @@ class _CachedAccessor:
             # dataset cannot have been freed and its id cannot have been reused.
             if accessor is not None and owner_id == id(obj):
                 return accessor
-        accessor = self._accessor_cls(obj)
+        accessor = self._cls(obj)
         self._cache(obj, obj_dict, accessor)
         return accessor
 
@@ -284,149 +249,16 @@ def _clear_accessor_cache(dict_: dict[str, Any]) -> None:
         del dict_[key]
 
 
-# ``_MISSING`` marks "attribute did not exist on the target class dict
-# before we touched it" so unregister can tell the difference between
-# "restore nothing" and "restore a prior value of None".
-_MISSING: Any = object()
-
-_registrations: list[AccessorRegistration] = []
-_prior_values: dict[tuple[type, str], Any] = {}
-_entry_points_loaded: bool = False
-_pending_accessors: dict[str, str] = {}
-_failed_accessors: dict[str, str] = {}
-
-
-def _save_registry_state() -> _AccessorRegistryState:
-    """Snapshot the current registry state for later restoration."""
-    attached: dict[tuple[type, str], Any] = {}
-    for record in _registrations:
-        key = (record.target, record.name)
-        attached[key] = record.target.__dict__.get(record.name, _MISSING)
-    return {
-        'registrations': list(_registrations),
-        'prior': dict(_prior_values),
-        'attached': attached,
-        'entry_points_loaded': _entry_points_loaded,
-        'pending': dict(_pending_accessors),
-        'failed': dict(_failed_accessors),
-    }
-
-
-def _restore_registry_state(state: _AccessorRegistryState) -> None:
-    """Restore registry state from a snapshot.
-
-    Removes any accessors that have been added since the snapshot was
-    taken and re-attaches any that were removed, putting prior built-in
-    attributes back if override had shadowed them.
-    """
-    global _entry_points_loaded  # noqa: PLW0603
-    current_keys = {(r.target, r.name) for r in _registrations}
-    snapshot_keys = {(r.target, r.name) for r in state['registrations']}
-
-    # Remove anything that was not in the snapshot.
-    for record in _registrations:
-        key = (record.target, record.name)
-        if key in snapshot_keys:
-            continue
-        attr = record.target.__dict__.get(record.name)
-        if isinstance(attr, _CachedAccessor):
-            delattr(record.target, record.name)
-        prior = _prior_values.pop(key, _MISSING)
-        if prior is not _MISSING:
-            setattr(record.target, record.name, prior)
-
-    # Re-add anything that was in the snapshot but has since been
-    # removed, restoring the descriptor binding that was live at
-    # snapshot time.
-    for record in state['registrations']:
-        key = (record.target, record.name)
-        attached_at_snapshot = state['attached'].get(key, _MISSING)
-        if attached_at_snapshot is _MISSING:
-            if record.name in record.target.__dict__:
-                delattr(record.target, record.name)
-        elif (
-            key not in current_keys
-            or record.target.__dict__.get(record.name) is not attached_at_snapshot
-        ):
-            setattr(record.target, record.name, attached_at_snapshot)
-
-    _registrations.clear()
-    _registrations.extend(state['registrations'])
-    _prior_values.clear()
-    _prior_values.update(state['prior'])
-    _entry_points_loaded = state['entry_points_loaded']
-    _pending_accessors.clear()
-    _pending_accessors.update(state['pending'])
-    _failed_accessors.clear()
-    _failed_accessors.update(state['failed'])
-
-
-def _find_accessor_on_mro(target_cls: type, name: str) -> type | None:
-    """Return the class whose ``__dict__`` owns the accessor.
-
-    Walks ``target_cls.__mro__`` and returns the first class whose
-    ``__dict__`` holds a :class:`_CachedAccessor` under ``name``, or
-    ``None`` if none exists.
-    """
-    for klass in target_cls.__mro__:
-        attr = klass.__dict__.get(name)
-        if isinstance(attr, _CachedAccessor):
-            return klass
-    return None
-
-
-def _find_shadow_on_mro(target_cls: type, name: str) -> type | None:
-    """Return the class shadowing ``name`` with a non-accessor attribute.
-
-    Walks ``target_cls.__mro__`` (skipping ``object``) and returns the
-    first class that defines a non-accessor attribute under ``name``, or
-    ``None`` if none exists. Used to detect built-in attribute
-    shadowing.
-    """
-    for klass in target_cls.__mro__:
-        if klass is object:
-            continue
-        if name not in klass.__dict__:
-            continue
-        attr = klass.__dict__[name]
-        if isinstance(attr, _CachedAccessor):
-            return None  # an accessor wins over any further shadow search
-        return klass
-    return None
-
-
-def _validate_name(name: object) -> str:
-    """Normalize and validate an accessor name.
-
-    Accepts ``object`` so the ``isinstance`` check is reachable for
-    callers that bypass static typing (for example, dynamic plugin loaders or
-    tests that intentionally pass the wrong type).
-    """
-    if not isinstance(name, str):
-        msg = f'Accessor name must be a string, got {type(name).__name__}.'
-        raise TypeError(msg)
-    normalized = name.strip()
-    if not normalized:
-        msg = 'Accessor name must not be empty.'
-        raise ValueError(msg)
-    if normalized.startswith('_'):
-        msg = (
-            f'Accessor name must not start with an underscore, got {name!r}. '
-            'Leading underscores are reserved for PyVista internals.'
-        )
-        raise ValueError(msg)
-    if not normalized.isidentifier():
-        msg = f'Accessor name must be a valid Python identifier, got {name!r}.'
-        raise ValueError(msg)
-    return normalized
-
-
-def _validate_target(target_cls: Any) -> type:
-    """Validate that ``target_cls`` is a class."""
-    if not isinstance(target_cls, type):
-        msg = f'target_cls must be a class, got {type(target_cls).__name__}.'
-        raise TypeError(msg)
-    return target_cls
+_registry: _DescriptorRegistry[AccessorRegistration] = _DescriptorRegistry(
+    ACCESSOR_ENTRY_POINT_GROUP,
+    descriptor=_CachedAccessor,
+    record=AccessorRegistration,
+    noun='accessor',
+    label='Accessor',
+)
+_plugins = _registry.plugins
+_save_registry_state = _registry.snapshot
+_restore_registry_state = _registry.restore
 
 
 def register_dataset_accessor(
@@ -448,6 +280,10 @@ def register_dataset_accessor(
 
     .. versionadded:: 0.48.0
 
+    .. versionchanged:: 0.50.0
+        ``override=True`` also silences the warning when replacing a
+        registered accessor.
+
     Parameters
     ----------
     name : str
@@ -466,7 +302,8 @@ def register_dataset_accessor(
         If ``True``, allow registering a name that shadows an existing
         built-in attribute on ``target_cls`` (a filter method, property,
         or any other non-accessor attribute). The prior attribute is
-        restored on :func:`~pyvista.unregister_dataset_accessor`.
+        restored on :func:`~pyvista.unregister_dataset_accessor`. It also
+        replaces a registered accessor of the same name without a warning.
 
     Returns
     -------
@@ -490,7 +327,8 @@ def register_dataset_accessor(
         If ``name`` already refers to a registered accessor on
         ``target_cls`` or any ancestor. Emitting a warning rather than
         raising matches pandas' behavior and avoids hard-failing when
-        two plugins collide.
+        two plugins collide. Pass ``override=True`` to silence the
+        warning when replacement is intentional.
 
     See Also
     --------
@@ -525,94 +363,15 @@ def register_dataset_accessor(
     >>> pv.unregister_dataset_accessor('demo', pv.PolyData)
 
     """
-    normalized = _validate_name(name)
-    target = _validate_target(target_cls)
+    normalized = _registry.validate_name(name)
+    target = _registry.validate_target(target_cls)
 
-    # Accept ``object`` so the runtime guard is reachable when callers
-    # (e.g. dynamic plugin loaders) bypass static typing.
     def decorator(accessor_cls: object) -> type:
-        if not isinstance(accessor_cls, type):
-            msg = f'Accessor must be a class, got {type(accessor_cls).__name__}.'
-            raise TypeError(msg)
-        _attach_accessor(normalized, target, accessor_cls, override=override)
-        return accessor_cls
+        cls = _registry.validate_class(accessor_cls)
+        _registry.attach(normalized, target, cls, override=override)
+        return cls
 
     return decorator
-
-
-def _attach_accessor(
-    name: str,
-    target_cls: type,
-    accessor_cls: type,
-    *,
-    override: bool,
-) -> None:
-    """Attach ``accessor_cls`` as a ``_CachedAccessor`` on ``target_cls``.
-
-    Performs collision detection before attaching.
-    """
-    accessor_owner = _find_accessor_on_mro(target_cls, name)
-    if accessor_owner is not None:
-        existing = accessor_owner.__dict__.get(name)
-        if (
-            accessor_owner is target_cls
-            and isinstance(existing, _CachedAccessor)
-            and existing._accessor_cls is accessor_cls
-        ):
-            # Idempotent re-registration: the exact same accessor class is
-            # already bound directly on this target under this name. This
-            # happens when a module that registers an accessor is imported
-            # twice (e.g. ``pytest --cov`` re-executes it). It is a true
-            # no-op, not a plugin collision, so do not warn or re-bind --
-            # warning here would be fatal for downstream packages running
-            # under ``filterwarnings=error``.
-            return
-        # Accessor-vs-accessor collision—warn and replace (pandas style).
-        if accessor_owner is target_cls:
-            location = target_cls.__qualname__
-        else:
-            location = f'{accessor_owner.__qualname__} (inherited by {target_cls.__qualname__})'
-        warn_external(
-            f'Registering accessor {name!r} on {target_cls.__qualname__} '
-            f'replaces an existing registered accessor on {location}.',
-        )
-    else:
-        shadow_owner = _find_shadow_on_mro(target_cls, name)
-        if shadow_owner is not None and not override:
-            if shadow_owner is target_cls:
-                location = target_cls.__qualname__
-            else:
-                location = f'{shadow_owner.__qualname__} (inherited by {target_cls.__qualname__})'
-            msg = (
-                f'Cannot register accessor {name!r} on '
-                f'{target_cls.__qualname__}: shadows built-in attribute on '
-                f'{location}. Pass override=True to force.'
-            )
-            raise ValueError(msg)
-
-    # Record the prior attribute value only on first registration for
-    # this (target, name) pair so repeated override+register cycles do
-    # not forget the very first built-in attribute.
-    key = (target_cls, name)
-    if key not in _prior_values:
-        _prior_values[key] = target_cls.__dict__.get(name, _MISSING)
-
-    setattr(target_cls, name, _CachedAccessor(name, accessor_cls))
-
-    source = f'{accessor_cls.__module__}.{accessor_cls.__qualname__}'
-    # Remove any previous registration record for this (target, name) pair
-    # so the registry state never reports duplicates.
-    _registrations[:] = [
-        r for r in _registrations if not (r.target is target_cls and r.name == name)
-    ]
-    _registrations.append(
-        AccessorRegistration(
-            name=name,
-            target=target_cls,
-            accessor=accessor_cls,
-            source=source,
-        ),
-    )
 
 
 def unregister_dataset_accessor(name: str, target_cls: type) -> None:
@@ -653,114 +412,11 @@ def unregister_dataset_accessor(name: str, target_cls: type) -> None:
     >>> pv.unregister_dataset_accessor('tmp', pv.PolyData)
 
     """
-    normalized = _validate_name(name)
-    target = _validate_target(target_cls)
-
-    attr = target.__dict__.get(normalized)
-    if not isinstance(attr, _CachedAccessor):
-        # ValueError (not TypeError)—the shape of the target is valid,
-        # the caller just did not have an accessor to remove.
-        msg = f'No registered accessor {name!r} attached directly to {target.__qualname__}.'
-        raise ValueError(msg)  # noqa: TRY004
-
-    key = (target, normalized)
-    prior = _prior_values.pop(key, _MISSING)
-    if prior is _MISSING:
-        delattr(target, normalized)
-    else:
-        setattr(target, normalized, prior)
-
-    _registrations[:] = [
-        r for r in _registrations if not (r.target is target and r.name == normalized)
-    ]
+    _registry.detach(_registry.validate_name(name), _registry.validate_target(target_cls))
 
 
-def _ensure_entry_points() -> None:
-    """Scan ``pyvista.accessors`` entry-point metadata once.
-
-    Populates :data:`_pending_accessors` with a mapping of
-    ``name -> module_path`` for every declared entry point. The plugin
-    modules themselves are **not** imported here; the cost of this
-    function is one ``importlib.metadata.entry_points`` call. The
-    plugin import is deferred to :func:`_resolve_pending_accessor`,
-    which runs only when the corresponding accessor is actually
-    accessed on a dataset.
-    """
-    global _entry_points_loaded  # noqa: PLW0603
-    if _entry_points_loaded:
-        return
-
-    # Flip the flag before iterating so a plugin that happens to import
-    # pyvista recursively does not loop back into this function.
-    _entry_points_loaded = True
-    for accessor_entry_point in entry_points(group=ACCESSOR_ENTRY_POINT_GROUP):
-        _pending_accessors[accessor_entry_point.name] = accessor_entry_point.value
-
-
-def _resolve_pending_accessor(name: str) -> bool:
-    """Import the plugin module registered under ``name``, if any.
-
-    Called from :meth:`pyvista.DataObject.__getattr__` when a normal
-    attribute lookup misses. Ensures entry-point metadata has been
-    scanned and imports the plugin module pending under ``name``.
-    Importing the module triggers any ``@register_dataset_accessor``
-    decorators inside it and attaches the accessor as a side effect;
-    only then is the entry removed from the pending list.
-
-    Returns
-    -------
-    bool
-        ``True`` if a plugin was loaded for ``name`` (and the attribute
-        lookup should be retried). ``False`` if no pending plugin
-        matches ``name``.
-
-    Raises
-    ------
-    AttributeError
-        If the plugin fails to import. The message names the entry
-        point, its module and the underlying error. The entry stays
-        pending but is marked failed: the first failure also emits a
-        ``UserWarning``, later accesses re-raise the recorded message
-        without re-importing, and :func:`registered_accessors` retries.
-
-    """
-    if name.startswith('_'):
-        # Registered names never start with an underscore, so private and dunder
-        # lookups can skip the entry-point scan entirely.
-        return False
-    _ensure_entry_points()
-    module_path = _pending_accessors.get(name)
-    if module_path is None:
-        return False
-    failure = _failed_accessors.get(name)
-    if failure is not None:
-        raise AttributeError(failure)
-    try:
-        import_module(module_path)
-    except Exception as exc:
-        msg = (
-            f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
-            f'"{name}" from {module_path}: {exc}'
-        )
-        _failed_accessors[name] = msg
-        warn_external(msg)
-        raise AttributeError(msg) from exc
-    del _pending_accessors[name]
-    return True
-
-
-def _pending_accessor_names() -> tuple[str, ...]:
-    """Return every pending accessor name without importing any plugin.
-
-    Used by :meth:`pyvista.DataObject.__dir__` so that IPython /
-    Jupyter / REPL tab completion surfaces accessors contributed by
-    installed plugins even before those plugins have been imported. The
-    plugin module itself is **not** loaded—only the entry-point
-    metadata is consulted. Names whose plugin failed to import are
-    omitted until :func:`registered_accessors` imports them successfully.
-    """
-    _ensure_entry_points()
-    return tuple(name for name in _pending_accessors if name not in _failed_accessors)
+_resolve_pending_accessor = _registry.resolve_pending
+_pending_accessor_names = _registry.plugins.pending_keys
 
 
 def registered_accessors() -> tuple[AccessorRegistration, ...]:
@@ -797,9 +453,4 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
     >>> pv.unregister_dataset_accessor('demo_listed', pv.PolyData)
 
     """
-    _ensure_entry_points()
-    _failed_accessors.clear()
-    for pending_name in list(_pending_accessors):
-        with contextlib.suppress(AttributeError):  # the failed import already warned
-            _resolve_pending_accessor(pending_name)
-    return tuple(_registrations)
+    return _registry.registered()

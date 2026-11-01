@@ -35,22 +35,14 @@ pyvista.registered_plotter_components
 from __future__ import annotations
 
 import contextlib
-
-# ICN003 waived: tests patch this module-level name to intercept plugin
-# imports. Patching `importlib.import_module` instead would apply globally,
-# for every importer, for the duration of the test.
-from importlib import import_module  # noqa: ICN003
-from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import NamedTuple
 from typing import Protocol
-from typing import TypedDict
 from typing import runtime_checkable
 
-from pyvista._warn_external import warn_external
-from pyvista.core.utilities._registry_helpers import handler_source
+from pyvista.core.utilities._registry import _DescriptorRegistry
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -136,22 +128,6 @@ class ComponentRegistration(NamedTuple):
     source: str
 
 
-class _ComponentRegistryState(TypedDict):
-    """Stored registry state used for test isolation.
-
-    Records every ``(target_cls, name)`` the registry has touched along
-    with the value that was present on the class dictionary before the
-    component descriptor replaced it (sentinel if the attribute did not
-    exist).
-    """
-
-    registrations: list[ComponentRegistration]
-    prior: dict[tuple[type, str], Any]
-    attached: dict[tuple[type, str], Any]
-    entry_points_loaded: bool
-    pending: dict[str, str]
-
-
 class _CachedComponent:
     """Non-data descriptor implementing the lazy-component pattern.
 
@@ -193,15 +169,15 @@ class _CachedComponent:
 
     def __init__(self, name: str, component_cls: type) -> None:
         self._name = name
-        self._component_cls = component_cls
+        self._cls = component_cls
 
     def __repr__(self) -> str:  # pragma: no cover - trivial
-        return f'<_CachedComponent name={self._name!r} cls={self._component_cls!r}>'
+        return f'<_CachedComponent name={self._name!r} cls={self._cls!r}>'
 
     def __get__(self, obj: Any, objtype: type | None = None) -> Any:
         if obj is None:
-            return self._component_cls
-        component_instance = self._component_cls(obj)
+            return self._cls
+        component_instance = self._cls(obj)
         try:
             obj.__dict__[self._name] = component_instance
         except AttributeError:
@@ -213,12 +189,12 @@ class _CachedComponent:
             declared = [
                 hook
                 for hook in self._LIFECYCLE_HOOKS
-                if getattr(self._component_cls, hook, None) is not None
+                if getattr(self._cls, hook, None) is not None
             ]
             if declared:
                 msg = (
                     f'Plotter component {self._name!r} '
-                    f'({self._component_cls.__qualname__}) declares '
+                    f'({self._cls.__qualname__}) declares '
                     f'lifecycle hook(s) {declared} but is attached to '
                     f'{type(obj).__qualname__}, which uses ``__slots__`` '
                     'and has no ``__dict__`` to cache the component '
@@ -245,128 +221,16 @@ class _CachedComponent:
         return component_instance
 
 
-_MISSING: Any = object()
-
-_registrations: list[ComponentRegistration] = []
-_prior_values: dict[tuple[type, str], Any] = {}
-_entry_points_loaded: bool = False
-_pending_components: dict[str, str] = {}
-
-
-def _save_registry_state() -> _ComponentRegistryState:
-    """Snapshot the current registry state for later restoration."""
-    attached: dict[tuple[type, str], Any] = {}
-    for record in _registrations:
-        key = (record.target, record.name)
-        attached[key] = record.target.__dict__.get(record.name, _MISSING)
-    return {
-        'registrations': list(_registrations),
-        'prior': dict(_prior_values),
-        'attached': attached,
-        'entry_points_loaded': _entry_points_loaded,
-        'pending': dict(_pending_components),
-    }
-
-
-def _restore_registry_state(state: _ComponentRegistryState) -> None:
-    """Restore registry state from a snapshot.
-
-    Removes any components that have been added since the snapshot was
-    taken and re-attaches any that were removed, putting prior built-in
-    attributes back if override had shadowed them.
-    """
-    global _entry_points_loaded  # noqa: PLW0603
-    current_keys = {(r.target, r.name) for r in _registrations}
-    snapshot_keys = {(r.target, r.name) for r in state['registrations']}
-
-    for record in _registrations:
-        key = (record.target, record.name)
-        if key in snapshot_keys:
-            continue
-        attr = record.target.__dict__.get(record.name)
-        if isinstance(attr, _CachedComponent):
-            delattr(record.target, record.name)
-        prior = _prior_values.pop(key, _MISSING)
-        if prior is not _MISSING:
-            setattr(record.target, record.name, prior)
-
-    for record in state['registrations']:
-        key = (record.target, record.name)
-        attached_at_snapshot = state['attached'].get(key, _MISSING)
-        if attached_at_snapshot is _MISSING:
-            if record.name in record.target.__dict__:
-                delattr(record.target, record.name)
-        elif (
-            key not in current_keys
-            or record.target.__dict__.get(record.name) is not attached_at_snapshot
-        ):
-            setattr(record.target, record.name, attached_at_snapshot)
-
-    _registrations.clear()
-    _registrations.extend(state['registrations'])
-    _prior_values.clear()
-    _prior_values.update(state['prior'])
-    _entry_points_loaded = state['entry_points_loaded']
-    _pending_components.clear()
-    _pending_components.update(state['pending'])
-
-
-def _find_component_on_mro(target_cls: type, name: str) -> type | None:
-    """Return the class whose ``__dict__`` owns the component descriptor."""
-    for klass in target_cls.__mro__:
-        attr = klass.__dict__.get(name)
-        if isinstance(attr, _CachedComponent):
-            return klass
-    return None
-
-
-def _find_shadow_on_mro(target_cls: type, name: str) -> type | None:
-    """Return the class shadowing ``name`` with a non-component attribute.
-
-    Walks ``target_cls.__mro__`` (skipping ``object``) and returns the
-    first class that defines a non-component attribute under ``name``,
-    or ``None`` if none exists. Used to detect built-in attribute
-    shadowing.
-    """
-    for klass in target_cls.__mro__:
-        if klass is object:
-            continue
-        if name not in klass.__dict__:
-            continue
-        attr = klass.__dict__[name]
-        if isinstance(attr, _CachedComponent):
-            return None
-        return klass
-    return None
-
-
-def _validate_name(name: object) -> str:
-    """Normalize and validate a component name."""
-    if not isinstance(name, str):
-        msg = f'Component name must be a string, got {type(name).__name__}.'
-        raise TypeError(msg)
-    normalized = name.strip()
-    if not normalized:
-        msg = 'Component name must not be empty.'
-        raise ValueError(msg)
-    if normalized.startswith('_'):
-        msg = (
-            f'Component name must not start with an underscore, got {name!r}. '
-            'Leading underscores are reserved for PyVista internals.'
-        )
-        raise ValueError(msg)
-    if not normalized.isidentifier():
-        msg = f'Component name must be a valid Python identifier, got {name!r}.'
-        raise ValueError(msg)
-    return normalized
-
-
-def _validate_target(target_cls: Any) -> type:
-    """Validate that ``target_cls`` is a class."""
-    if not isinstance(target_cls, type):
-        msg = f'target_cls must be a class, got {type(target_cls).__name__}.'
-        raise TypeError(msg)
-    return target_cls
+_registry: _DescriptorRegistry[ComponentRegistration] = _DescriptorRegistry(
+    COMPONENT_ENTRY_POINT_GROUP,
+    descriptor=_CachedComponent,
+    record=ComponentRegistration,
+    noun='plotter component',
+    label='Component',
+)
+_plugins = _registry.plugins
+_save_registry_state = _registry.snapshot
+_restore_registry_state = _registry.restore
 
 
 def register_plotter_component(
@@ -469,15 +333,13 @@ def register_plotter_component(
     >>> pl.close()
 
     """
-    normalized = _validate_name(name)
+    normalized = _registry.validate_name(name)
     target = _resolve_default_target(target_cls)
 
     def decorator(component_cls: object) -> type:
-        if not isinstance(component_cls, type):
-            msg = f'Component must be a class, got {type(component_cls).__name__}.'
-            raise TypeError(msg)
-        _attach_component(normalized, target, component_cls, override=override)
-        return component_cls
+        cls = _registry.validate_class(component_cls)
+        _registry.attach(normalized, target, cls, override=override)
+        return cls
 
     return decorator
 
@@ -489,64 +351,7 @@ def _resolve_default_target(target_cls: type | None) -> type:
         from pyvista.plotting.plotter import BasePlotter  # noqa: PLC0415
 
         return BasePlotter
-    return _validate_target(target_cls)
-
-
-def _attach_component(
-    name: str,
-    target_cls: type,
-    component_cls: type,
-    *,
-    override: bool,
-    source: str | None = None,
-) -> None:
-    """Attach ``component_cls`` as a ``_CachedComponent`` on ``target_cls``."""
-    component_owner = _find_component_on_mro(target_cls, name)
-    if component_owner is not None:
-        if not override:
-            if component_owner is target_cls:
-                location = target_cls.__qualname__
-            else:
-                location = (
-                    f'{component_owner.__qualname__} (inherited by {target_cls.__qualname__})'
-                )
-            warn_external(
-                f'Registering plotter component {name!r} on '
-                f'{target_cls.__qualname__} replaces an existing registered '
-                f'component on {location}.',
-            )
-    else:
-        shadow_owner = _find_shadow_on_mro(target_cls, name)
-        if shadow_owner is not None and not override:
-            if shadow_owner is target_cls:
-                location = target_cls.__qualname__
-            else:
-                location = f'{shadow_owner.__qualname__} (inherited by {target_cls.__qualname__})'
-            msg = (
-                f'Cannot register plotter component {name!r} on '
-                f'{target_cls.__qualname__}: shadows built-in attribute on '
-                f'{location}. Pass override=True to force.'
-            )
-            raise ValueError(msg)
-
-    key = (target_cls, name)
-    if key not in _prior_values:
-        _prior_values[key] = target_cls.__dict__.get(name, _MISSING)
-
-    setattr(target_cls, name, _CachedComponent(name, component_cls))
-
-    resolved_source = source if source is not None else handler_source(component_cls)
-    _registrations[:] = [
-        r for r in _registrations if not (r.target is target_cls and r.name == name)
-    ]
-    _registrations.append(
-        ComponentRegistration(
-            name=name,
-            target=target_cls,
-            component=component_cls,
-            source=resolved_source,
-        ),
-    )
+    return _registry.validate_target(target_cls)
 
 
 def unregister_plotter_component(name: str, target_cls: type | None = None) -> None:
@@ -587,77 +392,11 @@ def unregister_plotter_component(name: str, target_cls: type | None = None) -> N
     >>> pv.unregister_plotter_component('tmp')
 
     """
-    normalized = _validate_name(name)
-    target = _resolve_default_target(target_cls)
-
-    attr = target.__dict__.get(normalized)
-    if not isinstance(attr, _CachedComponent):
-        msg = (
-            f'No registered plotter component {name!r} attached directly to {target.__qualname__}.'
-        )
-        raise ValueError(msg)  # noqa: TRY004
-
-    key = (target, normalized)
-    prior = _prior_values.pop(key, _MISSING)
-    if prior is _MISSING:
-        delattr(target, normalized)
-    else:
-        setattr(target, normalized, prior)
-
-    _registrations[:] = [
-        r for r in _registrations if not (r.target is target and r.name == normalized)
-    ]
+    _registry.detach(_registry.validate_name(name), _resolve_default_target(target_cls))
 
 
-def _ensure_entry_points() -> None:
-    """Scan ``pyvista.plotter_components`` entry-point metadata once."""
-    global _entry_points_loaded  # noqa: PLW0603
-    if _entry_points_loaded:
-        return
-
-    _entry_points_loaded = True
-    for component_entry_point in entry_points(group=COMPONENT_ENTRY_POINT_GROUP):
-        _pending_components[component_entry_point.name] = component_entry_point.value
-
-
-def _resolve_pending_component(name: str) -> bool:
-    """Import the plugin module registered under ``name``, if any.
-
-    Called from :meth:`pyvista.BasePlotter.__getattr__` when a normal
-    attribute lookup misses. Ensures entry-point metadata has been
-    scanned, pops the pending entry for ``name``, and imports the
-    corresponding plugin module. Importing the module triggers any
-    ``@register_plotter_component`` decorators inside it and attaches
-    the component as a side effect.
-
-    Returns
-    -------
-    bool
-        ``True`` if a plugin was loaded for ``name`` (and the attribute
-        lookup should be retried). ``False`` if no pending plugin
-        matches ``name``, or if the plugin failed to import.
-
-    """
-    _ensure_entry_points()
-    module_path = _pending_components.pop(name, None)
-    if module_path is None:
-        return False
-    try:
-        import_module(module_path)
-    except Exception as exc:  # noqa: BLE001 - a broken plugin is reported, not fatal
-        msg = (
-            f'Failed to load {COMPONENT_ENTRY_POINT_GROUP} entry point '
-            f'"{name}" from {module_path}: {exc}'
-        )
-        warn_external(msg)
-        return False
-    return True
-
-
-def _pending_component_names() -> tuple[str, ...]:
-    """Return every pending component name without importing any plugin."""
-    _ensure_entry_points()
-    return tuple(_pending_components)
+_resolve_pending_component = _registry.resolve_pending
+_pending_component_names = _registry.plugins.pending_keys
 
 
 def registered_plotter_components() -> tuple[ComponentRegistration, ...]:
@@ -670,6 +409,11 @@ def registered_plotter_components() -> tuple[ComponentRegistration, ...]:
     still appear in the result.
 
     .. versionadded:: 0.48.0
+
+    .. versionchanged:: 0.50.0
+        A plugin whose import failed stays pending and is retried on
+        every call, so a component whose dependency was installed after
+        the failure becomes available again.
 
     Returns
     -------
@@ -693,7 +437,4 @@ def registered_plotter_components() -> tuple[ComponentRegistration, ...]:
     >>> pv.unregister_plotter_component('demo_listed')
 
     """
-    _ensure_entry_points()
-    for pending_name in list(_pending_components):
-        _resolve_pending_component(pending_name)
-    return tuple(_registrations)
+    return _registry.registered()
