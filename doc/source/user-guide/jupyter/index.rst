@@ -37,6 +37,7 @@ Install the ``marimo`` extra:
 :func:`Plotter.show() <pyvista.Plotter.show>` then shows an interactive plot
 in the cell output, as it does in Jupyter. Without it, plots are static images.
 Every example in this documentation also downloads as a marimo notebook.
+Each download lists its dependencies and the ``uv`` command that runs it.
 
 
 Usage With PyVista
