@@ -3195,6 +3195,34 @@ def test_reflect_keeps_cells_valid(load, inplace, normal):
         assert np.array_equal(restored[name], original[name])
 
 
+def _sheared_hexahedra():
+    """Return hexahedra sheared along two axes."""
+    shear = np.array([[1, 0.9, 0.3, 0], [0, 1, 0.8, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    return examples.load_hexbeam().points_to_double().transform(shear, inplace=False)
+
+
+def _turned_quads():
+    """Return quads turned to a generic angle."""
+    plane = pv.Plane(i_resolution=4, j_resolution=5).cast_to_unstructured_grid()
+    return plane.rotate_vector((1, 2, 3), 40)
+
+
+def _random_lines():
+    """Return lines in random directions."""
+    rng = np.random.default_rng(0)
+    points = rng.random((40, 3))
+    return pv.UnstructuredGrid({pv.CellType.LINE: np.arange(40).reshape(-1, 2)}, points)
+
+
+@pytest.mark.parametrize('normal', [(1, 1, 0), (1, 2, 3)])
+@pytest.mark.parametrize('load', [_sheared_hexahedra, _turned_quads, _random_lines])
+def test_reflect_twice_restores_turned_cells(load, normal):
+    mesh = load()
+    restored = mesh.reflect(normal).reflect(normal)
+    assert np.array_equal(restored.cell_connectivity, mesh.cell_connectivity)
+    assert np.allclose(restored.points, mesh.points)
+
+
 @pytest.mark.parametrize(
     'mesh_type',
     [
@@ -3300,8 +3328,8 @@ def test_transform_commutes_with_cast(source, cast, transform, dimensions):
         before.validate_mesh(action='error')
         after.validate_mesh(action='error')
 
-    if source == 'rectilinear' and transform.startswith('rotate'):
-        # A rectilinear grid reverses the axes a rotation makes descend, unlike the others
+    if source == 'rectilinear' and transform in ('rotate_half_turn', 'reflect_diagonal'):
+        # A rectilinear grid reverses or swaps axes to keep them along the global axes
         assert _canonical_cells(before, ordered=False) == _canonical_cells(after, ordered=False)
     elif isinstance(before, pv.UnstructuredGrid):
         assert _canonical_cells(before) == _canonical_cells(after)

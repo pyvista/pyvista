@@ -1083,8 +1083,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Cast this uniform grid to a rectilinear grid.
 
         .. versionchanged:: 0.50
-            An axis with a negative direction is reversed so its coordinates ascend, with
-            the offset and arrays reordered to match.
+            An axis with a negative direction is reversed so its coordinates ascend, and
+            index axes that lie along other axes are swapped, with the offset and arrays
+            reordered to match.
 
         Returns
         -------
@@ -1092,9 +1093,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             This uniform grid as a rectilinear grid.
 
         """
-        rectilinear_coords = self._generate_rectilinear_coords()
-        # A negative direction makes coordinates descend, so reverse those axes to ascend
-        axes, flips = np.arange(3), np.diagonal(self.direction_matrix) < 0
+        rectilinear_coords, axes, flips = self._generate_rectilinear_coords()
         grid = pv.RectilinearGrid(
             *(
                 coords[::-1] if flip else coords
@@ -1105,20 +1104,26 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
-        if flips.any():
+        if flips.any() or (axes != np.arange(3)).any():
             _reorder_structured_arrays(grid, self.dimensions, axes=axes, flips=flips)
         grid.copy_meta_from(self, deep=True)
         return grid
 
     def _generate_rectilinear_coords(
         self: Self,
-    ) -> list[NDArray[np.float64]]:
+    ) -> tuple[list[NDArray[np.float64]], NDArray[np.intp], NDArray[np.bool_]]:
         """Generate rectilinear coordinates (internal helper).
 
         Returns
         -------
         list[numpy.ndarray]
-            Rectilinear coordinates over the three dimensions.
+            Ascending rectilinear coordinates over the three dimensions.
+
+        numpy.ndarray
+            The index axis that lies along each axis.
+
+        numpy.ndarray
+            Whether each axis's coordinates are reversed to ascend.
 
         """
         dims = self.dimensions
@@ -1128,9 +1133,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         direction = self.direction_matrix
 
         # Off-axis rotation is not supported by RectilinearGrid
-        if np.allclose(np.abs(direction), np.eye(3)):
-            sign = np.diagonal(direction)
-        else:
+        axes = np.argmax(np.abs(direction), axis=1)
+        sign = direction[range(3), axes]
+        if len(set(axes)) < 3 or not np.allclose(np.abs(sign), 1):
             msg = (
                 'Rectilinear grid does not support off-axis rotations.\n'
                 'Consider removing off-axis rotations from the `direction_matrix`, '
@@ -1140,7 +1145,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
-        return [ijk[axis] * spacing[axis] * sign[axis] + origin[axis] for axis in range(3)]
+        coords = [ijk[axes[i]] * spacing[axes[i]] * sign[i] + origin[i] for i in range(3)]
+        # A negative direction makes coordinates descend, so those axes are reversed to ascend
+        return coords, axes, sign < 0
 
     @_wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(

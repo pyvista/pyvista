@@ -38,6 +38,7 @@ from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities._reflection import _align_voxels_and_pixels
 from .utilities.accessor_registry import _resolve_pending_accessor
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -1843,6 +1844,10 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             Use ``to_quads`` or ``to_hexahedra`` instead to convert the cell
             type for these cases.
 
+        .. versionchanged:: 0.50
+            The voxels and pixels of an :class:`~pyvista.ImageData` whose direction matrix
+            turns or reverses its axes list their corners along x, then y, then z.
+
         Returns
         -------
         pyvista.UnstructuredGrid
@@ -1894,7 +1899,11 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
         _update_alg(alg)
-        return _get_output(alg, output_type=pv.UnstructuredGrid)
+        grid = _get_output(alg, output_type=pv.UnstructuredGrid)
+        if isinstance(self, pv.ImageData):
+            # Voxels and pixels list their corners along x first, whichever way the image turns
+            _align_voxels_and_pixels(grid, self.index_to_physical_matrix)
+        return grid
 
     def cast_to_pointset(self: Self, *, pass_cell_data: bool = False) -> PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
