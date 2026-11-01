@@ -26,6 +26,7 @@ from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
+from pyvista.core.celltype import CellType
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
@@ -61,7 +62,6 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from pyvista import CellType
     from pyvista import Color
     from pyvista import DataSet
     from pyvista import ImageData
@@ -92,6 +92,7 @@ _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 _ConnectivityMode = Literal['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
 _RegionAssignmentMode = Literal['ascending', 'descending', 'unspecified']
+_VoxelizeCellType = Literal['voxel', 'hex', 'hexahedron', CellType.VOXEL, CellType.HEXAHEDRON]
 
 
 _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
@@ -9218,9 +9219,7 @@ class DataSetFilters(DataObjectFilters):
         rounding_func: Callable[[VectorLikeFloat], VectorLikeInt] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
-        cell_type: Literal[
-            'voxel', 'hex', 'hexahedron', CellType.VOXEL, CellType.HEXAHEDRON
-        ] = 'voxel',
+        cell_type: _VoxelizeCellType = 'voxel',
         progress_bar: bool = False,
     ) -> UnstructuredGrid:
         """Voxelize mesh to UnstructuredGrid.
@@ -9396,9 +9395,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         _validation.check_contains(
-            ['voxel', 'hex', 'hexahedron', pv.CellType.VOXEL, pv.CellType.HEXAHEDRON],
-            must_contain=cell_type,
-            name='cell_type',
+            get_args(_VoxelizeCellType), must_contain=cell_type, name='cell_type'
         )
         voxel_cells = self._voxelize_binary_mask_cells(
             reference_volume=reference_volume,
