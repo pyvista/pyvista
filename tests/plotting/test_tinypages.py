@@ -226,13 +226,13 @@ OPENGRAPH_PLOT_IMAGES_SERIAL = {
 
 # ``sphinx_examples_as_code`` downloads: ``samples`` has four functions with Examples
 # docstrings, but ``make_sphere_second`` uses ``:include-source: False``
-EXPECTED_DOWNLOADS_PY = {
-    'samples_make_sphere.py',
-    'samples_example_with_empty_plotter.py',
-    'samples_example_with_closed_plotter.py',
+EXPECTED_DOWNLOAD_STEMS = {
+    'make_sphere',
+    'example_with_empty_plotter',
+    'example_with_closed_plotter',
 }
-EXPECTED_DOWNLOADS = EXPECTED_DOWNLOADS_PY | {
-    name.removesuffix('.py') + '.ipynb' for name in EXPECTED_DOWNLOADS_PY
+EXPECTED_DOWNLOADS = {
+    f'{stem}{suffix}' for stem in EXPECTED_DOWNLOAD_STEMS for suffix in ('.py', '.ipynb')
 }
 
 
@@ -420,7 +420,7 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
     # The examples downloads do not depend on the plots being rendered
     downloads_dir = html_dir / '_downloads'
     assert downloads_dir.is_dir(), 'expected examples_download to produce a _downloads dir'
-    generated = {p.name for p in downloads_dir.rglob('samples_*')}
+    generated = {p.name for p in downloads_dir.rglob('*') if p.stem in EXPECTED_DOWNLOAD_STEMS}
     assert generated == EXPECTED_DOWNLOADS
 
 

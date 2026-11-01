@@ -24,7 +24,7 @@ dependencies = [
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'pyvista-validation==0.5.4', # Exact pin: the validation API is still unstable
-  'scooby>=0.5.1',
+  'scooby>=0.12.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
@@ -52,6 +52,7 @@ io = [
 ]
 io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['trame-pyvista[jupyter]']
+marimo = ['trame-pyvista[marimo]>=0.3.1']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
@@ -62,7 +63,7 @@ pinned = [ # Pinned versions of core dependencies
   'pillow>=13.0.0,<13.1.0', # GHSA-pchr-8j38-3x4p, GHSA-58r4-6rv3-gfh8, GHSA-p4wg-p73j-c528, GHSA-q45j-58j2-45rg, GHSA-8g5g-8vmr-9782: <13.0.0 vulnerable, patched in 13.0.0
   'pooch<1.10.0',
   'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
-  'scooby>=0.11.2,<0.13.0',
+  'scooby>=0.12.1,<0.13.0',
   'typing-extensions<4.17.0',
 ]
 
@@ -81,6 +82,7 @@ typing = [
 ]
 
 test = [
+  'anywidget<0.12.0',
   'cmcrameri<1.11.0',
   'cmocean<4.0.4',
   'colorcet<3.3.0',
@@ -116,13 +118,13 @@ test = [
   'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.5.0',
   'sphinx-design<0.8.0',
-  'sphinx-examples-as-code[gallery]==0.6.1',
+  'sphinx-examples-as-code[gallery]==0.8.2',
   'sphinx-gallery<0.23.0',
   'sphinx<9.2.0',
   'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
   'tqdm<4.71.0',
-  'trame-pyvista<0.3.0',
+  'trame-pyvista<0.4.0',
   'trimesh<5.3.0',
   'type-assert==0.5.0',
   'typing-extensions<4.17.0',
@@ -132,6 +134,7 @@ test = [
 test-playwright = ['playwright<1.65.0', { include-group = 'test' }]
 
 docs = [
+  'anywidget==0.11.0',
   'cmcrameri==1.10',
   'cmocean==4.0.3',
   'colorcet==3.2.1',
@@ -145,6 +148,7 @@ docs = [
   'jupyter-sphinx==0.5.3',
   'jupyterlab==4.6.4',
   'lxml==6.1.3',
+  'marimo==0.25.2',
   'matplotlib>=3.11; python_version >= "3.11"',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
@@ -167,7 +171,7 @@ docs = [
   'sphinx-book-theme==1.4.0; python_version >= "3.11"',
   'sphinx-copybutton==0.5.2',
   'sphinx-design==0.7.0; python_version >= "3.11"',
-  'sphinx-examples-as-code[gallery]==0.6.1',
+  'sphinx-examples-as-code[gallery,marimo]==0.8.2',
   'sphinx-gallery==0.22.1',
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.9.0',
@@ -181,7 +185,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-pyvista==0.2.3',
+  'trame-pyvista==0.3.1',
   'trimesh==5.2.0',
   { include-group = 'pinned' },
 ]
@@ -190,7 +194,7 @@ docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
-  'trame-pyvista==0.2.3',
+  'trame-pyvista==0.3.1',
   'type-assert==0.5.0', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]

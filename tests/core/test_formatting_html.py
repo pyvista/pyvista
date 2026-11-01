@@ -93,6 +93,14 @@ def test_css_dark_blocks_do_not_use_jp_variables():
         assert 'var(--jp-' not in body, f'{selector} must hardcode its values'
 
 
+def test_css_os_dark_mode_yields_to_light_data_theme():
+    # marimo marks its light theme on body, so the OS dark-mode fallback must skip it.
+    blocks = _css_theme_blocks(_load_css())
+    (selector,) = [s for s in blocks if 'not([data-theme="light"])' in s]
+    assert 'html:not([data-theme="light"])' in selector
+    assert 'body:not([data-theme="light"])' in selector
+
+
 def test_css_dark_blocks_are_consistent():
     """The explicit and the OS-preference dark blocks must agree."""
     blocks = _css_theme_blocks(_load_css())

@@ -56,6 +56,8 @@ from pyvista.core.utilities.misc import _wraps_overloaded
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.jupyter import _display
+from pyvista.jupyter import _in_notebook
 from pyvista.jupyter.notebook import handle_plotter
 
 from ._plotting import _common_arg_parser
@@ -8773,9 +8775,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         screenshots.
 
     notebook : bool, optional
-        When ``True``, the resulting plot is placed inline a jupyter
-        notebook. Assumes a jupyter console is active. Automatically
-        enables ``off_screen``.
+        When ``True``, the resulting plot is placed inline in a Jupyter
+        or marimo notebook. Defaults to
+        :attr:`pyvista.plotting.themes.Theme.notebook`, or detects a
+        Jupyter kernel or marimo notebook when that is ``None``.
+        Automatically enables ``off_screen``.
+
+        .. versionchanged:: 0.50
+            Detects marimo notebooks.
 
     shape : sequence[int], optional
         Number of sub-render windows inside of the main window.
@@ -8954,10 +8961,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             off_screen = pv.OFF_SCREEN
 
         if notebook is None:
-            if self._theme.notebook is not None:
-                notebook = self._theme.notebook
-            else:
-                notebook = scooby.in_ipykernel()
+            notebook = self._theme.notebook if self._theme.notebook is not None else _in_notebook()
 
         self.notebook = notebook
         if self.notebook or pv.ON_SCREENSHOT:
@@ -9404,12 +9408,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         if jupyter_disp is not None and not return_viewer:
             # Default behaviour is to display the Jupyter viewer
-            try:
-                from IPython import display  # noqa: PLC0415
-            except ImportError:  # pragma: no cover
-                msg = 'Install IPython to display an image in a notebook'
-                raise ImportError(msg)
-            display.display(jupyter_disp)
+            _display(jupyter_disp)
 
         # Three possible return values: (cpos, image, widget)
         return_values = tuple(
