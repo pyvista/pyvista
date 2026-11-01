@@ -224,7 +224,7 @@ def _get_ext_handler(ext: str) -> WriterHandler | None:
 
 
 def _list_custom_exts() -> list[str]:
-    """Return the extensions with a custom writer, registered or still pending."""
+    """Return the extensions that have a registered or pending custom writer."""
     return list(_registry.keys())
 
 

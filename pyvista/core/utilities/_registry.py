@@ -351,7 +351,7 @@ class _HandlerRegistryState(TypedDict):
 
 
 class _HandlerRegistry(Generic[_V]):
-    """Handlers registered by name, explicitly or through an entry-point group.
+    """Handlers keyed by name, from explicit registration and an entry-point group.
 
     Parameters
     ----------
