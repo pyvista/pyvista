@@ -19,6 +19,8 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from numpy.typing import NDArray
 
     from pyvista import DataSet
@@ -62,38 +64,41 @@ _BLOCK_CORNERS = {
 
 
 def _complete_frames(frames: NDArray[np.float64], real: NDArray[np.bool_]) -> NDArray[np.float64]:
-    """Return unit index axes, filling the axes without extent to make a right-handed frame."""
+    """Return unit index axes, filling the axes without extent to make a right-handed frame.
+
+    Frames are laid out as ``(coordinate, axis, frame)``.
+    """
     frames = frames.copy()
     columns = np.flatnonzero(real)
     with np.errstate(invalid='ignore', divide='ignore'):
-        frames[..., columns] /= np.linalg.norm(frames[..., columns], axis=-2, keepdims=True)
+        frames[:, columns] /= np.sqrt((frames[:, columns] ** 2).sum(axis=0))
         # A collapsed axis has no direction
-        frames = np.nan_to_num(frames)
+        frames = np.nan_to_num(frames, copy=False)
         if columns.size == 0:
-            frames[:] = np.eye(3)
+            frames[:] = np.eye(3)[:, :, np.newaxis]
         elif columns.size == 1:
             # Take the next global axis, or the one after if the only axis lies along it
             axis = columns[0]
-            first = frames[..., axis]
+            first = frames[:, axis]
             candidates = np.eye(3)[[(axis + 1) % 3, (axis + 2) % 3]]
             # Round so that rounding error cannot break a tie between axes
-            alignment = np.round(np.abs(first @ candidates.T), 8)
-            other = candidates[np.argmin(alignment, axis=-1)]
-            other -= np.sum(other * first, axis=-1, keepdims=True) * first
-            frames[..., (axis + 1) % 3] = other / np.linalg.norm(other, axis=-1, keepdims=True)
+            alignment = np.round(np.abs(candidates @ first), 8)
+            other = candidates[np.argmin(alignment, axis=0)].T
+            other -= np.sum(other * first, axis=0) * first
+            frames[:, (axis + 1) % 3] = other / np.sqrt((other**2).sum(axis=0))
             missing = (axis + 2) % 3
         elif columns.size == 2:
             missing = int(np.flatnonzero(~real)[0])
         if 0 < columns.size < 3:
-            frames[..., missing] = np.cross(
-                frames[..., (missing + 1) % 3], frames[..., (missing + 2) % 3]
+            frames[:, missing] = np.cross(
+                frames[:, (missing + 1) % 3], frames[:, (missing + 2) % 3], axis=0
             )
-    return np.nan_to_num(frames)
+    return np.nan_to_num(frames, copy=False)
 
 
 def _map_frames(linear: NDArray[np.float64], frames: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Return each frame's axes mapped by a linear transformation."""
-    return np.tensordot(frames, linear, axes=([-2], [1])).swapaxes(-1, -2)
+    """Return each frame's axes mapped by a linear transformation, laid out like the input."""
+    return (linear @ frames.reshape(3, -1)).reshape(frames.shape)
 
 
 def _mirror_choice(
@@ -105,23 +110,26 @@ def _mirror_choice(
 ) -> NDArray[np.intp]:
     """Return the mirroring reorder that keeps each frame of reflected index axes closest.
 
-    Frames that differ by at most ``atol`` count as matching.
+    Frames are laid out as ``(coordinate, axis, frame)`` or as one ``(coordinate, axis)``
+    frame. Frames that differ by at most ``atol`` count as matching.
     """
+    if frames.ndim == 2:
+        return _mirror_choice(frames[..., np.newaxis], real, matrix)[0]
     # Frames that all match, like the cells of a regular grid, share one choice
-    if frames.ndim == 3 and len(frames) > 1:
-        spread = np.abs(frames - frames[0]).max()
-        if spread <= max(1e-8 * np.abs(frames[0]).max(), atol):
-            return np.full(len(frames), _mirror_choice(frames[0], real, matrix))
+    if frames.shape[-1] > 1:
+        spread = np.abs(frames - frames[..., :1]).max()
+        if spread <= max(1e-8 * np.abs(frames[..., 0]).max(), atol):
+            return np.full(frames.shape[-1], _mirror_choice(frames[..., 0], real, matrix))
 
     linear = matrix[:3, :3]
     # Map the reflected axes back onto the original ones
     original = _complete_frames(_map_frames(np.linalg.inv(linear), frames), real)
     # Entry (i, j) is how far reflected axis j points along original axis i
-    alignment = np.swapaxes(original, -1, -2) @ _map_frames(linear, original)
-    scores = alignment.reshape(*alignment.shape[:-2], 9) @ _MIRROR_WEIGHTS
+    mapped = _map_frames(linear, original)
+    alignment = np.sum(original[:, :, np.newaxis] * mapped[:, np.newaxis], axis=0)
+    scores = _MIRROR_WEIGHTS.T @ alignment.reshape(9, -1)
     # Scores within rounding error of the best tie, and a tie goes to the first reorder
-    best = scores.max(axis=-1, keepdims=True)
-    return np.argmax(scores >= best - 1e-8, axis=-1)
+    return np.argmax(scores >= scores.max(axis=0) - 1e-8, axis=0)
 
 
 def _structured_frame(mesh: ImageData | StructuredGrid) -> NDArray[np.float64]:
@@ -147,13 +155,12 @@ def _mirror_structured(mesh: ImageData | StructuredGrid, matrix: NDArray[np.floa
     axes, flips = _MIRROR_AXES[choice], _MIRROR_FLIPS[choice]
     extent = _reorder_extent(dimensions, mesh.offset, axes=axes, flips=flips)
     if isinstance(mesh, pv.ImageData):
-        # Map each new index onto its old one, which keeps the origin where it is
-        index_map = np.eye(4)
-        index_map[:3, :3] = 0
-        index_map[axes, range(3)] = np.where(flips, -1, 1)
-        index_to_physical = mesh.index_to_physical_matrix @ index_map
+        # Each new axis takes its old axis's spacing and direction, which keeps the origin
+        direction = mesh.direction_matrix[:, axes] * np.where(flips, -1, 1)
+        spacing = np.asarray(mesh.spacing)[axes]
         mesh.extent = extent
-        mesh.index_to_physical_matrix = index_to_physical
+        mesh.spacing = spacing
+        mesh.direction_matrix = direction
     else:
         points = _reorder_block(mesh.points, dimensions, axes=axes, flips=flips)
         mesh.extent = extent
@@ -175,12 +182,12 @@ def _block_edge_weights(local: tuple[tuple[int, ...], ...]) -> NDArray[np.float6
 def _block_cell_frames(
     points: NDArray[np.float64], cells: NDArray[np.integer], local: tuple[tuple[int, ...], ...]
 ) -> NDArray[np.float64]:
-    """Return the mean edge along each axis of block cells, given their point ids."""
+    """Return the mean edge along each axis of block cells as ``(coordinate, axis, cell)``."""
     weights = _block_edge_weights(local)
-    frames = np.empty((len(cells), 3, 3))
+    frames = np.empty((3, 3, len(cells)))
     # Gathering one coordinate at a time is faster than gathering whole points
     for coordinate in range(3):
-        frames[:, coordinate] = points[:, coordinate][cells] @ weights
+        frames[coordinate] = (points[:, coordinate][cells] @ weights).T
     return frames
 
 
@@ -222,17 +229,20 @@ def _mirror_block_cells(
     # Frames of a regular grid differ by the rounding of its points
     precision = np.finfo(np.result_type(points.dtype, np.float32)).eps
     atol = 4 * precision * float(np.abs(points).max(initial=0))
+    offsets, input_connectivity = original
+    # The reflected cells hold the same number of points in the same places
+    connectivity = reflected[1]
     for cell_type, local in _BLOCK_CORNERS.items():
         ids = np.flatnonzero(celltypes == cell_type)
         if ids.size == 0:
             continue
         n_corners, n_axes = len(local), len(local[0])
         # Read each cell's points in the order the input lists them, at its reflected rows
-        offsets, input_connectivity = original
-        if ids.size == celltypes.size and input_connectivity.size == ids.size * n_corners:
+        uniform = ids.size == celltypes.size and input_connectivity.size == ids.size * n_corners
+        if uniform:
             # Cells of a single type are laid out back to back
-            rows = np.arange(input_connectivity.size).reshape(-1, n_corners)
             cells = input_connectivity.reshape(-1, n_corners)
+            target = connectivity.reshape(-1, n_corners)
         else:
             rows = reflected[0][ids, np.newaxis] + np.arange(n_corners)
             cells = input_connectivity[offsets[ids, np.newaxis] + np.arange(n_corners)]
@@ -241,18 +251,18 @@ def _mirror_block_cells(
         # A flat cell takes the index axes it would have in an axis-aligned grid
         if n_axes == 3:
             placements = np.zeros(len(ids), dtype=int)
+            unique_placements = np.zeros(1, dtype=int)
         else:
             unreflected = _map_frames(inverse, frames)
             direction = (
-                unreflected[..., 0]
+                unreflected[:, 0]
                 if n_axes == 1
-                else np.cross(unreflected[..., 0], unreflected[..., 1])
+                else np.cross(unreflected[:, 0], unreflected[:, 1], axis=0)
             )
-            placements = np.argmax(np.round(np.abs(direction), 8), axis=-1)
+            placements = np.argmax(np.round(np.abs(direction), 8), axis=0)
+            unique_placements = np.unique(placements)
 
-        # The reflected cells hold the same number of points in the same places
-        connectivity = reflected[1]
-        for placement in np.unique(placements):
+        for placement in unique_placements:
             axes = {
                 1: (int(placement),),
                 2: tuple(axis for axis in range(3) if axis != placement),
@@ -261,19 +271,26 @@ def _mirror_block_cells(
             subset = placements == placement
             # Index every cell with a slice when they share a placement, which copies nothing
             selected = slice(None) if subset.all() else np.flatnonzero(subset)
-            placed = np.zeros((np.count_nonzero(subset), 3, 3))
-            placed[..., axes] = frames[selected][..., :n_axes]
+            if n_axes == 3:
+                placed = frames
+            else:
+                placed = np.zeros((3, 3, np.count_nonzero(subset)))
+                placed[:, axes] = frames[:, :n_axes, selected]
             real = np.isin(range(3), axes)
             choices = _mirror_choice(placed, real, matrix, atol=atol)
             orders = _block_corner_orders(local, axes)
-            unique_choices = np.unique(choices)
+            unique_choices = [choices[0]] if np.all(choices == choices[0]) else np.unique(choices)
             for choice in unique_choices:
                 chosen = (
                     selected
-                    if unique_choices.size == 1
+                    if len(unique_choices) == 1
                     else np.flatnonzero(subset)[choices == choice]
                 )
-                connectivity[rows[chosen]] = cells[chosen][:, orders[choice]]
+                reordered = cells[chosen][:, orders[choice]]
+                if uniform:
+                    target[chosen] = reordered
+                else:
+                    connectivity[rows[chosen]] = reordered
 
 
 def _mirror_explicit_structured(mesh: ExplicitStructuredGrid, matrix: NDArray[np.float64]) -> None:
@@ -305,13 +322,17 @@ def _mirror_explicit_structured(mesh: ExplicitStructuredGrid, matrix: NDArray[np
 _AXIS_ALIGNED_TYPES = [CellType.VOXEL, CellType.PIXEL]
 
 
+def _has_types(celltypes: NDArray[np.uint8], types: Iterable[int]) -> NDArray[np.bool_]:
+    """Return which cells have one of the types."""
+    return np.logical_or.reduce([celltypes == cell_type for cell_type in types])
+
+
 def _axis_images(matrix: NDArray[np.float64]) -> NDArray[np.bool_]:
     """Return which axes the transformation maps each axis onto, ignoring rounding error."""
     linear = matrix[:3, :3]
-    with np.errstate(invalid='ignore', divide='ignore'):
+    with np.errstate(invalid='ignore'):
         # An axis scaled to zero maps onto no axis
-        columns = np.nan_to_num(linear / np.linalg.norm(linear, axis=0))
-    return ~np.isclose(columns, 0, atol=1e-8)
+        return np.abs(linear) > 1e-8 * np.sqrt((linear**2).sum(axis=0))
 
 
 def _check_axis_aligned_cells(mesh: UnstructuredGrid, matrix: NDArray[np.float64]) -> None:
@@ -321,7 +342,7 @@ def _check_axis_aligned_cells(mesh: UnstructuredGrid, matrix: NDArray[np.float64
     # A transformation that keeps cells on the axes maps each axis onto at most one axis
     if np.all(np.count_nonzero(_axis_images(matrix), axis=0) <= 1):
         return
-    if np.isin(mesh.celltypes, _AXIS_ALIGNED_TYPES).any():
+    if _has_types(mesh.celltypes, _AXIS_ALIGNED_TYPES).any():
         msg = (
             'Cannot transform VOXEL or PIXEL cells off the axes, since these cells must stay '
             'aligned with them.\nConvert them to HEXAHEDRON or QUAD cells first, for example '
@@ -361,23 +382,44 @@ def _replace_cells(mesh: UnstructuredGrid, cells: pv.CellArray) -> None:
         mesh.SetCells(types, locations, cells, mesh.GetFaceLocations(), mesh.GetFaces())
 
 
-# Cells that vtkReflectionFilter reverses into invalid cells
-_REVERSED_TYPES = [
-    CellType.TRIANGLE_STRIP,
-    CellType.BIQUADRATIC_TRIANGLE,
-    CellType.QUADRATIC_POLYGON,
-]
+# Cells that vtkReflectionFilter reverses into invalid cells, besides triangle strips
+_REVERSED_TYPES = [CellType.BIQUADRATIC_TRIANGLE, CellType.QUADRATIC_POLYGON]
 
 
 def _reversed_order(cell_type: int, size: int) -> NDArray[np.intp]:
     """Return the order of a cell's points that reverses it."""
     if cell_type == CellType.BIQUADRATIC_TRIANGLE:
         return np.array([0, 2, 1, 5, 4, 3, 6])
-    if cell_type == CellType.QUADRATIC_POLYGON:
-        # Reverse the corners from the first, then the edge midpoints between them
-        n_corners = size // 2
-        return np.concatenate((-np.arange(n_corners) % n_corners, size - 1 - np.arange(n_corners)))
-    return np.arange(size)[::-1]
+    # Reverse the corners from the first, then the edge midpoints between them
+    n_corners = size // 2
+    return np.concatenate((-np.arange(n_corners) % n_corners, size - 1 - np.arange(n_corners)))
+
+
+def _offsets_from_sizes(sizes: NDArray[np.integer]) -> NDArray[np.int64]:
+    """Return the offsets of cells of the given sizes."""
+    offsets = np.zeros(len(sizes) + 1, dtype=np.int64)
+    np.cumsum(sizes, out=offsets[1:])
+    return offsets
+
+
+def _reverse_strips(
+    sizes: NDArray[np.integer], starts: NDArray[np.integer], connectivity: NDArray[np.integer]
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
+    """Return each reversed triangle strip's size and the connectivity indices of its points.
+
+    Reversing a strip of an even number of points keeps its orientation, so its first point
+    is repeated to shift its triangles, and a repeated first point is dropped instead.
+    """
+    even = sizes % 2 == 0
+    repeated = np.zeros(len(sizes), dtype=bool)
+    long = sizes > 1
+    repeated[long] = connectivity[starts[long]] == connectivity[starts[long] + 1]
+    new_sizes = sizes + even - (~even & repeated)
+    offsets = _offsets_from_sizes(new_sizes)
+    positions = np.arange(offsets[-1]) - np.repeat(offsets[:-1], new_sizes)
+    # Count down from the last point, holding on it once more for an even strip
+    held = np.repeat(even, new_sizes) & (positions > 0)
+    return new_sizes, np.repeat(starts + sizes - 1, new_sizes) - positions + held
 
 
 def _reverse_cells(
@@ -386,7 +428,7 @@ def _reverse_cells(
     original: tuple[NDArray[np.integer], NDArray[np.integer]],
 ) -> None:
     """Reverse the reflected cells that vtkReflectionFilter reorders wrongly."""
-    reversed_cells = np.isin(celltypes, _REVERSED_TYPES)
+    reversed_cells = _has_types(celltypes, [CellType.TRIANGLE_STRIP, *_REVERSED_TYPES])
     if not reversed_cells.any():
         return
     cells = mesh.GetCells()
@@ -395,10 +437,19 @@ def _reverse_cells(
     input_offsets, input_connectivity = original
     input_sizes = np.diff(input_offsets)
     sizes = np.where(reversed_cells, input_sizes, np.diff(offsets))
-    new_offsets = np.zeros(len(offsets), dtype=np.int64)
-    np.cumsum(sizes, out=new_offsets[1:])
+    strips = np.flatnonzero(celltypes == CellType.TRIANGLE_STRIP)
+    strip_sizes, strip_source = _reverse_strips(
+        input_sizes[strips], input_offsets[strips], input_connectivity
+    )
+    sizes[strips] = strip_sizes
+    new_offsets = _offsets_from_sizes(sizes)
     # Index the reflected connectivity followed by the input's
     source = np.repeat(offsets[:-1] - new_offsets[:-1], sizes) + np.arange(new_offsets[-1])
+    strip_offsets = _offsets_from_sizes(strip_sizes)
+    rows = np.repeat(new_offsets[strips] - strip_offsets[:-1], strip_sizes) + np.arange(
+        strip_offsets[-1]
+    )
+    source[rows] = connectivity.size + strip_source
     for cell_type in _REVERSED_TYPES:
         ids = np.flatnonzero(celltypes == cell_type)
         for size in np.unique(input_sizes[ids]):
@@ -419,7 +470,7 @@ def _mirror_unstructured(mesh: UnstructuredGrid, matrix: NDArray[np.float64]) ->
         _vtk.vtk_to_numpy(input_cells.GetConnectivityArray()),
     )
     celltypes = _vtk.vtk_to_numpy(mesh._get_cell_types_array())
-    if np.isin(celltypes, list(_BLOCK_CORNERS)).all():
+    if _has_types(celltypes, _BLOCK_CORNERS).all():
         # Copy the cells, which the mesh shares with the input, to reorder them like a grid
         reordered = _copy_cells(mesh)
     else:
@@ -450,7 +501,7 @@ def _align_voxels_and_pixels(mesh: UnstructuredGrid, matrix: NDArray[np.float64]
     if np.all(np.diagonal(_axis_images(matrix))):
         return
     celltypes = _vtk.vtk_to_numpy(mesh._get_cell_types_array())
-    if not np.isin(celltypes, _AXIS_ALIGNED_TYPES).any():
+    if not _has_types(celltypes, _AXIS_ALIGNED_TYPES).any():
         return
 
     # Copy the cells, which the mesh shares with the input, to reorder them
@@ -463,24 +514,41 @@ def _align_voxels_and_pixels(mesh: UnstructuredGrid, matrix: NDArray[np.float64]
         ids = np.flatnonzero(celltypes == cell_type)
         if ids.size == 0:
             continue
-        rows = offsets[ids, np.newaxis] + np.arange(len(_BLOCK_CORNERS[cell_type]))
-        point_ids = connectivity[rows]
-        corners = points[point_ids]
-        # A corner is at the upper end of each axis along which it lies past the cell's center
-        upper = (corners > corners.mean(axis=1, keepdims=True)).astype(int)
+        n_corners = len(_BLOCK_CORNERS[cell_type])
+        uniform = ids.size == celltypes.size and connectivity.size == ids.size * n_corners
+        if uniform:
+            # Cells of a single type are laid out back to back
+            target = connectivity.reshape(-1, n_corners)
+            point_ids = target.copy()
+        else:
+            rows = offsets[ids, np.newaxis] + np.arange(n_corners)
+            point_ids = connectivity[rows]
         if cell_type == CellType.VOXEL:
-            index = upper @ [1, 2, 4]
+            spanned = None
         else:
             # A pixel's corners vary along the two axes its plane spans, in order
-            normal = np.argmin(np.ptp(corners, axis=1), axis=-1)
-            spanned = np.array([[1, 2], [0, 2], [0, 1]])[normal]
-            index = np.take_along_axis(upper, spanned[:, np.newaxis, :], axis=2) @ [1, 2]
+            extents = [np.ptp(points[:, axis][point_ids], axis=1) for axis in range(3)]
+            spanned = np.array([[1, 2], [0, 2], [0, 1]])[np.argmin(extents, axis=0)]
         # Voxels and pixels list their corners along x first, then y, then z
-        ordered = point_ids.copy()
-        np.put_along_axis(ordered, index, point_ids, axis=1)
+        index = np.zeros(point_ids.shape, dtype=np.intp)
+        for place in range(3 if spanned is None else 2):
+            # Gathering one coordinate at a time is faster than gathering whole points
+            coordinates = (
+                points[:, place][point_ids]
+                if spanned is None
+                else points[point_ids, spanned[:, place, np.newaxis]]
+            )
+            # A corner is at the upper end of each axis along which it lies past the center
+            index += (coordinates > coordinates.mean(axis=1, keepdims=True)) << place
         # A collapsed cell has no corner order to restore
-        distinct = np.all(np.sort(index, axis=1) == np.arange(index.shape[1]), axis=1)
-        connectivity[rows[distinct]] = ordered[distinct]
+        distinct = np.bitwise_or.reduce(1 << index, axis=1) == (1 << n_corners) - 1
+        kept = slice(None) if distinct.all() else np.flatnonzero(distinct)
+        if uniform:
+            target[np.arange(len(target))[kept, np.newaxis], index[kept]] = point_ids[kept]
+        else:
+            ordered = np.empty_like(point_ids)
+            ordered[np.arange(len(ids))[:, np.newaxis], index] = point_ids
+            connectivity[rows[kept]] = ordered[kept]
     cells.GetConnectivityArray().Modified()
 
 
@@ -489,9 +557,18 @@ def _mirror_cells(mesh: DataSet, matrix: NDArray[np.float64]) -> DataSet:
     if isinstance(mesh, pv.UnstructuredGrid):
         _mirror_unstructured(mesh, matrix)
     elif isinstance(mesh, pv.PolyData):
+        strips = mesh.GetStrips()
         mesh = mesh._reverse_sense(
             reverse_cells=True, reverse_normals=False, inplace=False, progress_bar=False
         )
+        if mesh.n_strips:
+            # vtkReverseSense keeps the orientation of strips of an even number of points
+            offsets = _vtk.vtk_to_numpy(strips.GetOffsetsArray())
+            connectivity = _vtk.vtk_to_numpy(strips.GetConnectivityArray())
+            sizes, source = _reverse_strips(np.diff(offsets), offsets[:-1], connectivity)
+            mesh.strips = pv.CellArray.from_arrays(
+                _offsets_from_sizes(sizes), connectivity[source]
+            )
     elif isinstance(mesh, pv.ExplicitStructuredGrid):
         _mirror_explicit_structured(mesh, matrix)
     elif isinstance(mesh, pv.StructuredGrid):
