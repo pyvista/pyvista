@@ -140,6 +140,17 @@ def get_reader(filename: str | Path, force_ext: str | None = None) -> Any:
     """
     # Circular import: reader_registry -> reader
     from pyvista.core.utilities.reader_registry import _get_ext_reader_class  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _get_scheme_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
+
+    if isinstance(filename, str) and has_scheme(filename) and _get_scheme_handler(filename):
+        scheme = filename.split('://', maxsplit=1)[0].lower()
+        msg = (
+            f'`pyvista.get_reader` does not support {scheme}:// URIs: they are handled by a '
+            f'scheme handler registered with `pyvista.register_scheme`, which has no reader '
+            f'object to return. Use `pyvista.read` instead.'
+        )
+        raise ValueError(msg)
 
     ext = _get_ext_force(filename, force_ext)
 
