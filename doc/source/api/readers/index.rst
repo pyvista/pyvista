@@ -278,8 +278,8 @@ the handler's result. URIs with any other scheme read exactly as above.
 
 The handler is called as ``handler(uri, force_ext=..., file_format=...,
 progress_bar=..., validate=..., **kwargs)``: every argument of that
-:func:`pyvista.read` call except ``cls`` is passed with its value, default
-or not, and ``cls`` is then checked against the returned mesh.
+:func:`pyvista.read` call except ``cls`` is passed with its value,
+including defaults. ``cls`` is then checked against the returned mesh.
 :func:`pyvista.get_reader` raises :class:`ValueError` for a URI whose scheme
 has a handler.
 

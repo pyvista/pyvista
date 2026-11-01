@@ -1423,6 +1423,44 @@ def test_scheme_entry_point_with_invalid_name_warns(monkeypatch, tmp_path):
     assert _reg_mod._pending_scheme_readers == {}
 
 
+def test_scheme_entry_point_that_fails_to_import_falls_through(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('broken', 'broken_scheme_plugin', 'raise RuntimeError("boom")')]
+    )
+    with patch.dict('sys.modules', {'fsspec': None}):
+        with (
+            pytest.warns(UserWarning, match='Failed to load pyvista.schemes entry point.*boom'),
+            pytest.raises(ImportError, match='Cannot download "broken://" URIs'),
+        ):
+            pv.read('broken://bucket/mesh.vtp')
+    assert 'broken' not in _reg_mod._custom_scheme_readers
+
+
+def test_scheme_claimed_by_two_entry_points_uses_first(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch,
+        tmp_path,
+        [
+            ('demo', 'first_scheme_plugin', _SCHEME_PLUGIN_BODY),
+            ('demo', 'second_scheme_plugin', _SCHEME_PLUGIN_BODY),
+        ],
+    )
+    with pytest.warns(UserWarning, match='Multiple pyvista.schemes entry points.*first_scheme'):
+        pv.read('demo://bucket/mesh')
+    assert _reg_mod._custom_scheme_sources['demo'] == 'first_scheme_plugin:read'
+
+
+def test_scheme_entry_point_skipped_when_registered_in_code_first(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('demo', 'shadowed_scheme_plugin', _SCHEME_PLUGIN_BODY)]
+    )
+    pv.register_scheme('demo', _recording_scheme_handler([], pv.Cube()))
+    _reg_mod._ensure_entry_points()
+
+    assert 'demo' not in _reg_mod._pending_scheme_readers
+    assert pv.read('demo://bucket/mesh').n_points == pv.Cube().n_points
+
+
 def test_registered_schemes_resolves_entry_points(monkeypatch, tmp_path):
     _install_scheme_plugin(
         monkeypatch, tmp_path, [('demo', 'listed_scheme_plugin', _SCHEME_PLUGIN_BODY)]
