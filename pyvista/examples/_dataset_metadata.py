@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from dataclasses import field
 import functools
 import re
+import tomllib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -33,11 +34,7 @@ _UNDETERMINED_LICENSE = 'LicenseRef-Unknown'
 
 
 def _load_toml(data: bytes) -> dict[str, Any]:
-    """Parse TOML bytes, using ``tomli`` before Python 3.11."""
-    try:
-        import tomllib  # noqa: PLC0415
-    except ModuleNotFoundError:  # pragma: no cover
-        import tomli as tomllib  # type: ignore[no-redef]  # noqa: PLC0415
+    """Parse TOML bytes."""
     return tomllib.loads(data.decode('utf-8'))
 
 
