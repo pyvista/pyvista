@@ -120,14 +120,14 @@ class ExampleMetadata:
     Examples
     --------
     >>> from pyvista import examples
-    >>> shark = examples.get_example('grey_nurse_shark')  # doctest:+SKIP
-    >>> shark.metadata.provenance  # doctest:+SKIP
+    >>> nefertiti = examples.get_example('nefertiti')  # doctest:+SKIP
+    >>> nefertiti.metadata.provenance  # doctest:+SKIP
     'verified'
 
     The one-word :attr:`~pyvista.examples.Example.usage` summarises the obligations
     read from every license the expression names; the flags behind it are here.
 
-    >>> shark.metadata.share_alike  # doctest:+SKIP
+    >>> nefertiti.metadata.share_alike  # doctest:+SKIP
     True
 
     """
@@ -148,7 +148,12 @@ class ExampleMetadata:
     """Every license the expression names, resolved to its full terms."""
 
     provenance: Provenance
-    """Confidence in the origin, not the license: ``'verified'``, ``'inferred'``, ``'unknown'``."""
+    """How far the origin was established, which says nothing about the license.
+
+    ``'verified'`` is stated at the source or proved by comparing bytes, ``'inferred'``
+    is a reasoned conclusion explained in ``notes``, and ``'unknown'`` could not be
+    established.
+    """
 
     paths: tuple[str, ...]
     """Path patterns the entry claims, relative to the ``Data/`` directory."""

@@ -206,12 +206,8 @@ def test_usage_badges_cover_every_usage_value():
     ]
     colours = [colour for _, colour in badges.values()]
     assert len(set(colours)) == len(colours)
-    # Solid marks usage and outlined marks provenance; the module badge is not checked.
+    # Solid marks usage; the outlined style is kept for the unrecorded badge.
     assert not any(colour.endswith('-line') for colour in colours)
-    assert all(
-        colour.endswith('-line')
-        for colour in make_tables.DATASET_GALLERY_PROVENANCE_COLORS.values()
-    )
 
 
 @pytest.mark.parametrize(
@@ -315,7 +311,6 @@ def test_usage_badge_links_the_legend(metadata):
     assert gen.generate_usage_badge(replace(metadata, licenses=(sa,))) == (
         ':bdg-ref-warning:`Share alike <dataset_gallery_usage>`'
     )
-    assert gen.generate_provenance_field(metadata) == ':bdg-success-line:`verified`'
 
 
 def test_usage_badge_marks_an_uncatalogued_file_but_not_generated_data():
@@ -356,13 +351,18 @@ def test_card_header_carries_the_module_and_usage_badges(monkeypatch, metadata, 
     assert 'use-share-alike' in header
     assert make_tables.DatasetCardFetcher.FACET_LABELS['use-share-alike'] == 'Share alike'
     footer = rst.split('+++')[1]
-    assert '**Usage**' in footer
-    assert '**Commercial use**' in footer
-    assert '**Attribution required**' in footer
-    assert '**Share alike**' in footer
-    assert re.findall(r'^\s*(Yes|No)$', footer, re.MULTILINE) == ['Yes', 'Yes', 'Yes']
-    plain = make_tables.DatasetCard._create_footer_block('', replace(metadata, licenses=()))
-    assert re.findall(r'^\s*(Yes|No)$', plain, re.MULTILINE) == ['No', 'Yes', 'No']
+    assert '.. dropdown:: License' in footer
+    # A local file has no download link, so there is no `Files` row.
+    assert re.findall(r'^\s*\*\*(\w[\w ]*)\*\*$', footer, re.MULTILINE) == [
+        'Usage',
+        'License',
+        'Origin',
+    ]
+    assert "``examples.get_example('thing').metadata``" in footer
+    # The route, the flags and the notes stay in the record, off the card.
+    assert 'Provenance' not in footer
+    assert 'gitlab.kitware.com' not in footer
+    assert 'Commercial use' not in footer
 
 
 def test_filter_manifest_lists_the_usage_slugs_the_cards_emit():
@@ -403,21 +403,6 @@ def test_license_field_falls_back_to_the_issuer_page(metadata):
     )
 
     assert ':bdg-link-primary:`CC-BY-3.0 <https://creativecommons.org/licenses/by/3.0/>`' in field
-
-
-def test_redistributor_shows_the_host_not_the_whole_url(metadata):
-    field = make_tables.DatasetPropsGenerator.generate_redistributor_field(metadata)
-    bare = make_tables.DatasetPropsGenerator.generate_redistributor_field(
-        replace(metadata, redistributed_from=('a private archive',))
-    )
-    missing = make_tables.DatasetPropsGenerator.generate_redistributor_field(
-        replace(metadata, redistributed_from=())
-    )
-
-    assert field.startswith('`gitlab.kitware.com <https://gitlab.kitware.com/')
-    assert field.endswith('`github.com <https://github.com/lorensen/VTKExamples>`__')
-    assert bare == '``a private archive``'
-    assert missing is None
 
 
 def test_origin_field_falls_back_to_a_literal_for_a_non_url(metadata):

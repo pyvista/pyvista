@@ -230,8 +230,26 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
         .. versionadded:: 0.50
 
-        One of ``'unrestricted'``, ``'attribution'``, ``'share_alike'``,
-        ``'non_commercial'`` and ``'undetermined'``, from least to most restrictive.
+        From least to most restrictive:
+
+        ``'unrestricted'``
+            Use it for anything, including a product for sale.
+        ``'attribution'``
+            Use it for anything, but credit the source with :attr:`attribution`.
+        ``'share_alike'``
+            Credit the source, and share derived work under the same license.
+        ``'non_commercial'``
+            Fine for learning, research, and demos, not for a product for sale.
+        ``'undetermined'``
+            Nobody could establish the terms, so treat it as all rights reserved.
+
+        A license can attach more than one term, and this is only the strictest;
+        the flags behind it are :attr:`ExampleMetadata.commercial_use
+        <pyvista.examples.ExampleMetadata.commercial_use>`,
+        :attr:`~pyvista.examples.ExampleMetadata.attribution_required` and
+        :attr:`~pyvista.examples.ExampleMetadata.share_alike`. ``None`` means the
+        example is generated in code or its files have no record yet; treat the
+        latter like ``'undetermined'``.
         """
         return None if self.metadata is None else self.metadata.usage
 

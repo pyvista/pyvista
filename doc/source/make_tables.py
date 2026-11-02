@@ -28,7 +28,6 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
-import urllib.parse
 
 import cmcrameri
 import cmocean
@@ -129,7 +128,8 @@ DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
 
 # Usage value -> (badge text, sphinx-design colour), least to most restrictive. The
 # order is the filter's, and a value missing here is dropped from the filter panel.
-# Keep in step with the legend in dataset_gallery.rst, which every badge links.
+# Keep in step with the legend in dataset_gallery.rst, which every badge links, and
+# with the values `Example.usage` documents.
 DATASET_GALLERY_USAGE_BADGES: dict[str, tuple[str, str]] = {
     'unrestricted': ('No restrictions', 'success'),
     'attribution': ('Credit required', 'info'),
@@ -141,14 +141,6 @@ DATASET_GALLERY_USAGE_LEGEND = 'dataset_gallery_usage'
 DATASET_GALLERY_UNRECORDED_BADGE = (
     f':bdg-ref-muted-line:`Not recorded <{DATASET_GALLERY_USAGE_LEGEND}>`'
 )
-
-# Provenance value -> outlined badge colour, so confidence in the origin never shares
-# a style with the solid usage badge.
-DATASET_GALLERY_PROVENANCE_COLORS: dict[str, str] = {
-    'verified': 'success-line',
-    'inferred': 'warning-line',
-    'unknown': 'danger-line',
-}
 
 # File size bin edges, in decimal MB (matches `_format_file_size` in
 # pyvista/examples/_dataset_loader.py) and calibrated to the real size
@@ -1861,11 +1853,6 @@ def _get_fullname(typ: type[Any]) -> str:
     return f'{typ.__module__}.{typ.__qualname__}'
 
 
-def _strip_trailing(text: str) -> str:
-    """Strip surrounding and per-line trailing whitespace from table prose."""
-    return '\n'.join(line.rstrip() for line in text.strip().splitlines())
-
-
 def _facet_slugify(text: str) -> str:
     """Turn a facet label into a CSS-class-safe slug, e.g. ``POLY_LINE`` -> ``poly-line``.
 
@@ -1874,11 +1861,6 @@ def _facet_slugify(text: str) -> str:
     """
     text = re.sub(r'(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])', '-', text)
     return text.lower().replace(' ', '-').replace('_', '-').replace('.', '-')
-
-
-def _yes_or_no(flag: bool) -> str:  # noqa: FBT001
-    """Spell a license flag out for the card's field grid."""
-    return 'Yes' if flag else 'No'
 
 
 def _facet_size_bin(total_size_bytes: int | None) -> tuple[str, str] | None:
@@ -2212,18 +2194,8 @@ class DatasetCard:
     footer_template = _aligned_dedent(
         """
         |+++
-        |.. dropdown:: Origin & License
+        |.. dropdown:: License
         |   :icon: law
-        |
-        |   {}
-        """,
-    )[1:-1]
-
-    # Notes are the only field long enough to need collapsing on their own.
-    notes_template = _aligned_dedent(
-        """
-        |.. dropdown:: Provenance notes
-        |   :icon: info
         |
         |   {}
         """,
@@ -2385,7 +2357,9 @@ class DatasetCard:
             importer_method=importer_meth,
         )
         seealso_block = self._create_seealso_block(cross_references)
-        footer_block = self._create_footer_block(datasource_links, dataset_metadata)
+        footer_block = self._create_footer_block(
+            datasource_links, dataset_metadata, self.dataset_name
+        )
 
         return self.card_template.format(
             class_card,
@@ -2784,23 +2758,15 @@ class DatasetCard:
         return ''
 
     @classmethod
-    def _create_footer_block(cls, datasource_links, metadata):
-        """Generate the collapsed Origin & License block shown under each card."""
+    def _create_footer_block(cls, datasource_links, metadata, example_name):
+        """Generate the collapsed License block shown under each card."""
         gen = DatasetPropsGenerator
         fields: list[tuple[str, str | None]] = []
         if metadata is not None:
             fields += [
                 ('Usage', gen.generate_usage_badge(metadata)),
                 ('License', gen.generate_license_field(metadata)),
-                ('Commercial use', _yes_or_no(metadata.commercial_use)),
-                ('Attribution required', _yes_or_no(metadata.attribution_required)),
-                ('Share alike', _yes_or_no(metadata.share_alike)),
                 ('Origin', gen.generate_origin_field(metadata)),
-                ('Collection', gen.generate_collection_field(metadata)),
-                ('Redistributed from', gen.generate_redistributor_field(metadata)),
-                ('Provenance', gen.generate_provenance_field(metadata)),
-                ('Authors', '\n'.join(map(_rst_from_prose, metadata.authors)) or None),
-                ('Copyright', '\n'.join(map(_rst_from_prose, metadata.copyright)) or None),
             ]
         fields.append(('Files', datasource_links))
         parts = [cls._generate_field_block(fields)]
@@ -2808,25 +2774,13 @@ class DatasetCard:
             # Prose wraps; the two-column field grid is `sd-text-nowrap` and would not.
             parts.append(
                 cls._generate_prose_block(
-                    [
-                        # `References` is built as reStructuredText here; the other two
-                        # are prose from the table and are escaped like `notes`.
-                        ('Attribution', _rst_from_prose(metadata.attribution or '') or None),
-                        (
-                            'Modification',
-                            _rst_from_prose(metadata.modification or '')
-                            if metadata.modified
-                            else None,
-                        ),
-                        ('References', gen.generate_references_field(metadata)),
-                    ]
+                    [('Attribution', _rst_from_prose(metadata.attribution or '') or None)]
                 )
             )
-            if metadata.notes:
-                notes = _indent_multi_line_string(
-                    _rst_from_prose(_strip_trailing(metadata.notes)), indent_level=1
-                )
-                parts.append(cls.notes_template.format(notes.lstrip()))
+            parts.append(
+                f'Full record: ``examples.get_example({example_name!r}).metadata``, an '
+                ':class:`~pyvista.examples.ExampleMetadata`.'
+            )
         block = '\n\n'.join(part for part in parts if part.strip())
         if not block.strip():
             return ''
@@ -2976,12 +2930,6 @@ class DatasetPropsGenerator:
         return f':bdg-ref-{color}:`{text} <{DATASET_GALLERY_USAGE_LEGEND}>`'
 
     @staticmethod
-    def generate_provenance_field(metadata) -> str:
-        """Format the provenance of the recorded origin as a badge."""
-        color = DATASET_GALLERY_PROVENANCE_COLORS.get(metadata.provenance, 'secondary')
-        return f':bdg-{color}:`{metadata.provenance}`'
-
-    @staticmethod
     def generate_origin_field(metadata) -> str | None:
         """Format `origin_url` as a link titled by `origin_title`."""
         if not metadata.origin_url:
@@ -2991,43 +2939,6 @@ class DatasetPropsGenerator:
             return f'``{name}``'
         # Anonymous, since the same title links a different URL on another card.
         return f'`{name} <{metadata.origin_url}>`__'
-
-    @staticmethod
-    def generate_collection_field(metadata) -> str | None:
-        """Format `collection` as a link titled by the collection's name."""
-        if metadata.collection is None:
-            return None
-        # Anonymous, since the same title links a different URL on another card.
-        return f'`{metadata.collection.title} <{metadata.collection.url}>`__'
-
-    @staticmethod
-    def generate_redistributor_field(metadata) -> str | None:
-        """Format each `redistributed_from` hop as a host link, falling back to the bare value."""
-        if not metadata.redistributed_from:
-            return None
-        hops = []
-        for url in metadata.redistributed_from:
-            if not url.startswith(('http://', 'https://')):
-                hops.append(f'``{url}``')
-                continue
-            # The full URL is often long enough to break the nowrap field grid.
-            hops.append(f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`__')
-        return ', '.join(hops)
-
-    @staticmethod
-    def generate_references_field(metadata) -> str | None:
-        """Format each work the dataset asks to be cited, one per line."""
-        if not metadata.references:
-            return None
-        lines = []
-        for reference in metadata.references:
-            if reference.doi:
-                lines.append(f'`{reference.citation} <https://doi.org/{reference.doi}>`__')
-            elif reference.url:
-                lines.append(f'`{reference.citation} <{reference.url}>`__')
-            else:
-                lines.append(reference.citation)
-        return '\n'.join(lines)
 
     @staticmethod
     def generate_datasource_links(loader: _DatasetLoader) -> str | None:
