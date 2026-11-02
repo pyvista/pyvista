@@ -9,8 +9,8 @@ Get and set data arrays as shaped NumPy arrays instead of flat arrays.
 PyVista stores every data array flat, with one row per point or cell.
 ``point_data.reshaped`` and ``cell_data.reshaped`` show the same arrays in a
 shaped layout chosen by :attr:`pyvista.global_config.array_reshaping
-<pyvista.core.config.Config.array_reshaping>` or by
-:meth:`~pyvista.core._array_reshaping.ReshapedArrays.using`.
+<pyvista.core.config.Config.array_reshaping>` or by calling the view with
+a preset name or an :class:`~pyvista.ArrayReshaper`.
 
 """
 
