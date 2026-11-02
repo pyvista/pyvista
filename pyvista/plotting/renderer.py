@@ -10,7 +10,9 @@ import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import TypeVar
 from typing import cast
+from typing import overload
 import weakref
 
 import numpy as np
@@ -63,6 +65,7 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
+    from ._property import Property
     from ._typing import CameraPositionOptions
     from ._typing import Chart
     from ._typing import ColorLike
@@ -70,6 +73,11 @@ if TYPE_CHECKING:
     from .lights import Light
     from .plotter import BasePlotter
     from .texture import Texture
+
+_PropT = TypeVar('_PropT', bound=_vtk.vtkProp)
+_ActorT = TypeVar('_ActorT', bound=_vtk.vtkActor)
+_VolumeT = TypeVar('_VolumeT', bound=_vtk.vtkVolume)
+_Actor2DT = TypeVar('_Actor2DT', bound=_vtk.vtkActor2D)
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -146,7 +154,7 @@ def map_loc_to_pos(
     return x, y, size
 
 
-def make_legend_face(face: str | pv.PolyData | None) -> PolyData:
+def make_legend_face(face: str | PolyData | None) -> PolyData:
     """Create the legend face based on the given face.
 
     Parameters
@@ -818,7 +826,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.set_background(color)
         self.Modified()
 
-    def _before_render_event(self, *args: object, **kwargs: object) -> None:
+    def _before_render_event(self, *args: Any, **kwargs: Any) -> None:
         """Notify all charts about render event."""
         if self._charts is not None:
             for chart in self._charts:
@@ -1165,6 +1173,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             return {}
         return dict(self._actors.items())
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_actor(self, actor: _vtk.vtkMapper, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[Actor, Property]: ...
+    @overload
+    def add_actor(self, actor: _ActorT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_ActorT, _vtk.vtkProperty]: ...
+    @overload
+    def add_actor(self, actor: _VolumeT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_VolumeT, _vtk.vtkVolumeProperty]: ...
+    @overload
+    def add_actor(self, actor: _Actor2DT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_Actor2DT, _vtk.vtkProperty2D]: ...
+    @overload
+    def add_actor(self, actor: _PropT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_PropT, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def add_actor(
         self,
         actor: _vtk.vtkProp | _vtk.vtkMapper,
@@ -1175,7 +1197,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         pickable: bool = True,
         render: bool = True,
         remove_existing_actor: bool = True,
-    ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None]:
+    ) -> tuple[
+        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None
+    ]:
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -2702,12 +2726,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._cube_axes_follow_scene = True
             self.Modified()
 
-    def add_light(self, light: _vtk.vtkLight | Light) -> None:
+    def add_light(self, light: Light | _vtk.vtkLight) -> None:
         """Add a light to the renderer.
 
         Parameters
         ----------
-        light : :vtk:`vtkLight` | Light
+        light : Light | :vtk:`vtkLight`
             Light to add.
 
         """
@@ -3136,10 +3160,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.reset_camera(render=render)
         self.Modified()
 
-    def get_default_cam_pos(self, *, negative: bool = False) -> list[VectorLikeFloat]:
+    def get_default_cam_pos(self, *, negative: bool = False) -> list[tuple[float, float, float]]:
         """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
+
+        .. versionchanged:: 0.50
+            Every element is a tuple of floats.
 
         Parameters
         ----------
@@ -3148,7 +3175,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        list
+        list[tuple[float, float, float]]
             List of camera position:
 
             * Position
@@ -3163,7 +3190,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        return [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
+        return [
+            _validation.validate_array3(vector, dtype_out=float, to_tuple=True)
+            for vector in (position + np.array(focal_pt), focal_pt, self._theme.camera.viewup)
+        ]
 
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
@@ -3666,11 +3696,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def enable_eye_dome_lighting(self) -> None:
         """Enable eye dome lighting (EDL).
 
-        Returns
-        -------
-        :vtk:`vtkOpenGLRenderer`
-            VTK renderer with eye dome lighting pass.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -3802,7 +3827,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        tuple
+        tuple[int, int, int, int]
             Pick position as ``x0, y0, x1, y1``.
 
         """
@@ -4253,7 +4278,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         size: Sequence[float] = (0.2, 0.2),
         name: str | None = None,
         loc: str = 'upper right',
-        face: str | pv.PolyData | None = None,
+        face: str | PolyData | None = None,
         font_family: str | None = None,
         background_opacity: float = 1.0,
     ) -> _vtk.vtkLegendBoxActor:

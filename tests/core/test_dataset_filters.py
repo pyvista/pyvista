@@ -81,7 +81,7 @@ class GetOutput:
 
     def __call__(self, algorithm, *args, **kwargs):
         self._mock(algorithm, *args, **kwargs)
-        return _get_output(algorithm)
+        return _get_output(algorithm, *args, **kwargs)
 
     def reset(self, *args, **kwargs):
         self._mock.reset_mock(*args, **kwargs)
@@ -147,8 +147,27 @@ def test_get_output_restores_field_data(sphere):
     vtk_output.GetFieldData().Initialize()
     assert 'data' in sphere.field_data
     assert vtk_output.GetFieldData().GetNumberOfArrays() == 0
-    output = _get_output(alg)
+    output = _get_output(alg, output_type=pv.PolyData)
     assert np.array_equal(output.field_data['data'], np.arange(3))
+
+
+def test_get_output_checks_output_type(sphere):
+    alg = _vtk.vtkTriangleFilter()
+    alg.SetInputDataObject(sphere)
+    alg.Update()
+    match = 'vtkTriangleFilter output is PolyData, not UnstructuredGrid | ImageData.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        _get_output(alg, output_type=(pv.UnstructuredGrid, pv.ImageData))
+
+
+def test_get_output_accepts_subclass(sphere):
+    class Foo(pv.PolyData):
+        """A user defined subclass of pv.PolyData."""
+
+    alg = _vtk.vtkTriangleFilter()
+    alg.SetInputDataObject(Foo(sphere))
+    alg.Update()
+    assert type(_get_output(alg, output_type=Foo)) is pv.PolyData
 
 
 def test_datasetfilters_init():

@@ -160,6 +160,14 @@ if pv.vtk_version_info >= (9, 5):
     ...
 ```
 
+A gate or workaround exists because of a specific upstream change, so find it before you
+write the branch: search [vtk-archive.pyvista.org](https://vtk-archive.pyvista.org/search)
+for the class or method, read the merge request as Markdown
+(`/vtk/vtk/-/merge_requests/<iid>.md`), and its `/diffs` page for what changed. Its
+milestone and head commit tell you which release the gate belongs on. Cite the canonical
+`gitlab.kitware.com` URL next to the gate. AGENTS.md has the rest of the archive's URL
+scheme.
+
 A shared constant already exists for most capability checks; reuse it rather than
 re-deriving one locally (see **pyvista-dev**).
 

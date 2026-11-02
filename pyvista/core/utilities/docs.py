@@ -73,7 +73,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
             continue
         try:
             obj = getattr(obj, part)
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001 - a property getter can raise anything
             return None
 
     # deal with our decorators properly
@@ -85,7 +85,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
-    except Exception:  # noqa: BLE001  # pragma: no cover
+    except Exception:  # noqa: BLE001 - source links are best effort  # pragma: no cover
         fn = None
 
     if not fn:  # pragma: no cover
@@ -96,7 +96,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except Exception:  # noqa: BLE001 # pragma: no cover
+    except Exception:  # noqa: BLE001 - source links are best effort  # pragma: no cover
         lineno = None
 
     if not lineno:

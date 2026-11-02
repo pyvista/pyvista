@@ -330,7 +330,7 @@ def read_mesh(
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
             return pv.read(path)
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:  # noqa: BLE001 - handled per ``on_error``
         if on_error.startswith('suppress'):
             if on_error == 'suppress+warn':
                 CLI_APP.error_console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
@@ -501,7 +501,7 @@ def call_or_exit(func: Callable[..., Any], /, command: str, **kwargs) -> Any:
     """
     try:
         return func(**kwargs)
-    except Exception as ex:  # noqa: BLE001
+    except Exception as ex:  # noqa: BLE001 - reported as a CLI error
         # Prevent traceback and output error along with help message
         CLI_APP.help_print(tokens=command, console=CLI_APP.error_console)
 

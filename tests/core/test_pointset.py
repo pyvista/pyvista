@@ -83,10 +83,17 @@ def test_pointset(pointset):
 
 
 def test_save(tmpdir, pointset):
-    filename = str(tmpdir.mkdir('tmpdir').join(f'{"tmp.xyz"}'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.txt'))
     pointset.save(filename)
     points = np.loadtxt(filename)
     assert np.allclose(points, pointset.points)
+
+
+def test_save_xyz_deprecated(tmp_path, pointset):
+    filename = tmp_path / 'tmp.xyz'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=r'Use `\.txt`'):
+        pointset.save(filename)
+    assert np.allclose(np.loadtxt(filename), pointset.points)
 
 
 @pytest.mark.parametrize('deep', [True, False])

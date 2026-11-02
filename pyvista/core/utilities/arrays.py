@@ -344,13 +344,13 @@ def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> NDArray[Any]:
 # fmt: off
 # ruff: disable[E501]
 @overload
-def get_array(mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable, name: str, *, preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = ..., err: Literal[True]) -> pyvista_ndarray: ...
+def get_array(mesh: DataSet | Table | _vtk.vtkDataSet | _vtk.vtkTable, name: str, *, preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = ..., err: Literal[True]) -> pyvista_ndarray: ...
 @overload
-def get_array(mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable, name: str, *, preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = ..., err: bool = ...) -> pyvista_ndarray | None: ...
+def get_array(mesh: DataSet | Table | _vtk.vtkDataSet | _vtk.vtkTable, name: str, *, preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = ..., err: bool = ...) -> pyvista_ndarray | None: ...
 # ruff: enable[E501]
 # fmt: on
 def get_array(
-    mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
+    mesh: DataSet | Table | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     *,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
@@ -360,7 +360,7 @@ def get_array(
 
     Parameters
     ----------
-    mesh : pyvista.DataSet
+    mesh : pyvista.DataSet | pyvista.Table
         Dataset to get the array from.
 
     name : str
@@ -427,7 +427,7 @@ def get_array(
 
 
 def get_array_association(
-    mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
+    mesh: DataSet | Table | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     *,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
@@ -437,7 +437,7 @@ def get_array_association(
 
     Parameters
     ----------
-    mesh : pyvista.DataSet
+    mesh : pyvista.DataSet | pyvista.Table
         Dataset to get the array association from.
 
     name : str
@@ -665,12 +665,12 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
     return _assoc_array(obj, name, 'cell')
 
 
-def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
+def row_array(obj: Table | _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
     """Return row array of a VTK object.
 
     Parameters
     ----------
-    obj : :vtk:`vtkTable`
+    obj : Table | :vtk:`vtkTable`
         PyVista or VTK table.
 
     name : str
@@ -678,7 +678,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
 
     Returns
     -------
-    numpy.ndarray
+    pyvista.pyvista_ndarray | None
         Wrapped array.
 
     """
@@ -928,7 +928,8 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     """
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
-    if mesh.active_vectors_name is None:
+    field, name = mesh.active_vectors_info
+    if name is None:
         point_data = mesh.point_data
         cell_data = mesh.cell_data
 
@@ -946,7 +947,9 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
             preference: Literal['point', 'cell'] = (
                 'point' if len(possible_vectors_point) == 1 else 'cell'
             )
-            mesh.set_active_vectors(possible_vectors[0], preference=preference)
+            name = possible_vectors[0]
+            mesh.set_active_vectors(name, preference=preference)
+            field = mesh.active_vectors_info.association
         elif n_possible_vectors < 1:
             msg = 'No vector-like data available.'
             raise MissingDataError(msg)
@@ -958,8 +961,7 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
                 'Set one as active using DataSet.set_active_vectors(name, preference=type)'
             )
             raise AmbiguousDataError(msg)
-    field, name = mesh.active_vectors_info
-    return _ActiveArrayExistsInfoTuple(field, cast('str', name))
+    return _ActiveArrayExistsInfoTuple(field, name)
 
 
 def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
@@ -996,7 +998,8 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     """
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
-    if mesh.active_scalars_name is None:
+    field, name = mesh.active_scalars_info
+    if name is None:
         point_data = mesh.point_data
         cell_data = mesh.cell_data
 
@@ -1010,7 +1013,9 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
             preference: Literal['point', 'cell'] = (
                 'point' if len(possible_scalars_point) == 1 else 'cell'
             )
-            mesh.set_active_scalars(possible_scalars[0], preference=preference)
+            name = possible_scalars[0]
+            mesh.set_active_scalars(name, preference=preference)
+            field = mesh.active_scalars_info.association
         elif n_possible_scalars < 1:
             msg = 'No data available.'
             raise MissingDataError(msg)
@@ -1022,8 +1027,7 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
                 'Set one as active using DataSet.set_active_scalars(name, preference=type)'
             )
             raise AmbiguousDataError(msg)
-    field, name = mesh.active_scalars_info
-    return _ActiveArrayExistsInfoTuple(field, cast('str', name))
+    return _ActiveArrayExistsInfoTuple(field, name)
 
 
 _JSONValueType = (

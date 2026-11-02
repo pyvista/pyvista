@@ -12,6 +12,7 @@ from pyvista_validation._cast_array import _cast_to_tuple
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core.filters.image_data import _active_point_scalars
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 
@@ -3537,3 +3538,9 @@ def test_concatenate_background_value(background_value, mode, origin, spacing):
     assert concatenated.spacing == spacing
     assert concatenated.user_dict == user_dict
     assert concatenated.active_scalars_name == image_a.active_scalars_name
+
+
+def test_active_point_scalars_missing():
+    match = 'The filter output has no active point scalars.'
+    with pytest.raises(pv.MissingDataError, match=match):
+        _active_point_scalars(pv.ImageData(dimensions=(2, 2, 2)))

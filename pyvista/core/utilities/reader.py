@@ -55,14 +55,15 @@ if TYPE_CHECKING:
     # so the imports are required at type-check time even though Ruff
     # cannot see the reference inside a string literal.
     from pyvista import DataObject
-    from pyvista import DataSet  # noqa: F401
+    from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid  # noqa: F401
     from pyvista import ImageData  # noqa: F401
-    from pyvista import MultiBlock  # noqa: F401
+    from pyvista import MultiBlock
     from pyvista import PartitionedDataSet  # noqa: F401
     from pyvista import PolyData  # noqa: F401
     from pyvista import RectilinearGrid  # noqa: F401
     from pyvista import StructuredGrid  # noqa: F401
+    from pyvista import Table
     from pyvista import UnstructuredGrid  # noqa: F401
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
@@ -196,7 +197,7 @@ class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self: BaseVTKReader) -> None:
-        self._data_object: pv.DataObject | None = None
+        self._data_object: DataObject | None = None
         self._filename: str | Path | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
@@ -259,7 +260,7 @@ class BaseVTKReader(ABC):
         Set self._data_object.
         """
 
-    def GetOutputDataObject(self, *args) -> pv.DataObject | None:  # noqa: ARG002  # numpydoc ignore=PR01
+    def GetOutputDataObject(self, *args) -> DataObject | None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Return stored data."""
         return self._data_object
 
@@ -1605,7 +1606,7 @@ class Plot3DFunctionEnum(IntEnum):
 
 
 class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
-    """Reader for the PLOT3D format.
+    """Reader for the PLOT3D format (``.xyz``).
 
     Wraps :vtk:`vtkMultiBlockPLOT3DReader`.
 
@@ -3091,7 +3092,7 @@ class GIFReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
     _format = _formats.GIF
 
 
-def _read_from_plotter(filename: str | Path, kind: Literal['vrml', '3ds']) -> pv.MultiBlock:
+def _read_from_plotter(filename: str | Path, kind: Literal['vrml', '3ds']) -> MultiBlock:
     pl = pv.Plotter(off_screen=True)
     importer = getattr(pl, f'import_{kind}')
     importer(filename)
@@ -3393,7 +3394,7 @@ class GaussianCubeReader(BaseReader['DataSet']):
         *,
         grid: bool = True,
         validate: bool | None = None,
-    ) -> pv.DataSet:
+    ) -> DataSet:
         """Read the file and return the output.
 
         Parameters
@@ -3634,7 +3635,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.enable_all_point_arrays()
         self.enable_all_side_set_arrays()
 
-    def read_global(self) -> pv.Table:
+    def read_global(self) -> Table:
         """Read enabled global data.
 
         Returns

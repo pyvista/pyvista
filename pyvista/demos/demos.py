@@ -16,6 +16,8 @@ from pyvista import examples
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from pyvista.core.pointset import PolyData
+    from pyvista.plotting.plotter import Plotter
     from pyvista.plotting.plotter import _ShowReturnType
 
 _DatasetTypeOptions = Literal[
@@ -23,7 +25,7 @@ _DatasetTypeOptions = Literal[
 ]
 
 
-def glyphs(grid_sz: int = 3) -> pv.PolyData:
+def glyphs(grid_sz: int = 3) -> PolyData:
     """Create several parametric supertoroids using VTK's glyph table functionality.
 
     Parameters
@@ -120,7 +122,7 @@ def plot_glyphs(grid_sz: int = 3, **kwargs: Any) -> _ShowReturnType:
     return pl.show()
 
 
-def orientation_cube() -> dict[str, pv.PolyData]:
+def orientation_cube() -> dict[str, PolyData]:
     """Return a dictionary containing the meshes composing an orientation cube.
 
     Returns
@@ -205,7 +207,7 @@ def orientation_cube() -> dict[str, pv.PolyData]:
     }
 
 
-def orientation_plotter() -> pv.Plotter:
+def orientation_plotter() -> Plotter:
     """Return a plotter containing the orientation cube.
 
     Returns

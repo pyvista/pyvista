@@ -33,6 +33,8 @@ if TYPE_CHECKING:
 
     from cyclopts import Token
 
+    from pyvista import DataObject
+
 fields_help = """
 Fields to validate. Specify individual fields or groups of fields:
 
@@ -243,7 +245,7 @@ def _check_mesh_type(mesh: object, path: Path) -> None:
 
 
 def _validate_one(
-    mesh: pv.DataObject,
+    mesh: DataObject,
     path: Path,
     *,
     fields: list[_LiteralMeshValidationFields] | None,
@@ -272,7 +274,7 @@ def _validate_one(
             size_tolerance=size_tolerance,
             report_body=report_body,
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 - reported as a CLI error
         msg = f'Failed to validate {class_name} mesh read from path {str(path)!r}\n{e}'
         print_error_and_exit(message=msg)
 

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
@@ -59,7 +60,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg = _vtk.vtkSubdivideTetra()
         alg.SetInputData(self)
         _update_alg(alg)
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def clean(
         self,
@@ -164,7 +165,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.UnstructuredGrid)
 
     def remove_unused_points(  # type: ignore[misc]
         self: _UnstructuredGridType,

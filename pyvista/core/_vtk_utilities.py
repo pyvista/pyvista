@@ -176,6 +176,10 @@ _MATRIX_GET_DATA_RETURNS_ELEMENTS = vtk_version_info >= (9, 4)
 # properties built on those cell arrays have nothing to read.
 _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
 
+# From VTK 9.7, `vtkGenericCell.DeepCopy/ShallowCopy` unwrap a `vtkGenericCell` source
+# to its representative cell. Before that the caller has to, or a polyhedron loses its faces.
+_GENERIC_CELL_COPY_UNWRAPS = vtk_version_info >= (9, 7)
+
 
 # Per-class attribute names verified safe to access in every ``vtk_snake_case`` state.
 _SAFE_ATTRS_BY_CLASS: dict[type, set[str]] = {}

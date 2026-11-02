@@ -920,7 +920,8 @@ def test_to_pandas_string_column(hexbeam):
     expected = np.array(['a', 'b'] * ((hexbeam.n_points + 1) // 2))[: hexbeam.n_points]
     hexbeam.point_data['name'] = expected
     df = hexbeam.point_data.to_pandas()
-    assert df['name'].dtype == object
+    # pandas >= 3 stores string columns as a string dtype instead of object
+    assert df['name'].dtype == object or isinstance(df['name'].dtype, pd.StringDtype)
     assert np.array_equal(df['name'].to_numpy(), expected)
 
 

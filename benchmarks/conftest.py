@@ -163,3 +163,26 @@ def mutable_sphere(rng):
 def scalars(sphere, rng):
     """Return an array sized to the small sphere's points."""
     return rng.random(sphere.n_points)
+
+
+@pytest.fixture(scope='session')
+def tetra_arrays(rng):
+    """Return (cells, celltypes, points) for 10,000 disjoint tetrahedra."""
+    n = 10_000
+    cells = np.hstack([np.full((n, 1), 4), np.arange(4 * n).reshape(n, 4)]).ravel()
+    return cells, np.full(n, pv.CellType.TETRA, np.uint8), rng.random((4 * n, 3))
+
+
+@pytest.fixture(scope='session')
+def polyhedron_arrays(rng):
+    """Return (cells, celltypes, points) for 10,000 disjoint hexahedra as polyhedra."""
+    n = 10_000
+    faces = [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
+    stream = np.array([value for face in faces for value in [4, *face]])
+    cell = np.concatenate([[1 + stream.size, 6], stream])
+    is_point_id = np.ones(cell.size, bool)
+    is_point_id[:2] = False
+    is_point_id[2::5] = False
+    cells = np.tile(cell, (n, 1))
+    cells[:, is_point_id] += (np.arange(n) * 8)[:, None]
+    return cells.ravel(), np.full(n, pv.CellType.POLYHEDRON, np.uint8), rng.random((8 * n, 3))

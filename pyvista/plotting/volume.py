@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 from pyvista import _vtk
 
 from .prop3d import Prop3D
+from .volume_property import VolumeProperty
 
 if TYPE_CHECKING:
     from typing import Self
 
     from .mapper import _BaseMapper
-    from .volume_property import VolumeProperty
 
 
 class Volume(Prop3D, _vtk.vtkVolume):
@@ -27,6 +27,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
     def __init__(self) -> None:
         """Initialize volume."""
         super().__init__()
+        self.prop = VolumeProperty()
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01

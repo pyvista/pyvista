@@ -15,6 +15,8 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.dataobject import DataObject
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.formatting_html import _key_value_section
+from pyvista.core.formatting_html import build_repr_html
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
@@ -25,6 +27,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista.core._typing_core import _Scalar
+    from pyvista.core.grid import ImageData
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import FieldLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -140,10 +143,12 @@ class Texture(DataObject, _vtk.vtkTexture):
     def __init__(
         self,
         uinput: str
+        | Texture
         | _vtk.vtkTexture
+        | ImageData
         | _vtk.vtkImageData
         | NDArray[_Scalar]
-        | Sequence[pv.ImageData]
+        | Sequence[ImageData]
         | None = None,
         **kwargs: Any,
     ) -> None:
@@ -381,7 +386,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         """
         return Texture(self._image()._flip_uniform(1))
 
-    def to_image(self) -> pv.ImageData | None:
+    def to_image(self) -> ImageData | None:
         """Return the texture as an image.
 
         Returns
@@ -393,7 +398,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         """
         return self.GetInput()
 
-    def _image(self) -> pv.ImageData:
+    def _image(self) -> ImageData:
         """Return the texture's image, or raise if it has none."""
         image = self.to_image()
         if image is None:
@@ -630,6 +635,31 @@ class Texture(DataObject, _vtk.vtkTexture):
         """Return the object representation."""
         return pv.DataSet.__repr__(self)  # type: ignore[type-var]
 
+    def _repr_html_(self) -> str:
+        """Return a pretty representation for Jupyter notebooks."""
+        width, height = self.dimensions
+        n_comp = self.n_components
+        badges = [f'{width} x {height}', f'{n_comp} component{"" if n_comp == 1 else "s"}']
+        if self.cube_map:
+            badges.append('cube map')
+        properties = [
+            ('Dimensions', f'{width} x {height}'),
+            ('Components', str(self.n_components)),
+            ('Cube Map', str(self.cube_map)),
+            ('Interpolate', str(self.interpolate)),
+            ('Mipmap', str(self.mipmap)),
+            ('Repeat', str(self.repeat)),
+            ('Wrap', self.wrap.name),
+            ('Color Mode', self.color_mode),
+        ]
+        return build_repr_html(
+            type(self).__name__,
+            'Texture',
+            header_badges=badges,
+            sections=[_key_value_section('Properties', properties)],
+            text_repr=repr(self),
+        )
+
     def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
@@ -848,7 +878,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return Texture(data)
 
 
-def image_to_texture(image: pv.ImageData | _vtk.vtkImageData) -> Texture:
+def image_to_texture(image: ImageData | _vtk.vtkImageData) -> Texture:
     """Convert :class:`pyvista.ImageData` to a :class:`pyvista.Texture`.
 
     Parameters

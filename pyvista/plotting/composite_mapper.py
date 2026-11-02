@@ -478,7 +478,10 @@ class CompositeAttributes(
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr.get_block(0)
         MultiBlock[PolyData] (...)
+          N Cells:    1686
+          N Points:   850
           N Blocks:   2
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 1.500e+00
@@ -585,7 +588,10 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.dataset
         MultiBlock[PolyData] (...)
+          N Cells:    1686
+          N Points:   850
           N Blocks:   2
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 1.500e+00
@@ -654,9 +660,8 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, scalars='data', show_scalar_bar=False
+        ...     dataset, scalars='data', show_scalar_bar=False, nan_color='r'
         ... )
-        >>> pv.global_theme.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
 

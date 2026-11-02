@@ -36,6 +36,7 @@ from .misc import check_valid_vector
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from pyvista import CellType
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
@@ -1172,7 +1173,7 @@ def SolidSphereGeneric(
             ntheta_ = ntheta
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
-    def _add_cells(celltype: pv.CellType, *point_ids: int | NDArray[np.signedinteger]) -> None:
+    def _add_cells(celltype: CellType, *point_ids: int | NDArray[np.signedinteger]) -> None:
         """Append one block of same-type cells, one row per broadcast element."""
         ids = np.broadcast_arrays(*point_ids)
         block = np.stack([np.full_like(ids[0], len(ids)), *ids], axis=-1)
@@ -2052,7 +2053,7 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
+    return cast('ImageData', wrap(wavelet_source.GetOutput()))
 
 
 def CircularArc(

@@ -103,11 +103,11 @@ jobs:
           cache: "pip"
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+        uses: pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4 # v5.2.0
 
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk git-restore-mtime
           version: 3.0
 
       - name: Restore pyvista/data cache
@@ -348,7 +348,7 @@ jobs:
       - name: Get app installation token (pyvista-examples)
         id: app-token
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
         with:
           app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
           private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}

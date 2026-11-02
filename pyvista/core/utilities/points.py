@@ -160,7 +160,7 @@ def line_segments_from_points(points: VectorLikeFloat | MatrixLikeFloat) -> Poly
     n_points = len(points)
     lines = cast('NDArray[np.signedinteger]', np.arange(n_points, dtype=pv.ID_TYPE).reshape(-1, 2))
     poly = pv.PolyData()
-    poly.points = cast('MatrixLikeFloat', points)
+    poly.points = points
     poly.lines = pv.CellArray.from_regular_cells(lines)
     return poly
 
@@ -206,7 +206,7 @@ def lines_from_points(
 
     """
     poly = pv.PolyData()
-    poly.points = cast('MatrixLikeFloat', points)
+    poly.points = points
     n_points = len(points)
     point_ids = np.arange(n_points, dtype=pv.ID_TYPE)
     cells = np.empty((n_points if close else n_points - 1, 2), dtype=pv.ID_TYPE)

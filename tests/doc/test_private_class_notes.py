@@ -10,22 +10,32 @@ from __future__ import annotations
 import importlib
 import inspect
 import pkgutil
+import warnings
 
 import pytest
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 NOTE = 'private internal implementation detail'
 
 
-def _all_classes():
-    """Return every class defined anywhere in ``pyvista``."""
-    modules = [pv]
-    for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.'):
+def _import_all_modules():
+    """Return the importable ``pyvista`` modules and ``{name: error}`` for the rest."""
+    modules, failed = [pv], {}
+    # A broken package is recorded below; ``onerror`` stops walk_packages raising it again
+    for info in pkgutil.walk_packages(pv.__path__, f'{pv.__name__}.', onerror=lambda _name: None):
         try:
-            modules.append(importlib.import_module(info.name))
-        except Exception:  # noqa: BLE001, S112  # pragma: no cover
-            continue  # a module whose optional dependency is missing
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', PyVistaDeprecationWarning)  # deprecated shims
+                modules.append(importlib.import_module(info.name))
+        except Exception as e:  # noqa: BLE001 - reported by test_every_module_imports  # pragma: no cover
+            failed[info.name] = f'{type(e).__name__}: {e}'
+    return modules, failed
+
+
+def _all_classes(modules):
+    """Return every class defined in ``modules``."""
     return list(
         {
             obj
@@ -50,9 +60,9 @@ def _own_public_members(cls) -> list[str]:
     )
 
 
-def _classes_needing_the_note():
+def _classes_needing_the_note(modules):
     """Return ``{private class: public subclasses}`` for classes the note applies to."""
-    classes = _all_classes()
+    classes = _all_classes(modules)
     needed = {}
     for cls in classes:
         if not cls.__name__.startswith('_') or not _own_public_members(cls):
@@ -70,8 +80,21 @@ def _classes_needing_the_note():
 
 
 @pytest.fixture(scope='module')
-def needs_note():
-    return _classes_needing_the_note()
+def imported():
+    return _import_all_modules()
+
+
+@pytest.fixture(scope='module')
+def needs_note(imported):
+    modules, _ = imported
+    return _classes_needing_the_note(modules)
+
+
+def test_every_module_imports(imported):
+    """Classes in a module that fails to import would go unchecked."""
+    _, failed = imported
+    details = '\n  '.join(f'{name}: {error}' for name, error in sorted(failed.items()))
+    assert not failed, f'These modules failed to import:\n  {details}'
 
 
 def test_some_classes_need_the_note(needs_note):

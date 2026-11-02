@@ -536,3 +536,13 @@ def test_cubic_line():
     assert grid.celltypes[0] == CellType.CUBIC_LINE
     assert grid.n_cells == 1
     assert grid.n_points == 4
+
+
+def test_isoparametric_grid_unsupported():
+    with pytest.raises(ValueError, match='not supported by the parametric generator'):
+        cells._isoparametric_grid(CellType.POLY_LINE)
+
+
+def test_vtk_cell_type_source_unsupported():
+    with pytest.raises(ValueError, match='not supported by the source generator'):
+        cells._vtkCellTypeSource(CellType.POLY_LINE)

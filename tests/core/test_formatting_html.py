@@ -14,10 +14,14 @@ from pyvista.core.formatting_html import _children_section
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _data_array_section
 from pyvista.core.formatting_html import _fmt_memory
+from pyvista.core.formatting_html import _key_value_section
+from pyvista.core.formatting_html import _kv_wide_flags
 from pyvista.core.formatting_html import _load_css
 from pyvista.core.formatting_html import _load_mesh_icon
 from pyvista.core.formatting_html import _metadata_html
+from pyvista.core.formatting_html import _parse_text_repr
 from pyvista.core.formatting_html import _summarize_array
+from pyvista.core.formatting_html import _text_repr_html
 from pyvista.core.formatting_html import build_repr_html
 from pyvista.core.formatting_html import collapsible_section
 
@@ -393,6 +397,180 @@ def test_build_repr_html_metadata_conditional():
     without_meta = build_repr_html('T', 'PolyData')
     assert 'pv-metadata' in with_meta
     assert 'pv-metadata' not in without_meta.split('</style>')[1]
+
+
+@pytest.mark.parametrize(
+    'mesh_type',
+    ['Report', 'GPUInfo', 'ExplicitStructuredGrid', 'PartitionedDataSet', 'Table', 'Texture'],
+)
+def test_load_mesh_icon_report_types(mesh_type):
+    assert _load_mesh_icon(mesh_type).startswith('<svg')
+
+
+def test_build_repr_html_header_copy():
+    body = build_repr_html('T', 'PolyData').split('</style>')[1]
+    assert 'pv-copy-btn' not in body
+    html = build_repr_html('T', 'PolyData', header_copy='a<b')
+    assert "data-copy='a&lt;b'" in html
+
+
+@pytest.mark.parametrize(('value', 'wide'), [('x' * 20, False), ('x' * 21, True)])
+def test_key_value_section(value, wide):
+    html = _key_value_section('Info', [('<k>', value), ('m', 'n/a')], muted_values=['n/a'])
+    assert 'Info:' in html
+    assert '(2)' in html
+    assert "<span class='pv-kv-key'>&lt;k&gt;</span>" in html
+    assert "<span class='pv-kv-value pv-kv-muted'>n/a</span>" in html
+    assert ('pv-kv-wide' in html) is wide
+
+
+@pytest.mark.parametrize(
+    ('values', 'expected'),
+    [
+        (['x' * 30, 'x', 'x' * 30], [True, True, True]),
+        (['x' * 30, 'x', 'x', 'x' * 30], [True, False, False, True]),
+        (['x'], [True]),
+        (['x', 'x'], [False, False]),
+    ],
+)
+def test_kv_wide_flags(values, expected):
+    assert _kv_wide_flags(values, 3) == expected
+
+
+def test_build_repr_html_empty_mesh_type_has_no_icon():
+    assert "class='pv-logo'" not in build_repr_html('T', '')
+
+
+_BLOCK_REPR = """Actor (0x12b3690c0)
+  Visible:                    True
+  X Bounds                    -4.993E-01, 4.993E-01
+  Empty:
+  stray
+
+Property (0x12b36b9a0)
+  Opacity:                     1.0
+"""
+
+_NESTED_REPR = """Document Theme
+--------------
+Background               : white
+Axes                     : Axes configuration
+    Show                 : True
+Slider Styles            :
+    Classic              :
+        Tube width       : 0.005
+Title                    : PyVista
+"""
+
+
+def test_parse_text_repr_blocks():
+    title, sections, unparsed = _parse_text_repr(_BLOCK_REPR)
+    assert title == 'Actor'
+    assert sections == {
+        'Properties': [('Visible', 'True'), ('X Bounds', '-4.993E-01, 4.993E-01')],
+        'Property': [('Opacity', '1.0')],
+    }
+    assert unparsed == ['stray']
+
+
+def test_parse_text_repr_nested_groups():
+    title, sections, unparsed = _parse_text_repr(_NESTED_REPR)
+    assert title == 'Document Theme'
+    assert sections == {
+        'Properties': [
+            ('Background', 'white'),
+            ('Axes', 'Axes configuration'),
+            ('Title', 'PyVista'),
+        ],
+        'Axes': [('Show', 'True')],
+        'Slider Styles · Classic': [('Tube width', '0.005')],
+    }
+    assert unparsed == []
+
+
+def test_parse_text_repr_multiline_value():
+    text = (
+        'Transform (0x1)\n  N:  1\n  Matrix:  [[ 1.,  0.],\n            [ 0.,  1.]]\n  After:  x\n'
+    )
+    _, sections, unparsed = _parse_text_repr(text)
+    assert sections == {
+        'Properties': [('N', '1'), ('Matrix', '[[ 1.,  0.],\n [ 0.,  1.]]'), ('After', 'x')]
+    }
+    assert unparsed == []
+    html = _text_repr_html(text, 'T')
+    assert "pv-kv-wide'><span class='pv-kv-key'>Matrix" in html
+    assert 'pv-kv-multiline' in html
+
+
+def test_parse_text_repr_unbalanced_value():
+    text = 'Theme\nTitle    : Run (draft\nAxes     :\n    Show : True\nAfter    : x\n'
+    _, sections, _ = _parse_text_repr(text)
+    assert sections == {
+        'Properties': [('Title', 'Run (draft'), ('After', 'x')],
+        'Axes': [('Show', 'True')],
+    }
+
+
+def test_text_repr_html():
+    html = _text_repr_html(_BLOCK_REPR, 'Fallback')
+    assert "<div class='pv-obj-type'>Actor</div>" in html
+    assert "<span class='pv-kv-key'>Opacity</span>" in html
+    assert "<pre class='pv-pre'>stray</pre>" in html
+    assert "class='pv-logo'" not in html
+    assert "<div class='pv-obj-type'>Fallback</div>" in _text_repr_html('  a: 1', 'Fallback')
+
+
+def test_text_repr_html_collapses_extra_sections():
+    text = '\n\n'.join(f'Block{i} (0x1)\n  key: {i}' for i in range(5))
+    html = _text_repr_html(text, 'T')
+    assert html.count(' checked />') == 1
+
+
+@pytest.mark.parametrize(
+    'make',
+    [
+        pv.Actor,
+        pv.Property,
+        pv.Camera,
+        pv.LookupTable,
+        pv.AxesAssembly,
+        pv.DataSetMapper,
+        pv.Transform,
+        pv.AxesGeometrySource,
+        pv.plotting.volume_property.VolumeProperty,
+        lambda: pv.global_config,
+        lambda: pv.global_theme,
+    ],
+)
+def test_text_repr_html_mixin(make):
+    obj = make()
+    html = obj._repr_html_()
+    assert 'pv-kv-list' in html
+    assert 'pv-pre' not in html.split('</style>')[1]
+
+
+def test_data_object_default_repr_html():
+    html = pv.Sphere().get_cell(0)._repr_html_()
+    assert "<div class='pv-obj-type'>Cell</div>" in html
+    assert "<span class='pv-kv-key'>Type</span>" in html
+
+
+def test_dataset_attributes_repr_html():
+    mesh = pv.Sphere()
+    mesh['s'] = mesh.points[:, 0]
+    mesh.field_data['f'] = [1, 2, 3]
+    html = mesh.point_data._repr_html_()
+    assert 'Point Data:' in html
+    assert "<span class='pv-header-badge'>2 arrays</span>" in html
+    assert 'pv-badge-active' in html
+    assert 'pv-badge-normals' in html
+    html = mesh.field_data._repr_html_()
+    assert 'Field Data:' in html
+    assert "<span class='pv-header-badge'>1 array</span>" in html
+    assert '(3,)' in html
+    html = pv.Table({'a': np.arange(3)}).row_arrays._repr_html_()
+    assert 'Row Data:' in html
+    assert "<span class='pv-header-badge'>row</span>" in html
 
 
 def test_dataset_repr_polydata():

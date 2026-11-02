@@ -188,7 +188,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make docs              # build the full documentation via tox (matches CI)
     make docs-test-build   # sanity-check the built documentation via tox (matches CI)
     make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista/numpy-nightly
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
@@ -220,7 +220,7 @@ Continuous Integration Etiquette
 Opening a pull request, and every push to it afterwards, starts the full
 continuous integration suite: unit tests on Linux, macOS, and Windows across
 every supported Python version, a separate VTK version matrix, the
-documentation build, the integration tests, type checking, and the style and
+documentation build, type checking, and the style and
 docstring jobs. Every one of those runs costs runner time. Push when the
 change is ready, and use the local gates rather than CI to find out whether it
 works.
@@ -230,6 +230,11 @@ runs on GitHub-hosted runners. Applying the ``blacksmith`` label moves the
 documentation cache, build and test jobs to the Blacksmith runners the merge
 queue uses, which finish sooner but are paid for by the project. The label
 takes effect on the next push to the pull request.
+
+The ``vtk-dev-testing``, ``vtk-master-testing``, ``integration-testing`` and
+``docker`` labels each start a job a pull request does not otherwise run, as
+soon as the label is added. Apply one only when the change touches what it
+covers; `Testing Against VTK Master`_ describes the two VTK labels.
 
 Before you push:
 
@@ -1094,10 +1099,9 @@ development.
 
 The ``vtk-dev-testing`` and ``vtk-master-testing`` labels are independent and may be applied separately or together.
 
-.. note::
-
-    The PR either needs a new commit, for example updating the branch from ``main``, or to be
-    closed/re-opened to rerun the CI with the label applied.
+The same build is available locally with `pyvista-build <https://pyvista.github.io/pyvista-build/>`_:
+``pyvista-build vtk --ref master`` clones VTK, configures it as CI does, and writes a wheel. Run it again after
+editing the checkout under ``vtk-build/src`` for an incremental rebuild. See :ref:`building_vtk`.
 
 Testing Against the ``cvista`` Backend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1107,7 +1111,7 @@ default and is tested on every pull request; cvista is tested at **integration c
 
 .. code-block:: shell
 
-    make integration PROJECT=cvista
+    tox run -e py3.13-vtk_cvista
 
 It is not on the per-PR fast path because it is a full extra run of the suite against a second VTK build, and because a
 failure there is rarely a reason to block an unrelated PR.
@@ -1286,8 +1290,8 @@ The tests can be executed with:
 
 Writing a Case
 """"""""""""""
-Cases live in ``tests/typing/cases``, under ``core`` or ``plotting`` after the
-subpackage of the callable they exercise. A case is one line: an expression, and
+Cases live in ``tests/typing/cases``, under ``core``, ``plotting`` or ``examples``
+after the subpackage of the callable they exercise. A case is one line: an expression, and
 the type it should have.
 
 .. code-block:: python
@@ -1314,6 +1318,8 @@ Each file holds the cases of one callable and is named after it: ``clip_scalar.p
 the bare name would not identify it, as for dunders (``multiblock_getitem.py``,
 ``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
 A file carries all the setup it needs, even when another file has the same helper.
+The dataset download functions share one overload pattern, so
+``examples/download_loaders.py`` covers them together.
 
 The directory carries its own ``ruff.toml`` raising the line length, so a case stays
 on one line however long it gets.

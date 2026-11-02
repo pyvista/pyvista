@@ -117,6 +117,7 @@ _EXPECTED_CLASS_READERS = {
     '.vtu': pv.XMLUnstructuredGridReader,
     '.wrl': pv.VRMLReader,
     '.xdmf': pv.XdmfReader,
+    '.xyz': pv.MultiBlockPlot3DReader,
 }
 
 
@@ -338,6 +339,16 @@ def test_get_reader_fail(tmp_path):
     match = '`pyvista.get_reader` does not support reading from directory:\n\t'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(str(tmp_path))
+
+
+@pytest.mark.expect_vtk_output(
+    'Auto detection check failed',
+    reason='the reader probes an empty file',
+)
+def test_get_reader_xyz_is_plot3d(tmp_path):
+    path = tmp_path / 'grid.xyz'
+    path.touch()
+    assert isinstance(pv.get_reader(path), pv.MultiBlockPlot3DReader)
 
 
 @pytest.mark.expect_vtk_output(

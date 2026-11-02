@@ -110,6 +110,10 @@ def test_actor_init_empty():
     assert 'User matrix:                Set' in repr_
 
 
+def test_volume_init_empty():
+    assert isinstance(pv.Volume().prop, pv.VolumeProperty)
+
+
 def test_actor_from_argument():
     mapper = pv.DataSetMapper()
     prop = pv.Property()

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import Actor
+    from pyvista import PolyData
     from pyvista import Renderer
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
@@ -71,7 +72,7 @@ def _check_callable(func: _CallableT, name: str = 'callback') -> _CallableT:
     return func
 
 
-def _make_quarter_arc() -> pv.PolyData:
+def _make_quarter_arc() -> PolyData:
     """Make a quarter circle centered at the origin."""
     circ = pv.Circle(resolution=100)
     circ.faces = np.empty(0, dtype=int)
@@ -298,13 +299,17 @@ class AffineWidget3D(_NoNewAttrMixin):
             actor.user_matrix = matrix
 
         if always_visible:
+            # Draw the widget almost a third of the depth range in front of the scene.
+            # VTK 9.8 measures offset units in depth-buffer steps.
+            depth_steps = 2**24 if pv.vtk_version_info >= (9, 7, 99) else 65000  # >= (9, 8, 0)
+            units = -20000 * depth_steps / 65000
             for actor in self._arrows + self._circles:
                 mapper = actor.mapper
                 if mapper is None:  # pragma: no cover
                     msg = 'The widget actor was added without a mapper.'
                     raise RuntimeError(msg)
                 mapper.SetResolveCoincidentTopologyToPolygonOffset()
-                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
+                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, units)
 
     def _get_world_coord_rot(
         self, interactor: _vtk.vtkRenderWindowInteractor
