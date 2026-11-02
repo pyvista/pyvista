@@ -19,6 +19,7 @@ pandas idioms.
 """
 
 import numpy as np
+import pandas  # for to_pandas
 from pyvista import examples
 
 # %%

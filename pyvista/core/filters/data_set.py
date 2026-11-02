@@ -8172,6 +8172,7 @@ class DataSetFilters(DataObjectFilters):
         Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
         to simplify the data.
 
+        >>> import colorcet  # colorcet colormaps
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> import numpy as np

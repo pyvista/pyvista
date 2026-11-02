@@ -22,6 +22,7 @@ with ``.show(auto_close=False)``. You may also have to set
 """
 
 # sphinx_gallery_thumbnail_number = 2
+import imageio  # image and animation I/O
 import pyvista as pv
 from pyvista import examples
 

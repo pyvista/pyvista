@@ -988,6 +988,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
+        >>> import trame_pyvista  # for export_html
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
@@ -6406,6 +6407,8 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         Open a MP4 movie and set the quality to maximum.
 
+        >>> import imageio  # image and animation I/O
+        >>> import imageio_ffmpeg  # MP4 writer
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.open_movie('movie.mp4', quality=10)  # doctest:+SKIP
@@ -6476,6 +6479,7 @@ class BasePlotter(_BoundsSizeMixin):
         Open a GIF file, setting the frame rate to 8 frames per second and
         reducing the color space to 64.
 
+        >>> import imageio  # image and animation I/O
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
@@ -7733,6 +7737,7 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         Plot an orbit around the earth. Save the gif as a temporary file.
 
+        >>> import imageio  # image and animation I/O
         >>> from pathlib import Path
         >>> from tempfile import mkdtemp
         >>> import pyvista as pv

@@ -25,6 +25,7 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 import numpy as np
 import pyvista as pv
 from pyvista import examples
+import sympy  # for the hydrogen orbital
 
 # %%
 # Generate the Dataset

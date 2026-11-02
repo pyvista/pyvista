@@ -1106,6 +1106,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Examples
         --------
+        >>> import pandas  # for to_pandas
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
@@ -1137,6 +1138,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Examples
         --------
+        >>> import pyarrow  # for to_arrow
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()

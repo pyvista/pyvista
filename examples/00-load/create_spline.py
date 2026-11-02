@@ -8,6 +8,7 @@ Create a spline/polyline from a NumPy array of XYZ vertices using :func:`pyvista
 
 """
 
+import colorcet  # colorcet colormaps
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2

@@ -8,6 +8,7 @@ Plot point clouds using PyVista's ``'points'`` and ``'points_gaussian'`` styles.
 
 """
 
+import imageio  # image and animation I/O
 import numpy as np
 import pyvista as pv
 from pyvista import examples
