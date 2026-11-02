@@ -358,7 +358,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        pyvista.core._array_reshaping.ReshapedArrays
+        pyvista.ReshapedArrays
             Shaped view of the arrays.
 
         See Also

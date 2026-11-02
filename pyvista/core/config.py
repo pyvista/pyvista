@@ -69,6 +69,7 @@ if TYPE_CHECKING:
     from numpy.typing import DTypeLike
 
     from ._array_reshaping import ArrayReshaper
+    from ._array_reshaping import _ArrayReshapingPresets
 
 _PointsDtypeOptions = Literal['preserve', 'float32', 'float64'] | None
 
@@ -230,7 +231,7 @@ class Config(_ConfigBase):
         self._validate_on_wrap: bool = True
         self._show_vtk_api: bool = False
         self._points_dtype: _PointsDtypeOptions = None
-        self._array_reshaping: str | ArrayReshaper = 'grid'
+        self._array_reshaping: _ArrayReshapingPresets | ArrayReshaper = 'grid'
 
     def __repr__(self) -> str:
         header = 'PyVista Config'
@@ -491,29 +492,11 @@ class Config(_ConfigBase):
         self._show_vtk_api = value
 
     @property
-    def array_reshaping(self) -> str | ArrayReshaper:  # numpydoc ignore=RT01
+    def array_reshaping(self) -> _ArrayReshapingPresets | ArrayReshaper:  # numpydoc ignore=RT01
         """Return or set the layout of :attr:`~pyvista.DataSetAttributes.reshaped` arrays.
 
-        Set a preset name or an :class:`~pyvista.ArrayReshaper`. The presets
-        are described by :meth:`pyvista.ArrayReshaper.presets`.
-
-        ``'grid'``
-            The default. Arrays of structured grids take the grid shape, indexed
-            ``array[i, j, k]`` along x, y, and z, with any component axis last.
-
-        ``'zyx'``
-            As ``'grid'``, indexed ``array[k, j, i]``.
-
-        ``'channels_first'``
-            As ``'grid'``, with the component axis first.
-
-        ``'image'``
-            Images as ``(row, column, channel)`` with the top row first, as read
-            by Pillow, OpenCV or imageio. A stack of frames is ``(frame, row,
-            column, channel)``.
-
-        ``'tensor'``
-            Arrays with nine components are 3x3 matrices, on any dataset.
+        Set a preset name or an :class:`~pyvista.ArrayReshaper`. The default is
+        ``'grid'``, and :meth:`pyvista.ArrayReshaper.presets` describes every preset.
 
         .. versionadded:: 0.50
 
@@ -567,7 +550,7 @@ class Config(_ConfigBase):
         return self._array_reshaping
 
     @array_reshaping.setter
-    def array_reshaping(self, value: str | ArrayReshaper) -> None:
+    def array_reshaping(self, value: _ArrayReshapingPresets | ArrayReshaper) -> None:
         from ._array_reshaping import _resolve_reshaper  # noqa: PLC0415
 
         _resolve_reshaper(value)

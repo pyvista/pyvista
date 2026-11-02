@@ -7,7 +7,7 @@ Reshape Data Arrays
 Get and set data arrays as shaped NumPy arrays instead of flat arrays.
 
 PyVista stores every data array flat, with one row per point or cell.
-``point_data.reshaped`` and ``cell_data.reshaped`` show the same arrays in a
+:attr:`~pyvista.DataSetAttributes.reshaped` shows the same arrays in a
 shaped layout chosen by :attr:`pyvista.global_config.array_reshaping
 <pyvista.core.config.Config.array_reshaping>` or by calling the view with
 a preset name or an :class:`~pyvista.ArrayReshaper`.
@@ -81,8 +81,8 @@ pl.show()
 image.cell_data.reshaped('image')['value']
 
 # %%
-# ``'grid'`` indexes the same values as ``array[i, j, k]`` along x, y, and z,
-# so ``array[0, 0, 0]`` is pixel 0 at the origin, and ``array[i, j, 0]`` is
+# The default, ``'grid'``, indexes the same values as ``array[i, j, k]`` along x,
+# y, and z, so ``array[0, 0, 0]`` is pixel 0 at the origin, and ``array[i, j, 0]`` is
 # the pixel at ``x = i`` and ``y = j``.
 image.cell_data.reshaped['value'][:, :, 0]
 
@@ -197,7 +197,9 @@ glyphs.plot(cmap='coolwarm', cpos='xy')
 # Many imaging libraries index volumes the other way round, as
 # ``array[k, j, i]``: ``SimpleITK.GetArrayFromImage``, scikit-image,
 # ``tifffile`` and image stacks read slice by slice. The ``'zyx'`` preset
-# reads and writes that layout without copying.
+# reads and writes that layout without copying. It keeps row 0 of each slice
+# at ``y = 0``. Use ``'image'`` instead to show each slice upright, as a
+# picture viewer does.
 zyx_volume = values.transpose(2, 1, 0)
 zyx_volume.shape
 
@@ -209,8 +211,8 @@ np.array_equal(volume.point_data.reshaped['values'], values)
 # %%
 # Scans With Several Modalities
 # +++++++++++++++++++++++++++++
-# Deep learning frameworks such as PyTorch and MONAI store scans with several modalities
-# channels first, as ``(channel, z, y, x)``. Build a reshaper for that layout
+# PyTorch stores scans with several modalities channels first, as
+# ``(channel, z, y, x)``. Build a reshaper for that layout
 # with :meth:`~pyvista.ArrayReshaper.grid`. Here two synthetic modalities stand in
 # for T1-weighted and T2-weighted MRI.
 t1 = np.exp(-(x**2 + y**2 + z**2) * 3)
@@ -265,8 +267,9 @@ logo.plot(rgb=True, cpos='xy', background='white')
 # Any layout can be read and written with an :class:`~pyvista.ArrayReshaper`
 # built from two functions. Each function gets the array, the dataset, and the
 # array association. OpenCV returns color images as BGR rather than RGB, so
-# reverse the channels on top of the ``'image'`` preset.
-image_preset = pv.ArrayReshaper.grid(axes='zyx', squeeze=True, flip='y')
+# reverse the channels on top of the ``'image'`` layout, built here with
+# :meth:`~pyvista.ArrayReshaper.grid`.
+image_preset = pv.ArrayReshaper.grid(axes='zyx', squeeze=True, origin='upper')
 
 
 def to_bgr(array, **kwargs):
@@ -288,30 +291,20 @@ np.array_equal(logo.point_data['from_opencv'], logo.point_data['rgba'][:, :3])
 # %%
 # Functions of Shaped Arrays
 # ++++++++++++++++++++++++++
-# :meth:`~pyvista.core._array_reshaping.ReshapedArrays.apply` passes a shaped
-# array through any function and stores the result. Blur the logo with
-# :func:`scipy.ndimage.gaussian_filter`, smoothing along the rows and columns
-# but not across the color channels.
-logo.point_data.reshaped('image').apply(
-    lambda pixels: ndimage.gaussian_filter(pixels, sigma=(4, 4, 0)),
-    'rgba',
-    output_name='blurred',
-)
+# :meth:`~pyvista.ArrayReshaper.wrap` turns a function of shaped arrays into a
+# filter. Blur the logo with :func:`scipy.ndimage.gaussian_filter`, smoothing
+# along the rows and columns but not across the color channels.
+blur = image_preset.wrap(lambda pixels: ndimage.gaussian_filter(pixels, sigma=(4, 4, 0)))
+blurred = blur(logo, 'rgba')
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
-logo.plot(scalars='blurred', rgb=True, cpos='xy', background='white')
+blurred.plot(scalars='rgba', rgb=True, cpos='xy', background='white')
 
 # %%
-# :meth:`~pyvista.ArrayReshaper.wrap` turns the same function into one of
-# flat arrays, for code that works on the stored arrays directly.
-blur = pv.ArrayReshaper.grid(squeeze=True).wrap(
-    lambda pixels: ndimage.gaussian_filter(pixels, sigma=(4, 4, 0))
-)
-blurred = blur(
-    logo.point_data['rgba'], dataset=logo, association=pv.FieldAssociation.POINT
-)
-np.array_equal(blurred, logo.point_data['blurred'])
+# Like other filters, it returns a new image and leaves the logo unchanged
+# unless ``inplace=True``.
+np.array_equal(logo.point_data['rgba'], blurred.point_data['rgba'])
 
 # %%
 # Animation Frames
@@ -328,12 +321,20 @@ frames.shape
 
 # %%
 n_frames, height, width = frames.shape[:3]
-movie = pv.ImageData(dimensions=(width, height, n_frames), spacing=(1, 1, 50))
+movie = pv.ImageData(dimensions=(width, height, n_frames), spacing=(1, 1, width))
 movie.point_data.reshaped('image')['frames'] = frames
 movie.point_data.reshaped('image')['frames'].shape
 
 # %%
-movie.slice_along_axis(n_frames, axis='z').plot(rgb=True, background='white')
+# Show the frames from the side, with the first frame at the bottom.
+pl = pv.Plotter()
+pl.add_mesh(movie.slice_along_axis(n_frames, axis='z'), rgb=True, lighting=False)
+pl.background_color = 'white'
+pl.camera_position = 'xz'
+pl.camera.elevation = 25
+pl.camera.azimuth = 10
+pl.reset_camera()
+pl.show()
 
 # %%
 # Tensors

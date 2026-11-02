@@ -11,8 +11,8 @@ The accessors are registered with :func:`~pyvista.register_dataset_accessor`, an
 
 Each library expects its own array layout. Pillow uses ``(row, column,
 channel)`` with the top row first, the layout of the ``'image'`` preset.
-:mod:`scipy.ndimage` takes volumes indexed along x, y, and z, the layout of
-the default ``'grid'`` preset. With the reshaping handled, each
+The SciPy accessor uses the default ``'grid'`` preset, whose x, y, and z axes
+match the image spacing. With the reshaping handled, each
 accessor method is a few lines, and its output chains with PyVista filters.
 See :ref:`reshape_data_arrays_example` for every preset and
 :ref:`extending-pyvista` for accessors.
@@ -102,10 +102,12 @@ pl.show()
 # %%
 # A SciPy Accessor
 # ++++++++++++++++
-# :mod:`scipy.ndimage` filters work on volumes of any dimension, indexed like
-# the default ``'grid'`` preset. ``apply`` passes an array through any such
-# function with :meth:`~pyvista.core._array_reshaping.ReshapedArrays.apply`,
-# and the filter sizes convert from physical units to voxels with the spacing.
+# :mod:`scipy.ndimage` filters work on arrays of any dimension. With the
+# ``'grid'`` preset the axes are x, y, and z, matching ``spacing``, so the filter
+# sizes convert from physical units to voxels.
+# :meth:`~pyvista.ArrayReshaper.wrap` turns each SciPy function into a filter,
+# so each accessor method is one call.
+xyz = pv.ArrayReshaper.grid()
 
 
 @pv.register_dataset_accessor('ndimage', pv.ImageData)
@@ -115,27 +117,16 @@ class NdimageAccessor:
     def __init__(self, image):
         self._image = image
 
-    def apply(self, function, *, scalars=None, output_name=None):
-        """Return a copy with a function applied to the named array as a volume."""
-        output = self._image.copy()
-        name = scalars or self._image.active_scalars_name
-        output.point_data.reshaped.apply(function, name, output_name=output_name)
-        return output
-
     def gaussian_filter(self, sigma, *, scalars=None):
         """Return a copy smoothed by a Gaussian with ``sigma`` in physical units."""
         voxels = np.divide(sigma, self._image.spacing)
-        return self.apply(
-            lambda volume: ndimage.gaussian_filter(volume, voxels), scalars=scalars
-        )
+        smooth = xyz.wrap(lambda volume: ndimage.gaussian_filter(volume, voxels))
+        return smooth(self._image, scalars)
 
     def label(self, threshold, *, scalars=None):
         """Return a copy with connected regions above ``threshold`` labeled."""
-        return self.apply(
-            lambda volume: ndimage.label(volume > threshold)[0],
-            scalars=scalars,
-            output_name='labels',
-        )
+        label = xyz.wrap(lambda volume: ndimage.label(volume > threshold)[0])
+        return label(self._image, scalars, output_name='labels')
 
 
 # %%
@@ -156,13 +147,13 @@ labeled = smooth.ndimage.label(0.5)
 np.unique(labeled.point_data['labels'])
 
 # %%
-# Compare a slice of the noisy and the smoothed volume. The reshaped arrays
-# plot directly with Matplotlib, with x along the horizontal axis.
+# Compare a slice of the noisy and the smoothed volume. With the ``'zyx'``
+# preset each slice is ``array[row, column]``, which Matplotlib plots directly.
 k = dimensions[2] // 2
 fig, axes = plt.subplots(1, 2, figsize=(8, 3))
 for ax, image, title in zip(axes, [volume, smooth], ['noisy', 'smoothed'], strict=True):
     ax.imshow(
-        image.point_data.reshaped['density'][:, :, k].T, origin='lower', cmap='magma'
+        image.point_data.reshaped('zyx')['density'][k], origin='lower', cmap='magma'
     )
     ax.set_title(title)
     ax.set_axis_off()
@@ -172,6 +163,17 @@ plt.show()
 # Show the labeled blobs in 3D.
 blobs = labeled.threshold(0.5, scalars='labels', all_scalars=True)
 blobs.plot(scalars='labels', cmap='tab10', show_scalar_bar=False)
+
+# %%
+# Filters on Every Block
+# ++++++++++++++++++++++
+# A filter made with :meth:`~pyvista.ArrayReshaper.wrap` runs on every block of
+# a :class:`~pyvista.MultiBlock` through :meth:`~pyvista.MultiBlock.generic_filter`.
+# Add the median of each scan to its block, in place.
+median = xyz.wrap(lambda volume: ndimage.median_filter(volume, size=3))
+scans = pv.MultiBlock({'noisy': volume.copy(), 'smoothed': smooth.copy()})
+scans.generic_filter(median, 'density', output_name='median', inplace=True)
+[round(float(np.std(block['median'])), 3) for block in scans]
 
 # %%
 # Remove the accessors when they are no longer needed.

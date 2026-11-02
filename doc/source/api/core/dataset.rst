@@ -51,7 +51,7 @@ layout, set by :attr:`pyvista.global_config.array_reshaping
    :toctree: _autosummary
 
    pyvista.ArrayReshaper
-   pyvista.core._array_reshaping.ReshapedArrays
+   pyvista.ReshapedArrays
 
 
 Shared Base Classes

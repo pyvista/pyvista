@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import re
+from typing import get_args
 
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core._array_reshaping import ReshapedArrays
+from pyvista.core._array_reshaping import _ArrayReshapingPresets
 
 DIMENSIONS = (4, 3, 2)
 
@@ -177,8 +178,8 @@ def test_flat_input_passes_through():
     grid.point_data.reshaped(pv.ArrayReshaper.grid(squeeze=True))['squeezed'] = np.arange(
         grid.n_points
     )
-    assert grid.point_data['squeezed'].shape == (grid.n_points,)
-    assert grid.point_data['flat'].shape == (grid.n_points,)
+    assert np.array_equal(grid.point_data['squeezed'], np.arange(grid.n_points))
+    assert np.array_equal(grid.point_data['flat'], np.arange(grid.n_points))
     assert np.array_equal(grid.point_data['vectors'], grid.points)
 
 
@@ -205,7 +206,7 @@ def test_grid_preset_on_non_grid_raises(sphere):
 def test_grid_preset_on_field_data_raises():
     grid = _image()
     grid.field_data['data'] = np.arange(3)
-    with pytest.raises(TypeError, match='point and cell arrays only, not NONE arrays'):
+    with pytest.raises(TypeError, match='point and cell arrays only, not field arrays'):
         grid.field_data.reshaped['data']
 
 
@@ -237,7 +238,7 @@ def test_reshaper_follows_global_config():
 def test_view_mapping_interface():
     grid = _image()
     view = grid.point_data.reshaped
-    assert isinstance(view, ReshapedArrays)
+    assert isinstance(view, pv.ReshapedArrays)
     assert len(view) == 0
     assert 'Contains arrays : None' in repr(view)
     view['a'] = np.zeros(DIMENSIONS)
@@ -285,7 +286,7 @@ def test_config_round_trip():
     [
         ({'axes': 'xyy'}, "`axes` must be a permutation of 'xyz'"),
         ({'components': 'middle'}, "`components` must be 'last' or 'first'"),
-        ({'flip': 'w'}, "`flip` must only contain letters of 'xyz'"),
+        ({'origin': 'top'}, "`origin` must be 'lower' or 'upper'"),
     ],
 )
 def test_grid_rejects_invalid(kwargs, match):
@@ -298,15 +299,16 @@ def test_reprs():
         "ArrayReshaper('x')"
     )
     assert repr(pv.ArrayReshaper.grid()) == (
-        "ArrayReshaper(\"grid(axes='xyz', components='last', squeeze=False, flip='')\")"
+        "ArrayReshaper(\"grid(axes='xyz', components='last', squeeze=False, origin='lower')\")"
     )
     assert repr(pv.ArrayReshaper.grid(name='mine')) == "ArrayReshaper('mine')"
 
 
 def test_presets():
-    assert pv.ArrayReshaper.presets() == ('grid', 'zyx', 'channels_first', 'image', 'tensor')
+    assert pv.ArrayReshaper.presets() == get_args(_ArrayReshapingPresets)
     for name in pv.ArrayReshaper.presets():
         pv.global_config.array_reshaping = name
+        assert pv.global_config.array_reshaping == name
 
 
 @pytest.mark.parametrize('axes', ['yxz', 'zxy', 'yzx'])
@@ -321,42 +323,102 @@ def test_grid_axes_permutations(axes):
     assert np.array_equal(grid.point_data.reshaped(reshaper)['data'], shaped)
 
 
-def test_grid_flip_several_axes():
+def test_grid_origin_upper_with_components_first():
     grid = _image()
-    xyz = np.arange(grid.n_points).reshape(DIMENSIONS)
-    flipped = xyz[::-1, :, ::-1]
-    reshaper = pv.ArrayReshaper.grid(flip='xz')
-    grid.point_data.reshaped(reshaper)['data'] = flipped
-    assert np.array_equal(grid.point_data['data'], xyz.ravel(order='F'))
-    assert np.array_equal(grid.point_data.reshaped(reshaper)['data'], flipped)
+    nx, ny, nz = DIMENSIONS
+    flat = np.arange(grid.n_points * 2).reshape(-1, 2)
+    expected = np.empty((2, nx, ny, nz), dtype=int)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                # with axes 'xyz' the rows run along y
+                expected[:, i, ny - 1 - j, k] = flat[i + nx * (j + ny * k)]
+    reshaper = pv.ArrayReshaper.grid(components='first', origin='upper')
+    grid.point_data['data'] = flat
+    assert np.array_equal(grid.point_data.reshaped(reshaper)['data'], expected)
+    grid.point_data.reshaped(reshaper)['copy'] = expected
+    assert np.array_equal(grid.point_data['copy'], flat)
 
 
-def test_wrap_and_apply():
+def test_unsqueezed_input_accepted_by_squeezing_reshaper():
+    grid = pv.ImageData(dimensions=(5, 4, 1))
+    frame = np.random.default_rng(0).integers(0, 255, (4, 5, 3))
+    grid.point_data.reshaped('image')['stack'] = frame[np.newaxis]
+    grid.point_data.reshaped('image')['frame'] = frame
+    assert np.array_equal(grid.point_data['stack'], grid.point_data['frame'])
+
+
+def _cumsum_filter(axes, axis):
+    return pv.ArrayReshaper.grid(axes=axes).wrap(lambda a: np.cumsum(a, axis=axis))
+
+
+@pytest.mark.parametrize(('axes', 'axis'), [('xyz', 2), ('zyx', 0)])
+def test_wrap_returns_filtered_copy(axes, axis):
     grid = _image()
     grid.point_data['data'] = np.arange(grid.n_points)
-    seen = []
+    expected = np.cumsum(np.arange(grid.n_points).reshape(DIMENSIONS, order='F'), axis=2)
+    output = _cumsum_filter(axes, axis)(grid, 'data')
+    assert type(output) is pv.ImageData
+    assert output is not grid
+    assert np.array_equal(output.point_data.reshaped['data'], expected)
+    assert np.array_equal(grid.point_data['data'], np.arange(grid.n_points))
 
-    def double(array):
-        seen.append(array.shape)
-        return array * 2
 
-    doubled = pv.ArrayReshaper.grid().wrap(double)
-    flat = doubled(grid.point_data['data'], dataset=grid, association=pv.FieldAssociation.POINT)
-    assert np.array_equal(flat, grid.point_data['data'] * 2)
-    assert seen == [DIMENSIONS]
+def test_wrap_inplace_and_output_name():
+    grid = _image()
+    grid.point_data['data'] = np.arange(grid.n_points)
+    output = _cumsum_filter('xyz', 0)(grid, 'data', output_name='cumsum', inplace=True)
+    assert output is grid
+    assert np.array_equal(grid.point_data['data'], np.arange(grid.n_points))
+    expected = np.cumsum(grid.point_data.reshaped['data'], axis=0)
+    assert np.array_equal(grid.point_data.reshaped['cumsum'], expected)
 
-    grid.point_data.reshaped.apply(double, 'data', output_name='twice')
-    assert np.array_equal(grid.point_data['twice'], grid.point_data['data'] * 2)
-    grid.point_data.reshaped.apply(double, 'data')
-    assert np.array_equal(grid.point_data['data'], grid.point_data['twice'])
+
+def test_wrap_finds_scalars():
+    grid = _image()
+    grid.point_data['data'] = np.arange(grid.n_points)
+    grid.cell_data['data'] = np.arange(grid.n_cells)
+    cumsum = _cumsum_filter('xyz', 0)
+    expected_cells = np.cumsum(grid.cell_data.reshaped['data'], axis=0)
+    output = cumsum(grid, 'data', preference='cell')
+    assert np.array_equal(output.cell_data.reshaped['data'], expected_cells)
+    assert np.array_equal(output.point_data['data'], grid.point_data['data'])
+
+    grid.set_active_scalars('data', preference='cell')
+    output = cumsum(grid)
+    assert np.array_equal(output.cell_data.reshaped['data'], expected_cells)
+
+
+def test_wrap_on_field_data():
+    sphere = pv.Sphere()
+    sphere.field_data['stress'] = np.arange(18.0).reshape(2, 9)
+    transpose = pv.ArrayReshaper(
+        reshape=lambda a, **_: a.reshape(-1, 3, 3),
+        flatten=lambda a, **_: a.reshape(-1, 9),
+    ).wrap(lambda a: a.transpose(0, 2, 1))
+    output = transpose(sphere, 'stress', preference='field')
+    expected = np.arange(18.0).reshape(2, 3, 3).transpose(0, 2, 1).reshape(2, 9)
+    assert np.array_equal(output.field_data['stress'], expected)
+
+
+@pytest.mark.parametrize('inplace', [False, True])
+def test_wrap_with_generic_filter(inplace):
+    blocks = pv.MultiBlock([_image(), pv.ImageData(dimensions=(2, 3, 4))])
+    for block in blocks:
+        block.point_data['data'] = np.arange(block.n_points)
+    expected = [np.cumsum(block.point_data.reshaped['data'], axis=0) for block in blocks]
+    output = blocks.generic_filter(_cumsum_filter('xyz', 0), 'data', inplace=inplace)
+    assert (output is blocks) == inplace
+    for block, values in zip(output, expected, strict=True):
+        assert np.array_equal(block.point_data.reshaped['data'], values)
 
 
 @pytest.mark.parametrize(
     ('dimensions', 'expected'),
     [
         ((4, 3, 1), [[8, 9, 10, 11], [4, 5, 6, 7], [0, 1, 2, 3]]),
-        ((4, 1, 3), [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]),
-        ((1, 3, 4), [[2, 1, 0], [5, 4, 3], [8, 7, 6], [11, 10, 9]]),
+        ((4, 1, 3), [[8, 9, 10, 11], [4, 5, 6, 7], [0, 1, 2, 3]]),
+        ((1, 3, 4), [[9, 10, 11], [6, 7, 8], [3, 4, 5], [0, 1, 2]]),
     ],
     ids=['xy', 'xz', 'yz'],
 )
@@ -381,6 +443,12 @@ def test_explicit_grid_with_cell_corners():
         grid.point_data.reshaped['data']
     grid.cell_data['data'] = np.arange(grid.n_cells)
     assert grid.cell_data.reshaped['data'].shape == _xyz_shape('cell')
+
+    merged = grid.clean()
+    assert merged.n_points == np.prod(DIMENSIONS)
+    merged.point_data['data'] = np.arange(merged.n_points)
+    with pytest.raises(TypeError, match='point ids are not in grid order'):
+        merged.point_data.reshaped['data']
 
 
 def test_components_first_with_every_axis_squeezed():

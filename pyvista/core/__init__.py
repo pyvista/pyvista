@@ -9,6 +9,7 @@ from pyvista.typing import _MOVED_TO_TYPING_NAMESPACE
 from pyvista.typing import _get_deprecated_alias
 
 from ._array_reshaping import ArrayReshaper as ArrayReshaper
+from ._array_reshaping import ReshapedArrays as ReshapedArrays
 from ._typing_core import BoundsTuple as BoundsTuple
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
