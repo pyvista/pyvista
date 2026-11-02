@@ -168,7 +168,7 @@ blobs.plot(scalars='labels', cmap='tab10', show_scalar_bar=False)
 # Filters on Every Block
 # ++++++++++++++++++++++
 # A filter made with :meth:`~pyvista.ArrayReshaper.wrap` runs on every block of
-# a :class:`~pyvista.MultiBlock` through :meth:`~pyvista.MultiBlock.generic_filter`.
+# a :class:`~pyvista.MultiBlock` through :meth:`~pyvista.CompositeFilters.generic_filter`.
 # Add the median of each scan to its block, in place.
 median = xyz.wrap(lambda volume: ndimage.median_filter(volume, size=3))
 scans = pv.MultiBlock({'noisy': volume.copy(), 'smoothed': smooth.copy()})

@@ -310,7 +310,7 @@ class ArrayReshaper(_NoNewAttrMixin):
 
         The filter reshapes an array of the dataset, passes it to ``function``,
         and stores the result flattened. Like other filters, it returns a copy
-        unless ``inplace=True``, so :meth:`pyvista.MultiBlock.generic_filter`
+        unless ``inplace=True``, so :meth:`~pyvista.CompositeFilters.generic_filter`
         runs it on every block.
 
         Parameters
@@ -329,7 +329,7 @@ class ArrayReshaper(_NoNewAttrMixin):
 
         See Also
         --------
-        pyvista.MultiBlock.generic_filter
+        pyvista.CompositeFilters.generic_filter
             Run the filter on every block of a :class:`~pyvista.MultiBlock`.
 
         Examples
