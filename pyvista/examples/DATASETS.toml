@@ -14,15 +14,6 @@ text_source = "https://spdx.org/licenses/CC-BY-4.0.json"
 title = "Creative Commons Attribution 4.0 International"
 url = "https://creativecommons.org/licenses/by/4.0/"
 
-[license."CC-BY-NC-4.0"]
-attribution_required = true
-commercial_use = false
-file = "https://spdx.org/licenses/CC-BY-NC-4.0.txt"
-share_alike = false
-text_source = "https://spdx.org/licenses/CC-BY-NC-4.0.json"
-title = "Creative Commons Attribution Non Commercial 4.0 International"
-url = "https://creativecommons.org/licenses/by-nc/4.0/"
-
 [license."CC0-1.0"]
 attribution_required = false
 commercial_use = true
@@ -102,19 +93,6 @@ provenance = "unknown"
 title = "Ant"
 
 [[dataset]]
-SPDX-License-Identifier = "CC0-1.0"
-attribution = "Avocado by Microsoft (https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Avocado), dedicated to the public domain under CC0 1.0."
-authors = ["Microsoft"]
-collection = "khronos-gltf-sample-models"
-description = "Textured surface model of an avocado, a Khronos glTF sample asset, in binary glTF form."
-name = "avocado"
-origin_title = "Khronos glTF Sample Models, Avocado"
-origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Avocado"
-path = ["Avocado/glTF-Binary/Avocado.glb"]
-provenance = "verified"
-title = "Avocado"
-
-[[dataset]]
 SPDX-License-Identifier = "LicenseRef-Unknown"
 description = "Facies model of fluvial channels in the subsurface, on a 251 by 251 by 101 uniform grid."
 name = "channels"
@@ -127,25 +105,6 @@ widely circulated in that field, but the specific model was not identified.
 path = ["channels.vti"]
 provenance = "unknown"
 title = "Fluvial channels"
-
-[[dataset]]
-SPDX-FileCopyrightText = ["2016 theblueturtle_", "2018 ctxwing"]
-SPDX-License-Identifier = "CC-BY-4.0 AND CC-BY-NC-4.0"
-attribution = "Battle Damaged Sci-fi Helmet - PBR by theblueturtle_ (https://sketchfab.com/theblueturtle_), CC BY-NC 4.0; rebuilt and converted to glTF by ctxwing, CC BY 4.0."
-authors = ["ctxwing", "theblueturtle_"]
-collection = "khronos-gltf-sample-models"
-description = "Textured surface model of a battle-damaged science fiction helmet, a Khronos glTF sample asset, in embedded glTF form."
-name = "damaged_helmet"
-notes = """
-The README beside the file names a Creative Commons Attribution-NonCommercial
-licence without a version; the successor repository, glTF-Sample-Assets, records
-the versions used here. The non-commercial term follows the model into any use.
-"""
-origin_title = "Khronos glTF Sample Models, DamagedHelmet"
-origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/DamagedHelmet"
-path = ["DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf"]
-provenance = "verified"
-title = "Damaged helmet"
 
 [[dataset]]
 SPDX-FileCopyrightText = ["Solar System Scope (INOVE)"]
@@ -199,23 +158,6 @@ redistributed_from = [
 title = "Frog tissue labels"
 
 [[dataset]]
-SPDX-License-Identifier = "LicenseRef-Unknown"
-collection = "khronos-gltf-sample-models"
-description = "Surface model of a gearbox assembly, a Khronos glTF sample asset, in binary glTF form."
-name = "gearbox"
-notes = """
-The README beside the file says only that Okino Computer Graphics converted the
-model from JT to COLLADA for Khronos; it names no author and states no terms,
-and the successor repository, glTF-Sample-Assets, does not list the model. Ask
-the Khronos Group before using it for more than running the example.
-"""
-origin_title = "Khronos glTF Sample Models, GearboxAssy"
-origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/GearboxAssy"
-path = ["GearboxAssy/glTF-Binary/GearboxAssy.glb"]
-provenance = "verified"
-title = "Gearbox assembly"
-
-[[dataset]]
 SPDX-FileCopyrightText = ["2017-2026 The PyVista Developers"]
 SPDX-License-Identifier = "MIT"
 attribution = "PyVista, MIT License."
@@ -260,24 +202,6 @@ origin_url = "https://github.com/pyvista/pyvista/tree/main/logo"
 path = ["pyvista_logo.png"]
 provenance = "verified"
 title = "PyVista logo"
-
-[[dataset]]
-SPDX-FileCopyrightText = ["2017 Cesium"]
-SPDX-License-Identifier = "CC-BY-4.0"
-attribution = "Cesium Milk Truck by Cesium (https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck), licensed under CC BY 4.0."
-authors = ["Cesium"]
-collection = "khronos-gltf-sample-models"
-description = "Textured surface model of a milk truck with a spinning wheel animation, a Khronos glTF sample asset, in binary glTF form."
-name = "milk_truck"
-notes = """
-The Cesium logo on the truck is a trademark; the successor repository,
-glTF-Sample-Assets, lists it separately as a non-copyrightable mark.
-"""
-origin_title = "Khronos glTF Sample Models, CesiumMilkTruck"
-origin_url = "https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck"
-path = ["CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb"]
-provenance = "verified"
-title = "Cesium milk truck"
 
 [[dataset]]
 SPDX-License-Identifier = "LicenseRef-Unknown"
