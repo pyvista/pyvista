@@ -60,7 +60,10 @@ jobs:
             timeout: 16 # usually takes ~5
           - project: playwright
             timeout: 6 # usually takes ~2
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest, which is moving to Ubuntu 26.04: its Mesa 26.0.8 draws cell scalars
+    # blank (https://gitlab.freedesktop.org/mesa/mesa/-/work_items/15660, fixed in Mesa 26.1.6).
+    # Move back once Ubuntu 26.04 ships the fix.
+    runs-on: ubuntu-24.04
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
