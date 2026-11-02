@@ -583,13 +583,13 @@ For a file with fixed coordinates and connectivity and a point field named
 The color limits stay fixed throughout playback. The slice assignment updates
 an existing array and retains the mesh and actor. The same approach applies to
 cell fields and vector arrays of matching shape and type. The explicit copy
-is required. Frames returned by :meth:`HDFReader.read` may share geometry
-buffers, so modifying one frame in place can change other frames.
+is required. Frames returned by :meth:`~pyvista.BaseReader.read` may share
+geometry buffers, so modifying one frame in place can change other frames.
 
 This example assumes that geometry, topology, array shape, and array type stay
 constant. When they change, replace the display mesh with the new frame instead.
-Each :meth:`HDFReader.read` still returns a complete frame; attribute-only disk
-reads are outside this interface. PyVista does not retain all frames. VTK
+Each :meth:`~pyvista.BaseReader.read` still returns a complete frame;
+attribute-only disk reads are outside this interface. PyVista does not retain all frames. VTK
 controls any internal geometry caching, whose capabilities depend on the VTK
 version and dataset type. Static files have an empty list of time values and
-support the usual :meth:`HDFReader.read` call.
+support the usual :meth:`~pyvista.BaseReader.read` call.
