@@ -296,11 +296,11 @@ numpydoc_xref_ignore = {'optional'}
 numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in _DOCUMENTED_TYPES}
 
 sphinx_examples_as_code_conf = {
+    'dependencies': {'jupyter': ['pyvista[jupyter]'], 'marimo': ['pyvista[marimo]']},
     # Replace sphinx-gallery's own per-example downloads with Python, Jupyter and marimo ones
     'gallery_downloads': True,
     # Start each download with its dependencies and a uv command that runs it
     'script_metadata': True,
-    'dependencies': {'jupyter': ['pyvista[jupyter]'], 'marimo': ['pyvista[marimo]']},
 }
 
 # Disable checking if vtk links resolve correctly, web checks can be unstable
