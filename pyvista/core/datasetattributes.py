@@ -351,8 +351,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Return a view of these arrays with their data reshaped.
 
         The layout is set by :attr:`pyvista.global_config.array_reshaping
-        <pyvista.core.config.Config.array_reshaping>`, or per access with
-        :meth:`~pyvista.core._array_reshaping.ReshapedArrays.using`.
+        <pyvista.core.config.Config.array_reshaping>`. Call the view with a
+        preset name or an :class:`~pyvista.ArrayReshaper` for another layout.
 
         .. versionadded:: 0.50
 
@@ -402,6 +402,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         >>> image.point_data.reshaped['x'][0, 0, 0] = 99
         >>> int(image.point_data['x'][0])
         99
+
+        Use another layout for one access.
+
+        >>> image.point_data.reshaped('zyx')['x'].shape
+        (2, 3, 4)
 
         """
         from ._array_reshaping import ReshapedArrays  # noqa: PLC0415

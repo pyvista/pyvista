@@ -20,6 +20,7 @@ from PIL import Image
 from PIL import ImageSequence
 import pyvista as pv
 from pyvista import examples
+from scipy import ndimage
 
 # %%
 # How Arrays Are Indexed in Space
@@ -46,7 +47,7 @@ plt.show()
 # ``'image'`` preset puts the top row of the NumPy array at the largest y, so
 # the picture stays upright.
 image = pv.ImageData(dimensions=(5, 4, 1), origin=(-0.5, -0.5, 0))
-image.cell_data.reshaped.using('image')['value'] = pixels
+image.cell_data.reshaped('image')['value'] = pixels
 image.cell_data['value']
 
 # %%
@@ -77,7 +78,7 @@ pl.show()
 # %%
 # Each preset is a different index order on the same stored values.
 # ``'image'`` gives back the NumPy array.
-image.cell_data.reshaped.using('image')['value']
+image.cell_data.reshaped('image')['value']
 
 # %%
 # ``'grid'`` indexes the same values as ``array[i, j, k]`` along x, y, and z,
@@ -88,7 +89,7 @@ image.cell_data.reshaped['value'][:, :, 0]
 # %%
 # ``'zyx'`` indexes them as ``array[k, j, i]``, which is the NumPy image
 # upside down: pixel 0 is in the first row.
-image.cell_data.reshaped.using('zyx')['value'][0]
+image.cell_data.reshaped('zyx')['value'][0]
 
 # %%
 # Compare With Matplotlib
@@ -181,7 +182,7 @@ gradient = np.stack(np.gradient(values, *grid.spacing))
 gradient.shape
 
 # %%
-grid.point_data.reshaped.using('channels_first')['gradient'] = gradient
+grid.point_data.reshaped('channels_first')['gradient'] = gradient
 grid.point_data['gradient'].shape
 
 # %%
@@ -202,7 +203,7 @@ zyx_volume.shape
 
 # %%
 volume = pv.ImageData(dimensions=grid.dimensions)
-volume.point_data.reshaped.using('zyx')['values'] = zyx_volume
+volume.point_data.reshaped('zyx')['values'] = zyx_volume
 np.array_equal(volume.point_data.reshaped['values'], values)
 
 # %%
@@ -210,7 +211,7 @@ np.array_equal(volume.point_data.reshaped['values'], values)
 # +++++++++++++++++++++++++++++
 # Deep learning frameworks such as PyTorch and MONAI store scans with several modalities
 # channels first, as ``(channel, z, y, x)``. Build a reshaper for that layout
-# with :class:`~pyvista.GridReshaper`. Here two synthetic modalities stand in
+# with :meth:`~pyvista.ArrayReshaper.grid`. Here two synthetic modalities stand in
 # for T1-weighted and T2-weighted MRI.
 t1 = np.exp(-(x**2 + y**2 + z**2) * 3)
 t2 = 1 - t1
@@ -218,9 +219,9 @@ scan = np.stack([t1, t2]).transpose(0, 3, 2, 1)
 scan.shape
 
 # %%
-channels_first_zyx = pv.GridReshaper(axes='zyx', components='first')
+channels_first_zyx = pv.ArrayReshaper.grid(axes='zyx', components='first')
 mri = pv.ImageData(dimensions=grid.dimensions)
-mri.point_data.reshaped.using(channels_first_zyx)['scan'] = scan
+mri.point_data.reshaped(channels_first_zyx)['scan'] = scan
 mri.point_data['scan'].shape
 
 # %%
@@ -243,7 +244,7 @@ rgba.shape
 # %%
 height, width = rgba.shape[:2]
 logo = pv.ImageData(dimensions=(width, height, 1))
-logo.point_data.reshaped.using('image')['rgba'] = rgba
+logo.point_data.reshaped('image')['rgba'] = rgba
 logo.point_data['rgba'].shape
 
 # %%
@@ -262,30 +263,55 @@ logo.plot(rgb=True, cpos='xy', background='white')
 # Custom Reshapers
 # ++++++++++++++++
 # Any layout can be read and written with an :class:`~pyvista.ArrayReshaper`
-# built from two functions. OpenCV returns color images as BGR rather than RGB,
-# so reverse the channels on top of the ``'image'`` preset.
-image_preset = pv.GridReshaper(axes='zyx', squeeze=True, origin='upper')
+# built from two functions. Each function gets the array, the dataset, and the
+# array association. OpenCV returns color images as BGR rather than RGB, so
+# reverse the channels on top of the ``'image'`` preset.
+image_preset = pv.ArrayReshaper.grid(axes='zyx', squeeze=True, flip='y')
 
 
-def bgr_to_grid(array, *, dataset, association):
+def to_bgr(array, **kwargs):
     """Return an RGB image from PyVista as a BGR image."""
-    return image_preset.reshape(array, dataset=dataset, association=association)[
-        ..., ::-1
-    ]
+    return image_preset.reshape(array, **kwargs)[..., ::-1]
 
 
-def grid_to_bgr(array, *, dataset, association):
+def from_bgr(array, **kwargs):
     """Return a BGR image as an RGB array for PyVista."""
-    return image_preset.flatten(
-        array[..., ::-1], dataset=dataset, association=association
-    )
+    return image_preset.flatten(array[..., ::-1], **kwargs)
 
 
-opencv = pv.ArrayReshaper(reshape=bgr_to_grid, flatten=grid_to_bgr, name='opencv')
+opencv = pv.ArrayReshaper(reshape=to_bgr, flatten=from_bgr, name='opencv')
 
 bgr = rgba[..., 2::-1]  # an image as returned by cv2.imread
-logo.point_data.reshaped.using(opencv)['from_opencv'] = bgr
+logo.point_data.reshaped(opencv)['from_opencv'] = bgr
 np.array_equal(logo.point_data['from_opencv'], logo.point_data['rgba'][:, :3])
+
+# %%
+# Functions of Shaped Arrays
+# ++++++++++++++++++++++++++
+# :meth:`~pyvista.core._array_reshaping.ReshapedArrays.apply` passes a shaped
+# array through any function and stores the result. Blur the logo with
+# :func:`scipy.ndimage.gaussian_filter`, smoothing along the rows and columns
+# but not across the color channels.
+logo.point_data.reshaped('image').apply(
+    lambda pixels: ndimage.gaussian_filter(pixels, sigma=(4, 4, 0)),
+    'rgba',
+    output_name='blurred',
+)
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+logo.plot(scalars='blurred', rgb=True, cpos='xy', background='white')
+
+# %%
+# :meth:`~pyvista.ArrayReshaper.wrap` turns the same function into one of
+# flat arrays, for code that works on the stored arrays directly.
+blur = pv.ArrayReshaper.grid(squeeze=True).wrap(
+    lambda pixels: ndimage.gaussian_filter(pixels, sigma=(4, 4, 0))
+)
+blurred = blur(
+    logo.point_data['rgba'], dataset=logo, association=pv.FieldAssociation.POINT
+)
+np.array_equal(blurred, logo.point_data['blurred'])
 
 # %%
 # Animation Frames
@@ -303,8 +329,8 @@ frames.shape
 # %%
 n_frames, height, width = frames.shape[:3]
 movie = pv.ImageData(dimensions=(width, height, n_frames), spacing=(1, 1, 50))
-movie.point_data.reshaped.using('image')['frames'] = frames
-movie.point_data.reshaped.using('image')['frames'].shape
+movie.point_data.reshaped('image')['frames'] = frames
+movie.point_data.reshaped('image')['frames'].shape
 
 # %%
 movie.slice_along_axis(n_frames, axis='z').plot(rgb=True, background='white')
@@ -316,13 +342,11 @@ movie.slice_along_axis(n_frames, axis='z').plot(rgb=True, background='white')
 # dataset, matching the tensor layout VTK uses.
 sphere = pv.Sphere()
 normals = sphere.point_data['Normals']
-sphere.point_data.reshaped.using('tensor')['outer'] = (
-    normals[:, :, None] * normals[:, None, :]
-)
+sphere.point_data.reshaped('tensor')['outer'] = normals[:, :, None] * normals[:, None, :]
 sphere.point_data['outer'].shape
 
 # %%
-sphere.point_data.reshaped.using('tensor')['outer'].shape
+sphere.point_data.reshaped('tensor')['outer'].shape
 
 # %%
 # Changing the Default

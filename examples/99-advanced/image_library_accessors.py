@@ -30,8 +30,8 @@ from scipy import ndimage
 # %%
 # A Pillow Accessor
 # +++++++++++++++++
-# ``to_pil`` reads an array in Pillow's layout and ``apply`` writes the result
-# of any Pillow function back to an image with the same origin and spacing.
+# ``to_pil`` reads an array in Pillow's layout, and ``apply`` writes the result
+# of any Pillow function back to a new image with the same origin and spacing.
 
 
 @pv.register_dataset_accessor('pil', pv.ImageData)
@@ -44,7 +44,7 @@ class PillowAccessor:
     def to_pil(self, scalars=None):
         """Return an array of the image as a Pillow image."""
         name = scalars or self._image.active_scalars_name
-        pixels = self._image.point_data.reshaped.using('image')[name]
+        pixels = self._image.point_data.reshaped('image')[name]
         return Image.fromarray(np.ascontiguousarray(pixels))
 
     def apply(self, function, *, scalars=None):
@@ -56,7 +56,7 @@ class PillowAccessor:
             spacing=self._image.spacing,
             origin=self._image.origin,
         )
-        output.point_data.reshaped.using('image')[name] = np.asarray(result)
+        output.point_data.reshaped('image')[name] = np.asarray(result)
         return output
 
     def filter(self, image_filter, *, scalars=None):
@@ -103,8 +103,9 @@ pl.show()
 # A SciPy Accessor
 # ++++++++++++++++
 # :mod:`scipy.ndimage` filters work on volumes of any dimension, indexed like
-# the default ``'grid'`` preset. Convert the filter sizes from physical units
-# to voxels with the image spacing.
+# the default ``'grid'`` preset. ``apply`` passes an array through any such
+# function with :meth:`~pyvista.core._array_reshaping.ReshapedArrays.apply`,
+# and the filter sizes convert from physical units to voxels with the spacing.
 
 
 @pv.register_dataset_accessor('ndimage', pv.ImageData)
@@ -114,26 +115,27 @@ class NdimageAccessor:
     def __init__(self, image):
         self._image = image
 
-    def _volume(self, scalars):
-        """Return the named point array in the grid shape."""
-        return self._image.point_data.reshaped[scalars or self._image.active_scalars_name]
+    def apply(self, function, *, scalars=None, output_name=None):
+        """Return a copy with a function applied to the named array as a volume."""
+        output = self._image.copy()
+        name = scalars or self._image.active_scalars_name
+        output.point_data.reshaped.apply(function, name, output_name=output_name)
+        return output
 
     def gaussian_filter(self, sigma, *, scalars=None):
         """Return a copy smoothed by a Gaussian with ``sigma`` in physical units."""
-        output = self._image.copy()
-        name = scalars or self._image.active_scalars_name
         voxels = np.divide(sigma, self._image.spacing)
-        output.point_data.reshaped[name] = ndimage.gaussian_filter(
-            self._volume(name), voxels
+        return self.apply(
+            lambda volume: ndimage.gaussian_filter(volume, voxels), scalars=scalars
         )
-        return output
 
     def label(self, threshold, *, scalars=None):
         """Return a copy with connected regions above ``threshold`` labeled."""
-        output = self._image.copy()
-        labels, _ = ndimage.label(self._volume(scalars) > threshold)
-        output.point_data.reshaped['labels'] = labels
-        return output
+        return self.apply(
+            lambda volume: ndimage.label(volume > threshold)[0],
+            scalars=scalars,
+            output_name='labels',
+        )
 
 
 # %%

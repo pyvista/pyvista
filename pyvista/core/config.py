@@ -494,7 +494,8 @@ class Config(_ConfigBase):
     def array_reshaping(self) -> str | ArrayReshaper:  # numpydoc ignore=RT01
         """Return or set the layout of :attr:`~pyvista.DataSetAttributes.reshaped` arrays.
 
-        Set a preset name or an :class:`~pyvista.ArrayReshaper`.
+        Set a preset name or an :class:`~pyvista.ArrayReshaper`. The presets
+        are described by :meth:`pyvista.ArrayReshaper.presets`.
 
         ``'grid'``
             The default. Arrays of structured grids take the grid shape, indexed

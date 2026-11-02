@@ -60,11 +60,11 @@ def test_grid_presets_round_trip(make_grid, association, n_components, preset, t
     xyz = np.arange(np.prod(shape)).reshape(shape)
     shaped = to_layout(xyz)
 
-    attributes.reshaped.using(preset)['data'] = shaped
+    attributes.reshaped(preset)['data'] = shaped
 
     flat = xyz.reshape((-1, *shape[3:]), order='F')
     assert np.array_equal(attributes['data'], flat)
-    out = attributes.reshaped.using(preset)['data']
+    out = attributes.reshaped(preset)['data']
     assert out.shape == shaped.shape
     assert np.array_equal(out, shaped)
     assert np.shares_memory(out, attributes['data'])
@@ -113,9 +113,9 @@ def test_singleton_dimensions(dimensions, association, expected):
     assert attributes.reshaped['data'].shape == expected
 
     squeezed = tuple(n for n in expected if n != 1)
-    reshaper = pv.GridReshaper(squeeze=True)
-    assert attributes.reshaped.using(reshaper)['data'].shape == squeezed
-    attributes.reshaped.using(reshaper)['copy'] = attributes.reshaped.using(reshaper)['data']
+    reshaper = pv.ArrayReshaper.grid(squeeze=True)
+    assert attributes.reshaped(reshaper)['data'].shape == squeezed
+    attributes.reshaped(reshaper)['copy'] = attributes.reshaped(reshaper)['data']
     assert np.array_equal(attributes['copy'], attributes['data'])
 
 
@@ -125,9 +125,9 @@ def test_image_preset_round_trip(n_frames):
     shape = (height, width, 3) if n_frames == 1 else (n_frames, height, width, 3)
     pixels = np.random.default_rng(0).integers(0, 255, shape, dtype=np.uint8)
     grid = pv.ImageData(dimensions=(width, height, n_frames))
-    grid.point_data.reshaped.using('image')['rgb'] = pixels
-    assert np.array_equal(grid.point_data.reshaped.using('image')['rgb'], pixels)
-    assert np.shares_memory(grid.point_data.reshaped.using('image')['rgb'], grid['rgb'])
+    grid.point_data.reshaped('image')['rgb'] = pixels
+    assert np.array_equal(grid.point_data.reshaped('image')['rgb'], pixels)
+    assert np.shares_memory(grid.point_data.reshaped('image')['rgb'], grid['rgb'])
     # first row of the image is the top row, at the largest y
     top_row = grid['rgb'].reshape(width, height, n_frames, 3, order='F')[:, -1, 0]
     first_image = pixels if n_frames == 1 else pixels[0]
@@ -139,24 +139,24 @@ def test_image_preset_matches_png_reader_and_texture():
 
     image = pv.read(examples.logofile)
     pixels = np.asarray(Image.open(examples.logofile))
-    assert np.array_equal(image.point_data.reshaped.using('image')['PNGImage'], pixels)
+    assert np.array_equal(image.point_data.reshaped('image')['PNGImage'], pixels)
 
     texture = pv.Texture(pixels)
-    assert np.array_equal(texture.to_image().point_data.reshaped.using('image')['Image'], pixels)
+    assert np.array_equal(texture.to_image().point_data.reshaped('image')['Image'], pixels)
 
 
 def test_tensor_preset(sphere):
     tensors = np.random.default_rng(0).random((sphere.n_points, 3, 3))
-    sphere.point_data.reshaped.using('tensor')['tensors'] = tensors
+    sphere.point_data.reshaped('tensor')['tensors'] = tensors
     assert sphere.point_data['tensors'].shape == (sphere.n_points, 9)
-    assert np.array_equal(sphere.point_data.reshaped.using('tensor')['tensors'], tensors)
+    assert np.array_equal(sphere.point_data.reshaped('tensor')['tensors'], tensors)
 
     # same layout as setting the 3D array directly
     sphere.point_data['direct'] = tensors
     assert np.array_equal(sphere.point_data['direct'], sphere.point_data['tensors'])
 
-    sphere.point_data.reshaped.using('tensor')['scalars'] = np.arange(sphere.n_points)
-    assert sphere.point_data.reshaped.using('tensor')['scalars'].shape == (sphere.n_points,)
+    sphere.point_data.reshaped('tensor')['scalars'] = np.arange(sphere.n_points)
+    assert sphere.point_data.reshaped('tensor')['scalars'].shape == (sphere.n_points,)
 
 
 @pytest.mark.parametrize('preset', ['grid', 'zyx'])
@@ -164,17 +164,17 @@ def test_squeezed_input_accepted(preset):
     grid = pv.ImageData(dimensions=(4, 3, 1))
     xy = np.arange(12).reshape(4, 3)
     pixels = xy.T if preset == 'zyx' else xy
-    grid.point_data.reshaped.using(preset)['data'] = pixels
+    grid.point_data.reshaped(preset)['data'] = pixels
     assert np.array_equal(grid.point_data['data'], xy.ravel(order='F'))
-    squeezed = pv.GridReshaper(axes='zyx' if preset == 'zyx' else 'xyz', squeeze=True)
-    assert np.array_equal(grid.point_data.reshaped.using(squeezed)['data'], pixels)
+    squeezed = pv.ArrayReshaper.grid(axes='zyx' if preset == 'zyx' else 'xyz', squeeze=True)
+    assert np.array_equal(grid.point_data.reshaped(squeezed)['data'], pixels)
 
 
 def test_flat_input_passes_through():
     grid = _image()
     grid.point_data.reshaped['flat'] = np.arange(grid.n_points)
     grid.point_data.reshaped['vectors'] = grid.points
-    grid.point_data.reshaped.using(pv.GridReshaper(squeeze=True))['squeezed'] = np.arange(
+    grid.point_data.reshaped(pv.ArrayReshaper.grid(squeeze=True))['squeezed'] = np.arange(
         grid.n_points
     )
     assert grid.point_data['squeezed'].shape == (grid.n_points,)
@@ -218,9 +218,9 @@ def test_custom_reshaper():
 
     reshaper = pv.ArrayReshaper(reshape=reshape, flatten=lambda array, **_: array.ravel())
     grid = _image()
-    grid.point_data.reshaped.using(reshaper)['data'] = np.arange(grid.n_points)[:, None]
+    grid.point_data.reshaped(reshaper)['data'] = np.arange(grid.n_points)[:, None]
     assert grid.point_data['data'].shape == (grid.n_points,)
-    assert grid.point_data.reshaped.using(reshaper)['data'].shape == (grid.n_points, 1)
+    assert grid.point_data.reshaped(reshaper)['data'].shape == (grid.n_points, 1)
     assert calls == [(pv.ImageData, pv.FieldAssociation.POINT)]
 
 
@@ -231,7 +231,7 @@ def test_reshaper_follows_global_config():
     pv.global_config.array_reshaping = 'zyx'
     assert view['data'].shape == DIMENSIONS[::-1]
     assert view.reshaper.name == 'zyx'
-    assert view.using('grid')['data'].shape == DIMENSIONS
+    assert view('grid')['data'].shape == DIMENSIONS
 
 
 def test_view_mapping_interface():
@@ -248,7 +248,7 @@ def test_view_mapping_interface():
     assert view._ipython_key_completions_() == ['a', 'b']
     assert grid.point_data.active_scalars_name == 'a'
     text = repr(view)
-    assert "name='grid'" in text
+    assert "ArrayReshaper('grid')" in text
     assert '(4, 3, 2, 3)' in text
     del view['a']
     assert list(grid.point_data) == ['b']
@@ -273,7 +273,7 @@ def test_config_rejects_invalid(value, error, match):
 
 
 def test_config_round_trip():
-    reshaper = pv.GridReshaper(axes='zyx')
+    reshaper = pv.ArrayReshaper.grid(axes='zyx')
     pv.global_config.array_reshaping = reshaper
     assert pv.global_config.array_reshaping is reshaper
     restored = type(pv.global_config).from_dict(pv.global_config.to_dict())
@@ -283,39 +283,88 @@ def test_config_round_trip():
 @pytest.mark.parametrize(
     ('kwargs', 'match'),
     [
-        ({'axes': 'yxz'}, "`axes` must be 'xyz' or 'zyx'"),
+        ({'axes': 'xyy'}, "`axes` must be a permutation of 'xyz'"),
         ({'components': 'middle'}, "`components` must be 'last' or 'first'"),
-        ({'origin': 'top'}, "`origin` must be 'lower' or 'upper'"),
+        ({'flip': 'w'}, "`flip` must only contain letters of 'xyz'"),
     ],
 )
-def test_grid_reshaper_rejects_invalid(kwargs, match):
+def test_grid_rejects_invalid(kwargs, match):
     with pytest.raises(ValueError, match=match):
-        pv.GridReshaper(**kwargs)
+        pv.ArrayReshaper.grid(**kwargs)
 
 
 def test_reprs():
     assert repr(pv.ArrayReshaper(reshape=np.ravel, flatten=np.ravel, name='x')) == (
-        "ArrayReshaper(name='x')"
+        "ArrayReshaper('x')"
     )
-    assert repr(pv.GridReshaper()) == (
-        "GridReshaper(axes='xyz', components='last', squeeze=False, origin='lower')"
+    assert repr(pv.ArrayReshaper.grid()) == (
+        "ArrayReshaper(\"grid(axes='xyz', components='last', squeeze=False, flip='')\")"
     )
+    assert repr(pv.ArrayReshaper.grid(name='mine')) == "ArrayReshaper('mine')"
+
+
+def test_presets():
+    assert pv.ArrayReshaper.presets() == ('grid', 'zyx', 'channels_first', 'image', 'tensor')
+    for name in pv.ArrayReshaper.presets():
+        pv.global_config.array_reshaping = name
+
+
+@pytest.mark.parametrize('axes', ['yxz', 'zxy', 'yzx'])
+def test_grid_axes_permutations(axes):
+    grid = _image()
+    xyz = np.arange(grid.n_points).reshape(DIMENSIONS)
+    order = ['xyz'.index(a) for a in axes]
+    shaped = xyz.transpose(order)
+    reshaper = pv.ArrayReshaper.grid(axes=axes)
+    grid.point_data.reshaped(reshaper)['data'] = shaped
+    assert np.array_equal(grid.point_data['data'], xyz.ravel(order='F'))
+    assert np.array_equal(grid.point_data.reshaped(reshaper)['data'], shaped)
+
+
+def test_grid_flip_several_axes():
+    grid = _image()
+    xyz = np.arange(grid.n_points).reshape(DIMENSIONS)
+    flipped = xyz[::-1, :, ::-1]
+    reshaper = pv.ArrayReshaper.grid(flip='xz')
+    grid.point_data.reshaped(reshaper)['data'] = flipped
+    assert np.array_equal(grid.point_data['data'], xyz.ravel(order='F'))
+    assert np.array_equal(grid.point_data.reshaped(reshaper)['data'], flipped)
+
+
+def test_wrap_and_apply():
+    grid = _image()
+    grid.point_data['data'] = np.arange(grid.n_points)
+    seen = []
+
+    def double(array):
+        seen.append(array.shape)
+        return array * 2
+
+    doubled = pv.ArrayReshaper.grid().wrap(double)
+    flat = doubled(grid.point_data['data'], dataset=grid, association=pv.FieldAssociation.POINT)
+    assert np.array_equal(flat, grid.point_data['data'] * 2)
+    assert seen == [DIMENSIONS]
+
+    grid.point_data.reshaped.apply(double, 'data', output_name='twice')
+    assert np.array_equal(grid.point_data['twice'], grid.point_data['data'] * 2)
+    grid.point_data.reshaped.apply(double, 'data')
+    assert np.array_equal(grid.point_data['data'], grid.point_data['twice'])
 
 
 @pytest.mark.parametrize(
     ('dimensions', 'expected'),
     [
         ((4, 3, 1), [[8, 9, 10, 11], [4, 5, 6, 7], [0, 1, 2, 3]]),
-        ((4, 1, 3), [[8, 9, 10, 11], [4, 5, 6, 7], [0, 1, 2, 3]]),
-        ((1, 3, 4), [[9, 10, 11], [6, 7, 8], [3, 4, 5], [0, 1, 2]]),
+        ((4, 1, 3), [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]),
+        ((1, 3, 4), [[2, 1, 0], [5, 4, 3], [8, 7, 6], [11, 10, 9]]),
     ],
     ids=['xy', 'xz', 'yz'],
 )
 def test_image_preset_flips_vertical_axis(dimensions, expected):
     grid = pv.ImageData(dimensions=dimensions)
     grid.point_data['data'] = np.arange(grid.n_points)
-    assert np.array_equal(grid.point_data.reshaped.using('image')['data'], expected)
-    grid.point_data.reshaped.using('image')['copy'] = np.array(expected)
+    assert np.array_equal(grid.point_data.reshaped('image')['data'], expected)
+    grid.point_data.reshaped('image')['copy'] = np.array(expected)
     assert np.array_equal(grid.point_data['copy'], grid.point_data['data'])
 
 
@@ -336,20 +385,14 @@ def test_explicit_grid_with_cell_corners():
 
 def test_components_first_with_every_axis_squeezed():
     grid = pv.ImageData(dimensions=(2, 2, 1))
-    reshaper = pv.GridReshaper(components='first', squeeze=True)
-    grid.cell_data.reshaped.using(reshaper)['rgb'] = np.array([1, 2, 3])
+    reshaper = pv.ArrayReshaper.grid(components='first', squeeze=True)
+    grid.cell_data.reshaped(reshaper)['rgb'] = np.array([1, 2, 3])
     assert np.array_equal(grid.cell_data['rgb'], [[1, 2, 3]])
-    assert np.array_equal(grid.cell_data.reshaped.using(reshaper)['rgb'], [1, 2, 3])
+    assert np.array_equal(grid.cell_data.reshaped(reshaper)['rgb'], [1, 2, 3])
 
 
 def test_flat_input_preferred_over_squeezed_layout():
     grid = pv.ImageData(dimensions=(3, 1, 1))
     flat = np.arange(9.0).reshape(3, 3)
-    grid.point_data.reshaped.using('channels_first')['data'] = flat
+    grid.point_data.reshaped('channels_first')['data'] = flat
     assert np.array_equal(grid.point_data['data'], flat)
-
-
-def test_grid_reshaper_is_read_only():
-    reshaper = pv.GridReshaper()
-    with pytest.raises(AttributeError):
-        reshaper.axes = 'zyx'
