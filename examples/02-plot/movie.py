@@ -13,6 +13,8 @@ This example uses :meth:`~pyvista.Plotter.open_movie` and
     This movie will appear static since MP4 movies will not be
     rendered on a sphinx gallery example.
 
+.. examples-as-code-dependencies:: imageio-ffmpeg
+
 """
 
 import numpy as np

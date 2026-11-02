@@ -6,6 +6,8 @@ Plot Atomic Orbitals
 
 Visualize the wave functions (orbitals) of the hydrogen atom.
 
+.. examples-as-code-dependencies:: sympy
+
 """
 
 # %%
