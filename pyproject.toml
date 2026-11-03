@@ -635,7 +635,6 @@ pyvista = "pv"
   'D400',
   'D415',
   'E402',
-  'F401', # imports that name a download's dependencies
   'INP',
   'PLC0415',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
