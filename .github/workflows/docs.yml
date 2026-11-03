@@ -323,6 +323,12 @@ jobs:
           name: pyvista-jupyter-notebooks
           path: _notebooks
 
+      - name: Check Jupyter Notebooks
+        run: |
+          count=$(find _notebooks/examples -type f -name '*.ipynb' | wc -l)
+          echo "Found $count Jupyter notebooks"
+          test "$count" -gt 0
+
       # Pinned to a commit: cookiecutter runs the template's hooks, and this job
       # later publishes the result with a write token.
       - name: Make Cookiecutter
