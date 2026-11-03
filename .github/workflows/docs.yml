@@ -169,7 +169,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: pyvista-jupyter-notebooks
-          path: doc/_build/examples-as-code/jupyter/
+          path: doc/_build/examples-as-code/gallery/jupyter/
           if-no-files-found: error
 
   # Republishes the matched build under this run, so everything downstream —
