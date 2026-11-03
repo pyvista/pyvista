@@ -28,6 +28,9 @@ a jupyter notebook:
 Marimo Notebooks
 ~~~~~~~~~~~~~~~~
 PyVista also plots inline in `marimo <https://marimo.io/>`_ notebooks.
+marimo is a separate notebook, not part of Jupyter and not a Jupyter backend.
+PyVista shows plots in it through the same backends it uses in Jupyter, so the
+backend settings below apply to both, even though their names say Jupyter.
 Install the ``marimo`` extra:
 
 .. code-block:: bash
