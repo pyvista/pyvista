@@ -299,6 +299,8 @@ sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
+    # Copy each gallery download to <format>/examples/<section>/ for MyBinder.
+    'export_dir': '../_build/examples-as-code',
 }
 
 # Disable checking if vtk links resolve correctly, web checks can be unstable
