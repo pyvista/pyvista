@@ -299,9 +299,9 @@ sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
-    # Copy each gallery download to gallery/<format>/examples/<section>/ for MyBinder.
-    'export_dir': '../_build/examples-as-code',
 }
+# Copy each gallery download to gallery/<format>/examples/<section>/ for MyBinder
+sphinx_examples_as_code_conf['export_dir'] = '../_build/examples-as-code'
 
 # Disable checking if vtk links resolve correctly, web checks can be unstable
 vtk_xref_nitpicky = False
@@ -576,8 +576,6 @@ sphinx_gallery_conf = {
     'doc_module': 'pyvista',
     # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
     'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
-    # sphinx_examples_as_code writes the downloads, so skip sphinx-gallery's notebooks
-    'notebook_extensions': set(),
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
     'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
