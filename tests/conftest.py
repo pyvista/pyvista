@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import sys
 from types import FunctionType
 from types import ModuleType
 
@@ -822,6 +823,10 @@ def pytest_runtest_setup(item: pytest.Item):
         backend = bounds.arguments[b]
         if pv.vtk_backend() == backend:
             pytest.skip(f'{backend} backend: {bounds.arguments[r]}')
+
+    for item_mark in item.iter_markers('skip_python'):
+        if sys.version_info >= item_mark.args[0]:
+            pytest.skip(f'Python {platform.python_version()}: {item_mark.kwargs["reason"]}')
 
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
