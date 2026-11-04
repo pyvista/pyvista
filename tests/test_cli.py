@@ -2015,8 +2015,10 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
     out, err = capture_out_err(capsys)
     assert out == ''
     assert '╭─ PyVista Error ─' in err, err
-    assert 'Cannot validate PartitionedDataSet' in err, err
-    assert 'only DataSet and MultiBlock meshes are supported' in err, err
+    # Where the panel wraps the message depends on the length of the cache path
+    flattened = ' '.join(err.replace('│', ' ').split())
+    assert 'Cannot validate PartitionedDataSet' in flattened, err
+    assert 'only DataSet and MultiBlock meshes are supported' in flattened, err
     assert e.value.code == 1
 
 

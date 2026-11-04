@@ -1217,6 +1217,13 @@ Run all code examples in the docstrings with:
     Additional testing is also performed on any images generated
     by the docstring. See `Documentation Image Regression Testing`_.
 
+.. note::
+
+    The macOS docstring job sets ``_PYVISTA_DOCTEST_SKIP_SHOW=true``, so
+    ``Plotter.show()`` closes the plotter instead of rendering. GitHub's macOS
+    runners have no GPU, and rendering on their software renderer takes the job
+    from about 2 to 25 minutes. Set the same variable to skip rendering locally.
+
 
 Type Checking
 ~~~~~~~~~~~~~

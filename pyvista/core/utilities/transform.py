@@ -2300,15 +2300,8 @@ class Transform(
         nevertheless valid and can be used to re-compose the original transformation.
 
         >>> T, R, N, S, K = transform.decompose(homogeneous=True)
-        >>> T @ R @ N @ S @ K
-        array([[-5.76153045e-17, -2.00000000e+00,  0.00000000e+00,
-                 4.00000000e+00],
-               [ 1.00000000e+00,  1.00000000e-01,  0.00000000e+00,
-                 5.00000000e+00],
-               [ 0.00000000e+00,  0.00000000e+00,  3.00000000e+00,
-                 6.00000000e+00],
-               [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
-                 1.00000000e+00]])
+        >>> np.allclose(T @ R @ N @ S @ K, transform.matrix)
+        True
 
         Alternatively, re-compose the transformation as a new
         :class:`~pyvista.Transform` with pre-multiplication.
