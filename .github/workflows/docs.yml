@@ -166,15 +166,11 @@ jobs:
           name: examples
           path: doc/source/examples/
 
-      - name: Get Notebooks
-        run: |
-          mkdir _notebooks
-          find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
-
       - uses: actions/upload-artifact@v7
         with:
-          name: pyvista-notebooks
-          path: _notebooks
+          name: pyvista-jupyter-notebooks
+          path: doc/_build/examples-as-code/gallery/jupyter/
+          if-no-files-found: error
 
   # Republishes the matched build under this run, so everything downstream —
   # `publish-notebooks` here, the Netlify deploy over in `netlify-deploy.yml` —
@@ -207,7 +203,7 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: pyvista-notebooks
+          name: pyvista-jupyter-notebooks
           path: _notebooks
           run-id: ${{ needs.resolve.outputs.run-id }}
           github-token: ${{ github.token }}
@@ -225,8 +221,9 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: pyvista-notebooks
+          name: pyvista-jupyter-notebooks
           path: _notebooks
+          if-no-files-found: error
 
   test:
     name: Test Documentation
@@ -307,7 +304,7 @@ jobs:
   # CI is never blocked waiting on a deployment approval.
 
   publish-notebooks:
-    name: Publish Notebooks for MyBinder
+    name: Publish Jupyter Notebooks for MyBinder
     runs-on: ubuntu-22.04
     needs: [doc, reuse]
     if: ${{ !cancelled() && (needs.doc.result == 'success' || needs.reuse.result == 'success') && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
@@ -323,8 +320,14 @@ jobs:
           pip install cookiecutter
       - uses: actions/download-artifact@v8
         with:
-          name: pyvista-notebooks
-          path: .
+          name: pyvista-jupyter-notebooks
+          path: _notebooks
+
+      - name: Check Jupyter Notebooks
+        run: |
+          count=$(find _notebooks/examples -type f -name '*.ipynb' | wc -l)
+          echo "Found $count Jupyter notebooks"
+          test "$count" -gt 0
 
       # Pinned to a commit: cookiecutter runs the template's hooks, and this job
       # later publishes the result with a write token.
@@ -334,7 +337,7 @@ jobs:
         run: |
           cookiecutter -f --no-input --checkout "$TEMPLATE_REF" --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git
           rm -rf ./pyvista-examples/notebooks/
-          cp -r doc/source/examples/ ./pyvista-examples/
+          cp -r _notebooks/examples ./pyvista-examples/
           ls -l ./pyvista-examples/
 
       - name: Get app installation token (pyvista-examples)
@@ -350,7 +353,7 @@ jobs:
           repositories: pyvista-examples
           permission-contents: write
 
-      - name: Publish notebooks on release
+      - name: Publish Jupyter notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         with:
