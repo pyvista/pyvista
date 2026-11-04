@@ -16,6 +16,7 @@ import pyvista_frd
 import pyvista_zstd
 
 import pyvista as pv
+from pyvista.core.utilities import _registry
 from pyvista.core.utilities import reader_registry as _reg_mod
 from pyvista.core.utilities import writer_registry as _writer_mod
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
@@ -212,14 +213,14 @@ def test_other_extensions_are_unaffected():
 
 
 def test_entry_point_wins(frd_file):
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     sentinel = pv.PolyData()
     plugin = MagicMock()
     plugin.name = '.frd'
     plugin.value = 'other_package:read'
     plugin.load.return_value = lambda _path, **_kwargs: sentinel
 
-    with patch.object(_reg_mod, 'entry_points', return_value=[plugin]):
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[plugin]):
         assert pv.read(frd_file) is sentinel
 
     registration = next(r for r in pv.registered_readers() if r.extension == '.frd')
@@ -240,13 +241,10 @@ ZSTD_EXTENSIONS = ['.pv', '.zvtk']
 def _forget_zstd():
     """Drop every trace of ``pyvista_zstd`` from both registries."""
     for ext in ZSTD_EXTENSIONS:
-        _reg_mod._custom_ext_readers.pop(ext, None)
-        _reg_mod._custom_class_readers.pop(ext, None)
-        _reg_mod._custom_ext_reader_sources.pop(ext, None)
-        _reg_mod._pending_ext_readers.pop(ext, None)
-        _writer_mod._custom_ext_writers.pop(ext, None)
-        _writer_mod._custom_ext_writer_sources.pop(ext, None)
-        _writer_mod._pending_ext_writers.pop(ext, None)
+        _reg_mod._custom_readers.pop(ext)
+        _reg_mod._plugins.pending.pop(ext, None)
+        _writer_mod._custom_ext_writers.pop(ext)
+        _writer_mod._plugins.pending.pop(ext, None)
 
 
 @pytest.fixture
@@ -258,8 +256,7 @@ def zstd_file(tmp_path):
 
 def _hide_zstd_entry_points(monkeypatch):
     """Hide the entry points ``pyvista-zstd`` declares for its two extensions."""
-    monkeypatch.setattr(_reg_mod, 'entry_points', lambda **_kwargs: [])
-    monkeypatch.setattr(_writer_mod, 'entry_points', lambda **_kwargs: [])
+    monkeypatch.setattr(_registry, 'entry_points', lambda **_kwargs: [])
     _forget_zstd()
 
 

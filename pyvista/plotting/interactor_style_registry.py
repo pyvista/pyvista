@@ -2,29 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from importlib.metadata import entry_points
 from typing import TYPE_CHECKING
-from typing import TypedDict
 
-from pyvista._warn_external import warn_external
-from pyvista.core.utilities._registry_helpers import handler_source
+from pyvista.core.utilities._registry import _HandlerRegistry
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from importlib.metadata import EntryPoint
     from typing import Any
 
     InteractorStyleHandler = Callable[..., Any]
-
-
-class _InteractorStyleRegistryState(TypedDict):
-    """Stored registry state used by tests."""
-
-    custom: dict[str, InteractorStyleHandler]
-    custom_sources: dict[str, str]
-    discovered: dict[str, InteractorStyleHandler]
-    discovered_sources: dict[str, str]
-    loaded: bool
 
 
 INTERACTOR_STYLE_ENTRY_POINT_GROUP = 'pyvista.interactor_styles'
@@ -43,41 +30,42 @@ _BUILTIN_INTERACTOR_STYLE_METHODS = {
     'zoom_style': 'enable_zoom_style',
 }
 
-_custom_interactor_styles: dict[str, InteractorStyleHandler] = {}
-_custom_interactor_style_sources: dict[str, str] = {}
-_discovered_entry_point_styles: dict[str, InteractorStyleHandler] = {}
-_discovered_entry_point_sources: dict[str, str] = {}
-_entry_points_loaded: bool = False
-
 
 def _normalize_interactor_style_name(name: str) -> str:
     """Normalize an interactor style name."""
     return name.strip().lower()
 
 
-def _save_registry_state() -> _InteractorStyleRegistryState:
-    """Snapshot the current registry state for later restoration."""
-    return {
-        'custom': _custom_interactor_styles.copy(),
-        'custom_sources': _custom_interactor_style_sources.copy(),
-        'discovered': _discovered_entry_point_styles.copy(),
-        'discovered_sources': _discovered_entry_point_sources.copy(),
-        'loaded': _entry_points_loaded,
-    }
+def _accept_style(key: str, handler: object) -> str | None:
+    """Return why ``handler`` cannot serve as interactor style ``key``, or ``None``."""
+    if key in _BUILTIN_INTERACTOR_STYLE_METHODS:
+        return 'collides with a built-in interactor style.'
+    return None if callable(handler) else 'handler is not callable.'
 
 
-def _restore_registry_state(state: _InteractorStyleRegistryState) -> None:
-    """Restore registry state from a snapshot."""
-    global _entry_points_loaded  # noqa: PLW0603
-    _custom_interactor_styles.clear()
-    _custom_interactor_styles.update(state['custom'])
-    _custom_interactor_style_sources.clear()
-    _custom_interactor_style_sources.update(state['custom_sources'])
-    _discovered_entry_point_styles.clear()
-    _discovered_entry_point_styles.update(state['discovered'])
-    _discovered_entry_point_sources.clear()
-    _discovered_entry_point_sources.update(state['discovered_sources'])
-    _entry_points_loaded = state['loaded']
+class _InteractorStyleRegistry(_HandlerRegistry['InteractorStyleHandler']):
+    """Interactor style registry: every entry point loads, since one may provide several styles."""
+
+    def pending_key(self, ep: EntryPoint, group: str) -> str | None:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Key each entry point on its own, so same-named ones from different packages all load."""
+        return f'{ep.name}={ep.value}'
+
+
+_registry = _InteractorStyleRegistry(
+    INTERACTOR_STYLE_ENTRY_POINT_GROUP,
+    label='interactor style',
+    normalize=_normalize_interactor_style_name,
+    builtin=lambda name: name in _BUILTIN_INTERACTOR_STYLE_METHODS,
+    builtin_label='a built-in interactor style',
+    accept=_accept_style,
+    separate_discovered=True,
+    unpack_mappings=True,
+)
+_custom_interactor_styles = _registry.explicit
+_discovered_entry_point_styles = _registry.discovered
+_plugins = _registry.plugins
+_save_registry_state = _registry.snapshot
+_restore_registry_state = _registry.restore
 
 
 def register_interactor_style(
@@ -142,26 +130,10 @@ def register_interactor_style(
     ... )  # doctest: +SKIP
 
     """
-    normalized_name = _normalize_interactor_style_name(name)
-    if not normalized_name:
+    if not _normalize_interactor_style_name(name):
         msg = 'Interactor style name must not be empty.'
         raise ValueError(msg)
-    if not override and normalized_name in _BUILTIN_INTERACTOR_STYLE_METHODS:
-        msg = (
-            f'Cannot register custom interactor style "{normalized_name}": '
-            'collides with a built-in interactor style. '
-            'Use override=True to replace it.'
-        )
-        raise ValueError(msg)
-    if not override and normalized_name in _custom_interactor_styles:
-        existing_source = _custom_interactor_style_sources.get(normalized_name, '<unknown>')
-        warn_external(
-            f'Registering interactor style "{normalized_name}" replaces an '
-            f'existing custom registration from {existing_source}.',
-        )
-
-    _custom_interactor_styles[normalized_name] = handler
-    _custom_interactor_style_sources[normalized_name] = handler_source(handler)
+    _registry.register(name, handler, override=override)
 
 
 def _get_interactor_style_handler(name: str) -> str | InteractorStyleHandler | None:
@@ -175,19 +147,14 @@ def _get_interactor_style_handler(name: str) -> str | InteractorStyleHandler | N
     if builtin_method is not None:
         return builtin_method
 
-    _ensure_entry_points()
-    return _discovered_entry_point_styles.get(normalized_name)
+    _plugins.ensure_loaded()
+    return _registry.get(normalized_name)
 
 
 def _available_interactor_style_names() -> tuple[str, ...]:
     """Return all currently available interactor style names."""
-    _ensure_entry_points()
-    names = (
-        set(_BUILTIN_INTERACTOR_STYLE_METHODS)
-        | set(_custom_interactor_styles)
-        | set(_discovered_entry_point_styles)
-    )
-    return tuple(sorted(names))
+    _plugins.ensure_loaded()
+    return tuple(sorted(set(_BUILTIN_INTERACTOR_STYLE_METHODS) | _registry.keys()))
 
 
 def _has_interactor_style(name: str) -> bool:
@@ -198,8 +165,8 @@ def _has_interactor_style(name: str) -> bool:
     if normalized_name in _BUILTIN_INTERACTOR_STYLE_METHODS:
         return True
 
-    _ensure_entry_points()
-    return normalized_name in _discovered_entry_point_styles
+    _plugins.ensure_loaded()
+    return _registry.get(normalized_name) is not None
 
 
 def _validate_interactor_style(name: object) -> str:
@@ -215,93 +182,3 @@ def _validate_interactor_style(name: object) -> str:
     available_styles = ', '.join(f'"{item}"' for item in _available_interactor_style_names())
     msg = f'Invalid interactor style "{name}".\nUse one of the following:\n{available_styles}'
     raise ValueError(msg)
-
-
-def _ensure_entry_points() -> None:
-    """Discover ``pyvista.interactor_styles`` entry points once."""
-    global _entry_points_loaded  # noqa: PLW0603
-    if _entry_points_loaded:
-        return
-
-    _entry_points_loaded = True
-    for interactor_style_entry_point in entry_points(group=INTERACTOR_STYLE_ENTRY_POINT_GROUP):
-        source = interactor_style_entry_point.value
-        try:
-            loaded_handler = interactor_style_entry_point.load()
-        except Exception as exc:  # noqa: BLE001 - a broken plugin is reported, not fatal
-            msg = (
-                f'Failed to load {INTERACTOR_STYLE_ENTRY_POINT_GROUP} entry point '
-                f'"{interactor_style_entry_point.name}" from {source}: {exc}'
-            )
-            warn_external(msg)
-            continue
-
-        if isinstance(loaded_handler, Mapping):
-            for style_name, style_handler in loaded_handler.items():
-                if not isinstance(style_name, str):
-                    msg = (
-                        f'Ignoring {INTERACTOR_STYLE_ENTRY_POINT_GROUP} entry point from '
-                        f'{source}: style names must be strings.'
-                    )
-                    warn_external(msg)
-                    continue
-                _register_discovered_interactor_style(
-                    style_name,
-                    style_handler,
-                    source=source,
-                )
-            continue
-
-        _register_discovered_interactor_style(
-            interactor_style_entry_point.name,
-            loaded_handler,
-            source=source,
-        )
-
-
-def _register_discovered_interactor_style(
-    name: str,
-    handler: object,
-    *,
-    source: str,
-) -> None:
-    """Register a discovered interactor style handler from an entry point."""
-    normalized_name = _normalize_interactor_style_name(name)
-    if not normalized_name:
-        msg = (
-            f'Ignoring {INTERACTOR_STYLE_ENTRY_POINT_GROUP} entry point from '
-            f'{source}: style name must not be empty.'
-        )
-        warn_external(msg)
-        return
-
-    if normalized_name in _BUILTIN_INTERACTOR_STYLE_METHODS:
-        msg = (
-            f'Ignoring {INTERACTOR_STYLE_ENTRY_POINT_GROUP} entry point '
-            f'"{normalized_name}" from {source}: collides with a built-in interactor style.'
-        )
-        warn_external(msg)
-        return
-
-    if normalized_name in _custom_interactor_styles:
-        return
-
-    if normalized_name in _discovered_entry_point_styles:
-        existing_source = _discovered_entry_point_sources[normalized_name]
-        msg = (
-            f'Multiple {INTERACTOR_STYLE_ENTRY_POINT_GROUP} providers registered for '
-            f'"{normalized_name}": {existing_source}, {source}. Using {existing_source}.'
-        )
-        warn_external(msg)
-        return
-
-    if not callable(handler):
-        msg = (
-            f'Ignoring {INTERACTOR_STYLE_ENTRY_POINT_GROUP} entry point '
-            f'"{normalized_name}" from {source}: handler is not callable.'
-        )
-        warn_external(msg)
-        return
-
-    _discovered_entry_point_styles[normalized_name] = handler
-    _discovered_entry_point_sources[normalized_name] = source

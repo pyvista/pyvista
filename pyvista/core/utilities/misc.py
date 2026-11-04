@@ -532,10 +532,12 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
         if sys.meta_path is None:  # pragma: no cover
             return None  # type: ignore[unreachable]
 
-        if _resolve_pending_accessor(name):
-            return getattr(cls, name)
-        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
-        raise AttributeError(msg)
+        _resolve_pending_accessor(name)
+        try:
+            return type.__getattribute__(cls, name)
+        except AttributeError:
+            msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+            raise AttributeError(msg) from None
 
 
 def _allow_ipython_completion(cls: type) -> None:

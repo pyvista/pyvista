@@ -19,8 +19,8 @@ from pyvista._warn_external import warn_external
 from pyvista.jupyter import _TRAME_BACKENDS
 from pyvista.jupyter import _TRAME_SERVER_BACKENDS
 from pyvista.jupyter import _custom_backends
-from pyvista.jupyter import _ensure_entry_points
 from pyvista.jupyter import _get_custom_backend_handler
+from pyvista.jupyter import _plugins
 from pyvista.jupyter import _resolve_backend
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ def handle_plotter(
 
     # Trame backend names with no registered handler—fall back with a hint
     if backend in _TRAME_BACKENDS:
-        _ensure_entry_points()
+        _plugins.ensure_loaded()
         if _custom_backends:
             fallback_name, fallback_handler = next(iter(_custom_backends.items()))
             available = [f'"{b}"' for b in sorted(_custom_backends.keys())]
