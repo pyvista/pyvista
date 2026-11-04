@@ -5,7 +5,8 @@ Call this from pyvista's root directory with
     python tests/check_doctest_names.py
 
 The examples of each docstring are concatenated and analysed with ``symtable``.
-Any name referenced without ever being bound is reported.
+Any name referenced without ever being bound is reported. Nothing is executed,
+so a ``# doctest: +SKIP`` example is analysed like any other.
 
 A name bound anywhere in the docstring counts, so rebinding forms that read the
 name they bind are not reported: augmented assignment, a use of an ``except ...
@@ -20,11 +21,9 @@ import argparse
 import ast
 import builtins
 import doctest
-import re
 import symtable
 import sys
 import textwrap
-from types import ModuleType
 
 import pyvista as pv
 
@@ -43,12 +42,26 @@ MODULE_DUNDERS = frozenset(
 )
 
 
-def discover_modules(entry=pv, recurse=True):
-    """Discover the submodules present under an entry point.
+def _imported_submodules(entry):
+    """Return the entry point and every module imported under it."""
+    entry_name = entry.__name__
+    prefix = entry_name + '.'
+    return {
+        name: module
+        for name, module in sys.modules.items()
+        if name == entry_name or name.startswith(prefix)
+    }
 
-    If ``recurse=True``, search goes all the way into descendants of the
-    entry point. Only modules are gathered, because within a module
-    ``doctest``'s discovery can work recursively.
+
+def discover_modules(entry=pv):
+    """Discover the modules imported under an entry point.
+
+    The search alternates between reading the attributes each module lists,
+    which imports whatever those names resolve to lazily, and collecting what
+    that left in ``sys.modules``, until nothing new arrives. Reading
+    ``sys.modules`` also reaches a submodule whose package has rebound its
+    name to another object. Only modules are gathered, because within a
+    module ``doctest``'s discovery can work recursively.
 
     Should work for ``pyvista`` as entry, but no promises for its more
     general applicability.
@@ -59,43 +72,23 @@ def discover_modules(entry=pv, recurse=True):
         The entry point of the submodule search. Defaults to the main
         ``pyvista`` module.
 
-    recurse : bool, optional
-        Whether to recurse into submodules.
-
     Returns
     -------
     modules : dict of modules
-        A (module name -> module) mapping of submodules under ``entry``.
+        A (module name -> module) mapping of ``entry`` and the modules
+        imported under it.
 
     """
-    entry_name = entry.__name__
-    found_modules = {}
-    next_entries = {entry}
-    while next_entries:
-        next_modules = {}
-        for ent in next_entries:
-            for attr_short_name in dir(ent):
-                attr = getattr(ent, attr_short_name)
-                if not isinstance(attr, ModuleType):
-                    continue
+    found_modules = _imported_submodules(entry)
+    while True:
+        for module in list(found_modules.values()):
+            for attr_short_name in dir(module):
+                getattr(module, attr_short_name)
 
-                module_name = attr.__name__
-
-                if module_name.startswith(entry_name):
-                    next_modules[module_name] = attr
-
-        if not recurse:
-            return next_modules
-
-        # find as-of-yet-undiscovered submodules
-        next_entries = {
-            module
-            for module_name, module in next_modules.items()
-            if module_name not in found_modules
-        }
-        found_modules.update(next_modules)
-
-    return found_modules
+        grown = _imported_submodules(entry)
+        if grown.keys() == found_modules.keys():
+            return grown
+        found_modules = grown
 
 
 def _walrus_targets(node):
@@ -217,7 +210,7 @@ def undefined_names(source):
     return sorted(undefined | _used_before_bound(tree))
 
 
-def check_doctests(modules=None, respect_skips=True, verbose=True):
+def check_doctests(modules=None, verbose=True):
     """Check whether doctests define every name they use.
 
     Parameters
@@ -226,10 +219,6 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         (module name -> module) mapping of submodules defined in a
         package as returned by ``discover_modules()``. If omitted,
         ``discover_modules()`` will be called for ``pyvista``.
-
-    respect_skips : bool, optional
-        Whether to ignore doctest examples that contain a DOCTEST:+SKIP
-        directive.
 
     verbose : bool, optional
         Whether to print passes/failures as the checking progresses.
@@ -242,8 +231,6 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         doctests that use names they never define.
 
     """
-    skip_pattern = re.compile(r'doctest: *\+SKIP')
-
     if modules is None:
         modules = discover_modules()
 
@@ -262,12 +249,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         if not dt.examples:
             continue
 
-        sources = [
-            example.source
-            for example in dt.examples
-            if example.source.strip()
-            and not (respect_skips and skip_pattern.search(example.source))
-        ]
+        sources = [example.source for example in dt.examples if example.source.strip()]
         if not sources:
             continue
         source = ''.join(sources)
@@ -319,15 +301,9 @@ if __name__ == '__main__':
         action='store_true',
         help='print passes and failures as checks progress',
     )
-    parser.add_argument(
-        '--no-respect-skips',
-        action='store_false',
-        dest='respect_skips',
-        help='ignore doctest SKIP directives',
-    )
     args = parser.parse_args()
 
-    failures = check_doctests(verbose=args.verbose, respect_skips=args.respect_skips)
+    failures = check_doctests(verbose=args.verbose)
 
     if failures:
         # raise a red flag for CI
