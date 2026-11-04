@@ -22,10 +22,11 @@ from trame_pyvista.ui.vuetify3 import text_field
 
 # %%
 # Let's first create the menu items we want to add to the trame's toolbar.
-# Here we want a "play" button that will be later connected to a slider
-# through the ``button_play`` function. The slider itself will represent the
-# "resolution" of the model we will render, a text field where the value of
-# the "resolution" will be displayed.
+# Here we want a "play" button that toggles the ``play`` state variable,
+# which will later drive a slider. The button's ``click`` is a trame expression
+# evaluated in the browser, so no Python callback is needed. The slider itself
+# will represent the "resolution" of the model we will render, a text field where
+# the value of the "resolution" will be displayed.
 # We will also add a dropdown menu to toggle the visibility of the model.
 # The dividers are the same as already used to divide and organize the toolbar.
 
@@ -33,7 +34,7 @@ from trame_pyvista.ui.vuetify3 import text_field
 def custom_tools():
     divider(vertical=True, classes='mx-1')
     button(
-        click=button_play,
+        click='play = !play',
         icon='mdi-play',
         tooltip='Play',
     )
@@ -68,19 +69,6 @@ def custom_tools():
         hide_details=True,
         dense=True,
     )
-
-
-# %%
-# The button callback function ``button_play`` needs to be created before starting
-# the server. This function will toggle the boolean state variable ``play``
-# and flush the server, that is, "force" the server to see the change.
-# We will see more on the state variables in a bit, but we need to create the
-# function here otherwise the server will complain ``button_play`` does not exist.
-
-
-def button_play():
-    state.play = not state.play
-    state.flush()
 
 
 # %%
@@ -123,11 +111,11 @@ ctrl.view_update = widget.viewer.update
 # a timer so that an animation can be set to play. To do that with ``trame`` we need
 # to have an asynchronous function so we can continue to do stuff while the
 # "timer" function is running. The ``_play`` function will be called when the ``play``
-# variable is changed (when we click the play button, through the ``button_play``
-# callback). While ``state.play`` is ``True`` we want to play the animation. We
-# change the ``state.resolution`` value, but to really call the ``update_resolution``
-# function we need to ``flush`` the server and force it to see the change in
-# the shared variables. When ``state.play`` changes to ``False``, the animation stops.
+# variable is changed (when we click the play button). While ``state.play`` is
+# ``True`` we want to play the animation. We change the ``state.resolution``
+# value, but to really call the ``update_resolution`` function we need to
+# ``flush`` the server and force it to see the change in the shared variables.
+# When ``state.play`` changes to ``False``, the animation stops.
 #
 # Note that using ``while play: ...`` would not work here because it is not the
 # actual state variable, but only an argument value passed to the callback function.

@@ -25,6 +25,24 @@ a jupyter notebook:
    trame
 
 
+Marimo Notebooks
+~~~~~~~~~~~~~~~~
+PyVista also plots inline in `marimo <https://marimo.io/>`_ notebooks.
+marimo is a separate notebook, not part of Jupyter and not a Jupyter backend.
+PyVista shows plots in it through the same backends it uses in Jupyter, so the
+backend settings below apply to both, even though their names say Jupyter.
+Install the ``marimo`` extra:
+
+.. code-block:: bash
+
+    pip install 'pyvista[marimo]'
+
+:func:`Plotter.show() <pyvista.Plotter.show>` then shows an interactive plot
+in the cell output, as it does in Jupyter. Without it, plots are static images.
+Every example in this documentation also downloads as a marimo notebook.
+Each download lists its dependencies and the ``uv`` command that runs it.
+
+
 Usage With PyVista
 ~~~~~~~~~~~~~~~~~~
 There are two ways to set the jupyter plotting backend. First, it can

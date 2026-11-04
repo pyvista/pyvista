@@ -82,7 +82,7 @@ def close_wormhole(x0, y0, z0, eta, xi, alpha):
 
     """
     # Eq. (7): (x, y, z) -> (x', y', z')
-    denominator = xi + eta * (x**2 + y**2)
+    denominator = xi + eta * (x0**2 + y0**2)
     x1 = x0 / (denominator**kappa)
     y1 = y0 / (denominator**kappa)
     z1 = z0 / denominator

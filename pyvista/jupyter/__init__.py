@@ -13,6 +13,7 @@ from typing import Literal
 from typing import NamedTuple
 from typing import get_args
 
+import scooby
 from typing_extensions import TypeIs
 
 import pyvista as pv
@@ -198,6 +199,36 @@ def _ensure_entry_points() -> None:
         _custom_backend_sources[name] = ep.value
 
 
+def _in_notebook() -> bool:
+    """Return whether this process runs notebook cells, in Jupyter or marimo."""
+    return scooby.in_ipykernel() or scooby.in_marimo()
+
+
+def _marimo_renders_trame_pyvista() -> bool:
+    """Return whether trame-pyvista's notebook widgets subclass ``AnyWidget``."""
+    try:
+        from anywidget import AnyWidget  # noqa: PLC0415
+        from trame_pyvista.jupyter import Widget  # noqa: PLC0415
+    except ImportError:
+        return False
+    return issubclass(Widget, AnyWidget)
+
+
+def _display(obj: Any) -> None:
+    """Display an object in the notebook, through marimo when IPython is missing."""
+    try:
+        from IPython import display  # noqa: PLC0415
+    except ImportError:
+        if not scooby.in_marimo():
+            msg = 'Install IPython to display an image in a notebook'
+            raise ImportError(msg) from None
+        import marimo  # noqa: PLC0415
+
+        marimo.output.append(obj)
+    else:
+        display.display(obj)
+
+
 def _resolve_backend() -> str:
     """Auto-detect the best available Jupyter backend.
 
@@ -210,16 +241,23 @@ def _resolve_backend() -> str:
 
     """
     _ensure_entry_points()
+    sources = _custom_backend_sources
+    if scooby.in_marimo() and not _marimo_renders_trame_pyvista():
+        sources = {
+            name: source
+            for name, source in sources.items()
+            if not source.startswith('trame_pyvista.')
+        }
     # Prefer user registrations over plugin-discovered backends; among
     # plugin-discovered ones, prefer 'trame' (the all-in-one backend)
     # over the more specialized 'server'/'client'/'html' aliases.
-    for name, source in _custom_backend_sources.items():
+    for name, source in sources.items():
         if ':' not in source:  # explicit registration (module.qualname)
             return name
-    if 'trame' in _custom_backends:
+    if 'trame' in sources:
         return 'trame'
-    if _custom_backends:
-        return next(iter(_custom_backends))
+    if sources:
+        return next(iter(sources))
     return 'static'
 
 
@@ -243,7 +281,7 @@ def _validate_jupyter_backend(
         return None
     backend = backend.lower()
 
-    if not importlib.util.find_spec('IPython'):
+    if not importlib.util.find_spec('IPython') and not scooby.in_marimo():
         msg = 'Install IPython to display with pyvista in a notebook.'
         raise ImportError(msg)
 

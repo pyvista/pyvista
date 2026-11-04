@@ -31,7 +31,7 @@ PyVista includes several optional dependencies for visualization and reading a v
 
 * `cmocean <https://pypi.org/project/cmocean/>`_ - Colormaps for Oceanography.
 * `colorcet <https://colorcet.holoviz.org/>`_ - Perceptually accurate 256-color colormaps for use with Python.
-* `trame <https://github.com/Kitware/trame>`_ - Used for client and server-side rendering in Jupyter.
+* `trame <https://github.com/Kitware/trame>`_ - Used for client and server-side rendering in Jupyter and marimo.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
 
 
