@@ -223,6 +223,10 @@ def test_plotting_attribute_cached():
     assert exec_success(exe_str)
 
 
+def test_plotting_submodule_first_access():
+    assert exec_success('import pyvista as pv\nassert pv.plotting.tools.normalize')
+
+
 def test_plotting_getattr_called_once():
     # pyvista.__getattr__ should only be called once for a lazy-loaded plotting attribute
     exe_str = (
