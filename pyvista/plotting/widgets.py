@@ -10,6 +10,7 @@ from typing import Literal
 from typing import cast
 from typing import get_args
 from typing import overload
+import weakref
 
 import numpy as np
 import pyvista_validation as _validation
@@ -195,6 +196,7 @@ class WidgetComponent(_NoNewAttrMixin):
         """Initialize the widget component."""
         self._plotter = plotter
         self.camera_widgets: list[_vtk.vtkCameraOrientationWidget] = []
+        self._camera_widget_observers: list[tuple[_vtk.vtkRenderer, int]] = []
         self.box_widgets: list[_vtk.vtkBoxWidget] = []
         self.box_clipped_meshes: list[DataSet] = []
         self.plane_widgets: list[_PlaneWidget] = []
@@ -3128,16 +3130,53 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
+        self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
         widget = _vtk.vtkCameraOrientationWidget()
         widget.SetParentRenderer(self._plotter.renderer)
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
+        widget_ref = weakref.ref(widget)
+
+        def _update_viewport(renderer: _vtk.vtkRenderer, _event: str) -> None:
+            """Anchor the widget's pixel size and padding to its parent viewport."""
+            camera_widget = widget_ref()
+            if camera_widget is None or camera_widget.GetParentRenderer() is None:
+                return
+            parent = camera_widget.GetParentRenderer().GetViewport()
+            representation = cast(
+                '_vtk.vtkCameraOrientationRepresentation', camera_widget.GetRepresentation()
+            )
+            width, height = renderer.GetRenderWindow().GetActualSize()
+            if width == 0 or height == 0:
+                return
+            size = max(representation.GetSize())
+            pad_x, pad_y = representation.GetPadding()
+            anchor = representation.GetAnchorPosition()
+            corners = representation.AnchorType
+            xmin = (
+                parent[0] + pad_x / width
+                if anchor in (corners.LowerLeft, corners.UpperLeft)
+                else parent[2] - (pad_x + size) / width
+            )
+            ymin = (
+                parent[1] + pad_y / height
+                if anchor in (corners.LowerLeft, corners.LowerRight)
+                else parent[3] - (pad_y + size) / height
+            )
+            renderer.SetViewport(xmin, ymin, xmin + size / width, ymin + size / height)
+
+        renderer = widget.GetCurrentRenderer()
+        observer = renderer.AddObserver(_vtk.vtkCommand.StartEvent, _update_viewport)
+        self._camera_widget_observers.append((renderer, observer))
         self.camera_widgets.append(widget)
         return widget
 
     def clear_camera_widgets(self) -> None:
         """Remove all of the camera widgets."""
+        for renderer, observer in self._camera_widget_observers:
+            renderer.RemoveObserver(observer)
+        self._camera_widget_observers.clear()
         for camera_widget in self.camera_widgets:
             camera_widget.Off()
         self.camera_widgets.clear()
