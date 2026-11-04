@@ -29,6 +29,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import data_set
 from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
 from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
@@ -2871,6 +2872,54 @@ def test_remove_cells_invert_polydata(sphere):
     assert empty.cell_data.keys() == ['vtkOriginalCellIds']
     empty = sphere.remove_cells([], invert=True, pass_point_ids=False, pass_cell_ids=False)
     assert empty.n_arrays == 0
+
+
+@pytest.mark.parametrize('pass_ids', [True, False])
+@pytest.mark.parametrize('faces', ['triangles', 'quads', 'mixed'])
+def test_extract_cells_regular_faces_fast_path(faces, pass_ids, monkeypatch):
+    triangles = pv.Sphere()
+    quads = pv.Plane(i_resolution=10, j_resolution=10)
+    mesh = {'triangles': triangles, 'quads': quads, 'mixed': triangles + quads}[faces]
+    rng = np.random.default_rng(0)
+    mesh.point_data['point'] = rng.random((mesh.n_points, 2))
+    mesh.cell_data['cell'] = rng.integers(0, 9, mesh.n_cells)
+    mesh.field_data['field'] = [1, 2]
+    mesh.set_active_scalars('cell')
+    mask = rng.random(mesh.n_cells) < 0.5
+    kwargs = dict(pass_point_ids=pass_ids, pass_cell_ids=pass_ids)
+
+    calls = []
+    fast_path = data_set._extract_polys_fast
+    monkeypatch.setattr(
+        data_set,
+        '_extract_polys_fast',
+        lambda *args, **kw: calls.append(1) or fast_path(*args, **kw),
+    )
+    extracted = mesh.extract_cells(mask, **kwargs)
+    removed = mesh.remove_cells(mask, invert=True, **kwargs)
+    assert len(calls) == (0 if faces == 'mixed' else 2)
+
+    monkeypatch.setattr(data_set, '_has_regular_faces_only', lambda _: False)
+    for actual, expected in (
+        (extracted, mesh.extract_cells(mask, **kwargs)),
+        (removed, mesh.remove_cells(mask, invert=True, **kwargs)),
+    ):
+        assert type(actual) is type(expected)
+        assert actual.points.dtype == expected.points.dtype
+        assert np.array_equal(actual.points, expected.points)
+        if isinstance(actual, pv.PolyData):
+            assert np.array_equal(actual.faces, expected.faces)
+        else:
+            assert np.array_equal(actual.cells, expected.cells)
+            assert np.array_equal(actual.celltypes, expected.celltypes)
+        assert sorted(actual.array_names) == sorted(expected.array_names)
+        for name in actual.array_names:
+            assert actual[name].dtype == expected[name].dtype
+            assert np.array_equal(actual[name], expected[name])
+        assert ('vtkOriginalPointIds' in actual.point_data) is pass_ids
+        assert ('vtkOriginalCellIds' in actual.cell_data) is pass_ids
+        assert actual.active_scalars_info == expected.active_scalars_info
+        assert actual.point_data.active_normals_name == expected.point_data.active_normals_name
 
 
 def test_extract_cells_column_vector_ind(hexbeam):

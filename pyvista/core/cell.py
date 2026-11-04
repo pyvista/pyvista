@@ -1354,15 +1354,8 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     if len(cells) == 0:
         return cells
 
-    if _SUPPORTS_FIXED_SIZE_STORAGE and cellarr.IsStorageFixedSize():
-        cell_size = cellarr.IsHomogeneous()
-    else:
-        offsets = _get_offset_array(cellarr)
-        cell_size = offsets[1] - offsets[0]
-
-    try:
-        return cells.reshape(-1, cell_size)
-    except ValueError:
+    cell_size = cellarr.IsHomogeneous()
+    if cell_size <= 0:
         offsets = _get_offset_array(cellarr)
         sizes = sorted(np.unique(np.diff(offsets)).tolist())
         msg = (
@@ -1370,6 +1363,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
             f'Multiple cell sizes detected with different number of points: {sizes}'
         )
         raise ValueError(msg)
+    return cells.reshape(-1, cell_size)
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NDArray[np.signedinteger], ...]:

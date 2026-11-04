@@ -5026,6 +5026,10 @@ class DataSetFilters(DataObjectFilters):
 
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
+        if isinstance(self, pv.PolyData) and _has_regular_faces_only(self) and mask.any():
+            return _extract_polys_fast(
+                self, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            ).cast_to_unstructured_grid()
         indices = np.flatnonzero(mask).astype(pv.ID_TYPE, copy=False)
 
         # Extract using a shallow copy to avoid the side effect of creating the
@@ -5280,16 +5284,22 @@ class DataSetFilters(DataObjectFilters):
         <class 'pyvista.core.pointset.PolyData'>
 
         """
-        output = self.extract_cells(
-            ind,
-            invert=not invert,
-            pass_point_ids=pass_point_ids,
-            pass_cell_ids=pass_cell_ids,
-            progress_bar=progress_bar,
-        )
-        output = _cast_extraction(
-            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
-        )
+        mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=not invert)
+        output: DataSet
+        if isinstance(self, pv.PolyData) and _has_regular_faces_only(self) and mask.any():
+            output = _extract_polys_fast(
+                self, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            )
+        else:
+            output = self.extract_cells(
+                mask,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
+                progress_bar=progress_bar,
+            )
+            output = _cast_extraction(
+                output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            )
         return _apply_inplace(self, output, inplace=inplace)
 
     # fmt: off
@@ -9509,6 +9519,49 @@ def _validate_extraction_ids(
                 raise IndexError(msg)
             mask[ids] = True
     return np.invert(mask) if invert else mask
+
+
+def _has_regular_faces_only(mesh: PolyData) -> bool:
+    """Return whether the mesh has only faces and all of them have the same size."""
+    return (
+        mesh.n_lines == mesh.n_verts == mesh.n_strips == 0 and mesh.GetPolys().IsHomogeneous() > 0
+    )
+
+
+def _extract_polys_fast(
+    mesh: PolyData, mask: NDArray[np.bool_], *, pass_point_ids: bool, pass_cell_ids: bool
+) -> PolyData:
+    """Extract the masked faces of a mesh with regular faces only, without VTK."""
+    faces = mesh.regular_faces[mask]
+    used = np.zeros(mesh.n_points, dtype=bool)
+    used[faces] = True
+    new_ids = np.cumsum(used) - 1
+    output = pv.PolyData.from_regular_faces(mesh.points[used], new_ids[faces])
+    for name, array in mesh.point_data.items():
+        output.point_data[name] = array[used]
+    for name, array in mesh.cell_data.items():
+        output.cell_data[name] = array[mask]
+    output.field_data.update(mesh.field_data)
+    if pass_point_ids:
+        output.point_data['vtkOriginalPointIds'] = np.flatnonzero(used)
+    if pass_cell_ids:
+        output.cell_data['vtkOriginalCellIds'] = np.flatnonzero(mask)
+    for source, target in (
+        (mesh.point_data, output.point_data),
+        (mesh.cell_data, output.cell_data),
+    ):
+        for attr in (
+            'active_scalars_name',
+            'active_vectors_name',
+            'active_normals_name',
+            'active_texture_coordinates_name',
+        ):
+            if (active := getattr(source, attr)) is not None:
+                setattr(target, attr, active)
+    association, scalars_name = mesh.active_scalars_info
+    if scalars_name is not None:
+        output.set_active_scalars(scalars_name, cast('PointLiteral | CellLiteral', association))
+    return output
 
 
 def _as_input_class(output: DataSet, input_mesh: _DataSetType) -> _DataSetType:
