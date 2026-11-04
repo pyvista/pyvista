@@ -4,7 +4,9 @@ Named Colors
 ============
 
 Named colors supported by :class:`~pyvista.Color` and plotting-related classes such as
-:class:`~pyvista.Plotter`.
+:class:`~pyvista.Plotter`. Annotate a parameter that takes one of these names with
+:data:`~pyvista.typing.NamedColors`, or with :data:`~pyvista.typing.ColorLike` to accept
+any color.
 
 The colors on this page come from various sources, and include:
 

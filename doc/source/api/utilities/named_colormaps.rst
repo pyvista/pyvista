@@ -4,7 +4,9 @@ Named Colormaps
 ===============
 
 Named colormaps supported by :class:`~pyvista.LookupTable`, :class:`~pyvista.Plotter`,
-and other plotting-related methods.
+and other plotting-related methods. Annotate a parameter that takes one of these names with
+:data:`~pyvista.typing.NamedColormaps`, or with :data:`~pyvista.typing.ColormapOptions` to
+accept any colormap.
 
 The colormaps on this page are from multiple packages:
 

@@ -112,3 +112,13 @@ def test_type_alias_value_links_types(alias, anchor):
 def test_type_alias_drops_alias_line():
     """Confirm no type alias repeats its value as an "alias of" line."""
     assert 'alias of' not in typing_page()
+
+
+@pytest.mark.parametrize('alias', ['NamedColors', 'NamedColormaps'])
+def test_type_alias_hidden_value(alias):
+    """Confirm a type alias documented without its value keeps its anchor but no signature."""
+    page = typing_page()
+    assert f'<dt class="sig sig-object py" id="pyvista.typing.{alias}"' not in page
+    start = page.index(f'id="pyvista.typing.{alias}"')
+    assert page[page.rindex('<', 0, start) : start].startswith('<dd')
+    assert 'type-alias-value' not in page[start : page.index('</dd>', start)]
