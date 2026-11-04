@@ -2964,6 +2964,63 @@ def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
     assert struct_grid.n_cells == n_cells
 
 
+def _mixed_kind_polydata():
+    """Return PolyData with several kinds of cells, keyed by the kinds."""
+    sphere = pv.Sphere()
+    return {
+        'verts_faces': pv.PolyData(sphere.points, faces=sphere.faces, verts=[1, 0]),
+        'verts_strips': pv.PolyData(sphere.points, verts=[1, 5], strips=[4, 0, 1, 2, 3]),
+        'verts_faces_strips': pv.PolyData(
+            sphere.points, verts=[1, 0], faces=[3, 0, 1, 2], strips=[4, 3, 4, 5, 6]
+        ),
+        'vert_triangle': pv.PolyData(np.eye(3), verts=[1, 0], faces=[3, 0, 1, 2]),
+    }
+
+
+@pytest.mark.parametrize('kinds', list(_mixed_kind_polydata()))
+def test_extract_every_cell_of_mixed_polydata(kinds):
+    mesh = _mixed_kind_polydata()[kinds]
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells)
+    expected = mesh.cast_to_unstructured_grid().remove_unused_points()
+
+    for extracted in (
+        mesh.extract_cells(np.arange(mesh.n_cells)),
+        mesh.extract_points(np.ones(mesh.n_points, dtype=bool)).remove_unused_points(),
+    ):
+        assert np.array_equal(extracted.celltypes, expected.celltypes)
+        assert np.array_equal(extracted.cells, expected.cells)
+        assert np.array_equal(extracted.points, expected.points)
+        assert np.array_equal(extracted.cell_data['ids'], np.arange(mesh.n_cells))
+
+    kept = mesh.remove_points(ind=np.zeros(mesh.n_points, dtype=bool))
+    assert kept.n_cells == mesh.n_cells
+    assert np.array_equal(kept.cell_data['ids'], np.arange(mesh.n_cells))
+
+
+@pytest.mark.parametrize('mesh_type', ['polydata', 'grid', 'polyhedron'])
+def test_extract_every_cell_drops_unused_points(mesh_type):
+    used = {
+        'polydata': pv.Sphere(),
+        'grid': examples.load_hexbeam(),
+        'polyhedron': examples.cells.Polyhedron(),
+    }[mesh_type]
+    mesh = used.copy()
+    mesh.clear_data()
+    mesh.points = np.vstack([used.points, [[9.0, 9.0, 9.0]]])
+    mesh.point_data['ids'] = np.arange(mesh.n_points)
+    sharing = mesh.copy(deep=False)
+    cells = mesh.cast_to_unstructured_grid().cells.copy()
+
+    extracted = mesh.extract_cells(np.arange(mesh.n_cells))
+    assert extracted.n_cells == mesh.n_cells
+    assert np.array_equal(extracted.points, used.points)
+    assert np.array_equal(extracted.point_data['ids'], np.arange(used.n_points))
+    assert np.array_equal(extracted.cells, used.cast_to_unstructured_grid().cells)
+    for unchanged in (mesh, sharing):
+        assert unchanged.n_points == used.n_points + 1
+        assert np.array_equal(unchanged.cast_to_unstructured_grid().cells, cells)
+
+
 @pytest.mark.parametrize('mode', ['any', 'all'])
 def test_remove_points(datasets, mode):
     for dataset in datasets:

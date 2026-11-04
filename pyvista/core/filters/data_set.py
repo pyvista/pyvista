@@ -5040,7 +5040,7 @@ class DataSetFilters(DataObjectFilters):
             ds_copy.point_data['vtkOriginalPointIds'] = np.arange(ds_copy.n_points)
 
         extract = _vtk.vtkExtractCells()
-        extract.SetInputData(ds_copy)
+        extract.SetInputData(_extraction_input(ds_copy, every_cell=bool(mask.all())))
         extract.SetCellIds(cast('Sequence[int]', indices), indices.size)
         extract.SetAssumeSortedAndUniqueIds(True)
         # We set the arrays manually earlier
@@ -5175,7 +5175,7 @@ class DataSetFilters(DataObjectFilters):
 
         # extract
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self.copy(deep=False))
+        extract_sel.SetInputData(0, _extraction_input(self.copy(deep=False), every_cell=False))
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel, output_type=pv.UnstructuredGrid)
@@ -9563,6 +9563,33 @@ def _finish_extraction(
         if pass_cell_ids and 'vtkOriginalCellIds' not in output.cell_data:
             output.cell_data['vtkOriginalCellIds'] = np.array((), dtype=int)
     return output
+
+
+def _extraction_input(mesh: DataSet, *, every_cell: bool) -> DataSet:
+    """Return a mesh that VTK's extraction filters subset cell by cell, never as a whole."""
+    if mesh.n_cells == 0:
+        return mesh
+    if isinstance(mesh, pv.PolyData):
+        kinds = (mesh.GetVerts(), mesh.GetLines(), mesh.GetPolys(), mesh.GetStrips())
+        if not every_cell and sum(kind.GetNumberOfCells() > 0 for kind in kinds) < 2:
+            return mesh
+        # vtkPolyDataToUnstructuredGrid writes wrong cells for some mixes of cell kinds
+        grid = mesh.cast_to_unstructured_grid()
+    elif every_cell and isinstance(mesh, pv.UnstructuredGrid):
+        # Copy the cells, which other meshes may share, and share everything else
+        structure = pv.UnstructuredGrid()
+        structure.CopyStructure(mesh)
+        grid = structure.copy()
+        grid.SetPoints(mesh.GetPoints())
+        grid.GetPointData().ShallowCopy(mesh.GetPointData())
+        grid.GetCellData().ShallowCopy(mesh.GetCellData())
+        grid.GetFieldData().ShallowCopy(mesh.GetFieldData())
+    else:
+        return mesh
+    if every_cell:
+        # An extra cell left out of the selection makes VTK drop the unused points
+        grid.InsertNextCell(pv.CellType.EMPTY_CELL, 0, [])
+    return grid
 
 
 def _set_threshold_limit(
