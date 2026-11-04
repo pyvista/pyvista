@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -14,6 +15,8 @@ with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
+if sys.version_info >= (3, 15):  # the import system no longer sets module `__cached__`
+    namespace.remove('__cached__')
 
 
 @pytest.mark.parametrize('name', namespace)

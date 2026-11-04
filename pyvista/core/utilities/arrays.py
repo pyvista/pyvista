@@ -1125,8 +1125,12 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         self._update_string()
 
     def popitem(self: _SerializedDictArray) -> Any:
-        """Pop the last item and re-serialize."""
-        item = super().popitem()
+        """Pop the first item and re-serialize."""
+        if not self.data:
+            msg = 'popitem(): dictionary is empty'
+            raise KeyError(msg)
+        key = next(iter(self.data))
+        item = (key, self.data.pop(key))
         self._update_string()
         return item
 
