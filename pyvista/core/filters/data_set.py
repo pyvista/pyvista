@@ -5026,7 +5026,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
-        if mask.any() and (cells := _homogeneous_cells(self)) is not None:
+        if mask.any() and not mask.all() and (cells := _homogeneous_cells(self)) is not None:
             return _extract_homogeneous_cells(
                 self, cells, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
             ).cast_to_unstructured_grid()
@@ -5095,6 +5095,10 @@ class DataSetFilters(DataObjectFilters):
 
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
+
+        .. versionchanged:: 0.50
+            Cells and points flagged as hidden in the ghost arrays are extracted
+            like any other, with their ghost values.
 
         Parameters
         ----------
@@ -5165,14 +5169,18 @@ class DataSetFilters(DataObjectFilters):
             and (cells := _homogeneous_cells(self)) is not None
         ):
             cell_mask = _cells_using_points(cells[0], mask, any_point=adjacent_cells)
-            if cell_mask.any():
-                return _extract_homogeneous_cells(
+            if cell_mask.any() and not cell_mask.all():
+                fast_output = _extract_homogeneous_cells(
                     self,
                     cells,
                     cell_mask,
                     pass_point_ids=pass_point_ids,
                     pass_cell_ids=pass_cell_ids,
-                ).cast_to_unstructured_grid()
+                )
+                _drop_unpassed_ids(
+                    fast_output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+                )
+                return fast_output.cast_to_unstructured_grid()
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -5207,10 +5215,7 @@ class DataSetFilters(DataObjectFilters):
             output.point_data[ghost_name] = point_ghosts[output.point_data['vtkOriginalPointIds']]
         if cell_ghosts is not None and 'vtkOriginalCellIds' in output.cell_data:
             output.cell_data[ghost_name] = cell_ghosts[output.cell_data['vtkOriginalCellIds']]
-        if not pass_point_ids:
-            output.point_data.pop('vtkOriginalPointIds', None)
-        if not pass_cell_ids:
-            output.cell_data.pop('vtkOriginalCellIds', None)
+        _drop_unpassed_ids(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
         return _finish_extraction(
             output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
@@ -5310,7 +5315,7 @@ class DataSetFilters(DataObjectFilters):
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=not invert)
         output: DataSet
-        if mask.any() and (cells := _homogeneous_cells(self)) is not None:
+        if mask.any() and not mask.all() and (cells := _homogeneous_cells(self)) is not None:
             output = _extract_homogeneous_cells(
                 self, cells, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
             )
@@ -5367,6 +5372,10 @@ class DataSetFilters(DataObjectFilters):
         first to remove points from a point cloud without cells.
 
         .. versionadded:: 0.49
+
+        .. versionchanged:: 0.50
+            Cells and points flagged as hidden in the ghost arrays are kept or
+            removed like any other, with their ghost values.
 
         Parameters
         ----------
@@ -5443,6 +5452,9 @@ class DataSetFilters(DataObjectFilters):
                     cell_mask,
                     pass_point_ids=pass_point_ids,
                     pass_cell_ids=pass_cell_ids,
+                )
+                _drop_unpassed_ids(
+                    kept, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
                 )
                 return _apply_inplace(self, kept, inplace=inplace)
         output = self.extract_points(
@@ -9589,14 +9601,18 @@ def _homogeneous_cells(mesh: DataSet) -> tuple[NDArray[np.signedinteger], str] |
     return (cells, name) if len(cells) == mesh.n_cells else None
 
 
+def _drop_unpassed_ids(mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool) -> None:
+    """Remove the original id arrays that are not passed."""
+    if not pass_point_ids:
+        mesh.point_data.pop('vtkOriginalPointIds', None)
+    if not pass_cell_ids:
+        mesh.cell_data.pop('vtkOriginalCellIds', None)
+
+
 def _cells_using_points(
     cells: NDArray[np.signedinteger], mask: NDArray[np.bool_], *, any_point: bool
 ) -> NDArray[np.bool_]:
-    """Return the mask of equal-sized cells that use any, or only, masked points.
-
-    This gather costs more than the VTK selection filter saves on an unstructured grid,
-    whose cells are wider than a surface's, so only ``PolyData`` takes this route.
-    """
+    """Return the mask of equal-sized cells that use any, or only, masked points."""
     used = mask[cells]
     return used.any(axis=1) if any_point else used.all(axis=1)
 
@@ -9645,8 +9661,7 @@ def _extract_homogeneous_cells(
             'active_normals_name',
             'active_texture_coordinates_name',
         ):
-            if (active := getattr(source, attr)) is not None:
-                setattr(target, attr, active)
+            setattr(target, attr, getattr(source, attr))
     association, scalars_name = mesh.active_scalars_info
     if scalars_name is not None:
         output.set_active_scalars(scalars_name, cast('PointLiteral | CellLiteral', association))

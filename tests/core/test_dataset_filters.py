@@ -2874,8 +2874,25 @@ def test_remove_cells_invert_polydata(sphere):
     assert empty.n_arrays == 0
 
 
+_HOMOGENEOUS_KINDS = (
+    'verts',
+    'lines',
+    'triangles',
+    'quads',
+    'strips',
+    'hexahedra',
+    'unused_point',
+)
+_ACTIVE_NAMES = (
+    'active_scalars_name',
+    'active_vectors_name',
+    'active_normals_name',
+    'active_texture_coordinates_name',
+)
+
+
 def _homogeneous_meshes():
-    """Return meshes keyed by kind, the first six having one array of equal-sized cells."""
+    """Return meshes keyed by kind, with ``_HOMOGENEOUS_KINDS`` taking the fast path."""
     rng = np.random.default_rng(0)
     triangles = pv.Sphere()
     hexahedra = pv.ImageData(dimensions=(4, 4, 4)).cast_to_unstructured_grid()
@@ -2886,28 +2903,50 @@ def _homogeneous_meshes():
         'quads': pv.Plane(i_resolution=5, j_resolution=5),
         'strips': pv.PolyData(rng.random((8, 3)), strips=[4, 0, 1, 2, 3, 4, 4, 5, 6, 7]),
         'hexahedra': hexahedra,
+        'unused_point': pv.PolyData(
+            np.vstack([triangles.points, [9.0, 9.0, 9.0]]), faces=triangles.faces
+        ),
         'mixed_faces': triangles + pv.Plane(),
         'verts_and_faces': pv.PolyData(triangles.points, faces=triangles.faces, verts=[1, 0]),
         'mixed_grid': hexahedra + examples.cells.Tetrahedron(),
     }
 
 
+@pytest.mark.parametrize('input_ids', [True, False])
+@pytest.mark.parametrize('full_mask', [True, False])
+@pytest.mark.parametrize('set_active', [True, False])
 @pytest.mark.parametrize('pass_ids', [True, False])
 @pytest.mark.parametrize('kind', list(_homogeneous_meshes()))
-def test_extract_homogeneous_cells_fast_path(kind, pass_ids, monkeypatch):
+def test_extract_homogeneous_cells_fast_path(
+    kind, pass_ids, set_active, full_mask, input_ids, monkeypatch
+):
+    if kind == 'verts_and_faces' and full_mask:
+        pytest.skip('vtkExtractCells returns corrupt cells when every cell of such a mesh is kept')
     mesh = _homogeneous_meshes()[kind]
-    is_homogeneous = kind in ('verts', 'lines', 'triangles', 'quads', 'strips', 'hexahedra')
+    is_homogeneous = kind in _HOMOGENEOUS_KINDS
     assert (data_set._homogeneous_cells(mesh) is not None) is is_homogeneous
     rng = np.random.default_rng(0)
     mesh.point_data['point'] = rng.random((mesh.n_points, 2))
     mesh.cell_data['cell'] = rng.integers(0, 9, mesh.n_cells)
     mesh.field_data['field'] = [1, 2]
-    mesh.set_active_scalars('cell')
-    cell_mask = rng.random(mesh.n_cells) < 0.5
-    point_mask = rng.random(mesh.n_points) < 0.5
-    # The first cell has every point selected and the last cell none
-    point_mask[mesh.get_cell(0).point_ids] = True
-    point_mask[mesh.get_cell(mesh.n_cells - 1).point_ids] = False
+    if input_ids:
+        # Arrays left by an earlier extraction
+        mesh.point_data['vtkOriginalPointIds'] = np.arange(mesh.n_points) * 7
+        mesh.cell_data['vtkOriginalCellIds'] = np.arange(mesh.n_cells) * 7
+    if set_active:
+        mesh.set_active_scalars('cell')
+    else:
+        mesh.point_data.active_scalars_name = None
+        mesh.cell_data.active_scalars_name = None
+    if full_mask:
+        cell_mask = np.ones(mesh.n_cells, dtype=bool)
+        point_mask = np.ones(mesh.n_points, dtype=bool)
+    else:
+        cell_mask = rng.random(mesh.n_cells) < 0.5
+        point_mask = rng.random(mesh.n_points) < 0.5
+        # The first cell has every point selected and the last cell none
+        point_mask[mesh.get_cell(0).point_ids] = True
+        point_mask[mesh.get_cell(mesh.n_cells - 1).point_ids] = False
     kwargs = dict(pass_point_ids=pass_ids, pass_cell_ids=pass_ids)
 
     def run_filters():
@@ -2928,9 +2967,10 @@ def test_extract_homogeneous_cells_fast_path(kind, pass_ids, monkeypatch):
         lambda *args, **kw: calls.append(1) or fast_path(*args, **kw),
     )
     actual_outputs = run_filters()
-    # The point filters take the fast path for PolyData only
-    expected_calls = 0 if not is_homogeneous else 2 if kind == 'hexahedra' else 6
-    assert len(calls) == expected_calls
+    if not full_mask:
+        # The point filters take the fast path for PolyData only
+        expected_calls = 0 if not is_homogeneous else 2 if kind == 'hexahedra' else 6
+        assert len(calls) == expected_calls
 
     monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
     for actual, expected in zip(actual_outputs, run_filters(), strict=True):
@@ -2947,10 +2987,15 @@ def test_extract_homogeneous_cells_fast_path(kind, pass_ids, monkeypatch):
         for name in actual.array_names:
             assert actual[name].dtype == expected[name].dtype
             assert np.array_equal(actual[name], expected[name])
-        assert ('vtkOriginalPointIds' in actual.point_data) is pass_ids
-        assert ('vtkOriginalCellIds' in actual.cell_data) is pass_ids
+        if not input_ids:
+            assert ('vtkOriginalPointIds' in actual.point_data) is pass_ids
+            assert ('vtkOriginalCellIds' in actual.cell_data) is pass_ids
         assert actual.active_scalars_info == expected.active_scalars_info
-        assert actual.point_data.active_normals_name == expected.point_data.active_normals_name
+        for attributes in ('point_data', 'cell_data'):
+            for active in _ACTIVE_NAMES:
+                assert getattr(getattr(actual, attributes), active) == getattr(
+                    getattr(expected, attributes), active
+                ), (attributes, active)
 
 
 @pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])

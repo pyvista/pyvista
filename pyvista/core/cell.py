@@ -1089,11 +1089,10 @@ class CellArray(
         numpy.ndarray
             Array of face indices of shape (``n_cells``, ``cell_size``).
 
-        Notes
-        -----
-        This property does not validate that the cells are all
-        actually the same size. If they're not, this property may either
-        raise a ``ValueError`` or silently return an incorrect array.
+        Raises
+        ------
+        ValueError
+            If the cells do not all have the same size.
 
         """
         return _get_regular_cells(self)
