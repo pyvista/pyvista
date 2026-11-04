@@ -161,7 +161,7 @@ docs = [
   'pyvista-stl==0.5.3',
   'pyvista-zstd==0.7.0',
   'ruamel-yaml<0.20.0',
-  'scipy==1.18.1; python_version >= "3.11"',
+  'scipy==1.18.1; python_version >= "3.12"',
   'sphinx-autobuild==2025.8.25; python_version >= "3.11"',
   'sphinx-autocodelink[gallery]==0.12.0',
   'sphinx-autoopengraph==0.2.1',
