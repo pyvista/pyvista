@@ -90,5 +90,22 @@ np.round(matrix, 3)
 # A successful registration leaves a small point-to-surface residual.
 
 aligned['distance_to_target'].mean(), aligned['distance_to_target'].max()
+
+
+# %%
+# Apply the Transform to an Actor
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The recovered matrix does not have to be applied to the mesh. Setting it as the
+# :attr:`~pyvista.Prop3D.user_matrix` of the actor registers the scan in the scene and
+# leaves its points in their own coordinates. See :ref:`actor_transformations_example`
+# for how ``user_matrix`` combines with the other actor transform properties.
+
+pl = pv.Plotter()
+pl.add_mesh(target, color='lightgray', opacity=0.4)
+actor = pl.add_mesh(source, color='tomato', opacity=0.8)
+actor.user_matrix = matrix
+pl.camera_position = cpos
+pl.show()
+
 # %%
 # .. tags:: filter
