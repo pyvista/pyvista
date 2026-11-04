@@ -243,10 +243,6 @@ def test_hdf_image_revisit(hdf_image_file):
 
 
 @pytest.mark.needs_vtk_version(at_least=(9, 4))
-@pytest.mark.skipif(
-    pv.vtk_version_info[:2] == (9, 6),
-    reason='VTK 9.6 logs an invalid initial extent for temporal images inside composites.',
-)
 def test_hdf_composite_image_revisit(hdf_image_file, tmp_path):
     """Return the selected image frame inside a composite output."""
     path = tmp_path / 'composite.vtkhdf'

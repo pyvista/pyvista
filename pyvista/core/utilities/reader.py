@@ -2898,8 +2898,13 @@ class HDFReader(BaseReader['DataObject'], TimeReader):
             _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP()
         )
         super()._update_information()
+        output = self.reader.GetOutputDataObject(0)
+        if pv.vtk_version_info >= (9, 6) and isinstance(output, _vtk.vtkCompositeDataSet):
+            # The first read after the first information request misreads temporal
+            # blocks, so request the information again before that read.
+            self.reader.Modified()
         if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
-            self.reader.GetOutputDataObject(0), (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
+            output, (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
         ):
             # Composite outputs may contain images whose blocks are not loaded yet.
             # The cache can return a previously read ImageData time step. Fixed in
