@@ -413,6 +413,8 @@ repo
 resample
 resampled
 resamples
+reshaper
+reshapers
 reslice
 resliced
 reslicing

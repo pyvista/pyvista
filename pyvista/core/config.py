@@ -46,7 +46,7 @@ Show the VTK-inherited API in :func:`dir` (and IDE tab-completion):
 Dump the current config to a plain dict (useful for logging or round-tripping):
 
 >>> pv.global_config.to_dict()
-{'points_dtype': None, 'show_vtk_api': False, 'validate_on_wrap': True}
+{'array_reshaping': 'grid', 'points_dtype': None, 'show_vtk_api': False, 'validate_on_wrap': True}
 
 """
 
@@ -68,6 +68,9 @@ if TYPE_CHECKING:
     from typing import Self
 
     from numpy.typing import DTypeLike
+
+    from ._array_reshaping import ArrayReshaper
+    from ._array_reshaping import _ArrayReshapingPresets
 
 _PointsDtypeOptions = Literal['preserve', 'float32', 'float64'] | None
 
@@ -240,12 +243,13 @@ class Config(_ConfigBase):
 
     """
 
-    __slots__ = ['_points_dtype', '_show_vtk_api', '_validate_on_wrap']
+    __slots__ = ['_array_reshaping', '_points_dtype', '_show_vtk_api', '_validate_on_wrap']
 
     def __init__(self) -> None:
         self._validate_on_wrap: bool = True
         self._show_vtk_api: bool = False
         self._points_dtype: _PointsDtypeOptions = None
+        self._array_reshaping: _ArrayReshapingPresets | ArrayReshaper = 'grid'
 
     def __repr__(self) -> str:
         header = 'PyVista Config'
@@ -504,6 +508,71 @@ class Config(_ConfigBase):
             msg = f'`show_vtk_api` must be a bool, got {type(value).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._show_vtk_api = value
+
+    @property
+    def array_reshaping(self) -> _ArrayReshapingPresets | ArrayReshaper:  # numpydoc ignore=RT01
+        """Return or set the layout of :attr:`~pyvista.DataSetAttributes.reshaped` arrays.
+
+        Set a preset name or an :class:`~pyvista.ArrayReshaper`. The default is
+        ``'grid'``, and :meth:`pyvista.ArrayReshaper.presets` describes every preset.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        :ref:`reshape_data_arrays_example`
+            Reshaping arrays from NumPy, imaging and medical imaging libraries.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(4, 3, 2))
+        >>> image.point_data['data'] = range(image.n_points)
+        >>> image.point_data['vectors'] = image.points
+        >>> pv.global_config.array_reshaping
+        'grid'
+        >>> image.point_data.reshaped['data'].shape
+        (4, 3, 2)
+        >>> image.point_data.reshaped['vectors'].shape
+        (4, 3, 2, 3)
+
+        >>> pv.global_config.array_reshaping = 'zyx'
+        >>> image.point_data.reshaped['vectors'].shape
+        (2, 3, 4, 3)
+
+        >>> pv.global_config.array_reshaping = 'channels_first'
+        >>> image.point_data.reshaped['vectors'].shape
+        (3, 4, 3, 2)
+
+        Set an RGB image as returned by ``numpy.asarray(PIL.Image.open(...))``.
+
+        >>> pv.global_config.array_reshaping = 'image'
+        >>> rgb = np.zeros((480, 640, 3), dtype=np.uint8)
+        >>> photo = pv.ImageData(dimensions=(640, 480, 1))
+        >>> photo.point_data.reshaped['rgb'] = rgb
+        >>> photo.point_data['rgb'].shape
+        (307200, 3)
+
+        Show 9-component arrays as 3x3 matrices.
+
+        >>> pv.global_config.array_reshaping = 'tensor'
+        >>> mesh = pv.Sphere()
+        >>> mesh.point_data['stress'] = np.zeros((mesh.n_points, 9))
+        >>> mesh.point_data.reshaped['stress'].shape
+        (842, 3, 3)
+
+        >>> pv.global_config.array_reshaping = 'grid'  # restore default
+
+        """
+        return self._array_reshaping
+
+    @array_reshaping.setter
+    def array_reshaping(self, value: _ArrayReshapingPresets | ArrayReshaper) -> None:
+        from ._array_reshaping import _resolve_reshaper  # noqa: PLC0415
+
+        _resolve_reshaper(value)
+        self._array_reshaping = value
 
 
 global_config = Config()

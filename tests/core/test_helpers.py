@@ -206,6 +206,7 @@ def test_wrap_auto_names_unnamed_arrays():
 
 def test_global_config_to_dict():
     assert pv.global_config.to_dict() == {
+        'array_reshaping': 'grid',
         'points_dtype': None,
         'show_vtk_api': False,
         'validate_on_wrap': True,
