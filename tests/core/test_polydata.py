@@ -1791,7 +1791,7 @@ def test_is_all_triangles():
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles
 
-    mesh.strips = [4, 0, 1, 2, 3]
+    mesh.strips = [4, 0, 1, 3, 2]
     assert not mesh.is_all_triangles
     assert mesh.triangulate().is_all_triangles
 

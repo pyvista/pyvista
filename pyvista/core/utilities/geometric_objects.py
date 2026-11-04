@@ -941,13 +941,15 @@ def SolidSphereGeneric(
     theta : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``theta``
         points. Must have at least two points. Can have any value as long
-        as range is within 360 degrees. Large magnitudes may result in
-        problems with endpoint overlap detection.
+        as range is within 360 degrees. Each step must be less than 180
+        degrees. Large magnitudes may result in problems with endpoint
+        overlap detection.
 
     phi : VectorLikeFloat, optional
         A monotonically increasing sequence of values specifying ``phi``
         points. Must have at least two points. Must be between
-        0 and 180 degrees.
+        0 and 180 degrees, with at least one value between them when
+        both are included.
 
     center : VectorLikeFloat, default: (0.0, 0.0, 0.0)
         Center coordinate vector in ``[x, y, z]``.
@@ -1081,6 +1083,19 @@ def SolidSphereGeneric(
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle_):
         max_angle = 'np.pi' if radians else '180 degrees'
         msg = f'maximum phi cannot be > {max_angle}'
+        raise ValueError(msg)
+
+    # A cell spanning half a turn or more around the axis is flat or inverted
+    if np.any(np.diff(theta) >= np.pi - tol_angle_):
+        max_angle = 'np.pi' if radians else '180 degrees'
+        msg = f'theta steps must be less than {max_angle}'
+        raise ValueError(msg)
+    if (
+        nphi == 2
+        and np.isclose(phi[0], 0.0, atol=tol_angle_)
+        and np.isclose(phi[1], np.pi, atol=tol_angle_)
+    ):
+        msg = 'phi must have a value between the poles'
         raise ValueError(msg)
 
     def _spherical_to_cartesian(
