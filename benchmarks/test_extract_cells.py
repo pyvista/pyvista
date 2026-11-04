@@ -1,81 +1,72 @@
-"""Benchmarks for extracting and removing cells and points from a surface."""
+"""Benchmarks for extracting and removing cells and points from meshes with equal-sized cells."""
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
+import pyvista as pv
 from pyvista.core.filters import data_set
 
-
-@pytest.fixture(scope='session')
-def label_surface(label_image):
-    """Return the triangulated boundary surface between labels and a mask of one label's faces."""
-    surface = label_image.contour_labels('all', scalars='labels', simplify_output=False)
-    mask = np.any(surface.cell_data['boundary_labels'] == 0, axis=1)
-    return surface, mask
+KINDS = ['verts', 'lines', 'triangles', 'hexahedra']
 
 
 @pytest.fixture(scope='session')
-def label_surface_points(label_surface):
-    """Return the label surface and a mask of the points on one side of its center."""
-    surface, _ = label_surface
-    return surface, surface.points[:, 0] > surface.center[0]
+def homogeneous_meshes(label_image, rng):
+    """Return one mesh per kind of equal-sized cell, each with about 100k cells or more."""
+    n = 100_000
+    segments = np.column_stack([np.full(n, 2), np.arange(n), np.arange(n) + 1])
+    return {
+        'verts': pv.PolyData(rng.random((n, 3))),
+        'lines': pv.PolyData(rng.random((n + 1, 3)), lines=segments),
+        'triangles': label_image.contour_labels('all', scalars='labels', simplify_output=False),
+        'hexahedra': pv.ImageData(dimensions=(47, 47, 47)).cast_to_unstructured_grid(),
+    }
 
 
-@pytest.fixture
-def vtk_path(monkeypatch):
-    """Send every mesh through the VTK extraction filters."""
-    monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
+@pytest.fixture(params=KINDS)
+def homogeneous_mesh(request, homogeneous_meshes):
+    """Return a mesh, a mask of every other cell and a mask of the points on one side."""
+    mesh = homogeneous_meshes[request.param]
+    cell_mask = np.arange(mesh.n_cells) % 2 == 0
+    point_mask = mesh.points[:, 0] > mesh.center[0]
+    return mesh, cell_mask, point_mask
 
 
-def test_remove_cells(label_surface, benchmark):
-    """Remove faces from a surface with equal-sized faces."""
-    surface, mask = label_surface
-    assert benchmark(surface.remove_cells, mask).n_cells == surface.n_cells - mask.sum()
+@pytest.fixture(params=['numpy', 'vtk'])
+def extraction_path(request, monkeypatch):
+    """Take the NumPy fast path, or send every mesh through the VTK extraction filters."""
+    if request.param == 'vtk':
+        monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
 
 
-@pytest.mark.usefixtures('vtk_path')
-def test_remove_cells_vtk(label_surface, benchmark):
-    """Remove faces from a surface through the VTK extraction filter."""
-    surface, mask = label_surface
-    assert benchmark(surface.remove_cells, mask).n_cells == surface.n_cells - mask.sum()
+@pytest.mark.usefixtures('extraction_path')
+def test_extract_cells(homogeneous_mesh, benchmark):
+    """Extract every other cell."""
+    mesh, cell_mask, _ = homogeneous_mesh
+    assert benchmark(mesh.extract_cells, cell_mask).n_cells == cell_mask.sum()
 
 
-def test_extract_cells(label_surface, benchmark):
-    """Extract faces from a surface with equal-sized faces."""
-    surface, mask = label_surface
-    assert benchmark(surface.extract_cells, mask).n_cells == mask.sum()
+@pytest.mark.usefixtures('extraction_path')
+def test_remove_cells(homogeneous_mesh, benchmark):
+    """Remove every other cell."""
+    mesh, cell_mask, _ = homogeneous_mesh
+    assert benchmark(mesh.remove_cells, cell_mask).n_cells == mesh.n_cells - cell_mask.sum()
 
 
-@pytest.mark.usefixtures('vtk_path')
-def test_extract_cells_vtk(label_surface, benchmark):
-    """Extract faces from a surface through the VTK extraction filter."""
-    surface, mask = label_surface
-    assert benchmark(surface.extract_cells, mask).n_cells == mask.sum()
+@pytest.mark.usefixtures('extraction_path')
+def test_extract_points(homogeneous_mesh, benchmark):
+    """Extract the points on one side of the mesh with their cells."""
+    mesh, _, point_mask = homogeneous_mesh
+    if not isinstance(mesh, pv.PolyData):
+        pytest.skip('point filters take the VTK path for grids')
+    assert benchmark(mesh.extract_points, point_mask).n_points < mesh.n_points
 
 
-def test_remove_points(label_surface_points, benchmark):
-    """Remove points from a surface with equal-sized faces."""
-    surface, mask = label_surface_points
-    assert benchmark(surface.remove_points, ind=mask).n_points < surface.n_points
-
-
-@pytest.mark.usefixtures('vtk_path')
-def test_remove_points_vtk(label_surface_points, benchmark):
-    """Remove points from a surface through the VTK selection filter."""
-    surface, mask = label_surface_points
-    assert benchmark(surface.remove_points, ind=mask).n_points < surface.n_points
-
-
-def test_extract_points(label_surface_points, benchmark):
-    """Extract points from a surface with equal-sized faces."""
-    surface, mask = label_surface_points
-    assert benchmark(surface.extract_points, mask).n_points < surface.n_points
-
-
-@pytest.mark.usefixtures('vtk_path')
-def test_extract_points_vtk(label_surface_points, benchmark):
-    """Extract points from a surface through the VTK selection filter."""
-    surface, mask = label_surface_points
-    assert benchmark(surface.extract_points, mask).n_points < surface.n_points
+@pytest.mark.usefixtures('extraction_path')
+def test_remove_points(homogeneous_mesh, benchmark):
+    """Remove the points on one side of the mesh with their cells."""
+    mesh, _, point_mask = homogeneous_mesh
+    if not isinstance(mesh, pv.PolyData):
+        pytest.skip('point filters take the VTK path for grids')
+    assert benchmark(mesh.remove_points, ind=point_mask).n_points < mesh.n_points

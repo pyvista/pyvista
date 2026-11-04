@@ -5159,7 +5159,11 @@ class DataSetFilters(DataObjectFilters):
         mask = _validate_extraction_ids(ind, n_items=self.n_points, name='points', invert=invert)
         if include_cells is None:
             include_cells = self.n_cells > 0
-        if include_cells and (cells := _homogeneous_cells(self)) is not None:
+        if (
+            include_cells
+            and isinstance(self, pv.PolyData)
+            and (cells := _homogeneous_cells(self)) is not None
+        ):
             cell_mask = _cells_using_points(cells[0], mask, any_point=adjacent_cells)
             if cell_mask.any():
                 return _extract_homogeneous_cells(
@@ -5187,12 +5191,22 @@ class DataSetFilters(DataObjectFilters):
         selection = _vtk.vtkSelection()
         selection.AddNode(selectionNode)
 
-        # extract
+        # The ghost arrays pass through like any other array instead of hiding
+        # cells and points from the selection
+        ds_copy = self.copy(deep=False)
+        ghost_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        point_ghosts = ds_copy.point_data.pop(ghost_name, None)
+        cell_ghosts = ds_copy.cell_data.pop(ghost_name, None)
+
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self.copy(deep=False))
+        extract_sel.SetInputData(0, ds_copy)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel, output_type=pv.UnstructuredGrid)
+        if point_ghosts is not None and 'vtkOriginalPointIds' in output.point_data:
+            output.point_data[ghost_name] = point_ghosts[output.point_data['vtkOriginalPointIds']]
+        if cell_ghosts is not None and 'vtkOriginalCellIds' in output.cell_data:
+            output.cell_data[ghost_name] = cell_ghosts[output.cell_data['vtkOriginalCellIds']]
         if not pass_point_ids:
             output.point_data.pop('vtkOriginalPointIds', None)
         if not pass_cell_ids:
@@ -5420,7 +5434,7 @@ class DataSetFilters(DataObjectFilters):
         mask = _validate_extraction_ids(
             ind, n_items=self.n_points, name='points', invert=not invert
         )
-        if (cells := _homogeneous_cells(self)) is not None:
+        if isinstance(self, pv.PolyData) and (cells := _homogeneous_cells(self)) is not None:
             cell_mask = _cells_using_points(cells[0], mask, any_point=mode == 'all')
             if cell_mask.any():
                 kept = _extract_homogeneous_cells(
@@ -9578,7 +9592,11 @@ def _homogeneous_cells(mesh: DataSet) -> tuple[NDArray[np.signedinteger], str] |
 def _cells_using_points(
     cells: NDArray[np.signedinteger], mask: NDArray[np.bool_], *, any_point: bool
 ) -> NDArray[np.bool_]:
-    """Return the mask of equal-sized cells that use any, or only, masked points."""
+    """Return the mask of equal-sized cells that use any, or only, masked points.
+
+    This gather costs more than the VTK selection filter saves on an unstructured grid,
+    whose cells are wider than a surface's, so only ``PolyData`` takes this route.
+    """
     used = mask[cells]
     return used.any(axis=1) if any_point else used.all(axis=1)
 

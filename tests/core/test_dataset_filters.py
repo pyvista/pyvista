@@ -2928,7 +2928,9 @@ def test_extract_homogeneous_cells_fast_path(kind, pass_ids, monkeypatch):
         lambda *args, **kw: calls.append(1) or fast_path(*args, **kw),
     )
     actual_outputs = run_filters()
-    assert len(calls) == (6 if is_homogeneous else 0)
+    # The point filters take the fast path for PolyData only
+    expected_calls = 0 if not is_homogeneous else 2 if kind == 'hexahedra' else 6
+    assert len(calls) == expected_calls
 
     monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
     for actual, expected in zip(actual_outputs, run_filters(), strict=True):
@@ -2949,6 +2951,45 @@ def test_extract_homogeneous_cells_fast_path(kind, pass_ids, monkeypatch):
         assert ('vtkOriginalCellIds' in actual.cell_data) is pass_ids
         assert actual.active_scalars_info == expected.active_scalars_info
         assert actual.point_data.active_normals_name == expected.point_data.active_normals_name
+
+
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+@pytest.mark.parametrize('fast_path', [True, False])
+def test_extract_keeps_ghost_cells_and_points(sphere, dataset_filter, fast_path, monkeypatch):
+    if not fast_path:
+        monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
+    ghost_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+    cell_ghosts = np.zeros(sphere.n_cells, dtype=np.uint8)
+    cell_ghosts[::7] = _vtk.vtkDataSetAttributes.DUPLICATECELL
+    cell_ghosts[::11] = _vtk.vtkDataSetAttributes.HIDDENCELL
+    point_ghosts = np.zeros(sphere.n_points, dtype=np.uint8)
+    point_ghosts[::5] = _vtk.vtkDataSetAttributes.HIDDENPOINT
+    sphere.cell_data[ghost_name] = cell_ghosts
+    sphere.point_data[ghost_name] = point_ghosts
+
+    mask = (
+        sphere.points[:, 0] > 0
+        if dataset_filter == 'extract_points'
+        else np.arange(sphere.n_cells) % 2 == 0
+    )
+    array_names = sphere.array_names
+    extracted = getattr(sphere, dataset_filter)(mask)
+    assert sphere.array_names == array_names
+
+    # Hidden cells and points are extracted like any other, with their ghost values
+    cell_ids = extracted['vtkOriginalCellIds']
+    point_ids = extracted['vtkOriginalPointIds']
+    assert (cell_ghosts[cell_ids] == _vtk.vtkDataSetAttributes.HIDDENCELL).any()
+    assert (point_ghosts[point_ids] == _vtk.vtkDataSetAttributes.HIDDENPOINT).any()
+    assert np.array_equal(extracted.cell_data[ghost_name], cell_ghosts[cell_ids])
+    assert np.array_equal(extracted.point_data[ghost_name], point_ghosts[point_ids])
+    assert extracted.GetCellData().GetGhostArray() is not None
+    assert extracted.GetPointData().GetGhostArray() is not None
+
+    # Without cells, hidden points are extracted too
+    point_mask = sphere.points[:, 0] > 0
+    points_only = sphere.extract_points(point_mask, include_cells=False)
+    assert np.array_equal(points_only.point_data[ghost_name], point_ghosts[point_mask])
 
 
 def test_extract_cells_column_vector_ind(hexbeam):
