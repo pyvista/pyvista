@@ -8,6 +8,8 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core.utilities.points import principal_axes
+from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import reflection
 
 
 def _chained_transform():
@@ -70,3 +72,25 @@ def test_dataset_equality(sphere, benchmark):
 def test_principal_axes(dense_points, benchmark):
     """Compute the principal axes of a large point set."""
     assert benchmark(principal_axes, dense_points).shape == (3, 3)
+
+
+def test_image_transform(image, benchmark):
+    """Rotate an image that carries no vectors."""
+    matrix = pv.Transform().rotate_z(30).matrix
+    assert benchmark(image.transform, matrix, inplace=False).n_points
+
+
+def test_transform_apply_points(dense_points, benchmark):
+    """Apply a transform to an array of points."""
+    transform = pv.Transform().rotate_z(30).scale(2)
+    assert benchmark(transform.apply, dense_points).shape == dense_points.shape
+
+
+def test_axis_angle_rotation(benchmark):
+    """Build a rotation matrix about an arbitrary axis."""
+    assert benchmark(axis_angle_rotation, (1, 1, 0), 30).shape == (4, 4)
+
+
+def test_reflection(benchmark):
+    """Build a reflection matrix about an arbitrary plane."""
+    assert benchmark(reflection, (1, 1, 0)).shape == (4, 4)

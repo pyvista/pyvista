@@ -186,3 +186,45 @@ def polyhedron_arrays(rng):
     cells = np.tile(cell, (n, 1))
     cells[:, is_point_id] += (np.arange(n) * 8)[:, None]
     return cells.ravel(), np.full(n, pv.CellType.POLYHEDRON, np.uint8), rng.random((8 * n, 3))
+
+
+@pytest.fixture(scope='session')
+def image(rng):
+    """Return a small image carrying point scalars."""
+    image = pv.ImageData(dimensions=(20, 20, 20))
+    image.point_data['data'] = rng.random(image.n_points)
+    return image
+
+
+@pytest.fixture(scope='session')
+def many_arrays_sphere(rng):
+    """Return a sphere carrying fifty point arrays besides its normals."""
+    mesh = pv.Sphere()
+    for i in range(50):
+        mesh.point_data[f'array{i}'] = rng.random(mesh.n_points)
+    return mesh
+
+
+@pytest.fixture(scope='session')
+def vtk_multiblock():
+    """Return an unwrapped VTK composite of ten spheres."""
+    composite = _vtk.vtkMultiBlockDataSet()
+    for i in range(10):
+        block = _vtk.vtkPolyData()
+        block.ShallowCopy(pv.Sphere())
+        composite.SetBlock(i, block)
+    return composite
+
+
+@pytest.fixture(scope='session')
+def padded_triangles(triangles):
+    """Return the triangle connectivity in the padded legacy format."""
+    return np.hstack([np.full((len(triangles), 1), 3), triangles]).ravel()
+
+
+@pytest.fixture
+def plotter():
+    """Return an off-screen plotter that is closed afterwards."""
+    pl = pv.Plotter(off_screen=True)
+    yield pl
+    pl.close()
