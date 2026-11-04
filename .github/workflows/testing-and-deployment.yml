@@ -92,11 +92,10 @@ jobs:
       rows: >-
         [
           {"python": "3.11", "vtk": "9.3.1"},
-          {"python": "3.11", "vtk": "9.4.2"},
-          {"python": "3.12", "vtk": "9.5.2"},
-          {"python": "3.13", "vtk": "9.6.2"},
-          {"python": "3.14", "vtk": "latest"},
-          {"python": "3.15"}
+          {"python": "3.12", "vtk": "9.4.2"},
+          {"python": "3.13", "vtk": "9.5.2"},
+          {"python": "3.14", "vtk": "9.6.2"},
+          {"python": "3.15", "vtk": "latest"}
         ]
 
   Windows:
