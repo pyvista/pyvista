@@ -409,6 +409,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOBBTree',
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
+        'vtkReflectionFilter',
         'vtkShrinkFilter',
         'vtkShrinkPolyData',
         'vtkTableBasedClipDataSet',

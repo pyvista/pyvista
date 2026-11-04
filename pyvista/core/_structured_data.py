@@ -3,17 +3,66 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import ClassVar
 
+import numpy as np
 import pyvista_validation as _validation
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from pyvista import DataSet
     from pyvista.core._typing_core import VectorLikeInt
 
 
 def _extent_from(offset: VectorLikeInt, dims: VectorLikeInt) -> list[int]:
     """Return the extent starting at ``offset`` with dimensions ``dims``."""
     return [int(n) for o, d in zip(offset, dims, strict=True) for n in (o, o + d - 1)]
+
+
+def _reorder_block(
+    array: NDArray[Any],
+    dimensions: VectorLikeInt,
+    *,
+    axes: NDArray[np.intp],
+    flips: NDArray[np.bool_],
+) -> NDArray[Any]:
+    """Return a block array whose axis ``i`` is old axis ``axes[i]``, reversed by ``flips``."""
+    # Arrays vary fastest along the first axis, so the array's axes are in reverse order
+    order = (*(2 - axes[::-1]), 3)
+    reversed_axes = tuple(int(axis) for axis in 2 - np.flatnonzero(flips))
+    block = array.reshape(*np.asarray(dimensions)[::-1], -1).transpose(order)
+    # Reversing every axis gives a view of the input, which assigning back to it would corrupt
+    return np.flip(block, axis=reversed_axes).reshape(array.shape).copy()
+
+
+def _reorder_extent(
+    dimensions: VectorLikeInt,
+    offset: VectorLikeInt,
+    *,
+    axes: NDArray[np.intp],
+    flips: NDArray[np.bool_],
+) -> list[int]:
+    """Return the extent of a structured block with its axes permuted and reversed."""
+    dimensions = np.asarray(dimensions)[axes]
+    offset = np.asarray(offset)[axes]
+    # A reversed axis mirrors its extent about index zero
+    return _extent_from(np.where(flips, -(offset + dimensions - 1), offset), dimensions)
+
+
+def _reorder_structured_arrays(
+    mesh: DataSet, dimensions: VectorLikeInt, *, axes: NDArray[np.intp], flips: NDArray[np.bool_]
+) -> None:
+    """Reorder a structured mesh's point and cell arrays in place, like its block."""
+    point_dimensions = np.asarray(dimensions)
+    cell_dimensions = np.maximum(point_dimensions - 1, 1)
+    for attributes, block in (
+        (mesh.point_data, point_dimensions),
+        (mesh.cell_data, cell_dimensions),
+    ):
+        for name in attributes.keys():
+            attributes[name] = _reorder_block(attributes[name], block, axes=axes, flips=flips)
 
 
 class _StructuredDataMixin:
