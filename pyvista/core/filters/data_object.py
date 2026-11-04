@@ -4808,9 +4808,7 @@ class DataObjectFilters:
         alg.SetInputDataObject(self)
         # Always use all points since VTK >= 9.2 is required
         alg.SetUseAllPoints(True)
-        # Suppress improperly used INFO for debugging messages in vtkExtractEdges
-        with pv.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting All Edges')
         output = _get_output(alg, output_type=pv.PolyData)
         if clear_data:
             output.clear_data()

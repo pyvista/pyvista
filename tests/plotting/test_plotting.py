@@ -7510,7 +7510,7 @@ def test_camera_distortion_reaches_an_actor_without_view_coordinates():
         pl.camera_position = 'xy'
         if distort:
             pl.enable_camera_distortion((0.4, 0.15, 0.0, 0.0))
-        with pv.VtkErrorCatcher(raise_errors=True):
+        with pv.vtk_messages(errors='raise'):
             image = pl.screenshot()
         pl.close()
         return image.astype(int)

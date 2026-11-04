@@ -56,20 +56,17 @@ def fail_on_vtk_output(request: pytest.FixtureRequest) -> Generator[None, None, 
     """
     if marker := request.node.get_closest_marker('skip_vtk_output_check'):
         _require_reason(marker)
-        yield
+        with pv.vtk_messages(errors='ignore', warnings='ignore'):
+            yield
         return
     markers = list(request.node.iter_markers('expect_vtk_output'))
     for marker in markers:
         _require_reason(marker)
     expected = [pattern for marker in markers for pattern in marker.args]
-    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+    with pv.vtk_messages(errors='ignore', warnings='ignore') as catcher:
         yield
-    events = catcher.events
-    # The traceback of a failure raised here keeps this frame alive, and with it the
-    # catcher's own output window, which the leak check would then report instead.
-    del catcher
     if unexpected := [
-        event for event in events if not any(text in event.alert for text in expected)
+        event for event in catcher.events if not any(text in event.alert for text in expected)
     ]:
         logged = '\n'.join(str(event) for event in unexpected)
         msg = f'VTK logged {len(unexpected)} error(s) or warning(s):\n{logged}'

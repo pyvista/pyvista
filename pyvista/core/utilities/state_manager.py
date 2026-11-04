@@ -161,9 +161,29 @@ _VerbosityOptions = Literal[
 
 
 class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
-    """Context manager to set VTK verbosity level.
+    """Context manager to set the verbosity of VTK's own logger.
+
+    VTK has a logger, :vtk:`vtkLogger`, that prints straight to ``stderr`` with a
+    timestamp, source file and line. This setting controls that logger only. It is
+    ``'off'`` by default, and it has no effect on what PyVista does with VTK messages.
+
+    What it does not control: the errors and warnings VTK reports always reach PyVista,
+    whatever this setting is. They are handled by
+    :attr:`pyvista.core.config.Config.vtk_errors` and
+    :attr:`pyvista.core.config.Config.vtk_warnings`, or by a
+    :class:`~pyvista.vtk_messages` block, and a failed filter or reader always raises
+    :class:`~pyvista.core.errors.VTKExecutionError`.
+
+    What it does control: VTK's own log stream, which is the only place some of VTK's
+    output goes. That includes debug and info messages, and messages that VTK logs
+    directly instead of reporting as an error or warning. Turn it on when a VTK
+    operation misbehaves without PyVista reporting anything.
 
     .. versionadded:: 0.45
+
+    .. versionchanged:: 0.50
+
+        The default is ``'off'``.
 
     Parameters
     ----------
@@ -182,7 +202,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
 
     >>> import pyvista as pv
     >>> pv.vtk_verbosity()
-    'info'
+    'off'
 
     Set verbosity to max.
 
@@ -209,7 +229,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
     calls. If the context manager isn't used, the state needs to be reset explicitly.
     Here, we set it back to its default value.
 
-    >>> _ = pv.vtk_verbosity('info')
+    >>> _ = pv.vtk_verbosity('off')
 
     """
 

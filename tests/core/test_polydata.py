@@ -759,7 +759,7 @@ def test_intersection(sphere, sphere_shifted):
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         curv = sphere.curvature(curv_type)
     assert catcher.warning_events == []
     assert np.any(curv)
@@ -772,7 +772,7 @@ def test_invalid_curvature(sphere):
 
 
 def test_volume_empty():
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         assert pv.PolyData().volume == 0.0
     assert catcher.error_events == []
 
