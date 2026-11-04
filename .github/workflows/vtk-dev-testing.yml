@@ -33,7 +33,7 @@ jobs:
       os: ubuntu-22.04
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
       coverage: true
-      rows: '[{"python": "3.14", "vtk": "dev"}]'
+      rows: '[{"python": "3.15", "vtk": "dev"}]'
 
   macOS:
     needs: cache-github-hosted
@@ -42,7 +42,7 @@ jobs:
       label: macOS
       os: macos-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      rows: '[{"python": "3.14", "vtk": "dev"}]'
+      rows: '[{"python": "3.15", "vtk": "dev"}]'
 
   Windows:
     needs: cache-github-hosted
@@ -51,7 +51,7 @@ jobs:
       label: Windows
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      rows: '[{"python": "3.14", "vtk": "dev"}]'
+      rows: '[{"python": "3.15", "vtk": "dev"}]'
 
   # Pull requests only, so a dispatch on main never leaves the dev flags on a main commit.
   upload-coverage:
