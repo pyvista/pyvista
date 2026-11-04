@@ -73,7 +73,7 @@ jobs:
       rows: >-
         [
           {"python": "3.11"},
-          {"python": "3.14"}
+          {"python": "3.15"}
         ]
 
   Linux:
@@ -95,7 +95,8 @@ jobs:
           {"python": "3.11", "vtk": "9.4.2"},
           {"python": "3.12", "vtk": "9.5.2"},
           {"python": "3.13", "vtk": "9.6.2"},
-          {"python": "3.14", "vtk": "latest"}
+          {"python": "3.14", "vtk": "latest"},
+          {"python": "3.15"}
         ]
 
   Windows:
@@ -112,7 +113,8 @@ jobs:
           {"python": "3.11"},
           {"python": "3.12"},
           {"python": "3.13"},
-          {"python": "3.14"}
+          {"python": "3.14"},
+          {"python": "3.15"}
         ]
 
   check-package:
