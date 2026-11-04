@@ -25,7 +25,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
-            python-version: "3.14" # Should be the latest version supported
+            python-version: "3.15" # Should be the latest version supported
           - os: windows-latest
             python-version: "3.11" # Should be the oldest version supported
 
@@ -80,7 +80,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14" # Should be the latest version supported
+          python-version: "3.15" # Should be the latest version supported
           cache: pip
 
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
@@ -109,7 +109,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: 3.14
+          python-version: 3.15
 
       - name: Install Vale
         run: |
