@@ -15,6 +15,8 @@ This example uses :meth:`~pyvista.Plotter.open_movie` and
 
 """
 
+import imageio  # image and animation I/O
+import imageio_ffmpeg  # MP4 writer
 import numpy as np
 import pyvista as pv
 

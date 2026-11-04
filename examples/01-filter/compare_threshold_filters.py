@@ -12,6 +12,7 @@ as well as the output type they produce.
 
 """
 
+import colorcet  # colorcet colormaps
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 1

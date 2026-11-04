@@ -411,6 +411,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         Examples
         --------
+        >>> import pyarrow  # for to_arrow
         >>> import numpy as np
         >>> import pyvista as pv
         >>> table = pv.Table({'a': np.arange(3), 'b': np.array([0.5, 1.5, 2.5])})

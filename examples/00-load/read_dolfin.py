@@ -13,6 +13,7 @@ PyVista leverages `meshio`_ to read many mesh formats not natively supported by 
 
 """
 
+import meshio  # meshio file I/O
 import pyvista as pv
 from pyvista import examples
 

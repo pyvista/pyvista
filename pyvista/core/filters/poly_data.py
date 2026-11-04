@@ -3215,6 +3215,7 @@ class PolyDataFilters(DataSetFilters):
         directions ``[1, 0, 0]``, ``[0, 1, 0]`` and ``[0, 0, 1]``, and
         a sphere with radius 0.5 centered at the origin
 
+        >>> import trimesh  # for multi_ray_trace
         >>> import pyvista as pv  # doctest:+SKIP
         >>> sphere = pv.Sphere()  # doctest:+SKIP
         >>> points, rays, cells = sphere.multi_ray_trace(

@@ -2675,6 +2675,7 @@ class ImageDataFilters(DataSetFilters):
         Load labeled image data with a background region ``0`` and four foreground
         regions.
 
+        >>> import colorcet  # colorcet colormaps
         >>> import pyvista as pv
         >>> import numpy as np
         >>> from pyvista import examples

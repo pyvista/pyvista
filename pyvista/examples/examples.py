@@ -644,6 +644,7 @@ def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 
         Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
         numbers ``n=3``, ``l=2``, and ``m=-2``.
 
+        >>> import sympy  # for the hydrogen orbital
         >>> from pyvista import examples
         >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
         >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
@@ -767,6 +768,7 @@ def load_frog_tissues() -> ImageData:
 
         Load data
 
+        >>> import colorcet  # colorcet colormaps
         >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
