@@ -555,9 +555,13 @@ Temporal VTKHDF Data
 values may be nonuniform. Inspecting these values and selecting a frame reads
 metadata without loading every mesh in the simulation.
 
-For a file with fixed coordinates and connectivity and a point field named
-``temperature``, read only that field and keep one display mesh whose values
-are updated:
+:meth:`~pyvista.Plotter.add_mesh` draws a volume mesh, such as an
+:class:`~pyvista.UnstructuredGrid` of tetrahedra, by extracting its boundary
+surface. The extraction runs again whenever the mesh changes, including when
+only its values change, and for a mesh with millions of cells it can dominate
+the cost of each frame. When coordinates and connectivity stay fixed, extract
+the surface once and copy each frame's values onto it. This example plays back
+a point field named ``temperature`` and reads only that field:
 
 .. code-block:: python
 
@@ -569,33 +573,41 @@ are updated:
     reader.disable_all_cell_arrays()
     reader.enable_point_array('temperature')
     reader.set_active_time_point(0)
-    display = reader.read().copy()
+    surface = reader.read().extract_surface(algorithm=None)
+    point_ids = surface.point_data['vtkOriginalPointIds']
+    temperature = surface.point_data['temperature']
+
     pl = pv.Plotter()
-    pl.add_mesh(display, scalars='temperature', clim=(0, 100))
+    pl.add_mesh(surface, scalars='temperature', clim=(0, 100))
     pl.show(auto_close=False, interactive_update=True)
 
     for time in reader.time_values:
         reader.set_active_time_value(time)
         frame = reader.read()
-        display.point_data['temperature'][:] = frame.point_data[
-            'temperature'
-        ]
+        temperature[:] = frame.point_data['temperature'][point_ids]
         pl.update()
 
     pl.close()
 
-The color limits stay fixed throughout playback. The slice assignment updates
-an existing array and retains the mesh and actor. The same approach applies to
-cell fields and vector arrays of matching shape and type. The explicit copy
-is required. Frames returned by :meth:`~pyvista.BaseReader.read` may share
-geometry buffers, so modifying one frame in place can change other frames.
+``vtkOriginalPointIds`` holds the index of the volume point that each surface
+point came from. The slice assignment updates the surface's own array, so the
+surface and its actor are kept, and the frames returned by
+:meth:`~pyvista.BaseReader.read` are not modified. The color limits stay fixed
+throughout playback. Vector point fields work the same way. For a cell field,
+index with ``surface.cell_data['vtkOriginalCellIds']`` instead, which holds the
+volume cell that each surface face came from.
 
 Disabled arrays are not read from disk, so each frame costs roughly in
 proportion to the arrays that remain enabled. Geometry and connectivity are
 still part of every frame that :meth:`~pyvista.BaseReader.read` returns.
 
-This example assumes that geometry, topology, array shape, and array type stay
-constant. When they change, replace the display mesh with the new frame instead. PyVista does not retain all frames. VTK
-controls any internal geometry caching, whose capabilities depend on the VTK
-version and dataset type. Static files have an empty list of time values and
-support the usual :meth:`~pyvista.BaseReader.read` call.
+This example assumes linear cells and constant point coordinates,
+connectivity, array shape, and array type. For quadratic and other nonlinear
+cells, ``vtkOriginalPointIds`` does not map surface points back to the volume.
+When points or cells change, extract a new surface from the frame. A surface
+has no interior values, so the approach does not apply to
+:meth:`~pyvista.Plotter.add_volume` or to filters such as slices that need the
+full mesh. PyVista does not retain all frames. VTK controls any internal
+geometry caching, whose capabilities depend on the VTK version and dataset
+type. Static files have an empty list of time values and support the usual
+:meth:`~pyvista.BaseReader.read` call.
