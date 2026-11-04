@@ -3,13 +3,20 @@ description: >-
   Extract a short failure summary from core-test.log/plotting-test.log and upload it as a
   failure-summary-* artifact for the VTK master workflow's failure report. Used because the
   job-logs API needs repo admin rights, which GITHUB_TOKEN never has.
+inputs:
+  job-name:
+    description: The job's name as the run lists it, which the report matches summaries by.
+    required: true
+  artifact-suffix:
+    description: Unique suffix for the failure-summary artifact name.
+    required: true
 runs:
   using: composite
   steps:
     - name: Build failure summary
       shell: bash
       env:
-        JOB_LABEL: ${{ github.job }} (${{ join(matrix.*, ', ') }})
+        JOB_LABEL: ${{ inputs.job-name }}
       run: |
         printf '%s\n' "$JOB_LABEL" > job_label.txt
         bash .github/scripts/vtk-master-failure-summary.sh . core-test.log plotting-test.log
@@ -17,7 +24,7 @@ runs:
     - name: Upload failure summary artifact
       uses: actions/upload-artifact@v7
       with:
-        name: failure-summary-${{ github.job }}-${{ join(matrix.* , '-') }}
+        name: failure-summary-${{ inputs.artifact-suffix }}
         path: |
           failure_summary.txt
           job_label.txt

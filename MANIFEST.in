@@ -2,6 +2,3 @@
 include LICENSE
 recursive-exclude doc *.rst
 recursive-exclude doc *.py
-# Include type hinting files
-global-include *.pyi
-global-include *.typed
