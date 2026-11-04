@@ -1089,11 +1089,10 @@ class CellArray(
         numpy.ndarray
             Array of face indices of shape (``n_cells``, ``cell_size``).
 
-        Notes
-        -----
-        This property does not validate that the cells are all
-        actually the same size. If they're not, this property may either
-        raise a ``ValueError`` or silently return an incorrect array.
+        Raises
+        ------
+        ValueError
+            If the cells do not all have the same size.
 
         """
         return _get_regular_cells(self)
@@ -1354,15 +1353,8 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
     if len(cells) == 0:
         return cells
 
-    if _SUPPORTS_FIXED_SIZE_STORAGE and cellarr.IsStorageFixedSize():
-        cell_size = cellarr.IsHomogeneous()
-    else:
-        offsets = _get_offset_array(cellarr)
-        cell_size = offsets[1] - offsets[0]
-
-    try:
-        return cells.reshape(-1, cell_size)
-    except ValueError:
+    cell_size = cellarr.IsHomogeneous()
+    if cell_size <= 0:
         offsets = _get_offset_array(cellarr)
         sizes = sorted(np.unique(np.diff(offsets)).tolist())
         msg = (
@@ -1370,6 +1362,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NDArray[np.signedinteger]:
             f'Multiple cell sizes detected with different number of points: {sizes}'
         )
         raise ValueError(msg)
+    return cells.reshape(-1, cell_size)
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NDArray[np.signedinteger], ...]:

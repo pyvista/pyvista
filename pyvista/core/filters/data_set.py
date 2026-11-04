@@ -5026,6 +5026,10 @@ class DataSetFilters(DataObjectFilters):
 
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
+        if mask.any() and not mask.all() and (cells := _homogeneous_cells(self)) is not None:
+            return _extract_homogeneous_cells(
+                self, cells, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            ).cast_to_unstructured_grid()
         indices = np.flatnonzero(mask).astype(pv.ID_TYPE, copy=False)
 
         # Extract using a shallow copy to avoid the side effect of creating the
@@ -5092,6 +5096,10 @@ class DataSetFilters(DataObjectFilters):
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
 
+        .. versionchanged:: 0.50
+            Cells and points flagged as hidden in the ghost arrays are extracted
+            like any other, with their ghost values.
+
         Parameters
         ----------
         ind : int | VectorLikeInt | VectorLikeBool
@@ -5155,6 +5163,24 @@ class DataSetFilters(DataObjectFilters):
         mask = _validate_extraction_ids(ind, n_items=self.n_points, name='points', invert=invert)
         if include_cells is None:
             include_cells = self.n_cells > 0
+        if (
+            include_cells
+            and isinstance(self, pv.PolyData)
+            and (cells := _homogeneous_cells(self)) is not None
+        ):
+            cell_mask = _cells_using_points(cells[0], mask, any_point=adjacent_cells)
+            if cell_mask.any() and not cell_mask.all():
+                fast_output = _extract_homogeneous_cells(
+                    self,
+                    cells,
+                    cell_mask,
+                    pass_point_ids=pass_point_ids,
+                    pass_cell_ids=pass_cell_ids,
+                )
+                _drop_unpassed_ids(
+                    fast_output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+                )
+                return fast_output.cast_to_unstructured_grid()
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -5173,16 +5199,23 @@ class DataSetFilters(DataObjectFilters):
         selection = _vtk.vtkSelection()
         selection.AddNode(selectionNode)
 
-        # extract
+        # The ghost arrays pass through like any other array instead of hiding
+        # cells and points from the selection
+        ds_copy = self.copy(deep=False)
+        ghost_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        point_ghosts = ds_copy.point_data.pop(ghost_name, None)
+        cell_ghosts = ds_copy.cell_data.pop(ghost_name, None)
+
         extract_sel = _vtk.vtkExtractSelection()
-        extract_sel.SetInputData(0, self.copy(deep=False))
+        extract_sel.SetInputData(0, ds_copy)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel, output_type=pv.UnstructuredGrid)
-        if not pass_point_ids:
-            output.point_data.pop('vtkOriginalPointIds', None)
-        if not pass_cell_ids:
-            output.cell_data.pop('vtkOriginalCellIds', None)
+        if point_ghosts is not None and 'vtkOriginalPointIds' in output.point_data:
+            output.point_data[ghost_name] = point_ghosts[output.point_data['vtkOriginalPointIds']]
+        if cell_ghosts is not None and 'vtkOriginalCellIds' in output.cell_data:
+            output.cell_data[ghost_name] = cell_ghosts[output.cell_data['vtkOriginalCellIds']]
+        _drop_unpassed_ids(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
         return _finish_extraction(
             output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
@@ -5280,16 +5313,22 @@ class DataSetFilters(DataObjectFilters):
         <class 'pyvista.core.pointset.PolyData'>
 
         """
-        output = self.extract_cells(
-            ind,
-            invert=not invert,
-            pass_point_ids=pass_point_ids,
-            pass_cell_ids=pass_cell_ids,
-            progress_bar=progress_bar,
-        )
-        output = _cast_extraction(
-            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
-        )
+        mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=not invert)
+        output: DataSet
+        if mask.any() and not mask.all() and (cells := _homogeneous_cells(self)) is not None:
+            output = _extract_homogeneous_cells(
+                self, cells, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            )
+        else:
+            output = self.extract_cells(
+                mask,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
+                progress_bar=progress_bar,
+            )
+            output = _cast_extraction(
+                output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            )
         return _apply_inplace(self, output, inplace=inplace)
 
     # fmt: off
@@ -5333,6 +5372,10 @@ class DataSetFilters(DataObjectFilters):
         first to remove points from a point cloud without cells.
 
         .. versionadded:: 0.49
+
+        .. versionchanged:: 0.50
+            Cells and points flagged as hidden in the ghost arrays are kept or
+            removed like any other, with their ghost values.
 
         Parameters
         ----------
@@ -5397,10 +5440,26 @@ class DataSetFilters(DataObjectFilters):
 
         """
         _validation.check_contains(['any', 'all'], must_contain=mode, name='mode')
+        mask = _validate_extraction_ids(
+            ind, n_items=self.n_points, name='points', invert=not invert
+        )
+        if isinstance(self, pv.PolyData) and (cells := _homogeneous_cells(self)) is not None:
+            cell_mask = _cells_using_points(cells[0], mask, any_point=mode == 'all')
+            if cell_mask.any():
+                kept = _extract_homogeneous_cells(
+                    self,
+                    cells,
+                    cell_mask,
+                    pass_point_ids=pass_point_ids,
+                    pass_cell_ids=pass_cell_ids,
+                )
+                _drop_unpassed_ids(
+                    kept, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+                )
+                return _apply_inplace(self, kept, inplace=inplace)
         output = self.extract_points(
-            ind,
+            mask,
             adjacent_cells=mode == 'all',
-            invert=not invert,
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
@@ -9509,6 +9568,104 @@ def _validate_extraction_ids(
                 raise IndexError(msg)
             mask[ids] = True
     return np.invert(mask) if invert else mask
+
+
+def _homogeneous_cells(mesh: DataSet) -> tuple[NDArray[np.signedinteger], str] | None:
+    """Return the (``n_cells``, size) point ids of a mesh with one cell array of equal-sized cells.
+
+    The second item names the attribute that sets those cells on a new mesh.
+    """
+    if isinstance(mesh, pv.PolyData):
+        cell_arrays = [
+            (mesh.GetVerts(), 'verts'),
+            (mesh.GetLines(), 'lines'),
+            (mesh.GetPolys(), 'faces'),
+            (mesh.GetStrips(), 'strips'),
+        ]
+        cell_arrays = [(array, name) for array, name in cell_arrays if array.GetNumberOfCells()]
+        if len(cell_arrays) != 1:
+            return None
+        cell_array, name = cell_arrays[0]
+    elif isinstance(mesh, pv.UnstructuredGrid):
+        if mesh.n_cells == 0 or (mesh.celltypes == pv.CellType.POLYHEDRON).any():
+            return None
+        cell_array, name = mesh.GetCells(), 'cells'
+    else:
+        return None
+    if cell_array.IsHomogeneous() <= 0:
+        return None
+    from pyvista.core.cell import _get_regular_cells  # noqa: PLC0415
+
+    cells = _get_regular_cells(cell_array)
+    # A cell array mid-edit can hold an offset its connectivity does not cover yet
+    return (cells, name) if len(cells) == mesh.n_cells else None
+
+
+def _drop_unpassed_ids(mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool) -> None:
+    """Remove the original id arrays that are not passed."""
+    if not pass_point_ids:
+        mesh.point_data.pop('vtkOriginalPointIds', None)
+    if not pass_cell_ids:
+        mesh.cell_data.pop('vtkOriginalCellIds', None)
+
+
+def _cells_using_points(
+    cells: NDArray[np.signedinteger], mask: NDArray[np.bool_], *, any_point: bool
+) -> NDArray[np.bool_]:
+    """Return the mask of equal-sized cells that use any, or only, masked points."""
+    used = mask[cells]
+    return used.any(axis=1) if any_point else used.all(axis=1)
+
+
+def _extract_homogeneous_cells(
+    mesh: DataSet,
+    cells: tuple[NDArray[np.signedinteger], str],
+    mask: NDArray[np.bool_],
+    *,
+    pass_point_ids: bool,
+    pass_cell_ids: bool,
+) -> PolyData | UnstructuredGrid:
+    """Extract the masked cells of a mesh with equal-sized cells, without VTK."""
+    point_ids, name = cells
+    point_ids = point_ids[mask]
+    used = np.zeros(mesh.n_points, dtype=bool)
+    used[point_ids] = True
+    new_ids = np.cumsum(used) - 1
+    new_cells = pv.CellArray.from_regular_cells(new_ids[point_ids])
+    output: PolyData | UnstructuredGrid
+    if isinstance(mesh, pv.PolyData):
+        output = pv.PolyData()
+        output.points = mesh.points[used]
+        setattr(output, name, new_cells)
+    else:
+        celltypes = cast('UnstructuredGrid', mesh).celltypes[mask]
+        output = pv.UnstructuredGrid()
+        output.points = mesh.points[used]
+        output.SetCells(_vtk.numpy_to_vtk(celltypes, deep=True), new_cells)
+    for array_name, array in mesh.point_data.items():
+        output.point_data[array_name] = array[used]
+    for array_name, array in mesh.cell_data.items():
+        output.cell_data[array_name] = array[mask]
+    output.field_data.update(mesh.field_data)
+    if pass_point_ids:
+        output.point_data['vtkOriginalPointIds'] = np.flatnonzero(used)
+    if pass_cell_ids:
+        output.cell_data['vtkOriginalCellIds'] = np.flatnonzero(mask)
+    for source, target in (
+        (mesh.point_data, output.point_data),
+        (mesh.cell_data, output.cell_data),
+    ):
+        for attr in (
+            'active_scalars_name',
+            'active_vectors_name',
+            'active_normals_name',
+            'active_texture_coordinates_name',
+        ):
+            setattr(target, attr, getattr(source, attr))
+    association, scalars_name = mesh.active_scalars_info
+    if scalars_name is not None:
+        output.set_active_scalars(scalars_name, cast('PointLiteral | CellLiteral', association))
+    return output
 
 
 def _as_input_class(output: DataSet, input_mesh: _DataSetType) -> _DataSetType:

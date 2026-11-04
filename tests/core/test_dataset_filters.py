@@ -29,6 +29,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import data_set
 from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
 from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
@@ -2871,6 +2872,169 @@ def test_remove_cells_invert_polydata(sphere):
     assert empty.cell_data.keys() == ['vtkOriginalCellIds']
     empty = sphere.remove_cells([], invert=True, pass_point_ids=False, pass_cell_ids=False)
     assert empty.n_arrays == 0
+
+
+_HOMOGENEOUS_KINDS = (
+    'verts',
+    'lines',
+    'triangles',
+    'quads',
+    'strips',
+    'hexahedra',
+    'unused_point',
+)
+_ACTIVE_NAMES = (
+    'active_scalars_name',
+    'active_vectors_name',
+    'active_normals_name',
+    'active_texture_coordinates_name',
+)
+
+
+def _homogeneous_meshes():
+    """Return meshes keyed by kind, with ``_HOMOGENEOUS_KINDS`` taking the fast path."""
+    rng = np.random.default_rng(0)
+    triangles = pv.Sphere()
+    hexahedra = pv.ImageData(dimensions=(4, 4, 4)).cast_to_unstructured_grid()
+    return {
+        'verts': pv.PolyData(rng.random((20, 3))),
+        'lines': pv.PolyData(rng.random((20, 3)), lines=[[2, i, i + 1] for i in range(19)]),
+        'triangles': triangles,
+        'quads': pv.Plane(i_resolution=5, j_resolution=5),
+        'strips': pv.PolyData(rng.random((8, 3)), strips=[4, 0, 1, 2, 3, 4, 4, 5, 6, 7]),
+        'hexahedra': hexahedra,
+        'unused_point': pv.PolyData(
+            np.vstack([triangles.points, [9.0, 9.0, 9.0]]), faces=triangles.faces
+        ),
+        'mixed_faces': triangles + pv.Plane(),
+        'verts_and_faces': pv.PolyData(triangles.points, faces=triangles.faces, verts=[1, 0]),
+        'mixed_grid': hexahedra + examples.cells.Tetrahedron(),
+    }
+
+
+@pytest.mark.parametrize('input_ids', [True, False])
+@pytest.mark.parametrize('full_mask', [True, False])
+@pytest.mark.parametrize('set_active', [True, False])
+@pytest.mark.parametrize('pass_ids', [True, False])
+@pytest.mark.parametrize('kind', list(_homogeneous_meshes()))
+def test_extract_homogeneous_cells_fast_path(
+    kind, pass_ids, set_active, full_mask, input_ids, monkeypatch
+):
+    if kind == 'verts_and_faces' and full_mask:
+        pytest.skip('vtkExtractCells returns corrupt cells when every cell of such a mesh is kept')
+    mesh = _homogeneous_meshes()[kind]
+    is_homogeneous = kind in _HOMOGENEOUS_KINDS
+    assert (data_set._homogeneous_cells(mesh) is not None) is is_homogeneous
+    rng = np.random.default_rng(0)
+    mesh.point_data['point'] = rng.random((mesh.n_points, 2))
+    mesh.cell_data['cell'] = rng.integers(0, 9, mesh.n_cells)
+    mesh.field_data['field'] = [1, 2]
+    if input_ids:
+        # Arrays left by an earlier extraction
+        mesh.point_data['vtkOriginalPointIds'] = np.arange(mesh.n_points) * 7
+        mesh.cell_data['vtkOriginalCellIds'] = np.arange(mesh.n_cells) * 7
+    if set_active:
+        mesh.set_active_scalars('cell')
+    else:
+        mesh.point_data.active_scalars_name = None
+        mesh.cell_data.active_scalars_name = None
+    if full_mask:
+        cell_mask = np.ones(mesh.n_cells, dtype=bool)
+        point_mask = np.ones(mesh.n_points, dtype=bool)
+    else:
+        cell_mask = rng.random(mesh.n_cells) < 0.5
+        point_mask = rng.random(mesh.n_points) < 0.5
+        # The first cell has every point selected and the last cell none
+        point_mask[mesh.get_cell(0).point_ids] = True
+        point_mask[mesh.get_cell(mesh.n_cells - 1).point_ids] = False
+    kwargs = dict(pass_point_ids=pass_ids, pass_cell_ids=pass_ids)
+
+    def run_filters():
+        return [
+            mesh.extract_cells(cell_mask, **kwargs),
+            mesh.remove_cells(cell_mask, **kwargs),
+            mesh.extract_points(point_mask, **kwargs),
+            mesh.extract_points(point_mask, adjacent_cells=False, **kwargs),
+            mesh.remove_points(ind=point_mask, mode='any', **kwargs),
+            mesh.remove_points(ind=point_mask, mode='all', **kwargs),
+        ]
+
+    calls = []
+    fast_path = data_set._extract_homogeneous_cells
+    monkeypatch.setattr(
+        data_set,
+        '_extract_homogeneous_cells',
+        lambda *args, **kw: calls.append(1) or fast_path(*args, **kw),
+    )
+    actual_outputs = run_filters()
+    if not full_mask:
+        # The point filters take the fast path for PolyData only
+        expected_calls = 0 if not is_homogeneous else 2 if kind == 'hexahedra' else 6
+        assert len(calls) == expected_calls
+
+    monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
+    for actual, expected in zip(actual_outputs, run_filters(), strict=True):
+        assert type(actual) is type(expected)
+        assert actual.points.dtype == expected.points.dtype
+        assert np.array_equal(actual.points, expected.points)
+        if isinstance(actual, pv.PolyData):
+            for cells in ('verts', 'lines', 'faces', 'strips'):
+                assert np.array_equal(getattr(actual, cells), getattr(expected, cells))
+        else:
+            assert np.array_equal(actual.cells, expected.cells)
+            assert np.array_equal(actual.celltypes, expected.celltypes)
+        assert sorted(actual.array_names) == sorted(expected.array_names)
+        for name in actual.array_names:
+            assert actual[name].dtype == expected[name].dtype
+            assert np.array_equal(actual[name], expected[name])
+        if not input_ids:
+            assert ('vtkOriginalPointIds' in actual.point_data) is pass_ids
+            assert ('vtkOriginalCellIds' in actual.cell_data) is pass_ids
+        assert actual.active_scalars_info == expected.active_scalars_info
+        for attributes in ('point_data', 'cell_data'):
+            for active in _ACTIVE_NAMES:
+                assert getattr(getattr(actual, attributes), active) == getattr(
+                    getattr(expected, attributes), active
+                ), (attributes, active)
+
+
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+@pytest.mark.parametrize('fast_path', [True, False])
+def test_extract_keeps_ghost_cells_and_points(sphere, dataset_filter, fast_path, monkeypatch):
+    if not fast_path:
+        monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
+    ghost_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+    cell_ghosts = np.zeros(sphere.n_cells, dtype=np.uint8)
+    cell_ghosts[::7] = _vtk.vtkDataSetAttributes.DUPLICATECELL
+    cell_ghosts[::11] = _vtk.vtkDataSetAttributes.HIDDENCELL
+    point_ghosts = np.zeros(sphere.n_points, dtype=np.uint8)
+    point_ghosts[::5] = _vtk.vtkDataSetAttributes.HIDDENPOINT
+    sphere.cell_data[ghost_name] = cell_ghosts
+    sphere.point_data[ghost_name] = point_ghosts
+
+    mask = (
+        sphere.points[:, 0] > 0
+        if dataset_filter == 'extract_points'
+        else np.arange(sphere.n_cells) % 2 == 0
+    )
+    array_names = sphere.array_names
+    extracted = getattr(sphere, dataset_filter)(mask)
+    assert sphere.array_names == array_names
+
+    # Hidden cells and points are extracted like any other, with their ghost values
+    cell_ids = extracted['vtkOriginalCellIds']
+    point_ids = extracted['vtkOriginalPointIds']
+    assert (cell_ghosts[cell_ids] == _vtk.vtkDataSetAttributes.HIDDENCELL).any()
+    assert (point_ghosts[point_ids] == _vtk.vtkDataSetAttributes.HIDDENPOINT).any()
+    assert np.array_equal(extracted.cell_data[ghost_name], cell_ghosts[cell_ids])
+    assert np.array_equal(extracted.point_data[ghost_name], point_ghosts[point_ids])
+    assert extracted.GetCellData().GetGhostArray() is not None
+    assert extracted.GetPointData().GetGhostArray() is not None
+
+    # Without cells, hidden points are extracted too
+    point_mask = sphere.points[:, 0] > 0
+    points_only = sphere.extract_points(point_mask, include_cells=False)
+    assert np.array_equal(points_only.point_data[ghost_name], point_ghosts[point_mask])
 
 
 def test_extract_cells_column_vector_ind(hexbeam):
