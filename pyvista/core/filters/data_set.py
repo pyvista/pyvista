@@ -5026,9 +5026,9 @@ class DataSetFilters(DataObjectFilters):
 
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
-        if isinstance(self, pv.PolyData) and _has_regular_faces_only(self) and mask.any():
-            return _extract_polys_fast(
-                self, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        if mask.any() and (cells := _homogeneous_cells(self)) is not None:
+            return _extract_homogeneous_cells(
+                self, cells, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
             ).cast_to_unstructured_grid()
         indices = np.flatnonzero(mask).astype(pv.ID_TYPE, copy=False)
 
@@ -5159,6 +5159,16 @@ class DataSetFilters(DataObjectFilters):
         mask = _validate_extraction_ids(ind, n_items=self.n_points, name='points', invert=invert)
         if include_cells is None:
             include_cells = self.n_cells > 0
+        if include_cells and (cells := _homogeneous_cells(self)) is not None:
+            cell_mask = _cells_using_points(cells[0], mask, any_point=adjacent_cells)
+            if cell_mask.any():
+                return _extract_homogeneous_cells(
+                    self,
+                    cells,
+                    cell_mask,
+                    pass_point_ids=pass_point_ids,
+                    pass_cell_ids=pass_cell_ids,
+                ).cast_to_unstructured_grid()
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -5286,9 +5296,9 @@ class DataSetFilters(DataObjectFilters):
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=not invert)
         output: DataSet
-        if isinstance(self, pv.PolyData) and _has_regular_faces_only(self) and mask.any():
-            output = _extract_polys_fast(
-                self, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        if mask.any() and (cells := _homogeneous_cells(self)) is not None:
+            output = _extract_homogeneous_cells(
+                self, cells, mask, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
             )
         else:
             output = self.extract_cells(
@@ -5407,10 +5417,23 @@ class DataSetFilters(DataObjectFilters):
 
         """
         _validation.check_contains(['any', 'all'], must_contain=mode, name='mode')
+        mask = _validate_extraction_ids(
+            ind, n_items=self.n_points, name='points', invert=not invert
+        )
+        if (cells := _homogeneous_cells(self)) is not None:
+            cell_mask = _cells_using_points(cells[0], mask, any_point=mode == 'all')
+            if cell_mask.any():
+                kept = _extract_homogeneous_cells(
+                    self,
+                    cells,
+                    cell_mask,
+                    pass_point_ids=pass_point_ids,
+                    pass_cell_ids=pass_cell_ids,
+                )
+                return _apply_inplace(self, kept, inplace=inplace)
         output = self.extract_points(
-            ind,
+            mask,
             adjacent_cells=mode == 'all',
-            invert=not invert,
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
@@ -9521,26 +9544,74 @@ def _validate_extraction_ids(
     return np.invert(mask) if invert else mask
 
 
-def _has_regular_faces_only(mesh: PolyData) -> bool:
-    """Return whether the mesh has only faces and all of them have the same size."""
-    return (
-        mesh.n_lines == mesh.n_verts == mesh.n_strips == 0 and mesh.GetPolys().IsHomogeneous() > 0
-    )
+def _homogeneous_cells(mesh: DataSet) -> tuple[NDArray[np.signedinteger], str] | None:
+    """Return the (``n_cells``, size) point ids of a mesh with one cell array of equal-sized cells.
+
+    The second item names the attribute that sets those cells on a new mesh.
+    """
+    if isinstance(mesh, pv.PolyData):
+        cell_arrays = [
+            (mesh.GetVerts(), 'verts'),
+            (mesh.GetLines(), 'lines'),
+            (mesh.GetPolys(), 'faces'),
+            (mesh.GetStrips(), 'strips'),
+        ]
+        cell_arrays = [(array, name) for array, name in cell_arrays if array.GetNumberOfCells()]
+        if len(cell_arrays) != 1:
+            return None
+        cell_array, name = cell_arrays[0]
+    elif isinstance(mesh, pv.UnstructuredGrid):
+        if mesh.n_cells == 0 or (mesh.celltypes == pv.CellType.POLYHEDRON).any():
+            return None
+        cell_array, name = mesh.GetCells(), 'cells'
+    else:
+        return None
+    if cell_array.IsHomogeneous() <= 0:
+        return None
+    from pyvista.core.cell import _get_regular_cells  # noqa: PLC0415
+
+    cells = _get_regular_cells(cell_array)
+    # A cell array mid-edit can hold an offset its connectivity does not cover yet
+    return (cells, name) if len(cells) == mesh.n_cells else None
 
 
-def _extract_polys_fast(
-    mesh: PolyData, mask: NDArray[np.bool_], *, pass_point_ids: bool, pass_cell_ids: bool
-) -> PolyData:
-    """Extract the masked faces of a mesh with regular faces only, without VTK."""
-    faces = mesh.regular_faces[mask]
+def _cells_using_points(
+    cells: NDArray[np.signedinteger], mask: NDArray[np.bool_], *, any_point: bool
+) -> NDArray[np.bool_]:
+    """Return the mask of equal-sized cells that use any, or only, masked points."""
+    used = mask[cells]
+    return used.any(axis=1) if any_point else used.all(axis=1)
+
+
+def _extract_homogeneous_cells(
+    mesh: DataSet,
+    cells: tuple[NDArray[np.signedinteger], str],
+    mask: NDArray[np.bool_],
+    *,
+    pass_point_ids: bool,
+    pass_cell_ids: bool,
+) -> PolyData | UnstructuredGrid:
+    """Extract the masked cells of a mesh with equal-sized cells, without VTK."""
+    point_ids, name = cells
+    point_ids = point_ids[mask]
     used = np.zeros(mesh.n_points, dtype=bool)
-    used[faces] = True
+    used[point_ids] = True
     new_ids = np.cumsum(used) - 1
-    output = pv.PolyData.from_regular_faces(mesh.points[used], new_ids[faces])
-    for name, array in mesh.point_data.items():
-        output.point_data[name] = array[used]
-    for name, array in mesh.cell_data.items():
-        output.cell_data[name] = array[mask]
+    new_cells = pv.CellArray.from_regular_cells(new_ids[point_ids])
+    output: PolyData | UnstructuredGrid
+    if isinstance(mesh, pv.PolyData):
+        output = pv.PolyData()
+        output.points = mesh.points[used]
+        setattr(output, name, new_cells)
+    else:
+        celltypes = cast('UnstructuredGrid', mesh).celltypes[mask]
+        output = pv.UnstructuredGrid()
+        output.points = mesh.points[used]
+        output.SetCells(_vtk.numpy_to_vtk(celltypes, deep=True), new_cells)
+    for array_name, array in mesh.point_data.items():
+        output.point_data[array_name] = array[used]
+    for array_name, array in mesh.cell_data.items():
+        output.cell_data[array_name] = array[mask]
     output.field_data.update(mesh.field_data)
     if pass_point_ids:
         output.point_data['vtkOriginalPointIds'] = np.flatnonzero(used)

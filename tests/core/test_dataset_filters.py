@@ -2874,41 +2874,70 @@ def test_remove_cells_invert_polydata(sphere):
     assert empty.n_arrays == 0
 
 
-@pytest.mark.parametrize('pass_ids', [True, False])
-@pytest.mark.parametrize('faces', ['triangles', 'quads', 'mixed'])
-def test_extract_cells_regular_faces_fast_path(faces, pass_ids, monkeypatch):
+def _homogeneous_meshes():
+    """Return meshes keyed by kind, the first six having one array of equal-sized cells."""
+    rng = np.random.default_rng(0)
     triangles = pv.Sphere()
-    quads = pv.Plane(i_resolution=10, j_resolution=10)
-    mesh = {'triangles': triangles, 'quads': quads, 'mixed': triangles + quads}[faces]
+    hexahedra = pv.ImageData(dimensions=(4, 4, 4)).cast_to_unstructured_grid()
+    return {
+        'verts': pv.PolyData(rng.random((20, 3))),
+        'lines': pv.PolyData(rng.random((20, 3)), lines=[[2, i, i + 1] for i in range(19)]),
+        'triangles': triangles,
+        'quads': pv.Plane(i_resolution=5, j_resolution=5),
+        'strips': pv.PolyData(rng.random((8, 3)), strips=[4, 0, 1, 2, 3, 4, 4, 5, 6, 7]),
+        'hexahedra': hexahedra,
+        'mixed_faces': triangles + pv.Plane(),
+        'verts_and_faces': pv.PolyData(triangles.points, faces=triangles.faces, verts=[1, 0]),
+        'mixed_grid': hexahedra + examples.cells.Tetrahedron(),
+    }
+
+
+@pytest.mark.parametrize('pass_ids', [True, False])
+@pytest.mark.parametrize('kind', list(_homogeneous_meshes()))
+def test_extract_homogeneous_cells_fast_path(kind, pass_ids, monkeypatch):
+    mesh = _homogeneous_meshes()[kind]
+    is_homogeneous = kind in ('verts', 'lines', 'triangles', 'quads', 'strips', 'hexahedra')
+    assert (data_set._homogeneous_cells(mesh) is not None) is is_homogeneous
     rng = np.random.default_rng(0)
     mesh.point_data['point'] = rng.random((mesh.n_points, 2))
     mesh.cell_data['cell'] = rng.integers(0, 9, mesh.n_cells)
     mesh.field_data['field'] = [1, 2]
     mesh.set_active_scalars('cell')
-    mask = rng.random(mesh.n_cells) < 0.5
+    cell_mask = rng.random(mesh.n_cells) < 0.5
+    point_mask = rng.random(mesh.n_points) < 0.5
+    # The first cell has every point selected and the last cell none
+    point_mask[mesh.get_cell(0).point_ids] = True
+    point_mask[mesh.get_cell(mesh.n_cells - 1).point_ids] = False
     kwargs = dict(pass_point_ids=pass_ids, pass_cell_ids=pass_ids)
 
+    def run_filters():
+        return [
+            mesh.extract_cells(cell_mask, **kwargs),
+            mesh.remove_cells(cell_mask, **kwargs),
+            mesh.extract_points(point_mask, **kwargs),
+            mesh.extract_points(point_mask, adjacent_cells=False, **kwargs),
+            mesh.remove_points(ind=point_mask, mode='any', **kwargs),
+            mesh.remove_points(ind=point_mask, mode='all', **kwargs),
+        ]
+
     calls = []
-    fast_path = data_set._extract_polys_fast
+    fast_path = data_set._extract_homogeneous_cells
     monkeypatch.setattr(
         data_set,
-        '_extract_polys_fast',
+        '_extract_homogeneous_cells',
         lambda *args, **kw: calls.append(1) or fast_path(*args, **kw),
     )
-    extracted = mesh.extract_cells(mask, **kwargs)
-    removed = mesh.remove_cells(mask, invert=True, **kwargs)
-    assert len(calls) == (0 if faces == 'mixed' else 2)
+    actual_outputs = run_filters()
+    assert len(calls) == (6 if is_homogeneous else 0)
 
-    monkeypatch.setattr(data_set, '_has_regular_faces_only', lambda _: False)
-    for actual, expected in (
-        (extracted, mesh.extract_cells(mask, **kwargs)),
-        (removed, mesh.remove_cells(mask, invert=True, **kwargs)),
-    ):
+    monkeypatch.setattr(data_set, '_homogeneous_cells', lambda _: None)
+    for actual, expected in zip(actual_outputs, run_filters(), strict=True):
         assert type(actual) is type(expected)
         assert actual.points.dtype == expected.points.dtype
         assert np.array_equal(actual.points, expected.points)
         if isinstance(actual, pv.PolyData):
-            assert np.array_equal(actual.faces, expected.faces)
+            for cells in ('verts', 'lines', 'faces', 'strips'):
+                assert np.array_equal(getattr(actual, cells), getattr(expected, cells))
         else:
             assert np.array_equal(actual.cells, expected.cells)
             assert np.array_equal(actual.celltypes, expected.celltypes)
