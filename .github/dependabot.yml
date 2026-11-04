@@ -17,7 +17,6 @@ updates:
       sphinx:
         patterns:
           - "*sphinx*"
-          - "pypandoc"
       pytest:
         patterns:
           - "pytest"

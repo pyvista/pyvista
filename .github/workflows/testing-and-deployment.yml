@@ -1,7 +1,6 @@
-name: Unit Testing and Deployment
+name: Unit Tests
 
-# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
-on: # zizmor: ignore[cache-poisoning]
+on:
   pull_request:
   merge_group:
   workflow_dispatch:
@@ -20,19 +19,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
-  ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  TOX_COLORED: "yes"
-  USE_CACHE: ${{
-    (
-    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
-    (github.event_name == 'pull_request') ||
-    (github.event_name == 'push')
-    ) &&
-    !startsWith(github.ref, 'refs/tags/v') &&
-    !startsWith(github.ref, 'refs/heads/release/') &&
-    !startsWith(github.ref, 'refs/heads/main')
-    }}
 
 permissions:
   id-token: none
@@ -70,163 +57,76 @@ jobs:
     with:
       runs-on: "ubuntu-22.04"
 
+  # Check names render as `macOS / 3.11`, and are required status checks on main.
   macOS:
-    # Job names are required status checks on main, so they have to keep
-    # rendering exactly as `MacOS Unit Testing (3.11)`.
-    name: MacOS Unit Testing (${{ matrix.python-version }})
     # The merge queue runs this suite against the exact tree that lands, and
     # nothing downstream of a push to `main` consumes its output, so it is only
     # repeated for a tag, where `release` gates on it.
     if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
-    runs-on: macos-latest
-    # macOS runner minutes bill at ten times the Linux rate, so a hung job is
-    # expensive at the 360-minute default. The suite finishes in ~15.
-    timeout-minutes: 80
     needs: cache-github-hosted
-    env:
-      PARALLEL: "-n auto" # Use all available cores on the selected runner
-    strategy:
-      fail-fast: false
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: macOS
+      os: macos-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
       # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
-      matrix:
-        python-version: ["3.11", "3.14"]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      - name: Core Testing (no GL)
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-core
-        run: tox run -e "$TOX_ENV"
-
-      - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() }}
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-plotting
-        run: tox run -e "$TOX_ENV"
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
+      rows: >-
+        [
+          {"python": "3.11"},
+          {"python": "3.14"}
+        ]
 
   Linux:
-    name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     # Repeated for a tag only, like the other two. The merge queue's own commit
     # is the one that lands, so the coverage it uploads is already Codecov's
     # report for `main` and the push has nothing left to add.
     if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-22.04
     needs: cache-github-hosted
-    strategy:
-      fail-fast: false
-
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Linux
+      os: ubuntu-22.04
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      coverage: true
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
-      matrix:
-        include:
-          # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          - python-version: "3.11"
-            vtk-version: "9.3.1"
-            numpy-version: "latest"
-          - python-version: "3.11"
-            vtk-version: "9.4.2"
-            numpy-version: "latest"
-          - python-version: "3.12"
-            vtk-version: "9.5.2"
-            numpy-version: "latest"
-          - python-version: "3.13"
-            vtk-version: "9.6.2"
-            numpy-version: "latest"
-          - python-version: "3.14"
-            vtk-version: "latest"
-            numpy-version: "latest"
+      rows: >-
+        [
+          {"python": "3.11", "vtk": "9.3.1"},
+          {"python": "3.11", "vtk": "9.4.2"},
+          {"python": "3.12", "vtk": "9.5.2"},
+          {"python": "3.13", "vtk": "9.6.2"},
+          {"python": "3.14", "vtk": "latest"}
+        ]
 
-    env:
-      TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
-      PARALLEL: "-n auto" # Use all available cores on the selected runner
+  Windows:
+    # Repeated for a tag only, for the same reason as the macOS suite.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
+    needs: cache-github-hosted
+    uses: $/.github/workflows/unit-tests.yml
+    with:
+      label: Windows
+      os: windows-latest
+      data-key: ${{ needs.cache-github-hosted.outputs.key }}
+      rows: >-
+        [
+          {"python": "3.11"},
+          {"python": "3.12"},
+          {"python": "3.13"},
+          {"python": "3.14"}
+        ]
+
+  check-package:
+    name: Check package
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 2
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
-
-      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
-        with:
-          packages: libosmesa6
-          version: 3.0
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      - name: Core Testing (no GL)
-        env:
-          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-core
-        run: tox run -e "$TOX_ENV"
-
-      - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() }}
-        env:
-          TOX_ENV: ${{ env.TOX_FACTOR }}-cov-plotting
-        run: tox run -e "$TOX_ENV"
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
-
-      - name: Upload coverage reports
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: coverage*.xml
-          if-no-files-found: error
+          python-version: "3.14"
 
       - name: Check package
         run: |
@@ -234,232 +134,23 @@ jobs:
           python -m build
           twine check --strict dist/*
 
-  VTK-dev:
-    # Runs on manual dispatch, and on PRs carrying the 'vtk-dev-testing' label
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
-    name: Linux VTK Dev Testing
-    permissions:
-      contents: read
-    runs-on: ubuntu-22.04
-    needs: cache-github-hosted
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.14"]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-
-      - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
-
-      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
-        with:
-          packages: libosmesa6
-          version: 3.0
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      - name: Core Testing (no GL)
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-cov-core-vtk_dev
-        run: tox run -e "$TOX_ENV"
-
-      - name: Plotting Testing (uses GL)
-        if: ${{ !cancelled() }}
-        env:
-          TOX_ENV: py${{ matrix.python-version }}-cov-plotting-vtk_dev
-        run: tox run -e "$TOX_ENV"
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
-
-      - name: Upload coverage reports
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage_reports-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: coverage*.xml
-          if-no-files-found: error
-
-  windows:
-    name: Windows Unit Testing
-    # Repeated for a tag only, for the same reason as the macOS suite.
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
-    runs-on: windows-latest
-    timeout-minutes: 80
-    needs: cache-github-hosted
-    env:
-      CI_WINDOWS: true
-      PARALLEL: "-n auto" # Use all available cores on the selected runner
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
-
-      - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
-
-      - name: Install tox-uv
-        run: pip install tox-uv
-
-      - name: Core Testing (no GL)
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: 12
-          max_attempts: 3
-          retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-core
-
-      - name: Plotting Testing (uses GL)
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        if: ${{ !cancelled() }}
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-plotting
-
-      - name: Upload Images for Failed Tests
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _failed_test_images
-
-      - name: Upload Generated Images
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: _generated_test_images
-
   # The test image report Netlify deploy lives in test-image-report-deploy.yml,
   # triggered via workflow_run, so fork PR CI is never blocked on deployment
   # approval.
 
-  upload-coverage-:
+  upload-coverage:
     name: Upload coverage reports
-    runs-on: ubuntu-22.04
-    needs: [Linux, VTK-dev]
-    # `always()` ensures this still runs when VTK-dev is skipped because the
-    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its reports
-    # upload under their own flags.
-    # Run on push/merge_group as well as pull_request so Codecov's
-    # main-branch baseline keeps advancing with every merge.
-    if: always() && needs.Linux.result == 'success'
+    needs: Linux
     permissions:
-      # id-token: write authorizes OIDC token minting so codecov-action can
-      # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
-      id-token: write
+      id-token: write # Codecov OIDC upload
       contents: read
-    steps:
-      # Needs to checkout only for codecov to match file names
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v8
-        with:
-          pattern: coverage_reports-*
-          path: coverage_reports
-
-      # Each matrix cell contributes one report per side. Sorting them into their own
-      # directories lets each side upload under its own flag. VTK-dev is matched first
-      # and flagged apart, since it runs only on demand and a flag whose set of jobs
-      # varies cannot be compared across commits.
-      - name: Sort reports by flag
-        run: |
-          mkdir -p flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
-          find coverage_reports -name 'coverage_package_*vtk_dev.xml' -exec mv {} flag_package_vtk_dev/ \;
-          find coverage_reports -name 'coverage_tests_*vtk_dev.xml' -exec mv {} flag_tests_vtk_dev/ \;
-          find coverage_reports -name 'coverage_package_*.xml' -exec mv {} flag_package/ \;
-          find coverage_reports -name 'coverage_tests_*.xml' -exec mv {} flag_tests/ \;
-          ls flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
-
-      - name: Upload pyvista coverage to CodeCov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
-        with:
-          directory: flag_package
-          flags: package
-          fail_ci_if_error: true
-          use_oidc: true
-
-      - name: Upload test coverage to CodeCov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
-        with:
-          directory: flag_tests
-          flags: tests
-          fail_ci_if_error: true
-          use_oidc: true
-
-      - name: Upload pyvista coverage from VTK dev to CodeCov
-        if: needs.VTK-dev.result == 'success'
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
-        with:
-          directory: flag_package_vtk_dev
-          flags: package-vtk-dev
-          fail_ci_if_error: true
-          use_oidc: true
-
-      - name: Upload test coverage from VTK dev to CodeCov
-        if: needs.VTK-dev.result == 'success'
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
-        with:
-          directory: flag_tests_vtk_dev
-          flags: tests-vtk-dev
-          fail_ci_if_error: true
-          use_oidc: true
+    uses: $/.github/workflows/codecov-upload.yml
 
   # Publish to PyPI using trusted publishing
   release:
     name: Release
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags')
-    needs: [Linux, windows, macOS]
+    needs: [Linux, Windows, macOS, check-package]
     runs-on: ubuntu-24.04
     environment:
       name: pypi
