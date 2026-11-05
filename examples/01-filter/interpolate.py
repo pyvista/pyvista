@@ -52,8 +52,10 @@ pl.show()
 # is to create an approximate 3D model of the temperature field in the
 # subsurface.
 #
-# This approach is a great for back-of-the-hand estimations but pales in
-# comparison to kriging
+# This approach is great for back-of-the-hand estimations. For a statistical
+# model of the field that also estimates its own uncertainty, use kriging,
+# for example with the `pyvista-krige <https://github.com/kleongf/pyvista-krige>`_
+# plugin.
 
 # Download the sparse data
 probes = examples.download_thermal_probes()
