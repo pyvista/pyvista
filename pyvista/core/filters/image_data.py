@@ -153,7 +153,6 @@ class ImageDataFilters(DataSetFilters):
 
         """
         alg = _vtk.vtkImageGaussianSmooth()
-        alg.SetInputDataObject(self)
         if scalars is None:
             field, scalars = set_default_active_scalars(self)
             if field.value == 1:
@@ -164,6 +163,10 @@ class ImageDataFilters(DataSetFilters):
             if field.value == 1:
                 msg = 'Can only process point data, given `scalars` are cell data.'
                 raise ValueError(msg)
+        # vtkImageGaussianSmooth smooths the active scalars, not the input array to process
+        alg_input = self.copy(deep=False)
+        alg_input.set_active_scalars(scalars, preference='point')
+        alg.SetInputDataObject(alg_input)
         alg.SetInputArrayToProcess(
             0,
             0,
