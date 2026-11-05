@@ -41,6 +41,7 @@ Geosciences
 * Flownet_: Data-Driven Reservoir Predictions.
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (OMF). PyVista provides the foundation for this library's visualization.
+* pyvista-krige_: Kriging of PyVista datasets with PyKrige. Adds a ``krige`` accessor that interpolates scattered samples onto any mesh with an uncertainty estimate, and a ``krige`` plotter component to plot the results.
 
 
 Many More
@@ -70,6 +71,7 @@ Many More
 .. _pymapdl: https://github.com/ansys/pymapdl
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _pyprocar: https://github.com/romerogroup/pyprocar
+.. _pyvista-krige: https://github.com/kleongf/pyvista-krige
 .. _tetgen: https://github.com/pyvista/tetgen
 .. _GemPy: https://github.com/gempy-project/gempy
 .. _Ptera: https://github.com/camurban/pterasoftware
