@@ -14,6 +14,7 @@ classifiers = [
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
   'Programming Language :: Python :: 3.14',
+  'Programming Language :: Python :: 3.15',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
@@ -84,7 +85,7 @@ test = [
   'cmcrameri<1.11.0',
   'cmocean<4.0.4',
   'colorcet<3.3.0',
-  'embreex<4.4.1',
+  'embreex<4.4.1; python_version < "3.15"', # no cp315 wheel
   'fsspec<2026.10.0',
   'hypothesis<6.170.10',
   'imageio-ffmpeg<0.7.0',
@@ -111,7 +112,7 @@ test = [
   'pyvista-stl>=0.5.3,<0.6.0',
   'pyvista-zstd>=0.3.1,<0.8.0',
   'refleak>=0.2.2,<0.3.0',
-  'scipy<1.18.0',
+  'scipy<1.19.0',
   'sphinx-autocodelink[gallery]==0.12.0',
   'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.5.0',
@@ -160,7 +161,7 @@ docs = [
   'pyvista-stl==0.5.3',
   'pyvista-zstd==0.7.0',
   'ruamel-yaml<0.20.0',
-  'scipy==1.17.1; python_version >= "3.11"',
+  'scipy==1.18.1; python_version >= "3.12"',
   'sphinx-autobuild==2025.8.25; python_version >= "3.11"',
   'sphinx-autocodelink[gallery]==0.12.0',
   'sphinx-autoopengraph==0.2.1',
@@ -306,6 +307,7 @@ filterwarnings = [
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
   'ignore:pyvista\.trame.*is deprecated:pyvista.core.errors.PyVistaDeprecationWarning', # shim re-exports to trame-pyvista
+  'ignore:unclosed iterparse iterator:ResourceWarning', # meshio's dolfin reader never closes its iterparse; Python 3.15 warns
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
   'always:(?s).*This test has multiple cached images.*:UserWarning',
@@ -326,6 +328,7 @@ markers = [
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_python(at_least, reason="..."): skip this test on Python `at_least` (a version tuple) and newer, e.g. while a test dependency has no wheel for it.',
   'skip_vtk_backend(backend, reason="..."): skip test when `pyvista.vtk_backend()` is `backend` (e.g. `cvista`). Use for behaviour that genuinely differs on an alternative VTK build -- attach it to the test itself, with a reason naming what diverges.',
   'skip_vtk_output_check(reason="..."): disable the autouse fail_on_vtk_output fixture for this test, for a test whose point is unreadable input, where the messages depend on which readers the VTK build ships. `reason` is required and says why.',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
