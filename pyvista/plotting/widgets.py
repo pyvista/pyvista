@@ -2344,6 +2344,7 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> mesh = examples.load_channels()
         >>> _ = pl.add_mesh(mesh.outline())
         >>> _ = pl.add_mesh_slice_spline(mesh)
+        >>> pl.camera_position = 'yz'
         >>> pl.show()
 
         """
