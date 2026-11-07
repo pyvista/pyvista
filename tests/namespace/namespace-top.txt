@@ -314,10 +314,12 @@ send_errors_to_logging, <function send_errors_to_logging at 0x163f63d30>
 set_algorithm_input, <function set_algorithm_input at 0x163f41700>
 set_default_active_scalars, <function set_default_active_scalars at 0x163f41670>
 set_default_active_vectors, <function set_default_active_vectors at 0x163f415e0>
+set_error_output, <function set_error_output at 0x163f438a0>
 set_error_output_file, <function set_error_output_file at 0x163f438b0>
 set_jupyter_backend, <function set_jupyter_backend at 0x1645b2f70>
 set_pickle_format, <function set_pickle_format at 0x163f3e3a0>
 set_plot_theme, <function set_plot_theme at 0x1647a4670>
+set_warning_output, <function set_warning_output at 0x163f438c0>
 # sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/pyvista/utilities/sphinx_gallery.py'>
 # start_xvfb, <function start_xvfb at 0x1641c8ca0>
 surface_from_para, <function surface_from_para at 0x1641c8670>

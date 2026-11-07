@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import os
 from pathlib import Path
 import re
 import signal
@@ -11,11 +12,13 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import NamedTuple
 from typing import NoReturn
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKExecutionError
 from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -33,10 +36,139 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseVTKReader
 
 
+class _Sentinel:
+    """A default which stands for something other than a value a caller can give.
+
+    Prints as the name it is given, so that a signature shows what it stands for
+    rather than the address of an object.
+
+    Parameters
+    ----------
+    name : str
+        Name shown when the sentinel is printed.
+
+    """
+
+    def __init__(self, name: str) -> None:
+        self._name = name
+
+    def __repr__(self) -> str:
+        return self._name
+
+
+_DEFAULT_OUTPUT: Any = _Sentinel('default')
+
+
+def set_error_output(
+    target: str | Path | None = _DEFAULT_OUTPUT,
+) -> tuple[
+    _vtk.vtkFileOutputWindow | _vtk.vtkStringOutputWindow | _vtk.vtkOutputWindow,
+    _vtk.vtkOutputWindow,
+]:
+    """Configure or redirect VTK error output.
+
+    Parameters
+    ----------
+    target : str | Path | None, optional
+        Destination for VTK errors:
+
+        - If not specified (default), restores VTK's default error output window
+          and standard error verbosity.
+        - If ``None`` or :data:`os.devnull`, silences all VTK error output.
+        - If a file path or string, redirects VTK error output to the specified file.
+
+    Returns
+    -------
+    :vtk:`vtkFileOutputWindow` or :vtk:`vtkStringOutputWindow` or :vtk:`vtkOutputWindow`
+        Active VTK output sink.
+    :vtk:`vtkOutputWindow`
+        VTK output window manager instance.
+
+    Examples
+    --------
+    Silence VTK errors completely:
+
+    >>> import pyvista as pv
+    >>> sink, _ = pv.set_error_output(None)
+
+    Redirect errors to a log file:
+
+    >>> sink, _ = pv.set_error_output('vtk_errors.log')
+
+    Reset back to VTK defaults:
+
+    >>> sink, _ = pv.set_error_output()
+
+    """
+    if target is _DEFAULT_OUTPUT:
+        _vtk.vtkOutputWindow.SetInstance(None)  # type: ignore[arg-type]
+        # Restore VTK's default stderr verbosity (INFO) so errors are no longer silenced
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_INFO)
+        win = _vtk.vtkOutputWindow.GetInstance()
+        return win, win
+
+    if target is None or str(target) == os.devnull:
+        string_window = _vtk.vtkStringOutputWindow()
+        _vtk.vtkOutputWindow.SetInstance(string_window)
+        # Silence vtkLogger so modern VTK log messages do not leak to stderr
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        return string_window, _vtk.vtkOutputWindow.GetInstance()
+
+    resolved_path = Path(target).expanduser().resolve()
+    file_output_window = _vtk.vtkFileOutputWindow()
+    file_output_window.SetFileName(str(resolved_path))
+    _vtk.vtkOutputWindow.SetInstance(file_output_window)
+    # Mute stderr logging so output goes only to the file without stderr duplication
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+    return file_output_window, _vtk.vtkOutputWindow.GetInstance()
+
+
+def set_warning_output(
+    target: str | Path | None = _DEFAULT_OUTPUT,
+) -> None:  # numpydoc ignore=RT01
+    """Configure VTK warning display.
+
+    Parameters
+    ----------
+    target : str | Path | None, optional
+        Warning display setting:
+
+        - If not specified (default), enables VTK global warning display.
+        - If ``None`` or :data:`os.devnull`, suppresses VTK global warning display.
+        - If a file path or string, enables warning display and redirects output to file.
+
+    Examples
+    --------
+    Silence VTK warnings:
+
+    >>> import pyvista as pv
+    >>> pv.set_warning_output(None)
+
+    Reset warnings back to VTK defaults:
+
+    >>> pv.set_warning_output()
+
+    """
+    if target is _DEFAULT_OUTPUT:
+        _vtk.vtkOutputWindow.GlobalWarningDisplayOn()
+        return
+
+    if target is None or str(target) == os.devnull:
+        _vtk.vtkOutputWindow.GlobalWarningDisplayOff()
+        return
+
+    # If redirected to a path, ensure warnings are on and redirect output
+    _vtk.vtkOutputWindow.GlobalWarningDisplayOn()
+    set_error_output(target)
+
+
 def set_error_output_file(
     filename: str | Path,
 ) -> tuple[_vtk.vtkFileOutputWindow, _vtk.vtkOutputWindow]:
     """Set a file to write out the VTK errors.
+
+    .. deprecated:: 0.50.0
+       Use :func:`pyvista.set_error_output` instead.
 
     Parameters
     ----------
@@ -51,6 +183,11 @@ def set_error_output_file(
         VTK output window.
 
     """
+    # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
+    warn_external(
+        '`set_error_output_file` has been deprecated. Use `set_error_output` instead.',
+        PyVistaDeprecationWarning,
+    )
     filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)  # type: ignore[arg-type]

@@ -50,4 +50,6 @@ control how much VTK logs in the first place, see
    :toctree: _autosummary
 
    send_errors_to_logging
+   set_error_output
    core.utilities.set_error_output_file
+   set_warning_output
