@@ -338,6 +338,10 @@ is discovered without an explicit import.
      - :func:`~pyvista.register_reader`
      - :func:`~pyvista.registered_readers`
      - ``pyvista.readers``
+   * - :ref:`URI scheme readers <reader_api>`
+     - :func:`~pyvista.register_scheme`
+     - :func:`~pyvista.registered_schemes`
+     - ``pyvista.schemes``
    * - :ref:`File writers <reader_api>`
      - :func:`~pyvista.register_writer`
      - :func:`~pyvista.registered_writers`

@@ -239,6 +239,7 @@ from .reader import get_reader as get_reader
 from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
 from .reader_registry import has_scheme as has_scheme
 from .reader_registry import register_reader as register_reader
+from .reader_registry import register_scheme as register_scheme
 from .state_manager import allow_new_attributes as allow_new_attributes
 from .state_manager import vtk_snake_case as vtk_snake_case
 from .state_manager import vtk_verbosity as vtk_verbosity
