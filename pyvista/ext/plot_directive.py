@@ -139,7 +139,7 @@ The plot directive has the following configuration options:
     ``pyvista_plot_autocodelink`` : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
         targets. Requires the `sphinx-autocodelink
-        <https://github.com/user27182/sphinx-autocodelink>`_ package to be
+        <https://github.com/pyvista/sphinx-autocodelink>`_ package to be
         installed (``pip install sphinx-autocodelink``); raises at build time
         if enabled without it. Only applies to directives with
         ``include-source`` on -- otherwise the code being linked from isn't

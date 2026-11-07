@@ -1300,7 +1300,7 @@ the type it should have.
     assert_types(pv.wrap(None), None)
     assert_types(list(multi().recursive_iterator('names')), list[str])
 
-``assert_types`` comes from `type-assert <https://github.com/user27182/type-assert>`_
+``assert_types`` comes from `type-assert <https://github.com/pyvista/type-assert>`_
 and is two things at once. To Mypy it is
 `typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
 which requires the expression's inferred type to match the second argument
@@ -1365,7 +1365,7 @@ test, so a skip cannot quietly outlive the case it was written for.
 
 The Framework
 """""""""""""
-The machinery lives in `type-assert <https://github.com/user27182/type-assert>`_,
+The machinery lives in `type-assert <https://github.com/pyvista/type-assert>`_,
 a standalone package that knows nothing about PyVista. It registers itself as a
 pytest plugin and takes one setting in ``pyproject.toml``:
 
