@@ -29,6 +29,12 @@ def test_color_labels_index(label_image, benchmark):
     assert colored.cell_data
 
 
+def test_color_labels_named_cmap(label_image, benchmark):
+    """Color labels with integer colors from a named colormap."""
+    colored = benchmark(label_image.color_labels, 'viridis', color_type='int_rgb')
+    assert colored.cell_data
+
+
 def test_color_labels_cycle(label_image, benchmark):
     """Color labels by cycling through the colormap."""
     colored = benchmark(label_image.color_labels, coloring_mode='cycle')
@@ -38,3 +44,8 @@ def test_color_labels_cycle(label_image, benchmark):
 def test_select_values(value_image, benchmark):
     """Select a range of values from an image."""
     assert benchmark(value_image.select_values, ranges=[10, 20]).n_points
+
+
+def test_voxelize_binary_mask(sphere, benchmark):
+    """Voxelize a closed surface into a binary mask."""
+    assert benchmark(sphere.voxelize_binary_mask, dimensions=(40, 40, 40)).n_points
