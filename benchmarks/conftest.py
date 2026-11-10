@@ -16,6 +16,11 @@ pv.OFF_SCREEN = True
 
 # Pin VTK to one thread so instruction counts do not depend on work splitting.
 _vtk.vtkSMPTools.Initialize(1)
+# Give the inactive STDThread backend that count too, or each SMP thread local reads sysfs.
+with pv.enable_smp_tools('stdthread', n_threads=1):
+    pass
+# Run threaded image filters in the calling thread instead of spawning workers.
+_vtk.vtkMultiThreader.SetGlobalMaximumNumberOfThreads(1)
 
 
 @pytest.fixture(scope='session')

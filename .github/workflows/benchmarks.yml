@@ -31,6 +31,9 @@ jobs:
           pip install uv
           uv pip install --system . --group test 'numpy==2.4.6' 'vtk==9.7.0'
       - uses: CodSpeedHQ/action@821a40cd6c80e3cfe387caf55668287addd808da # v5.5.0
+        env:
+          # NumPy's OpenBLAS reads this at import, before any conftest runs.
+          OPENBLAS_NUM_THREADS: "1"
         with:
           mode: simulation
           run: python -m pytest benchmarks --codspeed
