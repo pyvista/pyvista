@@ -6237,6 +6237,7 @@ class BasePlotter(_BoundsSizeMixin):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
         text_prop = TextProperty(
+            theme=self._theme,
             color=color,
             font_family=font,
             orientation=orientation,
@@ -6335,12 +6336,9 @@ class BasePlotter(_BoundsSizeMixin):
         if font_size is None:
             font_size = self.theme.font.size
         prop = TextProperty(
-            # A text property left to fill in the color and the font family itself
-            # takes them from the global theme rather than from the theme of the
-            # plotter it is drawn by, which draws black text on the black background
-            # of a plotter given a dark theme of its own
-            color=Color(color, default_color=self.theme.font.color),
-            font_family=self.theme.font.family if font is None else font,
+            theme=self._theme,
+            color=color,
+            font_family=font,
             orientation=orientation,
             font_file=font_file,
             shadow=shadow,
@@ -7013,6 +7011,7 @@ class BasePlotter(_BoundsSizeMixin):
         label_mapper.SetMargin(margin)
 
         text_property = pv.TextProperty(
+            theme=self._theme,
             italic=italic,
             bold=bold,
             font_size=font_size,
