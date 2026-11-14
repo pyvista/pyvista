@@ -211,6 +211,11 @@ articles = dict(
         link='https://bleyerj.github.io/comet-fenicsx/',
         image='comet_fenicsx.png',
     ),
+    pyvista_krige=Example(
+        title='Kriging with pyvista-krige',
+        link='https://github.com/kleongf/pyvista-krige#gallery',
+        image='pyvista_krige.png',
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
