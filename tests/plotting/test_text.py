@@ -366,6 +366,47 @@ def test_add_text_actor_follows_the_theme_of_the_plotter():
     pl.close()
 
 
+def test_add_text_follows_the_theme_of_the_plotter():
+    """Test that text is drawn in the color and font its own plotter asks for."""
+    theme = pv.themes.Theme()
+    theme.font.color = 'red'
+    theme.font.family = 'courier'
+    pl = pv.Plotter(theme=theme)
+
+    # A plotter with a theme of its own, a dark one in particular, would otherwise
+    # draw text in the color of the global theme, which its background may well be
+    actor = pl.add_text('text')
+    assert actor.prop.color == pv.Color('red')
+    assert actor.prop.font_family == 'courier'
+
+    # What the caller asks for is used instead
+    actor = pl.add_text('text', color='blue', font='times')
+    assert actor.prop.color == pv.Color('blue')
+    assert actor.prop.font_family == 'times'
+    pl.close()
+
+
+def test_add_point_labels_follows_the_theme_of_the_plotter():
+    """Test that point labels are drawn in the color and font their own plotter asks for."""
+    theme = pv.themes.Theme()
+    theme.font.color = 'red'
+    theme.font.family = 'courier'
+    pl = pv.Plotter(theme=theme)
+
+    actor = pl.add_point_labels([[0.0, 0.0, 0.0]], ['label'])
+    prop = actor.GetMapper().GetInputAlgorithm().GetTextProperty()
+    assert prop.color == pv.Color('red')
+    assert prop.font_family == 'courier'
+
+    actor = pl.add_point_labels(
+        [[0.0, 0.0, 0.0]], ['label'], text_color='blue', font_family='times'
+    )
+    prop = actor.GetMapper().GetInputAlgorithm().GetTextProperty()
+    assert prop.color == pv.Color('blue')
+    assert prop.font_family == 'times'
+    pl.close()
+
+
 def test_text_property_theme_is_not_shared():
     """Test that a property keeps its own theme when another property is created."""
     theme = pv.themes.Theme()
