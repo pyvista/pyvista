@@ -127,7 +127,9 @@ pl.show()
 #
 # .. code-block:: python
 #
-#     n_render = 100
+#     import time
+#
+#     n_render = 25
 #     for anti_aliasing in [False, 'fxaa', 'msaa', 'ssaa']:
 #
 #         pl = pv.Plotter(off_screen=True)
@@ -139,9 +141,9 @@ pl.show()
 #             pl.disable_anti_aliasing()
 #         pl.show(auto_close=False)
 #         tstart = time.time()
-#         # repeately trigger a render via saving a screenshot
+#         # repeatedly trigger a render via taking a screenshot
 #         for __ in range(n_render):
-#             pl.screenshot('tmp.png')
+#             pl.screenshot()
 #         telap = (time.time() - tstart)/n_render
 #
 #         print(f'Render time for {str(anti_aliasing):6}: {telap*1000:.3f} ms')

@@ -94,7 +94,11 @@ pl = pv.Plotter(notebook=True)
 algo = pv.ConeSource()
 mesh_actor = pl.add_mesh(algo)
 
-widget = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
+widget = pl.show(
+    jupyter_backend='trame',
+    jupyter_kwargs=dict(add_menu_items=custom_tools),
+    return_viewer=True,
+)
 
 # %%
 # To interact with ``trame``'s server we need to get the server's state.
