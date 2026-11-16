@@ -2939,9 +2939,6 @@ class HDFReader(BaseReader['DataObject'], TimeReader):
             Physical time value.
 
         """
-        if isinstance(time_point, bool) or not isinstance(time_point, (int, np.integer)):
-            msg = f'Time point must be an integer, got {type(time_point).__name__}.'
-            raise TypeError(msg)
         if time_point < 0 or time_point >= self.number_time_points:
             msg = f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
             raise ValueError(msg)
