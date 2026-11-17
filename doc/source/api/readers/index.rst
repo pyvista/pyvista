@@ -552,50 +552,39 @@ Temporal VTKHDF Data
 ~~~~~~~~~~~~~~~~~~~~
 
 :class:`HDFReader` reads one selected frame at a time. The file's physical time
-values may be nonuniform. Inspecting these values and selecting a frame reads
-metadata without loading every mesh in the simulation.
+values are listed in :attr:`~HDFReader.time_values`. Select a frame by index with
+:meth:`~HDFReader.set_active_time_point` or by physical time with
+:meth:`~HDFReader.set_active_time_value`, then call :meth:`~BaseReader.read`.
 
-For a file with fixed coordinates and connectivity and a point field named
-``temperature``, read only that field and keep one display mesh whose values
-are updated:
+Read the warping spheres at two time steps. This dataset requires VTK 9.4 or newer:
 
-.. code-block:: python
+.. pyvista-plot::
 
-    import pyvista as pv
+    >>> import pyvista as pv
+    >>> from pyvista import examples
 
-    reader = pv.get_reader('simulation.vtkhdf')
-    print(reader.time_values)
-    reader.disable_all_point_arrays()
-    reader.disable_all_cell_arrays()
-    reader.enable_point_array('temperature')
-    reader.set_active_time_point(0)
-    display = reader.read().copy()
-    pl = pv.Plotter()
-    pl.add_mesh(display, scalars='temperature', clim=(0, 100))
-    pl.show(auto_close=False, interactive_update=True)
+    >>> filename = examples.download_warping_spheres(load=False)
+    >>> reader = pv.HDFReader(filename)
+    >>> pl = pv.Plotter(shape=(1, 2))
+    >>> for column, index in enumerate((0, 25)):
+    ...     reader.set_active_time_point(index)
+    ...     frame = reader.read().cast_to_multiblock().copy()
+    ...     pl.subplot(0, column)
+    ...     _ = pl.add_mesh(
+    ...         frame, cmap='coolwarm', clim=(-3, 3), show_scalar_bar=False
+    ...     )
+    ...     _ = pl.add_text(
+    ...         f't = {reader.active_time_value:.2f}', font_size=12
+    ...     )
+    ...
+    >>> pl.link_views()
+    >>> pl.view_isometric()
+    >>> pl.show()
 
-    for time in reader.time_values:
-        reader.set_active_time_value(time)
-        frame = reader.read()
-        display.point_data['temperature'][:] = frame.point_data[
-            'temperature'
-        ]
-        pl.update()
+Time selection reads metadata without loading mesh data. Static files have an
+empty list of time values. Successive frames may share geometry buffers, so copy
+a frame before modifying its geometry.
 
-    pl.close()
-
-The color limits stay fixed throughout playback. The slice assignment updates
-an existing array and retains the mesh and actor. The same approach applies to
-cell fields and vector arrays of matching shape and type. The explicit copy
-is required. Frames returned by :meth:`~pyvista.BaseReader.read` may share
-geometry buffers, so modifying one frame in place can change other frames.
-
-Disabled arrays are not read from disk, so each frame costs roughly in
-proportion to the arrays that remain enabled. Geometry and connectivity are
-still part of every frame that :meth:`~pyvista.BaseReader.read` returns.
-
-This example assumes that geometry, topology, array shape, and array type stay
-constant. When they change, replace the display mesh with the new frame instead. PyVista does not retain all frames. VTK
-controls any internal geometry caching, whose capabilities depend on the VTK
-version and dataset type. Static files have an empty list of time values and
-support the usual :meth:`~pyvista.BaseReader.read` call.
+Use :class:`PointCellDataSelection` to disable unused point or cell arrays before
+reading. Disabled arrays are not loaded from disk; each frame still includes its
+geometry and connectivity.

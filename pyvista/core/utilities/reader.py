@@ -2912,8 +2912,13 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
             _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP()
         )
         super()._update_information()
+        output = self.reader.GetOutputDataObject(0)
+        if pv.vtk_version_info >= (9, 6) and isinstance(output, _vtk.vtkCompositeDataSet):
+            # The first read after the first information request misreads temporal
+            # blocks, so request the information again before that read.
+            self.reader.Modified()
         if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
-            self.reader.GetOutputDataObject(0), (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
+            output, (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
         ):
             # Composite outputs may contain images whose blocks are not loaded yet.
             # The cache can return a previously read ImageData time step. Fixed in
@@ -3039,9 +3044,6 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
             Physical time value.
 
         """
-        if isinstance(time_point, bool) or not isinstance(time_point, (int, np.integer)):
-            msg = f'Time point must be an integer, got {type(time_point).__name__}.'
-            raise TypeError(msg)
         if time_point < 0 or time_point >= self.number_time_points:
             msg = f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
             raise ValueError(msg)
