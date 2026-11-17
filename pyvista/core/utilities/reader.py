@@ -2926,20 +2926,23 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
             self._disable_cache()
 
     def _disable_cache(self) -> None:
+        """Disable VTK's geometry cache while suppressing its deprecation warning."""
         # SetUseCache is deprecated in VTK 9.7, where the cache is on by default
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             self.reader.SetUseCache(False)
 
     def _enable_array(self, association: Literal['Point', 'Cell'], name: str) -> None:
+        """Enable an array and invalidate affected VTK caches after reading."""
         selection = getattr(self.reader, f'Get{association}DataArraySelection')()
         if selection.ArrayIsEnabled(name):
             return
         selection.EnableArray(name)
         output = self.reader.GetOutputDataObject(0)
-        if (9, 7) <= pv.vtk_version_info < (9, 8) and output.GetUpdateTime() > 0:
+        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and output.GetUpdateTime() > 0:
             # The cache keeps returning data without a re-enabled array. Fixed in
             # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13790
+            # Backported in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13884
             self._disable_cache()
 
     def enable_point_array(self, name: str) -> None:
