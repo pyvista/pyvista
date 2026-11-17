@@ -94,3 +94,20 @@ def test_set_active_scalars(mutable_sphere, benchmark):
     """Set the active scalars by name."""
     benchmark(mutable_sphere.set_active_scalars, 'data')
     assert mutable_sphere.active_scalars_name == 'data'
+
+
+def test_attributes_values(many_arrays_sphere, benchmark):
+    """Read every array of an attributes wrapper holding fifty-one arrays."""
+    assert len(benchmark(many_arrays_sphere.point_data.values)) == 51
+
+
+def test_user_dict(sphere, benchmark):
+    """Read the user dict of a dataset."""
+    assert benchmark(operator.attrgetter('user_dict'), sphere) is not None
+
+
+def test_user_dict_setitem(mutable_sphere, benchmark):
+    """Assign a key in the user dict of a dataset."""
+    user_dict = mutable_sphere.user_dict
+    benchmark(user_dict.__setitem__, 'key', 'value')
+    assert mutable_sphere.user_dict['key'] == 'value'
