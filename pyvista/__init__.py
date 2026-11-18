@@ -215,8 +215,9 @@ def __getattr__(name: str) -> Any:
     if 'pyvista.plotting' not in sys.modules:
         import pyvista.plotting  # noqa: F401, PLC0415
 
+    plotting = sys.modules['pyvista.plotting']
     try:
-        feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
+        feature = plotting if name == 'plotting' else inspect.getattr_static(plotting, name)
     except AttributeError:
         msg = f"module 'pyvista' has no attribute '{name}'"
         raise AttributeError(msg) from None
