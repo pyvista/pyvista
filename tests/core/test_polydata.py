@@ -414,6 +414,7 @@ def test_polydata_subclass_del():
     del poly
 
 
+@pytest.mark.skip_python((3, 15), reason='no embreex wheel')
 def test_multi_ray_trace(sphere):
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4

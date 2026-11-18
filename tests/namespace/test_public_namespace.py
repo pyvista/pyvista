@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pyvista as pv
 
@@ -10,6 +11,8 @@ with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
+if sys.version_info >= (3, 15):  # the import system no longer sets module `__cached__`
+    namespace.remove('__cached__')
 
 
 def test_public_namespace():
