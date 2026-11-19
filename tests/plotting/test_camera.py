@@ -350,6 +350,19 @@ def test_tight_clipping_range(view, negative, adjust_render_window, scale):
     pl.close()
 
 
+@pytest.mark.parametrize('adjust_render_window', [False, True])
+def test_tight_sets_window_size(adjust_render_window):
+    pl = pv.Plotter(theme=pv.themes.Theme())
+    assert pl._window_size_unset
+    pl.add_mesh(pv.Plane(i_size=3, j_size=1))
+    pl.camera.tight(adjust_render_window=adjust_render_window)
+    assert pl._window_size_unset is not adjust_render_window
+    if adjust_render_window:
+        width, height = pl.window_size
+        assert width / height == pytest.approx(3, rel=0.01)
+    pl.close()
+
+
 def test_copy():
     camera = pv.Camera()
     for name, value, _ in configuration:

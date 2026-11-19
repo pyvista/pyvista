@@ -2525,7 +2525,7 @@ class Transform(
 
         Compose a second translation and get the component again.
 
-        >>> trans += (4, 5, 6)
+        >>> trans = trans + (4, 5, 6)
         >>> trans.translation
         (5.0, 7.0, 9.0)
 
@@ -2671,7 +2671,7 @@ class Transform(
 
         Compose a second scale matrix and get the factors again.
 
-        >>> trans *= (4, 5, 6)
+        >>> trans = trans * (4, 5, 6)
         >>> trans.scale_factors
         (4.0, 10.0, 18.0)
 

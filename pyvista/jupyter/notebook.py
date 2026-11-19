@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+import scooby
+
 import pyvista as pv
 from pyvista._warn_external import warn_external
 from pyvista.jupyter import _TRAME_BACKENDS
@@ -70,7 +72,13 @@ def handle_plotter(
     # Auto-detect the best available backend when not specified
     if backend is None:
         backend = _resolve_backend()
-        if backend == 'static':
+        if backend == 'static' and scooby.in_marimo():
+            warn_external(
+                'Using static image for notebook display.\n'
+                'Install or upgrade trame-pyvista for interactive plots in marimo:'
+                ' pip install -U "pyvista[marimo]"'
+            )
+        elif backend == 'static':
             warn_external(
                 'Using static image for notebook display.\n'
                 'Install trame for interactive backends:'

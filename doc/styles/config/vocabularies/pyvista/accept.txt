@@ -93,6 +93,7 @@ MRPs
 Maffitt
 Magnetoencephalography
 ManyLinux
+Marimo
 Matplotlib
 Meshgrid
 Meshio
@@ -326,6 +327,7 @@ lucy
 luma
 magpylib
 manylinux
+marimo
 matplotlib
 mayavi
 meshgrid

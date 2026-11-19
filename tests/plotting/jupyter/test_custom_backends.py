@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import contextlib
 import importlib.util
+import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from unittest.mock import patch
 import warnings
@@ -420,3 +422,144 @@ def test_handle_plotter_static_fallback_skips_server_proxy_warning(monkeypatch):
 def test_allowed_backends():
     """``ALLOWED_BACKENDS`` holds the backend names in order."""
     assert ALLOWED_BACKENDS == ('static', 'client', 'server', 'trame', 'html', 'none')
+
+
+@pytest.mark.parametrize(
+    ('ipykernel', 'marimo', 'expected'),
+    [
+        (True, None, True),
+        (False, None, False),
+        (False, True, True),
+        (False, False, False),
+        (False, 'missing', False),
+    ],
+)
+def test_in_notebook(monkeypatch, ipykernel, marimo, expected):
+    monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: ipykernel)
+    if marimo is None:
+        monkeypatch.delitem(sys.modules, 'marimo', raising=False)
+    elif marimo == 'missing':
+        monkeypatch.setitem(sys.modules, 'marimo', SimpleNamespace())
+    else:
+        monkeypatch.setitem(
+            sys.modules, 'marimo', SimpleNamespace(running_in_notebook=lambda: marimo)
+        )
+    assert jupyter_mod._in_notebook() is expected
+
+
+def _fake_marimo(monkeypatch, *, running=True):
+    """Run as a marimo notebook outside a Jupyter kernel and return the fake marimo module."""
+    marimo = SimpleNamespace(running_in_notebook=lambda: running, output=MagicMock())
+    monkeypatch.setattr(jupyter_mod.scooby, 'in_ipykernel', lambda: False)
+    monkeypatch.setitem(sys.modules, 'marimo', marimo)
+    return marimo
+
+
+@pytest.mark.parametrize(('theme', 'expected'), [(None, True), (False, False)])
+def test_plotter_notebook_in_marimo(monkeypatch, theme, expected):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(pv.global_theme, 'notebook', theme)
+    pl = pv.Plotter()
+    assert pl.notebook is expected
+    pl.close()
+
+
+def test_display_through_marimo_without_ipython(monkeypatch):
+    marimo = _fake_marimo(monkeypatch)
+    monkeypatch.setitem(sys.modules, 'IPython', None)
+    jupyter_mod._display('image')
+    marimo.output.append.assert_called_once_with('image')
+
+
+def test_display_without_ipython_raises(monkeypatch):
+    monkeypatch.delitem(sys.modules, 'marimo', raising=False)
+    monkeypatch.setitem(sys.modules, 'IPython', None)
+    with pytest.raises(ImportError, match='Install IPython'):
+        jupyter_mod._display('image')
+
+
+_TRAME_PYVISTA_SOURCES = pytest.mark.parametrize(
+    'trame_source',
+    ['trame_pyvista.jupyter:show_trame', 'trame_pyvista._make_handler.<locals>._handler'],
+)
+
+
+@_TRAME_PYVISTA_SOURCES
+@pytest.mark.parametrize(
+    ('running', 'renders', 'expected'),
+    [(True, True, 'trame'), (True, False, 'static'), (False, False, 'trame')],
+)
+def test_resolve_backend_in_marimo(monkeypatch, trame_source, running, renders, expected):
+    _fake_marimo(monkeypatch, running=running)
+    monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: renders)
+    with _without_custom_backends():
+        for name in ('trame', 'html'):
+            _custom_backends[name] = _mock_handler
+            _custom_backend_sources[name] = trame_source
+        assert _resolve_backend() == expected
+
+
+@pytest.mark.parametrize(('running', 'raises'), [(True, False), (False, True)])
+def test_validate_backend_without_ipython(monkeypatch, running, raises):
+    _fake_marimo(monkeypatch, running=running)
+    find_spec = importlib.util.find_spec
+    monkeypatch.setattr(
+        importlib.util, 'find_spec', lambda name: None if name == 'IPython' else find_spec(name)
+    )
+    with (
+        pytest.raises(ImportError, match='Install IPython') if raises else contextlib.nullcontext()
+    ):
+        assert _validate_jupyter_backend('static') == 'static'
+
+
+def test_marimo_renders_trame_pyvista():
+    assert jupyter_mod._marimo_renders_trame_pyvista()
+
+
+def test_marimo_renders_trame_pyvista_without_anywidget(monkeypatch):
+    monkeypatch.setitem(sys.modules, 'anywidget', None)
+    assert not jupyter_mod._marimo_renders_trame_pyvista()
+
+
+def test_marimo_renders_trame_pyvista_old_widget(monkeypatch):
+    old_jupyter = SimpleNamespace(Widget=type('Widget', (), {}))
+    monkeypatch.setitem(sys.modules, 'trame_pyvista.jupyter', old_jupyter)
+    assert not jupyter_mod._marimo_renders_trame_pyvista()
+
+
+@pytest.mark.parametrize('trame_registered', [True, False])
+def test_handle_plotter_in_marimo_suggests_marimo_extra(monkeypatch, trame_registered):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: False)
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.notebook.show_static_image', return_value='static_img'),
+    ):
+        if trame_registered:
+            _custom_backends['trame'] = _mock_handler
+            _custom_backend_sources['trame'] = 'trame_pyvista.jupyter:show_trame'
+        with pytest.warns(UserWarning, match=r'pyvista\[marimo\]'):
+            result = handle_plotter(MagicMock())
+    assert result == 'static_img'
+
+
+def test_handle_plotter_outside_marimo_suggests_jupyter_extra(monkeypatch):
+    _fake_marimo(monkeypatch, running=False)
+    with (
+        _without_custom_backends(),
+        patch('pyvista.jupyter.notebook.show_static_image', return_value='static_img'),
+        pytest.warns(UserWarning, match=r'pyvista\[jupyter\]'),
+    ):
+        handle_plotter(MagicMock())
+
+
+@_TRAME_PYVISTA_SOURCES
+def test_resolve_backend_in_marimo_keeps_other_plugins(monkeypatch, trame_source):
+    _fake_marimo(monkeypatch)
+    monkeypatch.setattr(jupyter_mod, '_marimo_renders_trame_pyvista', lambda: False)
+    with _without_custom_backends():
+        _custom_backends['trame'] = _mock_handler
+        _custom_backend_sources['trame'] = trame_source
+        _custom_backends['other'] = _mock_handler
+        _custom_backend_sources['other'] = 'other_plugin:show'
+        assert _resolve_backend() == 'other'
