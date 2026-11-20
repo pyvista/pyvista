@@ -332,6 +332,24 @@ def test_tight_without_renderer():
         pv.Camera().tight()
 
 
+@pytest.mark.parametrize('view', ['xy', 'yx', 'xz', 'zx', 'yz', 'zy'])
+@pytest.mark.parametrize('negative', [False, True])
+@pytest.mark.parametrize('adjust_render_window', [False, True])
+@pytest.mark.parametrize('scale', [0.01, 1.0, 1000.0])
+def test_tight_clipping_range(view, negative, adjust_render_window, scale):
+    """Keep all mesh points between the camera's clipping planes."""
+    mesh = pv.Box(bounds=np.array([1, 3, -4, 0, 7, 13]) * scale)
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.camera.tight(view=view, negative=negative, adjust_render_window=adjust_render_window)
+
+    depths = (mesh.points - pl.camera.position) @ pl.camera.direction
+    near, far = pl.camera.clipping_range
+    assert 0 < near < depths.min()
+    assert depths.max() < far
+    pl.close()
+
+
 def test_copy():
     camera = pv.Camera()
     for name, value, _ in configuration:

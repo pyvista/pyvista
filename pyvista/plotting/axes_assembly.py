@@ -21,6 +21,7 @@ import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
@@ -95,6 +96,7 @@ def _validate_single_color(color: ColorLike | Sequence[ColorLike]) -> Color:
 
 @abstract_class
 class _XYZAssembly(  # numpydoc ignore=PR01
+    _TextReprHTMLMixin,
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     _Prop3DMixin,

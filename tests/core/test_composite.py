@@ -433,7 +433,10 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     assert multi._repr_html_() is not None
     pattern = (
         r'MultiBlock\[.+\] \(0x[0-9a-fA-F]+\)'
+        r'\s+N Cells:\s{4}\d+'
+        r'\s+N Points:\s{3}\d+'
         r'\s+N Blocks:\s{3}\d+'
+        r'\s+Depth:\s{6}\d+'
         r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
         r'\s+Z Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
@@ -443,6 +446,45 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
     assert str(multi) == match.string
 
 
+@pytest.mark.parametrize(
+    ('blocks', 'depth'),
+    [
+        ([], 1),
+        ([None], 1),
+        ([pv.Sphere()], 1),
+        ([pv.MultiBlock()], 2),
+        ([pv.Sphere(), pv.MultiBlock([None, pv.Cube()])], 2),
+        ([pv.MultiBlock([pv.MultiBlock()]), pv.MultiBlock([pv.Cube()])], 3),
+        ([pv.Cube(), pv.MultiBlock(), pv.MultiBlock([None, pv.MultiBlock()])], 3),
+    ],
+)
+def test_multi_block_counts(blocks, depth):
+    multi = pv.MultiBlock(blocks)
+    leaves = list(multi.recursive_iterator(skip_none=True))
+    assert multi.n_points == sum(leaf.n_points for leaf in leaves)
+    assert multi.n_cells == sum(leaf.n_cells for leaf in leaves)
+    assert isinstance(multi.n_points, int)
+    assert isinstance(multi.n_cells, int)
+    assert multi.depth == depth
+    assert multi.is_nested == (depth > 1)
+
+
+def test_multi_block_counts_values():
+    multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+    assert multi.n_points == 850
+    assert multi.n_cells == 1686
+    assert multi.depth == 2
+    lines = repr(multi).splitlines()
+    assert lines[1:5] == [
+        '  N Cells:    1686',
+        '  N Points:   850',
+        '  N Blocks:   3',
+        '  Depth:      2',
+    ]
+    badges = re.findall(r"<span class='pv-header-badge'>([^<]*)</span>", multi._repr_html_())
+    assert badges[:4] == ['850 points', '1,686 cells', '3 blocks', 'depth 2']
+
+
 def test_multi_block_repr_bounds():
     empty_poly = pv.PolyData().extract_cells([])
     poly_x_bounds = repr(empty_poly).splitlines()[3]
@@ -450,9 +492,9 @@ def test_multi_block_repr_bounds():
     poly_z_bounds = repr(empty_poly).splitlines()[5]
 
     empty_multiblock = pv.MultiBlock([empty_poly])
-    multi_x_bounds = repr(empty_multiblock).splitlines()[2]
-    multi_y_bounds = repr(empty_multiblock).splitlines()[3]
-    multi_z_bounds = repr(empty_multiblock).splitlines()[4]
+    multi_x_bounds = repr(empty_multiblock).splitlines()[5]
+    multi_y_bounds = repr(empty_multiblock).splitlines()[6]
+    multi_z_bounds = repr(empty_multiblock).splitlines()[7]
 
     assert multi_x_bounds == poly_x_bounds
     assert multi_y_bounds == poly_y_bounds
@@ -722,6 +764,101 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
             assert (multi[i] is block) != recursive
         else:
             assert block is multi[i]
+
+
+@pytest.mark.parametrize('recursive', [True, False])
+def test_multi_block_shallow_copy_self(recursive, multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    keys, blocks = multi.keys(), list(multi)
+    multi.shallow_copy(multi, recursive=recursive)
+    assert multi.keys() == keys
+    assert all(a is b for a, b in zip(multi, blocks, strict=True))
+
+
+@pytest.mark.parametrize('recursive', [True, False])
+def test_multi_block_shallow_copy_deeply_nested(recursive, monkeypatch):
+    depth = 20
+    root = level = MultiBlock()
+    for i in range(depth):
+        level.append(pv.Sphere(center=(i, 0, 0)), f'sphere{i}')
+        child = MultiBlock()
+        child.field_data['level'] = [i]
+        level.append(child, f'level{i}')
+        level = child
+    multi_copy = MultiBlock()
+
+    n_init = 0
+    init = MultiBlock.__init__
+
+    def counting_init(self, *args, **kwargs):
+        nonlocal n_init
+        n_init += 1
+        assert n_init <= depth, 'each nested block must be copied at most once'
+        init(self, *args, **kwargs)
+
+    monkeypatch.setattr(MultiBlock, '__init__', counting_init)
+    multi_copy.shallow_copy(root, recursive=recursive)
+    assert n_init == (depth if recursive else 0)
+
+    source, copied = root, multi_copy
+    for i in range(depth):
+        assert copied.keys() == [f'sphere{i}', f'level{i}']
+        assert copied[0] is source[0]
+        assert (copied[1] is source[1]) != recursive
+        source, copied = source[1], copied[1]
+        assert copied.field_data['level'] == [i]
+
+
+def test_multi_block_from_raw_deeply_nested(monkeypatch):
+    depth = 20
+    root = level = _vtk.vtkMultiBlockDataSet()
+    for i in range(depth):
+        leaf = _vtk.vtkPolyData()
+        leaf.ShallowCopy(pv.Sphere(center=(i, 0, 0)))
+        child = _vtk.vtkMultiBlockDataSet()
+        level.SetNumberOfBlocks(2)
+        level.SetBlock(0, leaf)
+        level.SetBlock(1, child)
+        level = child
+
+    n_init = 0
+    init = MultiBlock.__init__
+
+    def counting_init(self, *args, **kwargs):
+        nonlocal n_init
+        n_init += 1
+        assert n_init <= depth + 1, 'each nested block must be wrapped at most once'
+        init(self, *args, **kwargs)
+
+    n_checks = 0
+    check = pv.core.utilities.helpers._dataset_array_lengths_match
+
+    def counting_check(obj):
+        nonlocal n_checks
+        n_checks += 1
+        return check(obj)
+
+    monkeypatch.setattr(MultiBlock, '__init__', counting_init)
+    monkeypatch.setattr(pv.core.utilities.helpers, '_dataset_array_lengths_match', counting_check)
+    multi = MultiBlock(root)
+    assert n_init == depth + 1
+    assert n_checks == depth
+
+    for _ in range(depth):
+        assert multi.keys() == [None, None]
+        assert isinstance(multi[0], PolyData)
+        assert isinstance(multi[1], MultiBlock)
+        multi = multi[1]
+
+
+def test_multi_block_shallow_copy_replaces_existing_blocks():
+    multi = MultiBlock({'x': pv.Sphere(), 'y': pv.Cube(), 'z': pv.Cone()})
+    source = _vtk.vtkMultiBlockDataSet()
+    source.SetNumberOfBlocks(2)
+    source.SetBlock(0, pv.Plane())
+    source.SetBlock(1, pv.Disc())
+    multi.shallow_copy(source)
+    assert multi.keys() == [None, None]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -1727,6 +1864,10 @@ def test_block_types(multiblock_all_with_nested_and_none):
             [pv.MultiBlock([pv.PolyData()]), pv.MultiBlock([None]), pv.UnstructuredGrid()],
             'MultiBlock[MultiBlock[PolyData | None] | UnstructuredGrid]',
         ),
+        (
+            [pv.ImageData(), pv.MultiBlock([pv.ImageData()])],
+            'MultiBlock[MultiBlock[ImageData] | ImageData]',
+        ),
     ],
 )
 def test_inferred_type(blocks, expected):
@@ -1789,7 +1930,7 @@ _WIDE = [
                     pv.PointSet(),
                 ]
             ),
-            'MultiBlock[ExplicitStructuredGrid | ImageData | ...]',
+            'MultiBlock[MultiBlock[PolyData] | ExplicitStructuredGrid | ...]',
         ),
     ],
 )

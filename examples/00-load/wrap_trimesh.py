@@ -13,7 +13,7 @@ You can :func:`~pyvista.wrap` several other object types using pyvista including
 - VTK objects
 
 This allows for the "best of both worlds" programming special to
-Python due to its modularity.  If there's some limitation of pyvista
+Python due to its modularity. If there's some limitation of pyvista
 (or trimesh), then you can adapt your scripts to use the best features
 of more than one module.
 

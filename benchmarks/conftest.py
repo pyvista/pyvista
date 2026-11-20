@@ -16,6 +16,11 @@ pv.OFF_SCREEN = True
 
 # Pin VTK to one thread so instruction counts do not depend on work splitting.
 _vtk.vtkSMPTools.Initialize(1)
+# Give the inactive STDThread backend that count too, or each SMP thread local reads sysfs.
+with pv.enable_smp_tools('stdthread', n_threads=1):
+    pass
+# Run threaded image filters in the calling thread instead of spawning workers.
+_vtk.vtkMultiThreader.SetGlobalMaximumNumberOfThreads(1)
 
 
 @pytest.fixture(scope='session')
@@ -163,3 +168,68 @@ def mutable_sphere(rng):
 def scalars(sphere, rng):
     """Return an array sized to the small sphere's points."""
     return rng.random(sphere.n_points)
+
+
+@pytest.fixture(scope='session')
+def tetra_arrays(rng):
+    """Return (cells, celltypes, points) for 10,000 disjoint tetrahedra."""
+    n = 10_000
+    cells = np.hstack([np.full((n, 1), 4), np.arange(4 * n).reshape(n, 4)]).ravel()
+    return cells, np.full(n, pv.CellType.TETRA, np.uint8), rng.random((4 * n, 3))
+
+
+@pytest.fixture(scope='session')
+def polyhedron_arrays(rng):
+    """Return (cells, celltypes, points) for 10,000 disjoint hexahedra as polyhedra."""
+    n = 10_000
+    faces = [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
+    stream = np.array([value for face in faces for value in [4, *face]])
+    cell = np.concatenate([[1 + stream.size, 6], stream])
+    is_point_id = np.ones(cell.size, bool)
+    is_point_id[:2] = False
+    is_point_id[2::5] = False
+    cells = np.tile(cell, (n, 1))
+    cells[:, is_point_id] += (np.arange(n) * 8)[:, None]
+    return cells.ravel(), np.full(n, pv.CellType.POLYHEDRON, np.uint8), rng.random((8 * n, 3))
+
+
+@pytest.fixture(scope='session')
+def image(rng):
+    """Return a small image carrying point scalars."""
+    image = pv.ImageData(dimensions=(20, 20, 20))
+    image.point_data['data'] = rng.random(image.n_points)
+    return image
+
+
+@pytest.fixture(scope='session')
+def many_arrays_sphere(rng):
+    """Return a sphere carrying fifty point arrays besides its normals."""
+    mesh = pv.Sphere()
+    for i in range(50):
+        mesh.point_data[f'array{i}'] = rng.random(mesh.n_points)
+    return mesh
+
+
+@pytest.fixture(scope='session')
+def vtk_multiblock():
+    """Return an unwrapped VTK composite of ten spheres."""
+    composite = _vtk.vtkMultiBlockDataSet()
+    for i in range(10):
+        block = _vtk.vtkPolyData()
+        block.ShallowCopy(pv.Sphere())
+        composite.SetBlock(i, block)
+    return composite
+
+
+@pytest.fixture(scope='session')
+def padded_triangles(triangles):
+    """Return the triangle connectivity in the padded legacy format."""
+    return np.hstack([np.full((len(triangles), 1), 3), triangles]).ravel()
+
+
+@pytest.fixture
+def plotter():
+    """Return an off-screen plotter that is closed afterwards."""
+    pl = pv.Plotter(off_screen=True)
+    yield pl
+    pl.close()

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="pv-tx-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#376fa0"/>
+      <stop offset="100%" stop-color="#ffd040"/>
+    </linearGradient>
+    <clipPath id="pv-tx-clip">
+      <rect x="4" y="4" width="24" height="24" rx="1.5"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#pv-tx-clip)">
+    <rect x="4" y="4" width="24" height="24" fill="url(#pv-tx-sky)" opacity="0.9"/>
+    <circle cx="21.5" cy="11" r="3" fill="#ffd040"/>
+    <polygon points="4,28 4,21 11,13 17,20 20,17 28,24 28,28" fill="#1a4a70" opacity="0.95"/>
+    <polygon points="11,13 14,16.5 12,17.5 10,15.5 8.5,16" fill="rgba(255,255,255,0.75)"/>
+    <polygon points="4,28 4,25 13,22 22,26 28,25 28,28" fill="#376fa0" opacity="0.9"/>
+  </g>
+  <g stroke="rgba(255,255,255,0.45)" stroke-width="0.4" fill="none">
+    <line x1="12" y1="4" x2="12" y2="28"/>
+    <line x1="20" y1="4" x2="20" y2="28"/>
+    <line x1="4" y1="12" x2="28" y2="12"/>
+    <line x1="4" y1="20" x2="28" y2="20"/>
+  </g>
+  <rect x="4" y="4" width="24" height="24" rx="1.5" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="0.6"/>
+</svg>

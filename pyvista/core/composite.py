@@ -88,18 +88,18 @@ class MultiBlock(
     Pythonic manner.
 
     You can think of ``MultiBlock`` like a list as we
-    can iterate over this data structure by index.  It has some dictionary
+    can iterate over this data structure by index. It has some dictionary
     features as we can also access blocks by their string name.
 
     Subscripting the class declares the block type for static type checking,
     so that ``MultiBlock[PolyData]`` indexes and iterates as
-    :class:`~pyvista.PolyData` and its mutators accept nothing else.  Nothing
-    is checked at runtime.  An unsubscripted ``MultiBlock`` holds any
+    :class:`~pyvista.PolyData` and its mutators accept nothing else. Nothing
+    is checked at runtime. An unsubscripted ``MultiBlock`` holds any
     combination of datasets, nested composites and empty blocks.
 
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
-       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
+       from :class:`collections.abc.MutableSequence`. Multiple nonconforming
        behaviors were removed or modified.
 
     .. versionadded:: 0.50
@@ -244,7 +244,9 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))
+                # Leaves are validated as their own level wraps them
+                nested = isinstance(block, _vtk.vtkMultiBlockDataSet)
+                self.SetBlock(i, wrap(block, validate=False) if nested else wrap(block))
 
     def _items(self) -> Iterable[tuple[str | None, _BlockType]]:
         yield from zip(self.keys(), self, strict=True)
@@ -353,7 +355,7 @@ class MultiBlock(
 
         node_type : 'parent' | 'child', default: 'child'
             Type of node blocks to generate ``contents`` from. If ``'parent'``, the
-            contents are generated from :class:`MultiBlock` nodes.  If ``'child'``, the
+            contents are generated from :class:`MultiBlock` nodes. If ``'child'``, the
             contents are generated from :class:`~pyvista.DataSet` and ``None`` nodes.
 
         skip_none : bool, default: False
@@ -1175,6 +1177,78 @@ class MultiBlock(
         return self.n_blocks == 0
 
     @property
+    def n_points(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of points in all blocks.
+
+        Nested blocks are counted recursively and ``None`` blocks count as zero.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+        >>> multi.n_points
+        850
+
+        This is the sum over all leaf datasets.
+
+        >>> sum(block.n_points for block in multi.recursive_iterator(skip_none=True))
+        850
+
+        """
+        return self.GetNumberOfPoints()
+
+    @property
+    def n_cells(self) -> int:  # numpydoc ignore=RT01
+        """Return the total number of cells in all blocks.
+
+        Nested blocks are counted recursively and ``None`` blocks count as zero.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere(), pv.MultiBlock([pv.Cube()]), None])
+        >>> multi.n_cells
+        1686
+
+        This is the sum over all leaf datasets.
+
+        >>> sum(block.n_cells for block in multi.recursive_iterator(skip_none=True))
+        1686
+
+        """
+        return self.GetNumberOfCells()
+
+    @property
+    def depth(self) -> int:  # numpydoc ignore=RT01
+        """Return the number of :class:`MultiBlock` levels, including this one.
+
+        A :class:`MultiBlock` with no nested :class:`MultiBlock` blocks has a depth of 1.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        is_nested
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere()])
+        >>> multi.depth
+        1
+
+        >>> nested = pv.MultiBlock([multi, pv.MultiBlock([multi])])
+        >>> nested.depth
+        3
+
+        """
+        return 1 + max((block.depth for block in self if isinstance(block, MultiBlock)), default=0)
+
+    @property
     def bounds(self) -> BoundsTuple:
         """Find min/max for bounds across blocks.
 
@@ -1204,9 +1278,8 @@ class MultiBlock(
 
         """
         # apply reduction of min and max over each block
-        # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
         blocks: Sequence[_TypeMultiBlockLeaf] = self
-        all_bounds = [cast('list[float]', block.bounds) for block in blocks if block]
+        all_bounds = [list(block.bounds) for block in blocks if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = (0.0, 0.0, 0.0)
@@ -1356,7 +1429,7 @@ class MultiBlock(
 
         preference : str, default: "cell"
             When scalars is specified, this is the preferred array type
-            to search for in the dataset.  Must be either ``'point'``,
+            to search for in the dataset. Must be either ``'point'``,
             ``'cell'``, or ``'field'``.
 
             .. versionadded:: 0.45
@@ -1424,14 +1497,14 @@ class MultiBlock(
     def __getitem__(self, index: slice) -> MultiBlock[_BlockType]: ...  # pragma: no cover
     # fmt: on
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | str | slice) -> _BlockType | MultiBlock[_BlockType]:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
 
         """
         if isinstance(index, slice):
-            multi = MultiBlock()
+            multi: MultiBlock[_BlockType] = MultiBlock()
             for i in range(self.n_blocks)[index]:
                 multi.append(self[i], self.get_block_name(i))
             return multi
@@ -1444,7 +1517,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))
+        return cast('_BlockType', wrap(self.GetBlock(index)))
 
     # fmt: off
     # ruff: disable[E501]
@@ -1463,14 +1536,14 @@ class MultiBlock(
             Dataset to append to this multi-block.
 
         name : str, optional
-            Block name to give to dataset.  A default name is given
+            Block name to give to dataset. A default name is given
             depending on the block index as ``'Block-{i:02}'``.
 
         Raises
         ------
         TypeError
             If ``dataset`` is a composite which cannot be a block, such as a
-            :class:`~pyvista.PartitionedDataSet`.  Convert it with
+            :class:`~pyvista.PartitionedDataSet`. Convert it with
             :meth:`~pyvista.DataObject.cast_to_multiblock` first.
 
         Examples
@@ -1959,7 +2032,7 @@ class MultiBlock(
         dataset : pyvista.DataSet or pyvista.MultiBlock
             Data to insert.
         name : str, optional
-            Name for key to give dataset.  A default name is given
+            Name for key to give dataset. A default name is given
             depending on the block index as ``'Block-{i:02}'``.
 
         Examples
@@ -1995,7 +2068,7 @@ class MultiBlock(
         Parameters
         ----------
         index : int or str, default: -1
-            Index or name of the dataset within the multiblock.  Defaults to
+            Index or name of the dataset within the multiblock. Defaults to
             last dataset.
 
         Returns
@@ -2092,7 +2165,10 @@ class MultiBlock(
     def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
+        attrs.append(('N Cells:', self.n_cells, '{}'))
+        attrs.append(('N Points:', self.n_points, '{}'))
         attrs.append(('N Blocks:', self.n_blocks, '{}'))
+        attrs.append(('Depth:', self.depth, '{}'))
         bds = self.bounds
         attrs.append(('X Bounds:', (bds.x_min, bds.x_max), '{:.3e}, {:.3e}'))
         attrs.append(('Y Bounds:', (bds.y_min, bds.y_max), '{:.3e}, {:.3e}'))
@@ -2145,7 +2221,10 @@ class MultiBlock(
             obj_type=type(self).__name__,
             mesh_type='MultiBlock',
             header_badges=[
+                f'{self.n_points:,} points',
+                f'{self.n_cells:,} cells',
                 f'{self.n_blocks} blocks',
+                f'depth {self.depth}',
                 _fmt_memory(self.actual_memory_size),
             ],
             metadata=meta,
@@ -2225,7 +2304,7 @@ class MultiBlock(
 
     def shallow_copy(  # type: ignore[override]
         self,
-        to_copy: _vtk.vtkMultiBlockDataSet,
+        to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet,
         *,
         recursive: bool = False,
     ) -> None:
@@ -2242,25 +2321,29 @@ class MultiBlock(
             any nested multi-blocks are not shallow-copied.
 
         """
-        self.CompositeShallowCopy(to_copy)
+        if to_copy is self:
+            return
+        # Copy one level at a time so each block is visited once
+        self.SetNumberOfBlocks(0)
+        # Base-class call: copies field data and information, not blocks
+        _vtk.vtkCompositeDataSet.CompositeShallowCopy(self, to_copy)
+        n_blocks = to_copy.GetNumberOfBlocks()
+        self.SetNumberOfBlocks(n_blocks)
+        for i in range(n_blocks):
+            block = to_copy.GetBlock(i)
+            if recursive and isinstance(block, _vtk.vtkMultiBlockDataSet):
+                nested = MultiBlock()
+                nested.shallow_copy(block, recursive=True)
+                block = nested
+            self.SetBlock(i, block)
+            if to_copy.HasMetaData(i):
+                self.GetMetaData(i).Copy(to_copy.GetMetaData(i), 0)
         self._sync_user_dict()
         self.wrap_nested()
 
-        # Shallow copy creates new instances of nested multiblocks
-        # Iterate through the blocks to fix this recursively
-        def _replace_nested_multiblocks(
-            this_object_: MultiBlock[Any], new_object: _vtk.vtkMultiBlockDataSet
-        ) -> None:
-            for i, this_block in enumerate(this_object_):
-                if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
-                    block_to_copy = cast('MultiBlock', new_object.GetBlock(i))
-                    this_object_.replace(i, block_to_copy)
-                    _replace_nested_multiblocks(cast('MultiBlock[Any]', this_block), block_to_copy)
-
-        if not recursive:
-            _replace_nested_multiblocks(self, to_copy)
-
-    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
+    def deep_copy(  # type: ignore[override]
+        self, to_copy: MultiBlock[Any] | _vtk.vtkMultiBlockDataSet
+    ) -> None:
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
 
         Parameters
@@ -2300,14 +2383,14 @@ class MultiBlock(
         Parameters
         ----------
         name : str or None
-            Name of the scalars array to assign as active.  If
+            Name of the scalars array to assign as active. If
             ``None``, deactivates active scalars for both point and
             cell data.
 
         preference : str, default: "cell"
             If there are two arrays of the same name associated with
             points or cells, it will prioritize an array matching this
-            type.  Can be either ``'cell'`` or ``'point'``.
+            type. Can be either ``'cell'`` or ``'point'``.
 
         allow_missing : bool, default: False
             Allow missing scalars in part of the composite dataset. If all
@@ -2318,7 +2401,7 @@ class MultiBlock(
         pyvista.core.utilities.arrays.FieldAssociation
             Field association of the scalars activated.
 
-        numpy.ndarray
+        pyvista.pyvista_ndarray
             An array from the dataset matching ``name``.
 
         Notes
@@ -2337,11 +2420,7 @@ class MultiBlock(
                     )
                 else:
                     try:
-                        field, scalars_out = block.set_active_scalars(name, preference=preference)
-                        if scalars_out is None:
-                            field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
-                        else:
-                            scalars = scalars_out
+                        field, scalars = block.set_active_scalars(name, preference=preference)
                     except KeyError:
                         if not allow_missing:
                             raise
@@ -2605,6 +2684,7 @@ class MultiBlock(
 
         Nested blocks of the same class at the same depth are described together, so
         every :class:`MultiBlock` at one level shares a single ``MultiBlock[...]``.
+        Nested composites are listed before the other block types.
         A composite without blocks is a bare ``MultiBlock``.
 
         .. versionadded:: 0.50
@@ -2625,7 +2705,7 @@ class MultiBlock(
 
         >>> nested = pv.MultiBlock([multi, pv.ImageData(), None])
         >>> nested.inferred_type
-        'MultiBlock[ImageData | MultiBlock[PolyData] | None]'
+        'MultiBlock[MultiBlock[PolyData] | ImageData | None]'
 
         """
         return _inferred_type(type(self).__name__, self, float('inf'))[0]
@@ -2850,7 +2930,7 @@ def _inferred_type(
             leaves.add('None' if block is None else type(block).__name__)
     if not leaves and not nested:
         return name, 1
-    members = sorted([*(leaves - {'None'}), *nested]) + sorted(leaves & {'None'})
+    members = [*sorted(nested), *sorted(leaves - {'None'}), *sorted(leaves & {'None'})]
     shown: list[str] = []
     used = 1
     for member in members:

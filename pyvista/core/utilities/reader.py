@@ -20,6 +20,7 @@ from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import get_origin
+import warnings
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -55,14 +56,15 @@ if TYPE_CHECKING:
     # so the imports are required at type-check time even though Ruff
     # cannot see the reference inside a string literal.
     from pyvista import DataObject
-    from pyvista import DataSet  # noqa: F401
+    from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid  # noqa: F401
     from pyvista import ImageData  # noqa: F401
-    from pyvista import MultiBlock  # noqa: F401
+    from pyvista import MultiBlock
     from pyvista import PartitionedDataSet  # noqa: F401
     from pyvista import PolyData  # noqa: F401
     from pyvista import RectilinearGrid  # noqa: F401
     from pyvista import StructuredGrid  # noqa: F401
+    from pyvista import Table
     from pyvista import UnstructuredGrid  # noqa: F401
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
@@ -196,7 +198,7 @@ class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self: BaseVTKReader) -> None:
-        self._data_object: pv.DataObject | None = None
+        self._data_object: DataObject | None = None
         self._filename: str | Path | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
@@ -259,7 +261,7 @@ class BaseVTKReader(ABC):
         Set self._data_object.
         """
 
-    def GetOutputDataObject(self, *args) -> pv.DataObject | None:  # noqa: ARG002  # numpydoc ignore=PR01
+    def GetOutputDataObject(self, *args) -> DataObject | None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Return stored data."""
         return self._data_object
 
@@ -803,7 +805,7 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
     >>> from pathlib import Path
     >>> filename = examples.download_notch_displacement(load=False)
     >>> Path(filename).name
-    'notch_disp.vtu'
+    'notch_disp_v2.vtu'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot(
@@ -1016,7 +1018,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader):
     """Reader for the OpenFOAM format (``.foam``).
 
-    By default, PyVista enables all patch arrays.  This is a deviation
+    By default, PyVista enables all patch arrays. This is a deviation
     from the VTK default.
 
     Wraps :vtk:`vtkOpenFOAMReader`.
@@ -1605,7 +1607,7 @@ class Plot3DFunctionEnum(IntEnum):
 
 
 class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
-    """Reader for the PLOT3D format.
+    """Reader for the PLOT3D format (``.xyz``).
 
     Wraps :vtk:`vtkMultiBlockPLOT3DReader`.
 
@@ -1791,7 +1793,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
 
     Examples
     --------
-    Load a CGNS file.  All arrays are loaded by default.
+    Load a CGNS file. All arrays are loaded by default.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -2848,10 +2850,22 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
     _format = _formats.AVS_UCD
 
 
-class HDFReader(BaseReader['DataObject']):
+class HDFReader(BaseReader['DataObject'], TimeReader):
     """Reader for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFReader`.
+
+    Temporal files expose their physical time values through :attr:`time_values`.
+    Select a frame with :meth:`set_active_time_point` or :meth:`set_active_time_value`
+    before calling :meth:`read`. Selection reads no mesh data. Static files have
+    no time points and can be read normally. VTK may treat a file with a single
+    time step as static, in which case it exposes no time points.
+
+    Successive frames may share geometry buffers with each other, so copy a
+    frame before modifying its points or cells.
+
+    .. versionadded:: 0.50
+        Support for the :class:`TimeReader` interface.
 
     Examples
     --------
@@ -2876,6 +2890,97 @@ class HDFReader(BaseReader['DataObject']):
         'PartitionedDataSet',
         'MultiBlock',
     )
+
+    def _update_information(self) -> None:
+        """Reset the time selection when opening a file."""
+        self.reader.SetStep(0)
+        self.reader.GetOutputInformation(0).Remove(
+            _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP()
+        )
+        super()._update_information()
+        output = self.reader.GetOutputDataObject(0)
+        if pv.vtk_version_info >= (9, 6) and isinstance(output, _vtk.vtkCompositeDataSet):
+            # The first read after the first information request misreads temporal
+            # blocks, so request the information again before that read.
+            self.reader.Modified()
+        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
+            output, (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
+        ):
+            # Composite outputs may contain images whose blocks are not loaded yet.
+            # The cache can return a previously read ImageData time step. Fixed in
+            # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13773
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=DeprecationWarning)
+                self.reader.SetUseCache(False)
+
+    @property
+    def time_values(self) -> list[float]:
+        """Physical time values, or an empty list for a static file."""
+        info = self.reader.GetOutputInformation(0)
+        values = info.Get(_vtk.vtkStreamingDemandDrivenPipeline.TIME_STEPS())
+        return [] if values is None else list(values)
+
+    @property
+    def number_time_points(self) -> int:
+        """Return the number of available time points."""
+        return len(self.time_values)
+
+    def time_point_value(self, time_point: int) -> float:
+        """Return the physical time at an index.
+
+        Parameters
+        ----------
+        time_point : int
+            Zero-based time point index.
+
+        Returns
+        -------
+        float
+            Physical time value.
+
+        """
+        if time_point < 0 or time_point >= self.number_time_points:
+            msg = f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
+            raise ValueError(msg)
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self) -> float:
+        """Return the selected physical time, raising ValueError for a static file."""
+        if not self.number_time_points:
+            msg = 'No time points available in this file.'
+            raise ValueError(msg)
+        return self.time_point_value(self.reader.GetStep())
+
+    def set_active_time_point(self, time_point: int) -> None:
+        """Select a time point without reading mesh data.
+
+        Parameters
+        ----------
+        time_point : int
+            Zero-based time point index.
+
+        """
+        time_value = self.time_point_value(time_point)
+        self.reader.SetStep(time_point)
+        # A pipeline time request takes precedence over SetStep in vtkHDFReader.
+        self.reader.GetOutputInformation(0).Set(
+            _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP(), time_value
+        )
+
+    def set_active_time_value(self, time_value: float) -> None:
+        """Select a physical time without reading mesh data.
+
+        Parameters
+        ----------
+        time_value : float
+            One of the values in :attr:`time_values`.
+
+        """
+        if time_value not in self.time_values:
+            msg = f'Not a valid time {time_value} from available time values: {self.time_values}'
+            raise ValueError(msg)
+        self.set_active_time_point(self.time_values.index(time_value))
 
 
 class GLTFReader(BaseReader['MultiBlock']):
@@ -3091,7 +3196,7 @@ class GIFReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
     _format = _formats.GIF
 
 
-def _read_from_plotter(filename: str | Path, kind: Literal['vrml', '3ds']) -> pv.MultiBlock:
+def _read_from_plotter(filename: str | Path, kind: Literal['vrml', '3ds']) -> MultiBlock:
     pl = pv.Plotter(off_screen=True)
     importer = getattr(pl, f'import_{kind}')
     importer(filename)
@@ -3393,7 +3498,7 @@ class GaussianCubeReader(BaseReader['DataSet']):
         *,
         grid: bool = True,
         validate: bool | None = None,
-    ) -> pv.DataSet:
+    ) -> DataSet:
         """Read the file and return the output.
 
         Parameters
@@ -3634,7 +3739,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.enable_all_point_arrays()
         self.enable_all_side_set_arrays()
 
-    def read_global(self) -> pv.Table:
+    def read_global(self) -> Table:
         """Read enabled global data.
 
         Returns

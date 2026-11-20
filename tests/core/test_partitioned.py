@@ -6,6 +6,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import PartitionedDataSet
+from pyvista import _vtk
 from pyvista.core.errors import PartitionedDataSetsNotSupported
 
 
@@ -99,6 +100,26 @@ def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetb
         partitions[index] = uniform
 
 
+def test_setitem_raw_vtk_and_none(sphere):
+    partitions = PartitionedDataSet([sphere, sphere])
+    partitions[0] = _vtk.vtkPolyData()
+    assert isinstance(partitions[0], pv.PolyData)
+    partitions[1] = None
+    assert partitions[1] is None
+
+
+def test_setitem_mismatched_data_raises(sphere):
+    partitions = PartitionedDataSet([sphere, sphere])
+    with pytest.raises(
+        TypeError, match=re.escape('Setting a slice requires an iterable of datasets.')
+    ):
+        partitions[0:1] = sphere
+    with pytest.raises(TypeError, match=re.escape('Setting an index requires a dataset or None.')):
+        partitions[0] = [sphere]
+    with pytest.raises(TypeError, match=re.escape('Setting an index requires a dataset or None.')):
+        partitions[0] = _vtk.vtkTable()
+
+
 def test_del_slice(sphere):
     partitions = PartitionedDataSet([sphere for i in range(10)])
     match = 'The requested operation is not supported for PartitionedDataSetss.'
@@ -112,6 +133,29 @@ def test_partitioned_dataset_repr(ant, sphere, uniform, airplane):
     assert partitions._repr_html_() is not None
     assert repr(partitions) is not None
     assert str(partitions) is not None
+
+
+@pytest.mark.parametrize(
+    ('datasets', 'n_points', 'n_cells'),
+    [
+        ([], 0, 0),
+        ([None], 0, 0),
+        ([pv.Sphere(), pv.Cube()], 850, 1686),
+        ([pv.Sphere(), None, pv.Cube()], 850, 1686),
+    ],
+)
+def test_partitioned_counts(datasets, n_points, n_cells):
+    partitions = PartitionedDataSet(datasets)
+    assert partitions.n_points == n_points
+    assert partitions.n_cells == n_cells
+
+
+def test_partitioned_counts_repr():
+    partitions = PartitionedDataSet([pv.Sphere(), pv.Cube()])
+    lines = repr(partitions).splitlines()
+    assert lines[1:] == ['  N Cells         1686', '  N Points        850', '  N Partitions    2']
+    badges = re.findall(r"<span class='pv-header-badge'>([^<]*)</span>", partitions._repr_html_())
+    assert badges == ['850 points', '1,686 cells', '2 partitions']
 
 
 def test_partitioned_is_empty(sphere):

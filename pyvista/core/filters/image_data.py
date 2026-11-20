@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
+    from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -179,7 +180,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.ImageData)
 
     def median_smooth(  # type: ignore[misc]
         self: ImageData,
@@ -211,7 +212,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: "point"
             When scalars is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
+            type to search for in the dataset. Must be either
             ``'point'`` or ``'cell'``.
 
         progress_bar : bool, default: False
@@ -264,7 +265,7 @@ class ImageDataFilters(DataSetFilters):
         kernel = np.asarray(kernel_size, dtype=int)
         alg.SetKernelSize(kernel[0], kernel[1], kernel[2])
         _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.ImageData)
 
     def slice_index(  # type: ignore[misc]
         self: ImageData,
@@ -315,13 +316,15 @@ class ImageDataFilters(DataSetFilters):
             Mode to use when determining the range of values to index from.
 
             - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
-            - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
-              that is, ``[offset, offset + dimensions - 1]``.
+            - Use ``'extent'`` to index values based on the
+              :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent`, that is,
+              ``[offset, offset + dimensions - 1]``.
 
             The main difference between these modes is the inclusion or exclusion of the
-            :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
-            object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
-            definition of ``extent`` and considers the object's geometry.
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`. ``dimensions`` is
+            more pythonic and is how the object's data arrays themselves would be indexed, whereas
+            ``'extent'`` respects VTK's definition of ``extent`` and considers the object's
+            geometry.
 
         strict_index : bool, default: False
             Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
@@ -332,7 +335,8 @@ class ImageDataFilters(DataSetFilters):
             Rebase the coordinate reference of the extracted subset:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
-            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+            - the :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset` is reset to
+              ``(0, 0, 0)``
 
             The rebasing effectively applies a positive translation in world (XYZ)
             coordinates and a similar (that is, inverse) negative translation in voxel
@@ -450,9 +454,9 @@ class ImageDataFilters(DataSetFilters):
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max indices
-        that specify a rectangular region in the data. (Note that these are
-        0-offset.) You can also specify a sampling rate to subsample the
-        data.
+        that specify a rectangular region in the data. They are in the same
+        index space as the extent, so they include the offset. You can also
+        specify a sampling rate to subsample the data.
 
         Typical applications of this filter are to extract a slice from a
         volume for image processing, subsampling large volumes to reduce data
@@ -461,9 +465,9 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         voi : VectorLikeInt
-            Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-            These bounds specify the volume of interest in i-j-k min/max
-            indices. Must be within this mesh's :attr:`~pyvista.ImageData.extent`.
+            Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``. These
+            bounds specify the volume of interest in i-j-k min/max indices. Must be within this
+            mesh's :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent`.
 
         rate : VectorLikeInt, default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
@@ -481,7 +485,8 @@ class ImageDataFilters(DataSetFilters):
             If ``True`` (default), reset the coordinate reference of the extracted subset:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
-            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+            - the :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset` is reset to
+              ``(0, 0, 0)``
 
             The rebasing effectively applies a positive translation in world (XYZ)
             coordinates and a similar (that is, inverse) negative translation in voxel
@@ -525,7 +530,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetSampleRate(*rate)
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
-        result = _get_output(alg)
+        result = _get_output(alg, output_type=pv.ImageData)
 
         # VTK mutates direction and origin inconsistently, so we fix it up here
         result.direction_matrix = self.direction_matrix
@@ -580,8 +585,10 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``factor`` to crop a portion of the image symmetrically.
         #. Use ``margin`` to remove points from the image border.
         #. Use ``dimensions`` (and optionally, ``offset``) to explicitly crop to the specified
-           :attr:`~pyvista.Grid.dimensions` and :attr:`~pyvista.ImageData.offset`.
-        #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
+           :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` and
+           :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`.
+        #. Use ``extent`` to explicitly crop to a specified
+           :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
         #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
            values to define the cropping region.
@@ -589,7 +596,8 @@ class ImageDataFilters(DataSetFilters):
         These methods are all independent, for example, it is not possible to specify
         both ``factor`` and ``margin``.
 
-        By default, the cropped output's :attr:`~pyvista.Grid.dimensions` are typically less
+        By default, the cropped output's
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` are typically less
         than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
         ensure the output dimensions always match the input.
 
@@ -620,19 +628,21 @@ class ImageDataFilters(DataSetFilters):
               margin from each boundary independently.
 
         offset : VectorLikeInt, optional
-            Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.offset` indices
-            where the cropping region originates. If specified, then ``dimensions`` must also be
-            provided.
+            Length-3 vector of integers specifying the
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset` indices where the
+            cropping region originates. If specified, then ``dimensions`` must also be provided.
 
         dimensions : VectorLikeInt, optional
-            Length-3 vector of integers specifying the :attr:`~pyvista.Grid.dimensions` of
-            the cropping region. ``offset`` may also be provided, but if it is not, the crop is
-            centered in the image.
+            Length-3 vector of integers specifying the
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` of the cropping
+            region. ``offset`` may also be provided, but if it is not, the crop is centered in the
+            image.
 
         extent : VectorLikeInt, optional
-            Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
-            the cropping region. If the region extends beyond the extents of this mesh, it is
-            clipped to the part this mesh covers.
+            Length-6 vector of integers specifying the full
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent` of the cropping
+            region. If the region extends beyond the extents of this mesh, it is clipped to the
+            part this mesh covers.
 
         normalized_bounds : VectorLikeFloat, optional
             Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
@@ -686,7 +696,8 @@ class ImageDataFilters(DataSetFilters):
             Rebase the coordinate reference of the cropped output:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
-            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+            - the :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset` is reset to
+              ``(0, 0, 0)``
 
             The rebasing effectively applies a positive translation in world (XYZ)
             coordinates and a similar (that is, inverse) negative translation in voxel
@@ -850,7 +861,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_mask(
             *, mask_: str | ImageData | VectorLikeFloat | MatrixLikeFloat | bool
-        ) -> VectorLikeInt:
+        ) -> NDArray[np.signedinteger]:
             """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
             # Validate scalars
@@ -872,7 +883,7 @@ class ImageDataFilters(DataSetFilters):
                 mesh[scalars] = mask_
 
             field, scalars_ = _validate_scalars(mesh, scalars)
-            array = cast('pv.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field))
+            array = get_array(mesh, name=scalars_, preference=field, err=True)
             num_components = 1 if array.ndim == 1 else array.shape[1]
 
             # Create a binary foreground/background mask array
@@ -914,7 +925,9 @@ class ImageDataFilters(DataSetFilters):
             # Clip voi so it doesn't extend beyond the image's extent
             return ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
 
-        def _voi_from_normalized_bounds(normalized_bounds_: VectorLikeFloat) -> VectorLikeInt:
+        def _voi_from_normalized_bounds(
+            normalized_bounds_: VectorLikeFloat,
+        ) -> NDArray[np.signedinteger]:
             """Return the volume of interest for bounds relative to the image size."""
             _raise_error_kwargs_not_none('normalized_bounds')
             bounds = _validation.validate_arrayN(
@@ -942,9 +955,9 @@ class ImageDataFilters(DataSetFilters):
             xmin, ymin, zmin = starts + offset
             xmax, ymax, zmax = stops + offset
 
-            return xmin, xmax, ymin, ymax, zmin, zmax
+            return np.array([xmin, xmax, ymin, ymax, zmin, zmax])
 
-        def _voi_from_extent(extent_: VectorLikeInt) -> VectorLikeInt:
+        def _voi_from_extent(extent_: VectorLikeInt) -> NDArray[np.signedinteger]:
             """Return the volume of interest for an explicit extent."""
             _raise_error_kwargs_not_none('extent')
             return _validation.validate_arrayN(
@@ -955,7 +968,7 @@ class ImageDataFilters(DataSetFilters):
                 name='extent',
             )
 
-        def _voi_from_factor(factor_: float | VectorLikeFloat) -> VectorLikeInt:
+        def _voi_from_factor(factor_: float | VectorLikeFloat) -> NDArray[np.signedinteger]:
             """Return the volume of interest for a fraction of the image size."""
             _raise_error_kwargs_not_none('factor')
             valid_factor = _validation.validate_array3(
@@ -975,9 +988,9 @@ class ImageDataFilters(DataSetFilters):
             # Offset to center the new cropped region around the original center
             new_offset = center - ((new_dimensions - 1) // 2)
 
-            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return np.array(pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent)
 
-        def _voi_from_dimensions(dimensions_: VectorLikeInt) -> VectorLikeInt:
+        def _voi_from_dimensions(dimensions_: VectorLikeInt) -> NDArray[np.signedinteger]:
             """Return the volume of interest centered on the image with the given dimensions."""
             valid_dims = _validation.validate_array3(
                 dimensions_,
@@ -998,9 +1011,9 @@ class ImageDataFilters(DataSetFilters):
             half_size = (new_dimensions - 1) // 2
             new_offset = center - half_size
 
-            return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+            return np.array(pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent)
 
-        def _voi_from_margin(margin_: int | VectorLikeInt) -> VectorLikeInt:
+        def _voi_from_margin(margin_: int | VectorLikeInt) -> NDArray[np.signedinteger]:
             """Return the volume of interest left after removing a border."""
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
@@ -1012,7 +1025,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_dimensions_or_offset(
             dimensions_: VectorLikeInt | None, offset_: VectorLikeInt | None
-        ) -> VectorLikeInt:
+        ) -> NDArray[np.signedinteger]:
             """Return the volume of interest for explicit dimensions and offset."""
             _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
             if dimensions_ is None:
@@ -1021,7 +1034,7 @@ class ImageDataFilters(DataSetFilters):
             elif offset_ is None:
                 return _voi_from_dimensions(dimensions_)
             else:
-                return pv.ImageData(dimensions=dimensions, offset=offset).extent
+                return np.array(pv.ImageData(dimensions=dimensions, offset=offset).extent)
 
         if factor is not None:
             voi = _voi_from_factor(factor)
@@ -1186,7 +1199,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetDilateValue(dilate_value)
         alg.SetErodeValue(erode_value)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.ImageData)
 
     def _get_binary_values(  # type: ignore[misc]
         self: ImageData,
@@ -1277,7 +1290,7 @@ class ImageDataFilters(DataSetFilters):
         """Run an image algorithm on this image and return its output."""
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message=f'Performing {operation}')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.ImageData)
 
     def _validate_point_scalars(  # type: ignore[misc]
         self: ImageData, scalars: str | None = None
@@ -1661,11 +1674,11 @@ class ImageDataFilters(DataSetFilters):
         .. pyvista-plot::
             :force_static:
 
-            Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
-            for context.
+            Load a CT scan :func:`~pyvista.examples.downloads.download_chest()`, take one
+            :meth:`slice <slice_index>` as a 2D grayscale image, and show it for context.
 
             >>> from pyvista import examples
-            >>> im = examples.download_chest()
+            >>> im = examples.download_chest().slice_index(k=0)
             >>> clim = im.get_data_range()
             >>> kwargs = dict(
             ...     cmap='grey',
@@ -1680,7 +1693,7 @@ class ImageDataFilters(DataSetFilters):
 
             Use ``open`` to remove small objects in the lungs.
 
-            >>> opened = im.open(kernel_size=15)
+            >>> opened = im.open(kernel_size=19)
             >>> opened.plot(**kwargs)
 
         """
@@ -1858,7 +1871,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         threshold : float | VectorLikeFloat
-            Single value or (min, max) to be used for the data threshold.  If
+            Single value or (min, max) to be used for the data threshold. If
             a sequence, then length must be 2. Thresholds for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
@@ -1873,7 +1886,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: "point"
             When scalars is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
+            type to search for in the dataset. Must be either
             ``'point'`` or ``'cell'``.
 
         progress_bar : bool, default: False
@@ -1966,7 +1979,7 @@ class ImageDataFilters(DataSetFilters):
                 alg.SetReplaceOut(False)
 
             _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
-            return _get_output(alg)
+            return _get_output(alg, output_type=pv.ImageData)
 
         def _binary_image_threshold(
             *,
@@ -2003,7 +2016,7 @@ class ImageDataFilters(DataSetFilters):
                 alg.ReplaceOutOff()
 
             _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
-            return _get_output(alg)
+            return _get_output(alg, output_type=pv.ImageData)
 
         threshold_filter = (
             _binary_image_threshold if pv.vtk_version_info >= (9, 7) else _image_threshold
@@ -2105,7 +2118,7 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Fast Fourier Transform')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.ImageData)
         self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
@@ -2175,7 +2188,7 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(
             alg, progress_bar=progress_bar, message='Performing Reverse Fast Fourier Transform.'
         )
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.ImageData)
         self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
@@ -2198,7 +2211,7 @@ class ImageDataFilters(DataSetFilters):
 
         A :func:`ImageDataFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates high
-        frequency components.  Input and output are complex arrays with
+        frequency components. Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
 
         The frequencies of the input assume standard order: along each axis
@@ -2248,7 +2261,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Low Pass Filter')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.ImageData)
         self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
@@ -2271,7 +2284,7 @@ class ImageDataFilters(DataSetFilters):
 
         A :func:`ImageDataFilters.rfft` filter can be used to convert the
         output back into the spatial domain. This filter attenuates low
-        frequency components.  Input and output are complex arrays with
+        frequency components. Input and output are complex arrays with
         datatype :attr:`numpy.complex128`.
 
         The frequencies of the input assume standard order: along each axis
@@ -2321,7 +2334,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
         _update_alg(alg, progress_bar=progress_bar, message='Performing High Pass Filter')
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.ImageData)
         self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
@@ -2370,7 +2383,7 @@ class ImageDataFilters(DataSetFilters):
             raise ValueError(msg)
         return scalars_name
 
-    def _flip_uniform(self: ImageData, axis: int) -> pv.ImageData:  # type: ignore[misc]
+    def _flip_uniform(self: ImageData, axis: int) -> ImageData:  # type: ignore[misc]
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -2380,7 +2393,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return cast('pv.ImageData', wrap(alg.GetOutput()))
+        return cast('ImageData', wrap(alg.GetOutput()))
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
@@ -2810,7 +2823,7 @@ class ImageDataFilters(DataSetFilters):
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
 
-        def _empty_output(dtype_: np.dtype[Any]) -> pv.PolyData:
+        def _empty_output(dtype_: np.dtype[Any]) -> PolyData:
             """Return a contour with no cells and an empty boundary labels array."""
             empty = pv.PolyData()
             components = 1 if simplify_output else 2
@@ -2927,7 +2940,7 @@ class ImageDataFilters(DataSetFilters):
         if (dim := alg_input.dimensionality) != 3:
             msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
             raise ValueError(msg)
-        active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
+        active_scalars = _active_point_scalars(alg_input)[1]
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
             return _empty_output(active_scalars.dtype)
@@ -2943,7 +2956,7 @@ class ImageDataFilters(DataSetFilters):
         if boundary_style != 'strict_external':
             _configure_boundaries(
                 alg,
-                array_=cast('pv.pyvista_ndarray', alg_input.active_scalars),
+                array_=_active_point_scalars(alg_input)[1],
             )
         _configure_smoothing(
             alg,
@@ -2959,7 +2972,7 @@ class ImageDataFilters(DataSetFilters):
         with pv.vtk_verbosity('off'):
             _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
-        output: pv.PolyData = _get_output(alg)
+        output: PolyData = _get_output(alg, output_type=pv.PolyData)
 
         # Array added in 9.7 for use with vtkSurfaceNetsAtlas, remove it for now
         with contextlib.suppress(KeyError):
@@ -3072,9 +3085,10 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as voxel cells instead of as points.
 
         .. note::
-            Only the input's :attr:`~pyvista.Grid.dimensions`, and
-            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
-            properties such as :attr:`~pyvista.ImageData.spacing` and
+            Only the input's
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`, and
+            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial properties
+            such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
 
         .. versionadded:: 0.44.0
@@ -3276,9 +3290,10 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as points instead of as voxel cells.
 
         .. note::
-            Only the input's :attr:`~pyvista.Grid.dimensions`, and
-            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
-            properties such as :attr:`~pyvista.ImageData.spacing` and
+            Only the input's
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`, and
+            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial properties
+            such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
 
         .. versionadded:: 0.44.0
@@ -3816,7 +3831,7 @@ class ImageDataFilters(DataSetFilters):
                         'ignore',
                         category=pv.InvalidMeshWarning,
                     )
-                    return _get_output(alg)
+                    return _get_output(alg, output_type=pv.ImageData)
 
             # Set scalars since the filter only operates on the active scalars
             self.set_active_scalars(scalars_, preference='point')
@@ -3869,7 +3884,7 @@ class ImageDataFilters(DataSetFilters):
         scalars: str | None = None,
         scalar_range: (Literal['auto', 'foreground', 'vtk_default'] | VectorLikeFloat) = 'auto',
         extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
-        point_seeds: (MatrixLikeFloat | VectorLikeFloat | _vtk.vtkDataSet | None) = None,
+        point_seeds: (MatrixLikeFloat | VectorLikeFloat | DataSet | _vtk.vtkDataSet | None) = None,
         label_mode: Literal['size', 'constant', 'seeds'] = 'size',
         constant_value: int | None = None,
         inplace: bool = False,
@@ -3921,7 +3936,7 @@ class ImageDataFilters(DataSetFilters):
             If ``'seeded'``, only the regions that include the points defined with
             ``point_seeds`` are extracted.
 
-        point_seeds : MatrixLikeFloat, VectorLikeFloat, :vtk:`vtkDataSet`, optional
+        point_seeds : MatrixLikeFloat, VectorLikeFloat, DataSet, :vtk:`vtkDataSet`, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
             as a :vtk:`vtkDataSet`. Has no effect if ``extraction_mode`` is not
             ``'seeded'``.
@@ -4103,7 +4118,7 @@ class ImageDataFilters(DataSetFilters):
             if point_seeds is None:
                 msg = '`point_seeds` must be specified when `extraction_mode="seeded"`.'
                 raise ValueError(msg)
-            elif not isinstance(point_seeds, _vtk.vtkDataSet):
+            elif not isinstance(point_seeds, (pv.DataSet, _vtk.vtkDataSet)):
                 point_seeds = pv.PointSet(point_seeds)
 
             alg.SetExtractionModeToSeededRegions()
@@ -4136,7 +4151,7 @@ class ImageDataFilters(DataSetFilters):
             alg, progress_bar=progress_bar, message='Identifying and Labelling Connected Regions'
         )
 
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.ImageData)
 
         labels: NDArray[np.signedinteger] = _vtk.vtk_to_numpy(alg.GetExtractedRegionLabels())
 
@@ -4424,10 +4439,10 @@ class ImageDataFilters(DataSetFilters):
 
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resized to the reference's
-            :attr:`~pyvista.Grid.dimensions`, and the reference's
-            :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
-            :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
-            are applied to the output.
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`, and the
+            reference's :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`, and
+            :attr:`~pyvista.ImageData.direction_matrix` are applied to the output.
 
             .. note::
                 The image is resampled in its own frame and the reference's geometry is
@@ -4435,7 +4450,8 @@ class ImageDataFilters(DataSetFilters):
                 reference image's points. Use :meth:`reslice` to sample at those points.
 
         dimensions : VectorLikeInt, optional
-            Set the output :attr:`~pyvista.Grid.dimensions` of the resampled image.
+            Set the output :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`
+            of the resampled image.
 
             .. note::
 
@@ -4517,7 +4533,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: 'point'
             When scalars is specified, this is the preferred array type to search
-            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+            for in the dataset. Must be either ``'point'`` or ``'cell'``.
 
         inplace : bool, default: False
             If ``True``, resample the image in-place. By default, a new
@@ -4653,10 +4669,11 @@ class ImageDataFilters(DataSetFilters):
           Spacing:      5.000e-01, 5.000e-01, 1.000e+00
           N Arrays:     1
 
-        Note that the up-sampled :attr:`~pyvista.Grid.dimensions` are doubled and
-        the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
-        however, that the physical bounds of the input differ from the output.
-        The up-sampled :attr:`~pyvista.ImageData.origin` also differs:
+        Note that the up-sampled
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions` are doubled and the
+        :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note, however, that the
+        physical bounds of the input differ from the output. The up-sampled
+        :attr:`~pyvista.ImageData.origin` also differs:
 
         >>> image.origin
         (0.0, 0.0, 0.0)
@@ -5114,18 +5131,18 @@ class ImageDataFilters(DataSetFilters):
         # with the dimensions, which is also how cells are resampled
         resize_filter.SetBorder(extend_border or processing_cell_scalars)
         _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
-        output_image = _get_output(resize_filter)
+        output_image = _get_output(resize_filter, output_type=pv.ImageData)
 
-        output_image.rename_array(output_image.active_scalars_name, name)
+        output_image.rename_array(_active_point_scalars(output_image)[0], name)
         if premultiply_alpha:
             output_image.point_data[name] = _unpremultiply_alpha(
-                output_image.active_scalars, rgba_min, rgba_max
+                output_image.point_data[name], rgba_min, rgba_max
             )
         if is_srgb:
             output_image.point_data[name] = _linear_to_srgb_colors(
-                output_image.active_scalars, max_value=255 if input_dtype == np.uint8 else 1
+                output_image.point_data[name], max_value=255 if input_dtype == np.uint8 else 1
             )
-        output_array = output_image.active_scalars
+        output_array = output_image.point_data[name]
         if output_array.dtype != input_dtype:
             output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
         if premultiply_alpha:
@@ -5171,10 +5188,11 @@ class ImageDataFilters(DataSetFilters):
     ) -> ImageData:
         """Sample the image at the points of a reference image.
 
-        The image is sampled at the physical position of each point of the
-        ``reference_image``, so the two images are aligned in space. The
-        :attr:`~pyvista.Grid.dimensions`, :attr:`~pyvista.ImageData.spacing`,
-        :attr:`~pyvista.ImageData.origin`, :attr:`~pyvista.ImageData.offset`, and
+        The image is sampled at the physical position of each point of the ``reference_image``, so
+        the two images are aligned in space. The
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.dimensions`,
+        :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
+        :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`, and
         :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference.
 
         Use this filter to map an image onto the grid of another image, for example, to
@@ -5242,7 +5260,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: 'point'
             When scalars is specified, this is the preferred array type to search
-            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+            for in the dataset. Must be either ``'point'`` or ``'cell'``.
 
         inplace : bool, default: False
             If ``True``, reslice the image in-place. By default, a new
@@ -5467,8 +5485,8 @@ class ImageDataFilters(DataSetFilters):
             progress_bar=progress_bar,
         )
 
-        output_image.rename_array(cast('str', output_image.active_scalars_name), name)
-        output_array = cast('pyvista_ndarray', output_image.active_scalars)
+        output_name, output_array = _active_point_scalars(output_image)
+        output_image.rename_array(output_name, name)
         if output_array.dtype != input_dtype:
             output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
 
@@ -5576,7 +5594,7 @@ class ImageDataFilters(DataSetFilters):
 
         preference : str, default: 'point'
             When ``scalars`` is specified, this is the preferred array type to search
-            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+            for in the dataset. Must be either ``'point'`` or ``'cell'``.
 
         component_mode : int | 'any' | 'all' | 'multi', default: 'all'
             Specify the components to use when ``scalars`` is a multi-component array.
@@ -5755,10 +5773,7 @@ class ImageDataFilters(DataSetFilters):
         fill_value: float | VectorLikeFloat | None,
         replacement_value: float | VectorLikeFloat | None,
     ) -> ImageData:
-        input_array = cast(
-            'pv.pyvista_ndarray',
-            get_array(self, name=array_name, preference=association),
-        )
+        input_array = get_array(self, name=array_name, preference=association, err=True)
         preference: PointLiteral | CellLiteral = (
             'point' if association == FieldAssociation.POINT else 'cell'
         )
@@ -5863,9 +5878,10 @@ class ImageDataFilters(DataSetFilters):
 
         mode : str, default: 'strict'
             Concatenation mode to use. This determines how images are placed in the output. All
-            modes operate along the specified ``axis`` except for ``'preserve-extents'``, which
-            is also the only mode that uses the images' :attr:`~pyvista.ImageData.offset`; all
-            other modes ignore it and take the output's offset from the input. Specify one of:
+            modes operate along the specified ``axis`` except for ``'preserve-extents'``, which is
+            also the only mode that uses the images'
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset`; all other modes
+            ignore it and take the output's offset from the input. Specify one of:
 
             - ``'strict'``: all images must have identical dimensions except along the specified
               ``axis``.
@@ -6019,7 +6035,8 @@ class ImageDataFilters(DataSetFilters):
 
             Use the ``'preserve-extents'`` mode. Using this mode naively may not produce the
             desired result, e.g. if we concatenate ``beach`` with ``bird``, the ``beach`` image is
-            completely overwritten since their :attr:`~pyvista.ImageData.extent` fully overlap.
+            completely overwritten since their
+            :attr:`~pyvista.core._structured_data._StructuredDataMixin.extent` fully overlap.
 
             >>> beach.extent
             (0, 99, 0, 99, 0, 0)
@@ -6031,8 +6048,8 @@ class ImageDataFilters(DataSetFilters):
             (0, 457, 0, 341, 0, 0)
             >>> concatenated.plot(**plot_kwargs)
 
-            Set the ``beach`` :attr:`~pyvista.ImageData.offset` so that there is only partial
-            overlap instead.
+            Set the ``beach`` :attr:`~pyvista.core._structured_data._StructuredDataMixin.offset` so
+            that there is only partial overlap instead.
 
             >>> beach.offset = (-50, -50, 0)
             >>> beach.extent
@@ -6110,7 +6127,7 @@ class ImageDataFilters(DataSetFilters):
             # but we leave the image's concatenating axis unchanged
             new_dims = list(reference_dimensions)
             new_dims[axis_num] = image_dimensions[axis_num]
-            return cast('tuple[int, int, int]', tuple(new_dims))
+            return new_dims[0], new_dims[1], new_dims[2]
 
         def _compute_sample_rate(
             reference_image: ImageData, image: ImageData
@@ -6373,7 +6390,7 @@ class ImageDataFilters(DataSetFilters):
             alg.AddInputData(img)
 
         _update_alg(alg)
-        output = _get_output(alg)
+        output = _get_output(alg, output_type=pv.ImageData)
         if mode != 'preserve-extents':
             output.offset = self.offset
         return output
@@ -6517,7 +6534,7 @@ def _bspline_coefficients(
         coefficients.SetOutputScalarTypeToDouble()
     _set_border_mode(coefficients, border_mode)
     _update_alg(coefficients, progress_bar=progress_bar, message='Computing spline coefficients.')
-    return _get_output(coefficients)
+    return _get_output(coefficients, output_type=pv.ImageData)
 
 
 def _resolve_reslice_transform(
@@ -6574,7 +6591,7 @@ def _reslice_image(
     if interpolation in modes:
         modes[interpolation]()
     _update_alg(alg, progress_bar=progress_bar, message='Reslicing image.')
-    return _get_output(alg)
+    return _get_output(alg, output_type=pv.ImageData)
 
 
 def _srgb_to_linear_colors(colors: NDArray[Any], *, name: str) -> NDArray[np.floating]:
@@ -6634,6 +6651,15 @@ def _unpremultiply_alpha(
     straight[(alpha <= 0)[:, 0], :3] = 0
     # Bound the overshoot of ringing kernels, which a near-zero alpha amplifies
     return np.clip(straight, rgba_min, rgba_max, out=straight)
+
+
+def _active_point_scalars(image: ImageData) -> tuple[str, pyvista_ndarray]:
+    """Return the name and array of the active point scalars of a filter's output."""
+    name = image.point_data.active_scalars_name
+    if name is None:
+        msg = 'The filter output has no active point scalars.'
+        raise MissingDataError(msg)
+    return name, image.point_data[name]
 
 
 def _round_to_dtype(array: NDArray[np.floating], dtype: np.dtype[Any]) -> NDArray[Any]:

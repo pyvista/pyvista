@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .colors import _COLORCET_CMAPS_LITERAL
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
+    from .mapper import _BaseMapper
 
 PlottableType: TypeAlias = _MeshLike | str | Path
 
@@ -110,6 +111,7 @@ StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
 TrameModeOptions = Literal['trame', 'server', 'client']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
+_TransparentBackgroundOptions = Literal[True, False, 'straight', 'premultiplied']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
 # 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
@@ -158,7 +160,7 @@ class ScalarBarArgs(TypedDict, total=False):
     """Keyword arguments accepted by :meth:`~pyvista.Plotter.add_scalar_bar`."""
 
     title: str
-    mapper: _vtk.vtkMapper
+    mapper: _BaseMapper
     n_labels: int
     tick_locations: Sequence[float]
     italic: bool

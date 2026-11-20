@@ -15,7 +15,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # %%
 # To have more control over reading data files, use a class based reader.
 # This class allows for more fine-grained control over reading datasets from
-# files.  See :func:`pyvista.get_reader` for a list of file types supported.
+# files. See :func:`pyvista.get_reader` for a list of file types supported.
 
 
 import tempfile
@@ -25,14 +25,14 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# An XML PolyData file in ``.vtp`` format is created.  It will be saved in a
+# An XML PolyData file in ``.vtp`` format is created. It will be saved in a
 # temporary file for this example.
 
 temp_file = tempfile.NamedTemporaryFile('w', suffix='.vtp')
 temp_file.name
 
 # %%
-# :class:`pyvista.Sphere` already includes ``Normals`` point data.  Additionally
+# :class:`pyvista.Sphere` already includes ``Normals`` point data. Additionally
 # ``height`` point data and ``id`` cell data is added.
 mesh = pv.Sphere()
 mesh['height'] = mesh.points[:, 1]
@@ -66,8 +66,8 @@ print(f'Available cell data:    {reader.cell_array_names}')
 
 # %%
 # We can select which data to read by selectively disabling or enabling
-# specific arrays or all arrays.  Here we disable all the cell arrays and
-# the ``Normals`` point array to leave only the ``height`` point array.  The data
+# specific arrays or all arrays. Here we disable all the cell arrays and
+# the ``Normals`` point array to leave only the ``height`` point array. The data
 # is finally read into a pyvista object that only has the ``height`` point array.
 
 reader.disable_all_cell_arrays()
@@ -87,7 +87,7 @@ print(f'New read arrays: {reader_mesh_2.array_names}')
 # %%
 # Some Readers support setting different time points or iterations. In both
 # cases, this is done using the time point functionality. The NACA
-# dataset has two such points with density.  This dataset is in EnSight format,
+# dataset has two such points with density. This dataset is in EnSight format,
 # which uses the :class:`pyvista.EnSightReader` class.
 
 filename = examples.download_naca(load=False)
@@ -99,7 +99,7 @@ print(f'Available point arrays: {reader.point_array_names}')
 
 # %%
 # First both time points are read in, and then the difference in density is
-# calculated and saved on the second mesh.  The read method of
+# calculated and saved on the second mesh. The read method of
 # :class:`pyvista.EnSightReader` returns a :class:`pyvista.MultiBlock` instance.
 # In this dataset, there are 3 blocks and the new scalar must be applied on each
 # block.

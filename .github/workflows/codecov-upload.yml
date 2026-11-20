@@ -1,0 +1,54 @@
+name: Upload coverage
+
+on:
+  workflow_call:
+    inputs:
+      flag-suffix:
+        description: Appended to the `package` and `tests` Codecov flags.
+        default: ""
+        type: string
+
+permissions:
+  id-token: write # Codecov OIDC upload
+  contents: read
+
+jobs:
+  upload:
+    name: Codecov
+    runs-on: ubuntu-22.04
+    steps:
+      # Needs to checkout only for codecov to match file names
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage_reports-*
+          path: coverage_reports
+
+      # Each matrix cell contributes one report per side, each uploaded under its own flag.
+      - name: Sort reports by flag
+        run: |
+          mkdir -p flag_package flag_tests
+          find coverage_reports -name 'coverage_package_*.xml' -exec mv {} flag_package/ \;
+          find coverage_reports -name 'coverage_tests_*.xml' -exec mv {} flag_tests/ \;
+          ls flag_package flag_tests
+
+      - name: Upload pyvista coverage to CodeCov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
+        with:
+          directory: flag_package
+          flags: package${{ inputs.flag-suffix }}
+          fail_ci_if_error: true
+          use_oidc: true
+
+      - name: Upload test coverage to CodeCov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
+        with:
+          directory: flag_tests
+          flags: tests${{ inputs.flag-suffix }}
+          fail_ci_if_error: true
+          use_oidc: true

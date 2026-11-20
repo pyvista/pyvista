@@ -75,6 +75,26 @@ def test_has_render_window_fail():
         pl._make_render_window_current()
 
 
+def test_ren_win_deprecated():
+    pl = pv.Plotter()
+    render_window = pl.render_window
+    match = '`ren_win` is deprecated. Use `render_window` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        assert pl.ren_win is render_window
+
+    new_render_window = _vtk.vtkRenderWindow()
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        pl.ren_win = new_render_window
+    assert pl.render_window is new_render_window
+
+    pl.render_window = render_window
+    pl.close()
+    assert pl.render_window is None
+
+    assert pv.version_info < (0, 56), 'Convert `ren_win` to raise `DeprecationError`.'
+    assert pv.version_info < (0, 57), 'Remove `ren_win`.'
+
+
 def test_image_with_overridden_check_has_ren_win(sphere):
     """A subclass may override the check, so its return value must not be used."""
 
@@ -554,6 +574,83 @@ def test_close_releases_render_window_observers(event):
     pl.close()
     gc.collect()
     assert reference() is None
+
+
+def test_render_respects_interactor_enable_render(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    renders = []
+    pl.render_window.AddObserver(_vtk.vtkCommand.StartEvent, lambda *_: renders.append(1))
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+
+    pl.render()
+    assert not renders
+
+    pl.screenshot(return_img=True)
+    assert renders
+    assert not interactor.GetEnableRender()
+
+    interactor.EnableRenderOn()
+    renders.clear()
+    pl.render()
+    assert renders
+    pl.close()
+
+
+def test_key_press_respects_interactor_enable_render(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    renders = []
+    pl.render_window.AddObserver(_vtk.vtkCommand.StartEvent, lambda *_: renders.append(1))
+    callbacks = []
+    pl.add_on_render_callback(callbacks.append)
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+    view_angle = pl.camera.view_angle
+
+    interactor.SetKeySym('Up')
+    interactor.SetKeyCode('\0')
+    interactor.KeyPressEvent()
+    assert pl.camera.view_angle < view_angle
+    assert not renders
+    assert callbacks == [pl]
+    pl.close()
+
+
+def test_render_updates_charts_while_interactor_render_disabled():
+    pl = pv.Plotter()
+    chart = pv.Chart2D()
+    plot = chart.line([0, 1], [0, 1])
+    pl.add_chart(chart)
+    pl.show(auto_close=False)
+    pl.render_window.GetInteractor().EnableRenderOff()
+
+    plot.update([0, 10], [0, 10])
+    pl.render()
+    # The caller that disabled rendering draws the window itself
+    pl.render_window.Render()
+    assert chart.x_range == [0, 10]
+    pl.close()
+
+
+def test_write_frame_renders_while_interactor_render_disabled(mocker: MockerFixture):
+    writer = mocker.Mock()
+    mocker.patch.object(pv.Plotter, '_get_mwriter_not_none', return_value=writer)
+    pl = pv.Plotter(window_size=(50, 50))
+    pl.background_color = 'black'
+    pl.show(auto_close=False)
+    interactor = pl.render_window.GetInteractor()
+    interactor.EnableRenderOff()
+
+    pl.background_color = 'white'
+    pl.write_frame()
+    frame = writer.append_data.call_args.args[0]
+    assert (frame[..., :3] == 255).all()
+    assert not interactor.GetEnableRender()
+    pl.close()
 
 
 def test_show_after_closed_raises():
@@ -1440,13 +1537,14 @@ def test_off_screen_background_thread_rendering():
             assert img is not None
             assert img.shape[0] > 0
             pl.close()
-        except Exception as e:  # noqa: BLE001  # pragma: no cover
+        except Exception as e:  # noqa: BLE001 - reported by the assertion below  # pragma: no cover
             errors.append(e)
 
-    t = threading.Thread(target=render_on_thread)
+    t = threading.Thread(target=render_on_thread, daemon=True)
     t.start()
     t.join(timeout=10)
 
+    assert not t.is_alive(), 'Background thread rendering did not finish'
     assert not errors, f'Background thread rendering failed: {errors[0]}'
 
 
@@ -1491,9 +1589,9 @@ def _invoke_supports_open_gl():
     return fake_render_window
 
 
-def _invoke_plotter_offscreen():
+def _invoke_plotter_offscreen():  # pragma: no cover -- macOS only
     pl = pv.Plotter(off_screen=True)
-    ren_win = pl.ren_win
+    ren_win = pl.render_window
     pl.close()
     return ren_win
 
@@ -1558,4 +1656,23 @@ def test_backface_params_culling(sphere, value, expected):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, backface_params={'culling': value})
     assert actor.backface_prop.culling == expected
+    pl.close()
+
+
+def test_close_warns_when_movie_writer_fails():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = OSError('disk full')
+    with pytest.warns(UserWarning, match='disk full'):
+        pl.close()
+    assert pl.mwriter is None
+
+
+def test_close_propagates_keyboard_interrupt_from_movie_writer():
+    pl = pv.Plotter()
+    pl.mwriter = MagicMock()
+    pl.mwriter.close.side_effect = KeyboardInterrupt
+    with pytest.raises(KeyboardInterrupt):
+        pl.close()
+    assert pl.mwriter is None
     pl.close()

@@ -684,6 +684,7 @@ class _CellTypeMeta(EnumMeta):
     _dimension_map_proxy: ClassVar[MappingProxyType[_Dimension, frozenset[CellType]]] = (
         MappingProxyType(_dimension_map)
     )
+    _linear_shapes: ClassVar[dict[tuple[int, int, int], CellType]] = {}
 
     def __getattribute__(cls, name: str) -> Any:
         member = super().__getattribute__(name)
@@ -1339,6 +1340,31 @@ class CellType(IntEnum, metaclass=_CellTypeMeta):
             )
             raise ValueError(msg)
         return n_faces
+
+    @property
+    def _linear_type(self) -> CellType | None:
+        """Return the linear cell type spanned by this cell type's corner points, if any."""
+        if self._is_linear:
+            return self
+        if not (shapes := _CellTypeMeta._linear_shapes):
+            # Populate dict on first access
+            for linear in (
+                CellType.LINE,
+                CellType.TRIANGLE,
+                CellType.QUAD,
+                CellType.POLYGON,
+                CellType.TETRA,
+                CellType.PYRAMID,
+                CellType.WEDGE,
+                CellType.HEXAHEDRON,
+            ):
+                shapes[linear._topology] = linear
+        return shapes.get(self._topology) if self._vtk_class else None
+
+    @property
+    def _topology(self) -> tuple[int, int, int]:
+        """Return the dimension, edge count and face count, with ``-1`` for a variable count."""
+        return self._dimension, self._n_edges, self._n_faces
 
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
     VERTEX = _CELL_TYPE_INFO['VERTEX']

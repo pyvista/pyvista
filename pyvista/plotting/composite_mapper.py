@@ -478,7 +478,10 @@ class CompositeAttributes(
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr.get_block(0)
         MultiBlock[PolyData] (...)
+          N Cells:    1686
+          N Points:   850
           N Blocks:   2
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 1.500e+00
@@ -544,8 +547,8 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         ``scalars``.
 
     interpolate_before_map : bool, optional
-        Enabling makes for a smoother scalars display.  Default is
-        ``True``.  When ``False``, OpenGL will interpolate the
+        Enabling makes for a smoother scalars display. Default is
+        ``True``. When ``False``, OpenGL will interpolate the
         mapped colors which can result is showing colors that are
         not present in the color map.
 
@@ -585,7 +588,10 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.dataset
         MultiBlock[PolyData] (...)
+          N Cells:    1686
+          N Points:   850
           N Blocks:   2
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 1.500e+00
@@ -654,9 +660,8 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(
-        ...     dataset, scalars='data', show_scalar_bar=False
+        ...     dataset, scalars='data', show_scalar_bar=False, nan_color='r'
         ... )
-        >>> pv.global_theme.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
 
@@ -741,12 +746,12 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         preference : str
             For each block, when ``block.n_points == block.n_cells`` and
             setting scalars, this parameter sets how the scalars will be mapped
-            to the mesh.  Default ``'point'``, causes the scalars will be
-            associated with the mesh points.  Can be either ``'point'`` or
+            to the mesh. Default ``'point'``, causes the scalars will be
+            associated with the mesh points. Can be either ``'point'`` or
             ``'cell'``.
 
         component : int
-            Set component of vector valued scalars to plot.  Must be
+            Set component of vector valued scalars to plot. Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
@@ -782,21 +787,21 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             ``below_label`` to ``'below'``.
 
         clim : VectorLikeFloat
-            Color bar range for scalars.  Defaults to minimum and
+            Color bar range for scalars. Defaults to minimum and
             maximum of scalars array, or ``(max, max)`` when they differ only
             by floating-point rounding and ``below_color`` is not set.
             Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
-            ``scalars``.  See available Matplotlib colormaps.  Only applicable
+            ``scalars``. See available Matplotlib colormaps. Only applicable
             for when displaying ``scalars``.
             ``colormap`` is also an accepted alias for this. If
             ``colorcet`` or ``cmocean`` are installed, their colormaps can be
             specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one.  For example, to create a three color
+            colormap with a custom one. For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this

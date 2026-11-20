@@ -144,7 +144,7 @@ def test_invalid_command(capsys: pytest.CaptureFixture):
     )
     with pytest.raises(SystemExit) as e:
         main('foo')
-    assert e.value.code == 1
+    assert e.value.code == 2
     out, err = capture_out_err(capsys)
     assert out == ''
     assert err == expected
@@ -162,7 +162,7 @@ def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
     )
     with pytest.raises(SystemExit) as e:
         main(f'{command} --foo=1')
-    assert e.value.code == 1
+    assert e.value.code == 2
     out, err = capture_out_err(capsys)
     assert out == ''
     actual = '\n'.join(err.split('\n')[-4:])
@@ -174,7 +174,7 @@ def test_command_bad_kwarg(capsys: pytest.CaptureFixture, command: str):
 def test_command_paths_required(capsys: pytest.CaptureFixture, command):
     with pytest.raises(SystemExit) as e:
         main(f'{command}')
-    assert e.value.code == 1
+    assert e.value.code == 2
     out, err = capture_out_err(capsys)
     expected = f'Command "{command}" parameter PATHS requires an argument'
     actual = '\n'.join(err.split('\n')[-3:])
@@ -940,7 +940,7 @@ def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert message in err
-    assert e.value.code == 1
+    assert e.value.code == 2
 
     with pytest.raises(SystemExit) as e:
         main(command + ' bar')
@@ -952,7 +952,7 @@ def test_validate_invalid_args(tmp_ant_file: Path, capsys: pytest.CaptureFixture
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert message in err
-    assert e.value.code == 1
+    assert e.value.code == 2
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -968,7 +968,7 @@ def test_validate_help(capsys: pytest.CaptureFixture):
     )
     assert usage in out, out
 
-    assert '│ * PATHS  -' in out, out
+    assert '│ *       -' in out, out
     assert 'Mesh(es) to validate.' in out, out
 
     assert '│ --fields -f            -' in out, out
@@ -1010,7 +1010,7 @@ def test_validate_invalid_field(tmp_ant_file: Path, capsys: pytest.CaptureFixtur
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert expected in err, err
-    assert e.value.code == 1
+    assert e.value.code == 2
 
 
 @pytest.mark.usefixtures('patch_app_console')
@@ -1519,14 +1519,20 @@ def test_plot_called_kwargs(
 
 @parametrize_with_cases('tokens, errors', cases=CasesPlot, has_tag='raises')
 @pytest.mark.usefixtures('patch_app_console')
-def test_plot_called_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
+def test_plot_called_raises(
+    tokens: str, errors: list[str], capsys: pytest.CaptureFixture, current_cases
+):
     """Test that the plot CLI is raising expected exit errors."""
 
     file = Path(examples.antfile).as_posix()
     with pytest.raises(SystemExit) as e:
         main(f'plot {file} {tokens}')
 
-    assert e.value.code == 1
+    # Cyclopts exits with 2 (usage error) for invalid option values that fail
+    # during parsing; exceptions raised while calling the command exit with 1.
+    case_name = current_cases['tokens'].func.__name__
+    usage_error = not {'case_kw_unknown', 'case_wrong_argument'} & {case_name}
+    assert e.value.code == (2 if usage_error else 1)
 
     out, err = capture_out_err(capsys)
     assert out == ''
@@ -1615,12 +1621,18 @@ def test_plot_called_files(
 
 @parametrize_with_cases('tokens, errors', cases=CasesPlotFiles, filter=filters.has_tag('raises'))
 @pytest.mark.usefixtures('patch_app_console')
-def test_plot_files_raises(tokens: str, errors: list[str], capsys: pytest.CaptureFixture):
+def test_plot_files_raises(
+    tokens: str, errors: list[str], capsys: pytest.CaptureFixture, current_cases
+):
     """Test that errors are correctly raised for the paths argument"""
     with pytest.raises(SystemExit) as e:
         main(f'plot {tokens}')
 
-    assert e.value.code == 1
+    # Cyclopts exits with 2 (usage error) for missing required arguments;
+    # exceptions raised while reading files exit with 1.
+    case_name = current_cases['tokens'].func.__name__
+    usage_error = case_name == 'case_empty'
+    assert e.value.code == (2 if usage_error else 1)
 
     out, err = capture_out_err(capsys)
     assert out == ''
@@ -2010,9 +2022,9 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
 
 @parametrize(
     tokens_err_codes=[
-        ('--foo', 1),
-        ('report --foo', 1),
-        ('plot --foo', 1),
+        ('--foo', 2),
+        ('report --foo', 2),
+        ('plot --foo', 2),
         ('', 0),
         ('report --help', 0),
         ('plot --help', 0),
@@ -2199,7 +2211,7 @@ def test_compare_border_invalid_args(tmp_compare_files: list[Path], capsys: pyte
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert message in err
-    assert e.value.code == 1
+    assert e.value.code == 2
 
     with pytest.raises(SystemExit) as e:
         main(command + ' bar')
@@ -2211,7 +2223,7 @@ def test_compare_border_invalid_args(tmp_compare_files: list[Path], capsys: pyte
         '╰────────────────────────────────────────────────────────────────────╯\n'
     )
     assert message in err
-    assert e.value.code == 1
+    assert e.value.code == 2
 
 
 @pytest.mark.parametrize(

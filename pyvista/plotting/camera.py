@@ -12,6 +12,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import MatrixLikeFloat
     from pyvista.core._typing_core import VectorLikeFloat
+    from pyvista.core.pointset import PolyData
 
     from .helpers import _ViewOptions
     from .renderer import Renderer
@@ -32,7 +34,7 @@ if TYPE_CHECKING:
 _OPENCV_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
-class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
@@ -877,7 +879,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         """
         return self.GetDirectionOfProjection()
 
-    def view_frustum(self, aspect: float = 1.0) -> pv.PolyData:
+    def view_frustum(self, aspect: float = 1.0) -> PolyData:
         """Get the view frustum.
 
         Parameters
@@ -1072,8 +1074,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         The camera view direction is reoriented to be normal to the ``view``
         plane. When ``negative=False``, The first letter of ``view`` refers
         to the axis that points to the right. The second letter of ``view``
-        refers to axis that points up.  When ``negative=True``, the first
-        letter refers to the axis that points left.  The up direction is
+        refers to axis that points up. When ``negative=True``, the first
+        letter refers to the axis that points left. The up direction is
         unchanged.
 
         Parallel projection is enabled when using this function.
@@ -1147,8 +1149,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         # set focal point to objects' center
         # offset camera position from objects center by dist in opposite of viewing direction
-        # (actual distance doesn't matter due to parallel projection)
-        dist = 1
+        # Keep the camera outside the actors' bounds.
+        dist = max(1.0, abs(objects_size @ direction))
         camera_position = position + dist * direction
 
         self.SetViewUp(*viewup)

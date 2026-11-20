@@ -13,7 +13,6 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
-from typing import cast
 from typing import get_args
 
 import numpy as np
@@ -128,22 +127,25 @@ def plot_cell(  # noqa: ANN201
 
     Examples
     --------
-    Create and plot a single hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Hexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single hexahedron.
 
-    Show normals and customize the size of various elements in the rendering.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Hexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> examples.plot_cell(
-    ...     grid,
-    ...     show_normals=True,
-    ...     normals_scale=0.2,
-    ...     line_width=8,
-    ...     point_size=50,
-    ...     font_size=30,
-    ... )
+        Show normals and customize the size of various elements in the rendering.
+
+        >>> examples.plot_cell(
+        ...     grid,
+        ...     show_normals=True,
+        ...     normals_scale=0.2,
+        ...     line_width=8,
+        ...     point_size=50,
+        ...     font_size=30,
+        ... )
 
     """
     config = pv.global_theme._plot_cell
@@ -271,24 +273,27 @@ def Vertex() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single vertex.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Vertex()
-    >>> examples.plot_cell(grid)
+        Create and plot a single vertex.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Vertex()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([1, 0]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([1, 0]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.VERTEX
-    array([1], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.VERTEX
+        array([1], dtype=uint8)
 
     """
     points = [[0.0, 0.0, 0.0]]
@@ -310,29 +315,32 @@ def PolyVertex() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single poly vertex.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.PolyVertex()
-    >>> examples.plot_cell(grid)
+        Create and plot a single poly vertex.
 
-    List the grid's cells. This could be any number of points.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.PolyVertex()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5]...)
+        List the grid's cells. This could be any number of points.
 
-    List the grid's points.
+        >>> grid.cells
+        array([6, 0, 1, 2, 3, 4, 5]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 0.4],
-                     [0. , 1. , 0.6]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.POLY_VERTEX
-    array([2], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 0.4],
+                         [0. , 1. , 0.6]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.POLY_VERTEX
+        array([2], dtype=uint8)
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0.4], [0, 1, 0.6]]
@@ -354,29 +362,32 @@ def ConvexPointSet() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single convex point set.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.ConvexPointSet()
-    >>> examples.plot_cell(grid)
+        Create and plot a single convex point set.
 
-    List the grid's cells. This could be any number of points.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.ConvexPointSet()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5]...)
+        List the grid's cells. This could be any number of points.
 
-    List the grid's points.
+        >>> grid.cells
+        array([6, 0, 1, 2, 3, 4, 5]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 0.4],
-                     [0. , 1. , 0.6]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.CONVEX_POINT_SET
-    array([41], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 0.4],
+                         [0. , 1. , 0.6]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.CONVEX_POINT_SET
+        array([41], dtype=uint8)
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0.4], [0, 1, 0.6]]
@@ -396,25 +407,28 @@ def Line() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single line.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Line()
-    >>> examples.plot_cell(grid)
+        Create and plot a single line.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Line()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([2, 0, 1]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([2, 0, 1]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.],
-                     [1., 0., 0.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LINE
-    array([3], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.],
+                         [1., 0., 0.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LINE
+        array([3], dtype=uint8)
 
     """
     points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
@@ -436,27 +450,30 @@ def PolyLine() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single polyline.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.PolyLine()
-    >>> examples.plot_cell(grid)
+        Create and plot a single polyline.
 
-    List the grid's cells. This could be any number of points.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.PolyLine()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells. This could be any number of points.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 1. , 0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.POLY_LINE
-    array([4], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 1. , 0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.POLY_LINE
+        array([4], dtype=uint8)
 
     """
     points = [
@@ -482,26 +499,29 @@ def Triangle() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single triangle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Triangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single triangle.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Triangle()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([3, 0, 1, 2]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([3, 0, 1, 2]...)
 
-    >>> grid.points
-    pyvista_ndarray([[ 0.5       , -0.28867513,  0.        ],
-                     [ 0.        ,  0.57735027,  0.        ],
-                     [-0.5       , -0.28867513,  0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE
-    array([5], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[ 0.5       , -0.28867513,  0.        ],
+                         [ 0.        ,  0.57735027,  0.        ],
+                         [-0.5       , -0.28867513,  0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE
+        array([5], dtype=uint8)
 
     """
     R33 = np.sqrt(3) / 3
@@ -523,31 +543,34 @@ def TriangleStrip() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single triangle strip.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.TriangleStrip()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single triangle strip.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.TriangleStrip()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
-    >>> grid.points
-    pyvista_ndarray([[1., 0., 0.],
-                     [0., 0., 0.],
-                     [1., 1., 0.],
-                     [0., 1., 0.],
-                     [1., 2., 0.],
-                     [0., 2., 0.],
-                     [1., 3., 0.],
-                     [0., 3., 0.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE_STRIP
-    array([6], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[1., 0., 0.],
+                         [0., 0., 0.],
+                         [1., 1., 0.],
+                         [0., 1., 0.],
+                         [1., 2., 0.],
+                         [0., 2., 0.],
+                         [1., 3., 0.],
+                         [0., 3., 0.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.TRIANGLE_STRIP
+        array([6], dtype=uint8)
 
     """
     points = [
@@ -576,29 +599,32 @@ def Polygon() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single polygon.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Polygon()
-    >>> examples.plot_cell(grid)
+        Create and plot a single polygon.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polygon()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([6, 0, 1, 2, 3, 4, 5]...)
 
-    >>> grid.points
-    pyvista_ndarray([[ 0. ,  0. ,  0. ],
-                     [ 1. , -0.1,  0. ],
-                     [ 1.4,  0.5,  0. ],
-                     [ 1. ,  1. ,  0. ],
-                     [ 0.6,  1.2,  0. ],
-                     [ 0. ,  0.8,  0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.POLYGON
-    array([7], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[ 0. ,  0. ,  0. ],
+                         [ 1. , -0.1,  0. ],
+                         [ 1.4,  0.5,  0. ],
+                         [ 1. ,  1. ,  0. ],
+                         [ 0.6,  1.2,  0. ],
+                         [ 0. ,  0.8,  0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.POLYGON
+        array([7], dtype=uint8)
 
     """
     points = [[0, 0, 0], [1, -0.1, 0], [1.4, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
@@ -618,22 +644,25 @@ def Polyhedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single polyhedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Polyhedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single polyhedron.
 
-    A polyhedron is defined by it's faces. List the grid's faces.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Polyhedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.get_cell(0).faces  # doctest: +ELLIPSIS
-    [Cell...
-    ..., Cell...
-    ..., Cell...
-    ...]
+        A polyhedron is defined by it's faces. List the grid's faces.
 
-    >>> grid.celltypes  # same as pyvista.CellType.POLYHEDRON
-    array([42], dtype=uint8)
+        >>> grid.get_cell(0).faces  # doctest: +ELLIPSIS
+        [Cell...
+        ..., Cell...
+        ..., Cell...
+        ...]
+
+        >>> grid.celltypes  # same as pyvista.CellType.POLYHEDRON
+        array([42], dtype=uint8)
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
@@ -654,27 +683,30 @@ def Pixel() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single pixel.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Pixel()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single pixel.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Pixel()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.],
-                     [1., 0., 0.],
-                     [0., 1., 0.],
-                     [1., 1., 0.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.PIXEL
-    array([8], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.],
+                         [1., 0., 0.],
+                         [0., 1., 0.],
+                         [1., 1., 0.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.PIXEL
+        array([8], dtype=uint8)
 
     """
     points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]]
@@ -694,27 +726,30 @@ def Quadrilateral() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quad.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Quadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single quad.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Quadrilateral()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.],
-                     [1., 0., 0.],
-                     [1., 1., 0.],
-                     [0., 1., 0.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUAD
-    array([9], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.],
+                         [1., 0., 0.],
+                         [1., 1., 0.],
+                         [0., 1., 0.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUAD
+        array([9], dtype=uint8)
 
     """
     points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
@@ -734,27 +769,30 @@ def Tetrahedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single tetrahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Tetrahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single tetrahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Tetrahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[ 0.35355339, -0.35355339, -0.35355339],
-                     [ 0.35355339,  0.35355339,  0.35355339],
-                     [-0.35355339,  0.35355339, -0.35355339],
-                     [-0.35355339, -0.35355339,  0.35355339]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.TETRA
-    array([10], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[ 0.35355339, -0.35355339, -0.35355339],
+                         [ 0.35355339,  0.35355339,  0.35355339],
+                         [-0.35355339,  0.35355339, -0.35355339],
+                         [-0.35355339, -0.35355339,  0.35355339]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.TETRA
+        array([10], dtype=uint8)
 
     """
     # Original points
@@ -787,31 +825,34 @@ def Hexahedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Hexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single hexahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Hexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.],
-                     [1., 0., 0.],
-                     [1., 1., 0.],
-                     [0., 1., 0.],
-                     [0., 0., 1.],
-                     [1., 0., 1.],
-                     [1., 1., 1.],
-                     [0., 1., 1.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.HEXAHEDRON
-    array([12], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.],
+                         [1., 0., 0.],
+                         [1., 1., 0.],
+                         [0., 1., 0.],
+                         [0., 0., 1.],
+                         [1., 0., 1.],
+                         [1., 1., 1.],
+                         [0., 1., 1.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.HEXAHEDRON
+        array([12], dtype=uint8)
 
     """
     points = [
@@ -840,35 +881,38 @@ def HexagonalPrism() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single hexagonal prism.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.HexagonalPrism()
-    >>> examples.plot_cell(grid)
+        Create and plot a single hexagonal prism.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.HexagonalPrism()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]...)
 
-    >>> grid.points
-    pyvista_ndarray([[ 0. ,  0. ,  1. ],
-                     [-0.5,  0.5,  1. ],
-                     [ 0. ,  1. ,  1. ],
-                     [ 1. ,  1. ,  1. ],
-                     [ 1.5,  0.5,  1. ],
-                     [ 1. ,  0. ,  1. ],
-                     [ 0. ,  0. ,  0. ],
-                     [-0.5,  0.5,  0. ],
-                     [ 0. ,  1. ,  0. ],
-                     [ 1. ,  1. ,  0. ],
-                     [ 1.5,  0.5,  0. ],
-                     [ 1. ,  0. ,  0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.HEXAGONAL_PRISM
-    array([16], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[ 0. ,  0. ,  1. ],
+                         [-0.5,  0.5,  1. ],
+                         [ 0. ,  1. ,  1. ],
+                         [ 1. ,  1. ,  1. ],
+                         [ 1.5,  0.5,  1. ],
+                         [ 1. ,  0. ,  1. ],
+                         [ 0. ,  0. ,  0. ],
+                         [-0.5,  0.5,  0. ],
+                         [ 0. ,  1. ,  0. ],
+                         [ 1. ,  1. ,  0. ],
+                         [ 1.5,  0.5,  0. ],
+                         [ 1. ,  0. ,  0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.HEXAGONAL_PRISM
+        array([16], dtype=uint8)
 
     """
     points = [
@@ -903,29 +947,32 @@ def Wedge() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single wedge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Wedge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single wedge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Wedge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([6, 0, 1, 2, 3, 4, 5]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.       , 1.       , 0.       ],
-                     [0.       , 0.5      , 0.8660254],
-                     [0.       , 0.       , 0.       ],
-                     [1.       , 1.       , 0.       ],
-                     [1.       , 0.5      , 0.8660254],
-                     [1.       , 0.       , 0.       ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.WEDGE
-    array([13], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.       , 1.       , 0.       ],
+                         [0.       , 0.5      , 0.8660254],
+                         [0.       , 0.       , 0.       ],
+                         [1.       , 1.       , 0.       ],
+                         [1.       , 0.5      , 0.8660254],
+                         [1.       , 0.       , 0.       ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.WEDGE
+        array([13], dtype=uint8)
 
     """
     R32 = np.sqrt(3) / 2
@@ -949,33 +996,36 @@ def PentagonalPrism() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single pentagonal prism.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.PentagonalPrism()
-    >>> examples.plot_cell(grid)
+        Create and plot a single pentagonal prism.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.PentagonalPrism()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
-    >>> grid.points
-    pyvista_ndarray([[1., 0., 0.],
-                     [3., 0., 0.],
-                     [4., 2., 0.],
-                     [2., 4., 0.],
-                     [0., 2., 0.],
-                     [1., 0., 4.],
-                     [3., 0., 4.],
-                     [4., 2., 4.],
-                     [2., 4., 4.],
-                     [0., 2., 4.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.PENTAGONAL_PRISM
-    array([15], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[1., 0., 0.],
+                         [3., 0., 0.],
+                         [4., 2., 0.],
+                         [2., 4., 0.],
+                         [0., 2., 0.],
+                         [1., 0., 4.],
+                         [3., 0., 4.],
+                         [4., 2., 4.],
+                         [2., 4., 4.],
+                         [0., 2., 4.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.PENTAGONAL_PRISM
+        array([15], dtype=uint8)
 
     """
     points = [
@@ -1006,28 +1056,31 @@ def Pyramid() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single pyramid.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Pyramid()
-    >>> examples.plot_cell(grid)
+        Create and plot a single pyramid.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Pyramid()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([5, 0, 1, 2, 3, 4]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([5, 0, 1, 2, 3, 4]...)
 
-    >>> grid.points
-    pyvista_ndarray([[ 0.5       ,  0.5       ,  0.        ],
-                     [-0.5       ,  0.5       ,  0.        ],
-                     [-0.5       , -0.5       ,  0.        ],
-                     [ 0.5       , -0.5       ,  0.        ],
-                     [ 0.        ,  0.        ,  0.70710678]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.PYRAMID
-    array([14], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[ 0.5       ,  0.5       ,  0.        ],
+                         [-0.5       ,  0.5       ,  0.        ],
+                         [-0.5       , -0.5       ,  0.        ],
+                         [ 0.5       , -0.5       ,  0.        ],
+                         [ 0.        ,  0.        ,  0.70710678]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.PYRAMID
+        array([14], dtype=uint8)
 
     """
     points = [
@@ -1053,31 +1106,34 @@ def Voxel() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single voxel.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.Voxel()
-    >>> examples.plot_cell(grid)
+        Create and plot a single voxel.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.Voxel()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.],
-                     [1., 0., 0.],
-                     [1., 1., 0.],
-                     [0., 1., 0.],
-                     [0., 0., 1.],
-                     [1., 0., 1.],
-                     [1., 1., 1.],
-                     [0., 1., 1.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.VOXEL
-    array([11], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.],
+                         [1., 0., 0.],
+                         [1., 1., 0.],
+                         [0., 1., 0.],
+                         [0., 0., 1.],
+                         [1., 0., 1.],
+                         [1., 1., 1.],
+                         [0., 1., 1.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.VOXEL
+        array([11], dtype=uint8)
 
     """
     points = [
@@ -1106,29 +1162,32 @@ def QuadraticEdge() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic edge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticEdge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single quadratic edge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticEdge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([3, 0, 1, 2]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([3, 0, 1, 2]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0.5, 0. , 0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_EDGE
-    array([21], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0.5, 0. , 0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_EDGE
+        array([21], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_EDGE))
+    return _isoparametric_grid(CellType.QUADRATIC_EDGE)
 
 
 def QuadraticTriangle() -> UnstructuredGrid:
@@ -1143,32 +1202,35 @@ def QuadraticTriangle() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic triangle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single quadratic triangle.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticTriangle()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([6, 0, 1, 2, 3, 4, 5]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
-                     [0. , 0.5, 0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TRIANGLE
-    array([22], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 0.5, 0. ],
+                         [0. , 0.5, 0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TRIANGLE
+        array([22], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_TRIANGLE))
+    return _isoparametric_grid(CellType.QUADRATIC_TRIANGLE)
 
 
 def QuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1183,34 +1245,37 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic quadrilateral.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single quadratic quadrilateral.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticQuadrilateral()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0.5, 0. , 0. ],
-                     [1. , 0.5, 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 0.5, 0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_QUAD
-    array([23], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0.5, 0. , 0. ],
+                         [1. , 0.5, 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 0.5, 0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_QUAD
+        array([23], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_QUAD))
+    return _isoparametric_grid(CellType.QUADRATIC_QUAD)
 
 
 def QuadraticPolygon() -> UnstructuredGrid:
@@ -1225,31 +1290,34 @@ def QuadraticPolygon() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic polygon.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticPolygon()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single quadratic polygon.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticPolygon()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0., 0., 0.],
-                     [2., 0., 0.],
-                     [2., 2., 0.],
-                     [0., 2., 0.],
-                     [1., 0., 0.],
-                     [3., 1., 0.],
-                     [1., 2., 0.],
-                     [0., 1., 0.]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
-    array([36], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0., 0., 0.],
+                         [2., 0., 0.],
+                         [2., 2., 0.],
+                         [0., 2., 0.],
+                         [1., 0., 0.],
+                         [3., 1., 0.],
+                         [1., 2., 0.],
+                         [0., 1., 0.]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
+        array([36], dtype=uint8)
 
     """
     points = [
@@ -1278,36 +1346,39 @@ def QuadraticTetrahedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic tetrahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticTetrahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single quadratic tetrahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticTetrahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
-                     [0. , 0.5, 0. ],
-                     [0. , 0. , 0.5],
-                     [0.5, 0. , 0.5],
-                     [0. , 0.5, 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TETRA
-    array([24], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 0.5, 0. ],
+                         [0. , 0.5, 0. ],
+                         [0. , 0. , 0.5],
+                         [0.5, 0. , 0.5],
+                         [0. , 0.5, 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TETRA
+        array([24], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_TETRA))
+    return _isoparametric_grid(CellType.QUADRATIC_TETRA)
 
 
 def QuadraticHexahedron() -> UnstructuredGrid:
@@ -1322,47 +1393,50 @@ def QuadraticHexahedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticHexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single quadratic hexahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticHexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
-                     [1. , 1. , 1. ],
-                     [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [1. , 0.5, 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [1. , 0.5, 1. ],
-                     [0.5, 1. , 1. ],
-                     [0. , 0.5, 1. ],
-                     [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [1. , 1. , 0.5],
-                     [0. , 1. , 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_HEXAHEDRON
-    array([25], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 1. ],
+                         [1. , 1. , 1. ],
+                         [0. , 1. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [1. , 0.5, 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0. , 1. ],
+                         [1. , 0.5, 1. ],
+                         [0.5, 1. , 1. ],
+                         [0. , 0.5, 1. ],
+                         [0. , 0. , 0.5],
+                         [1. , 0. , 0.5],
+                         [1. , 1. , 0.5],
+                         [0. , 1. , 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_HEXAHEDRON
+        array([25], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_HEXAHEDRON))
+    return _isoparametric_grid(CellType.QUADRATIC_HEXAHEDRON)
 
 
 def QuadraticWedge() -> UnstructuredGrid:
@@ -1377,41 +1451,44 @@ def QuadraticWedge() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic wedge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticWedge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single quadratic wedge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticWedge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
-                     [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [0.5, 0.5, 1. ],
-                     [0. , 0.5, 1. ],
-                     [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [0. , 1. , 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
-    array([26], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 1. ],
+                         [0. , 1. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 0.5, 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0. , 1. ],
+                         [0.5, 0.5, 1. ],
+                         [0. , 0.5, 1. ],
+                         [0. , 0. , 0.5],
+                         [1. , 0. , 0.5],
+                         [0. , 1. , 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
+        array([26], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_WEDGE))
+    return _isoparametric_grid(CellType.QUADRATIC_WEDGE)
 
 
 def QuadraticPyramid() -> UnstructuredGrid:
@@ -1426,39 +1503,42 @@ def QuadraticPyramid() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic pyramid.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticPyramid()
-    >>> examples.plot_cell(grid)
+        Create and plot a single quadratic pyramid.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticPyramid()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([13,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([13,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [1. , 0.5, 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 0.5, 0. ],
-                     [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [1. , 1. , 0.5],
-                     [0. , 1. , 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
-    array([27], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [1. , 0.5, 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 0.5, 0. ],
+                         [0. , 0. , 0.5],
+                         [1. , 0. , 0.5],
+                         [1. , 1. , 0.5],
+                         [0. , 1. , 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
+        array([27], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_PYRAMID))
+    return _isoparametric_grid(CellType.QUADRATIC_PYRAMID)
 
 
 def BiQuadraticQuadrilateral() -> UnstructuredGrid:
@@ -1473,35 +1553,38 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single biquadratic quadrilateral.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BiQuadraticQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single biquadratic quadrilateral.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BiQuadraticQuadrilateral()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0.5, 0. , 0. ],
-                     [1. , 0.5, 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0.5, 0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUAD
-    array([28], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0.5, 0. , 0. ],
+                         [1. , 0.5, 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0.5, 0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUAD
+        array([28], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_QUAD))
+    return _isoparametric_grid(CellType.BIQUADRATIC_QUAD)
 
 
 def TriQuadraticHexahedron() -> UnstructuredGrid:
@@ -1516,54 +1599,57 @@ def TriQuadraticHexahedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single triquadratic hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.TriQuadraticHexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single triquadratic hexahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.TriQuadraticHexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([27,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([27,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
-                     [1. , 1. , 1. ],
-                     [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [1. , 0.5, 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [1. , 0.5, 1. ],
-                     [0.5, 1. , 1. ],
-                     [0. , 0.5, 1. ],
-                     [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [1. , 1. , 0.5],
-                     [0. , 1. , 0.5],
-                     [0. , 0.5, 0.5],
-                     [1. , 0.5, 0.5],
-                     [0.5, 0. , 0.5],
-                     [0.5, 1. , 0.5],
-                     [0.5, 0.5, 0. ],
-                     [0.5, 0.5, 1. ],
-                     [0.5, 0.5, 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.TRIQUADRATIC_HEXAHEDRON
-    array([29], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 1. ],
+                         [1. , 1. , 1. ],
+                         [0. , 1. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [1. , 0.5, 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0. , 1. ],
+                         [1. , 0.5, 1. ],
+                         [0.5, 1. , 1. ],
+                         [0. , 0.5, 1. ],
+                         [0. , 0. , 0.5],
+                         [1. , 0. , 0.5],
+                         [1. , 1. , 0.5],
+                         [0. , 1. , 0.5],
+                         [0. , 0.5, 0.5],
+                         [1. , 0.5, 0.5],
+                         [0.5, 0. , 0.5],
+                         [0.5, 1. , 0.5],
+                         [0.5, 0.5, 0. ],
+                         [0.5, 0.5, 1. ],
+                         [0.5, 0.5, 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.TRIQUADRATIC_HEXAHEDRON
+        array([29], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.TRIQUADRATIC_HEXAHEDRON))
+    return _isoparametric_grid(CellType.TRIQUADRATIC_HEXAHEDRON)
 
 
 def TriQuadraticPyramid() -> UnstructuredGrid:
@@ -1578,46 +1664,49 @@ def TriQuadraticPyramid() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single triquadratic pyramid.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.TriQuadraticPyramid()
-    >>> examples.plot_cell(grid)
+        Create and plot a single triquadratic pyramid.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.TriQuadraticPyramid()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([19,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([19,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.5       ],
-                     [1.        , 0.        , 0.5       ],
-                     [1.        , 1.        , 0.5       ],
-                     [0.        , 1.        , 0.5       ],
-                     [0.5       , 0.5       , 1.        ],
-                     [0.5       , 0.        , 0.5       ],
-                     [1.        , 0.5       , 0.5       ],
-                     [0.5       , 1.        , 0.5       ],
-                     [0.        , 0.5       , 0.5       ],
-                     [0.25      , 0.25      , 0.75      ],
-                     [0.75      , 0.25      , 0.75      ],
-                     [0.75      , 0.75      , 0.75      ],
-                     [0.25      , 0.75      , 0.75      ],
-                     [0.5       , 0.5       , 0.5       ],
-                     [0.5       , 0.16666667, 0.66666667],
-                     [0.83333333, 0.5       , 0.66666667],
-                     [0.5       , 0.83333333, 0.66666667],
-                     [0.16666667, 0.5       , 0.66666667],
-                     [0.5       , 0.5       , 0.625     ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.TRIQUADRATIC_PYRAMID
-    array([37], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.5       ],
+                         [1.        , 0.        , 0.5       ],
+                         [1.        , 1.        , 0.5       ],
+                         [0.        , 1.        , 0.5       ],
+                         [0.5       , 0.5       , 1.        ],
+                         [0.5       , 0.        , 0.5       ],
+                         [1.        , 0.5       , 0.5       ],
+                         [0.5       , 1.        , 0.5       ],
+                         [0.        , 0.5       , 0.5       ],
+                         [0.25      , 0.25      , 0.75      ],
+                         [0.75      , 0.25      , 0.75      ],
+                         [0.75      , 0.75      , 0.75      ],
+                         [0.25      , 0.75      , 0.75      ],
+                         [0.5       , 0.5       , 0.5       ],
+                         [0.5       , 0.16666667, 0.66666667],
+                         [0.83333333, 0.5       , 0.66666667],
+                         [0.5       , 0.83333333, 0.66666667],
+                         [0.16666667, 0.5       , 0.66666667],
+                         [0.5       , 0.5       , 0.625     ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.TRIQUADRATIC_PYRAMID
+        array([37], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.TRIQUADRATIC_PYRAMID))
+    return _isoparametric_grid(CellType.TRIQUADRATIC_PYRAMID)
 
 
 def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
@@ -1632,32 +1721,35 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic linear quadrilateral.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticLinearQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single quadratic linear quadrilateral.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticLinearQuadrilateral()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([6, 0, 1, 2, 3, 4, 5]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 1. , 0. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_QUAD
-    array([30], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 1. , 0. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_QUAD
+        array([30], dtype=uint8)
 
     """  # noqa: E501
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_LINEAR_QUAD))
+    return _isoparametric_grid(CellType.QUADRATIC_LINEAR_QUAD)
 
 
 def QuadraticLinearWedge() -> UnstructuredGrid:
@@ -1672,38 +1764,41 @@ def QuadraticLinearWedge() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single quadratic linear wedge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.QuadraticLinearWedge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single quadratic linear wedge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.QuadraticLinearWedge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
-                     [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [0.5, 0.5, 1. ],
-                     [0. , 0.5, 1. ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_WEDGE
-    array([31], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 1. ],
+                         [0. , 1. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 0.5, 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0. , 1. ],
+                         [0.5, 0.5, 1. ],
+                         [0. , 0.5, 1. ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_WEDGE
+        array([31], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.QUADRATIC_LINEAR_WEDGE))
+    return _isoparametric_grid(CellType.QUADRATIC_LINEAR_WEDGE)
 
 
 def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
@@ -1718,45 +1813,48 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single biquadratic quadratic wedge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BiQuadraticQuadraticWedge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single biquadratic quadratic wedge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BiQuadraticQuadraticWedge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([18,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([18,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
-                     [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [0.5, 0.5, 1. ],
-                     [0. , 0.5, 1. ],
-                     [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [0. , 1. , 0.5],
-                     [0.5, 0. , 0.5],
-                     [0.5, 0.5, 0.5],
-                     [0. , 0.5, 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_WEDGE
-    array([32], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 1. ],
+                         [0. , 1. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [0.5, 0.5, 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0. , 1. ],
+                         [0.5, 0.5, 1. ],
+                         [0. , 0.5, 1. ],
+                         [0. , 0. , 0.5],
+                         [1. , 0. , 0.5],
+                         [0. , 1. , 0.5],
+                         [0.5, 0. , 0.5],
+                         [0.5, 0.5, 0.5],
+                         [0. , 0.5, 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_WEDGE
+        array([32], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE))
+    return _isoparametric_grid(CellType.BIQUADRATIC_QUADRATIC_WEDGE)
 
 
 def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
@@ -1772,51 +1870,54 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single biquadratic quadratic hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BiQuadraticQuadraticHexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single biquadratic quadratic hexahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BiQuadraticQuadraticHexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([24,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([24,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19, 20, 21, 22, 23]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 1. , 0. ],
-                     [0. , 1. , 0. ],
-                     [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
-                     [1. , 1. , 1. ],
-                     [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [1. , 0.5, 0. ],
-                     [0.5, 1. , 0. ],
-                     [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [1. , 0.5, 1. ],
-                     [0.5, 1. , 1. ],
-                     [0. , 0.5, 1. ],
-                     [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [1. , 1. , 0.5],
-                     [0. , 1. , 0.5],
-                     [0. , 0.5, 0.5],
-                     [1. , 0.5, 0.5],
-                     [0.5, 0. , 0.5],
-                     [0.5, 1. , 0.5]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
-    array([33], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0. , 0. , 0. ],
+                         [1. , 0. , 0. ],
+                         [1. , 1. , 0. ],
+                         [0. , 1. , 0. ],
+                         [0. , 0. , 1. ],
+                         [1. , 0. , 1. ],
+                         [1. , 1. , 1. ],
+                         [0. , 1. , 1. ],
+                         [0.5, 0. , 0. ],
+                         [1. , 0.5, 0. ],
+                         [0.5, 1. , 0. ],
+                         [0. , 0.5, 0. ],
+                         [0.5, 0. , 1. ],
+                         [1. , 0.5, 1. ],
+                         [0.5, 1. , 1. ],
+                         [0. , 0.5, 1. ],
+                         [0. , 0. , 0.5],
+                         [1. , 0. , 0.5],
+                         [1. , 1. , 0.5],
+                         [0. , 1. , 0.5],
+                         [0. , 0.5, 0.5],
+                         [1. , 0.5, 0.5],
+                         [0.5, 0. , 0.5],
+                         [0.5, 1. , 0.5]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
+        array([33], dtype=uint8)
 
     """  # noqa: E501
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON))
+    return _isoparametric_grid(CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON)
 
 
 def BiQuadraticTriangle() -> UnstructuredGrid:
@@ -1831,33 +1932,36 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single biquadratic triangle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BiQuadraticTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single biquadratic triangle.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BiQuadraticTriangle()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([7, 0, 1, 2, 3, 4, 5, 6]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([7, 0, 1, 2, 3, 4, 5, 6]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.5       , 0.        , 0.        ],
-                     [0.5       , 0.5       , 0.        ],
-                     [0.        , 0.5       , 0.        ],
-                     [0.33333333, 0.33333333, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_TRIANGLE
-    array([34], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.5       , 0.        , 0.        ],
+                         [0.5       , 0.5       , 0.        ],
+                         [0.        , 0.5       , 0.        ],
+                         [0.33333333, 0.33333333, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_TRIANGLE
+        array([34], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.BIQUADRATIC_TRIANGLE))
+    return _isoparametric_grid(CellType.BIQUADRATIC_TRIANGLE)
 
 
 def CubicLine() -> UnstructuredGrid:
@@ -1872,30 +1976,33 @@ def CubicLine() -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single cubic line.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.CubicLine()
-    >>> examples.plot_cell(grid)
+        Create and plot a single cubic line.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.CubicLine()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[-1.        ,  0.        ,  0.        ],
-                     [ 1.        ,  0.        ,  0.        ],
-                     [-0.33333333,  0.        ,  0.        ],
-                     [ 0.33333333,  0.        ,  0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.CUBIC_LINE
-    array([35], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[-1.        ,  0.        ,  0.        ],
+                         [ 1.        ,  0.        ,  0.        ],
+                         [-0.33333333,  0.        ,  0.        ],
+                         [ 0.33333333,  0.        ,  0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.CUBIC_LINE
+        array([35], dtype=uint8)
 
     """
-    return cast('UnstructuredGrid', _isoparametric_grid(CellType.CUBIC_LINE))
+    return _isoparametric_grid(CellType.CUBIC_LINE)
 
 
 def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -1915,32 +2022,33 @@ def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Lagrange curve.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.LagrangeCurve()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Lagrange curve.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.LagrangeCurve()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_CURVE
-    array([68], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_CURVE
+        array([68], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _vtkCellTypeSource(CellType.LAGRANGE_CURVE, cell_order=cell_order)
-    )
+    return _vtkCellTypeSource(CellType.LAGRANGE_CURVE, cell_order=cell_order)
 
 
 def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -1960,39 +2068,39 @@ def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Lagrange triangle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.LagrangeTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single Lagrange triangle.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.LagrangeTriangle()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.33333334, 0.33333334, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TRIANGLE
-    array([69], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.33333334, 0.33333334, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TRIANGLE
+        array([69], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.LAGRANGE_TRIANGLE, cell_order=cell_order)
 
 
 def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2012,45 +2120,45 @@ def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Lagrange quadrilateral.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.LagrangeQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single Lagrange quadrilateral.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.LagrangeQuadrilateral()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [1.        , 1.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [1.        , 0.33333334, 0.        ],
-                     [1.        , 0.66666669, 0.        ],
-                     [0.33333334, 1.        , 0.        ],
-                     [0.66666669, 1.        , 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.66666669, 0.66666669, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_QUADRILATERAL
-    array([70], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [1.        , 1.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [1.        , 0.33333334, 0.        ],
+                         [1.        , 0.66666669, 0.        ],
+                         [0.33333334, 1.        , 0.        ],
+                         [0.66666669, 1.        , 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.66666669, 0.66666669, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_QUADRILATERAL
+        array([70], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.LAGRANGE_QUADRILATERAL, cell_order=cell_order)
 
 
 def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2070,50 +2178,50 @@ def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Lagrange tetrahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.LagrangeTetrahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Lagrange tetrahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.LagrangeTetrahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [1.        , 1.        , 0.        ],
-                     [0.5       , 0.5       , 0.5       ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [1.        , 0.33333334, 0.        ],
-                     [1.        , 0.66666669, 0.        ],
-                     [0.66666669, 0.66666669, 0.        ],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.16666667, 0.16666667, 0.16666667],
-                     [0.33333334, 0.33333334, 0.33333334],
-                     [0.83333331, 0.16666667, 0.16666667],
-                     [0.66666669, 0.33333334, 0.33333334],
-                     [0.83333331, 0.83333331, 0.16666667],
-                     [0.66666669, 0.66666669, 0.33333334],
-                     [0.5       , 0.16666667, 0.16666667],
-                     [0.83333331, 0.5       , 0.16666667],
-                     [0.5       , 0.5       , 0.16666667],
-                     [0.66666669, 0.33333334, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TETRAHEDRON
-    array([71], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [1.        , 1.        , 0.        ],
+                         [0.5       , 0.5       , 0.5       ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [1.        , 0.33333334, 0.        ],
+                         [1.        , 0.66666669, 0.        ],
+                         [0.66666669, 0.66666669, 0.        ],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.16666667, 0.16666667, 0.16666667],
+                         [0.33333334, 0.33333334, 0.33333334],
+                         [0.83333331, 0.16666667, 0.16666667],
+                         [0.66666669, 0.33333334, 0.33333334],
+                         [0.83333331, 0.83333331, 0.16666667],
+                         [0.66666669, 0.66666669, 0.33333334],
+                         [0.5       , 0.16666667, 0.16666667],
+                         [0.83333331, 0.5       , 0.16666667],
+                         [0.5       , 0.5       , 0.16666667],
+                         [0.66666669, 0.33333334, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_TETRAHEDRON
+        array([71], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.LAGRANGE_TETRAHEDRON, cell_order=cell_order)
 
 
 def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2133,96 +2241,96 @@ def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Lagrange hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.LagrangeHexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Lagrange hexahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.LagrangeHexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-           33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+               33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+               50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [1.        , 1.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.        , 0.        , 1.        ],
-                     [1.        , 0.        , 1.        ],
-                     [1.        , 1.        , 1.        ],
-                     [0.        , 1.        , 1.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [1.        , 0.33333334, 0.        ],
-                     [1.        , 0.66666669, 0.        ],
-                     [0.33333334, 1.        , 0.        ],
-                     [0.66666669, 1.        , 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.33333334, 0.        , 1.        ],
-                     [0.66666669, 0.        , 1.        ],
-                     [1.        , 0.33333334, 1.        ],
-                     [1.        , 0.66666669, 1.        ],
-                     [0.33333334, 1.        , 1.        ],
-                     [0.66666669, 1.        , 1.        ],
-                     [0.        , 0.33333334, 1.        ],
-                     [0.        , 0.66666669, 1.        ],
-                     [0.        , 0.        , 0.33333334],
-                     [0.        , 0.        , 0.66666669],
-                     [1.        , 0.        , 0.33333334],
-                     [1.        , 0.        , 0.66666669],
-                     [1.        , 1.        , 0.33333334],
-                     [1.        , 1.        , 0.66666669],
-                     [0.        , 1.        , 0.33333334],
-                     [0.        , 1.        , 0.66666669],
-                     [0.        , 0.33333334, 0.33333334],
-                     [0.        , 0.66666669, 0.33333334],
-                     [0.        , 0.33333334, 0.66666669],
-                     [0.        , 0.66666669, 0.66666669],
-                     [1.        , 0.33333334, 0.33333334],
-                     [1.        , 0.66666669, 0.33333334],
-                     [1.        , 0.33333334, 0.66666669],
-                     [1.        , 0.66666669, 0.66666669],
-                     [0.33333334, 0.        , 0.33333334],
-                     [0.66666669, 0.        , 0.33333334],
-                     [0.33333334, 0.        , 0.66666669],
-                     [0.66666669, 0.        , 0.66666669],
-                     [0.33333334, 1.        , 0.33333334],
-                     [0.66666669, 1.        , 0.33333334],
-                     [0.33333334, 1.        , 0.66666669],
-                     [0.66666669, 1.        , 0.66666669],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.66666669, 0.66666669, 0.        ],
-                     [0.33333334, 0.33333334, 1.        ],
-                     [0.66666669, 0.33333334, 1.        ],
-                     [0.33333334, 0.66666669, 1.        ],
-                     [0.66666669, 0.66666669, 1.        ],
-                     [0.33333334, 0.33333334, 0.33333334],
-                     [0.66666669, 0.33333334, 0.33333334],
-                     [0.33333334, 0.66666669, 0.33333334],
-                     [0.66666669, 0.66666669, 0.33333334],
-                     [0.33333334, 0.33333334, 0.66666669],
-                     [0.66666669, 0.33333334, 0.66666669],
-                     [0.33333334, 0.66666669, 0.66666669],
-                     [0.66666669, 0.66666669, 0.66666669]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_HEXAHEDRON
-    array([72], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [1.        , 1.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.        , 0.        , 1.        ],
+                         [1.        , 0.        , 1.        ],
+                         [1.        , 1.        , 1.        ],
+                         [0.        , 1.        , 1.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [1.        , 0.33333334, 0.        ],
+                         [1.        , 0.66666669, 0.        ],
+                         [0.33333334, 1.        , 0.        ],
+                         [0.66666669, 1.        , 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.33333334, 0.        , 1.        ],
+                         [0.66666669, 0.        , 1.        ],
+                         [1.        , 0.33333334, 1.        ],
+                         [1.        , 0.66666669, 1.        ],
+                         [0.33333334, 1.        , 1.        ],
+                         [0.66666669, 1.        , 1.        ],
+                         [0.        , 0.33333334, 1.        ],
+                         [0.        , 0.66666669, 1.        ],
+                         [0.        , 0.        , 0.33333334],
+                         [0.        , 0.        , 0.66666669],
+                         [1.        , 0.        , 0.33333334],
+                         [1.        , 0.        , 0.66666669],
+                         [1.        , 1.        , 0.33333334],
+                         [1.        , 1.        , 0.66666669],
+                         [0.        , 1.        , 0.33333334],
+                         [0.        , 1.        , 0.66666669],
+                         [0.        , 0.33333334, 0.33333334],
+                         [0.        , 0.66666669, 0.33333334],
+                         [0.        , 0.33333334, 0.66666669],
+                         [0.        , 0.66666669, 0.66666669],
+                         [1.        , 0.33333334, 0.33333334],
+                         [1.        , 0.66666669, 0.33333334],
+                         [1.        , 0.33333334, 0.66666669],
+                         [1.        , 0.66666669, 0.66666669],
+                         [0.33333334, 0.        , 0.33333334],
+                         [0.66666669, 0.        , 0.33333334],
+                         [0.33333334, 0.        , 0.66666669],
+                         [0.66666669, 0.        , 0.66666669],
+                         [0.33333334, 1.        , 0.33333334],
+                         [0.66666669, 1.        , 0.33333334],
+                         [0.33333334, 1.        , 0.66666669],
+                         [0.66666669, 1.        , 0.66666669],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.66666669, 0.66666669, 0.        ],
+                         [0.33333334, 0.33333334, 1.        ],
+                         [0.66666669, 0.33333334, 1.        ],
+                         [0.33333334, 0.66666669, 1.        ],
+                         [0.66666669, 0.66666669, 1.        ],
+                         [0.33333334, 0.33333334, 0.33333334],
+                         [0.66666669, 0.33333334, 0.33333334],
+                         [0.33333334, 0.66666669, 0.33333334],
+                         [0.66666669, 0.66666669, 0.33333334],
+                         [0.33333334, 0.33333334, 0.66666669],
+                         [0.66666669, 0.33333334, 0.66666669],
+                         [0.33333334, 0.66666669, 0.66666669],
+                         [0.66666669, 0.66666669, 0.66666669]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_HEXAHEDRON
+        array([72], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.LAGRANGE_HEXAHEDRON, cell_order=cell_order)
 
 
 def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2242,70 +2350,71 @@ def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Lagrange wedge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.LagrangeWedge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Lagrange wedge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.LagrangeWedge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-           33, 34, 35, 36, 37, 38, 39]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+               33, 34, 35, 36, 37, 38, 39]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.        , 0.        , 1.        ],
-                     [1.        , 0.        , 1.        ],
-                     [0.        , 1.        , 1.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.33333334, 0.        , 1.        ],
-                     [0.66666669, 0.        , 1.        ],
-                     [0.66666669, 0.33333334, 1.        ],
-                     [0.33333334, 0.66666669, 1.        ],
-                     [0.        , 0.66666669, 1.        ],
-                     [0.        , 0.33333334, 1.        ],
-                     [0.        , 0.        , 0.33333334],
-                     [0.        , 0.        , 0.66666669],
-                     [1.        , 0.        , 0.33333334],
-                     [1.        , 0.        , 0.66666669],
-                     [0.        , 1.        , 0.33333334],
-                     [0.        , 1.        , 0.66666669],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.33333334, 0.33333334, 1.        ],
-                     [0.33333334, 0.        , 0.33333334],
-                     [0.66666669, 0.        , 0.33333334],
-                     [0.33333334, 0.        , 0.66666669],
-                     [0.66666669, 0.        , 0.66666669],
-                     [0.66666669, 0.33333334, 0.33333334],
-                     [0.33333334, 0.66666669, 0.33333334],
-                     [0.66666669, 0.33333334, 0.66666669],
-                     [0.33333334, 0.66666669, 0.66666669],
-                     [0.        , 0.66666669, 0.33333334],
-                     [0.        , 0.33333334, 0.33333334],
-                     [0.        , 0.66666669, 0.66666669],
-                     [0.        , 0.33333334, 0.66666669],
-                     [0.33333334, 0.33333334, 0.33333334],
-                     [0.33333334, 0.33333334, 0.66666669]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_WEDGE
-    array([73], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.        , 0.        , 1.        ],
+                         [1.        , 0.        , 1.        ],
+                         [0.        , 1.        , 1.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.33333334, 0.        , 1.        ],
+                         [0.66666669, 0.        , 1.        ],
+                         [0.66666669, 0.33333334, 1.        ],
+                         [0.33333334, 0.66666669, 1.        ],
+                         [0.        , 0.66666669, 1.        ],
+                         [0.        , 0.33333334, 1.        ],
+                         [0.        , 0.        , 0.33333334],
+                         [0.        , 0.        , 0.66666669],
+                         [1.        , 0.        , 0.33333334],
+                         [1.        , 0.        , 0.66666669],
+                         [0.        , 1.        , 0.33333334],
+                         [0.        , 1.        , 0.66666669],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.33333334, 0.33333334, 1.        ],
+                         [0.33333334, 0.        , 0.33333334],
+                         [0.66666669, 0.        , 0.33333334],
+                         [0.33333334, 0.        , 0.66666669],
+                         [0.66666669, 0.        , 0.66666669],
+                         [0.66666669, 0.33333334, 0.33333334],
+                         [0.33333334, 0.66666669, 0.33333334],
+                         [0.66666669, 0.33333334, 0.66666669],
+                         [0.33333334, 0.66666669, 0.66666669],
+                         [0.        , 0.66666669, 0.33333334],
+                         [0.        , 0.33333334, 0.33333334],
+                         [0.        , 0.66666669, 0.66666669],
+                         [0.        , 0.33333334, 0.66666669],
+                         [0.33333334, 0.33333334, 0.33333334],
+                         [0.33333334, 0.33333334, 0.66666669]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.LAGRANGE_WEDGE
+        array([73], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _vtkCellTypeSource(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
-    )
+    return _vtkCellTypeSource(CellType.LAGRANGE_WEDGE, cell_order=cell_order)
 
 
 def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2325,32 +2434,33 @@ def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Bezier curve.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BezierCurve()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Bezier curve.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BezierCurve()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([4, 0, 1, 2, 3]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([4, 0, 1, 2, 3]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_CURVE
-    array([75], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BEZIER_CURVE
+        array([75], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _vtkCellTypeSource(CellType.BEZIER_CURVE, cell_order=cell_order)
-    )
+    return _vtkCellTypeSource(CellType.BEZIER_CURVE, cell_order=cell_order)
 
 
 def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2370,38 +2480,39 @@ def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Bezier triangle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BezierTriangle()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single Bezier triangle.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BezierTriangle()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.33333334, 0.33333334, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_TRIANGLE
-    array([76], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.33333334, 0.33333334, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BEZIER_TRIANGLE
+        array([76], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _vtkCellTypeSource(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
-    )
+    return _vtkCellTypeSource(CellType.BEZIER_TRIANGLE, cell_order=cell_order)
 
 
 def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2421,45 +2532,45 @@ def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Bezier quadrilateral.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BezierQuadrilateral()
-    >>> examples.plot_cell(grid, cpos='xy')
+        Create and plot a single Bezier quadrilateral.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BezierQuadrilateral()
+        >>> examples.plot_cell(grid, cpos='xy')
 
-    >>> grid.cells
-    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [1.        , 1.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [1.        , 0.33333334, 0.        ],
-                     [1.        , 0.66666669, 0.        ],
-                     [0.33333334, 1.        , 0.        ],
-                     [0.66666669, 1.        , 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.66666669, 0.66666669, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_QUADRILATERAL
-    array([77], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [1.        , 1.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [1.        , 0.33333334, 0.        ],
+                         [1.        , 0.66666669, 0.        ],
+                         [0.33333334, 1.        , 0.        ],
+                         [0.66666669, 1.        , 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.66666669, 0.66666669, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BEZIER_QUADRILATERAL
+        array([77], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.BEZIER_QUADRILATERAL, cell_order=cell_order)
 
 
 def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2479,50 +2590,50 @@ def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Bezier tetrahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BezierTetrahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Bezier tetrahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BezierTetrahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [1.        , 1.        , 0.        ],
-                     [0.5       , 0.5       , 0.5       ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [1.        , 0.33333334, 0.        ],
-                     [1.        , 0.66666669, 0.        ],
-                     [0.66666669, 0.66666669, 0.        ],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.16666667, 0.16666667, 0.16666667],
-                     [0.33333334, 0.33333334, 0.33333334],
-                     [0.83333331, 0.16666667, 0.16666667],
-                     [0.66666669, 0.33333334, 0.33333334],
-                     [0.83333331, 0.83333331, 0.16666667],
-                     [0.66666669, 0.66666669, 0.33333334],
-                     [0.5       , 0.16666667, 0.16666667],
-                     [0.83333331, 0.5       , 0.16666667],
-                     [0.5       , 0.5       , 0.16666667],
-                     [0.66666669, 0.33333334, 0.        ]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_TETRAHEDRON
-    array([78], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [1.        , 1.        , 0.        ],
+                         [0.5       , 0.5       , 0.5       ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [1.        , 0.33333334, 0.        ],
+                         [1.        , 0.66666669, 0.        ],
+                         [0.66666669, 0.66666669, 0.        ],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.16666667, 0.16666667, 0.16666667],
+                         [0.33333334, 0.33333334, 0.33333334],
+                         [0.83333331, 0.16666667, 0.16666667],
+                         [0.66666669, 0.33333334, 0.33333334],
+                         [0.83333331, 0.83333331, 0.16666667],
+                         [0.66666669, 0.66666669, 0.33333334],
+                         [0.5       , 0.16666667, 0.16666667],
+                         [0.83333331, 0.5       , 0.16666667],
+                         [0.5       , 0.5       , 0.16666667],
+                         [0.66666669, 0.33333334, 0.        ]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BEZIER_TETRAHEDRON
+        array([78], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.BEZIER_TETRAHEDRON, cell_order=cell_order)
 
 
 def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2542,96 +2653,96 @@ def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Bezier hexahedron.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BezierHexahedron()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Bezier hexahedron.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BezierHexahedron()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-           33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+               33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+               50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [1.        , 1.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.        , 0.        , 1.        ],
-                     [1.        , 0.        , 1.        ],
-                     [1.        , 1.        , 1.        ],
-                     [0.        , 1.        , 1.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [1.        , 0.33333334, 0.        ],
-                     [1.        , 0.66666669, 0.        ],
-                     [0.33333334, 1.        , 0.        ],
-                     [0.66666669, 1.        , 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.33333334, 0.        , 1.        ],
-                     [0.66666669, 0.        , 1.        ],
-                     [1.        , 0.33333334, 1.        ],
-                     [1.        , 0.66666669, 1.        ],
-                     [0.33333334, 1.        , 1.        ],
-                     [0.66666669, 1.        , 1.        ],
-                     [0.        , 0.33333334, 1.        ],
-                     [0.        , 0.66666669, 1.        ],
-                     [0.        , 0.        , 0.33333334],
-                     [0.        , 0.        , 0.66666669],
-                     [1.        , 0.        , 0.33333334],
-                     [1.        , 0.        , 0.66666669],
-                     [1.        , 1.        , 0.33333334],
-                     [1.        , 1.        , 0.66666669],
-                     [0.        , 1.        , 0.33333334],
-                     [0.        , 1.        , 0.66666669],
-                     [0.        , 0.33333334, 0.33333334],
-                     [0.        , 0.66666669, 0.33333334],
-                     [0.        , 0.33333334, 0.66666669],
-                     [0.        , 0.66666669, 0.66666669],
-                     [1.        , 0.33333334, 0.33333334],
-                     [1.        , 0.66666669, 0.33333334],
-                     [1.        , 0.33333334, 0.66666669],
-                     [1.        , 0.66666669, 0.66666669],
-                     [0.33333334, 0.        , 0.33333334],
-                     [0.66666669, 0.        , 0.33333334],
-                     [0.33333334, 0.        , 0.66666669],
-                     [0.66666669, 0.        , 0.66666669],
-                     [0.33333334, 1.        , 0.33333334],
-                     [0.66666669, 1.        , 0.33333334],
-                     [0.33333334, 1.        , 0.66666669],
-                     [0.66666669, 1.        , 0.66666669],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.66666669, 0.66666669, 0.        ],
-                     [0.33333334, 0.33333334, 1.        ],
-                     [0.66666669, 0.33333334, 1.        ],
-                     [0.33333334, 0.66666669, 1.        ],
-                     [0.66666669, 0.66666669, 1.        ],
-                     [0.33333334, 0.33333334, 0.33333334],
-                     [0.66666669, 0.33333334, 0.33333334],
-                     [0.33333334, 0.66666669, 0.33333334],
-                     [0.66666669, 0.66666669, 0.33333334],
-                     [0.33333334, 0.33333334, 0.66666669],
-                     [0.66666669, 0.33333334, 0.66666669],
-                     [0.33333334, 0.66666669, 0.66666669],
-                     [0.66666669, 0.66666669, 0.66666669]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_HEXAHEDRON
-    array([79], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [1.        , 1.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.        , 0.        , 1.        ],
+                         [1.        , 0.        , 1.        ],
+                         [1.        , 1.        , 1.        ],
+                         [0.        , 1.        , 1.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [1.        , 0.33333334, 0.        ],
+                         [1.        , 0.66666669, 0.        ],
+                         [0.33333334, 1.        , 0.        ],
+                         [0.66666669, 1.        , 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.33333334, 0.        , 1.        ],
+                         [0.66666669, 0.        , 1.        ],
+                         [1.        , 0.33333334, 1.        ],
+                         [1.        , 0.66666669, 1.        ],
+                         [0.33333334, 1.        , 1.        ],
+                         [0.66666669, 1.        , 1.        ],
+                         [0.        , 0.33333334, 1.        ],
+                         [0.        , 0.66666669, 1.        ],
+                         [0.        , 0.        , 0.33333334],
+                         [0.        , 0.        , 0.66666669],
+                         [1.        , 0.        , 0.33333334],
+                         [1.        , 0.        , 0.66666669],
+                         [1.        , 1.        , 0.33333334],
+                         [1.        , 1.        , 0.66666669],
+                         [0.        , 1.        , 0.33333334],
+                         [0.        , 1.        , 0.66666669],
+                         [0.        , 0.33333334, 0.33333334],
+                         [0.        , 0.66666669, 0.33333334],
+                         [0.        , 0.33333334, 0.66666669],
+                         [0.        , 0.66666669, 0.66666669],
+                         [1.        , 0.33333334, 0.33333334],
+                         [1.        , 0.66666669, 0.33333334],
+                         [1.        , 0.33333334, 0.66666669],
+                         [1.        , 0.66666669, 0.66666669],
+                         [0.33333334, 0.        , 0.33333334],
+                         [0.66666669, 0.        , 0.33333334],
+                         [0.33333334, 0.        , 0.66666669],
+                         [0.66666669, 0.        , 0.66666669],
+                         [0.33333334, 1.        , 0.33333334],
+                         [0.66666669, 1.        , 0.33333334],
+                         [0.33333334, 1.        , 0.66666669],
+                         [0.66666669, 1.        , 0.66666669],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.66666669, 0.66666669, 0.        ],
+                         [0.33333334, 0.33333334, 1.        ],
+                         [0.66666669, 0.33333334, 1.        ],
+                         [0.33333334, 0.66666669, 1.        ],
+                         [0.66666669, 0.66666669, 1.        ],
+                         [0.33333334, 0.33333334, 0.33333334],
+                         [0.66666669, 0.33333334, 0.33333334],
+                         [0.33333334, 0.66666669, 0.33333334],
+                         [0.66666669, 0.66666669, 0.33333334],
+                         [0.33333334, 0.33333334, 0.66666669],
+                         [0.66666669, 0.33333334, 0.66666669],
+                         [0.33333334, 0.66666669, 0.66666669],
+                         [0.66666669, 0.66666669, 0.66666669]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BEZIER_HEXAHEDRON
+        array([79], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid',
-        _vtkCellTypeSource(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order),
-    )
+    return _vtkCellTypeSource(CellType.BEZIER_HEXAHEDRON, cell_order=cell_order)
 
 
 def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
@@ -2651,70 +2762,71 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
 
     Examples
     --------
-    Create and plot a single Bezier wedge.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.cells.BezierWedge()
-    >>> examples.plot_cell(grid)
+        Create and plot a single Bezier wedge.
 
-    List the grid's cells.
+        >>> from pyvista import examples
+        >>> grid = examples.cells.BezierWedge()
+        >>> examples.plot_cell(grid)
 
-    >>> grid.cells
-    array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-           33, 34, 35, 36, 37, 38, 39]...)
+        List the grid's cells.
 
-    List the grid's points.
+        >>> grid.cells
+        array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+               16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+               33, 34, 35, 36, 37, 38, 39]...)
 
-    >>> grid.points
-    pyvista_ndarray([[0.        , 0.        , 0.        ],
-                     [1.        , 0.        , 0.        ],
-                     [0.        , 1.        , 0.        ],
-                     [0.        , 0.        , 1.        ],
-                     [1.        , 0.        , 1.        ],
-                     [0.        , 1.        , 1.        ],
-                     [0.33333334, 0.        , 0.        ],
-                     [0.66666669, 0.        , 0.        ],
-                     [0.66666669, 0.33333334, 0.        ],
-                     [0.33333334, 0.66666669, 0.        ],
-                     [0.        , 0.66666669, 0.        ],
-                     [0.        , 0.33333334, 0.        ],
-                     [0.33333334, 0.        , 1.        ],
-                     [0.66666669, 0.        , 1.        ],
-                     [0.66666669, 0.33333334, 1.        ],
-                     [0.33333334, 0.66666669, 1.        ],
-                     [0.        , 0.66666669, 1.        ],
-                     [0.        , 0.33333334, 1.        ],
-                     [0.        , 0.        , 0.33333334],
-                     [0.        , 0.        , 0.66666669],
-                     [1.        , 0.        , 0.33333334],
-                     [1.        , 0.        , 0.66666669],
-                     [0.        , 1.        , 0.33333334],
-                     [0.        , 1.        , 0.66666669],
-                     [0.33333334, 0.33333334, 0.        ],
-                     [0.33333334, 0.33333334, 1.        ],
-                     [0.33333334, 0.        , 0.33333334],
-                     [0.66666669, 0.        , 0.33333334],
-                     [0.33333334, 0.        , 0.66666669],
-                     [0.66666669, 0.        , 0.66666669],
-                     [0.66666669, 0.33333334, 0.33333334],
-                     [0.33333334, 0.66666669, 0.33333334],
-                     [0.66666669, 0.33333334, 0.66666669],
-                     [0.33333334, 0.66666669, 0.66666669],
-                     [0.        , 0.66666669, 0.33333334],
-                     [0.        , 0.33333334, 0.33333334],
-                     [0.        , 0.66666669, 0.66666669],
-                     [0.        , 0.33333334, 0.66666669],
-                     [0.33333334, 0.33333334, 0.33333334],
-                     [0.33333334, 0.33333334, 0.66666669]])
+        List the grid's points.
 
-    >>> grid.celltypes  # same as pyvista.CellType.BEZIER_WEDGE
-    array([80], dtype=uint8)
+        >>> grid.points
+        pyvista_ndarray([[0.        , 0.        , 0.        ],
+                         [1.        , 0.        , 0.        ],
+                         [0.        , 1.        , 0.        ],
+                         [0.        , 0.        , 1.        ],
+                         [1.        , 0.        , 1.        ],
+                         [0.        , 1.        , 1.        ],
+                         [0.33333334, 0.        , 0.        ],
+                         [0.66666669, 0.        , 0.        ],
+                         [0.66666669, 0.33333334, 0.        ],
+                         [0.33333334, 0.66666669, 0.        ],
+                         [0.        , 0.66666669, 0.        ],
+                         [0.        , 0.33333334, 0.        ],
+                         [0.33333334, 0.        , 1.        ],
+                         [0.66666669, 0.        , 1.        ],
+                         [0.66666669, 0.33333334, 1.        ],
+                         [0.33333334, 0.66666669, 1.        ],
+                         [0.        , 0.66666669, 1.        ],
+                         [0.        , 0.33333334, 1.        ],
+                         [0.        , 0.        , 0.33333334],
+                         [0.        , 0.        , 0.66666669],
+                         [1.        , 0.        , 0.33333334],
+                         [1.        , 0.        , 0.66666669],
+                         [0.        , 1.        , 0.33333334],
+                         [0.        , 1.        , 0.66666669],
+                         [0.33333334, 0.33333334, 0.        ],
+                         [0.33333334, 0.33333334, 1.        ],
+                         [0.33333334, 0.        , 0.33333334],
+                         [0.66666669, 0.        , 0.33333334],
+                         [0.33333334, 0.        , 0.66666669],
+                         [0.66666669, 0.        , 0.66666669],
+                         [0.66666669, 0.33333334, 0.33333334],
+                         [0.33333334, 0.66666669, 0.33333334],
+                         [0.66666669, 0.33333334, 0.66666669],
+                         [0.33333334, 0.66666669, 0.66666669],
+                         [0.        , 0.66666669, 0.33333334],
+                         [0.        , 0.33333334, 0.33333334],
+                         [0.        , 0.66666669, 0.66666669],
+                         [0.        , 0.33333334, 0.66666669],
+                         [0.33333334, 0.33333334, 0.33333334],
+                         [0.33333334, 0.33333334, 0.66666669]])
+
+        >>> grid.celltypes  # same as pyvista.CellType.BEZIER_WEDGE
+        array([80], dtype=uint8)
 
     """
-    return cast(
-        'UnstructuredGrid', _vtkCellTypeSource(CellType.BEZIER_WEDGE, cell_order=cell_order)
-    )
+    return _vtkCellTypeSource(CellType.BEZIER_WEDGE, cell_order=cell_order)
 
 
 _GeneratorOptions = Literal['examples', 'source', 'parametric']
@@ -2793,165 +2905,171 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
 
     Examples
     --------
-    .. autoopengraph_thumbnail:: 11
+    .. pyvista-plot::
+        :force_static:
 
-    Generate a single :attr:`~pyvista.CellType.TRIANGLE` cell.
+        .. autoopengraph_thumbnail:: 11
 
-    >>> import pyvista as pv
-    >>> from pyvista.examples import cells, generate_cell_blocks, plot_cell
-    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE)
-    >>> plot_cell(triangle, cpos='xy')
+        Generate a single :attr:`~pyvista.CellType.TRIANGLE` cell.
 
-    This is similar to the :func:`~pyvista.examples.cells.Triangle` grid, except it's a
-    :class:`~pyvista.MultiBlock` and its bounds are normalized to fit inside a 1x1x1 grid.
+        >>> import pyvista as pv
+        >>> from pyvista.examples import cells, generate_cell_blocks, plot_cell
+        >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE)
+        >>> plot_cell(triangle, cpos='xy')
 
-    >>> triangle
-    MultiBlock[UnstructuredGrid] (...)
-      N Blocks:   1
-      X Bounds:   0.000e+00, 1.000e+00
-      Y Bounds:   -5.551e-17, 1.000e+00
-      Z Bounds:   0.000e+00, 0.000e+00
+        This is similar to the :func:`~pyvista.examples.cells.Triangle` grid, except it's a
+        :class:`~pyvista.MultiBlock` and its bounds are normalized to fit inside a 1x1x1 grid.
 
-    Compare to the un-normalized bounds.
+        >>> triangle
+        MultiBlock[UnstructuredGrid] (...)
+          N Cells:    1
+          N Points:   3
+          N Blocks:   1
+          Depth:      1
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   -5.551e-17, 1.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
 
-    >>> cells.Triangle()
-    UnstructuredGrid (...)
-      N Cells:    1
-      N Points:   3
-      X Bounds:   -5.000e-01, 5.000e-01
-      Y Bounds:   -2.887e-01, 5.774e-01
-      Z Bounds:   0.000e+00, 0.000e+00
-      N Arrays:   0
+        Compare to the un-normalized bounds.
 
-    Use the ``'parametric'`` generator instead.
+        >>> cells.Triangle()
+        UnstructuredGrid (...)
+          N Cells:    1
+          N Points:   3
+          X Bounds:   -5.000e-01, 5.000e-01
+          Y Bounds:   -2.887e-01, 5.774e-01
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
 
-    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'parametric')
-    >>> plot_cell(triangle, cpos='xy')
+        Use the ``'parametric'`` generator instead.
 
-    Use the ``'source'`` generator instead.
+        >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'parametric')
+        >>> plot_cell(triangle, cpos='xy')
 
-    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'source')
-    >>> plot_cell(triangle, cpos='xy')
+        Use the ``'source'`` generator instead.
 
-    Generate multiple cell types. Here we generate all concrete linear 2D cells.
+        >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'source')
+        >>> plot_cell(triangle, cpos='xy')
 
-    >>> cell_types = [
-    ...     ctype
-    ...     for ctype in pv.CellType
-    ...     if ctype.dimension == 2 and ctype.is_linear
-    ... ]
-    >>> cell_types  # doctest: +NORMALIZE_WHITESPACE
-    [<CellType.TRIANGLE: 5>,
-     <CellType.TRIANGLE_STRIP: 6>,
-     <CellType.POLYGON: 7>,
-     <CellType.PIXEL: 8>,
-     <CellType.QUAD: 9>]
+        Generate multiple cell types. Here we generate all concrete linear 2D cells.
 
-    >>> cell_blocks = generate_cell_blocks(cell_types, shrink_factor=0.8)
-    >>> plot_cell(cell_blocks, cpos='xy')
+        >>> cell_types = [
+        ...     ctype
+        ...     for ctype in pv.CellType
+        ...     if ctype.dimension == 2 and ctype.is_linear
+        ... ]
+        >>> cell_types  # doctest: +NORMALIZE_WHITESPACE
+        [<CellType.TRIANGLE: 5>,
+         <CellType.TRIANGLE_STRIP: 6>,
+         <CellType.POLYGON: 7>,
+         <CellType.PIXEL: 8>,
+         <CellType.QUAD: 9>]
 
-    Each block's name matches the name of the cell type.
+        >>> cell_blocks = generate_cell_blocks(cell_types, shrink_factor=0.8)
+        >>> plot_cell(cell_blocks, cpos='xy')
 
-    >>> cell_blocks.keys()
-    ['TRIANGLE', 'TRIANGLE_STRIP', 'POLYGON', 'PIXEL', 'QUAD']
+        Each block's name matches the name of the cell type.
 
-    Generate the same cell types using the parametric generator. This generator does not support
-    triangle strip or polygon cells, so we skip these.
+        >>> cell_blocks.keys()
+        ['TRIANGLE', 'TRIANGLE_STRIP', 'POLYGON', 'PIXEL', 'QUAD']
 
-    >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_action='skip'
-    ... )
-    >>> plot_cell(cell_blocks, cpos='xy')
+        Generate the same cell types using the parametric generator. This generator does not
+        support triangle strip or polygon cells, so we skip these.
 
-    Use the source generator. It also does not support triangle strip, but it does support polygon.
-    This time, we squeeze the blocks together instead of skipping them, and do not shrink them.
-    This combination generates a continuous grid with no gaps.
+        >>> cell_blocks = generate_cell_blocks(
+        ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_action='skip'
+        ... )
+        >>> plot_cell(cell_blocks, cpos='xy')
 
-    >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types, 'source', unsupported_action='squeeze'
-    ... )
-    >>> plot_cell(cell_blocks, cpos='xy')
+        Use the source generator. It also does not support triangle strip, but it does support
+        polygon. This time, we squeeze the blocks together instead of skipping them, and do not
+        shrink them. This combination generates a continuous grid with no gaps.
 
-    Generate cell types on a dimensioned grid.
+        >>> cell_blocks = generate_cell_blocks(
+        ...     cell_types, 'source', unsupported_action='squeeze'
+        ... )
+        >>> plot_cell(cell_blocks, cpos='xy')
 
-    >>> lines = [pv.CellType.LINE] * 3
-    >>> polygons = [pv.CellType.POLYGON] * 3
-    >>> wedges = [pv.CellType.WEDGE] * 3
-    >>> pyramids = [pv.CellType.PYRAMID] * 3
-    >>> cell_types = [*lines, *polygons, *wedges, *pyramids]
+        Generate cell types on a dimensioned grid.
 
-    Plot them with 3 cells in the x-direction, and 4 cells in the y-direction.
+        >>> lines = [pv.CellType.LINE] * 3
+        >>> polygons = [pv.CellType.POLYGON] * 3
+        >>> wedges = [pv.CellType.WEDGE] * 3
+        >>> pyramids = [pv.CellType.PYRAMID] * 3
+        >>> cell_types = [*lines, *polygons, *wedges, *pyramids]
 
-    >>> cell_blocks = generate_cell_blocks(cell_types, block_dimensions=(3, 4, 1))
-    >>> size_kwargs = dict(point_size=40, font_size=20)
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        Plot them with 3 cells in the x-direction, and 4 cells in the y-direction.
 
-    Reverse the x and y dimension.
+        >>> cell_blocks = generate_cell_blocks(cell_types, block_dimensions=(3, 4, 1))
+        >>> size_kwargs = dict(point_size=40, font_size=20)
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = generate_cell_blocks(cell_types, block_dimensions=(4, 3, 1))
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        Reverse the x and y dimension.
 
-    Use the ``'stop'`` fill mode if there is a mismatch between the number of cell types and block
-    dimensions. Here, the last two pyramid cell types are omitted.
+        >>> cell_blocks = generate_cell_blocks(cell_types, block_dimensions=(4, 3, 1))
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='stop'
-    ... )
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        Use the ``'stop'`` fill mode if there is a mismatch between the number of cell types and
+        block dimensions. Here, the last two pyramid cell types are omitted.
 
-    Alternatively, cycle through the cell types again to completely fill the dimensions. In this
-    case, the line type is reused to fill the gap.
+        >>> cell_blocks = generate_cell_blocks(
+        ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='stop'
+        ... )
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='cycle'
-    ... )
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        Alternatively, cycle through the cell types again to completely fill the dimensions. In
+        this case, the line type is reused to fill the gap.
 
-    Generate a 5x5x5 grid comprised of all 3D concrete cell types with no gaps.
+        >>> cell_blocks = generate_cell_blocks(
+        ...     cell_types[:-2], block_dimensions=(3, 4, 1), fill_mode='cycle'
+        ... )
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_types = [
-    ...     ctype
-    ...     for ctype in pv.CellType
-    ...     if ctype.dimension == 3 and ctype.vtk_class is not None
-    ... ]
-    >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types,
-    ...     'source',
-    ...     block_dimensions=(5, 5, 5),
-    ...     unsupported_action='squeeze',
-    ...     fill_mode='cycle',
-    ... )
-    >>> cell_blocks.plot(show_edges=True, opacity=0.5, line_width=3)
+        Generate a 5x5x5 grid comprised of all 3D concrete cell types with no gaps.
 
-    Combine into a single grid and show :attr:`~pyvista.DataSet.distinct_cell_types`.
+        >>> cell_types = [
+        ...     ctype
+        ...     for ctype in pv.CellType
+        ...     if ctype.dimension == 3 and ctype.vtk_class is not None
+        ... ]
+        >>> cell_blocks = generate_cell_blocks(
+        ...     cell_types,
+        ...     'source',
+        ...     block_dimensions=(5, 5, 5),
+        ...     unsupported_action='squeeze',
+        ...     fill_mode='cycle',
+        ... )
+        >>> cell_blocks.plot(show_edges=True, opacity=0.5, line_width=3)
 
-    >>> cell_blocks.combine().distinct_cell_types  # doctest: +NORMALIZE_WHITESPACE
-    {<CellType.TETRA: 10>, <CellType.VOXEL: 11>, <CellType.HEXAHEDRON: 12>, <CellType.WEDGE: 13>,
-     <CellType.PYRAMID: 14>, <CellType.PENTAGONAL_PRISM: 15>, <CellType.HEXAGONAL_PRISM: 16>,
-     <CellType.QUADRATIC_TETRA: 24>, <CellType.QUADRATIC_HEXAHEDRON: 25>,
-     <CellType.QUADRATIC_WEDGE: 26>, <CellType.QUADRATIC_PYRAMID: 27>,
-     <CellType.TRIQUADRATIC_HEXAHEDRON: 29>, <CellType.TRIQUADRATIC_PYRAMID: 37>,
-     <CellType.POLYHEDRON: 42>, <CellType.LAGRANGE_TETRAHEDRON: 71>,
-     <CellType.LAGRANGE_HEXAHEDRON: 72>, <CellType.LAGRANGE_WEDGE: 73>,
-     <CellType.BEZIER_TETRAHEDRON: 78>, <CellType.BEZIER_HEXAHEDRON: 79>,
-     <CellType.BEZIER_WEDGE: 80>}
+        Combine into a single grid and show :attr:`~pyvista.DataSet.distinct_cell_types`.
 
-    Compare the first 16 cell types from the different generators. Gaps are expected in the
-    output wherever a generator does not support a cell type.
+        >>> cell_blocks.combine().distinct_cell_types  # doctest: +NORMALIZE_WHITESPACE
+        {<CellType.TETRA: 10>, <CellType.VOXEL: 11>, <CellType.HEXAHEDRON: 12>,
+         <CellType.WEDGE: 13>, <CellType.PYRAMID: 14>, <CellType.PENTAGONAL_PRISM: 15>,
+         <CellType.HEXAGONAL_PRISM: 16>, <CellType.QUADRATIC_TETRA: 24>,
+         <CellType.QUADRATIC_HEXAHEDRON: 25>, <CellType.QUADRATIC_WEDGE: 26>,
+         <CellType.QUADRATIC_PYRAMID: 27>, <CellType.TRIQUADRATIC_HEXAHEDRON: 29>,
+         <CellType.TRIQUADRATIC_PYRAMID: 37>, <CellType.POLYHEDRON: 42>,
+         <CellType.LAGRANGE_TETRAHEDRON: 71>, <CellType.LAGRANGE_HEXAHEDRON: 72>,
+         <CellType.LAGRANGE_WEDGE: 73>, <CellType.BEZIER_TETRAHEDRON: 78>,
+         <CellType.BEZIER_HEXAHEDRON: 79>, <CellType.BEZIER_WEDGE: 80>}
 
-    >>> kwargs = dict(
-    ...     cell_types=range(1, 17),
-    ...     block_dimensions=(4, 4, 1),
-    ...     unsupported_action='skip',
-    ... )
-    >>> cell_blocks = generate_cell_blocks(generator='examples', **kwargs)
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        Compare the first 16 cell types from the different generators. Gaps are expected in the
+        output wherever a generator does not support a cell type.
 
-    >>> cell_blocks = generate_cell_blocks(generator='parametric', **kwargs)
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        >>> kwargs = dict(
+        ...     cell_types=range(1, 17),
+        ...     block_dimensions=(4, 4, 1),
+        ...     unsupported_action='skip',
+        ... )
+        >>> cell_blocks = generate_cell_blocks(generator='examples', **kwargs)
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    >>> cell_blocks = generate_cell_blocks(generator='source', **kwargs)
-    >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+        >>> cell_blocks = generate_cell_blocks(generator='parametric', **kwargs)
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
+
+        >>> cell_blocks = generate_cell_blocks(generator='source', **kwargs)
+        >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
     """
 
@@ -2961,9 +3079,11 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
         return globals()[example]()
 
     def _parametric_grid(cell_type: CellType) -> UnstructuredGrid | None:
-        return _isoparametric_grid(cell_type)
+        return _isoparametric_grid(cell_type) if _supports_parametric(cell_type) else None
 
     def _blocks_grid(cell_type: CellType) -> UnstructuredGrid | None:
+        if not _supports_cell_source(cell_type):
+            return None
         return _vtkCellTypeSource(cell_type, cell_order=3, single_cell=False)
 
     _validation.check_contains(
@@ -3091,9 +3211,21 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     return output
 
 
-def _isoparametric_grid(celltype: CellType) -> UnstructuredGrid | None:
+def _supports_parametric(celltype: CellType) -> bool:
+    """Return whether ``_isoparametric_grid`` supports a cell type."""
+    return celltype.vtk_class is not None and celltype not in _NOT_SUPPORTED_PARAMETRIC
+
+
+def _supports_cell_source(celltype: CellType) -> bool:
+    """Return whether ``_vtkCellTypeSource`` supports a cell type."""
+    return celltype.vtk_class is not None and celltype not in _NOT_SUPPORTED_CELL_SOURCE
+
+
+def _isoparametric_grid(celltype: CellType) -> UnstructuredGrid:
+    """Generate an UnstructuredGrid with a single cell at its parametric coordinates."""
     if celltype.vtk_class is None or celltype in _NOT_SUPPORTED_PARAMETRIC:
-        return None
+        msg = f'{celltype!r} is not supported by the parametric generator.'
+        raise ValueError(msg)
     cell = celltype.vtk_class()
 
     # Create points
@@ -3109,16 +3241,17 @@ def _isoparametric_grid(celltype: CellType) -> UnstructuredGrid | None:
 
 def _vtkCellTypeSource(
     celltype: CellType, *, cell_order: int = 3, single_cell: bool = True
-) -> UnstructuredGrid | None:
+) -> UnstructuredGrid:
     """Use vtkCellTypeSource to generate UnstructuredGrid with a single cell type."""
-    if celltype.vtk_class is None or celltype in _NOT_SUPPORTED_CELL_SOURCE:
-        return None
+    if not _supports_cell_source(celltype):
+        msg = f'{celltype!r} is not supported by the source generator.'
+        raise ValueError(msg)
     src = _vtk.vtkCellTypeSource()
     src.SetBlocksDimensions(1, 1, 1)
     src.SetCellOrder(cell_order)
     src.SetCellType(celltype)
     src.Update()
-    ugrid = cast('_vtk.vtkUnstructuredGrid', src.GetOutput())
+    ugrid: _vtk.vtkUnstructuredGrid = src.GetOutput()
 
     if single_cell:
         cell0 = ugrid.GetCell(0)

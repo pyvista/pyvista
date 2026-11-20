@@ -82,8 +82,8 @@ Baselines are the Linux CI renders. Your driver produces slightly different pixe
 regenerating locally on macOS or Windows bakes platform-specific output into the canonical
 cache.
 
-The failing job uploads what it rendered: `failed_test_images-<job>-<matrix>` from
-`Unit Testing and Deployment`, `doc-failed-test-images` from `Build Documentation`.
+The failing job uploads what it rendered: `failed_test_images-<os>-<tox env>` from
+`Unit Tests`, `doc-failed-test-images` from `Build Documentation`.
 
 ```bash
 RUN=$(gh run list -R pyvista/pyvista --workflow testing-and-deployment.yml \

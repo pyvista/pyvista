@@ -16,6 +16,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -56,6 +57,7 @@ def _is_nested_sequence(
 
 
 class Transform(
+    _TextReprHTMLMixin,
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     vtkPyVistaOverride,
@@ -714,14 +716,11 @@ class Transform(
                [ 0.,  0.,  0.,  1.]])
 
         """
-        valid_normal = cast(
-            'tuple[float, float, float]',
-            _validation.validate_array3(
-                normal,  # type: ignore[arg-type]
-                dtype_out=float,
-                to_tuple=True,
-                name='reflection normal',
-            ),
+        valid_normal = _validation.validate_array3(
+            normal,  # type: ignore[arg-type]
+            dtype_out=float,
+            to_tuple=True,
+            name='reflection normal',
         )
         transform = reflection(valid_normal)
         return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
@@ -1654,7 +1653,7 @@ class Transform(
         *,
         inverse: bool = False,
         copy: bool = True,
-    ):
+    ) -> NDArray[np.floating] | DataSet | MultiBlock[Any] | Prop3D:
         """Apply the current transformation :attr:`~Transform.matrix` to points, vectors, a dataset, or actor.
 
         .. note::

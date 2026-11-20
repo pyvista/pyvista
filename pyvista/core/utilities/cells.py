@@ -250,7 +250,7 @@ def _variable_size_cells(
         if cells_arr.ndim == 2 and np.issubdtype(cells_arr.dtype, np.integer):
             _check_cell_indices(cells_arr, elem_t, nr_points)
             nr_elems, nr_points_per_elem = cells_arr.shape
-            types = np.array([elem_t] * nr_elems, dtype=np.uint8)
+            types = np.full(nr_elems, elem_t, dtype=np.uint8)
             counts = np.ones_like(cells_arr[..., :1]) * nr_points_per_elem
             arr = np.concatenate([counts, cells_arr], axis=-1).reshape([-1])
             return types, arr
@@ -263,23 +263,27 @@ def _variable_size_cells(
 
     # Ragged case: a sequence of per-cell 1D index arrays.
     per_cell = [np.asarray(cell) for cell in cells_arr]
-    for cell in per_cell:
-        if cell.ndim != 1 or not np.issubdtype(cell.dtype, np.integer) or cell.size == 0:
+    n_cells = len(per_cell)
+    sizes = np.empty(n_cells, dtype=pv.ID_TYPE)
+    for i, cell in enumerate(per_cell):
+        # Matches np.issubdtype(dtype, np.integer), where timedelta64 ('m') is a subtype
+        if cell.ndim != 1 or cell.dtype.kind not in ('i', 'u', 'm') or cell.size == 0:
             msg = (
                 f"Each cell of type '{elem_t.name}' must be a non-empty 1D array of "
                 f'integer point indices.'
             )
             raise ValueError(msg)
+        sizes[i] = cell.size
+
     # Optimization: check the indices and build the array for all cells at once instead
     # of concatenating one cell at a time; each cell's size is inserted ahead of its ids
-    sizes = np.array([cell.size for cell in per_cell], dtype=pv.ID_TYPE)
     connectivity: NDArray[np.signedinteger] = (
         np.concatenate(per_cell).astype(pv.ID_TYPE, copy=False)
         if per_cell
         else np.empty(0, dtype=pv.ID_TYPE)
     )
     _check_cell_indices(connectivity, elem_t, nr_points)
-    types = np.full(len(per_cell), elem_t, dtype=np.uint8)
+    types = np.full(n_cells, elem_t, dtype=np.uint8)
     arr = np.insert(connectivity, np.cumsum(sizes) - sizes, sizes)
     return types, arr
 
@@ -295,7 +299,7 @@ def create_mixed_cells(
     mapping of ``vtk_type`` -> ``np.ndarray`` (int), where the given ``ndarray``
     for each cell-type has to be an array of dimensions [N, D] or
     [N*D], where N is the number of cells and D is the size of the
-    cells for the given type (for example, 3 for triangles).  Multiple
+    cells for the given type (for example, 3 for triangles). Multiple
     ``vtk_type`` keys with associated arrays can be present in one
     dictionary.
 
@@ -317,7 +321,7 @@ def create_mixed_cells(
     ----------
     mixed_cell_dict : dict
         A dictionary that maps VTK-Enum-types (for example, :attr:`~pyvista.CellType.TRIANGLE`) to
-        np.ndarrays of type int.  The ``np.ndarrays`` describe the cell
+        np.ndarrays of type int. The ``np.ndarrays`` describe the cell
         connectivity. For cell types with a data-defined number of points, the value
         may instead be a sequence of 1D integer arrays (one per cell).
     nr_points : int, optional

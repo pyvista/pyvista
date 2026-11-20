@@ -275,10 +275,10 @@ def set_jupyter_backend(
     Parameters
     ----------
     backend : str
-        Jupyter backend to use when plotting.  Must be one of the following:
+        Jupyter backend to use when plotting. Must be one of the following:
 
         * ``'static'`` : Display a single static image within the
-          Jupyterlab environment.  Still requires that a virtual
+          Jupyterlab environment. Still requires that a virtual
           framebuffer be set up when displaying on a headless server,
           but does not require any additional modules to be installed.
 
@@ -303,7 +303,7 @@ def set_jupyter_backend(
           with the Trame client backend but in a static HTML file.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
-          instead display using dedicated VTK render windows.  This
+          instead display using dedicated VTK render windows. This
           will generate nothing on headless servers even with a
           virtual framebuffer.
 

@@ -52,6 +52,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _wraps
+from pyvista.core.utilities.misc import _wraps_overloaded
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -92,6 +93,10 @@ from .prop_collection import _PropCollection
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import CameraPosition
 from .renderer import Renderer
+from .renderer import _Actor2DT
+from .renderer import _ActorT
+from .renderer import _PropT
+from .renderer import _VolumeT
 from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
@@ -103,6 +108,7 @@ from .text import TextProperty
 from .texture import numpy_to_texture
 from .theme_registry import _resolve_theme_like
 from .themes import Theme
+from .themes import _validate_transparent_background
 from .tools import _prepare_offscreen_macos_render_window
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -114,8 +120,9 @@ from .utilities.algorithms import set_algorithm_input
 from .utilities.algorithms import smooth_shading_algorithm
 from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
-from .utilities.regression import image_from_window
+from .utilities.regression import _read_window
 from .utilities.regression import run_image_filter
+from .utilities.sphinx_gallery import _gallery_force_static
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetComponent
@@ -132,6 +139,8 @@ if TYPE_CHECKING:
     from trame_pyvista.jupyter import Widget
 
     from pyvista import DataSet
+    from pyvista import ImageData
+    from pyvista import Light
     from pyvista import LookupTable
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -161,6 +170,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting._typing import ThemeOptions
+    from pyvista.plotting._typing import _TransparentBackgroundOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
@@ -322,8 +332,8 @@ def _attach_raw_scalars_via_callback(  # noqa: PLR0917
 def _warn_xserver() -> None:  # pragma: no cover
     """Check if plotting is supported and persist this state.
 
-    Check once and cache this value between calls.  Warn the user if
-    plotting is not supported.  Configured to check on Linux and Mac
+    Check once and cache this value between calls. Warn the user if
+    plotting is not supported. Configured to check on Linux and Mac
     OS since the Windows check is not quick.
 
     """
@@ -413,6 +423,17 @@ def _projection_terms(renderer: Renderer) -> tuple[tuple[float, float], tuple[fl
     return (x_scale, y_scale), (-matrix.GetElement(0, 2), -matrix.GetElement(1, 2))
 
 
+def _unpremultiply_alpha(image: NDArray[np.uint8]) -> NDArray[np.uint8]:
+    """Divide the colors of an RGBA image by alpha, undoing a multiplication by alpha."""
+    alpha = image[..., 3:].astype(float)
+    rgb = np.divide(
+        image[..., :3] * 255.0, alpha, out=np.zeros(image[..., :3].shape), where=alpha > 0
+    )
+    straight = image.copy()
+    straight[..., :3] = np.clip(np.rint(rgb), 0, 255)
+    return straight
+
+
 @abstract_class
 class BasePlotter(_BoundsSizeMixin):
     """Base plotting class.
@@ -425,7 +446,7 @@ class BasePlotter(_BoundsSizeMixin):
     shape : sequence[int] | str, optional
         Two item sequence of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one renderer.
+        with ``shape=(2, 2)``. By default there is only one renderer.
         Can also accept a string descriptor as shape. For example:
 
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
@@ -452,7 +473,7 @@ class BasePlotter(_BoundsSizeMixin):
         Color of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_color
         <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
-        rgb list, or hex color string.  For example:
+        rgb list, or hex color string. For example:
 
         * ``color='white'``
         * ``color='w'``
@@ -480,7 +501,7 @@ class BasePlotter(_BoundsSizeMixin):
         Column weights for renderers.
 
     lighting : str, default: 'light kit'
-        What lighting to set up for the plotter.  Accepted options:
+        What lighting to set up for the plotter. Accepted options:
 
         * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
         * ``'three lights'``: illumination using 3 lights.
@@ -547,7 +568,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
-        self.ren_win: _vtk.vtkRenderWindow | None = None
+        self._render_window: _vtk.vtkRenderWindow | None = None
         # 3D location of the last click registered by ``left_button_down``
         self.pickpoint: NDArray[np.float64] | None = None
 
@@ -705,6 +726,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         If the plotter is closed, this will return ``None``.
 
+        .. versionchanged:: 0.50
+           Can be set.
+
         Returns
         -------
         output : :vtk:`vtkRenderWindow` | None
@@ -712,10 +736,37 @@ class BasePlotter(_BoundsSizeMixin):
 
         Notes
         -----
-        Subclass must set ``ren_win`` on initialization.
+        Subclass must set ``render_window`` on initialization.
 
         """
-        return self.ren_win
+        return self._render_window
+
+    @render_window.setter
+    def render_window(self, render_window: _vtk.vtkRenderWindow | None) -> None:
+        self._render_window = render_window
+
+    @property
+    def ren_win(self) -> _vtk.vtkRenderWindow | None:  # numpydoc ignore=RT01
+        """Access the :vtk:`vtkRenderWindow` attached to this plotter.
+
+        .. deprecated:: 0.50
+           Use :attr:`render_window` instead.
+
+        """
+        # deprecated 0.50.0, convert to error in 0.56.0, remove 0.57.0
+        warn_external(
+            '`ren_win` is deprecated. Use `render_window` instead.',
+            PyVistaDeprecationWarning,
+        )
+        return self.render_window
+
+    @ren_win.setter
+    def ren_win(self, render_window: _vtk.vtkRenderWindow | None) -> None:
+        warn_external(
+            '`ren_win` is deprecated. Use `render_window` instead.',
+            PyVistaDeprecationWarning,
+        )
+        self.render_window = render_window
 
     @property
     def theme(self) -> Theme:  # numpydoc ignore=RT01
@@ -928,7 +979,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        StringIO
+        StringIO | None
             If filename is None, returns the HTML as a StringIO object.
 
         Notes
@@ -1048,7 +1099,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         inline_data : bool, default: True
             Sets if the binary data be included in the ``json`` file as a
-            base64 string.  When ``True``, only one file is exported.
+            base64 string. When ``True``, only one file is exported.
 
         rotate_scene : bool, default: True
             Rotate scene to be compatible with the glTF specifications.
@@ -1139,7 +1190,8 @@ class BasePlotter(_BoundsSizeMixin):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except Exception as e:  # noqa: BLE001  # pragma: no cover
+                        except AttributeError as e:  # pragma: no cover
+                            # The mapper has no PyVista dataset
                             log.debug('Failed to rename array during gLTF export: %s', e)
 
         exporter = _vtk.vtkGLTFExporter()
@@ -1350,7 +1402,7 @@ class BasePlotter(_BoundsSizeMixin):
         Examples
         --------
         Create a 2 wide plot and set the background of right-hand plot
-        to orange.  Add a cube to the left plot and a sphere to the
+        to orange. Add a cube to the left plot and a sphere to the
         right.
 
         >>> import pyvista as pv
@@ -1390,12 +1442,12 @@ class BasePlotter(_BoundsSizeMixin):
     def legend(self) -> _vtk.vtkLegendBoxActor | None:  # numpydoc ignore=RT01
         """Legend actor.
 
-        There can only be one legend actor per renderer.  If
+        There can only be one legend actor per renderer. If
         ``legend`` is ``None``, there is no legend actor.
 
         Returns
         -------
-        :vtk:`vtkLegendBoxActor`
+        :vtk:`vtkLegendBoxActor` | None
             Legend actor.
 
         """
@@ -1702,14 +1754,28 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderers.set_chart_interaction``."""
         return self.renderers.set_chart_interaction(*args, **kwargs)
 
-    @_wraps(Renderer.add_actor)
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def add_actor(self, actor: _vtk.vtkMapper, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[Actor, Property]: ...
+    @overload
+    def add_actor(self, actor: _ActorT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_ActorT, _vtk.vtkProperty]: ...
+    @overload
+    def add_actor(self, actor: _VolumeT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_VolumeT, _vtk.vtkVolumeProperty]: ...
+    @overload
+    def add_actor(self, actor: _Actor2DT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_Actor2DT, _vtk.vtkProperty2D]: ...
+    @overload
+    def add_actor(self, actor: _PropT, *, reset_camera: bool | None = ..., name: str | None = ..., culling: str | bool = ..., pickable: bool = ..., render: bool = ..., remove_existing_actor: bool = ...) -> tuple[_PropT, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None]: ...
+    # ruff: enable[E501]
+    # fmt: on
+    @_wraps_overloaded(Renderer.add_actor)
     def add_actor(
-        self, *args, **kwargs
+        self, actor: _vtk.vtkProp | _vtk.vtkMapper, **kwargs: Any
     ) -> tuple[
-        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None
+        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | _vtk.vtkProperty2D | None
     ]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
-        return self.renderer.add_actor(*args, **kwargs)
+        return self.renderer.add_actor(actor, **kwargs)
 
     @_wraps(Renderer.enable_parallel_projection)
     def enable_parallel_projection(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -2101,7 +2167,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(
         self, *args, **kwargs
-    ) -> list[VectorLikeFloat]:  # numpydoc ignore=PR01,RT01
+    ) -> list[tuple[float, float, float]]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
@@ -2361,7 +2427,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
-    def background_color(self, color: Color) -> None:
+    def background_color(self, color: ColorLike | None) -> None:
         self.set_background(color)
 
     @property
@@ -2398,7 +2464,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         window_size : sequence[int], optional
-            Window size in pixels.  Defaults to :attr:`pyvista.Plotter.window_size`.
+            Window size in pixels. Defaults to :attr:`pyvista.Plotter.window_size`.
 
         Examples
         --------
@@ -2488,6 +2554,15 @@ class BasePlotter(_BoundsSizeMixin):
     def image(self) -> NDArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
 
+        The image has an alpha channel when the plotter has a transparent background,
+        which is set by the theme and by :meth:`screenshot`. With the ``'straight'`` and
+        ``'premultiplied'`` options, reading the image renders the scene again over a
+        black background; see :meth:`screenshot`.
+
+        .. versionadded:: 0.50
+            Support for the ``'straight'`` and ``'premultiplied'`` transparent
+            backgrounds.
+
         .. versionchanged:: 0.50
             A :class:`RuntimeError` is raised instead of an
             :class:`AttributeError` when the plotter has not been rendered.
@@ -2511,6 +2586,19 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._check_rendered()
         self._check_has_ren_win()
+        return self._image_with_background(self.image_transparent_background)
+
+    def _image_with_background(
+        self, transparent_background: _TransparentBackgroundOptions
+    ) -> NDArray[np.uint8]:
+        """Read the render window with a ``transparent_background`` option."""
+        if transparent_background in ('straight', 'premultiplied'):
+            image = self._image_over_black()
+            return _unpremultiply_alpha(image) if transparent_background == 'straight' else image
+        return self._read_image(ignore_alpha=not transparent_background)
+
+    def _read_image(self, *, ignore_alpha: bool, front_buffer: bool = True) -> NDArray[np.uint8]:
+        """Read the render window at the image scale."""
         render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         # A modified title property makes VTK rescale the title for the tile scale
@@ -2518,11 +2606,54 @@ class BasePlotter(_BoundsSizeMixin):
             for bar in self.scalar_bars.values():
                 bar.GetTitleTextProperty().Modified()
 
-        return image_from_window(
+        return _read_window(
             render_window,
             scale=self.image_scale,
-            ignore_alpha=not self.image_transparent_background,
+            ignore_alpha=ignore_alpha,
+            front_buffer=front_buffer,
         )
+
+    def _image_over_black(self) -> NDArray[np.uint8]:
+        """Read the scene rendered over black as RGBA, with colors multiplied by alpha."""
+        render_window = cast('_vtk.vtkRenderWindow', self.render_window)
+        interactor = render_window.GetInteractor()
+        render_enabled = interactor.GetEnableRender()
+        swap_buffers = render_window.GetSwapBuffers()
+        interactor.EnableRenderOn()
+        renderers = list(self.renderers)
+        states = [
+            (
+                renderer.GetBackground(),
+                renderer.GetGradientBackground(),
+                renderer.GetTexturedBackground(),
+                renderer.GetUseFXAA(),
+            )
+            for renderer in renderers
+        ]
+        try:
+            for renderer in renderers:
+                renderer.SetBackground(0.0, 0.0, 0.0)
+                renderer.SetGradientBackground(False)
+                renderer.SetTexturedBackground(False)
+                # FXAA smooths colors but not alpha, so it would blend the edges with black
+                renderer.SetUseFXAA(False)
+            # Keep the black render off the screen
+            render_window.SwapBuffersOff()
+            render_window.Render()
+            # The back buffer averages multisamples in the same color space that translucent
+            # surfaces are blended in, so every partially transparent color is multiplied by alpha
+            image = self._read_image(ignore_alpha=False, front_buffer=False)
+        finally:
+            for renderer, (color, gradient, textured, fxaa) in zip(renderers, states, strict=True):
+                renderer.SetBackground(color)
+                renderer.SetGradientBackground(gradient)
+                renderer.SetTexturedBackground(textured)
+                renderer.SetUseFXAA(fxaa)
+            render_window.SetSwapBuffers(swap_buffers)
+            render_window.Render()
+            interactor.SetEnableRender(render_enabled)
+        image[image[..., 3] == 0, :3] = 0
+        return image
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
@@ -2574,7 +2705,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         scale : int, optional
-            Integer scale factor.  Defaults to :attr:`pyvista.Plotter.image_scale`.
+            Integer scale factor. Defaults to :attr:`pyvista.Plotter.image_scale`.
 
         """
         scale_before = self.image_scale
@@ -2588,7 +2719,8 @@ class BasePlotter(_BoundsSizeMixin):
     def render(self) -> None:
         """Render the main window.
 
-        Will not render until ``show`` has been called.
+        Will not render until ``show`` has been called, nor while the
+        render window interactor has rendering disabled.
 
         Any render callbacks added with
         :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
@@ -2614,12 +2746,39 @@ class BasePlotter(_BoundsSizeMixin):
             and not self._first_time
             and not self._suppress_rendering
         ):
-            log.debug('Rendering')
             self.renderers.on_plotter_render()
-            self.render_window.Render()
-            self._rendered = True
+            if self._interactor_render_enabled():
+                log.debug('Rendering')
+                self.render_window.Render()
+                self._rendered = True
         for callback in self._on_render_callbacks:
             callback(self)
+
+    def _interactor_render_enabled(self) -> bool:
+        """Return whether the render window interactor allows rendering."""
+        # The stubs say non-None, but a window without an interactor returns None
+        interactor: _vtk.vtkRenderWindowInteractor | None = cast(
+            '_vtk.vtkRenderWindow', self.render_window
+        ).GetInteractor()
+        return interactor is None or bool(interactor.GetEnableRender())
+
+    @contextlib.contextmanager
+    def _interactor_render_on(self) -> Iterator[None]:
+        """Allow rendering even while the render window interactor has rendering disabled."""
+        if self.render_window is None or self._interactor_render_enabled():
+            yield
+            return
+        interactor = self.render_window.GetInteractor()
+        interactor.EnableRenderOn()
+        try:
+            yield
+        finally:
+            interactor.EnableRenderOff()
+
+    def _render_requested(self) -> None:
+        """Render even while the render window interactor has rendering disabled."""
+        with self._interactor_render_on():
+            self.render()
 
     def add_on_render_callback(
         self,
@@ -2979,7 +3138,22 @@ class BasePlotter(_BoundsSizeMixin):
             self.render_window.StereoRenderOff()
 
     def hide_axes_all(self) -> None:
-        """Hide the axes orientation widget in all renderers."""
+        """Hide the axes orientation widget in all renderers.
+
+        Examples
+        --------
+        Hide the axes orientation widget in every renderer of a two-panel plot.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.show_axes_all()
+        >>> pl.hide_axes_all()
+        >>> pl.close()
+
+        """
         for renderer in self.renderers:
             renderer.hide_axes()
 
@@ -3122,7 +3296,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.color`
             Use to make the entire mesh have a single solid color.
-            Either a string, RGB list, or hex color string.  For example:
+            Either a string, RGB list, or hex color string. For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified. To color each element of the composite dataset
@@ -3130,7 +3304,7 @@ class BasePlotter(_BoundsSizeMixin):
             each sub-dataset.
 
         style : str, default: 'wireframe'
-            Visualization style of the mesh.  One of the following:
+            Visualization style of the mesh. One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``.
             Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
             wireframe of the outer geometry.
@@ -3141,13 +3315,13 @@ class BasePlotter(_BoundsSizeMixin):
             composite dataset.
 
         clim : sequence[float], optional
-            Two item color bar range for scalars.  Defaults to minimum and
+            Two item color bar range for scalars. Defaults to minimum and
             maximum of scalars array, or ``(max, max)`` when they differ only
             by floating-point rounding and ``below_color`` is not set.
             Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
-            Shows the edges of a mesh.  Does not apply to a wireframe
+            Shows the edges of a mesh. Does not apply to a wireframe
             representation.
 
             Defaults to :attr:`pyvista.global_theme.show_edges
@@ -3166,7 +3340,7 @@ class BasePlotter(_BoundsSizeMixin):
             Must be in the range ``[0.0, inf)``.
 
         line_width : float, optional
-            Thickness of lines.  Only valid for wireframe and surface
+            Thickness of lines. Only valid for wireframe and surface
             representations, expressed in screen units. Must be in the
             range ``[0.0, inf)``.
 
@@ -3184,11 +3358,11 @@ class BasePlotter(_BoundsSizeMixin):
             Enable or disable view direction lighting.
 
         n_colors : int, default: 256
-            Number of colors to use when displaying scalars.  The scalar bar
+            Number of colors to use when displaying scalars. The scalar bar
             will also have this many colors.
 
         interpolate_before_map : bool, default: True
-            Enabling makes for a smoother scalars display.  When ``False``,
+            Enabling makes for a smoother scalars display. When ``False``,
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
@@ -3202,7 +3376,7 @@ class BasePlotter(_BoundsSizeMixin):
             colormaps can be specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one.  For example, to create a three color
+            colormap with a custom one. For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this
@@ -3239,27 +3413,27 @@ class BasePlotter(_BoundsSizeMixin):
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
-            updated.  If an actor of this name already exists in the
+            updated. If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
         render_points_as_spheres : bool, default: False
             Render points as spheres rather than dots.
 
         render_lines_as_tubes : bool, default: False
-            Show lines as thick tubes rather than flat lines.  Control
+            Show lines as thick tubes rather than flat lines. Control
             the width with ``line_width``.
 
         smooth_shading : bool, default: :attr:`pyvista.plotting.themes.Theme.smooth_shading`
             Enable smooth shading when ``True`` using the Phong shading
-            algorithm.  When ``False``, uses flat shading.  Automatically
-            enabled when ``pbr=True``.  See :ref:`shading_example`.
+            algorithm. When ``False``, uses flat shading. Automatically
+            enabled when ``pbr=True``. See :ref:`shading_example`.
 
         split_sharp_edges : bool, default: False
             Split sharp edges exceeding 30 degrees when plotting with smooth
-            shading.  Control the angle with the optional keyword argument
-            ``feature_angle``.  By default this is ``False`` unless overridden
-            by the global or plotter theme.  Note that enabling this will
-            create a copy of the input mesh within the plotter.  See
+            shading. Control the angle with the optional keyword argument
+            ``feature_angle``. By default this is ``False`` unless overridden
+            by the global or plotter theme. Note that enabling this will
+            create a copy of the input mesh within the plotter. See
             :ref:`shading_example`.
 
         ambient : float, default: 0.0
@@ -3289,7 +3463,7 @@ class BasePlotter(_BoundsSizeMixin):
             scalar array.
 
         nan_opacity : float, default: 1.0
-            Opacity of ``NaN`` values.  Should be between 0 and 1.
+            Opacity of ``NaN`` values. Should be between 0 and 1.
 
         culling : str, bool, default: False
             Does not render faces that are culled. This can be helpful for
@@ -3308,9 +3482,9 @@ class BasePlotter(_BoundsSizeMixin):
         rgb : bool, default: False
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
-            accepted alias for this.  Opacity (the A) is optional.  If
+            accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgb"`` or ``"_rgba"`` is passed,
-            the default becomes ``True``.  This can be overridden by setting
+            the default becomes ``True``. This can be overridden by setting
             this parameter to ``False``.
 
         below_color : ColorLike, optional
@@ -3334,8 +3508,8 @@ class BasePlotter(_BoundsSizeMixin):
         preference : str, default: 'point'
             For each block, when ``block.n_points == block.n_cells`` and
             setting scalars, this parameter sets how the scalars will be mapped
-            to the mesh.  For example, when ``'point'`` the scalars will be
-            associated with the mesh points if available.  Can be either
+            to the mesh. For example, when ``'point'`` the scalars will be
+            associated with the mesh points if available. Can be either
             ``'point'`` or ``'cell'``.
 
         log_scale : bool, default: False
@@ -3345,7 +3519,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         pbr : bool, default: False
             Enable physics based rendering (PBR) if the mesh is
-            ``PolyData``.  Use the ``color`` argument to set the base
+            ``PolyData``. Use the ``color`` argument to set the base
             color.
 
         metallic : float, default: 0.0
@@ -3373,7 +3547,7 @@ class BasePlotter(_BoundsSizeMixin):
             .. versionadded:: 0.49
 
         component : int, optional
-            Set component of vector valued scalars to plot.  Must be
+            Set component of vector valued scalars to plot. Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted.
 
@@ -3384,7 +3558,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         copy_mesh : bool, default: False
             If ``True``, a copy of the mesh will be made before adding it to
-            the plotter.  This is useful if for example, you would like to add the same
+            the plotter. This is useful if for example, you would like to add the same
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
@@ -3520,7 +3694,6 @@ class BasePlotter(_BoundsSizeMixin):
         self.mapper = mapper
 
         actor, _ = self.add_actor(mapper, render=False)
-        actor = cast('Actor', actor)
         actor.force_opaque = force_opaque
 
         prop = Property(
@@ -3722,7 +3895,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
-            Either a string, RGB list, or hex color string.  For example:
+            Either a string, RGB list, or hex color string. For example:
             ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
             ``color='#FFFFFF'``. Color will be overridden if scalars are
             specified.
@@ -3731,7 +3904,7 @@ class BasePlotter(_BoundsSizeMixin):
             <pyvista.plotting.themes.Theme.color>`.
 
         style : str, optional
-            Visualization style of the mesh.  One of the following:
+            Visualization style of the mesh. One of the following:
             ``style='surface'``, ``style='wireframe'``, ``style='points'``,
             ``style='points_gaussian'``. Defaults to ``'surface'``. Note that
             ``'wireframe'`` only shows a wireframe of the outer geometry.
@@ -3739,10 +3912,10 @@ class BasePlotter(_BoundsSizeMixin):
             ``render_points_as_spheres`` options.
 
         scalars : str | numpy.ndarray, optional
-            Scalars used to "color" the mesh.  Accepts a string name
+            Scalars used to "color" the mesh. Accepts a string name
             of an array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
-            mesh.  Array should be sized as a single vector. If both
+            mesh. Array should be sized as a single vector. If both
             ``color`` and ``scalars`` are ``None``, then the active
             scalars are used.
 
@@ -3757,13 +3930,13 @@ class BasePlotter(_BoundsSizeMixin):
             Passing ``scalars=<str>`` never modifies the mesh.
 
         clim : sequence[float], optional
-            Two item color bar range for scalars.  Defaults to minimum and
+            Two item color bar range for scalars. Defaults to minimum and
             maximum of scalars array, or ``(max, max)`` when they differ only
             by floating-point rounding and ``below_color`` is not set.
             Example: ``[-1, 2]``. ``rng`` is also an accepted alias for this.
 
         show_edges : bool, optional
-            Shows the edges of a mesh.  Does not apply to a wireframe
+            Shows the edges of a mesh. Does not apply to a wireframe
             representation.
 
         edge_color : ColorLike, optional
@@ -3779,7 +3952,7 @@ class BasePlotter(_BoundsSizeMixin):
             Default ``5.0``. Must be in the range ``[0.0, inf)``.
 
         line_width : float, optional
-            Thickness of lines.  Only valid for wireframe and surface
+            Thickness of lines. Only valid for wireframe and surface
             representations, expressed in screen units. Default ``None``.
             Must be in the range ``[0.0, inf)``.
 
@@ -3825,8 +3998,8 @@ class BasePlotter(_BoundsSizeMixin):
             The scalar bar will also have this many colors.
 
         interpolate_before_map : bool, optional
-            Enabling makes for a smoother scalars display.  Default is
-            ``True``.  When ``False``, OpenGL will interpolate the
+            Enabling makes for a smoother scalars display. Default is
+            ``True``. When ``False``, OpenGL will interpolate the
             mapped colors which can result is showing colors that are
             not present in the color map.
 
@@ -3841,7 +4014,7 @@ class BasePlotter(_BoundsSizeMixin):
             colormaps can be specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one.  For example, to create a three color
+            colormap with a custom one. For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this
@@ -3879,12 +4052,12 @@ class BasePlotter(_BoundsSizeMixin):
 
         name : str, optional
             The name for the added mesh/actor so that it can be easily
-            updated.  If an actor of this name already exists in the
+            updated. If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
         texture : pyvista.Texture or np.ndarray, optional
             A texture to apply if the input mesh has texture
-            coordinates.  This will not work with MultiBlock
+            coordinates. This will not work with MultiBlock
             datasets.
 
         render_points_as_spheres : bool, optional
@@ -3909,21 +4082,21 @@ class BasePlotter(_BoundsSizeMixin):
                 and preserve explicit sphere rendering.
 
         render_lines_as_tubes : bool, optional
-            Show lines as thick tubes rather than flat lines.  Control
+            Show lines as thick tubes rather than flat lines. Control
             the width with ``line_width``.
 
         smooth_shading : bool, optional
             Enable smooth shading when ``True`` using the Phong
-            shading algorithm.  When ``False``, use flat shading.
-            Automatically enabled when ``pbr=True``.  See
+            shading algorithm. When ``False``, use flat shading.
+            Automatically enabled when ``pbr=True``. See
             :ref:`shading_example`.
 
         split_sharp_edges : bool, optional
             Split sharp edges exceeding 30 degrees when plotting with smooth
-            shading.  Control the angle with the optional keyword argument
-            ``feature_angle``.  By default this is ``False`` unless overridden
-            by the global or plotter theme.  Note that enabling this will
-            create a copy of the input mesh within the plotter.  See
+            shading. Control the angle with the optional keyword argument
+            ``feature_angle``. By default this is ``False`` unless overridden
+            by the global or plotter theme. Note that enabling this will
+            create a copy of the input mesh within the plotter. See
             :ref:`shading_example`.
 
         ambient : float, optional
@@ -3954,22 +4127,22 @@ class BasePlotter(_BoundsSizeMixin):
             scalar array.
 
         nan_opacity : float, optional
-            Opacity of ``NaN`` values.  Should be between 0 and 1.
+            Opacity of ``NaN`` values. Should be between 0 and 1.
             Default 1.0.
 
         culling : str, optional
             Does not render faces that are culled. Options are
             ``'front'`` or ``'back'``. This can be helpful for dense
             surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed.  Defaults to
+            cause flat meshes to be partially displayed. Defaults to
             ``False``.
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
-            accepted alias for this.  Opacity (the A) is optional.  If
+            accepted alias for this. Opacity (the A) is optional. If
             a scalars array ending with ``"_rgba"`` is passed, the default
-            becomes ``True``.  This can be overridden by setting this
+            becomes ``True``. This can be overridden by setting this
             parameter to ``False``.
 
         categories : bool | int, optional
@@ -3985,7 +4158,7 @@ class BasePlotter(_BoundsSizeMixin):
         silhouette : dict, bool, optional
             If set to ``True``, plot a silhouette highlight for the
             mesh. This feature is only available for a triangulated
-            ``PolyData``.  As a ``dict``, it contains the properties
+            ``PolyData``. As a ``dict``, it contains the properties
             of the silhouette to display:
 
                 * ``color``: ``ColorLike``, color of the silhouette
@@ -4020,8 +4193,8 @@ class BasePlotter(_BoundsSizeMixin):
         preference : str, default: "point"
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'point'``, causes the
-            scalars will be associated with the mesh points.  Can be
+            mapped to the mesh. Default ``'point'``, causes the
+            scalars will be associated with the mesh points. Can be
             either ``'point'`` or ``'cell'``.
 
         log_scale : bool, default: False
@@ -4031,7 +4204,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         pbr : bool, optional
             Enable physics based rendering (PBR) if the mesh is
-            ``PolyData``.  Use the ``color`` argument to set the base
+            ``PolyData``. Use the ``color`` argument to set the base
             color.
 
         metallic : float, optional
@@ -4065,7 +4238,7 @@ class BasePlotter(_BoundsSizeMixin):
             identity matrix.
 
         component : int, optional
-            Set component of vector valued scalars to plot.  Must be
+            Set component of vector valued scalars to plot. Must be
             nonnegative, if supplied. If ``None``, the magnitude of
             the vector is plotted. See :ref:`vector_component_example`
             for examples.
@@ -4076,7 +4249,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         copy_mesh : bool, default: False
             If ``True``, a copy of the mesh will be made before adding it to
-            the plotter.  This is useful if you would like to add the same
+            the plotter. This is useful if you would like to add the same
             mesh to a plotter multiple times and display different
             scalars. Setting ``copy_mesh`` to ``False`` is necessary if you
             would like to update the mesh after adding it to the plotter and
@@ -4152,7 +4325,7 @@ class BasePlotter(_BoundsSizeMixin):
         >>> _ = pl.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
         >>> pl.show()
 
-        Plot using RGB on a single cell.  Note that since the number of
+        Plot using RGB on a single cell. Note that since the number of
         points and the number of cells are identical, we have to pass
         ``preference='cell'``.
 
@@ -4185,7 +4358,7 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
-        Note how this varies from ``preference=='point'``.  This is
+        Note how this varies from ``preference=='point'``. This is
         because each point is now being individually colored, versus
         in ``preference=='point'``, each cell face is individually
         colored.
@@ -4223,19 +4396,24 @@ class BasePlotter(_BoundsSizeMixin):
         ...     show_scalar_bar=False,
         ... )
 
-        Plot spheres using ``'points_gaussian'`` style and scale them by radius.
+        Plot spheres using ``'points_gaussian'`` style and scale them by radius
+        with the mapper's :attr:`~pyvista.plotting.mapper.PointGaussianMapper.scale_array`.
 
-        >>> N_SPHERES = 1_000_000
+        >>> N_SPHERES = 10_000
         >>> rng = np.random.default_rng(seed=0)
         >>> pos = rng.random((N_SPHERES, 3))
-        >>> rad = rng.random(N_SPHERES) * 0.01
+        >>> rad = rng.random(N_SPHERES) * 0.02
         >>> pdata = pv.PolyData(pos)
         >>> pdata['radius'] = rad
-        >>> pdata.plot(
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(
+        ...     pdata,
         ...     style='points_gaussian',
         ...     emissive=False,
         ...     render_points_as_spheres=True,
         ... )
+        >>> actor.mapper.scale_array = 'radius'
+        >>> pl.show()
 
         """
         if (
@@ -4884,7 +5062,7 @@ class BasePlotter(_BoundsSizeMixin):
                 volume rendering will often have poor performance.
 
         scalars : str | numpy.ndarray, optional
-            Scalars used to "color" the mesh.  Accepts a string name of an
+            Scalars used to "color" the mesh. Accepts a string name of an
             array that is present on the mesh or an array with length equal
             to the number of cells or the number of points in the
             mesh. If ``scalars`` is ``None``, then the active scalars are used.
@@ -4896,7 +5074,7 @@ class BasePlotter(_BoundsSizeMixin):
             datatype ``np.uint8``.
 
         clim : sequence[float] | float, optional
-            Color bar range for scalars.  For example: ``[-1, 2]``. Defaults to
+            Color bar range for scalars. For example: ``[-1, 2]``. Defaults to
             minimum and maximum of scalars array if the scalars dtype is not
             ``np.uint8``. A range that spans only floating-point rounding
             becomes ``(max, max)``. ``rng`` is also an accepted alias for this
@@ -4962,7 +5140,7 @@ class BasePlotter(_BoundsSizeMixin):
             colormaps can be specified by name.
 
             You can also specify a list of colors to override an existing
-            colormap with a custom one.  For example, to create a three color
+            colormap with a custom one. For example, to create a three color
             colormap you might specify ``['green', 'red', 'blue']``.
 
             This parameter also accepts a :class:`pyvista.LookupTable`. If this
@@ -4978,13 +5156,13 @@ class BasePlotter(_BoundsSizeMixin):
 
         name : str, optional
             The name for the added actor so that it can be easily
-            updated.  If an actor of this name already exists in the
+            updated. If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
         ambient : float, optional
             When lighting is enabled, this is the amount of light from
             0 to 1 that reaches the actor when not directed at the
-            light source emitted from the viewer.  Default 0.0.
+            light source emitted from the viewer. Default 0.0.
 
         categories : bool | int, optional
             If ``True``, each unique value in the scalar array gets its own
@@ -5000,7 +5178,7 @@ class BasePlotter(_BoundsSizeMixin):
             Does not render faces that are culled. Options are ``'front'`` or
             ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
-            meshes to be partially displayed.  Defaults ``False``.
+            meshes to be partially displayed. Defaults ``False``.
 
         multi_colors : bool, optional
             Whether or not to use multiple colors when plotting MultiBlock
@@ -5015,7 +5193,7 @@ class BasePlotter(_BoundsSizeMixin):
         mapper : str, optional
             Volume mapper to use given by name. Options include:
             ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, ``'smart'``,
-            and ``'ugrid'``.  If ``None`` the ``"volume_mapper"`` in the
+            and ``'ugrid'``. If ``None`` the ``"volume_mapper"`` in the
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``ImageData`` types can be used.
 
@@ -5056,8 +5234,8 @@ class BasePlotter(_BoundsSizeMixin):
         preference : str, optional
             When ``mesh.n_points == mesh.n_cells`` and setting
             scalars, this parameter sets how the scalars will be
-            mapped to the mesh.  Default ``'point'``, causes the
-            scalars will be associated with the mesh points.  Can be
+            mapped to the mesh. Default ``'point'``, causes the
+            scalars will be associated with the mesh points. Can be
             either ``'point'`` or ``'cell'``.
 
         opacity_unit_distance : float, optional
@@ -5195,7 +5373,7 @@ class BasePlotter(_BoundsSizeMixin):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast('pv.ImageData', wrap(volume))
+                volume = cast('ImageData', wrap(volume))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -5295,7 +5473,7 @@ class BasePlotter(_BoundsSizeMixin):
             )
             raise TypeError(msg)
 
-        volume = cast('pv.DataSet', volume)
+        volume = cast('DataSet', volume)
         if opacity_unit_distance is None and not isinstance(volume, pv.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -5447,7 +5625,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
-        return cast('Volume', actor)
+        return actor
 
     def add_silhouette(
         self,
@@ -5543,12 +5721,11 @@ class BasePlotter(_BoundsSizeMixin):
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)
-        prop = cast('Property', prop)
         prop.SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
         prop.SetOpacity(opacity)
         prop.SetLineWidth(line_width)
 
-        return cast('Actor', actor)
+        return actor
 
     def update_scalar_bar_range(
         self, clim: float | Sequence[float], name: str | None = None
@@ -5564,6 +5741,23 @@ class BasePlotter(_BoundsSizeMixin):
 
         name : str, optional
             The title of the scalar bar to update.
+
+        Examples
+        --------
+        Update the range of a named scalar bar.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh['height'] = mesh.points[:, 2]
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
+        ...     mesh,
+        ...     scalars='height',
+        ...     clim=(-0.5, 0.5),
+        ...     scalar_bar_args={'title': 'Height'},
+        ... )
+        >>> pl.update_scalar_bar_range((-1, 1), name='Height')
+        >>> pl.show()
 
         """
         if isinstance(clim, (float, int)):
@@ -5596,7 +5790,25 @@ class BasePlotter(_BoundsSizeMixin):
             self.scalar_bars._resync_titles.add(title)
 
     def clear_actors(self) -> None:
-        """Clear actors from all renderers."""
+        """Clear actors from all renderers.
+
+        Examples
+        --------
+        Add a mesh to each subplot, then remove both actors.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> [bool(renderer.actors) for renderer in pl.renderers]
+        [True, True]
+        >>> pl.clear_actors()
+        >>> [bool(renderer.actors) for renderer in pl.renderers]
+        [False, False]
+
+        """
         self.renderers.clear_actors()
 
     def clear(self) -> None:
@@ -5712,6 +5924,36 @@ class BasePlotter(_BoundsSizeMixin):
             is int unlink the selected view's camera or if ``views``
             is a tuple or a list, unlink the given views cameras.
 
+        See Also
+        --------
+        link_views
+
+        Examples
+        --------
+        Link two subplots so they share a camera.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> left_camera = pl.camera
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(pv.Cone())
+        >>> pl.link_views()
+        >>> pl.camera is left_camera
+        True
+
+        Unlink the right subplot to adjust its camera independently.
+
+        >>> pl.unlink_views(1)
+        >>> pl.camera is left_camera
+        False
+        >>> left_camera.view_angle = 30.0
+        >>> pl.camera.view_angle = 15.0
+        >>> left_camera.view_angle
+        30.0
+        >>> pl.camera.view_angle
+        15.0
+
         """
         if views is None:
             for renderer in self.renderers:
@@ -5770,12 +6012,11 @@ class BasePlotter(_BoundsSizeMixin):
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(title, **kwargs)
 
-    def _clear_ren_win(self) -> None:
+    def _clear_render_window(self) -> None:
         """Clear the render window."""
-        # Not using `render_window` property here to enforce clean up
-        if self.ren_win is not None:
-            self.ren_win.Finalize()
-            self.ren_win.RemoveAllObservers()
+        if self._render_window is not None:
+            self._render_window.Finalize()
+            self._render_window.RemoveAllObservers()
             if (
                 sys.platform == 'darwin'
                 and self.iren is not None
@@ -5786,7 +6027,7 @@ class BasePlotter(_BoundsSizeMixin):
                 # is removed from NSApp.windows() but the window server
                 # still draws it as a frozen "zombie" window.
                 self.iren.interactor.ProcessEvents()
-            self.ren_win = None
+            self._render_window = None
 
     def close(self) -> None:
         """Close the render window."""
@@ -5831,16 +6072,19 @@ class BasePlotter(_BoundsSizeMixin):
         self.mapper = None
         self.text = None
 
-        self._clear_ren_win()
+        self._clear_render_window()
         if self.iren is not None:
             self.iren.close()
             self.iren = None
 
         # end movie
         if self.mwriter is not None:
-            with contextlib.suppress(BaseException):
+            try:
                 self.mwriter.close()
-            self.mwriter = None
+            except Exception as e:  # noqa: BLE001 - finish closing the plotter
+                warn_external(f'Failed to finalize the movie file, it may be incomplete:\n{e}')
+            finally:
+                self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -5913,7 +6157,7 @@ class BasePlotter(_BoundsSizeMixin):
             Sets the size of the title font.
 
         color : ColorLike, optional
-            Either a string, RGB list, or hex color string.  For example:
+            Either a string, RGB list, or hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -5941,9 +6185,9 @@ class BasePlotter(_BoundsSizeMixin):
             and 1.0 and support for HiDPI).
 
         orientation : float, default: 0.0
-            Angle orientation of text counterclockwise in degrees.  The text
+            Angle orientation of text counterclockwise in degrees. The text
             is rotated around an anchor point that may be on the edge or
-            corner of the text.  The default is horizontal (0.0 degrees).
+            corner of the text. The default is horizontal (0.0 degrees).
 
         font_file : str, default: None
             The absolute file path to a local file containing a freetype
@@ -5993,6 +6237,7 @@ class BasePlotter(_BoundsSizeMixin):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
         text_prop = TextProperty(
+            theme=self._theme,
             color=color,
             font_family=font,
             orientation=orientation,
@@ -6091,12 +6336,9 @@ class BasePlotter(_BoundsSizeMixin):
         if font_size is None:
             font_size = self.theme.font.size
         prop = TextProperty(
-            # A text property left to fill in the color and the font family itself
-            # takes them from the global theme rather than from the theme of the
-            # plotter it is drawn by, which draws black text on the black background
-            # of a plotter given a dark theme of its own
-            color=Color(color, default_color=self.theme.font.color),
-            font_family=self.theme.font.family if font is None else font,
+            theme=self._theme,
+            color=color,
+            font_family=font,
             orientation=orientation,
             font_file=font_file,
             shadow=shadow,
@@ -6139,8 +6381,8 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         filename : str | Path
-            Filename of the movie to open.  Filename should end in mp4,
-            but other file types may be supported.  See :func:`imageio.get_writer()
+            Filename of the movie to open. Filename should end in mp4,
+            but other file types may be supported. See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
 
         framerate : int, default: 24
@@ -6148,7 +6390,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         quality : int, default: 5
             Quality 10 is the top possible quality for any codec. The
-            range is ``0 - 10``.  Higher quality leads to a larger file.
+            range is ``0 - 10``. Higher quality leads to a larger file.
 
         **kwargs : dict, optional
             See the documentation for :func:`imageio.get_writer()
@@ -6196,7 +6438,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         filename : str | Path
-            Filename of the gif to open.  Filename must end in ``"gif"``.
+            Filename of the gif to open. Filename must end in ``"gif"``.
 
         loop : int, default: 0
             The number of iterations. Default value of 0 loops indefinitely.
@@ -6263,8 +6505,20 @@ class BasePlotter(_BoundsSizeMixin):
 
         self.mwriter = get_writer(filename, **kwargs)
 
-    def write_frame(self) -> None:
+    def write_frame(
+        self, *, transparent_background: _TransparentBackgroundOptions | None = None
+    ) -> None:
         """Write a single frame to the movie file.
+
+        Parameters
+        ----------
+        transparent_background : bool | 'straight' | 'premultiplied', optional
+            Whether the frame has a transparent background, with the same options as
+            :meth:`screenshot`. ``'straight'`` and ``'premultiplied'`` render the scene
+            again over a black background. Defaults to the plotter's transparent
+            background, which is set by the theme and by :meth:`screenshot`.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -6279,11 +6533,15 @@ class BasePlotter(_BoundsSizeMixin):
         # before extracting an image
         if self._first_time:
             self._on_first_render_request()
-            self.render()
+            self._render_requested()
 
+        if transparent_background is None:
+            transparent_background = self.image_transparent_background
+        _validate_transparent_background(transparent_background)
         mwriter = self._get_mwriter_not_none()
-        self.update()
-        mwriter.append_data(self.image)
+        with self._interactor_render_on():
+            self.update()
+        mwriter.append_data(self._image_with_background(transparent_background))
 
     def get_image_depth(
         self,
@@ -6393,12 +6651,12 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         lines : np.ndarray
-            Points representing line segments.  For example, two line
+            Points representing line segments. For example, two line
             segments would be represented as ``np.array([[0, 1, 0],
             [1, 0, 0], [1, 1, 0], [2, 0, 0]])``.
 
         color : ColorLike, default: 'w'
-            Either a string, rgb list, or hex color string.  For example:
+            Either a string, rgb list, or hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -6456,7 +6714,7 @@ class BasePlotter(_BoundsSizeMixin):
             msg = 'Input should be an array of point segments'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        lines_polydata: pv.PolyData = (
+        lines_polydata: PolyData = (
             pv.lines_from_points(lines) if connected else pv.line_segments_from_points(lines)
         )
 
@@ -6527,7 +6785,7 @@ class BasePlotter(_BoundsSizeMixin):
             points or mesh-producing algorithm.
 
         labels : list | str
-            List of labels.  Must be the same length as points. If a
+            List of labels. Must be the same length as points. If a
             string name is given with a :class:`pyvista.DataSet` input for
             points, then these are fetched.
 
@@ -6549,7 +6807,7 @@ class BasePlotter(_BoundsSizeMixin):
             * ``text_color='#FFFFFF'``
 
         font_family : str, optional
-            Font family.  Must be either ``'courier'``, ``'times'``,
+            Font family. Must be either ``'courier'``, ``'times'``,
             or ``'arial'``. This is ignored if the ``font_file`` is set.
 
         font_file : str, default: None
@@ -6563,7 +6821,7 @@ class BasePlotter(_BoundsSizeMixin):
             Controls if points are visible.
 
         point_color : ColorLike, optional
-            Either a string, rgb list, or hex color string.  One of
+            Either a string, rgb list, or hex color string. One of
             the following.
 
             * ``point_color='white'``
@@ -6576,11 +6834,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         name : str, optional
             The name for the added actor so that it can be easily
-            updated.  If an actor of this name already exists in the
+            updated. If an actor of this name already exists in the
             rendering window, it will be replaced by the new actor.
 
         shape_color : ColorLike, default: "grey"
-            Color of shape (if visible).  Either a string, rgb
+            Color of shape (if visible). Either a string, rgb
             sequence, or hex color string.
 
         shape : str, default: "rounded_rect"
@@ -6604,7 +6862,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         tolerance : float, default: 0.001
             A tolerance to use to determine whether a point label is
-            visible.  A tolerance is usually required because the
+            visible. A tolerance is usually required because the
             conversion from world space to display space during
             rendering introduces numerical round-off.
 
@@ -6648,7 +6906,7 @@ class BasePlotter(_BoundsSizeMixin):
         Returns
         -------
         :vtk:`vtkActor2D`
-            VTK label actor.  Can be used to change properties of the labels.
+            VTK label actor. Can be used to change properties of the labels.
 
         Examples
         --------
@@ -6753,6 +7011,7 @@ class BasePlotter(_BoundsSizeMixin):
         label_mapper.SetMargin(margin)
 
         text_property = pv.TextProperty(
+            theme=self._theme,
             italic=italic,
             bold=bold,
             font_size=font_size,
@@ -6815,7 +7074,7 @@ class BasePlotter(_BoundsSizeMixin):
             An ``n x 3`` ``numpy.ndarray`` or PyVista dataset with points.
 
         labels : list | str
-            List of scalars of labels.  Must be the same length as points. If a
+            List of scalars of labels. Must be the same length as points. If a
             string name is given with a :class:`pyvista.DataSet` input for
             points, then these are fetched.
 
@@ -6832,7 +7091,7 @@ class BasePlotter(_BoundsSizeMixin):
         Returns
         -------
         :vtk:`vtkActor2D`
-            VTK label actor.  Can be used to change properties of the labels.
+            VTK label actor. Can be used to change properties of the labels.
 
         Examples
         --------
@@ -6887,7 +7146,7 @@ class BasePlotter(_BoundsSizeMixin):
             Array of points or the points from a pyvista object.
 
         style : str, default: 'points'
-            Visualization style of the mesh.  One of the following:
+            Visualization style of the mesh. One of the following:
             ``style='points'``, ``style='points_gaussian'``.
             ``'points_gaussian'`` can be controlled with the ``emissive`` and
             ``render_points_as_spheres`` options.
@@ -7127,18 +7386,18 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501, FBT001]
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8]: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: _TransparentBackgroundOptions | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NDArray[np.uint8] | None: ...
     # ruff: enable[E501, FBT001]
     # fmt: on
     def screenshot(
         self,
         filename: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
         *,
-        transparent_background: bool | None = None,
+        transparent_background: _TransparentBackgroundOptions | None = None,
         return_img: bool = True,
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
@@ -7149,11 +7408,34 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         filename : str | Path | io.BytesIO, optional
-            Location to write image to.  If ``None``, no image is written.
+            Location to write image to. If ``None``, no image is written.
 
-        transparent_background : bool, optional
-            Whether to make the background transparent.  The default is
+        transparent_background : bool | 'straight' | 'premultiplied', optional
+            Whether to make the background transparent. The default is
             looked up on the plotter's theme.
+
+            - ``False`` returns an opaque RGB image.
+            - ``True`` returns an RGBA image with a transparent background. Anti-aliased
+              edges and translucent surfaces keep the color of the background they were
+              blended with.
+            - ``'straight'`` returns an RGBA image with straight (unassociated) alpha and
+              the background color removed, which is what image viewers, web browsers,
+              PNG files, and ``PIL`` expect. Use it for images that are saved or shown.
+            - ``'premultiplied'`` returns an RGBA image whose colors are already multiplied
+              by alpha (associated alpha) and contain no background color. Use it for
+              compositing software and formats that expect colors multiplied by alpha,
+              or to filter the image further without halos.
+
+            ``'straight'`` and ``'premultiplied'`` render the scene once more over a black
+            background and then restore the background. Fully transparent pixels are
+            ``(0, 0, 0, 0)``. FXAA anti-aliasing is not applied, since it does not smooth
+            the alpha channel.
+
+            .. versionadded:: 0.50
+                The ``'straight'`` and ``'premultiplied'`` options.
+
+            .. versionchanged:: 0.50
+                Other values raise a :class:`ValueError`.
 
         return_img : bool, default: True
             If ``True``, a :class:`numpy.ndarray` of the image will be
@@ -7178,12 +7460,11 @@ class BasePlotter(_BoundsSizeMixin):
         Returns
         -------
         numpy.ndarray
-            Array containing pixel RGB and alpha.  Sized:
+            Array containing pixel RGB and alpha. Sized:
 
             * [Window height x Window width x 3] if
               ``transparent_background`` is set to ``False``.
-            * [Window height x Window width x 4] if
-              ``transparent_background`` is set to ``True``.
+            * [Window height x Window width x 4] otherwise.
 
         None
             If ``return_img`` is ``False``.
@@ -7200,11 +7481,57 @@ class BasePlotter(_BoundsSizeMixin):
         >>> actor = pl.add_mesh(sphere)
         >>> pl.screenshot('screenshot.png')  # doctest:+SKIP
 
+        Take a screenshot with a transparent background and remove the background color
+        from the anti-aliased edges of the sphere, which makes the image suitable for
+        placing over any background.
+
+        >>> image = pl.screenshot(transparent_background='straight')  # doctest:+SKIP
+
+        .. pyvista-plot::
+            :force_static:
+
+            Take a screenshot of an opaque sphere and a translucent cube with each
+            ``transparent_background`` option.
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter(off_screen=True, window_size=[150, 150])
+            >>> sphere = pv.Sphere(center=(-0.3, 0, 0))
+            >>> _ = pl.add_mesh(sphere, color='navy', lighting=False)
+            >>> cube = pv.Cube(center=(0.3, 0, 0))
+            >>> _ = pl.add_mesh(cube, color='crimson', opacity=0.5, lighting=False)
+            >>> pl.view_xy()
+            >>> images = {
+            ...     str(option): pv.Texture(
+            ...         pl.screenshot(transparent_background=option)
+            ...     ).to_image()
+            ...     for option in [False, True, 'straight', 'premultiplied']
+            ... }
+
+            Compare the images over a black background. With ``True``, the white
+            background color shows as a light halo around the sphere and lightens the
+            cube. ``'straight'`` has neither. ``'premultiplied'`` is for software that
+            expects colors multiplied by alpha, and looks darker when shown as straight
+            alpha.
+
+            >>> pv.plot_compare(
+            ...     images,
+            ...     rgba=True,
+            ...     background='black',
+            ...     label_kwargs={'color': 'darkorange'},
+            ...     border_color='gray',
+            ...     border_width=6,
+            ...     lighting=False,
+            ...     show_axes=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ... )
+
         """
         with self.window_size_context(window_size):
             # configure image filter
             if transparent_background is None:
                 transparent_background = self._theme.transparent_background
+            _validate_transparent_background(transparent_background)
             self.image_transparent_background = transparent_background
 
             # This if statement allows you to save screenshots of closed plotters
@@ -7235,9 +7562,9 @@ class BasePlotter(_BoundsSizeMixin):
             # before extracting an image
             if self._first_time:
                 self._on_first_render_request()
-                self.render()
+                self._render_requested()
             elif render:
-                self.render()
+                self._render_requested()
 
             with self.image_scale_context(scale):
                 self._make_render_window_current()
@@ -7285,7 +7612,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points: int = 20,
         viewup: VectorLikeFloat | None = None,
         shift: float = 0.0,
-    ) -> pv.PolyData:
+    ) -> PolyData:
         """Generate an orbital path around the data scene.
 
         Parameters
@@ -7361,7 +7688,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def orbit_on_path(
         self,
-        path: pv.PolyData | None = None,
+        path: PolyData | None = None,
         *,
         focus: VectorLikeFloat | None = None,
         step: float = 0.5,
@@ -7393,7 +7720,7 @@ class BasePlotter(_BoundsSizeMixin):
             view during the orbit.
 
         threaded : bool, default: False
-            Run this as a background thread.  Generally used within a
+            Run this as a background thread. Generally used within a
             GUI (that is, PyQt).
 
         progress_bar : bool, default: False
@@ -7403,7 +7730,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Plot an orbit around the earth.  Save the gif as a temporary file.
+        Plot an orbit around the earth. Save the gif as a temporary file.
 
         >>> from pathlib import Path
         >>> from tempfile import mkdtemp
@@ -7493,7 +7820,7 @@ class BasePlotter(_BoundsSizeMixin):
         Parameters
         ----------
         filename : str | Path
-            Filename to export the scene to.  Must end in ``'.obj'``.
+            Filename to export the scene to. Must end in ``'.obj'``.
 
         Examples
         --------
@@ -7526,7 +7853,7 @@ class BasePlotter(_BoundsSizeMixin):
         exporter.Write()
 
     @property
-    def _datasets(self) -> list[pv.DataSet]:
+    def _datasets(self) -> list[DataSet]:
         """Return a list of all datasets associated with this plotter."""
         datasets = []
         for renderer in self.renderers:
@@ -7568,7 +7895,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         scale : float, default: 1.0
             Scale the image larger or smaller relative to the size of
-            the window.  The image height is scaled to the height of the
+            the window. The image height is scaled to the height of the
             render window, or of the subplot when ``as_global=False``.
             Its aspect ratio is preserved, so the image is cropped
             horizontally where it is too wide to fit.
@@ -7649,7 +7976,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         self.renderer.ResetCameraClippingRange()
 
-    def add_light(self, light: _vtk.vtkLight, *, only_active: bool = False) -> None:
+    def add_light(self, light: Light | _vtk.vtkLight, *, only_active: bool = False) -> None:
         """Add a Light to the scene.
 
         Parameters
@@ -8441,19 +8768,19 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when ``True``.  Useful for automated
+        Renders off screen when ``True``. Useful for automated
         screenshots.
 
     notebook : bool, optional
         When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.  Automatically
+        notebook. Assumes a jupyter console is active. Automatically
         enables ``off_screen``.
 
     shape : sequence[int], optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one render
-        window.  Can also accept a string descriptor as shape. E.g.:
+        with ``shape=(2, 2)``. By default there is only one render
+        window. Can also accept a string descriptor as shape. E.g.:
 
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
@@ -8497,7 +8824,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Color of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_color
         <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
-        rgb list, or hex color string.  For example:
+        rgb list, or hex color string. For example:
 
             * ``color='white'``
             * ``color='w'``
@@ -8510,7 +8837,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         <pyvista.plotting.themes.Theme.border_width>`.
 
     window_size : sequence[int], optional
-        Window size in pixels.  Defaults to ``[1024, 768]``, unless
+        Window size in pixels. Defaults to ``[1024, 768]``, unless
         set differently in the relevant theme's ``window_size``
         property.
 
@@ -8588,7 +8915,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
         border_width: float | None = None,
-        window_size: list[int] | None = None,
+        window_size: Sequence[int] | None = None,
         line_smoothing: bool = False,
         point_smoothing: bool = False,
         polygon_smoothing: bool = False,
@@ -8637,7 +8964,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self.off_screen = off_screen
 
         # initialize render window
-        self.ren_win = _vtk.vtkRenderWindow()
+        self._render_window = _vtk.vtkRenderWindow()
         self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
         self.render_window.SetBorders(True)  # type: ignore[union-attr]
         if line_smoothing:
@@ -8743,7 +9070,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         auto_close: bool | None = None,
         interactive_update: bool = False,
         full_screen: bool | None = None,
-        screenshot: str | Path | BytesIO | bool = False,
+        screenshot: str | Path | BytesIO | bool | None = False,
         return_img: bool = False,
         cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | str | None = None,
@@ -8768,21 +9095,21 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         Parameters
         ----------
         title : str, optional
-            Title of plotting window.  Defaults to
+            Title of plotting window. Defaults to
             :attr:`pyvista.global_theme.title <pyvista.plotting.themes.Theme.title>`.
 
         window_size : list[int], optional
-            Window size in pixels.  Defaults to
+            Window size in pixels. Defaults to
             :attr:`pyvista.global_theme.window_size <pyvista.plotting.themes.Theme.window_size>`.
 
         interactive : bool, optional
-            Enabled by default.  Allows user to pan and move figure.
+            Enabled by default. Allows user to pan and move figure.
             Defaults to
             :attr:`pyvista.global_theme.interactive <pyvista.plotting.themes.Theme.interactive>`.
 
         auto_close : bool, optional
             Exits plotting session when user closes the window when
-            interactive is ``True``.  Defaults to
+            interactive is ``True``. Defaults to
             :attr:`pyvista.global_theme.auto_close <pyvista.plotting.themes.Theme.auto_close>`.
 
         interactive_update : bool, default: False
@@ -8790,12 +9117,12 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             :func:`Plotter.update` in each iteration.
 
         full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores
-            ``window_size``.  Defaults to
+            Opens window in full screen. When enabled, ignores
+            ``window_size``. Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.plotting.themes.Theme.full_screen>`.
 
         screenshot : str | Path | io.BytesIO | bool, default: False
-            Take a screenshot of the initial state of the plot.  If a string,
+            Take a screenshot of the initial state of the plot. If a string,
             it specifies the path to which the screenshot is saved. If
             ``True``, the screenshot is returned as an array. For interactive
             screenshots it's recommended to first call ``show()`` with
@@ -8809,11 +9136,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             with the camera position.
 
         cpos : sequence[sequence[float]], optional
-            The camera position.  You can also set this with
+            The camera position. You can also set this with
             :attr:`Plotter.camera_position`.
 
         jupyter_backend : str, optional
-            Jupyter notebook plotting backend to use.  One of the
+            Jupyter notebook plotting backend to use. One of the
             following:
 
             * ``'none'`` : Do not display in the notebook.
@@ -8835,7 +9162,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         return_cpos : bool, optional
             Return the last camera position from the render window
-            when enabled.  Default based on theme setting.  See
+            when enabled. Default based on theme setting. See
             :attr:`pyvista.plotting.themes.Theme.return_cpos`.
 
         before_close_callback : Callable, optional
@@ -8868,8 +9195,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
             * [Window height x Window width x 3] if the theme sets
               ``transparent_background=False``.
-            * [Window height x Window width x 4] if the theme sets
-              ``transparent_background=True``.
+            * [Window height x Window width x 4] otherwise.
 
         widget : Widget | EmbeddableWidget | IFrame | Image
             IPython widget when ``return_viewer=True``.
@@ -8889,7 +9215,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.show()
 
-        Take a screenshot interactively.  Screenshot will be of the
+        Take a screenshot interactively. Screenshot will be of the
         first image shown, so use the first call with
         ``auto_close=False`` to set the scene before taking the
         screenshot.
@@ -8968,11 +9294,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             if jupyter_backend is None or jupyter_backend.lower() != 'none':
                 jupyter_disp = handle_plotter(self, backend=jupyter_backend, **jupyter_kwargs)
 
-        self.render()
+        self._render_requested()
 
         # initial double render needed for certain passes when offscreen
         if self.off_screen and 'vtkDepthOfFieldPass' in self.renderer._render_passes._passes:
-            self.render()
+            self._render_requested()
 
         # This has to be after the first render for some reason
         if title is None:
@@ -8985,8 +9311,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if pv.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True, render=False)
-            with contextlib.suppress(ImportError):
-                self.last_vtksz = self._trame_component().export_vtksz(filename=None)
+            if not _gallery_force_static():
+                with contextlib.suppress(ImportError):
+                    self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:  # pragma: no cover
@@ -9040,7 +9367,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             # called from a key event callback). Nothing left to do.
             pass  # type: ignore[unreachable]  # pragma: no cover
         elif jupyter_disp is None and not _is_current:
-            self._clear_ren_win()  # The ren_win is deleted
+            self._clear_render_window()  # The render window is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:  # pragma: no cover
                 warn_external(
@@ -9120,8 +9447,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             Sets the size of the title font.
 
         color : ColorLike, optional
-            Either a string, rgb list, or hex color string.  Defaults
-            to white or the value of the global theme if set.  For
+            Either a string, rgb list, or hex color string. Defaults
+            to white or the value of the global theme if set. For
             example:
 
             * ``color='white'``
@@ -9170,7 +9497,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         focal_point: Sequence[float] = (0.0, 0.0, 0.0),
         color: ColorLike | None = None,
-    ) -> _vtk.vtkActor:
+    ) -> Actor:
         """Add a cursor of a PyVista or VTK dataset to the scene.
 
         Parameters
@@ -9184,7 +9511,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             The focal point of the cursor.
 
         color : ColorLike, optional
-            Either a string, RGB sequence, or hex color string.  For one
+            Either a string, RGB sequence, or hex color string. For one
             of the following.
 
             * ``color='white'``
@@ -9194,8 +9521,8 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the 2D cursor.
+        pyvista.Actor
+            Actor of the 2D cursor.
 
         Examples
         --------
@@ -9213,15 +9540,16 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         alg.AllOn()
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
-        actor, prop = self.add_actor(mapper)
-        cast('_vtk.vtkProperty', prop).SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
+        actor = Actor(mapper=mapper)
+        self.add_actor(actor)
+        actor.prop.color = color
 
-        return cast('_vtk.vtkActor', actor)
+        return actor
 
     @property
     def meshes(
         self,
-    ) -> list[pv.DataSet | pv.MultiBlock[Any]]:  # numpydoc ignore=RT01
+    ) -> list[DataSet | MultiBlock[Any]]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns
@@ -9263,7 +9591,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                         input_alg.Update()
                     meshes.append(pv.wrap(dataset))
 
-        meshes: list[pv.DataSet | pv.MultiBlock[Any]] = []
+        meshes: list[DataSet | MultiBlock[Any]] = []
         for actor in self.actors.values():
             for leaf in _iter_leaf_props(actor):
                 _append_actor_dataset(leaf)

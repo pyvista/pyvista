@@ -20,6 +20,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.data_set import _outline_corners_filter
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
@@ -146,7 +147,10 @@ class CompositeFilters(DataObjectFilters):
         >>> filtered = multi.generic_filter(normalize_bounds)
         >>> filtered
         MultiBlock[ImageData | PolyData | UnstructuredGrid] (...)
+          N Cells:    1841
+          N Points:   1585
           N Blocks:   3
+          Depth:      1
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 5.000e-01
@@ -397,10 +401,10 @@ class CompositeFilters(DataObjectFilters):
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock[Any],
         *,
-        factor=0.2,
+        factor: float = 0.2,
         nested: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | MultiBlock:
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -424,7 +428,8 @@ class CompositeFilters(DataObjectFilters):
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+            alg = _outline_corners_filter(self, factor=factor, progress_bar=progress_bar)
+            return _get_output(alg, output_type=pv.MultiBlock)
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
@@ -467,7 +472,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetFeatureAngle(feature_angle)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Normals')
-        return _get_output(alg)
+        return _get_output(alg, output_type=pv.MultiBlock)
 
 
 def _format_nested_index(index: tuple[int, ...]) -> str:

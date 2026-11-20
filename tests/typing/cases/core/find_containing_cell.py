@@ -14,5 +14,12 @@ def an_image() -> pv.ImageData:
     return pv.ImageData(dimensions=(3, 3, 3))
 
 
-assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NDArray[np.int_])
-assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NDArray[np.int_])
+assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int)
+assert_types(an_image().find_containing_cell([1, 1, 1]), int)
+
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), NDArray[np.int_])
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0)]), NDArray[np.int_])
+
+# An array, whose shape is not known statically
+assert_types(an_image().find_containing_cell(np.ones(3)), int | NDArray[np.int_])
+assert_types(an_image().find_containing_cell(np.ones((2, 3))), int | NDArray[np.int_])

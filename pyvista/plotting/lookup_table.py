@@ -15,6 +15,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
+from pyvista.core.formatting_html import _TextReprHTMLMixin
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -111,7 +112,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
     __getattr__ = VTKObjectWrapperCheckSnakeCase.__getattr__
 
 
-class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
+class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -869,8 +870,8 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         opacity : float | VectorLikeFloat | str
             The opacity mapping to use. Can be a ``str`` name of a predefined
             mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-            ``'sigmoid_3-10'``.  Append an ``'_r'`` to any of those names to
-            reverse that mapping.  This can also be a custom array or list of
+            ``'sigmoid_3-10'``. Append an ``'_r'`` to any of those names to
+            reverse that mapping. This can also be a custom array or list of
             values that will be interpolated across the ``n_color`` range for
             user defined mappings. Values must be between 0 and 1.
 

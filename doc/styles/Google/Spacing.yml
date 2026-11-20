@@ -4,5 +4,5 @@ link: "https://developers.google.com/style/sentence-spacing"
 level: error
 nonword: true
 tokens:
-  - "[a-z][.?!] {2,}[A-Z]"
+  # Double spaces between sentences are checked by hooks/sentence_spacing.py.
   - "[a-z][.?!][A-Z]"

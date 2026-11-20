@@ -20,6 +20,7 @@ from pyvista import examples
 from pyvista.examples import _get_example
 from pyvista.examples import downloads
 from pyvista.examples import planets
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
@@ -38,13 +39,12 @@ _GENERATED_START = '# --- generated overloads ---\n'
 _GENERATED_END = '# --- end generated overloads ---\n'
 # the `load=False` half of a function's return annotation, which is not a dataset
 _PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
-# every other dataset type name is an attribute of `pv`
-_DATASET_TYPE_NAMES = {'ndarray': 'NDArray[Any]'}
 _REGENERATE = (
     'Regenerate the generated block with\n'
     '  pytest tests/examples/test_get_example.py -k overloads_current '
     '--test_downloads --regenerate_overloads\n'
-    'and run pre-commit afterwards.'
+    'and run pre-commit afterwards. Import any new type names under TYPE_CHECKING in\n'
+    'pyvista/examples/_get_example.py.'
 )
 
 
@@ -63,7 +63,7 @@ def _dataset_annotation(function):
     annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
     members = _split_union(str(annotation))
     dataset = ' | '.join(member for member in members if member not in _PATH_TYPES)
-    return re.sub(r'\b(?<!\.)[A-Za-z_]\w*', _qualify_type_name, dataset)
+    return re.sub(r'\bndarray\b', 'NDArray[Any]', dataset)
 
 
 def _split_union(annotation):
@@ -78,17 +78,9 @@ def _split_union(annotation):
     return members
 
 
-def _qualify_type_name(match):
-    """Return a type name as the generated overloads spell it."""
-    name = match[0]
-    if name == 'None':
-        return name
-    return _DATASET_TYPE_NAMES.get(name, f'pv.{name}')
-
-
 def _readers_annotation(example):
     """Render the exact tuple type of ``example.readers``."""
-    names = ', '.join(f'pv.{type(reader).__name__}' for reader in example.readers)
+    names = ', '.join(type(reader).__name__ for reader in example.readers)
     return f'tuple[{names}]' if names else 'tuple[()]'
 
 
@@ -297,26 +289,70 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
     ), f'no overload of {function.__name__} accepts a plain call'
 
 
+def _expected_return_types(loader, dataset):
+    """Return the dataset type an example loads and the type ``load=False`` gives back."""
+    dataset_type = (
+        dataset.inferred_type if isinstance(dataset, pv.MultiBlock) else type(dataset).__name__
+    )
+    # `_download_dataset` collapses to a bare path only when there is one to return
+    loadable = getattr(loader, 'loadable_paths', ())
+    return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
+
+
+@pytest.mark.needs_download
+@pytest.mark.needs_vtk_version(9, 7, 0, reason='Annotations describe what the newest VTK loads')
+@pytest.mark.parametrize('name', _all_example_names())
+def test_example_function_annotations_match_the_loaded_dataset(name):
+    """The function and its ``load=False`` overload are annotated with what they return."""
+    if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:  # pragma: no cover -- Windows only
+        pytest.skip('Error loading on Windows')
+    loader, _, function = _get_dataset_loader(name)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+        try:
+            if isinstance(loader, _DOWNLOADABLE_TYPES):
+                loader.download()
+            dataset = loader.load()
+        except pv.VTKVersionError:  # pragma: no cover -- only on older VTK
+            pytest.skip('VTK version not supported.')
+    dataset_type, path_type = _expected_return_types(loader, dataset)
+
+    signature = inspect.signature(function)
+    expected = {dataset_type}
+    if 'texture' in signature.parameters:
+        expected.add('Texture')
+    if 'load' in signature.parameters:
+        expected.add(path_type)
+    assert set(_split_union(str(signature.return_annotation))) == expected
+
+    for overload in get_overloads(function):
+        overload_signature = inspect.signature(overload)
+        load = overload_signature.parameters.get('load')
+        if load is not None and 'Literal[False]' in str(load.annotation):
+            assert overload_signature.return_annotation == path_type
+
+
 def test_example_name_literal_lists_every_example():
     """``ExampleName`` is the ``Literal`` of every example name, so editors can complete it."""
     assert get_args(_get_example.ExampleName) == tuple(_all_example_names()), _REGENERATE
 
 
 def test_dataset_annotation_keeps_nested_unions():
-    """Only a top-level path member is dropped, and every class name is qualified."""
+    """Only a top-level path member is dropped, and nested names are kept as written."""
 
     def load() -> MultiBlock[UnstructuredGrid | None] | str:
         """Stand in for an example function without overloads."""
 
-    assert _dataset_annotation(load) == 'pv.MultiBlock[pv.UnstructuredGrid | None]'
+    assert _dataset_annotation(load) == 'MultiBlock[UnstructuredGrid | None]'
 
 
 def test_format_overloads_renders_one_line_per_stub():
     """The generated block is the name literal, then an ``@overload`` and a one-line stub each."""
     block = _format_overloads(
         {
-            'cow': ('pv.PolyData', 'tuple[pv.XMLPolyDataReader]'),
-            'ant': ('pv.PolyData', 'tuple[pv.PLYReader]'),
+            'cow': ('PolyData', 'tuple[XMLPolyDataReader]'),
+            'ant': ('PolyData', 'tuple[PLYReader]'),
         }
     )
     assert block == (
@@ -325,10 +361,10 @@ def test_format_overloads_renders_one_line_per_stub():
         ']\n'
         '@overload\n'
         "def get_example(name: Literal['ant'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.PLYReader]]: ...\n'
+        ' -> Example[PolyData, tuple[PLYReader]]: ...\n'
         '@overload\n'
         "def get_example(name: Literal['cow'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.XMLPolyDataReader]]: ...\n'
+        ' -> Example[PolyData, tuple[XMLPolyDataReader]]: ...\n'
     )
 
 

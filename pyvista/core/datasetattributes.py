@@ -15,6 +15,8 @@ from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
+from .formatting_html import _data_array_section
+from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _warn_scalar_array
@@ -109,7 +111,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     :func:`DataSetAttributes.set_scalars`.
 
     .. versionchanged:: 0.32.0
-        The ``[]`` operator no longer allows integers.  Use
+        The ``[]`` operator no longer allows integers. Use
         :func:`DataSetAttributes.get_array` to retrieve an array
         using an index.
 
@@ -120,8 +122,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         usually an instance of :vtk:`vtkCellData`, :vtk:`vtkPointData`, or
         :vtk:`vtkFieldData`.
 
-    dataset : :vtk:`vtkDataSet`
-        The :vtk:`vtkDataSet` containing the ``vtkobject``.
+    dataset : DataSet | :vtk:`vtkDataSet`
+        The dataset containing the ``vtkobject``.
 
     association : FieldAssociation
         The array association type of the ``vtkobject``.
@@ -188,7 +190,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def __init__(
         self: Self,
         vtkobject: _vtk.vtkFieldData,
-        dataset: _vtk.vtkDataSet | DataSet,
+        dataset: DataSet | _vtk.vtkDataSet,
         association: FieldAssociation,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
@@ -228,6 +230,48 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         info.append(f'Contains arrays :{array_info}')
         return '\n'.join(info)
 
+    def _html_array_info(
+        self: Self, *, show_shape: bool = False, show_range: bool = False
+    ) -> list[tuple[str, int, str, str, str]]:
+        """Return ``(name, n_components, dtype, shape, range)`` rows for the HTML ``repr``."""
+        import pyvista as pv  # noqa: PLC0415
+
+        fmt = pv.FLOAT_FORMAT
+        result: list[tuple[str, int, str, str, str]] = []
+        for name, arr in self.items():
+            ncomp = arr.shape[1] if arr.ndim > 1 else 1
+            shape = str(tuple(arr.shape)) if show_shape else ''
+            range_str = ''
+            if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                range_str = f'[{fmt.format(np.nanmin(arr))}, {fmt.format(np.nanmax(arr))}]'
+            result.append((name, ncomp, str(arr.dtype), shape, range_str))
+        return result
+
+    def _repr_html_(self: Self) -> str:
+        """Return a pretty representation for Jupyter notebooks."""
+        kind = (
+            'field' if self.association == FieldAssociation.NONE else self.association.name.lower()
+        )
+        title = f'{kind.capitalize()} Data'
+        if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+            section = _data_array_section(
+                title,
+                self._html_array_info(show_range=True),
+                active_scalars=self.active_scalars_name,
+                active_vectors=self.active_vectors_name,
+                active_normals=self.active_normals_name,
+                active_tcoords=self.active_texture_coordinates_name,
+            )
+        else:
+            section = _data_array_section(title, self._html_array_info(show_shape=True))
+        return build_repr_html(
+            type(self).__name__,
+            '',
+            header_badges=[kind, f'{len(self)} array{"" if len(self) == 1 else "s"}'],
+            sections=[section],
+            text_repr=repr(self),
+        )
+
     # fmt: off
     @overload
     def get(self: Self, key: str, value: None = None) -> pyvista_ndarray | None: ...
@@ -243,7 +287,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Name of the array item you want to return the value from.
 
         value : Any, optional
-            A value to return if the key does not exist.  Default
+            A value to return if the key does not exist. Default
             is ``None``.
 
         Returns
@@ -350,7 +394,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Return the active scalars.
 
         .. versionchanged:: 0.32.0
-            Can no longer be used to set the active scalars.  Either use
+            Can no longer be used to set the active scalars. Either use
             :func:`DataSetAttributes.set_scalars` or if the array
             already exists, assign to
             :attr:`pyvista.DataSetAttributes.active_scalars_name`.
@@ -389,7 +433,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Return the active vectors as a ``pyvista_ndarray``.
 
         .. versionchanged:: 0.32.0
-            Can no longer be used to set the active vectors.  Either use
+            Can no longer be used to set the active vectors. Either use
             :func:`DataSetAttributes.set_vectors` or if the array
             already exists, assign to
             :attr:`pyvista.DataSetAttributes.active_vectors_name`.
@@ -462,7 +506,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Parameters
         ----------
         key : str | int
-            The name or index of the array to return.  Arrays are
+            The name or index of the array to return. Arrays are
             ordered within VTK DataSetAttributes, and this feature is
             mirrored here.
 
@@ -479,7 +523,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Notes
         -----
         This is provided since arrays are ordered within VTK and can
-        be indexed via an int.  When getting an array, you can just
+        be indexed via an int. When getting an array, you can just
         use the key of the array with the ``[]`` operator with the
         name of the array.
 
@@ -539,7 +583,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def set_array(self: Self, data: _AnyArrayLike, name: str, *, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
-        Use this method when adding arrays to the DataSet.  If
+        Use this method when adding arrays to the DataSet. If
         needed, these arrays can later be assigned to become the
         active scalars, vectors, normals, or texture coordinates with:
 
@@ -559,7 +603,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Array of data.
 
         name : str
-            Name to assign to the data.  If this name already exists,
+            Name to assign to the data. If this name already exists,
             it will be overwritten.
 
         deep_copy : bool, optional
@@ -568,7 +612,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Notes
         -----
         You can simply use the ``[]`` operator to add an array to the
-        dataset.  Note that this will automatically become the active
+        dataset. Note that this will automatically become the active
         scalars.
 
         Examples
@@ -615,7 +659,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
-        direction.  This can include data with multiple components
+        direction. This can include data with multiple components
         (such as RGBA values) or just one component (such as
         temperature data).
 
@@ -675,7 +719,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Vectors are a quantity that has magnitude and direction, such
         as normal vectors or a velocity field.
 
-        The vectors data must contain three components per cell or point.  Use
+        The vectors data must contain three components per cell or point. Use
         :func:`DataSetAttributes.set_scalars` when adding non-directional data.
 
         Parameters
@@ -687,7 +731,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             Name of the vectors.
 
         deep_copy : bool, default: False
-            When ``True`` makes a full copy of the array.  When ``False``, the
+            When ``True`` makes a full copy of the array. When ``False``, the
             data references the original array without copying it.
 
         Notes
@@ -1025,7 +1069,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         [pyvista_ndarray([0, 0, 0, 0, 0, 0]), pyvista_ndarray([0, 1, 2, 3, 4, 5])]
 
         """
-        return [self.get_array(name) for name in self.keys()]
+        # Optimization: lookup by index instead of by name for O(1) instead of O(N) performance
+        return [self.get_array(i) for i in range(self.VTKObject.GetNumberOfArrays())]
 
     def _iter_flat_columns(self: Self) -> Iterator[tuple[str, NDArray[Any]]]:
         """Yield ``(column_name, 1d_ndarray)`` pairs with multi-component arrays expanded.
@@ -1480,7 +1525,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        pyvista_ndarray
+        pyvista_ndarray | None
             Normals of this dataset attribute. ``None`` if no normals have been
             set.
 
@@ -1511,7 +1556,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                          [0., 0., 1.],
                          [0., 0., 1.]], dtype=float32)
 
-        Assign normals to the cell arrays.  An array will be added
+        Assign normals to the cell arrays. An array will be added
         named ``"Normals"``.
 
         >>> mesh.cell_data.active_normals = [[0.0, 0.0, 1.0]]
@@ -1568,7 +1613,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        str
+        str | None
             Name of the active normals array.
 
         Examples
@@ -1621,7 +1666,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        pyvista.pyvista_ndarray | None
             Array of the active texture coordinates.
 
         Examples

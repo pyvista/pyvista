@@ -63,8 +63,8 @@ solids.append(teapot)
 #
 # .. note::
 #    VTK has known issues when rendering shadows on certain window
-#    sizes.  Be prepared to experiment with the ``window_size``
-#    parameter.  An initial window size of ``(1000, 1000)`` seems to
+#    sizes. Be prepared to experiment with the ``window_size``
+#    parameter. An initial window size of ``(1000, 1000)`` seems to
 #    work well, which can be manually resized without issue.
 
 

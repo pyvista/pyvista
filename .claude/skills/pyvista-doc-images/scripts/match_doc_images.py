@@ -24,7 +24,7 @@ def score(cached: Path, generated: Path) -> float:
     """Return pyvista's image comparison value, or ``inf`` for mismatched shapes."""
     try:
         return float(pv.compare_images(str(cached), str(generated)))
-    except Exception:  # noqa: BLE001 - differing dimensions raise
+    except RuntimeError:  # differing dimensions raise
         return float('inf')
 
 

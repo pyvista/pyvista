@@ -64,12 +64,12 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
             self.radius = radius
 
     @property
-    def whole_extent(self) -> Sequence[int]:
+    def whole_extent(self) -> tuple[int, int, int, int, int, int]:
         """Get extent of the whole output image.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int, int, int, int]
             The extent of the whole output image.
 
         """
@@ -112,12 +112,12 @@ class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEl
         self.SetCenter(center)  # type: ignore[arg-type]
 
     @property
-    def radius(self) -> Sequence[float]:
+    def radius(self) -> tuple[float, float, float]:
         """Get the radius of the ellipsoid.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             The radius of the ellipsoid.
 
         """
@@ -185,12 +185,12 @@ class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageM
             self.maxiter = maxiter
 
     @property
-    def whole_extent(self) -> Sequence[int]:
+    def whole_extent(self) -> tuple[int, int, int, int, int, int]:
         """Get extent of the whole output image.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int, int, int, int]
             The extent of the whole output image.
 
         """
@@ -299,12 +299,12 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
             self.seed(seed)
 
     @property
-    def whole_extent(self) -> VectorLikeInt:
+    def whole_extent(self) -> tuple[int, int, int, int, int, int]:
         """Get extent of the whole output image.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int, int, int, int]
           The extent of the whole output image.
 
         """
@@ -458,12 +458,12 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
             self.amplitude = amplitude
 
     @property
-    def whole_extent(self) -> VectorLikeInt:
+    def whole_extent(self) -> tuple[int, int, int, int, int, int]:
         """Get extent of the whole output image.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int, int, int, int]
             The extent of the whole output image.
 
         """
@@ -492,12 +492,12 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
         )
 
     @property
-    def direction(self) -> Sequence[float]:
+    def direction(self) -> tuple[float, float, float]:
         """Get the direction of the sinusoid.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             The direction of the sinusoid.
 
         """
@@ -678,12 +678,12 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
         self.SetCenter(center)  # type: ignore[arg-type]
 
     @property
-    def whole_extent(self) -> VectorLikeInt:
+    def whole_extent(self) -> tuple[int, int, int, int, int, int]:
         """Get extent of the whole output image.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int, int, int, int]
           The extent of the whole output image.
 
         """
@@ -817,12 +817,12 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
             self.spacing = spacing
 
     @property
-    def origin(self) -> Sequence[int]:
+    def origin(self) -> tuple[int, int, int]:
         """Get the origin of the grid lines.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int]
             The origin of the grid lines in pixels.
 
         """
@@ -841,12 +841,12 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
         self.SetGridOrigin(origin)
 
     @property
-    def extent(self) -> Sequence[int]:
+    def extent(self) -> tuple[int, int, int, int, int, int]:
         """Get extent of the whole output image.
 
         Returns
         -------
-        sequence[int]
+        tuple[int, int, int, int, int, int]
             The extent of the whole output image.
 
         """
@@ -865,12 +865,12 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
         self.SetDataExtent(extent)  # type: ignore[arg-type]
 
     @property
-    def spacing(self) -> Sequence[float]:
+    def spacing(self) -> tuple[float, float, float]:
         """Get the spacing of the grid.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             The pixel spacing.
 
         """

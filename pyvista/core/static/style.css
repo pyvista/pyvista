@@ -461,3 +461,58 @@ body.vscode-dark {
   content: "\00b7";
   padding: 0 6px;
 }
+
+/* Key-value list */
+.pv-kv-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16em, 1fr));
+  gap: 0 16px;
+  padding-left: 15px !important;
+  margin: 0;
+  list-style: none;
+}
+
+.pv-kv-item {
+  display: flex;
+  gap: 12px;
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--pv-border-color);
+}
+
+.pv-kv-wide {
+  grid-column: 1 / -1;
+}
+
+.pv-kv-key {
+  flex: 0 0 calc(var(--pv-kv-key-chars) * 0.6em);
+  color: var(--pv-font-color2);
+  overflow-wrap: anywhere;
+}
+
+.pv-kv-value {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--jp-code-font-family, monospace);
+  font-size: 0.92em;
+}
+
+.pv-kv-multiline {
+  text-align: left;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.pv-kv-muted {
+  color: var(--pv-font-color3);
+  font-style: italic;
+}
+
+.pv-pre {
+  margin: 0 0 0 15px;
+  white-space: pre-wrap;
+  font-family: var(--jp-code-font-family, monospace);
+  font-size: 0.92em;
+  color: var(--pv-font-color0);
+  background: none;
+}

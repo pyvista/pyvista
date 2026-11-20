@@ -646,6 +646,127 @@ def test_add_camera_orientation_widget():
     assert not pl.widgets.camera_widgets
 
 
+def _assert_camera_widget_viewport(widget, anchor):
+    """Check the widget's pixel size and padding within its parent viewport."""
+    renderer = widget.GetParentRenderer()
+    window_size = np.array(renderer.GetRenderWindow().GetActualSize())
+    parent = np.array(renderer.GetViewport()) * np.tile(window_size, 2)
+    representation = widget.GetRepresentation()
+    size = max(representation.GetSize())
+    pad_x, pad_y = representation.GetPadding()
+    x = parent[0] + pad_x if anchor.endswith('Left') else parent[2] - pad_x - size
+    y = parent[1] + pad_y if anchor.startswith('Lower') else parent[3] - pad_y - size
+    actual = np.array(widget.GetCurrentRenderer().GetViewport()) * np.tile(window_size, 2)
+    assert np.allclose(actual, (x, y, x + size, y + size))
+
+
+@pytest.mark.parametrize('shape', [(1, 1), (1, 2), (2, 1), (2, 2)])
+@pytest.mark.parametrize('anchor', ['LowerLeft', 'LowerRight', 'UpperLeft', 'UpperRight'])
+def test_camera_orientation_widget_subplots(shape, anchor):
+    """Keep each widget in its own subplot during native renders and resizes."""
+    pl = pv.Plotter(shape=shape, window_size=(800, 600))
+    camera_widgets = []
+    for index in np.ndindex(shape):
+        pl.subplot(*index)
+        pl.add_mesh(pv.Cone())
+        widget = pl.add_camera_orientation_widget()
+        representation = widget.GetRepresentation()
+        getattr(representation, f'AnchorTo{anchor}')()
+        representation.SetSize(90, 60)
+        representation.SetPadding(7, 11)
+        camera_widgets.append(widget)
+    pl.show(auto_close=False, interactive=False)
+    for size in [(800, 600), (600, 800), (1000, 800)]:
+        pl.window_size = size
+        for _ in range(2):
+            pl.render()
+            for widget in camera_widgets:
+                _assert_camera_widget_viewport(widget, anchor)
+    pl.close()
+
+
+def test_camera_orientation_widget_viewport_changes():
+    """Honor changes to the parent viewport and the representation anchor."""
+    pl = pv.Plotter(window_size=(800, 600))
+    widget = pl.add_camera_orientation_widget()
+    pl.show(auto_close=False, interactive=False)
+    pl.renderer.viewport = (0.1, 0.2, 0.6, 0.8)
+    pl.render()
+    _assert_camera_widget_viewport(widget, 'UpperRight')
+    widget.GetRepresentation().AnchorToLowerLeft()
+    pl.render()
+    _assert_camera_widget_viewport(widget, 'LowerLeft')
+    pl.close()
+
+
+@pytest.mark.parametrize('window_size', [(0, 0), (0, 600), (800, 0)])
+def test_camera_orientation_widget_zero_window_size(window_size, capsys):
+    """Keep the viewport until the render window has a nonzero size."""
+    pl = pv.Plotter(window_size=(800, 600))
+    widget = pl.add_camera_orientation_widget()
+    renderer = widget.GetCurrentRenderer()
+    viewport = renderer.GetViewport()
+    pl.render_window.SetSize(*window_size)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    assert not capsys.readouterr().err
+    assert renderer.GetViewport() == viewport
+    pl.render_window.SetSize(800, 600)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    _assert_camera_widget_viewport(widget, 'UpperRight')
+    pl.close()
+
+
+def test_camera_orientation_widget_clear():
+    """Stop updating a retained widget after clearing camera widgets."""
+    pl = pv.Plotter(shape=(1, 2))
+    widget = pl.add_camera_orientation_widget()
+    renderer = widget.GetCurrentRenderer()
+    pl.clear_camera_widgets()
+    renderer.SetViewport(0, 0, 1, 1)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    assert renderer.GetViewport() == (0, 0, 1, 1)
+    assert not widget.GetEnabled()
+    pl.close()
+
+
+def test_camera_orientation_widget_detached():
+    """Leave the viewport alone after detaching the parent renderer."""
+    pl = pv.Plotter()
+    widget = pl.add_camera_orientation_widget()
+    renderer = widget.GetCurrentRenderer()
+    widget.SetParentRenderer(None)
+    renderer.SetViewport(0, 0, 1, 1)
+    renderer.InvokeEvent(_vtk.vtkCommand.StartEvent)
+    assert renderer.GetViewport() == (0, 0, 1, 1)
+    pl.close()
+
+
+def test_camera_orientation_widget_closed_plotter():
+    pl = pv.Plotter()
+    pl.close()
+    with pytest.raises(RuntimeError, match=r'Cannot add a widget to a closed plotter.'):
+        pl.add_camera_orientation_widget()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_camera_orientation_widget_subplots_image():
+    """Render independently placed camera widgets over distinct subplot scenes."""
+    pl = pv.Plotter(shape=(1, 2), window_size=(400, 400))
+    pl.add_mesh(pv.Cone(direction=(1, 2, 1)), color='tomato', show_edges=True)
+    left_widget = pl.add_camera_orientation_widget()
+    pl.camera_position = 'iso'
+    pl.reset_camera()
+    pl.subplot(0, 1)
+    pl.add_mesh(pv.Arrow(direction=(0.5, 1, 2)), color='royalblue', show_edges=True)
+    right_widget = pl.add_camera_orientation_widget()
+    pl.camera_position = 'xy'
+    pl.reset_camera()
+    pl.render_window.Render()
+    _assert_camera_widget_viewport(left_widget, 'UpperRight')
+    _assert_camera_widget_viewport(right_widget, 'UpperRight')
+    pl.show()
+
+
 def test_plot_algorithm_widgets():
     algo = _vtk.vtkRTAnalyticSource()
 
@@ -760,8 +881,88 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
+@pytest.fixture
+def affine_widget():
+    """Create an affine widget for behavioral interaction tests."""
+    pl = pv.Plotter(window_size=(400, 400))
+    actor = pl.add_mesh(pv.Cube())
+    return pl, pl.add_affine_transform_widget(actor)
+
+
+@pytest.mark.parametrize('style', ['zoom_style', 'terrain_style', 'trackball_style', None])
+@pytest.mark.parametrize('finish', ['release', 'disable', 'remove'])
+def test_affine_widget_restores_interactor_style(affine_widget, style, finish):
+    """Ending a drag restores the style selected after the widget was created."""
+    pl, widget = affine_widget
+    pl.iren.style = style
+    original_style = pl.iren.get_interactor_style()
+    widget._selected_actor = widget._arrows[0]
+    widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+    assert pl.iren.get_interactor_style() is not original_style
+    transform = np.eye(4)
+    transform[0, 3] = 2
+    widget._main_actor.user_matrix = transform
+    actions = {
+        'release': lambda: widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent'),
+        'disable': widget.disable,
+        'remove': widget.remove,
+    }
+
+    actions[finish]()
+
+    assert pl.iren.get_interactor_style() is original_style
+    assert not widget._pressing_down
+    assert np.array_equal(widget._cached_matrix, transform)
+
+
+@pytest.mark.parametrize('hovered', [False, True])
+def test_affine_widget_release_without_drag_preserves_style(affine_widget, hovered):
+    """A release without a widget drag leaves the interactor style untouched."""
+    pl, widget = affine_widget
+    pl.enable_zoom_style()
+    original_style = pl.iren.get_interactor_style()
+    widget._selected_actor = widget._arrows[0] if hovered else None
+
+    widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent')
+
+    assert pl.iren.get_interactor_style() is original_style
+
+
+def test_affine_widget_repeated_drags_preserve_current_style(affine_widget):
+    """Each drag captures the current style, even with repeated press events."""
+    pl, widget = affine_widget
+    widget._selected_actor = widget._arrows[0]
+    for style in ['zoom_style', 'terrain_style']:
+        pl.iren.style = style
+        original_style = pl.iren.get_interactor_style()
+
+        widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+        widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+        widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent')
+
+        assert pl.iren.get_interactor_style() is original_style
+
+
+def test_affine_widget_restores_custom_style_observers(affine_widget):
+    """Restoring a custom style retains its instance and registered observers."""
+    pl, widget = affine_widget
+    style = _vtk.vtkInteractorStyleJoystickCamera()
+    calls = []
+    style.AddObserver('UserEvent', lambda *_: calls.append('called'))
+    pl.iren.style = style
+    widget._selected_actor = widget._arrows[0]
+
+    widget._press_callback(pl.iren.interactor, 'LeftButtonPressEvent')
+    widget._release_callback(pl.iren.interactor, 'LeftButtonReleaseEvent')
+
+    assert pl.iren.get_interactor_style() is style
+    style.InvokeEvent('UserEvent')
+    assert calls == ['called']
+
+
 @flaky_test
-def test_affine_widget(sphere):
+@pytest.mark.parametrize('style', ['trackball_style', 'zoom_style', 'terrain_style'])
+def test_affine_widget(sphere, style):
     interact_calls = []
     release_calls = []
 
@@ -789,6 +990,8 @@ def test_affine_widget(sphere):
         interact_callback=interact_callback,
         release_callback=release_callback,
     )
+    pl.iren.style = style
+    original_style = pl.iren.get_interactor_style()
     pl.show(auto_close=False)
 
     assert not widget._selected_actor
@@ -821,6 +1024,7 @@ def test_affine_widget(sphere):
         trans_val = actor.user_matrix[idx, 3]
         assert (trans_val < 0) if direction == 'neg' else (trans_val > 0)
         assert not widget._pressing_down
+        assert pl.iren.get_interactor_style() is original_style
         widget._reset()
         assert np.allclose(widget._cached_matrix, np.eye(4))
 
@@ -869,6 +1073,7 @@ def test_affine_widget(sphere):
         assert np.count_nonzero(np.isclose(euler_angles, 0)) == len(euler_angles) - 1
         pl.iren._mouse_left_button_release()
         assert not widget._pressing_down
+        assert pl.iren.get_interactor_style() is original_style
         widget._reset()
         assert np.allclose(widget._cached_matrix, np.eye(4))
 

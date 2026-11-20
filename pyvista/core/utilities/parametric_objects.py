@@ -208,7 +208,7 @@ def KochanekSpline(
     Parameters
     ----------
     points : VectorLikeFloat | MatrixLikeFloat
-        Array of points to build a Kochanek spline out of.  Array must
+        Array of points to build a Kochanek spline out of. Array must
         be 3D and directionally ordered.
 
     tension : VectorLikeFloat, default: [0.0, 0.0, 0.0]
@@ -386,7 +386,7 @@ def ParametricBour(**kwargs) -> PolyData:
 def ParametricBoy(zscale: float | None = None, **kwargs) -> PolyData:
     """Generate Boy's surface.
 
-    This is a model of the projective plane without singularities.  It
+    This is a model of the projective plane without singularities. It
     was found by Werner Boy on assignment from David Hilbert.
 
     For further information about this surface, please consult the
@@ -537,7 +537,7 @@ def ParametricCrossCap(**kwargs) -> PolyData:
     """Generate a cross-cap.
 
     ParametricCrossCap generates a cross-cap which is a non-orientable
-    self-intersecting single-sided surface.  This is one possible
+    self-intersecting single-sided surface. This is one possible
     image of a projective plane in three-space.
 
     Parameters
@@ -573,17 +573,17 @@ def ParametricCrossCap(**kwargs) -> PolyData:
 def ParametricDini(a: float | None = None, b: float | None = None, **kwargs) -> PolyData:
     """Generate Dini's surface.
 
-    ParametricDini generates Dini's surface.  Dini's surface is a
+    ParametricDini generates Dini's surface. Dini's surface is a
     surface that possesses constant negative Gaussian curvature
 
     Parameters
     ----------
     a : float, default: 1.0
-        The scale factor.  See the definition in Parametric surfaces
+        The scale factor. See the definition in Parametric surfaces
         referred to above.
 
     b : float, default: 0.2
-        The scale factor.  See the definition in Parametric surfaces
+        The scale factor. See the definition in Parametric surfaces
         referred to above.
 
     **kwargs : dict, optional
@@ -627,10 +627,10 @@ def ParametricEllipsoid(
 ) -> PolyData:
     """Generate an ellipsoid.
 
-    ParametricEllipsoid generates an ellipsoid.  If all the radii are
-    the same, we have a sphere.  An oblate spheroid occurs if RadiusX
-    = RadiusY > RadiusZ.  Here the Z-axis forms the symmetry axis. To
-    a first approximation, this is the shape of the earth.  A prolate
+    ParametricEllipsoid generates an ellipsoid. If all the radii are
+    the same, we have a sphere. An oblate spheroid occurs if RadiusX
+    = RadiusY > RadiusZ. Here the Z-axis forms the symmetry axis. To
+    a first approximation, this is the shape of the earth. A prolate
     spheroid occurs if RadiusX = RadiusY < RadiusZ.
 
     Parameters
@@ -696,7 +696,7 @@ def ParametricEllipsoid(
 def ParametricEnneper(**kwargs) -> PolyData:
     """Generate Enneper's surface.
 
-    ParametricEnneper generates Enneper's surface.  Enneper's surface
+    ParametricEnneper generates Enneper's surface. Enneper's surface
     is a self-intersecting minimal surface possessing constant
     negative Gaussian curvature.
 
@@ -733,7 +733,7 @@ def ParametricEnneper(**kwargs) -> PolyData:
 def ParametricFigure8Klein(radius: float | None = None, **kwargs) -> PolyData:
     """Generate a figure-8 Klein bottle.
 
-    ParametricFigure8Klein generates a figure-8 Klein bottle.  A Klein
+    ParametricFigure8Klein generates a figure-8 Klein bottle. A Klein
     bottle is a closed surface with no interior and only one surface.
     It is unrealisable in 3 dimensions without intersecting surfaces.
 
@@ -808,14 +808,21 @@ def ParametricKlein(**kwargs) -> PolyData:
     """Generate a "classical" representation of a Klein bottle.
 
     ParametricKlein generates a "classical" representation of a Klein
-    bottle.  A Klein bottle is a closed surface with no interior and only one
-    surface.  It is unrealisable in 3 dimensions without intersecting
+    bottle. A Klein bottle is a closed surface with no interior and only one
+    surface. It is unrealisable in 3 dimensions without intersecting
     surfaces.
 
     Parameters
     ----------
     **kwargs : dict, optional
         See :func:`surface_from_para` for additional keyword arguments.
+
+        ``u_res`` must be at least 3 and ``v_res`` at least 4. An odd
+        ``v_res`` is rounded up to the next even value.
+
+        .. versionchanged:: 0.50
+            The surface is closed along both seams, ``clean`` defaults to
+            ``False``, and ``u_res`` and ``v_res`` have minimum values.
 
     Returns
     -------
@@ -835,8 +842,40 @@ def ParametricKlein(**kwargs) -> PolyData:
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
-    kwargs.setdefault('clean', True)
+    clean = kwargs.pop('clean', False)
+    u_res = kwargs.get('u_res', 100)
+    v_res = kwargs.get('v_res', 100)
+    if u_res < 3 or v_res < 4:
+        msg = '`u_res` must be at least 3 and `v_res` at least 4.'
+        raise ValueError(msg)
+    # The u seam maps v to pi - v, which lands on a sample only for even v_res.
+    v_res += v_res % 2
+    kwargs['v_res'] = v_res
+
+    # vtkParametricFunctionSource cannot join the half-twisted u seam, so sample
+    # neither seam and stitch both from the structured point ordering.
+    parametric_function.SetMaximumU((u_res - 1) / u_res * math.pi)
+    parametric_function.SetMaximumV((v_res - 1) / v_res * 2 * math.pi)
+    parametric_function.SetJoinU(False)
+    parametric_function.SetJoinV(False)
     surf = surface_from_para(parametric_function, **kwargs)
+
+    # grid[i, j] is the point at u = i * pi / u_res, v = j * 2 * pi / v_res
+    grid = np.arange(u_res * v_res).reshape(u_res, v_res)
+    twisted = grid[0, (v_res // 2 - np.arange(v_res)) % v_res]
+    a, b, c, d = (
+        np.concatenate(corners)
+        for corners in zip(
+            (grid[:-1, -1], grid[:-1, 0], grid[1:, 0], grid[1:, -1]),
+            (grid[-1], np.roll(grid[-1], -1), np.roll(twisted, -1), twisted),
+            strict=True,
+        )
+    )
+    seam = np.column_stack([a, b, c, a, c, d]).reshape(-1, 3)
+    surf.regular_faces = np.vstack([surf.regular_faces, seam])
+    if clean:
+        surf = _clean_parametric_surface(surf)
+
     _translate_and_orient(surf, center, direction)
     return surf
 
@@ -925,7 +964,7 @@ def ParametricPluckerConoid(n: int | None = None, **kwargs) -> PolyData:
     """Generate Plucker's conoid surface.
 
     ParametricPluckerConoid generates Plucker's conoid surface
-    parametrically.  Plucker's conoid is a ruled surface, named after
+    parametrically. Plucker's conoid is a ruled surface, named after
     Julius Plucker. It is possible to set the number of folds in this
     class via the parameter 'n'.
 
@@ -1018,8 +1057,8 @@ def ParametricRandomHills(
     ParametricRandomHills generates a surface covered with randomly
     placed hills. Hills will vary in shape and height since the
     presence of nearby hills will contribute to the shape and height
-    of a given hill.  An option is provided for placing hills on a
-    regular grid on the surface.  In this case the hills will all have
+    of a given hill. An option is provided for placing hills on a
+    regular grid on the surface. In this case the hills will all have
     the same shape and height.
 
     Parameters
@@ -1150,7 +1189,7 @@ def ParametricSuperEllipsoid(
 ) -> PolyData:
     """Generate a superellipsoid.
 
-    ParametricSuperEllipsoid generates a superellipsoid.  A superellipsoid
+    ParametricSuperEllipsoid generates a superellipsoid. A superellipsoid
     is a versatile primitive that is controlled by two parameters n1 and
     n2. As special cases it can represent a sphere, square box, and closed
     cylindrical can.
@@ -1240,7 +1279,7 @@ def ParametricSuperToroid(
 ) -> PolyData:
     """Generate a supertoroid.
 
-    ParametricSuperToroid generates a supertoroid.  Essentially a
+    ParametricSuperToroid generates a supertoroid. Essentially a
     supertoroid is a torus with the sine and cosine terms raised to a power.
     A supertoroid is a versatile primitive that is controlled by four
     parameters r0, r1, n1, and n2. r0, r1 determine the type of torus whilst
@@ -1488,11 +1527,15 @@ def surface_from_para(
     _update_alg(para_source)
     surf = _apply_points_dtype(wrap(para_source.GetOutput()), algorithm=para_source)
     if clean:
-        surf = surf.clean(
-            tolerance=1e-7,  # determined experimentally
-            absolute=False,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
-        )
+        surf = _clean_parametric_surface(surf)
     return surf
+
+
+def _clean_parametric_surface(surf: PolyData) -> PolyData:
+    return surf.clean(
+        tolerance=1e-7,  # determined experimentally
+        absolute=False,
+        lines_to_points=False,
+        polys_to_lines=False,
+        strips_to_polys=False,
+    )

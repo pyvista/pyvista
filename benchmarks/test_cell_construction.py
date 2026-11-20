@@ -27,3 +27,18 @@ def test_create_mixed_cells(benchmark):
 def test_polydata_from_points(point_cloud, benchmark):
     """Build a point cloud polydata."""
     assert benchmark(pv.PolyData, point_cloud).n_points
+
+
+def test_unstructured_grid_from_arrays(tetra_arrays, benchmark):
+    """Build an unstructured grid of tetrahedra from cells, cell types and points."""
+    assert benchmark(pv.UnstructuredGrid, *tetra_arrays).n_cells
+
+
+def test_unstructured_grid_from_polyhedra(polyhedron_arrays, benchmark):
+    """Build an unstructured grid of polyhedra, which validates every face stream."""
+    assert benchmark(pv.UnstructuredGrid, *polyhedron_arrays).n_cells
+
+
+def test_cell_array_from_padded_cells(padded_triangles, benchmark):
+    """Build a cell array from padded legacy connectivity."""
+    assert benchmark(pv.CellArray, padded_triangles).GetNumberOfCells()

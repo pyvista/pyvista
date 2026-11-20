@@ -221,7 +221,7 @@ def _map_extensions(*classes: _FileIOT) -> dict[str, _FileIOT]:
     return mapping
 
 
-def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
+def _warn_multiblock_nested_field_data(mesh: DataObject) -> None:
     if not isinstance(mesh, pv.MultiBlock):
         return
     iterator = mesh.recursive_iterator('all', node_type='parent')
@@ -368,13 +368,13 @@ def read(
         command-line interface. See :ref:`pyvista convert <cli_convert>` for details.
 
     Automatically determines the correct reader to use then wraps the
-    corresponding mesh as a pyvista object.  Attempts native ``vtk``
+    corresponding mesh as a pyvista object. Attempts native ``vtk``
     readers first then tries to use ``meshio``.
 
     Remote URIs (``https://``, ``s3://``, etc.) are downloaded to a
-    temporary file automatically.  Install ``fsspec`` for full protocol
+    temporary file automatically. Install ``fsspec`` for full protocol
     support (``pip install pyvista[io]``); ``pooch`` is used as a
-    fallback for HTTP(S).  Third-party reader plugins registered via
+    fallback for HTTP(S). Third-party reader plugins registered via
     :func:`pyvista.register_reader` are also checked.
 
     See the tables below for a list of all supported file formats. See also
@@ -461,7 +461,7 @@ def read(
 
     Returns
     -------
-    pyvista.DataSet | pyvista.MultiBlock
+    pyvista.DataObject
         Wrapped PyVista dataset. When ``cls`` is given, an instance of
         ``cls`` is returned instead.
 
@@ -1534,12 +1534,12 @@ def save_meshio(
         Any PyVista mesh/spatial data type.
 
     file_format : str, optional
-        File type for meshio to save.  For example ``'.bdf'``.  This
+        File type for meshio to save. For example ``'.bdf'``. This
         is normally inferred from the extension but this can be
         overridden.
 
     **kwargs : dict, optional
-        Additional keyword arguments.  See
+        Additional keyword arguments. See
         ``meshio.Mesh.write`` for more details.
 
     Examples

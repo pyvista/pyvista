@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PartitionedDataSet
     from pyvista import Plotter
+    from pyvista import Text
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BorderOptions
     from pyvista.plotting._typing import CameraPositionOptions
@@ -473,7 +474,7 @@ def _shorten(text: str, prop: Any, *, width: float, dpi: int, size: float, measu
 
 
 def _fit_labels(
-    actors: Sequence[pv.Text],
+    actors: Sequence[Text],
     labels: Sequence[str],
     renderers: Sequence[Any],
     *,
@@ -771,13 +772,13 @@ def plot_compare(  # noqa: ANN201
         :func:`Plotter.enable_ssao` for more details.
 
     off_screen : bool, optional
-        Plots off screen when ``True``.  Helpful for saving
-        screenshots without a window popping up.  Defaults to the
+        Plots off screen when ``True``. Helpful for saving
+        screenshots without a window popping up. Defaults to the
         global setting ``pyvista.OFF_SCREEN``.
 
     notebook : bool, default: :attr:`pyvista.plotting.themes.Theme.notebook`
         When ``True``, the resulting plot is placed inline a jupyter
-        notebook.  Assumes a jupyter console is active.
+        notebook. Assumes a jupyter console is active.
 
     window_size : list[int], default: :attr:`pyvista.plotting.themes.Theme.window_size`
         Window size in pixels.
@@ -793,7 +794,7 @@ def plot_compare(  # noqa: ANN201
         Color of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_color
         <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
-        rgb list, or hex color string.  For example:
+        rgb list, or hex color string. For example:
 
         * ``color='white'``
         * ``color='w'``
@@ -814,7 +815,7 @@ def plot_compare(  # noqa: ANN201
         a screenshot array.
 
     full_screen : bool, default: :attr:`pyvista.plotting.themes.Theme.full_screen`
-        Opens window in full screen.  When enabled, ignores
+        Opens window in full screen. When enabled, ignores
         ``window_size``.
 
     interactive : bool, default: :attr:`pyvista.plotting.themes.Theme.interactive`
@@ -825,7 +826,7 @@ def plot_compare(  # noqa: ANN201
 
     return_cpos : bool, default: False
         Return the last camera position from the render window
-        when enabled.  Defaults to value in theme settings.
+        when enabled. Defaults to value in theme settings.
 
     return_viewer : bool, default: False
         Return the jupyterlab viewer, scene, or display object

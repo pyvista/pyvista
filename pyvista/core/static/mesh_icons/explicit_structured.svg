@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="pv-esg-top" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd040"/>
+      <stop offset="100%" stop-color="#376fa0"/>
+    </linearGradient>
+    <linearGradient id="pv-esg-left" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#376fa0"/>
+      <stop offset="100%" stop-color="#1a4a70"/>
+    </linearGradient>
+    <linearGradient id="pv-esg-right" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd040"/>
+      <stop offset="100%" stop-color="#376fa0"/>
+    </linearGradient>
+  </defs>
+  <polygon points="16.00,10.09 20.56,12.37 16.00,14.64 11.44,12.37" fill="url(#pv-esg-top)"/>
+  <polygon points="11.44,12.37 16.00,14.64 16.00,19.96 11.44,17.68" fill="url(#pv-esg-left)"/>
+  <polygon points="20.56,12.37 16.00,14.64 16.00,19.96 20.56,17.68" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="16.00,10.09 20.56,12.37 16.00,14.64 11.44,12.37"/>
+    <polygon points="11.44,12.37 16.00,14.64 16.00,19.96 11.44,17.68"/>
+    <polygon points="20.56,12.37 16.00,14.64 16.00,19.96 20.56,17.68"/>
+  </g>
+  <polygon points="16.00,3.44 20.56,5.72 16.00,8.00 11.44,5.72" fill="url(#pv-esg-top)"/>
+  <polygon points="11.44,5.72 16.00,8.00 16.00,13.31 11.44,11.04" fill="url(#pv-esg-left)"/>
+  <polygon points="20.56,5.72 16.00,8.00 16.00,13.31 20.56,11.04" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="16.00,3.44 20.56,5.72 16.00,8.00 11.44,5.72"/>
+    <polygon points="11.44,5.72 16.00,8.00 16.00,13.31 11.44,11.04"/>
+    <polygon points="20.56,5.72 16.00,8.00 16.00,13.31 20.56,11.04"/>
+  </g>
+  <polygon points="10.30,12.93 14.86,15.21 10.30,17.50 5.74,15.21" fill="url(#pv-esg-top)"/>
+  <polygon points="5.74,15.21 10.30,17.50 10.30,22.81 5.74,20.53" fill="url(#pv-esg-left)"/>
+  <polygon points="14.86,15.21 10.30,17.50 10.30,22.81 14.86,20.53" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="10.30,12.93 14.86,15.21 10.30,17.50 5.74,15.21"/>
+    <polygon points="5.74,15.21 10.30,17.50 10.30,22.81 5.74,20.53"/>
+    <polygon points="14.86,15.21 10.30,17.50 10.30,22.81 14.86,20.53"/>
+  </g>
+  <polygon points="21.70,15.86 26.26,18.14 21.70,20.42 17.14,18.14" fill="url(#pv-esg-top)"/>
+  <polygon points="17.14,18.14 21.70,20.42 21.70,25.74 17.14,23.46" fill="url(#pv-esg-left)"/>
+  <polygon points="26.26,18.14 21.70,20.42 21.70,25.74 26.26,23.46" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="21.70,15.86 26.26,18.14 21.70,20.42 17.14,18.14"/>
+    <polygon points="17.14,18.14 21.70,20.42 21.70,25.74 17.14,23.46"/>
+    <polygon points="26.26,18.14 21.70,20.42 21.70,25.74 26.26,23.46"/>
+  </g>
+  <polygon points="10.30,6.29 14.86,8.57 10.30,10.84 5.74,8.56" fill="url(#pv-esg-top)"/>
+  <polygon points="5.74,8.56 10.30,10.84 10.30,16.16 5.74,13.88" fill="url(#pv-esg-left)"/>
+  <polygon points="14.86,8.57 10.30,10.84 10.30,16.16 14.86,13.88" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="10.30,6.29 14.86,8.57 10.30,10.84 5.74,8.56"/>
+    <polygon points="5.74,8.56 10.30,10.84 10.30,16.16 5.74,13.88"/>
+    <polygon points="14.86,8.57 10.30,10.84 10.30,16.16 14.86,13.88"/>
+  </g>
+  <polygon points="21.70,9.21 26.26,11.49 21.70,13.77 17.14,11.49" fill="url(#pv-esg-top)"/>
+  <polygon points="17.14,11.49 21.70,13.77 21.70,19.09 17.14,16.81" fill="url(#pv-esg-left)"/>
+  <polygon points="26.26,11.49 21.70,13.77 21.70,19.09 26.26,16.81" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="21.70,9.21 26.26,11.49 21.70,13.77 17.14,11.49"/>
+    <polygon points="17.14,11.49 21.70,13.77 21.70,19.09 17.14,16.81"/>
+    <polygon points="26.26,11.49 21.70,13.77 21.70,19.09 26.26,16.81"/>
+  </g>
+  <polygon points="16.00,18.71 20.56,20.99 16.00,23.27 11.44,20.99" fill="url(#pv-esg-top)"/>
+  <polygon points="11.44,20.99 16.00,23.27 16.00,28.59 11.44,26.31" fill="url(#pv-esg-left)"/>
+  <polygon points="20.56,20.99 16.00,23.27 16.00,28.59 20.56,26.31" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="16.00,18.71 20.56,20.99 16.00,23.27 11.44,20.99"/>
+    <polygon points="11.44,20.99 16.00,23.27 16.00,28.59 11.44,26.31"/>
+    <polygon points="20.56,20.99 16.00,23.27 16.00,28.59 20.56,26.31"/>
+  </g>
+  <polygon points="16.00,12.06 20.56,14.34 16.00,16.62 11.44,14.34" fill="url(#pv-esg-top)"/>
+  <polygon points="11.44,14.34 16.00,16.62 16.00,21.94 11.44,19.66" fill="url(#pv-esg-left)"/>
+  <polygon points="20.56,14.34 16.00,16.62 16.00,21.94 20.56,19.66" fill="url(#pv-esg-right)"/>
+  <g stroke="rgba(255,255,255,0.5)" stroke-width="0.4" fill="none">
+    <polygon points="16.00,12.06 20.56,14.34 16.00,16.62 11.44,14.34"/>
+    <polygon points="11.44,14.34 16.00,16.62 16.00,21.94 11.44,19.66"/>
+    <polygon points="20.56,14.34 16.00,16.62 16.00,21.94 20.56,19.66"/>
+  </g>
+</svg>

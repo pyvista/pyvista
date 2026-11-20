@@ -7,5 +7,5 @@ from type_assert import assert_types
 import pyvista as pv
 from tests.typing.meshes import poly
 
-assert_types(poly().elevation().set_active_scalars('Elevation'), tuple[pv.FieldAssociation, pv.pyvista_ndarray | None])
-assert_types(poly().set_active_scalars(None), tuple[pv.FieldAssociation, pv.pyvista_ndarray | None])
+assert_types(poly().elevation().set_active_scalars('Elevation'), tuple[pv.FieldAssociation, pv.pyvista_ndarray])
+assert_types(poly().set_active_scalars(None), tuple[pv.FieldAssociation, pv.pyvista_ndarray])

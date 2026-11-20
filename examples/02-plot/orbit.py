@@ -12,7 +12,7 @@ Orbit around a scene.
    ``pl.open_gif('orbit.gif')``
 
 For orbiting to work you first have to show the scene and leave the plotter open
-with ``.show(auto_close=False)``.  You may also have to set
+with ``.show(auto_close=False)``. You may also have to set
 ``pv.Plotter(off_screen=True)``
 
 .. note::

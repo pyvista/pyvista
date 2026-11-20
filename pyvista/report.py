@@ -11,6 +11,8 @@ from types import ModuleType  # noqa: TC003
 import scooby
 
 from pyvista._vtk import _VTK_ROOT
+from pyvista.core.formatting_html import _key_value_section
+from pyvista.core.formatting_html import build_repr_html
 
 # ``{pkg}`` is filled with the selected VTK backend (vtkmodules or cvista) in `_run`.
 _cmd_render_window_info = """
@@ -159,13 +161,13 @@ class GPUInfo:
         ]
 
     def _repr_html_(self) -> str:
-        """HTML table representation."""
-        fmt = '<table>'
-        row = '<tr><th>{}</th><td>{}</td></tr>\n'
-        for meta in self.get_info():
-            fmt += row.format(*meta)
-        fmt += '</table>'
-        return fmt
+        """HTML representation for Jupyter notebooks."""
+        return build_repr_html(
+            type(self).__name__,
+            'GPUInfo',
+            sections=[_key_value_section('GPU', self.get_info())],
+            text_repr=str(self),
+        )
 
     def __repr__(self) -> str:
         """Representation method."""
@@ -196,8 +198,7 @@ class Report(scooby.Report):
         List of packages or package names to add to output information.
 
     ncol : int, default: 3
-        Number of package-columns in html table; only has effect if
-        ``mode='HTML'`` or ``mode='html'``.
+        Maximum number of columns in the HTML representation.
 
     text_width : int, default: 80
         The text width for non-HTML display modes.
@@ -332,7 +333,7 @@ class Report(scooby.Report):
         if gpu:
             try:
                 extra_meta = GPUInfo().get_info()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 - the report must not fail
                 extra_meta = [
                     ('GPU Details', 'error'),
                 ]
@@ -344,7 +345,7 @@ class Report(scooby.Report):
         if gpu:
             try:
                 render_window = _get_render_window_class()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 - the report must not fail
                 render_window = 'error'
         else:
             render_window = 'None'
@@ -373,6 +374,43 @@ class Report(scooby.Report):
             text_width=text_width,
             sort=sort,
             extra_meta=extra_meta,
+        )
+
+    def _repr_html_(self) -> str:
+        """HTML representation for Jupyter notebooks."""
+        info = self.to_dict()
+        system_keys = (
+            'OS',
+            'CPU(s)',
+            'Machine',
+            'Architecture',
+            'RAM',
+            'Environment',
+            'File system',
+        )
+        system = [(key, str(info[key])) for key in system_keys if key in info]
+        system += [(str(key), str(value)) for key, value in self._extra_meta]
+        text = str(self)
+        metadata = [('Python', [('', self.sys_version)], '')]
+        if self.mkl_info:
+            metadata.append(('MKL', [('', self.mkl_info)], ''))
+        sections = [
+            _key_value_section('System', system, max_columns=self.ncol),
+            _key_value_section(
+                'Packages',
+                [(name, str(version)) for name, version in self.packages.items()],
+                muted_values=('Module not found', 'Version unknown'),
+                max_columns=self.ncol,
+            ),
+        ]
+        return build_repr_html(
+            'Report',
+            'Report',
+            header_badges=[self.date],
+            metadata=metadata,
+            sections=sections,
+            text_repr=text,
+            header_copy=text,
         )
 
 

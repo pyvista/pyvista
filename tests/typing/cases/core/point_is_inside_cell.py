@@ -17,7 +17,11 @@ def a_grid() -> pv.ImageData:
     return pv.ImageData(dimensions=(3, 3, 3))
 
 
-assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)), bool | NDArray[np.bool_])
-assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]), bool | NDArray[np.bool_])
+assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)), bool)
+
+assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]), NDArray[np.bool_])
+
+# An array, whose shape is not known statically
+assert_types(a_grid().point_is_inside_cell(0, np.full(3, 0.5)), bool | NDArray[np.bool_])
 
 assert_types(pointset().point_is_inside_cell(0, (0.5, 0.5, 0.5)), Never)

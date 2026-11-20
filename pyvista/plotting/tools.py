@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import VectorLikeFloat
     from pyvista.core._typing_core import _FloatingT
+    from pyvista.core.pointset import PolyData
 
     from ._typing import ColorLike
     from ._typing import OpacityOptions
@@ -448,7 +449,7 @@ def create_axes_orientation_box(
         ``color_box`` is ``True``.
 
     color_box : bool, default: False
-        Enable or disable the face colors.  Otherwise, box is white.
+        Enable or disable the face colors. Otherwise, box is white.
 
     label_color : ColorLike, optional
         Color of the text edges.
@@ -575,7 +576,7 @@ def create_axes_orientation_box(
     return actor
 
 
-def create_north_arrow() -> pv.PolyData:
+def create_north_arrow() -> PolyData:
     """Create a north arrow mesh.
 
     .. versionadded:: 0.44.0

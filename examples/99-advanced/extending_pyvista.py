@@ -9,17 +9,17 @@ A :class:`pyvista.DataSet`, such as :class:`pyvista.PolyData`, can be extended b
 For example, if the user wants to keep track of the location of the
 maximum point in the (1, 0, 1) direction on the mesh.
 
-There are two methods by which users can handle subclassing.  One is directly managing
-the types objects.  This may require checking types during filter
+There are two methods by which users can handle subclassing. One is directly managing
+the types objects. This may require checking types during filter
 operations.
 
-The second is automatic managing of types.  Users can control whether user defined
+The second is automatic managing of types. Users can control whether user defined
 classes are nearly always used for particular types of DataSets.
 
 .. note::
-    This is for advanced usage only.  Automatic managing of types
+    This is for advanced usage only. Automatic managing of types
     will not work in all situations, in particular when a builtin dataset is directly
-    instantiated.  See examples below.
+    instantiated. See examples below.
 
 """
 
@@ -72,7 +72,7 @@ print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
 
 # %%
 # However, filter operations can return different ``DataSet`` types including
-# ones that differ from the original type.  In this case, the
+# ones that differ from the original type. In this case, the
 # :func:`decimate <pyvista.PolyDataFilters.decimate>` method returns a
 # :class:`pyvista.PolyData` object.
 
@@ -134,7 +134,7 @@ print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
 
 # %%
 # Users can still create a native :class:`pyvista.PolyData` object, but
-# using this method may incur unintended consequences.  In this case,
+# using this method may incur unintended consequences. In this case,
 # it is recommended to use the directly managing types method.
 
 poly_object = pv.PolyData(vtk.vtkPolyData())
@@ -153,7 +153,7 @@ pv._wrappers['vtkPolyData'] = pv.PolyData
 
 # %%
 # For instances where a localized usage is preferred, a tear-down method is
-# recommended.  One example is a ``try...finally`` block.
+# recommended. One example is a ``try...finally`` block.
 
 try:
     pv._wrappers['vtkPolyData'] = FooData

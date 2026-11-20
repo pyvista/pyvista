@@ -156,7 +156,7 @@ def test_plotting_import_has_no_direct_pillow_imports():
         """
         import builtins
         import importlib
-        import sys
+        import inspect
 
         original_import = builtins.__import__
         original_import_module = importlib.import_module
@@ -173,7 +173,7 @@ def test_plotting_import_has_no_direct_pillow_imports():
             return original_import(name, globals, locals, fromlist, level)
 
         def tracked_import_module(name, package=None):
-            record(sys._getframe(1).f_globals.get('__name__', ''), name)
+            record(inspect.currentframe().f_back.f_globals.get('__name__', ''), name)
             return original_import_module(name, package)
 
         builtins.__import__ = tracked_import

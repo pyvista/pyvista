@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from enum import Enum
 import functools
 import importlib
+import inspect
 import sys
 import threading
 import traceback
@@ -82,7 +83,9 @@ def assert_empty_kwargs(**kwargs) -> bool:
     n = len(kwargs)
     if n == 0:
         return True
-    caller = sys._getframe(1).f_code.co_name
+    frame = inspect.currentframe()
+    caller = frame.f_back.f_code.co_name if frame and frame.f_back else 'function'
+    del frame
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
     grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
@@ -172,6 +175,19 @@ def _wraps(
     """Give a forwarding method ``target``'s docstring, name and signature."""
 
     def decorate(method: Callable[..., _R]) -> Callable[Concatenate[Any, _P], _R]:
+        functools.update_wrapper(method, target)
+        return method
+
+    return decorate
+
+
+_F = TypeVar('_F', bound='Callable[..., Any]')
+
+
+def _wraps_overloaded(target: Callable[..., Any]) -> Callable[[_F], _F]:
+    """Give an overloaded forwarding method ``target``'s docstring, name and signature."""
+
+    def decorate(method: _F) -> _F:
         functools.update_wrapper(method, target)
         return method
 
@@ -424,7 +440,7 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
     """
     try:
         func(*args)
-    except Exception:  # noqa: BLE001  # pragma: no cover
+    except Exception:  # noqa: BLE001 - reported as a warning  # pragma: no cover
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(

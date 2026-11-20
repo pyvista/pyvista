@@ -202,6 +202,26 @@ def test_special_loaders_resolve_through_the_active_backend(fake_flat_backend):
     )
 
 
+@pytest.mark.parametrize('module', ['vtkRenderingCore', 'vtkRenderingOpenGL2'])
+@pytest.mark.parametrize(
+    'name', ['vtkCameraPass', 'vtkRenderPassCollection', 'vtkRenderStepsPass', 'vtkSequencePass']
+)
+def test_render_passes_resolve_from_either_module(monkeypatch, module, name):
+    """Render passes VTK 10 moved to RenderingCore resolve before and after the move."""
+    root = ModuleType('_fake_stock_backend')
+    core = ModuleType('_fake_stock_backend.vtkRenderingCore')
+    opengl = ModuleType('_fake_stock_backend.vtkRenderingOpenGL2')
+    cls = type(name, (), {})
+    setattr(core if module == 'vtkRenderingCore' else opengl, name, cls)
+    monkeypatch.setitem(sys.modules, root.__name__, root)
+    monkeypatch.setitem(sys.modules, core.__name__, core)
+    monkeypatch.setitem(sys.modules, opengl.__name__, opengl)
+    monkeypatch.setattr(_vtk, '_VTK_ROOT', root.__name__)
+    monkeypatch.setattr(_vtk, '_VTK_ROOT_IS_FLAT', False)
+
+    assert _vtk._SPECIAL_LOADERS[name]() is cls
+
+
 def test_module_prefixes_match_the_active_backend():
     """``_VTK_MODULE_PREFIXES`` must match what this build's classes report.
 

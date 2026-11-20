@@ -191,6 +191,23 @@ def test_texture_repr(texture):
     assert 'Dimensions:   300, 200' in tex_repr
 
 
+def test_texture_repr_html(texture):
+    html = texture._repr_html_()
+    assert "<span class='pv-header-badge'>300 x 200</span>" in html
+    assert "<span class='pv-header-badge'>3 components</span>" in html
+    assert 'cube map</span>' not in html
+    assert "<span class='pv-kv-key'>Wrap</span>" in html
+    assert f"<span class='pv-kv-value'>{texture.wrap.name}</span>" in html
+    assert 'id="pv-tx-sky"' in html
+
+
+def test_texture_repr_html_badges(image):
+    html = pv.Texture([image] * 6)._repr_html_()
+    assert "<span class='pv-header-badge'>cube map</span>" in html
+    html = pv.Texture(np.zeros((4, 5), dtype=np.uint8))._repr_html_()
+    assert "<span class='pv-header-badge'>1 component</span>" in html
+
+
 def test_interpolate(texture):
     assert isinstance(texture.interpolate, bool)
     for value in [True, False]:

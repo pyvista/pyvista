@@ -65,15 +65,15 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     obj: Any = submod
     for part in fullname.split('.'):
-        # A metaclass property (e.g. CellType.dimension_map) is invoked by a plain
-        # getattr, losing the property itself -- grab it off the metaclass instead.
-        metaclass_prop = getattr(type(obj), part, None) if inspect.isclass(obj) else None
-        if isinstance(metaclass_prop, property):
-            obj = metaclass_prop
+        # A plain getattr evaluates a metaclass property (e.g. CellType.dimension_map) or a
+        # class property (e.g. BaseReader.extensions), losing the property itself.
+        static = inspect.getattr_static(obj, part, None) if inspect.isclass(obj) else None
+        if isinstance(static, property):
+            obj = static
             continue
         try:
             obj = getattr(obj, part)
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001 - a property getter can raise anything
             return None
 
     # deal with our decorators properly
@@ -85,7 +85,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
-    except Exception:  # noqa: BLE001  # pragma: no cover
+    except Exception:  # noqa: BLE001 - source links are best effort  # pragma: no cover
         fn = None
 
     if not fn:  # pragma: no cover
@@ -96,7 +96,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except Exception:  # noqa: BLE001 # pragma: no cover
+    except Exception:  # noqa: BLE001 - source links are best effort  # pragma: no cover
         lineno = None
 
     if not lineno:
