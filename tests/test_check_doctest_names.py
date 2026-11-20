@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import sys
+from types import ModuleType
+
 import pytest
 
+from tests.check_doctest_names import check_doctests
+from tests.check_doctest_names import discover_modules
 from tests.check_doctest_names import undefined_names
 
 
@@ -90,3 +95,62 @@ def test_syntax_error_propagates():
     """Unparsable source raises so the caller can report it."""
     with pytest.raises(SyntaxError):
         undefined_names('def (:\n')
+
+
+def _check(docstring):
+    """Return the failures reported for a module carrying one docstring."""
+    module = ModuleType('fake_module')
+    module.__doc__ = docstring
+    return check_doctests({module.__name__: module}, verbose=False)
+
+
+def test_skipped_examples_are_checked():
+    """A ``+SKIP`` example is analysed, and its source is reported."""
+    exc, source = _check('>>> missing.plot()  # doctest:+SKIP\n')['fake_module']
+    assert str(exc) == "name 'missing' is not defined"
+    assert source == 'missing.plot()  # doctest:+SKIP\n'
+
+
+def test_skipped_examples_bind_names():
+    """A name bound by a ``+SKIP`` example is available to the examples after it."""
+    assert _check('>>> import pyvista as pv  # doctest:+SKIP\n>>> pv.Sphere()\n') == {}
+
+
+def _module(monkeypatch, name):
+    """Return a module registered under a name, as an import would leave it."""
+    module = ModuleType(name)
+    monkeypatch.setitem(sys.modules, name, module)
+    return module
+
+
+def test_modules_imported_during_the_search_are_discovered(monkeypatch):
+    """A module that only arrives once the search reads an attribute is gathered."""
+    entry = _module(monkeypatch, 'fake')
+    lazy = ModuleType('fake.lazy')
+
+    def read_attribute(name):
+        monkeypatch.setitem(sys.modules, lazy.__name__, lazy)
+        return name
+
+    entry.__dir__ = lambda: ['probe']
+    entry.__getattr__ = read_attribute
+
+    assert sorted(discover_modules(entry)) == ['fake', 'fake.lazy']
+
+
+def test_a_submodule_not_exposed_as_a_module_attribute_is_discovered(monkeypatch):
+    """A submodule whose package rebound its name to something else is gathered."""
+    entry = _module(monkeypatch, 'fake')
+    _module(monkeypatch, 'fake.thing')
+    entry.thing = lambda: None
+
+    assert sorted(discover_modules(entry)) == ['fake', 'fake.thing']
+
+
+def test_a_package_sharing_the_name_prefix_is_not_followed(monkeypatch):
+    """A separate package whose name starts with the entry point's is left out."""
+    entry = _module(monkeypatch, 'fake')
+    _module(monkeypatch, 'fake.child')
+    _module(monkeypatch, 'fake_other')
+
+    assert sorted(discover_modules(entry)) == ['fake', 'fake.child']
