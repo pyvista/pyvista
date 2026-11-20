@@ -43,6 +43,12 @@ grid.cell_data['values'] = values.flatten(order='F')  # Flatten the array
 # Now plot the grid
 grid.plot(show_edges=True)
 
+# %%
+# PyVista stores the values flat, with x varying fastest, which is the order
+# ``flatten(order='F')`` gives. :attr:`~pyvista.DataSetAttributes.reshaped`
+# converts in both directions, so it returns the values in their 3D shape. See
+# :ref:`reshape_data_arrays_example` for more layouts.
+grid.cell_data.reshaped['values'].shape
 
 # %%
 # Don't like cell data? You could also add the NumPy array to the point data of

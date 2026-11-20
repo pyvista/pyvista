@@ -28,6 +28,7 @@ from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 
+from ._structured_data import _grid_shape
 from ._structured_data import _StructuredDataMixin
 from .cell import CellArray
 from .cell import _get_connectivity
@@ -4388,9 +4389,7 @@ class StructuredGrid(
 
     def _reshape_cell_array(self, array: NDArray[_GenericT]) -> NDArray[_GenericT]:
         """Reshape cell data to a 3-D matrix."""
-        cell_dims = np.array(self.dimensions) - 1
-        cell_dims[cell_dims == 0] = 1
-        return array.reshape(cell_dims, order='F')
+        return array.reshape(_grid_shape(self.dimensions, cells=True), order='F')
 
 
 class ExplicitStructuredGrid(_StructuredDataMixin, PointGrid, _vtk.vtkExplicitStructuredGrid):

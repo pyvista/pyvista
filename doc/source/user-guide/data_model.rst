@@ -389,6 +389,11 @@ numerical data may be associated with the :attr:`points
 <pyvista.DataSet.points>`, cells, or not associated with points
 or cells and attached to the mesh in general.
 
+Unlike a multidimensional NumPy array, each data array is stored flat,
+with one value, or one row of components, per point or cell. For grids,
+:attr:`reshaped <pyvista.DataSetAttributes.reshaped>` gets and sets the
+same arrays in the shape of the grid. See :ref:`reshape_data_arrays_example`.
+
 To illustrate data arrays within PyVista, let's first construct a
 slightly more complex mesh than our previous example. Here, we create
 a simple mesh containing four isometric cells by starting with a
