@@ -48,6 +48,8 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         #. Translate entity away from its origin and to its :attr:`~position`.
         #. Transform entity with :attr:`~user_matrix`.
 
+    See :ref:`actor_transformations_example` for examples.
+
     """
 
     def __init__(self) -> None:
