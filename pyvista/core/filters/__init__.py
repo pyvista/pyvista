@@ -37,19 +37,30 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PrecisionWarning
+from pyvista.core.errors import VTKExecutionError
+from pyvista.core.errors import VTKExecutionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.observers import _join
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Sequence
 
     from pyvista.core.dataobject import DataObject
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.core.utilities.observers import VtkEvent
 
 
-def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: str = '') -> None:
-    """Update an algorithm with or without a progress bar."""
+def _update_alg(
+    alg: _vtk.vtkAlgorithm,
+    *,
+    progress_bar: bool = False,
+    message: str = '',
+    prior_errors: Sequence[VtkEvent] = (),
+) -> None:
+    """Update an algorithm, raising the errors VTK reports if the update fails."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
     if pv.vtk_version_info >= (9, 7):
@@ -62,22 +73,33 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
             to_be_updated = alg
 
     # Do the update
-    with _requested_points_precision(alg):
-        if progress_bar:
-            with ProgressMonitor(alg, message=message):
+    failed = False
+    try:
+        with pv.vtk_messages() as messages, _requested_points_precision(alg):
+            if progress_bar:
+                with ProgressMonitor(alg, message=message):
+                    status = to_be_updated.Update()
+            else:
                 status = to_be_updated.Update()
-        else:
-            status = to_be_updated.Update()
+            failed = status is not None and status == 0
+            if failed:
+                messages._drop_pending_errors()
+    except VTKExecutionWarning as exc:
+        if not failed:
+            raise
+        raise VTKExecutionError(_failure_message(alg, prior_errors, messages)) from exc
 
-    if status is not None and status == 0:
-        # There was an error with the update. Re-run so we can catch it and
-        # raise it as a proper Python error.
-        # We avoid using VtkErrorCatcher for the initial update because adding and tracking
-        # with VTK observers can be slow.
-        # VTK marks even a failed execution as up-to-date, so force the re-run to execute.
-        alg.Modified()
-        with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
-            alg.Update()
+    if failed:
+        raise VTKExecutionError(_failure_message(alg, prior_errors, messages))
+
+
+def _failure_message(
+    alg: _vtk.vtkAlgorithm, prior_errors: Sequence[VtkEvent], messages: pv.vtk_messages
+) -> str:
+    """Format the errors VTK reported for a failed update."""
+    return (
+        _join([*prior_errors, *messages.error_events]) or f'{alg.GetClassName()} failed to update.'
+    )
 
 
 DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION

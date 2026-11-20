@@ -211,14 +211,14 @@ def test_render_passes_deep_clean():
     ],
 )
 def test_render_pass_releases_graphics_resources(enable, disable):
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         pl = pv.Plotter()
         pl.add_mesh(pv.Sphere())
         getattr(pl, enable)()
         pl.show()
     assert catcher.error_events == []
 
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         pl = pv.Plotter()
         pl.add_mesh(pv.Sphere())
         getattr(pl, enable)()

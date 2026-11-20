@@ -146,7 +146,11 @@ def pytest_generate_tests(metafunc):
 
             def inherits_from_vtk(klass):
                 bases = klass.__mro__[1:]
-                return any(base.__name__[:3].lower() == 'vtk' for base in bases)
+                return any(
+                    base.__name__[:3].lower() == 'vtk'
+                    and not base.__module__.startswith('pyvista')
+                    for base in bases
+                )
 
             inherits_from_vtk = {
                 name: cls
@@ -183,7 +187,7 @@ def try_init_pyvista_object(class_):
     # Init object but skip if abstract
     kwargs = get_default_class_init_kwargs(class_)
     ctx = contextlib.nullcontext()
-    if class_ is pv.ActorProperties:
+    if class_ in (pv.ActorProperties, pv.VtkErrorCatcher):
         ctx = pytest.warns(pv.PyVistaDeprecationWarning)
     try:
         with ctx:
@@ -470,6 +474,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             vtkPyVistaOverride,
             VTKObjectWrapperCheckSnakeCase,
             pv.VtkErrorCatcher,
+            pv.vtk_messages,
             pv.DataSetAccessor,
         ):
             assert not issubclass(pyvista_class, _NoNewAttrMixin)

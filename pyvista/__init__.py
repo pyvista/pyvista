@@ -42,7 +42,7 @@ from pyvista.core.utilities.accessor_registry import registered_accessors as reg
 from pyvista.core.utilities.accessor_registry import (
     unregister_dataset_accessor as unregister_dataset_accessor,
 )
-from pyvista.core.utilities.observers import send_errors_to_logging
+from pyvista.core.utilities.observers import _install_vtk_output_window
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
 from pyvista.core.utilities.reader_registry import ReaderRegistration as ReaderRegistration
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
@@ -94,8 +94,7 @@ FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
 
 ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'true'
 
-# Send VTK messages to the logging module:
-send_errors_to_logging()
+_install_vtk_output_window()
 
 # theme to use by default for the plot directive
 PLOT_DIRECTIVE_THEME: Theme | str | None = None

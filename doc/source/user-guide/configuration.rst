@@ -306,10 +306,21 @@ temporarily when used as context managers:
    ~pyvista.enable_smp_tools
    ~pyvista.vtk_backend
 
-Related settings: :attr:`~pyvista.core.config.Config.show_vtk_api` on
-``pv.global_config`` controls whether the VTK-inherited API appears in
-:func:`dir` and tab completion, and ``pv.vtk_version_info`` reports
-the version of VTK in use.
+Related settings on ``pv.global_config``:
+:attr:`~pyvista.core.config.Config.vtk_errors` and
+:attr:`~pyvista.core.config.Config.vtk_warnings` set what happens when VTK
+reports an error or a warning (``'raise'``, ``'warn'``, ``'log'`` or
+``'ignore'``), with :class:`~pyvista.vtk_messages` overriding them for a
+block of code, and :attr:`~pyvista.core.config.Config.show_vtk_api`
+controls whether the VTK-inherited API appears in :func:`dir` and tab
+completion. ``pv.vtk_version_info`` reports the version of VTK in use.
+
+.. code-block:: python
+
+    pv.global_config.vtk_warnings = 'ignore'  # applies globally
+
+    with pv.vtk_messages(errors='raise'):  # applies within the context
+        ...
 
 .. seealso::
 

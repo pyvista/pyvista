@@ -791,7 +791,7 @@ def test_download_pepper():
 
 
 def test_download_drill():
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         dataset = examples.download_drill()
     assert catcher.warning_events == []
     assert isinstance(dataset, pv.PolyData)
