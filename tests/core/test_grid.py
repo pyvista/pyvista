@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import itertools
 from pathlib import Path
 import re
 import sys
@@ -1853,6 +1854,32 @@ def test_cast_uniform_to_rectilinear():
     )
     with pytest.raises(ValueError, match=match):
         grid.cast_to_rectilinear_grid()
+
+
+@pytest.mark.parametrize('axes', list(itertools.permutations(range(3))))
+@pytest.mark.parametrize('signs', [(1, 1, 1), (-1, 1, 1), (1, -1, -1)])
+def test_cast_turned_image(axes, signs):
+    """An image whose index axes lie along other global axes casts to the same cells."""
+    direction = np.zeros((3, 3))
+    direction[list(axes), range(3)] = signs
+    image = pv.ImageData(
+        dimensions=(2, 3, 4), spacing=(1, 2, 3), origin=(1, 2, 3), direction_matrix=direction
+    )
+    image.point_data['ids'] = np.arange(image.n_points)
+    image.cell_data['ids'] = np.arange(image.n_cells)
+
+    rectilinear = image.cast_to_rectilinear_grid()
+    assert all(np.all(np.diff(coords) > 0) for coords in (rectilinear.x, rectilinear.y))
+    assert np.allclose(rectilinear.points, image.points[rectilinear.point_data['ids']])
+    centers = image.cell_centers().points
+    assert np.allclose(rectilinear.cell_centers().points, centers[rectilinear.cell_data['ids']])
+
+    voxels = image.cast_to_unstructured_grid()
+    assert np.array_equal(voxels.cell_data['ids'], np.arange(image.n_cells))
+    corners = voxels.points[voxels.cell_connectivity.reshape(-1, 8)]
+    # Voxels list their corners along x first, then y, then z
+    upper = corners > corners.mean(axis=1, keepdims=True)
+    assert np.array_equal(upper @ [1, 2, 4], np.tile(np.arange(8), (image.n_cells, 1)))
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():
