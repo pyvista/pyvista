@@ -2355,13 +2355,31 @@ class Transform(
             return _decomposition_as_homogeneous(*cache)
         return cache
 
-    def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
+    def invert(self: Transform, *, inplace: bool = True) -> Transform:
         """Invert the current transformation.
 
         The current transformation :attr:`matrix` (including all matrices in the
         :attr:`matrix_list`) is inverted every time :meth:`invert` is called.
 
         Use :attr:`is_inverted` to check if the transformations are currently inverted.
+
+        Parameters
+        ----------
+        inplace : bool, default: True
+            Invert this transform in place. Set this to ``False`` to return an
+            inverted copy and leave this transform unchanged.
+
+            .. versionadded:: 0.50
+
+        Returns
+        -------
+        Transform
+            This transform if ``inplace`` is ``True``, otherwise an inverted copy.
+
+        See Also
+        --------
+        inverted
+            Return an inverted copy of this transform.
 
         Examples
         --------
@@ -2405,9 +2423,66 @@ class Transform(
         >>> transform.is_inverted
         False
 
+        Return an inverted copy instead and leave the transformation unchanged.
+
+        >>> inverted = transform.invert(inplace=False)
+        >>> inverted.is_inverted, transform.is_inverted
+        (True, False)
+
         """
-        self.Inverse()
-        return self
+        output = self if inplace else self.copy()
+        output.Inverse()
+        return output
+
+    @property
+    def inverted(self: Transform) -> Transform:
+        """Return an inverted copy of this transform.
+
+        .. versionadded:: 0.50
+
+        This is equivalent to ``invert(inplace=False)``. This transform is not
+        modified.
+
+        Returns
+        -------
+        Transform
+            Inverted copy of this transform.
+
+        See Also
+        --------
+        invert
+            Invert this transform in place.
+        inverse_matrix
+            Return the inverse of the current transformation matrix.
+
+        Examples
+        --------
+        Compose a transformation and get its inverse.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform().scale(2.0).translate(1.0, 2.0, 3.0)
+        >>> inverse = transform.inverted
+        >>> inverse.matrix
+        array([[ 0.5,  0. ,  0. , -0.5],
+               [ 0. ,  0.5,  0. , -1. ],
+               [ 0. ,  0. ,  0.5, -1.5],
+               [ 0. ,  0. ,  0. ,  1. ]])
+
+        The original transform is unchanged.
+
+        >>> transform.is_inverted
+        False
+
+        Composing a transform with its inverse gives the identity.
+
+        >>> (transform * inverse).matrix
+        array([[1., 0., 0., 0.],
+               [0., 1., 0., 0.],
+               [0., 0., 1., 0.],
+               [0., 0., 0., 1.]])
+
+        """
+        return self.invert(inplace=False)
 
     def identity(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Set the transformation to the identity transformation.

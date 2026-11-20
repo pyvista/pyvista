@@ -2369,6 +2369,83 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
+def test_transform_invert_inplace_returns_self(transform):
+    transform.scale(SCALE)
+    assert transform.invert() is transform
+    assert transform.invert(inplace=True) is transform
+
+
+def test_transform_invert_inplace_keyword_only():
+    param = inspect.signature(Transform.invert).parameters['inplace']
+    assert param.kind is inspect.Parameter.KEYWORD_ONLY
+    assert param.default is True
+
+
+@pytest.mark.parametrize(
+    'get_inverse',
+    [lambda t: t.inverted, lambda t: t.invert(inplace=False)],
+    ids=['inverted', 'invert_not_inplace'],
+)
+def test_transform_inverted_copy(transform, get_inverse):
+    transform.multiply_mode = 'pre'
+    transform.point = (1.0, 2.0, 3.0)
+    transform.check_finite = False
+    transform.scale(SCALE).rotate_z(30).translate(VECTOR)
+    matrix = transform.matrix
+    matrix_list = transform.matrix_list
+    inverse_matrix = transform.inverse_matrix
+    expected = transform.copy().invert()
+
+    inverse = get_inverse(transform)
+
+    assert isinstance(inverse, Transform)
+    assert inverse is not transform
+    assert inverse.is_inverted is True
+    assert np.array_equal(inverse.matrix, inverse_matrix)
+    assert np.array_equal(inverse.inverse_matrix, matrix)
+    assert len(inverse.matrix_list) == len(matrix_list) > 1
+    for actual, desired in zip(inverse.matrix_list, expected.matrix_list, strict=True):
+        assert np.array_equal(actual, desired)
+    assert inverse.multiply_mode == 'pre'
+    assert inverse.point == (1.0, 2.0, 3.0)
+    assert inverse.check_finite is False
+
+    assert transform.is_inverted is False
+    assert np.array_equal(transform.matrix, matrix)
+    for actual, original in zip(transform.matrix_list, matrix_list, strict=True):
+        assert np.array_equal(actual, original)
+
+
+def test_transform_inverted_is_independent(transform):
+    transform.scale(SCALE)
+    matrix = transform.matrix
+    inverse = transform.inverted
+
+    inverse.translate(VECTOR)
+    inverse.invert()
+    assert transform.is_inverted is False
+    assert np.array_equal(transform.matrix, matrix)
+
+    transform.translate(VECTOR)
+    assert inverse.n_transformations == 2
+
+
+def test_transform_inverted_round_trip(transform):
+    transform.scale(SCALE).rotate_x(45).translate(VECTOR)
+    round_trip = transform.inverted.inverted
+    assert round_trip.is_inverted is False
+    assert np.array_equal(round_trip.matrix, transform.matrix)
+    assert np.allclose((transform * transform.inverted).matrix, np.eye(4))
+
+
+def test_transform_inverted_of_inverted_transform(transform):
+    transform.scale(SCALE).invert()
+    inverse = transform.inverted
+    assert inverse.is_inverted is False
+    assert np.array_equal(inverse.matrix, transform.inverse_matrix)
+    assert transform.is_inverted is True
+
+
 class CasesTransformApply:
     """Each case returns a *factory*, not an object.
 
