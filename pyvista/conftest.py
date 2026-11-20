@@ -98,17 +98,17 @@ def skip_show(request: pytest.FixtureRequest) -> Generator[None, None, None]:
         Fixture request for the doctest.
 
     """
-    # Chart axes only update their ranges when rendered
     skip = os.environ.get('_PYVISTA_DOCTEST_SKIP_SHOW', 'false').lower() == 'true'
+    # Chart axes only update their ranges when rendered
     if not skip or 'charts.py' in request.node.nodeid:
         yield
         return
     show = pv.Plotter.show
     needs_render = ('screenshot', 'return_img', 'return_cpos', 'store_image_depth')
 
-    def close_instead(self: pv.Plotter, *args: object, **kwargs: object) -> object:
-        if args or any(kwargs.get(key) for key in needs_render):
-            return show(self, *args, **kwargs)  # type: ignore[arg-type]
+    def close_instead(self: pv.Plotter, **kwargs: object) -> object:
+        if any(kwargs.get(key) for key in needs_render):
+            return show(self, **kwargs)  # type: ignore[arg-type]
         self.close()
         return None
 

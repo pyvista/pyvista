@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   # GitHub-hosted runners can re-use the cache across OS's, so this ubuntu
-  # entry serves the Windows job via enableCrossOsArchive on the restore.
+  # entry serves the Windows and macOS jobs via enableCrossOsArchive on the restore.
   cache-pyvista-data:
     name: Cache pyvista/data
     uses: $/.github/workflows/cache-pyvista-data.yml
