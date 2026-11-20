@@ -27,20 +27,9 @@ from pyvista import examples
 from pyvista.conftest import fail_on_vtk_output  # noqa: F401
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import VersionInfo
-from pyvista.core.utilities.accessor_registry import (
-    _restore_registry_state as _restore_accessor_registry_state,
-)
-from pyvista.core.utilities.accessor_registry import (
-    _save_registry_state as _save_accessor_registry_state,
-)
-from pyvista.core.utilities.reader_registry import _restore_registry_state
-from pyvista.core.utilities.reader_registry import _save_registry_state
-from pyvista.core.utilities.writer_registry import (
-    _restore_registry_state as _restore_writer_registry_state,
-)
-from pyvista.core.utilities.writer_registry import (
-    _save_registry_state as _save_writer_registry_state,
-)
+from pyvista.core.utilities import accessor_registry
+from pyvista.core.utilities import reader_registry
+from pyvista.core.utilities import writer_registry
 
 # Unconditional, unlike the Hypothesis probe below: every environment that runs pytest
 # over tests/ has to carry refleak, the docs-test dependency group included.
@@ -52,43 +41,18 @@ from tests.gc_check import take_snapshot
 # Probe the active backend for a rendering module (precise, and no import-error control flow).
 HAS_PLOTTING = importlib.util.find_spec(f'{_vtk._VTK_ROOT}.vtkRenderingCore') is not None
 
+# Every module with a plugin registry, saved and restored around each test.
+REGISTRY_MODULES = [accessor_registry, reader_registry, writer_registry]
+
 if HAS_PLOTTING:
-    from pyvista.plotting.component_registry import (
-        _restore_registry_state as _restore_component_registry_state,
-    )
-    from pyvista.plotting.component_registry import (
-        _save_registry_state as _save_component_registry_state,
-    )
-    from pyvista.plotting.interactor_style_registry import (
-        _restore_registry_state as _restore_style_registry_state,
-    )
-    from pyvista.plotting.interactor_style_registry import (
-        _save_registry_state as _save_style_registry_state,
-    )
-    from pyvista.plotting.theme_registry import (
-        _restore_registry_state as _restore_theme_registry_state,
-    )
-    from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
+    from pyvista import jupyter
+    from pyvista.plotting import component_registry
+    from pyvista.plotting import interactor_style_registry
+    from pyvista.plotting import theme_registry
     from pyvista.plotting.utilities.gl_checks import uses_egl
+
+    REGISTRY_MODULES += [component_registry, interactor_style_registry, theme_registry, jupyter]
 else:  # pragma: no cover -- core-only VTK backend, measured by no -cov environment
-
-    def _save_component_registry_state():
-        return None
-
-    def _restore_component_registry_state(state):  # noqa: ARG001
-        return None
-
-    def _save_style_registry_state():
-        return None
-
-    def _restore_style_registry_state(state):  # noqa: ARG001
-        return None
-
-    def _save_theme_registry_state():
-        return None
-
-    def _restore_theme_registry_state(state):  # noqa: ARG001
-        return None
 
     def uses_egl():
         return False
@@ -228,21 +192,12 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
-    style_registry_state = _save_style_registry_state()
-    reader_registry_state = _save_registry_state()
-    writer_registry_state = _save_writer_registry_state()
-    accessor_registry_state = _save_accessor_registry_state()
-    component_registry_state = _save_component_registry_state()
-    theme_registry_state = _save_theme_registry_state()
+    registry_states = [module._save_registry_state() for module in REGISTRY_MODULES]
 
     yield
 
-    _restore_style_registry_state(style_registry_state)
-    _restore_registry_state(reader_registry_state)
-    _restore_writer_registry_state(writer_registry_state)
-    _restore_accessor_registry_state(accessor_registry_state)
-    _restore_component_registry_state(component_registry_state)
-    _restore_theme_registry_state(theme_registry_state)
+    for module, state in zip(REGISTRY_MODULES, registry_states, strict=True):
+        module._restore_registry_state(state)
 
     pv.vtk_snake_case('error')
     assert pv.vtk_snake_case() == 'error'

@@ -204,7 +204,8 @@ Two collision cases are handled differently:
 - **Accessor-vs-accessor** (two plugins register the same name on
   the same target): emits :class:`UserWarning` and replaces the
   previous accessor. Matches pandas' behavior so a collision does not
-  hard-break user scripts.
+  hard-break user scripts. Pass ``override=True`` to replace it
+  without the warning.
 - **Accessor shadowing a built-in attribute** (a filter method, a
   property, or any other non-accessor attribute on the target or one
   of its ancestors): raises :class:`ValueError` unless
@@ -370,5 +371,11 @@ their ``pyproject.toml`` for zero-config discovery. The plugin module
 itself is imported only when a user first accesses
 ``plotter.<plugin_name>``, so installing the plugin costs nothing for
 plotters that never use it.
+
+A broken component plugin behaves the same way a broken accessor
+plugin does: the first access emits a ``UserWarning`` naming the
+plugin, every access raises an ``AttributeError`` carrying the same
+message, the name drops out of ``dir(plotter)``, and
+:func:`~pyvista.registered_plotter_components` retries it.
 
 See :ref:`plotter-component-api` for the full registration API.
