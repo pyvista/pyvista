@@ -584,3 +584,7 @@ Read the warping spheres at two time steps. This dataset requires VTK 9.4 or new
 Time selection reads metadata without loading mesh data. Static files have an
 empty list of time values. Successive frames may share geometry buffers, so copy
 a frame before modifying its geometry.
+
+Use :class:`PointCellDataSelection` to disable unused point or cell arrays before
+reading. Disabled arrays are not loaded from disk; each frame still includes its
+geometry and connectivity.

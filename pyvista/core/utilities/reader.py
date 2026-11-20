@@ -30,6 +30,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _HDF_CACHE_DROPS_REENABLED_ARRAYS
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
@@ -2850,7 +2851,7 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
     _format = _formats.AVS_UCD
 
 
-class HDFReader(BaseReader['DataObject'], TimeReader):
+class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
     """Reader for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFReader`.
@@ -2861,11 +2862,15 @@ class HDFReader(BaseReader['DataObject'], TimeReader):
     no time points and can be read normally. VTK may treat a file with a single
     time step as static, in which case it exposes no time points.
 
+    Disabled point and cell arrays are not read from disk, which reduces the cost
+    of each frame when only some arrays are needed.
+
     Successive frames may share geometry buffers with each other, so copy a
     frame before modifying its points or cells.
 
     .. versionadded:: 0.50
-        Support for the :class:`TimeReader` interface.
+        Support for the :class:`TimeReader` interface and point and cell array
+        selection.
 
     Examples
     --------
@@ -2878,6 +2883,16 @@ class HDFReader(BaseReader['DataObject'], TimeReader):
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
+
+    Read only one point array.
+
+    >>> reader.point_array_names
+    ['ACCL', 'DISPL', 'GlobalNodeId', 'PedigreeNodeId', 'VEL']
+    >>> reader.disable_all_point_arrays()
+    >>> reader.enable_point_array('VEL')
+    >>> mesh = reader.read()
+    >>> mesh.point_data.keys()
+    ['VEL']
 
     """
 
@@ -2903,15 +2918,111 @@ class HDFReader(BaseReader['DataObject'], TimeReader):
             # The first read after the first information request misreads temporal
             # blocks, so request the information again before that read.
             self.reader.Modified()
-        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
+        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(  # pragma: no cover
             output, (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
         ):
             # Composite outputs may contain images whose blocks are not loaded yet.
             # The cache can return a previously read ImageData time step. Fixed in
             # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13773
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=DeprecationWarning)
-                self.reader.SetUseCache(False)
+            self._disable_cache()
+
+    def _disable_cache(self) -> None:  # pragma: no cover
+        """Disable VTK's geometry cache while suppressing its deprecation warning."""
+        # SetUseCache is deprecated in VTK 9.7, where the cache is on by default
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            self.reader.SetUseCache(False)
+
+    def _enable_array(self, association: Literal['Point', 'Cell'], name: str) -> None:
+        """Enable an array and invalidate affected VTK caches after reading."""
+        if association == 'Point':
+            selection = self.reader.GetPointDataArraySelection()
+        else:
+            selection = self.reader.GetCellDataArraySelection()
+        if selection.ArrayIsEnabled(name):
+            return
+        selection.EnableArray(name)
+        output = self.reader.GetOutputDataObject(0)
+        if _HDF_CACHE_DROPS_REENABLED_ARRAYS and output.GetUpdateTime() > 0:  # pragma: no cover
+            # Fixed in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13790
+            # Backported in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13884
+            self._disable_cache()
+
+    def enable_point_array(self, name: str) -> None:
+        """Enable point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        """
+        self._enable_array('Point', name)
+
+    def disable_point_array(self, name: str) -> None:
+        """Disable point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        """
+        self.reader.GetPointDataArraySelection().DisableArray(name)
+
+    def point_array_status(self, name: str) -> bool:
+        """Get status of point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the point array is enabled.
+
+        """
+        return bool(self.reader.GetPointDataArraySelection().ArrayIsEnabled(name))
+
+    def enable_cell_array(self, name: str) -> None:
+        """Enable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        """
+        self._enable_array('Cell', name)
+
+    def disable_cell_array(self, name: str) -> None:
+        """Disable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        """
+        self.reader.GetCellDataArraySelection().DisableArray(name)
+
+    def cell_array_status(self, name: str) -> bool:
+        """Get status of cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the cell array is enabled.
+
+        """
+        return bool(self.reader.GetCellDataArraySelection().ArrayIsEnabled(name))
 
     @property
     def time_values(self) -> list[float]:

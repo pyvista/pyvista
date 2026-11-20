@@ -64,6 +64,7 @@ def hdf_image_file(tmp_path):
         group.attrs['Direction'] = np.eye(3).ravel()
         # Arrays are stored as [time, z, y, x]
         group['PointData/step'] = np.repeat(np.arange(4.0), 60).reshape(4, 3, 4, 5)
+        group['CellData/cell_step'] = np.repeat(np.arange(4.0) + 10, 24).reshape(4, 2, 3, 4)
         steps = group.create_group('Steps')
         steps.attrs['NSteps'] = 4
         steps['Values'] = [0.0, 10.0, 20.0, 30.0]
@@ -261,3 +262,75 @@ def test_hdf_composite_image_revisit(hdf_image_file, tmp_path):
         assert len(mesh) == 1
         assert isinstance(mesh[0], pv.ImageData)
         assert np.array_equal(mesh[0]['step'], np.full(60, float(index)))
+
+
+def test_hdf_array_selection(hdf_file):
+    """Read only enabled arrays and keep the selection across time steps."""
+    reader = pv.HDFReader(hdf_file)
+    assert isinstance(reader, pv.PointCellDataSelection)
+    assert reader.point_array_names == ['temperature', 'velocity']
+    assert reader.cell_array_names == ['pressure']
+    assert reader.all_point_arrays_status == {'temperature': True, 'velocity': True}
+    reader.disable_point_array('velocity')
+    reader.disable_all_cell_arrays()
+    assert reader.all_point_arrays_status == {'temperature': True, 'velocity': False}
+    assert not reader.cell_array_status('pressure')
+    for index in [2, 0, 1]:
+        reader.set_active_time_point(index)
+        mesh = reader.read()
+        assert mesh.point_data.keys() == ['temperature']
+        assert mesh.cell_data.keys() == []
+        assert np.array_equal(mesh['temperature'], np.arange(4) + index * 4)
+
+
+@pytest.mark.parametrize('fixture', ['hdf_file', 'hdf_image_file'])
+@pytest.mark.parametrize('association', ['point', 'cell'])
+@pytest.mark.parametrize('enable_all', [False, True])
+def test_hdf_reenable_array(fixture, association, enable_all, request):
+    """Restore an array enabled again after a read without it."""
+    path = request.getfixturevalue(fixture)
+    reader = pv.HDFReader(path)
+    names = getattr(reader, f'{association}_array_names')
+    name = names[0]
+    reader.set_active_time_point(1)
+    expected = reader.read()[name].copy()
+    getattr(reader, f'disable_all_{association}_arrays')()
+    assert getattr(reader.read(), f'{association}_data').keys() == []
+    if enable_all:
+        getattr(reader, f'enable_all_{association}_arrays')()
+        enabled_names = names
+    else:
+        getattr(reader, f'enable_{association}_array')(name)
+        enabled_names = [name]
+    mesh = reader.read()
+    assert getattr(mesh, f'{association}_data').keys() == enabled_names
+    assert np.array_equal(mesh[name], expected)
+    control = pv.HDFReader(path)
+    control.set_active_time_point(2)
+    expected = control.read()[name].copy()
+    reader.set_active_time_point(2)
+    mesh = reader.read()
+    assert getattr(mesh, f'{association}_data').keys() == enabled_names
+    assert np.array_equal(mesh[name], expected)
+
+
+@pytest.mark.parametrize(('association', 'name'), [('point', 'temperature'), ('cell', 'pressure')])
+@pytest.mark.parametrize('read_first', [False, True])
+@pytest.mark.parametrize('disable_first', [False, True])
+def test_hdf_array_configuration_preserves_cache(
+    hdf_file, association, name, read_first, disable_first
+):
+    """Preserve geometry caching for no-op enables and selection before reading."""
+    reader = pv.HDFReader(hdf_file)
+    if read_first:
+        reader.read()
+    if disable_first:
+        getattr(reader, f'disable_{association}_array')(name)
+    getattr(reader, f'enable_{association}_array')(name)
+    first = reader.read()
+    reader.set_active_time_point(1)
+    second = reader.read()
+    assert name in getattr(second, f'{association}_data')
+    if (9, 7) <= pv.vtk_version_info < (9, 8):
+        cache_disabled = read_first and disable_first and pv.vtk_version_info < (9, 7, 2)
+        assert np.shares_memory(first.points, second.points) is not cache_disabled
