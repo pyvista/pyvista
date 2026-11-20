@@ -4089,6 +4089,23 @@ def test_gaussian_smooth_outlier():
     assert volume_smoothed.get_data_range()[1] < volume.get_data_range()[1]
 
 
+def test_gaussian_smooth_non_active_scalars(uniform):
+    uniform.point_data['labels'] = np.zeros(uniform.n_points, dtype=np.int32)
+    uniform.set_active_scalars('labels')
+    smoothed = uniform.gaussian_smooth(scalars='Spatial Point Data')
+    assert uniform.active_scalars_name == 'labels'
+
+    uniform.set_active_scalars('Spatial Point Data')
+    assert smoothed == uniform.gaussian_smooth()
+
+
+def test_gaussian_smooth_no_active_point_scalars(uniform):
+    assert uniform.point_data.active_scalars_name == 'Spatial Point Data'
+    expected = uniform.gaussian_smooth(scalars='Spatial Point Data')
+    uniform.point_data.active_scalars_name = None
+    assert uniform.gaussian_smooth(scalars='Spatial Point Data') == expected
+
+
 def test_gaussian_smooth_cell_data_specified():
     point_data = np.zeros((10, 10, 10))
     cell_data = np.zeros((9, 9, 9))
