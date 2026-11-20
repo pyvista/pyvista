@@ -318,21 +318,19 @@ def test_hdf_reenable_array(fixture, association, enable_all, request):
 @pytest.mark.parametrize('read_first', [False, True])
 @pytest.mark.parametrize('disable_first', [False, True])
 def test_hdf_array_configuration_preserves_cache(
-    hdf_file, association, name, read_first, disable_first, mocker
+    hdf_file, association, name, read_first, disable_first
 ):
     """Preserve geometry caching for no-op enables and selection before reading."""
     reader = pv.HDFReader(hdf_file)
-    disable_cache = mocker.spy(reader, '_disable_cache')
     if read_first:
         reader.read()
     if disable_first:
         getattr(reader, f'disable_{association}_array')(name)
     getattr(reader, f'enable_{association}_array')(name)
-    needs_workaround = read_first and disable_first and (9, 7) <= pv.vtk_version_info < (9, 7, 2)
-    assert disable_cache.call_count == int(needs_workaround)
     first = reader.read()
     reader.set_active_time_point(1)
     second = reader.read()
     assert name in getattr(second, f'{association}_data')
-    if (9, 7) <= pv.vtk_version_info < (9, 8) and not needs_workaround:
-        assert np.shares_memory(first.points, second.points)
+    if (9, 7) <= pv.vtk_version_info < (9, 8):
+        cache_disabled = read_first and disable_first and pv.vtk_version_info < (9, 7, 2)
+        assert np.shares_memory(first.points, second.points) is not cache_disabled

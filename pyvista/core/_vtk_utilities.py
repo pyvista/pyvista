@@ -180,6 +180,10 @@ _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
 # to its representative cell. Before that the caller has to, or a polyhedron loses its faces.
 _GENERIC_CELL_COPY_UNWRAPS = vtk_version_info >= (9, 7)
 
+# VTK 9.7.0 and 9.7.1 `vtkHDFReader` keep serving cached data without an array
+# that is enabled again after a read.
+_HDF_CACHE_DROPS_REENABLED_ARRAYS = (9, 7) <= vtk_version_info < (9, 7, 2)
+
 
 # Per-class attribute names verified safe to access in every ``vtk_snake_case`` state.
 _SAFE_ATTRS_BY_CLASS: dict[type, set[str]] = {}

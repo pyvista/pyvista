@@ -30,6 +30,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _HDF_CACHE_DROPS_REENABLED_ARRAYS
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
@@ -2917,7 +2918,7 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
             # The first read after the first information request misreads temporal
             # blocks, so request the information again before that read.
             self.reader.Modified()
-        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(
+        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(  # pragma: no cover
             output, (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
         ):
             # Composite outputs may contain images whose blocks are not loaded yet.
@@ -2925,7 +2926,7 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
             # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13773
             self._disable_cache()
 
-    def _disable_cache(self) -> None:
+    def _disable_cache(self) -> None:  # pragma: no cover
         """Disable VTK's geometry cache while suppressing its deprecation warning."""
         # SetUseCache is deprecated in VTK 9.7, where the cache is on by default
         with warnings.catch_warnings():
@@ -2934,14 +2935,16 @@ class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
 
     def _enable_array(self, association: Literal['Point', 'Cell'], name: str) -> None:
         """Enable an array and invalidate affected VTK caches after reading."""
-        selection = getattr(self.reader, f'Get{association}DataArraySelection')()
+        if association == 'Point':
+            selection = self.reader.GetPointDataArraySelection()
+        else:
+            selection = self.reader.GetCellDataArraySelection()
         if selection.ArrayIsEnabled(name):
             return
         selection.EnableArray(name)
         output = self.reader.GetOutputDataObject(0)
-        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and output.GetUpdateTime() > 0:
-            # The cache keeps returning data without a re-enabled array. Fixed in
-            # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13790
+        if _HDF_CACHE_DROPS_REENABLED_ARRAYS and output.GetUpdateTime() > 0:  # pragma: no cover
+            # Fixed in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13790
             # Backported in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13884
             self._disable_cache()
 
