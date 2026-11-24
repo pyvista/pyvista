@@ -89,7 +89,7 @@ jobs:
       fail-fast: false
       # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
       matrix:
-        python-version: ["3.10", "3.14"]
+        python-version: ["3.10", "3.15"]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -162,6 +162,9 @@ jobs:
             vtk-version: "9.6.2"
             numpy-version: "latest"
           - python-version: "3.14"
+            vtk-version: "9.7.0"
+            numpy-version: "latest"
+          - python-version: "3.15"
             vtk-version: "latest"
             numpy-version: "latest"
 
@@ -316,7 +319,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
         with:
