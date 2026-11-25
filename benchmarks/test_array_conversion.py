@@ -59,3 +59,8 @@ def test_numpy_to_idarr(benchmark):
 def test_vtk_points(point_cloud, benchmark):
     """Build VTK points from a NumPy array."""
     assert benchmark(pv.vtk_points, point_cloud).GetNumberOfPoints()
+
+
+def test_wrap_vtk_multiblock(vtk_multiblock, benchmark):
+    """Wrap an unwrapped VTK composite."""
+    assert benchmark(pv.wrap, vtk_multiblock).n_blocks == 10

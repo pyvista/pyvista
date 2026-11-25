@@ -18,3 +18,18 @@ def test_sphere(benchmark):
 def test_image_data(benchmark):
     """Build an image dataset."""
     assert benchmark(pv.ImageData, dimensions=(10, 10, 10)).n_points
+
+
+def test_cylinder(benchmark):
+    """Build a cylinder along its default direction."""
+    assert benchmark(pv.Cylinder).n_cells
+
+
+def test_cone(benchmark):
+    """Build a cone along its default direction."""
+    assert benchmark(pv.Cone).n_cells
+
+
+def test_axes_geometry_source(benchmark):
+    """Build the axes geometry source and its output."""
+    assert benchmark(pv.AxesGeometrySource).output.n_blocks

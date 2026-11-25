@@ -144,6 +144,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkLogger',
         'vtkLookupTable',
         'vtkMath',
+        'vtkMultiThreader',
         'vtkObjectBase',
         'vtkOutputWindow',
         'vtkPoints',

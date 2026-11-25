@@ -547,3 +547,44 @@ Enumerations are available to simplify inputs to certain readers.
     :maxdepth: 2
 
     enums
+
+Temporal VTKHDF Data
+~~~~~~~~~~~~~~~~~~~~
+
+:class:`HDFReader` reads one selected frame at a time. The file's physical time
+values are listed in :attr:`~HDFReader.time_values`. Select a frame by index with
+:meth:`~HDFReader.set_active_time_point` or by physical time with
+:meth:`~HDFReader.set_active_time_value`, then call :meth:`~BaseReader.read`.
+
+Read the warping spheres at two time steps. This dataset requires VTK 9.4 or newer:
+
+.. pyvista-plot::
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+
+    >>> filename = examples.download_warping_spheres(load=False)
+    >>> reader = pv.HDFReader(filename)
+    >>> pl = pv.Plotter(shape=(1, 2))
+    >>> for column, index in enumerate((0, 25)):
+    ...     reader.set_active_time_point(index)
+    ...     frame = reader.read().cast_to_multiblock().copy()
+    ...     pl.subplot(0, column)
+    ...     _ = pl.add_mesh(
+    ...         frame, cmap='coolwarm', clim=(-3, 3), show_scalar_bar=False
+    ...     )
+    ...     _ = pl.add_text(
+    ...         f't = {reader.active_time_value:.2f}', font_size=12
+    ...     )
+    ...
+    >>> pl.link_views()
+    >>> pl.view_isometric()
+    >>> pl.show()
+
+Time selection reads metadata without loading mesh data. Static files have an
+empty list of time values. Successive frames may share geometry buffers, so copy
+a frame before modifying its geometry.
+
+Use :class:`PointCellDataSelection` to disable unused point or cell arrays before
+reading. Disabled arrays are not loaded from disk; each frame still includes its
+geometry and connectivity.

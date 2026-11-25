@@ -20,6 +20,7 @@ from typing import TypeVar
 from typing import cast
 from typing import get_args
 from typing import get_origin
+import warnings
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -29,6 +30,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
+from pyvista.core._vtk_utilities import _HDF_CACHE_DROPS_REENABLED_ARRAYS
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
@@ -2849,10 +2851,26 @@ class AVSucdReader(BaseReader['UnstructuredGrid']):
     _format = _formats.AVS_UCD
 
 
-class HDFReader(BaseReader['DataObject']):
+class HDFReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
     """Reader for the VTKHDF format (``.hdf``, ``.vtkhdf``).
 
     Wraps :vtk:`vtkHDFReader`.
+
+    Temporal files expose their physical time values through :attr:`time_values`.
+    Select a frame with :meth:`set_active_time_point` or :meth:`set_active_time_value`
+    before calling :meth:`read`. Selection reads no mesh data. Static files have
+    no time points and can be read normally. VTK may treat a file with a single
+    time step as static, in which case it exposes no time points.
+
+    Disabled point and cell arrays are not read from disk, which reduces the cost
+    of each frame when only some arrays are needed.
+
+    Successive frames may share geometry buffers with each other, so copy a
+    frame before modifying its points or cells.
+
+    .. versionadded:: 0.50
+        Support for the :class:`TimeReader` interface and point and cell array
+        selection.
 
     Examples
     --------
@@ -2866,6 +2884,16 @@ class HDFReader(BaseReader['DataObject']):
     >>> mesh = reader.read()
     >>> mesh.plot()
 
+    Read only one point array.
+
+    >>> reader.point_array_names
+    ['ACCL', 'DISPL', 'GlobalNodeId', 'PedigreeNodeId', 'VEL']
+    >>> reader.disable_all_point_arrays()
+    >>> reader.enable_point_array('VEL')
+    >>> mesh = reader.read()
+    >>> mesh.point_data.keys()
+    ['VEL']
+
     """
 
     _vtk_class_name = 'vtkHDFReader'
@@ -2877,6 +2905,193 @@ class HDFReader(BaseReader['DataObject']):
         'PartitionedDataSet',
         'MultiBlock',
     )
+
+    def _update_information(self) -> None:
+        """Reset the time selection when opening a file."""
+        self.reader.SetStep(0)
+        self.reader.GetOutputInformation(0).Remove(
+            _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP()
+        )
+        super()._update_information()
+        output = self.reader.GetOutputDataObject(0)
+        if pv.vtk_version_info >= (9, 6) and isinstance(output, _vtk.vtkCompositeDataSet):
+            # The first read after the first information request misreads temporal
+            # blocks, so request the information again before that read.
+            self.reader.Modified()
+        if (9, 7) <= pv.vtk_version_info < (9, 7, 2) and isinstance(  # pragma: no cover
+            output, (_vtk.vtkImageData, _vtk.vtkCompositeDataSet)
+        ):
+            # Composite outputs may contain images whose blocks are not loaded yet.
+            # The cache can return a previously read ImageData time step. Fixed in
+            # https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13773
+            self._disable_cache()
+
+    def _disable_cache(self) -> None:  # pragma: no cover
+        """Disable VTK's geometry cache while suppressing its deprecation warning."""
+        # SetUseCache is deprecated in VTK 9.7, where the cache is on by default
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            self.reader.SetUseCache(False)
+
+    def _enable_array(self, association: Literal['Point', 'Cell'], name: str) -> None:
+        """Enable an array and invalidate affected VTK caches after reading."""
+        if association == 'Point':
+            selection = self.reader.GetPointDataArraySelection()
+        else:
+            selection = self.reader.GetCellDataArraySelection()
+        if selection.ArrayIsEnabled(name):
+            return
+        selection.EnableArray(name)
+        output = self.reader.GetOutputDataObject(0)
+        if _HDF_CACHE_DROPS_REENABLED_ARRAYS and output.GetUpdateTime() > 0:  # pragma: no cover
+            # Fixed in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13790
+            # Backported in https://gitlab.kitware.com/vtk/vtk/-/merge_requests/13884
+            self._disable_cache()
+
+    def enable_point_array(self, name: str) -> None:
+        """Enable point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        """
+        self._enable_array('Point', name)
+
+    def disable_point_array(self, name: str) -> None:
+        """Disable point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        """
+        self.reader.GetPointDataArraySelection().DisableArray(name)
+
+    def point_array_status(self, name: str) -> bool:
+        """Get status of point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the point array is enabled.
+
+        """
+        return bool(self.reader.GetPointDataArraySelection().ArrayIsEnabled(name))
+
+    def enable_cell_array(self, name: str) -> None:
+        """Enable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        """
+        self._enable_array('Cell', name)
+
+    def disable_cell_array(self, name: str) -> None:
+        """Disable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        """
+        self.reader.GetCellDataArraySelection().DisableArray(name)
+
+    def cell_array_status(self, name: str) -> bool:
+        """Get status of cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the cell array is enabled.
+
+        """
+        return bool(self.reader.GetCellDataArraySelection().ArrayIsEnabled(name))
+
+    @property
+    def time_values(self) -> list[float]:
+        """Physical time values, or an empty list for a static file."""
+        info = self.reader.GetOutputInformation(0)
+        values = info.Get(_vtk.vtkStreamingDemandDrivenPipeline.TIME_STEPS())
+        return [] if values is None else list(values)
+
+    @property
+    def number_time_points(self) -> int:
+        """Return the number of available time points."""
+        return len(self.time_values)
+
+    def time_point_value(self, time_point: int) -> float:
+        """Return the physical time at an index.
+
+        Parameters
+        ----------
+        time_point : int
+            Zero-based time point index.
+
+        Returns
+        -------
+        float
+            Physical time value.
+
+        """
+        if time_point < 0 or time_point >= self.number_time_points:
+            msg = f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
+            raise ValueError(msg)
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self) -> float:
+        """Return the selected physical time, raising ValueError for a static file."""
+        if not self.number_time_points:
+            msg = 'No time points available in this file.'
+            raise ValueError(msg)
+        return self.time_point_value(self.reader.GetStep())
+
+    def set_active_time_point(self, time_point: int) -> None:
+        """Select a time point without reading mesh data.
+
+        Parameters
+        ----------
+        time_point : int
+            Zero-based time point index.
+
+        """
+        time_value = self.time_point_value(time_point)
+        self.reader.SetStep(time_point)
+        # A pipeline time request takes precedence over SetStep in vtkHDFReader.
+        self.reader.GetOutputInformation(0).Set(
+            _vtk.vtkStreamingDemandDrivenPipeline.UPDATE_TIME_STEP(), time_value
+        )
+
+    def set_active_time_value(self, time_value: float) -> None:
+        """Select a physical time without reading mesh data.
+
+        Parameters
+        ----------
+        time_value : float
+            One of the values in :attr:`time_values`.
+
+        """
+        if time_value not in self.time_values:
+            msg = f'Not a valid time {time_value} from available time values: {self.time_values}'
+            raise ValueError(msg)
+        self.set_active_time_point(self.time_values.index(time_value))
 
 
 class GLTFReader(BaseReader['MultiBlock']):

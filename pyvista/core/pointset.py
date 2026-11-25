@@ -2487,15 +2487,13 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.point_normals
+        >>> normals = sphere.point_normals
+        >>> normals.shape
+        (842, 3)
+        >>> normals[:3]
         pyvista_ndarray([[ 0.        ,  0.        ,  1.        ],
                          [ 0.        ,  0.        , -1.        ],
-                         [ 0.10811902,  0.        ,  0.99413794],
-                         ...,
-                         [ 0.31232402, -0.06638652, -0.9476532 ],
-                         [ 0.21027282, -0.04469487, -0.97662055],
-                         [ 0.10575636, -0.02247921, -0.99413794]],
-                        shape=(842, 3), dtype=float32)
+                         [ 0.10811902,  0.        ,  0.99413794]], dtype=float32)
 
         """
         if self.point_data.active_normals is not None:
@@ -2588,9 +2586,26 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self._obb_tree
 
+    def _count_open_edges(self, *, include_non_manifold: bool) -> int:
+        """Count boundary edges and optionally non-manifold edges."""
+        alg = _vtk.vtkFeatureEdges()
+        alg.FeatureEdgesOff()
+        alg.BoundaryEdgesOn()
+        alg.SetNonManifoldEdges(include_non_manifold)
+        alg.ManifoldEdgesOff()
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return alg.GetOutput().GetNumberOfCells()
+
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01
-        """Return the number of open edges on this mesh.
+        """Return the number of boundary edges on this mesh.
+
+        A boundary edge belongs to only one face. Non-manifold edges shared by
+        three or more faces are not included; :attr:`is_manifold` checks both.
+
+        .. versionchanged:: 0.50
+            Non-manifold edges are no longer included in this count.
 
         Examples
         --------
@@ -2608,17 +2623,11 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         4
 
         """
-        alg = _vtk.vtkFeatureEdges()
-        alg.FeatureEdgesOff()
-        alg.BoundaryEdgesOn()
-        alg.NonManifoldEdgesOn()
-        alg.SetInputDataObject(self)
-        alg.Update()
-        return alg.GetOutput().GetNumberOfCells()
+        return self._count_open_edges(include_non_manifold=False)
 
     @property
     def is_manifold(self) -> bool:  # numpydoc ignore=RT01
-        """Return if the mesh is manifold (no open edges).
+        """Return whether the mesh has neither boundary nor non-manifold edges.
 
         Examples
         --------
@@ -2634,7 +2643,7 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         False
 
         """
-        return self.n_open_edges == 0
+        return self._count_open_edges(include_non_manifold=True) == 0
 
 
 @abstract_class
