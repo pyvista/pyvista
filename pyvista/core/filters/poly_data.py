@@ -943,8 +943,8 @@ class PolyDataFilters(DataSetFilters):
         kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
         return self.plot(scalars=self.curvature(curv_type), **kwargs)
 
-    def triangulate(  # type: ignore[override]
-        self,
+    def triangulate(  # type: ignore[override, misc]
+        self: PolyData,
         *,
         pass_verts: bool = False,
         pass_lines: bool = False,
@@ -994,15 +994,54 @@ class PolyDataFilters(DataSetFilters):
 
         """
         trifilter = _vtk.vtkTriangleFilter()
-        trifilter.SetInputData(self)
         trifilter.SetPassVerts(pass_verts)
         trifilter.SetPassLines(pass_lines)
-        _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
+        kinds = ('verts', 'lines', 'faces', 'strips')
+        counts = [self.n_verts, self.n_lines, self.n_faces, self.n_strips]
+        if np.count_nonzero(counts) <= 1:
+            trifilter.SetInputData(self)
+            _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
+            mesh = _get_output(trifilter, output_type=pv.PolyData)
+        else:
+            # When a cell kind takes a fast path in vtkTriangleFilter, its cell data
+            # is copied after the cells are added, so it lands shifted by the size of
+            # that kind, and the all-triangle polys path passes the lines through
+            # whatever PassLines says. Triangulate one kind at a time instead, then
+            # index the cell data by the original cell ids. Cells are ordered verts,
+            # lines, polys, strips, and strips become polys.
+            starts = np.cumsum([0, *counts])
+            cells: dict[str, list[NDArray[np.signedinteger]]] = {k: [] for k in kinds[:3]}
+            ids = []
+            for i, kind in enumerate(kinds):
+                if not counts[i]:
+                    continue
+                part = pv.PolyData()
+                part.points = self.points
+                setattr(part, kind, getattr(self, kind))
+                part.cell_data['ids'] = np.arange(starts[i], starts[i + 1])
+                trifilter.SetInputData(part)
+                _update_alg(
+                    trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh'
+                )
+                tri = _get_output(trifilter, output_type=pv.PolyData)
+                ids.append(tri.cell_data['ids'])
+                for name, arrays in cells.items():
+                    arrays.append(getattr(tri, name))
 
-        mesh = _get_output(trifilter, output_type=pv.PolyData)
+            mesh = self.copy(deep=False)
+            mesh.cell_data.clear()
+            mesh.strips = pv.CellArray()
+            for name, arrays in cells.items():
+                setattr(mesh, name, np.concatenate(arrays))
+            cell_ids = np.concatenate(ids)
+            for name, array in self.cell_data.items():
+                mesh.cell_data[name] = array[cell_ids]
+            for attr in ('scalars', 'vectors', 'normals', 'texture_coordinates'):
+                attr_name = f'active_{attr}_name'
+                setattr(mesh.cell_data, attr_name, getattr(self.cell_data, attr_name))
         if inplace:
-            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
-            return cast('PolyData', self)
+            self.copy_from(mesh, deep=False)
+            return self
         return mesh
 
     def smooth(  # type: ignore[misc]
