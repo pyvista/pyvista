@@ -220,7 +220,7 @@ def test_clip_strips_does_not_duplicate_points(name):
     mesh = pv.PolyData(points, faces=[3, 0, 1, 2], strips=[4, 0, 1, 3, 2])
     mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
 
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         clipped = _clip_that_removes_nothing(mesh, name)
 
     assert not catcher.events
@@ -2455,7 +2455,7 @@ def test_cell_quality_all_valid(ant):
     ],
 )
 def test_cell_quality_no_vtk_warnings(mesh):
-    with pv.VtkErrorCatcher() as catcher:
+    with pv.vtk_messages() as catcher:
         mesh.cell_quality('all_valid')
     assert catcher.warning_events == []
 
