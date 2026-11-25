@@ -229,21 +229,14 @@ class UnstructuredGridFilters(DataSetFilters):
         if self.is_empty:
             return self if inplace else self.copy()
 
-        out = self if inplace else self.copy()
-        cell_ids = np.arange(out.n_cells)
+        # vtkExtractCells passes its input through when it extracts every cell, so append an
+        # empty cell to leave out and make it remap the point ids
+        grown = self.copy()
+        grown.InsertNextCell(pv.CellType.EMPTY_CELL, 0, [])
+        extracted = grown.extract_cells(
+            np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False
+        )
 
-        # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
-        cell_array = out.GetCells()
-        if inplace:
-            # Another mesh may share the input's cell array with it
-            grown = _vtk.vtkCellArray()
-            grown.DeepCopy(cell_array)
-            out.SetCells(out._get_cell_types_array(), grown)
-            cell_array = grown
-        cell_array.InsertNextCell(1)
-
-        # Extract all the cells, except for the dummy cell
-        extracted = out.extract_cells(cell_ids, pass_point_ids=False, pass_cell_ids=False)
-
+        out = self if inplace else grown
         out.copy_from(extracted, deep=False)
         return out

@@ -347,14 +347,14 @@ def test_solid_sphere_generic():
     ('kwargs', 'n_points', 'cells', 'celltypes'),
     [
         (
-            dict(radius=[0.25, 0.5], theta=[0, 180, 360], phi=[45, 135]),
-            8,
-            [8, 0, 2, 3, 1, 4, 6, 7, 5, 8, 1, 3, 2, 0, 5, 7, 6, 4],
-            [pv.CellType.HEXAHEDRON] * 2,
+            dict(radius=[0.25, 0.5], theta=[0, 120, 240, 360], phi=[45, 135]),
+            12,
+            [8, 0, 3, 4, 1, 6, 9, 10, 7, 8, 1, 4, 5, 2, 7, 10, 11, 8, 8, 2, 5, 3, 0, 8, 11, 9, 6],
+            [pv.CellType.HEXAHEDRON] * 3,
         ),
         (
-            dict(radius=[0, 0.5], theta=[0, 180, 360], phi=[0, 60, 120, 180]),
-            7,
+            dict(radius=[0, 0.5], theta=[0, 120, 240, 360], phi=[0, 60, 120, 180]),
+            9,
             [
                 4,
                 0,
@@ -365,31 +365,47 @@ def test_solid_sphere_generic():
                 0,
                 1,
                 4,
+                5,
+                4,
+                0,
+                1,
+                5,
                 3,
                 4,
                 0,
                 2,
+                7,
                 6,
-                5,
                 4,
                 0,
                 2,
-                5,
+                8,
+                7,
+                4,
+                0,
+                2,
                 6,
+                8,
                 5,
                 3,
                 4,
+                7,
                 6,
-                5,
                 0,
                 5,
                 4,
-                3,
                 5,
+                8,
+                7,
+                0,
+                5,
+                5,
+                3,
                 6,
+                8,
                 0,
             ],
-            [pv.CellType.TETRA] * 4 + [pv.CellType.PYRAMID] * 2,
+            [pv.CellType.TETRA] * 6 + [pv.CellType.PYRAMID] * 3,
         ),
         (
             dict(radius=[0.25, 0.5], theta=[0, 120, 240, 360], phi=[0, 90]),
@@ -508,6 +524,12 @@ def test_solid_sphere_resolution_errors():
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
     with pytest.raises(ValueError, match=r'maximum phi cannot be > np.pi'):
         pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
+    with pytest.raises(ValueError, match='theta steps must be less than 180 degrees'):
+        pv.SolidSphere(theta_resolution=2)
+    with pytest.raises(ValueError, match=r'theta steps must be less than np\.pi'):
+        pv.SolidSphereGeneric(theta=[0, 3.5], radians=True)
+    with pytest.raises(ValueError, match='phi must have a value between the poles'):
+        pv.SolidSphere(phi_resolution=2)
 
     with pytest.raises(ValueError, match='radius is not monotonically increasing'):
         pv.SolidSphereGeneric(radius=(0, 10, 1))
