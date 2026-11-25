@@ -69,6 +69,16 @@ files, where they came from, and the readers for them.
    >>> mesh = examples.get_example('bunny').load()
    >>> mesh.plot()
 
+It also says in one word what using the data obliges you to do, names the
+license, and carries the credit line to use; the full record behind them is
+:attr:`~pyvista.examples.Example.metadata`.
+
+.. code-block:: python
+
+   >>> nefertiti = examples.get_example('nefertiti')
+   >>> nefertiti.usage, nefertiti.license
+   ('share_alike', 'CC-BY-SA-4.0')
+
 See the API reference for details:
 
 .. autosummary::
@@ -76,6 +86,10 @@ See the API reference for details:
 
    examples.get_example
    examples.Example
+   examples.Collection
+   examples.ExampleMetadata
+   examples.License
+   examples.Reference
 
 Dataset Gallery
 ---------------
