@@ -195,11 +195,41 @@ Plotting Types
 
 pyvista.typing.ColorLike
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Any object that can be converted to a :class:`~pyvista.Color`.
+Any object that can be converted to a :class:`~pyvista.Color`, including the color names in
+:data:`NamedColors`.
 
 .. currentmodule:: pyvista.typing
 
 .. autodata:: ColorLike
+
+pyvista.typing.NamedColors
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Name of a color accepted as a :data:`ColorLike`. See :ref:`named_colors` for every name
+and its color.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: NamedColors
+   :no-value:
+
+pyvista.typing.NamedColormaps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Name of a colormap accepted as a :data:`ColormapOptions`. See :ref:`named_colormaps` for every
+name and its colormap.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: NamedColormaps
+   :no-value:
+
+pyvista.typing.ColormapOptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Colormap accepted by :class:`~pyvista.LookupTable` and the ``cmap`` argument of plotting
+methods, such as a :data:`NamedColormaps` name.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: ColormapOptions
 
 pyvista.typing.Chart
 ~~~~~~~~~~~~~~~~~~~~
