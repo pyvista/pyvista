@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import shutil
 
-import h5py
 import numpy as np
 import pytest
 
 import pyvista as pv
 
+pytestmark = pytest.mark.skip_python((3, 15), reason='no h5py wheel')
+
 
 @pytest.fixture
 def hdf_file(tmp_path):
     """Write a tetrahedron with shared geometry and nonuniform physical times."""
+    import h5py
+
     path = tmp_path / 'temporal.vtkhdf'
     with h5py.File(path, 'w') as file:
         group = file.create_group('VTKHDF', track_order=True)
@@ -53,6 +56,8 @@ def hdf_file(tmp_path):
 @pytest.fixture
 def hdf_image_file(tmp_path):
     """Write a temporal image whose point values equal the step index."""
+    import h5py
+
     path = tmp_path / 'image.vtkhdf'
     with h5py.File(path, 'w') as file:
         group = file.create_group('VTKHDF', track_order=True)
@@ -164,6 +169,8 @@ def test_hdf_copied_frame_is_independent(hdf_file):
 
 
 def _make_static(path):
+    import h5py
+
     with h5py.File(path, 'a') as file:
         del file['VTKHDF/Steps']
         for name in ['temperature', 'velocity']:
@@ -192,6 +199,8 @@ def test_hdf_static(hdf_file):
 
 def test_hdf_change_path(hdf_file, tmp_path):
     """Reset both the selected index and pipeline request when changing files."""
+    import h5py
+
     other = tmp_path / 'other.vtkhdf'
     shutil.copyfile(hdf_file, other)
     with h5py.File(other, 'a') as file:
@@ -246,6 +255,8 @@ def test_hdf_image_revisit(hdf_image_file):
 @pytest.mark.needs_vtk_version(at_least=(9, 4))
 def test_hdf_composite_image_revisit(hdf_image_file, tmp_path):
     """Return the selected image frame inside a composite output."""
+    import h5py
+
     path = tmp_path / 'composite.vtkhdf'
     with h5py.File(hdf_image_file, 'r') as source, h5py.File(path, 'w') as target:
         group = target.create_group('VTKHDF', track_order=True)
