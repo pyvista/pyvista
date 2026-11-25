@@ -142,6 +142,9 @@ def pytest_configure(config: pytest.Config) -> None:
 
 faulthandler.enable()
 
+# h5py has no cp315 wheel
+collect_ignore = ['core/test_hdf_reader.py'] if sys.version_info >= (3, 15) else []
+
 
 def flaky_test(
     test_function=None,

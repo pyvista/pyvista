@@ -87,7 +87,7 @@ test = [
   'colorcet<3.3.0',
   'embreex<4.4.1; python_version < "3.15"', # no cp315 wheel
   'fsspec<2026.10.0',
-  'h5py<3.17.0',
+  'h5py<3.17.0; python_version < "3.15"', # no cp315 wheel
   'hypothesis<6.170.10',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.39.0',
