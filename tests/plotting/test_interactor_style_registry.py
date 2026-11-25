@@ -53,7 +53,7 @@ def test_register_interactor_style_custom_collision_warns_and_replaces():
     def replacement(_interactor):
         return _vtk.vtkInteractorStyleTrackballCamera()
 
-    with pytest.warns(UserWarning, match='replaces an existing custom registration'):
+    with pytest.warns(UserWarning, match='replaces an existing registration from'):
         pv.register_interactor_style('mycollide', replacement)
     assert _get_interactor_style_handler('mycollide') is replacement
 
@@ -87,9 +87,9 @@ def test_entry_point_discovery_is_cached():
     mock_entry_point.value = 'my_package:custom_style'
     mock_entry_point.load.return_value = _mock_style_factory
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.interactor_style_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[mock_entry_point],
     ):
         assert _reg_mod._has_interactor_style('discovered_style') is True
@@ -113,9 +113,9 @@ def test_entry_point_does_not_override_explicit_registration():
     mock_entry_point.value = 'my_package:other_style'
     mock_entry_point.load.return_value = other_handler
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.interactor_style_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[mock_entry_point],
     ):
         handler = _get_interactor_style_handler('explicit_style')
@@ -132,9 +132,9 @@ def test_entry_point_mapping_discovery():
         'discovered_style': _mock_style_factory,
     }
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with patch(
-        'pyvista.plotting.interactor_style_registry.entry_points',
+        'pyvista.core.utilities._registry.entry_points',
         return_value=[mock_entry_point],
     ):
         assert _reg_mod._has_interactor_style('discovered_style') is True
@@ -150,15 +150,20 @@ def test_entry_point_load_failure_warns():
     mock_entry_point.value = 'my_package:broken'
     mock_entry_point.load.side_effect = ImportError('no such module')
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.interactor_style_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[mock_entry_point],
         ),
         pytest.warns(UserWarning, match='Failed to load'),
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_loaded()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert not _reg_mod._has_interactor_style('broken_style')
+    assert 'broken_style' not in _reg_mod._available_interactor_style_names()
+    mock_entry_point.load.assert_called_once()
 
 
 def test_entry_point_non_callable_handler_warns():
@@ -167,15 +172,15 @@ def test_entry_point_non_callable_handler_warns():
     mock_entry_point.value = 'my_package:not_callable'
     mock_entry_point.load.return_value = 'not_a_callable'
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.interactor_style_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[mock_entry_point],
         ),
         pytest.warns(UserWarning, match='handler is not callable'),
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_loaded()
 
     assert not _reg_mod._has_interactor_style('not_callable_style')
 
@@ -191,15 +196,35 @@ def test_entry_point_duplicate_provider_warns():
     ep2.value = 'package_b:style'
     ep2.load.return_value = _mock_style_factory
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.interactor_style_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[ep1, ep2],
         ),
         pytest.warns(UserWarning, match='Multiple .* providers'),
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_loaded()
+    ep1.load.assert_called_once()
+    ep2.load.assert_called_once()
+    assert _reg_mod._discovered_entry_point_styles.source('dup_style') == 'package_a:style'
+
+
+def test_explicit_style_does_not_block_the_rest_of_an_entry_point():
+    """An entry point sharing a name with an explicit style still provides its other styles."""
+    ep = MagicMock()
+    ep.name = 'explicit_style'
+    ep.value = 'package:STYLES'
+    ep.load.return_value = {
+        'explicit_style': _mock_style_factory,
+        'companion_style': _mock_style_factory,
+    }
+
+    pv.register_interactor_style('explicit_style', _mock_style_factory)
+    _reg_mod._plugins.reset()
+    with patch('pyvista.core.utilities._registry.entry_points', return_value=[ep]):
+        assert _reg_mod._has_interactor_style('companion_style')
+    assert _reg_mod._custom_interactor_styles.source('explicit_style') != 'package:STYLES'
 
 
 def test_entry_point_builtin_collision_warns():
@@ -208,15 +233,15 @@ def test_entry_point_builtin_collision_warns():
     mock_entry_point.value = 'my_package:terrain'
     mock_entry_point.load.return_value = _mock_style_factory
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.interactor_style_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[mock_entry_point],
         ),
         pytest.warns(UserWarning, match='collides with a built-in'),
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_loaded()
 
 
 def test_entry_point_empty_name_warns():
@@ -225,15 +250,15 @@ def test_entry_point_empty_name_warns():
     mock_entry_point.value = 'my_package:empty_name'
     mock_entry_point.load.return_value = _mock_style_factory
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.interactor_style_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[mock_entry_point],
         ),
         pytest.warns(UserWarning, match='must not be empty'),
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_loaded()
 
 
 def test_entry_point_mapping_non_string_key_warns():
@@ -244,12 +269,12 @@ def test_entry_point_mapping_non_string_key_warns():
         123: _mock_style_factory,
     }
 
-    _reg_mod._entry_points_loaded = False
+    _reg_mod._plugins.reset()
     with (
         patch(
-            'pyvista.plotting.interactor_style_registry.entry_points',
+            'pyvista.core.utilities._registry.entry_points',
             return_value=[mock_entry_point],
         ),
-        pytest.warns(UserWarning, match='style names must be strings'),
+        pytest.warns(UserWarning, match='interactor style names must be strings'),
     ):
-        _reg_mod._ensure_entry_points()
+        _reg_mod._plugins.ensure_loaded()
