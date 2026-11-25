@@ -203,7 +203,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     def __init__(self, theme: Theme | None = None, **kwargs) -> None:
         # snapshot the theme so later edits to the source theme do not reach this mapper
         self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
-        self.lookup_table = LookupTable()
+        self.lookup_table = LookupTable(theme=self._theme)
 
         self.interpolate_before_map = kwargs.get(
             'interpolate_before_map',
@@ -597,11 +597,6 @@ class _BaseDataSetMapper(_TextReprHTMLMixin, _BaseMapper):
         """Initialize this class."""
         super().__init__(theme=theme)
         self._use_default_scalar_range = True
-        # _BaseMapper creates a bare LookupTable() which does not honor the
-        # theme cmap. Apply it here so auto-range paths (set_active_scalars
-        # -> _maybe_set_default_scalar_range) see the theme colors before
-        # any set_scalars call.
-        self.lookup_table.apply_cmap(self._theme.cmap, self.lookup_table.n_values)
         self._input_dataset_ref: weakref.ref[DataSet] | None = None
         if dataset is not None:
             self.dataset = dataset
@@ -1683,7 +1678,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
-        self._lut = LookupTable()
+        self._lut = LookupTable(theme=self._theme)
         self._scalar_range = (0.0, 256.0)
 
     @property
