@@ -107,6 +107,11 @@ Here, PyVista has done several things for us:
    and it's made more explicit in the code, following the Python best
    practice of "Explicit is better than implicit".
 
+   For grids such as :class:`pyvista.ImageData`,
+   :attr:`reshaped <pyvista.DataSetAttributes.reshaped>` also converts
+   arrays between this flat layout and the shape of the grid, in both
+   directions. See :ref:`reshape_data_arrays_example`.
+
 Finally, with PyVista, each geometry class contains methods that allow
 you to immediately plot the mesh without also setting up the plot.
 For example, in VTK you would have to do:
