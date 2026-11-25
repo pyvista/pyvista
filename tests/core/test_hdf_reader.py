@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import shutil
+import sys
 
-import h5py
 import numpy as np
 import pytest
 
 import pyvista as pv
+
+if sys.version_info < (3, 15):  # no h5py wheel
+    import h5py
+
+pytestmark = pytest.mark.skip_python((3, 15), reason='no h5py wheel')
 
 
 @pytest.fixture

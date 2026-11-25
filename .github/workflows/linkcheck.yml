@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: "Collect example dataset URLs"
         # lychee reads files, so it never sees the URLs the example loaders build at runtime.

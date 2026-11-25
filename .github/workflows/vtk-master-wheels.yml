@@ -48,7 +48,7 @@ jobs:
           sparse-checkout: .github/scripts
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
       - run: pip install pytest
       - run: pytest -c /dev/null --rootdir=. .github/scripts/test_vtk_master_failure_report.py
 
@@ -59,7 +59,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.14"]
+        python-version: ["3.15"]
 
     runs-on: ${{ matrix.os }}
 
@@ -230,7 +230,7 @@ jobs:
       label: Linux
       os: ubuntu-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      rows: '[{"python": "3.14", "vtk": "local"}]'
+      rows: '[{"python": "3.15", "vtk": "local"}]'
 
   macOS:
     needs: [check-should-run, build-vtk, cache-github-hosted]
@@ -240,7 +240,7 @@ jobs:
       label: macOS
       os: macos-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      rows: '[{"python": "3.14", "vtk": "local"}]'
+      rows: '[{"python": "3.15", "vtk": "local"}]'
 
   Windows:
     needs: [check-should-run, build-vtk, cache-github-hosted]
@@ -250,7 +250,7 @@ jobs:
       label: Windows
       os: windows-latest
       data-key: ${{ needs.cache-github-hosted.outputs.key }}
-      rows: '[{"python": "3.14", "vtk": "local"}]'
+      rows: '[{"python": "3.15", "vtk": "local"}]'
 
   alert-on-failure:
     needs:
@@ -315,7 +315,7 @@ jobs:
             --description "Tracks the recurring VTK master wheel build/test failure" \
             --force || true
 
-          # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
+          # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.15)"
           failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
             --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv' || true)
 
