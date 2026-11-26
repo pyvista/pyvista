@@ -191,7 +191,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         annotations.
 
     theme : pyvista.plotting.themes.Theme, optional
-        Theme supplying default colors. Defaults to :attr:`pyvista.global_theme`.
+        Theme supplying default colors. Defaults to ``pyvista.global_theme``.
         Explicit parameters override the theme.
 
         .. versionadded:: 0.50

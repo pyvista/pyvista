@@ -132,3 +132,11 @@ def test_mapper_lookup_table_theme(lookup_theme, mapper_type):
     copied = mapper.copy()
     assert copied.lookup_table.cmap.name == 'plasma'
     assert copied.lookup_table.nan_color == lookup_theme.nan_color
+
+
+def test_mapper_category_gaps_use_theme_nan_color(lookup_theme):
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 1.0, 3.0]
+    mapper = pv.DataSetMapper(mesh, theme=lookup_theme)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap='viridis')
+    assert mapper.lookup_table.map_value(2.0) == lookup_theme.nan_color.float_rgba
