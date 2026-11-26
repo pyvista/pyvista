@@ -3960,6 +3960,18 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Mesh with the ``"arc_length"`` point data array.
 
+        See Also
+        --------
+        strip : Join connected line segments into polylines.
+
+        Notes
+        -----
+        Arc length is computed independently for each polyline cell, following
+        the order of its points. Connected line segments stored as separate
+        cells are not joined automatically. Use :meth:`strip` to join these segments
+        into polylines before computing the cumulative arc length. See
+        :meth:`strip` for how cell data is handled when cells are joined.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -3979,6 +3991,14 @@ class PolyDataFilters(DataSetFilters):
 
         >>> arc = path.compute_arc_length()
         >>> arc.plot(scalars='arc_length')
+
+        Join the line segments of a slice into a polyline before computing
+        its arc length. The maximum value is the length of this polyline.
+
+        >>> contour = sphere.slice(normal='y').strip()
+        >>> arc = contour.compute_arc_length()
+        >>> f'Length is {arc["arc_length"].max():.3f}'
+        'Length is 3.140'
 
         """
         alg = _vtk.vtkAppendArcLength()
