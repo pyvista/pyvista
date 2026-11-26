@@ -235,7 +235,7 @@ def test_log_scale(lut):
 
 
 def test_repr(lut):
-    assert 'PyVista' in repr(lut)
+    assert lut.cmap.name in repr(lut)
 
     lut.values = lut.values**0.5
     assert 'From values' in repr(lut)
@@ -272,6 +272,7 @@ def test_to_tf(lut):
 
 
 def test_map_value(lut):
+    lut.apply_cmap(['red', 'lime', 'blue'], n_values=3)
     assert lut.map_value(0.5) == (0.0, 1.0, 0.0, 1.0)
 
 

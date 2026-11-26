@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from ._typing import OpacityOptions
     from ._typing import ScalarBarArgs
     from ._typing import _InterpolationKind
+    from .themes import Theme
 
 _RampOptions = Literal['linear', 's-curve', 'sqrt']
 RAMP_MAP: dict[int, _RampOptions] = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
@@ -123,12 +124,17 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
     See :vtk:`vtkLookupTable` for more
     details regarding the underlying VTK API.
 
+    .. versionchanged:: 0.50
+        The default color map and NaN color come from the theme.
+
     Parameters
     ----------
     cmap : str | matplotlib.colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
         See :ref:`named_colormaps` for supported colormaps.
+        Defaults to the theme's color map unless ``values``, ``value_range``,
+        ``hue_range``, ``alpha_range``, or ``ramp`` is specified.
 
     n_values : int, default: 256
         Number of colors in the color map.
@@ -164,13 +170,16 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         Use a log scale when mapping scalar values.
 
     nan_color : ColorLike, optional
-        Color to render any values that are NaNs.
+        Color to render any values that are NaNs. Defaults to the theme's
+        :attr:`~pyvista.plotting.themes.Theme.nan_color`.
 
-    above_range_color : ColorLike, optional
+    above_range_color : bool | ColorLike, optional
         Color to render any values above :attr:`LookupTable.scalar_range`.
+        Set to ``True`` to use the theme's above range color. Disabled by default.
 
-    below_range_color : ColorLike, optional
+    below_range_color : bool | ColorLike, optional
         Color to render any values below :attr:`LookupTable.scalar_range`.
+        Set to ``True`` to use the theme's below range color. Disabled by default.
 
     ramp : str, optional
         The shape of the table ramp. This range is only used when creating
@@ -181,12 +190,18 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         range to annotate on the scalar bar and the values are the string
         annotations.
 
+    theme : pyvista.plotting.themes.Theme, optional
+        Theme supplying default colors. Defaults to ``pyvista.global_theme``.
+        Explicit parameters override the theme.
+
+        .. versionadded:: 0.50
+
     Examples
     --------
     .. pyvista-plot::
         :force_static:
 
-        Plot the lookup table with the default VTK color map.
+        Plot the lookup table with the global theme's color map.
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
@@ -196,14 +211,9 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
           N Values:                   256
           Above Range Color:          None
           Below Range Color:          None
-          NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
+          NAN Color:                  Color(name='dark_gray', hex='#a9a9a9ff', opacity=255)
           Log Scale:                  False
-          Color Map:                  "PyVista Lookup Table"
-            Alpha Range:              (1.0, 1.0)
-            Hue Range:                (0.0, 0.66667)
-            Saturation Range          (1.0, 1.0)
-            Value Range               (1.0, 1.0)
-            Ramp                      s-curve
+          Color Map:                  "viridis"
         >>> lut.plot()
 
         Plot the lookup table with the ``'inferno'`` color map.
@@ -216,10 +226,21 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
           N Values:                   32
           Above Range Color:          None
           Below Range Color:          None
-          NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
+          NAN Color:                  Color(name='dark_gray', hex='#a9a9a9ff', opacity=255)
           Log Scale:                  False
           Color Map:                  "inferno"
         >>> lut.plot()
+
+    Use a theme to choose a color map and override its NaN color.
+
+    >>> theme = pv.themes.Theme()
+    >>> theme.cmap = 'plasma'
+    >>> theme.nan_color = 'cyan'
+    >>> lut = pv.LookupTable(theme=theme, nan_color='red')
+    >>> lut.cmap.name
+    'plasma'
+    >>> lut.nan_color == pv.Color('red')
+    True
 
     """
 
@@ -245,11 +266,20 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         below_range_color: bool | ColorLike | None = None,
         ramp: _RampOptions | None = None,
         annotations: dict[float, str] | None = None,
+        theme: Theme | None = None,
     ) -> None:
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
             msg = 'Cannot set both `cmap` and `values`.'
             raise ValueError(msg)
+
+        self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
+        if (
+            cmap is None
+            and values is None
+            and all(value is None for value in (value_range, hue_range, alpha_range, ramp))
+        ):
+            cmap = self._theme.cmap
 
         if cmap is not None:
             self.apply_cmap(cmap, n_values=n_values, flip=flip)
@@ -268,6 +298,8 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
 
         if nan_color is not None:
             self.nan_color = nan_color
+        else:
+            self.SetNanColor(*self._theme.nan_color.float_rgba)
         if above_range_color is not None:
             self.above_range_color = above_range_color
         if below_range_color is not None:
@@ -596,7 +628,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
     @nan_opacity.setter
     def nan_opacity(self, value: float | str) -> None:
         # Hacky check to prevent auto activation
-        if not self._nan_color_set and (value in (1.0, 255)):
+        if not self._nan_color_set and self.nan_opacity == 255 and (value in (1.0, 255)):
             return
         self.nan_color = Color(self.nan_color, opacity=value)
 
@@ -697,7 +729,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
-            self.SetAboveRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
+            self.SetAboveRangeColor(*self._theme.above_range_color.float_rgba)
             self.SetUseAboveRangeColor(True)
         else:
             self.SetAboveRangeColor(*Color(value).float_rgba)
@@ -728,7 +760,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
     def above_range_opacity(self, value: float | str) -> None:
         color = self.above_range_color
         if color is None:
-            color = Color(pv.global_theme.above_range_color)
+            color = self._theme.above_range_color
         self.above_range_color = Color(color, opacity=value)
 
     @property
@@ -767,7 +799,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
-            self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
+            self.SetBelowRangeColor(*self._theme.below_range_color.float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
@@ -798,7 +830,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
     def below_range_opacity(self, value: float | str) -> None:
         color = self.below_range_color
         if color is None:
-            color = Color(pv.global_theme.below_range_color)
+            color = self._theme.below_range_color
         self.below_range_color = Color(color, opacity=value)
 
     def apply_cmap(
@@ -1227,10 +1259,10 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
         Examples
         --------
         >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
+        >>> lut = pv.LookupTable(cmap='gray', n_values=2)
         >>> rgba_color = lut.map_value(0.0)
         >>> rgba_color
-        (1.0, 0.0, 0.0, 1.0)
+        (0.0, 0.0, 0.0, 1.0)
 
         """
         color = [0.0, 0.0, 0.0]
