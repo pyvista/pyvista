@@ -507,8 +507,7 @@ def _resolve_ext(ext: str) -> None:
     if ext in _custom_ext_readers or ext in _custom_class_readers:
         return
     _ensure_entry_points()
-    if ext in _pending_ext_readers:
-        _resolve_pending_reader(ext)
+    if ext in _pending_ext_readers and _resolve_pending_reader(ext):
         return
     _resolve_optional_reader(ext)
 
