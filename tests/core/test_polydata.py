@@ -1993,9 +1993,14 @@ def test_regular_faces_raises():
         _ = mesh.regular_faces
 
     mesh = tri + quad + quad + quad
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = mesh.regular_faces
+
+    # The connectivity reshapes to the first face's size and the number of faces
+    mesh = pv.PolyData(np.zeros((12, 3)), faces=[4, 0, 1, 2, 3, 2, 4, 5, 6, 6, 7, 8, 9, 10, 11])
     match = (
-        'Mesh does not have regular faces. '
-        'Multiple face sizes detected with different number of points: [3, 4]'
+        'Cell array does not have regular cells. '
+        'Multiple cell sizes detected with different number of points: [2, 4, 6]'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = mesh.regular_faces
