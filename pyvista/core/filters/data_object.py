@@ -1847,6 +1847,7 @@ class DataObjectFilters:
         --------
         Load a mesh with invalid cells.
 
+        >>> import colorcet  # colorcet colormaps
         >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples

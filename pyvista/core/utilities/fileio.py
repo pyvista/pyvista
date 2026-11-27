@@ -1355,6 +1355,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     --------
     Convert a pyvista sphere to a ``meshio`` mesh instance.
 
+    >>> import meshio  # meshio file I/O
     >>> import pyvista as pv
     >>> sphere = pv.Sphere()
     >>> mesh = pv.to_meshio(sphere)
@@ -1546,6 +1547,7 @@ def save_meshio(
     --------
     Save a pyvista sphere to a Abaqus data file.
 
+    >>> import meshio  # meshio file I/O
     >>> import pyvista as pv
     >>> sphere = pv.Sphere()
     >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP

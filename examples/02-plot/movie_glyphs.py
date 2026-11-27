@@ -12,6 +12,7 @@ Uses :func:`glyph() <pyvista.DataSetFilters.glyph>` with
 """
 
 # sphinx_gallery_thumbnail_number = 1
+import imageio  # image and animation I/O
 import numpy as np
 import pyvista as pv
 

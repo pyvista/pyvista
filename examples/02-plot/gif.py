@@ -16,6 +16,7 @@ This example uses :meth:`~pyvista.Plotter.open_gif` and
 """
 
 # sphinx_gallery_thumbnail_number = 2
+import imageio  # image and animation I/O
 import numpy as np
 import pyvista as pv
 

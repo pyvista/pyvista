@@ -20,6 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 import tempfile
 
+import imageio  # image and animation I/O
 import numpy as np
 import pyvista as pv
 from pyvista import examples

@@ -8,6 +8,7 @@ Extract thin planar slices from a volume.
 
 """
 
+import colorcet  # colorcet colormaps
 import matplotlib.pyplot as plt
 import numpy as np
 

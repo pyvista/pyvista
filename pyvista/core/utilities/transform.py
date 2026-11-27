@@ -2865,6 +2865,7 @@ class Transform(
         --------
         Create a rotation matrix and initialize a :class:`Transform` from it.
 
+        >>> import scipy  # for as_rotation
         >>> import numpy as np
         >>> import pyvista as pv
         >>> matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]

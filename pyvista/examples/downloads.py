@@ -907,6 +907,7 @@ def download_procedural_cow(*, load: bool = True) -> PolyData | str:
     .. pyvista-plot::
         :force_static:
 
+        >>> import pyvista_zstd  # .pv reader
         >>> from pyvista import examples
         >>> dataset = examples.download_procedural_cow()
         >>> dataset.plot(rgb=True, smooth_shading=True)
@@ -1767,6 +1768,7 @@ def download_iron_protein(*, load: bool = True) -> ImageData | str:
     .. pyvista-plot::
         :force_static:
 
+        >>> import colorcet  # colorcet colormaps
         >>> from pyvista import examples
         >>> dataset = examples.download_iron_protein()
         >>> dataset.plot(volume=True, cmap='blues')
@@ -3282,6 +3284,7 @@ def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
 
     Examples
     --------
+    >>> import pyvista_frd  # FRD reader
     >>> from pyvista import examples
     >>> dataset = examples.download_frd()
     >>> dataset.plot()
@@ -4704,6 +4707,7 @@ def download_dolfin(*, load: bool = True) -> UnstructuredGrid | str:
 
     Examples
     --------
+    >>> import meshio  # meshio file I/O
     >>> from pyvista import examples
     >>> dataset = examples.download_dolfin()
     >>> dataset.plot(cpos='xy', show_edges=True)
@@ -5965,6 +5969,7 @@ def download_cylinder_crossflow(*, load: bool = True) -> MultiBlock[Unstructured
 
     Examples
     --------
+    >>> import colorcet  # colorcet colormaps
     >>> from pyvista import examples
     >>> dataset = examples.download_cylinder_crossflow()
     >>> dataset.plot(cpos='xy', cmap='blues', rng=[-200, 500])
@@ -6167,6 +6172,7 @@ def download_single_sphere_animation(*, load: bool = True) -> MultiBlock[PolyDat
 
     Examples
     --------
+    >>> import imageio  # image and animation I/O
     >>> import os
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv
@@ -6230,6 +6236,7 @@ def download_dual_sphere_animation(*, load: bool = True) -> MultiBlock[PolyData]
 
     Examples
     --------
+    >>> import imageio  # image and animation I/O
     >>> import os
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv

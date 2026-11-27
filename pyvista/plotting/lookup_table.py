@@ -1068,6 +1068,7 @@ class LookupTable(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk
 
             Plot the ``"viridis"`` colormap with the below and above colors.
 
+            >>> import colorcet  # colorcet colormaps
             >>> import pyvista as pv
             >>> lut = pv.LookupTable('viridis', n_values=8)
             >>> lut.below_range_color = 'black'

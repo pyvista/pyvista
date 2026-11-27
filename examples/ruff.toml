@@ -9,5 +9,15 @@ line-length = 90
 # and it clutters the rendered sphinx-gallery output.
 required-imports = []
 
+[lint.pyflakes]
+allowed-unused-imports = [
+  "colorcet",
+  "imageio",
+  "imageio_ffmpeg",
+  "meshio",
+  "pandas",
+  "sympy",
+] # name a download's dependencies
+
 [lint.flake8-tidy-imports.banned-api]
 "__future__" = { msg = "`__future__` imports are omitted from examples for cleaner sphinx-gallery output." }

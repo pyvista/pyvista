@@ -17,6 +17,7 @@ Highlight some applications of the :func:`~pyvista.DataSetFilters.connectivity` 
 # This section is similar to `this VTK example <https://examples.vtk.org/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
 
 # sphinx_gallery_thumbnail_number = 2
+import colorcet  # colorcet colormaps
 import numpy as np
 import pyvista as pv
 from pyvista import examples

@@ -25,6 +25,7 @@ smooth; this was proved in the paper by Bednorz and Bednorz.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+import imageio  # image and animation I/O
 import numpy as np
 import pyvista as pv
 

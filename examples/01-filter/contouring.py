@@ -11,6 +11,7 @@ meshes can have 1D iso-lines of a scalar field extracted.
 
 """
 
+import colorcet  # colorcet colormaps
 import numpy as np
 import pyvista as pv
 from pyvista import examples

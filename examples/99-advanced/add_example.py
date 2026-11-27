@@ -88,6 +88,7 @@ typically set up your imports.
 # block, output will be generated and printed to the screen according to its
 # ``__repr__`` method. Otherwise, you can use ``print()`` to output text.
 
+import imageio  # image and animation I/O
 import pyvista as pv
 from pyvista import examples
 

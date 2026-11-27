@@ -8,6 +8,7 @@ Plot a mesh with an image projected onto it as a texture.
 
 """
 
+import imageio  # image and animation I/O
 from matplotlib.pyplot import get_cmap
 import numpy as np
 import pyvista as pv

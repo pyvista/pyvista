@@ -22,6 +22,7 @@ vibration.
 
 """
 
+import imageio  # image and animation I/O
 import numpy as np
 import pyvista as pv
 from pyvista import examples
