@@ -48,7 +48,8 @@ def _css_theme_blocks(css: str) -> dict[str, str]:
     blocks = {}
     for selector, body in re.findall(r'([^{}]+)\{([^{}]+)\}', css):
         if re.search(r'--pv-[\w-]+\s*:', body):
-            blocks[' '.join(selector.split())] = body
+            tight = re.sub(r'\(\s+|\s+\)', lambda m: m.group().strip(), selector)
+            blocks[' '.join(tight.split())] = body
     return blocks
 
 
@@ -91,6 +92,22 @@ def test_css_dark_blocks_do_not_use_jp_variables():
     assert len(dark) == 2, f'expected 2 hardcoded dark blocks, found {sorted(dark)}'
     for selector, body in dark.items():
         assert 'var(--jp-' not in body, f'{selector} must hardcode its values'
+
+
+@pytest.mark.parametrize(
+    'light_marker',
+    [
+        'html:not([data-theme="light"])',
+        'body:not([data-theme="light"])',
+        ':not([data-jp-theme-light="true"])',
+        ':not(.vscode-light)',
+    ],
+)
+def test_css_os_dark_mode_yields_to_light_host_theme(light_marker):
+    # marimo, JupyterLab and VS Code mark a light theme, so the OS dark-mode fallback must skip it.
+    blocks = _css_theme_blocks(_load_css())
+    (selector,) = [s for s in blocks if 'not([data-theme="light"])' in s]
+    assert light_marker in selector
 
 
 def test_css_dark_blocks_are_consistent():

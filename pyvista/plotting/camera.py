@@ -1172,7 +1172,10 @@ class Camera(_TextReprHTMLMixin, _NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkC
             else:
                 size[1] = round(size[1] / resize_ratio)
 
-            ren_win.SetSize(size)
+            if self._renderer.parent is None:
+                ren_win.SetSize(size)
+            else:
+                self._renderer.parent.window_size = size
 
             # simply call tight again to reset the parallel scale due to the
             # resized window
