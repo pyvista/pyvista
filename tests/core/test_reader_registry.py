@@ -1159,3 +1159,335 @@ def test_resolving_an_extension_no_plugin_claimed_loads_nothing():
     _reg_mod._pending_ext_readers.pop('.nopluginclaims', None)
 
     assert _reg_mod._resolve_pending_reader('.nopluginclaims') is False
+
+
+def _recording_scheme_handler(calls, mesh):
+    """Return a scheme handler that records each call and returns ``mesh``."""
+
+    def handler(uri, /, **kwargs):
+        calls.append((uri, kwargs))
+        return mesh
+
+    return handler
+
+
+def test_register_scheme_direct_call_reads_uri():
+    calls = []
+    mesh = pv.Sphere()
+    pv.register_scheme('myscheme', _recording_scheme_handler(calls, mesh))
+
+    assert pv.read('myscheme://bucket/mesh') is mesh
+    assert [uri for uri, _ in calls] == ['myscheme://bucket/mesh']
+
+
+def test_register_scheme_as_decorator_returns_handler():
+    @pv.register_scheme('demo')
+    def read_demo(_uri, /, **_):
+        return pv.Cube()
+
+    assert _reg_mod._custom_scheme_readers['demo'] is read_demo
+    assert pv.read('demo://anything').n_points == pv.Cube().n_points
+
+
+def test_register_scheme_duplicate_warns_and_replaces():
+    first = _recording_scheme_handler([], pv.Sphere())
+    second = _recording_scheme_handler([], pv.Cube())
+    pv.register_scheme('myscheme', first)
+
+    with pytest.warns(UserWarning, match=r'"myscheme://" URIs replaces the existing handler'):
+        pv.register_scheme('MyScheme://', second)
+    assert _reg_mod._custom_scheme_readers['myscheme'] is second
+    assert pv.read('myscheme://bucket/mesh').n_points == pv.Cube().n_points
+
+
+def test_register_scheme_override_replaces_silently():
+    pv.register_scheme('myscheme', _recording_scheme_handler([], pv.Sphere()))
+    second = _recording_scheme_handler([], pv.Cube())
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        pv.register_scheme('myscheme', second, override=True)
+    assert _reg_mod._custom_scheme_readers['myscheme'] is second
+
+
+@pytest.mark.parametrize('scheme', ['demo', 'DEMO', 'demo://', 'Demo://'])
+def test_register_scheme_normalizes_key(scheme):
+    pv.register_scheme(scheme, _recording_scheme_handler([], pv.Sphere()))
+    assert 'demo' in _reg_mod._custom_scheme_readers
+    assert pv.read('DEMO://bucket/mesh').n_points == pv.Sphere().n_points
+
+
+@pytest.mark.parametrize(
+    'scheme', ['', '1demo', 'my scheme', 'demo:', 'demo:/', '://', 'demo:://']
+)
+def test_register_scheme_invalid_key_raises(scheme):
+    with pytest.raises(ValueError, match='Invalid URI scheme'):
+        pv.register_scheme(scheme, _recording_scheme_handler([], pv.Sphere()))
+    assert _reg_mod._custom_scheme_readers == {}
+
+
+def test_scheme_handler_wins_over_extension_handler():
+    ext_calls = []
+    pv.register_reader('.schemefmt', _recording_scheme_handler(ext_calls, pv.Cube()))
+    pv.register_scheme('myscheme', _recording_scheme_handler([], pv.Sphere()))
+
+    mesh = pv.read('myscheme://bucket/data.schemefmt')
+
+    assert mesh.n_points == pv.Sphere().n_points
+    assert ext_calls == []
+    # The extension handler still serves the same extension under another scheme.
+    assert pv.read('https://example.com/data.schemefmt').n_points == pv.Cube().n_points
+
+
+def test_scheme_handler_skips_download():
+    """A scheme with no download backend and an unreadable extension still reads."""
+    uri = 'myscheme://bucket/mesh.notaformat'
+    with patch.dict('sys.modules', {'fsspec': None}):
+        with pytest.raises(ImportError, match='Cannot download "myscheme://" URIs'):
+            pv.read(uri)
+
+        pv.register_scheme('myscheme', _recording_scheme_handler([], pv.Sphere()))
+        temp_files = list(_reg_mod._temp_files)
+        assert pv.read(uri).n_points == pv.Sphere().n_points
+
+    assert _reg_mod._temp_files == temp_files
+
+
+def test_scheme_handler_receives_read_arguments():
+    calls = []
+    pv.register_scheme('myscheme', _recording_scheme_handler(calls, pv.Sphere()))
+
+    pv.read('myscheme://bucket/mesh', force_ext='.vtp', progress_bar=True, custom=1)
+    pv.read('myscheme://bucket/mesh', file_format='obj', validate=False)
+
+    assert calls == [
+        (
+            'myscheme://bucket/mesh',
+            {
+                'force_ext': '.vtp',
+                'file_format': None,
+                'progress_bar': True,
+                'validate': None,
+                'custom': 1,
+            },
+        ),
+        (
+            'myscheme://bucket/mesh',
+            {'force_ext': None, 'file_format': 'obj', 'progress_bar': False, 'validate': False},
+        ),
+    ]
+
+
+def test_scheme_handler_result_is_checked_against_cls():
+    pv.register_scheme('myscheme', _recording_scheme_handler([], pv.Sphere()))
+    with pytest.raises(TypeError, match='Expected an instance of UnstructuredGrid'):
+        pv.read('myscheme://bucket/mesh', cls=pv.UnstructuredGrid)
+
+
+def test_unregistered_scheme_still_downloads(tmp_path):
+    vtp_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(vtp_file)
+    calls = []
+    pv.register_scheme('myscheme', _recording_scheme_handler(calls, pv.Cube()))
+
+    with patch.dict('sys.modules', {'fsspec': None}):
+        with patch('pooch.retrieve', return_value=str(vtp_file)) as dl:
+            mesh = pv.read('https://example.com/mesh.vtp')
+
+    dl.assert_called_once()
+    assert calls == []
+    assert mesh.n_points == pv.Sphere().n_points
+
+
+def test_get_reader_refuses_registered_scheme():
+    pv.register_scheme('myscheme', _recording_scheme_handler([], pv.Sphere()))
+    with pytest.raises(ValueError, match=r'myscheme:// URIs.*Use `pyvista.read` instead'):
+        pv.get_reader('myscheme://bucket/mesh.vtp')
+
+
+def _install_scheme_plugin(monkeypatch, tmp_path, specs, *, readers=()):
+    """Fake installed distributions declaring ``pyvista.schemes`` entry points.
+
+    Each spec is ``(scheme, module_name, body)``. The module is written to
+    ``tmp_path`` and only importable, never imported, until an entry point
+    loads it. ``readers`` are ``(extension, module_name)`` pairs declared in
+    ``pyvista.readers``.
+    """
+    groups = {_reg_mod.SCHEME_GROUP: [], _reg_mod.READER_GROUP: []}
+    for scheme, module_name, body in specs:
+        (tmp_path / f'{module_name}.py').write_text(body)
+        groups[_reg_mod.SCHEME_GROUP].append(
+            EntryPoint(name=scheme, value=f'{module_name}:read', group=_reg_mod.SCHEME_GROUP)
+        )
+    for ext, module_name in readers:
+        groups[_reg_mod.READER_GROUP].append(
+            EntryPoint(name=ext, value=f'{module_name}:read', group=_reg_mod.READER_GROUP)
+        )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setattr(
+        'pyvista.core.utilities.reader_registry.entry_points',
+        lambda group: groups.get(group, []),
+    )
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_scheme_readers.clear()
+
+
+_SCHEME_PLUGIN_BODY = """\
+import pyvista as pv
+
+
+def read(uri, /, **kwargs):
+    return pv.Sphere()
+"""
+
+
+def test_scheme_entry_point_imported_only_for_matching_uri(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch,
+        tmp_path,
+        [
+            ('demo', 'demo_scheme_plugin', _SCHEME_PLUGIN_BODY),
+            ('other', 'other_scheme_plugin', _SCHEME_PLUGIN_BODY),
+        ],
+    )
+    for name in ('demo_scheme_plugin', 'other_scheme_plugin'):
+        monkeypatch.delitem(sys.modules, name, raising=False)
+
+    local = tmp_path / 'mesh.vtp'
+    pv.Cube().save(local)
+    pv.read(local)
+    assert 'demo' in _reg_mod._pending_scheme_readers
+    assert 'demo_scheme_plugin' not in sys.modules
+
+    assert pv.read('demo://bucket/mesh').n_points == pv.Sphere().n_points
+    assert 'demo_scheme_plugin' in sys.modules
+    assert 'other_scheme_plugin' not in sys.modules
+    assert _reg_mod._custom_scheme_sources['demo'] == 'demo_scheme_plugin:read'
+
+
+def test_scheme_entry_point_sharing_name_with_reader_entry_point(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch,
+        tmp_path,
+        [('zarrx', 'shared_name_plugin', _SCHEME_PLUGIN_BODY)],
+        readers=[('zarrx', 'shared_name_plugin')],
+    )
+    _reg_mod._ensure_entry_points()
+
+    assert '.zarrx' in _reg_mod._pending_ext_readers
+    assert 'zarrx' in _reg_mod._pending_scheme_readers
+
+
+def test_code_registration_replaces_loaded_entry_point(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('demo', 'loaded_scheme_plugin', _SCHEME_PLUGIN_BODY)]
+    )
+    assert pv.read('demo://bucket/mesh').n_points == pv.Sphere().n_points
+
+    with pytest.warns(
+        UserWarning, match='replaces the existing handler from loaded_scheme_plugin'
+    ):
+        pv.register_scheme('demo', _recording_scheme_handler([], pv.Cube()))
+    assert pv.read('demo://bucket/mesh').n_points == pv.Cube().n_points
+
+
+def test_scheme_handler_never_sees_pickle_uri():
+    calls = []
+    pv.register_scheme('myscheme', _recording_scheme_handler(calls, pv.Sphere()))
+    with pytest.raises(ValueError, match='pickle'):
+        pv.read('myscheme://bucket/mesh.pkl')
+    with pytest.raises(ValueError, match='pickle'):
+        pv.read('myscheme://bucket/mesh', force_ext='.PKL')
+    assert calls == []
+
+
+def test_scheme_entry_point_yields_to_code_registration(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('demo', 'yield_scheme_plugin', _SCHEME_PLUGIN_BODY)]
+    )
+    _reg_mod._ensure_entry_points()
+    pv.register_scheme('demo', _recording_scheme_handler([], pv.Cube()))
+
+    assert pv.read('demo://bucket/mesh').n_points == pv.Cube().n_points
+    (record,) = pv.registered_schemes()
+    assert record.scheme == 'demo'
+    assert record.source.endswith('_recording_scheme_handler.<locals>.handler')
+
+
+def test_scheme_entry_point_with_invalid_name_warns(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('not a scheme', 'bad_scheme_plugin', _SCHEME_PLUGIN_BODY)]
+    )
+    with pytest.warns(UserWarning, match='Ignoring pyvista.schemes entry point'):
+        _reg_mod._ensure_entry_points()
+    assert _reg_mod._pending_scheme_readers == {}
+
+
+def test_scheme_entry_point_that_fails_to_import_falls_through(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('broken', 'broken_scheme_plugin', 'raise RuntimeError("boom")')]
+    )
+    with patch.dict('sys.modules', {'fsspec': None}):
+        with (
+            pytest.warns(UserWarning, match='Failed to load pyvista.schemes entry point.*boom'),
+            pytest.raises(ImportError, match='Cannot download "broken://" URIs'),
+        ):
+            pv.read('broken://bucket/mesh.vtp')
+    assert 'broken' not in _reg_mod._custom_scheme_readers
+
+
+def test_scheme_claimed_by_two_entry_points_uses_first(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch,
+        tmp_path,
+        [
+            ('demo', 'first_scheme_plugin', _SCHEME_PLUGIN_BODY),
+            ('demo', 'second_scheme_plugin', _SCHEME_PLUGIN_BODY),
+        ],
+    )
+    with pytest.warns(UserWarning, match='Multiple pyvista.schemes entry points.*first_scheme'):
+        pv.read('demo://bucket/mesh')
+    assert _reg_mod._custom_scheme_sources['demo'] == 'first_scheme_plugin:read'
+
+
+def test_scheme_entry_point_skipped_when_registered_in_code_first(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('demo', 'shadowed_scheme_plugin', _SCHEME_PLUGIN_BODY)]
+    )
+    pv.register_scheme('demo', _recording_scheme_handler([], pv.Cube()))
+    _reg_mod._ensure_entry_points()
+
+    assert 'demo' not in _reg_mod._pending_scheme_readers
+    assert pv.read('demo://bucket/mesh').n_points == pv.Cube().n_points
+
+
+def test_registered_schemes_resolves_entry_points(monkeypatch, tmp_path):
+    _install_scheme_plugin(
+        monkeypatch, tmp_path, [('demo', 'listed_scheme_plugin', _SCHEME_PLUGIN_BODY)]
+    )
+    handler = _recording_scheme_handler([], pv.Cube())
+    pv.register_scheme('myscheme', handler)
+
+    schemes = {record.scheme: record for record in pv.registered_schemes()}
+
+    assert isinstance(schemes['demo'], pv.SchemeRegistration)
+    assert schemes['demo'].source == 'listed_scheme_plugin:read'
+    assert schemes['demo'].handler is sys.modules['listed_scheme_plugin'].read
+    assert schemes['myscheme'].handler is handler
+    assert schemes['myscheme'].source.startswith(__name__)
+    assert _reg_mod._pending_scheme_readers == {}
+
+
+def test_registry_state_roundtrips_scheme_registrations():
+    pv.register_scheme('myscheme', _recording_scheme_handler([], pv.Sphere()))
+    _reg_mod._pending_scheme_readers['pendingscheme'] = []
+    state = _reg_mod._save_registry_state()
+    _reg_mod._custom_scheme_readers.clear()
+    _reg_mod._custom_scheme_sources.clear()
+    _reg_mod._pending_scheme_readers.clear()
+
+    _reg_mod._restore_registry_state(state)
+
+    assert 'myscheme' in _reg_mod._custom_scheme_readers
+    assert 'myscheme' in _reg_mod._custom_scheme_sources
+    assert 'pendingscheme' in _reg_mod._pending_scheme_readers
