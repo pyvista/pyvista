@@ -2615,6 +2615,19 @@ class WidgetComponent(_NoNewAttrMixin):
             The sphere widget, or the list of widgets when ``center`` holds more than
             one point.
 
+        Examples
+        --------
+        Move a point by dragging a sphere widget.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> point = pv.PolyData([(0.0, 0.0, 0.0)])
+        >>> _ = pl.add_points(point, color='red', point_size=10)
+        >>> def callback(center):
+        ...     point.points = [center]
+        >>> _ = pl.add_sphere_widget(callback, center=(0.0, 0.0, 0.0), radius=0.1)
+        >>> pl.show()  # doctest:+SKIP
+
         """
         sphere_color = pv.global_theme.color.float_rgb if color is None else color
         _validation.check_contains(
